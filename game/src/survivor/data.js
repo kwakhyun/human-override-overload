@@ -1,0 +1,202 @@
+export const GAME_WIDTH = 1152;
+export const GAME_HEIGHT = 648;
+export const RUN_DURATION = 300;
+
+export const ENEMY_TYPES = {
+  hunter: {
+    name: "HUNTER",
+    hp: 22,
+    speed: 116,
+    radius: 17,
+    damage: 9,
+    xp: 2,
+    scrap: 2,
+    sprite: "hunter",
+  },
+  suppressor: {
+    name: "SUPPRESSOR",
+    hp: 42,
+    speed: 70,
+    radius: 18,
+    damage: 11,
+    xp: 4,
+    scrap: 3,
+    sprite: "suppressor",
+    ranged: true,
+  },
+  hacker: {
+    name: "NULL HACKER",
+    hp: 68,
+    speed: 82,
+    radius: 19,
+    damage: 7,
+    xp: 7,
+    scrap: 5,
+    sprite: "suppressor",
+    hacker: true,
+  },
+  brute: {
+    name: "BULWARK",
+    hp: 190,
+    speed: 48,
+    radius: 29,
+    damage: 20,
+    xp: 12,
+    scrap: 9,
+    sprite: "brute",
+  },
+  boss: {
+    name: "THE INSTRUCTOR",
+    hp: 2400,
+    speed: 44,
+    radius: 48,
+    damage: 24,
+    xp: 60,
+    scrap: 40,
+    sprite: "brute",
+    boss: true,
+    ranged: true,
+  },
+};
+
+export const COUNTER_PROTOCOLS = {
+  sampling: {
+    id: "sampling",
+    name: "SAMPLING",
+    short: "전투 데이터를 수집 중",
+    detail: "AI가 사거리, 이동량, 피해원을 분석합니다.",
+    color: "#61ecff",
+  },
+  armor: {
+    id: "armor",
+    name: "KINETIC SHELL",
+    short: "탄도 피해 대응 장갑",
+    detail: "헌터 일부가 탄도 피해를 45% 흡수합니다. 아크나 방어 시설로 전환하세요.",
+    color: "#ff5367",
+  },
+  siege: {
+    id: "siege",
+    name: "AREA DENIAL",
+    short: "정지 패턴 대응 포격",
+    detail: "장거리 사수 비율이 증가합니다. 계속 이동하며 포위망을 찢으세요.",
+    color: "#ff8d55",
+  },
+  hacker: {
+    id: "hacker",
+    name: "TOWER HIJACK",
+    short: "설치물 의존 대응 해커",
+    detail: "NULL 해커가 가장 가까운 타워를 마비시킵니다. 직접 제거가 우선입니다.",
+    color: "#b77cff",
+  },
+  rush: {
+    id: "rush",
+    name: "PURSUIT SWARM",
+    short: "기동 사격 대응 추적 군집",
+    detail: "더 빠른 헌터가 여러 게이트에서 동시 진입합니다. 관통과 범위 피해가 유효합니다.",
+    color: "#ff3e57",
+  },
+};
+
+export const UPGRADES = [
+  {
+    id: "pulse",
+    icon: "Crosshair",
+    name: "PULSE OVERDRIVE",
+    tag: "WEAPON",
+    description: "펄스 카빈 피해량 +35%, 탄속 +8%.",
+    max: 5,
+  },
+  {
+    id: "multishot",
+    icon: "ArrowsOutLineHorizontal",
+    name: "FORKED BARREL",
+    tag: "WEAPON",
+    description: "한 번에 발사하는 탄환이 1개 증가합니다.",
+    max: 3,
+  },
+  {
+    id: "pierce",
+    icon: "ArrowRight",
+    name: "GHOST ROUND",
+    tag: "WEAPON",
+    description: "탄환 관통 +1, 피해량 +10%.",
+    max: 3,
+  },
+  {
+    id: "firerate",
+    icon: "Lightning",
+    name: "ZERO-LATENCY TRIGGER",
+    tag: "WEAPON",
+    description: "자동 사격 속도가 22% 증가합니다.",
+    max: 4,
+  },
+  {
+    id: "arc",
+    icon: "WaveSine",
+    name: "ARC CASCADE",
+    tag: "ABILITY",
+    description: "주기적으로 적 사이를 연쇄하는 전격을 방출합니다.",
+    max: 4,
+  },
+  {
+    id: "orbit",
+    icon: "Atom",
+    name: "DATA BLADES",
+    tag: "ABILITY",
+    description: "주위를 회전하며 접촉한 적을 베는 데이터 칼날을 추가합니다.",
+    max: 4,
+  },
+  {
+    id: "drone",
+    icon: "Drone",
+    name: "WINGMAN DAEMON",
+    tag: "ABILITY",
+    description: "플레이어를 따라다니며 독립 사격하는 보조 드론을 활성화합니다.",
+    max: 3,
+  },
+  {
+    id: "armor",
+    icon: "ShieldChevron",
+    name: "RECURSIVE ARMOR",
+    tag: "BODY",
+    description: "최대 체력 +25, 즉시 25 회복.",
+    max: 4,
+  },
+  {
+    id: "mobility",
+    icon: "Wind",
+    name: "VECTOR LEGS",
+    tag: "BODY",
+    description: "이동 속도 +11%, 대시 재사용 대기시간 감소.",
+    max: 4,
+  },
+  {
+    id: "magnet",
+    icon: "Magnet",
+    name: "DATA MAGNET",
+    tag: "UTILITY",
+    description: "데이터 조각 획득 반경이 크게 증가합니다.",
+    max: 3,
+  },
+  {
+    id: "repair",
+    icon: "Heartbeat",
+    name: "COMBAT PATCH",
+    tag: "UTILITY",
+    description: "처치 시 낮은 확률로 체력을 회복하고 즉시 18 회복합니다.",
+    max: 3,
+  },
+  {
+    id: "tower",
+    icon: "Broadcast",
+    name: "SENTRY FIRMWARE",
+    tag: "DEFENSE",
+    description: "센트리 피해와 지속 시간이 30% 증가합니다.",
+    max: 4,
+  },
+];
+
+export function formatTime(seconds) {
+  const safe = Math.max(0, Math.ceil(seconds));
+  return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
+}

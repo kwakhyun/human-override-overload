@@ -1,0 +1,9 @@
+.DS_Store
+game/node_modules/
+game/dist/
+game/qa/implementation-gameplay.png
+game/qa/implementation-compact.png
+game/qa/implementation-portrait.png
+game/qa/implementation-sprite-run.jpg
+game/qa/implementation-sprite-dash.jpg
+game/tmp/
