@@ -17,10 +17,18 @@
   - 장거리 코일 라이플을 사용하는 AI 사수. NULL 해커 변형도 이 원본에 엔진 색 변환을 적용합니다.
 - `public/assets/survivor/brute.png`
   - 방패와 충격포를 가진 중장갑 기체. 최종 보스의 시각 원본으로도 사용합니다.
+- `public/assets/survivor/skills/sentry.png`
+  - 흑철 원형 기부, 호박색 쌍열 에너지 포신, 시안 조준 렌즈를 가진 설치형 자동 센트리.
+- `public/assets/survivor/skills/emp-pylon.png`
+  - 육각 기부와 보라색 전자기 코일, 호박색 안정판, 시안 축전기를 가진 EMP 파일런.
+- `public/assets/survivor/skills/wingman-drone.png`
+  - 흑철 가오리형 동체, 보라색 코어, 시안 센서와 소형 무장 포트를 가진 보조 전투 드론.
 
 캐릭터 공통 프롬프트 조건은 실제 90도 상부 시점, 동쪽을 향하는 단일 배우, 전술 게임에서
-작은 크기로 읽히는 실루엣, 균일한 `#ff00ff` 배경, 그림자·UI·텍스트 제외입니다. 생성 원본은
-내장 `imagegen`을 사용했고, 프로젝트의 크로마키 제거 도구로 투명 PNG화했습니다.
+작은 크기로 읽히는 실루엣, 균일한 크로마키 배경, 그림자·UI·텍스트 제외입니다. 신규 지원
+장비는 `#00ff00` 균일 배경 위에 단일 개체로 생성하고, 근흑색 산업 금속·호박·시안·보라색
+발광부, 넉넉한 패딩, 그림자와 바닥면 제외를 지시했습니다. 생성 원본은 OpenAI 내장
+`imagegen`을 사용했고, 프로젝트의 크로마키 제거 도구로 투명 PNG화한 뒤 384px로 최적화했습니다.
 
 ## Original procedural sound
 
@@ -49,4 +57,3 @@
 - IBM Plex Mono — SIL Open Font License 1.1
 
 정확한 버전은 `package-lock.json`에 고정되어 있습니다.
-

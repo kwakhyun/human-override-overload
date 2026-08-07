@@ -1,19 +1,16 @@
 import {
-  COUNTER_PROTOCOLS,
   ENEMY_TYPES,
   GAME_HEIGHT,
   GAME_WIDTH,
+  HERO_ARCHETYPES,
+  REGIONS,
   RUN_DURATION,
-  UPGRADES,
+  SHOP_ITEMS,
+  getShopItemCost,
 } from "./data.js";
 
 const TAU = Math.PI * 2;
-const GATE_POINTS = [
-  { x: GAME_WIDTH / 2, y: 26 },
-  { x: GAME_WIDTH - 35, y: GAME_HEIGHT / 2 },
-  { x: GAME_WIDTH / 2, y: GAME_HEIGHT - 25 },
-  { x: 35, y: GAME_HEIGHT / 2 },
-];
+const ZONE_PADDING = 34;
 
 export function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -23,8 +20,11 @@ export function distance(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function randomChoice(items, random = Math.random) {
-  return items[Math.floor(random() * items.length)];
+function normalizeAngle(angle) {
+  let value = angle;
+  while (value > Math.PI) value -= TAU;
+  while (value < -Math.PI) value += TAU;
+  return value;
 }
 
 function uid(state, prefix) {
@@ -40,764 +40,101 @@ export function drainEvents(state) {
   return state.events.splice(0, state.events.length);
 }
 
+function createHero(region) {
+  const archetype = HERO_ARCHETYPES[region.hero];
+  return {
+    id: `hero-${region.id}`,
+    zoneId: region.id,
+    archetype: region.hero,
+    name: archetype.name,
+    role: archetype.role,
+    sprite: archetype.sprite,
+    color: archetype.color,
+    x: region.x + region.width / 2,
+    y: region.y + region.height / 2 + 28,
+    vx: 0,
+    vy: 0,
+    angle: -Math.PI / 2,
+    targetAngle: -Math.PI / 2,
+    radius: archetype.radius,
+    hp: archetype.hp,
+    maxHp: archetype.hp,
+    shield: 0,
+    speed: archetype.speed,
+    dead: false,
+    kills: 0,
+    fireCooldown: 0.2 + region.id * 0.08,
+    droneCooldown: 0,
+    dashCooldown: 0,
+    dashRemaining: 0,
+    sentryCooldown: 0,
+    empCooldown: 0,
+    invulnerability: 0,
+    hitFlash: 0,
+    stats: {
+      damage: archetype.damage,
+      fireInterval: archetype.fireInterval,
+      bulletSpeed: archetype.bulletSpeed,
+      range: archetype.range,
+      projectile: archetype.projectile,
+      regen: archetype.regen || 0,
+    },
+    upgrades: {
+      arsenal: 0,
+      firerate: 0,
+      vitality: 0,
+      regen: 0,
+      drone: 0,
+      sentry: 0,
+      emp: 0,
+    },
+  };
+}
+
 export function createGameState({ random = Math.random, duration = RUN_DURATION } = {}) {
+  const zones = REGIONS.map((region) => ({
+    ...region,
+    status: "active",
+    spawnCooldown: 0.6 + region.id * 0.24,
+    invasionLevel: 0,
+    pressure: 0,
+    fallTime: null,
+  }));
   return {
     status: "running",
+    paused: false,
     random,
     duration,
     time: 0,
     timeLeft: duration,
+    wave: 1,
     entityId: 0,
-    player: {
-      x: GAME_WIDTH / 2,
-      y: GAME_HEIGHT / 2 + 112,
-      vx: 0,
-      vy: 0,
-      angle: -Math.PI / 2,
-      targetAngle: -Math.PI / 2,
-      radius: 18,
-      hp: 100,
-      maxHp: 100,
-      speed: 222,
-      dashCooldown: 0,
-      dashRemaining: 0,
-      invulnerability: 0,
-      hitFlash: 0,
-      fireCooldown: 0,
-      arcCooldown: 2.8,
-      droneCooldown: 0,
-      level: 1,
-      xp: 0,
-      xpNext: 9,
-      scrap: 22,
-      kills: 0,
-      score: 0,
-      upgrades: Object.fromEntries(UPGRADES.map((upgrade) => [upgrade.id, 0])),
-      stats: {
-        damage: 28,
-        fireInterval: 0.31,
-        bulletSpeed: 680,
-        multishot: 1,
-        pierce: 0,
-        magnet: 112,
-        dashCooldown: 1.6,
-        sentryDamage: 17,
-        sentryDuration: 28,
-        repairChance: 0,
-      },
-    },
+    controlledZoneId: null,
+    gold: 92,
+    zones,
+    heroes: REGIONS.map(createHero),
     enemies: [],
     projectiles: [],
     enemyShots: [],
-    gems: [],
-    particles: [],
-    beams: [],
     towers: [],
+    beams: [],
+    particles: [],
     texts: [],
-    spawnCooldown: 0.4,
-    wave: 1,
-    counter: COUNTER_PROTOCOLS.sampling,
-    counterIndex: 0,
-    nextAdaptation: 38,
-    counterFlash: 0,
-    bossSpawned: false,
-    pendingUpgradeChoices: [],
-    profile: {
-      damage: { ballistic: 0, arc: 0, orbit: 0, tower: 0 },
-      distance: 0,
-      towerBuilds: 0,
-      window: 0,
-    },
+    bossSpawnedByZone: REGIONS.map(() => false),
     runStats: {
-      damage: { ballistic: 0, arc: 0, orbit: 0, tower: 0 },
-      counters: [],
-      towersBuilt: 0,
-      highestWave: 1,
+      kills: 0,
+      goldEarned: 0,
+      goldSpent: 0,
+      zonesLost: 0,
+      invasions: 0,
+      killsByZone: REGIONS.map(() => 0),
+      purchases: 0,
     },
     events: [],
     shake: 0,
     dangerPulse: 0,
+    invasionFlash: 0,
   };
-}
-
-export function getUpgradeChoices(state, count = 3) {
-  const eligible = UPGRADES.filter((upgrade) => state.player.upgrades[upgrade.id] < upgrade.max);
-  const pool = [...eligible];
-  const choices = [];
-  while (choices.length < count && pool.length) {
-    const index = Math.floor(state.random() * pool.length);
-    choices.push(pool.splice(index, 1)[0]);
-  }
-  return choices;
-}
-
-export function applyUpgrade(state, upgradeId) {
-  const upgrade = UPGRADES.find((entry) => entry.id === upgradeId);
-  if (!upgrade || state.player.upgrades[upgradeId] >= upgrade.max) return false;
-  const player = state.player;
-  player.upgrades[upgradeId] += 1;
-  switch (upgradeId) {
-    case "pulse":
-      player.stats.damage *= 1.35;
-      player.stats.bulletSpeed *= 1.08;
-      break;
-    case "multishot":
-      player.stats.multishot += 1;
-      break;
-    case "pierce":
-      player.stats.pierce += 1;
-      player.stats.damage *= 1.1;
-      break;
-    case "firerate":
-      player.stats.fireInterval *= 0.78;
-      break;
-    case "armor":
-      player.maxHp += 25;
-      player.hp = Math.min(player.maxHp, player.hp + 25);
-      break;
-    case "mobility":
-      player.speed *= 1.11;
-      player.stats.dashCooldown *= 0.9;
-      break;
-    case "magnet":
-      player.stats.magnet += 54;
-      break;
-    case "repair":
-      player.hp = Math.min(player.maxHp, player.hp + 18);
-      player.stats.repairChance += 0.035;
-      break;
-    case "tower":
-      player.stats.sentryDamage *= 1.3;
-      player.stats.sentryDuration *= 1.3;
-      break;
-    default:
-      break;
-  }
-  state.pendingUpgradeChoices = [];
-  state.status = "running";
-  emit(state, "upgradeApplied", { upgrade });
-  return true;
-}
-
-export function analyzeBuild(profile) {
-  const damageEntries = Object.entries(profile.damage);
-  const total = damageEntries.reduce((sum, [, value]) => sum + value, 0) || 1;
-  const [dominant, dominantValue] = damageEntries.sort((a, b) => b[1] - a[1])[0];
-  if (dominant === "tower" && dominantValue / total > 0.3 || profile.towerBuilds >= 3) {
-    return COUNTER_PROTOCOLS.hacker;
-  }
-  if (dominant === "ballistic" && dominantValue / total > 0.62) {
-    return COUNTER_PROTOCOLS.armor;
-  }
-  const movementPerSecond = profile.distance / Math.max(1, profile.window);
-  if (movementPerSecond < 72) return COUNTER_PROTOCOLS.siege;
-  return COUNTER_PROTOCOLS.rush;
-}
-
-function resetProfileWindow(state) {
-  state.profile.damage = { ballistic: 0, arc: 0, orbit: 0, tower: 0 };
-  state.profile.distance = 0;
-  state.profile.towerBuilds = 0;
-  state.profile.window = 0;
-}
-
-export function spawnEnemy(state, requestedType, gateIndex) {
-  let type = requestedType;
-  const wave = state.wave;
-  if (!type) {
-    const roll = state.random();
-    if (wave >= 7 && roll > 0.9) type = "brute";
-    else if (state.counter.id === "hacker" && roll > 0.72) type = "hacker";
-    else if ((state.counter.id === "siege" || wave >= 3) && roll > 0.68) type = "suppressor";
-    else type = "hunter";
-  }
-  const config = ENEMY_TYPES[type];
-  const point = GATE_POINTS[gateIndex ?? Math.floor(state.random() * GATE_POINTS.length)];
-  const hpScale = 1 + Math.max(0, wave - 1) * 0.075;
-  const elite = !config.boss && wave >= 6 && state.random() > 0.92;
-  const enemy = {
-    id: uid(state, "enemy"),
-    type,
-    x: point.x + (state.random() - 0.5) * 68,
-    y: point.y + (state.random() - 0.5) * 48,
-    vx: 0,
-    vy: 0,
-    angle: 0,
-    radius: config.radius * (elite ? 1.16 : 1),
-    hp: config.hp * hpScale * (elite ? 1.8 : 1),
-    maxHp: config.hp * hpScale * (elite ? 1.8 : 1),
-    speed: config.speed * (state.counter.id === "rush" && type === "hunter" ? 1.22 : 1),
-    damage: config.damage,
-    xp: config.xp * (elite ? 2 : 1),
-    scrap: config.scrap * (elite ? 2 : 1),
-    sprite: config.sprite,
-    ranged: config.ranged,
-    hacker: config.hacker,
-    boss: config.boss,
-    elite,
-    attackCooldown: 0.4 + state.random() * 0.8,
-    hitFlash: 0,
-    slow: 0,
-    contactCooldown: 0,
-    resist: state.counter.id === "armor" && type === "hunter" && state.random() > 0.38 ? "ballistic" : null,
-    dead: false,
-  };
-  state.enemies.push(enemy);
-  return enemy;
-}
-
-function addParticles(state, x, y, color, count = 7, speed = 140) {
-  for (let index = 0; index < count; index += 1) {
-    const angle = state.random() * TAU;
-    const velocity = speed * (0.35 + state.random() * 0.75);
-    state.particles.push({
-      x,
-      y,
-      vx: Math.cos(angle) * velocity,
-      vy: Math.sin(angle) * velocity,
-      life: 0.2 + state.random() * 0.35,
-      maxLife: 0.55,
-      size: 1.5 + state.random() * 3.8,
-      color,
-    });
-  }
-}
-
-function addText(state, x, y, text, color = "#ffffff") {
-  state.texts.push({ x, y, text, color, life: 0.7, maxLife: 0.7 });
-}
-
-function dealEnemyDamage(state, enemy, amount, source) {
-  const multiplier = enemy.resist === source ? 0.55 : 1;
-  const actual = amount * multiplier;
-  enemy.hp -= actual;
-  enemy.hitFlash = 0.09;
-  state.profile.damage[source] += actual;
-  state.runStats.damage[source] += actual;
-  if (enemy.resist === source && state.random() > 0.64) addText(state, enemy.x, enemy.y - 18, "RESIST", "#ff6677");
-  if (enemy.hp <= 0 && !enemy.dead) killEnemy(state, enemy);
-  return actual;
-}
-
-function killEnemy(state, enemy) {
-  enemy.dead = true;
-  state.player.kills += 1;
-  state.player.score += Math.round(enemy.maxHp * (enemy.elite ? 2 : 1));
-  const gemCount = enemy.boss ? 12 : enemy.elite ? 3 : 1;
-  for (let index = 0; index < gemCount; index += 1) {
-    const angle = state.random() * TAU;
-    state.gems.push({
-      id: uid(state, "gem"),
-      x: enemy.x + Math.cos(angle) * index * 5,
-      y: enemy.y + Math.sin(angle) * index * 5,
-      vx: Math.cos(angle) * 40,
-      vy: Math.sin(angle) * 40,
-      value: enemy.xp / gemCount,
-      scrap: enemy.scrap / gemCount,
-      age: 0,
-      life: 16,
-    });
-  }
-  if (state.random() < state.player.stats.repairChance) {
-    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 4);
-    addText(state, enemy.x, enemy.y, "+4 HP", "#66ffb3");
-  }
-  addParticles(state, enemy.x, enemy.y, enemy.boss ? "#ffb34d" : "#ff405a", enemy.boss ? 35 : 9, enemy.boss ? 300 : 160);
-  state.shake = Math.max(state.shake, enemy.boss ? 0.8 : enemy.elite ? 0.25 : 0.08);
-  emit(state, "enemyKilled", { enemy });
-}
-
-function nearestEnemy(state, origin, range = Infinity, filter = () => true) {
-  let target = null;
-  let best = range;
-  for (const enemy of state.enemies) {
-    if (enemy.dead || !filter(enemy)) continue;
-    const current = distance(origin, enemy);
-    if (current < best) {
-      best = current;
-      target = enemy;
-    }
-  }
-  return target;
-}
-
-function firePlayerWeapon(state) {
-  const player = state.player;
-  const target = nearestEnemy(state, player, 420);
-  if (!target) return;
-  const baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
-  player.targetAngle = baseAngle;
-  const count = player.stats.multishot;
-  for (let index = 0; index < count; index += 1) {
-    const offset = (index - (count - 1) / 2) * 0.105;
-    const angle = baseAngle + offset;
-    state.projectiles.push({
-      id: uid(state, "shot"),
-      x: player.x + Math.cos(angle) * 26,
-      y: player.y + Math.sin(angle) * 26,
-      vx: Math.cos(angle) * player.stats.bulletSpeed,
-      vy: Math.sin(angle) * player.stats.bulletSpeed,
-      angle,
-      damage: player.stats.damage,
-      life: 1,
-      radius: 4,
-      pierce: player.stats.pierce,
-      hit: new Set(),
-      source: "ballistic",
-      color: "#71f2ff",
-    });
-  }
-  player.fireCooldown = player.stats.fireInterval;
-  emit(state, "playerShot");
-}
-
-function fireArc(state) {
-  const level = state.player.upgrades.arc;
-  if (!level) return;
-  const first = nearestEnemy(state, state.player, 280 + level * 26);
-  if (!first) return;
-  const hit = new Set();
-  let origin = { x: state.player.x, y: state.player.y };
-  let current = first;
-  const chainCount = 2 + level;
-  for (let index = 0; index < chainCount && current; index += 1) {
-    state.beams.push({ x1: origin.x, y1: origin.y, x2: current.x, y2: current.y, life: 0.14, color: "#8af7ff", width: 3 });
-    dealEnemyDamage(state, current, 17 + level * 8, "arc");
-    hit.add(current.id);
-    origin = current;
-    current = nearestEnemy(state, origin, 170, (enemy) => !hit.has(enemy.id));
-  }
-  state.player.arcCooldown = Math.max(1.35, 3.2 - level * 0.35);
-  emit(state, "arc");
-}
-
-function updateOrbitBlades(state, dt) {
-  const level = state.player.upgrades.orbit;
-  if (!level) return;
-  const bladeCount = 1 + Math.ceil(level / 2);
-  for (let index = 0; index < bladeCount; index += 1) {
-    const angle = state.time * (1.8 + level * 0.12) + index * (TAU / bladeCount);
-    const blade = {
-      x: state.player.x + Math.cos(angle) * (62 + level * 4),
-      y: state.player.y + Math.sin(angle) * (62 + level * 4),
-      angle,
-    };
-    for (const enemy of state.enemies) {
-      if (enemy.dead || enemy.orbitCooldown > 0) continue;
-      if (distance(blade, enemy) < enemy.radius + 14) {
-        dealEnemyDamage(state, enemy, 22 + level * 10, "orbit");
-        enemy.orbitCooldown = 0.38;
-        addParticles(state, blade.x, blade.y, "#ffd166", 4, 110);
-      }
-    }
-  }
-}
-
-function fireDrone(state) {
-  const level = state.player.upgrades.drone;
-  if (!level || state.player.droneCooldown > 0) return;
-  const droneAngle = -state.time * 1.3;
-  const origin = {
-    x: state.player.x + Math.cos(droneAngle) * 48,
-    y: state.player.y + Math.sin(droneAngle) * 48,
-  };
-  const target = nearestEnemy(state, origin, 420);
-  if (!target) return;
-  const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
-  state.projectiles.push({
-    id: uid(state, "drone-shot"),
-    x: origin.x,
-    y: origin.y,
-    vx: Math.cos(angle) * 570,
-    vy: Math.sin(angle) * 570,
-    angle,
-    damage: 11 + level * 6,
-    life: 0.9,
-    radius: 3,
-    pierce: 0,
-    hit: new Set(),
-    source: "arc",
-    color: "#b68cff",
-  });
-  state.player.droneCooldown = Math.max(0.22, 0.52 - level * 0.08);
-}
-
-function deployTower(state, kind) {
-  const cost = kind === "sentry" ? 18 : 28;
-  const maximum = kind === "sentry" ? 4 : 2;
-  if (state.player.scrap < cost || state.towers.filter((tower) => tower.kind === kind).length >= maximum) {
-    emit(state, "buildDenied", { kind });
-    return;
-  }
-  state.player.scrap -= cost;
-  const angle = state.player.angle + Math.PI;
-  state.towers.push({
-    id: uid(state, kind),
-    kind,
-    x: clamp(state.player.x + Math.cos(angle) * 44, 70, GAME_WIDTH - 70),
-    y: clamp(state.player.y + Math.sin(angle) * 44, 62, GAME_HEIGHT - 62),
-    angle: 0,
-    life: kind === "sentry" ? state.player.stats.sentryDuration : 22,
-    maxLife: kind === "sentry" ? state.player.stats.sentryDuration : 22,
-    cooldown: 0.15,
-    disabled: 0,
-    pulse: 0,
-  });
-  state.profile.towerBuilds += 1;
-  state.runStats.towersBuilt += 1;
-  addParticles(state, state.player.x, state.player.y, "#ffc857", 12, 120);
-  emit(state, "build", { kind });
-}
-
-function updateTowers(state, dt) {
-  for (const tower of state.towers) {
-    tower.life -= dt;
-    tower.cooldown -= dt;
-    tower.disabled = Math.max(0, tower.disabled - dt);
-    tower.pulse = Math.max(0, tower.pulse - dt);
-    if (tower.disabled > 0) continue;
-    if (tower.kind === "sentry") {
-      const target = nearestEnemy(state, tower, 330);
-      if (target) tower.angle += normalizeAngle(Math.atan2(target.y - tower.y, target.x - tower.x) - tower.angle) * Math.min(1, dt * 14);
-      if (target && tower.cooldown <= 0) {
-        const angle = tower.angle;
-        state.projectiles.push({
-          id: uid(state, "tower-shot"),
-          x: tower.x + Math.cos(angle) * 18,
-          y: tower.y + Math.sin(angle) * 18,
-          vx: Math.cos(angle) * 590,
-          vy: Math.sin(angle) * 590,
-          angle,
-          damage: state.player.stats.sentryDamage,
-          life: 0.8,
-          radius: 3,
-          pierce: 0,
-          hit: new Set(),
-          source: "tower",
-          color: "#ffc857",
-        });
-        tower.cooldown = 0.42;
-        emit(state, "towerShot");
-      }
-    } else if (tower.cooldown <= 0) {
-      tower.cooldown = 3.2;
-      tower.pulse = 0.45;
-      for (const enemy of state.enemies) {
-        if (!enemy.dead && distance(tower, enemy) < 175) {
-          dealEnemyDamage(state, enemy, 17, "tower");
-          enemy.slow = 2.2;
-        }
-      }
-      state.beams.push({ x1: tower.x, y1: tower.y, x2: tower.x, y2: tower.y, radius: 175, life: 0.35, color: "#ffc857", width: 4, ring: true });
-      emit(state, "empPulse");
-    }
-  }
-  state.towers = state.towers.filter((tower) => tower.life > 0);
-}
-
-function normalizeAngle(angle) {
-  let value = angle;
-  while (value > Math.PI) value -= TAU;
-  while (value < -Math.PI) value += TAU;
-  return value;
-}
-
-function updatePlayer(state, input, dt) {
-  const player = state.player;
-  player.dashCooldown = Math.max(0, player.dashCooldown - dt);
-  player.dashRemaining = Math.max(0, player.dashRemaining - dt);
-  player.invulnerability = Math.max(0, player.invulnerability - dt);
-  player.hitFlash = Math.max(0, player.hitFlash - dt);
-  player.fireCooldown -= dt;
-  player.arcCooldown -= dt;
-  player.droneCooldown -= dt;
-
-  let moveX = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-  let moveY = (input.down ? 1 : 0) - (input.up ? 1 : 0);
-  const magnitude = Math.hypot(moveX, moveY);
-  if (magnitude > 0) {
-    moveX /= magnitude;
-    moveY /= magnitude;
-    player.targetAngle = Math.atan2(moveY, moveX);
-  }
-  if (input.dashPressed && player.dashCooldown <= 0) {
-    const dashX = magnitude ? moveX : Math.cos(player.angle);
-    const dashY = magnitude ? moveY : Math.sin(player.angle);
-    player.vx = dashX * 720;
-    player.vy = dashY * 720;
-    player.dashRemaining = 0.16;
-    player.dashCooldown = player.stats.dashCooldown;
-    player.invulnerability = 0.24;
-    emit(state, "dash");
-  }
-
-  if (player.dashRemaining <= 0) {
-    const targetVx = moveX * player.speed;
-    const targetVy = moveY * player.speed;
-    const ease = 1 - Math.exp(-dt * (magnitude ? 13 : 18));
-    player.vx += (targetVx - player.vx) * ease;
-    player.vy += (targetVy - player.vy) * ease;
-  }
-  const previous = { x: player.x, y: player.y };
-  player.x = clamp(player.x + player.vx * dt, 62, GAME_WIDTH - 62);
-  player.y = clamp(player.y + player.vy * dt, 54, GAME_HEIGHT - 54);
-  state.profile.distance += distance(previous, player);
-  if (Math.hypot(player.vx, player.vy) > 18) player.targetAngle = Math.atan2(player.vy, player.vx);
-  player.angle += normalizeAngle(player.targetAngle - player.angle) * Math.min(1, dt * 15);
-
-  if (input.deploySentryPressed) deployTower(state, "sentry");
-  if (input.deployEmpPressed) deployTower(state, "emp");
-  if (player.fireCooldown <= 0) firePlayerWeapon(state);
-  if (player.arcCooldown <= 0) fireArc(state);
-  fireDrone(state);
-}
-
-function updateProjectiles(state, dt) {
-  for (const projectile of state.projectiles) {
-    projectile.x += projectile.vx * dt;
-    projectile.y += projectile.vy * dt;
-    projectile.life -= dt;
-    for (const enemy of state.enemies) {
-      if (enemy.dead || projectile.hit.has(enemy.id)) continue;
-      if (distance(projectile, enemy) < projectile.radius + enemy.radius) {
-        projectile.hit.add(enemy.id);
-        dealEnemyDamage(state, enemy, projectile.damage, projectile.source);
-        addParticles(state, projectile.x, projectile.y, projectile.color, 4, 100);
-        emit(state, "enemyHit", { source: projectile.source });
-        if (projectile.pierce > 0) projectile.pierce -= 1;
-        else {
-          projectile.life = 0;
-          break;
-        }
-      }
-    }
-  }
-  state.projectiles = state.projectiles.filter((projectile) => projectile.life > 0 && projectile.x > 20 && projectile.x < GAME_WIDTH - 20 && projectile.y > 20 && projectile.y < GAME_HEIGHT - 20);
-}
-
-function damagePlayer(state, amount) {
-  const player = state.player;
-  if (player.invulnerability > 0 || state.status !== "running") return;
-  player.hp -= amount;
-  player.invulnerability = 0.42;
-  player.hitFlash = 0.18;
-  state.shake = Math.max(state.shake, 0.42);
-  state.dangerPulse = 0.55;
-  addParticles(state, player.x, player.y, "#ff4964", 11, 180);
-  emit(state, "playerHit");
-  if (player.hp <= 0) {
-    player.hp = 0;
-    state.status = "defeat";
-    emit(state, "defeat");
-  }
-}
-
-function fireEnemyShot(state, enemy, target) {
-  const angle = Math.atan2(target.y - enemy.y, target.x - enemy.x);
-  const count = enemy.boss ? 5 : 1;
-  for (let index = 0; index < count; index += 1) {
-    const shotAngle = angle + (index - (count - 1) / 2) * 0.13;
-    state.enemyShots.push({
-      x: enemy.x + Math.cos(shotAngle) * enemy.radius,
-      y: enemy.y + Math.sin(shotAngle) * enemy.radius,
-      vx: Math.cos(shotAngle) * (enemy.boss ? 280 : 230),
-      vy: Math.sin(shotAngle) * (enemy.boss ? 280 : 230),
-      angle: shotAngle,
-      radius: enemy.boss ? 7 : 5,
-      damage: enemy.damage,
-      life: 3,
-      color: enemy.hacker ? "#bd72ff" : "#ff4964",
-    });
-  }
-  emit(state, "enemyShot");
-}
-
-function updateEnemies(state, dt) {
-  const player = state.player;
-  for (let index = 0; index < state.enemies.length; index += 1) {
-    const enemy = state.enemies[index];
-    if (enemy.dead) continue;
-    enemy.hitFlash = Math.max(0, enemy.hitFlash - dt);
-    enemy.slow = Math.max(0, enemy.slow - dt);
-    enemy.contactCooldown = Math.max(0, enemy.contactCooldown - dt);
-    enemy.orbitCooldown = Math.max(0, (enemy.orbitCooldown || 0) - dt);
-    enemy.attackCooldown -= dt;
-
-    let target = player;
-    if (enemy.hacker && state.towers.length) {
-      target = state.towers.reduce((best, tower) => distance(enemy, tower) < distance(enemy, best) ? tower : best, state.towers[0]);
-      if (distance(enemy, target) < 130 && enemy.attackCooldown <= 0) {
-        target.disabled = 4.8;
-        enemy.attackCooldown = 3.2;
-        state.beams.push({ x1: enemy.x, y1: enemy.y, x2: target.x, y2: target.y, life: 0.42, color: "#b77cff", width: 4 });
-        emit(state, "towerHacked");
-      }
-    }
-    const dx = target.x - enemy.x;
-    const dy = target.y - enemy.y;
-    const targetDistance = Math.hypot(dx, dy) || 1;
-    const desiredAngle = Math.atan2(dy, dx);
-    enemy.angle += normalizeAngle(desiredAngle - enemy.angle) * Math.min(1, dt * 7);
-    let desiredSpeed = enemy.speed * (enemy.slow > 0 ? 0.48 : 1);
-    if (enemy.ranged && target === player && targetDistance < (enemy.boss ? 330 : 255)) desiredSpeed *= -0.24;
-    if (enemy.ranged && target === player && targetDistance > 430) desiredSpeed *= 1.1;
-    let separationX = 0;
-    let separationY = 0;
-    for (let otherIndex = Math.max(0, index - 6); otherIndex < Math.min(state.enemies.length, index + 7); otherIndex += 1) {
-      const other = state.enemies[otherIndex];
-      if (other === enemy || other.dead) continue;
-      const apart = distance(enemy, other);
-      const minimum = enemy.radius + other.radius + 3;
-      if (apart > 0 && apart < minimum) {
-        separationX += (enemy.x - other.x) / apart * (minimum - apart) * 5;
-        separationY += (enemy.y - other.y) / apart * (minimum - apart) * 5;
-      }
-    }
-    const targetVx = Math.cos(desiredAngle) * desiredSpeed + separationX;
-    const targetVy = Math.sin(desiredAngle) * desiredSpeed + separationY;
-    const moveEase = 1 - Math.exp(-dt * 5.5);
-    enemy.vx += (targetVx - enemy.vx) * moveEase;
-    enemy.vy += (targetVy - enemy.vy) * moveEase;
-    enemy.x += enemy.vx * dt;
-    enemy.y += enemy.vy * dt;
-
-    if (enemy.ranged && target === player && targetDistance < (enemy.boss ? 520 : 410) && enemy.attackCooldown <= 0) {
-      fireEnemyShot(state, enemy, player);
-      enemy.attackCooldown = enemy.boss ? 1.45 : 2.1 + state.random() * 0.6;
-    }
-    if (target === player && targetDistance < player.radius + enemy.radius + 3 && enemy.contactCooldown <= 0) {
-      damagePlayer(state, enemy.damage);
-      enemy.contactCooldown = 0.85;
-      enemy.vx *= -1.2;
-      enemy.vy *= -1.2;
-    }
-  }
-  state.enemies = state.enemies.filter((enemy) => !enemy.dead);
-}
-
-function updateEnemyShots(state, dt) {
-  for (const shot of state.enemyShots) {
-    shot.x += shot.vx * dt;
-    shot.y += shot.vy * dt;
-    shot.life -= dt;
-    if (distance(shot, state.player) < shot.radius + state.player.radius) {
-      damagePlayer(state, shot.damage);
-      shot.life = 0;
-    }
-  }
-  state.enemyShots = state.enemyShots.filter((shot) => shot.life > 0 && shot.x > 10 && shot.x < GAME_WIDTH - 10 && shot.y > 10 && shot.y < GAME_HEIGHT - 10);
-}
-
-function updateGems(state, dt) {
-  for (const gem of state.gems) {
-    gem.age += dt;
-    gem.life -= dt;
-    gem.vx *= Math.pow(0.02, dt);
-    gem.vy *= Math.pow(0.02, dt);
-    const currentDistance = distance(gem, state.player);
-    const magnetRange = gem.age > 1.35 ? 2400 : state.player.stats.magnet;
-    if (currentDistance < magnetRange) {
-      const acceleration = gem.age > 1.35
-        ? 520 + Math.min(900, currentDistance * 1.2)
-        : 900 * (1 - currentDistance / magnetRange) + 240;
-      gem.vx += (state.player.x - gem.x) / Math.max(1, currentDistance) * acceleration * dt;
-      gem.vy += (state.player.y - gem.y) / Math.max(1, currentDistance) * acceleration * dt;
-    }
-    gem.x += gem.vx * dt;
-    gem.y += gem.vy * dt;
-    if (currentDistance < state.player.radius + 10) {
-      state.player.xp += gem.value;
-      state.player.scrap += gem.scrap;
-      gem.life = 0;
-      emit(state, "collect");
-    }
-  }
-  state.gems = state.gems.filter((gem) => gem.life > 0);
-  if (state.player.xp >= state.player.xpNext && state.status === "running") {
-    state.player.xp -= state.player.xpNext;
-    state.player.level += 1;
-    state.player.xpNext = Math.round(state.player.xpNext * 1.26 + 4);
-    state.pendingUpgradeChoices = getUpgradeChoices(state);
-    if (state.pendingUpgradeChoices.length) {
-      state.status = "upgrade";
-      emit(state, "levelUp", { choices: state.pendingUpgradeChoices });
-    }
-  }
-}
-
-function updateEffects(state, dt) {
-  for (const particle of state.particles) {
-    particle.x += particle.vx * dt;
-    particle.y += particle.vy * dt;
-    particle.vx *= Math.pow(0.08, dt);
-    particle.vy *= Math.pow(0.08, dt);
-    particle.life -= dt;
-  }
-  state.particles = state.particles.filter((particle) => particle.life > 0);
-  for (const beam of state.beams) beam.life -= dt;
-  state.beams = state.beams.filter((beam) => beam.life > 0);
-  for (const text of state.texts) {
-    text.y -= 30 * dt;
-    text.life -= dt;
-  }
-  state.texts = state.texts.filter((text) => text.life > 0);
-  state.shake = Math.max(0, state.shake - dt * 2.8);
-  state.counterFlash = Math.max(0, state.counterFlash - dt);
-  state.dangerPulse = Math.max(0, state.dangerPulse - dt);
-}
-
-function updateSpawner(state, dt) {
-  state.spawnCooldown -= dt;
-  if (state.spawnCooldown <= 0 && !state.bossSpawned && state.enemies.length < 90) {
-    const baseInterval = Math.max(0.16, 0.58 - state.time * 0.0012);
-    const baseGroup = state.wave === 1 ? 1 : Math.min(6, state.wave + 1);
-    const group = state.counter.id === "rush" ? baseGroup + 2 : baseGroup;
-    const gate = Math.floor(state.random() * GATE_POINTS.length);
-    for (let index = 0; index < group; index += 1) spawnEnemy(state, null, (gate + index) % GATE_POINTS.length);
-    state.spawnCooldown = baseInterval * (0.78 + state.random() * 0.58);
-  }
-  if (!state.bossSpawned && state.time >= state.duration - 42) {
-    state.bossSpawned = true;
-    spawnEnemy(state, "boss", 0);
-    emit(state, "bossSpawn");
-  }
-}
-
-function updateAdaptation(state) {
-  if (state.time < state.nextAdaptation) return;
-  const protocol = analyzeBuild(state.profile);
-  state.counter = protocol;
-  state.counterIndex += 1;
-  state.counterFlash = 3.8;
-  state.runStats.counters.push(protocol.id);
-  state.nextAdaptation += 40;
-  resetProfileWindow(state);
-  emit(state, "counter", { protocol });
-}
-
-export function stepGame(state, input, rawDt) {
-  const dt = clamp(rawDt, 0, 0.034);
-  updateEffects(state, dt);
-  if (state.status !== "running") return state;
-  state.time += dt;
-  state.timeLeft = Math.max(0, state.duration - state.time);
-  state.wave = 1 + Math.floor(state.time / 25);
-  state.runStats.highestWave = Math.max(state.runStats.highestWave, state.wave);
-  state.profile.window += dt;
-  updatePlayer(state, input, dt);
-  updateSpawner(state, dt);
-  updateProjectiles(state, dt);
-  updateOrbitBlades(state, dt);
-  updateTowers(state, dt);
-  updateEnemies(state, dt);
-  updateEnemyShots(state, dt);
-  updateGems(state, dt);
-  updateAdaptation(state);
-  if (state.time >= state.duration && state.bossSpawned && !state.enemies.some((enemy) => enemy.boss)) {
-    state.status = "victory";
-    emit(state, "victory");
-  }
-  return state;
 }
 
 export function createInputState() {
@@ -816,4 +153,733 @@ export function clearPressedInput(input) {
   input.dashPressed = false;
   input.deploySentryPressed = false;
   input.deployEmpPressed = false;
+}
+
+export function selectControlledZone(state, zoneId) {
+  const zone = state.zones[zoneId];
+  const hero = state.heroes[zoneId];
+  if (!zone || zone.status !== "active" || !hero || hero.dead) return false;
+  state.controlledZoneId = zoneId;
+  emit(state, "focus", { zoneId });
+  return true;
+}
+
+export function returnToOverview(state) {
+  state.controlledZoneId = null;
+  emit(state, "overview");
+}
+
+export function getHeroForZone(state, zoneId) {
+  return state.heroes.find((hero) => hero.zoneId === zoneId) || null;
+}
+
+function addParticles(state, x, y, color, count = 7, speed = 110) {
+  for (let index = 0; index < count; index += 1) {
+    const angle = state.random() * TAU;
+    const velocity = speed * (0.3 + state.random() * 0.8);
+    state.particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * velocity,
+      vy: Math.sin(angle) * velocity,
+      life: 0.25 + state.random() * 0.32,
+      maxLife: 0.58,
+      size: 1.4 + state.random() * 2.7,
+      color,
+    });
+  }
+}
+
+function addText(state, x, y, text, color = "#ffffff") {
+  state.texts.push({ x, y, text, color, life: 0.82, maxLife: 0.82 });
+}
+
+function zoneBounds(state, zoneId) {
+  return state.zones[zoneId] || REGIONS[zoneId];
+}
+
+function clampToZone(state, entity, zoneId, extra = 0) {
+  const zone = zoneBounds(state, zoneId);
+  if (!zone) return;
+  entity.x = clamp(entity.x, zone.x + ZONE_PADDING + extra, zone.x + zone.width - ZONE_PADDING - extra);
+  entity.y = clamp(entity.y, zone.y + ZONE_PADDING + extra, zone.y + zone.height - ZONE_PADDING - extra);
+}
+
+function livingZoneIds(state) {
+  return state.zones.filter((zone) => zone.status === "active").map((zone) => zone.id);
+}
+
+function chooseInvasionTarget(state, fromZoneId) {
+  const alive = livingZoneIds(state);
+  if (!alive.length) return null;
+  const from = state.zones[fromZoneId];
+  const adjacent = alive.filter((zoneId) => {
+    const zone = state.zones[zoneId];
+    const horizontal = Math.abs(zone.x - from.x) === from.width && zone.y === from.y;
+    const vertical = Math.abs(zone.y - from.y) === from.height && zone.x === from.x;
+    return horizontal || vertical;
+  });
+  const pool = adjacent.length ? adjacent : alive;
+  return pool.sort((a, b) => state.zones[a].pressure - state.zones[b].pressure)[0];
+}
+
+function getSpawnPoint(state, zoneId, gateIndex = Math.floor(state.random() * 4)) {
+  const zone = zoneBounds(state, zoneId);
+  const margin = 22;
+  const spreadX = zone.x + margin + state.random() * (zone.width - margin * 2);
+  const spreadY = zone.y + margin + state.random() * (zone.height - margin * 2);
+  if (gateIndex === 0) return { x: spreadX, y: zone.y + margin };
+  if (gateIndex === 1) return { x: zone.x + zone.width - margin, y: spreadY };
+  if (gateIndex === 2) return { x: spreadX, y: zone.y + zone.height - margin };
+  return { x: zone.x + margin, y: spreadY };
+}
+
+export function spawnEnemy(state, requestedType = null, zoneId = 0, options = {}) {
+  const zone = state.zones[zoneId];
+  if (!zone) return null;
+  let type = requestedType;
+  if (!type) {
+    const roll = state.random();
+    if (state.wave >= 5 && roll > 0.88) type = "brute";
+    else if (state.wave >= 2 && roll > 0.66) type = "shooter";
+    else type = "raider";
+  }
+  const config = ENEMY_TYPES[type];
+  if (!config) return null;
+  const targetZoneId = options.targetZoneId ?? (zone.status === "active" ? zoneId : chooseInvasionTarget(state, zoneId));
+  if (targetZoneId === null) return null;
+  const point = getSpawnPoint(state, zoneId, options.gateIndex);
+  const waveScale = 1 + Math.max(0, state.wave - 1) * 0.095 + state.zones[targetZoneId].invasionLevel * 0.13;
+  const elite = !config.boss && state.wave >= 5 && state.random() > 0.94;
+  const hp = config.hp * waveScale * (elite ? 1.65 : 1);
+  const enemy = {
+    id: uid(state, "enemy"),
+    type,
+    name: config.name,
+    originZoneId: zoneId,
+    zoneId,
+    targetZoneId,
+    migrating: targetZoneId !== zoneId,
+    x: point.x,
+    y: point.y,
+    vx: 0,
+    vy: 0,
+    angle: 0,
+    radius: config.radius * (elite ? 1.12 : 1),
+    hp,
+    maxHp: hp,
+    speed: config.speed * (1 + state.zones[targetZoneId].invasionLevel * 0.07),
+    damage: config.damage * (1 + Math.max(0, state.wave - 1) * 0.035),
+    gold: Math.round(config.gold * (elite ? 1.8 : 1)),
+    sprite: config.sprite,
+    ranged: Boolean(config.ranged),
+    boss: Boolean(config.boss),
+    elite,
+    attackCooldown: 0.7 + state.random() * 0.9,
+    contactCooldown: 0,
+    hitFlash: 0,
+    slow: 0,
+    dead: false,
+  };
+  state.enemies.push(enemy);
+  return enemy;
+}
+
+function nearestEnemy(state, origin, range = Infinity, predicate = () => true) {
+  let best = range;
+  let target = null;
+  for (const enemy of state.enemies) {
+    if (enemy.dead || !predicate(enemy)) continue;
+    const current = distance(origin, enemy);
+    if (current < best) {
+      best = current;
+      target = enemy;
+    }
+  }
+  return target;
+}
+
+function enemiesForZone(state, zoneId) {
+  return state.enemies.filter((enemy) => !enemy.dead && enemy.targetZoneId === zoneId);
+}
+
+export function damageEnemy(state, enemy, amount, sourceZoneId = null, source = "weapon") {
+  if (!enemy || enemy.dead) return 0;
+  enemy.hp -= amount;
+  enemy.hitFlash = 0.09;
+  if (enemy.hp <= 0) killEnemy(state, enemy, sourceZoneId, source);
+  return amount;
+}
+
+function killEnemy(state, enemy, sourceZoneId, source) {
+  enemy.dead = true;
+  state.gold += enemy.gold;
+  state.runStats.kills += 1;
+  state.runStats.goldEarned += enemy.gold;
+  if (Number.isInteger(sourceZoneId) && state.heroes[sourceZoneId]) {
+    state.heroes[sourceZoneId].kills += 1;
+    state.runStats.killsByZone[sourceZoneId] += 1;
+  }
+  addText(state, enemy.x, enemy.y - enemy.radius, `+${enemy.gold}G`, "#ffd56b");
+  addParticles(state, enemy.x, enemy.y, enemy.boss ? "#ffd36a" : state.zones[enemy.originZoneId].accent, enemy.boss ? 28 : 8, enemy.boss ? 240 : 130);
+  state.shake = Math.max(state.shake, enemy.boss ? 0.75 : enemy.elite ? 0.2 : 0.06);
+  emit(state, "enemyKilled", { enemy, gold: enemy.gold, source });
+  emit(state, "goldEarned", { amount: enemy.gold });
+}
+
+function makeProjectile(state, hero, angle, options = {}) {
+  const speed = options.speed ?? hero.stats.bulletSpeed;
+  state.projectiles.push({
+    id: uid(state, "shot"),
+    ownerZoneId: hero.zoneId,
+    source: options.source || "weapon",
+    x: options.x ?? hero.x + Math.cos(angle) * 23,
+    y: options.y ?? hero.y + Math.sin(angle) * 23,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    angle,
+    damage: options.damage ?? hero.stats.damage,
+    life: options.life ?? 0.9,
+    radius: options.radius ?? 3.5,
+    pierce: options.pierce ?? 0,
+    color: options.color || hero.color,
+    hit: new Set(),
+  });
+}
+
+function fireChainWeapon(state, hero, firstTarget) {
+  const visited = new Set();
+  let origin = hero;
+  let target = firstTarget;
+  const chains = 2 + Math.floor(hero.upgrades.arsenal / 2);
+  for (let index = 0; index < chains && target; index += 1) {
+    state.beams.push({ x1: origin.x, y1: origin.y, x2: target.x, y2: target.y, color: hero.color, width: 2.3, life: 0.16 });
+    damageEnemy(state, target, hero.stats.damage * (1 - index * 0.12), hero.zoneId, "chain");
+    visited.add(target.id);
+    origin = target;
+    target = nearestEnemy(state, origin, 115, (enemy) => enemy.targetZoneId === hero.zoneId && !visited.has(enemy.id));
+  }
+  emit(state, "arc", { zoneId: hero.zoneId });
+}
+
+function fireHeroWeapon(state, hero) {
+  const target = nearestEnemy(state, hero, hero.stats.range, (enemy) => enemy.targetZoneId === hero.zoneId);
+  if (!target) return false;
+  const angle = Math.atan2(target.y - hero.y, target.x - hero.x);
+  hero.targetAngle = angle;
+  if (hero.stats.projectile === "chain") {
+    fireChainWeapon(state, hero, target);
+  } else if (hero.stats.projectile === "scatter") {
+    for (let index = -1; index <= 1; index += 1) {
+      makeProjectile(state, hero, angle + index * 0.13, { damage: hero.stats.damage, life: 0.56, radius: 3.2 });
+    }
+  } else if (hero.stats.projectile === "heavy") {
+    makeProjectile(state, hero, angle, { damage: hero.stats.damage, pierce: 2, radius: 6, color: "#9dffb4" });
+  } else {
+    makeProjectile(state, hero, angle, { damage: hero.stats.damage, pierce: hero.upgrades.arsenal >= 4 ? 1 : 0 });
+  }
+  hero.fireCooldown = hero.stats.fireInterval;
+  emit(state, "playerShot", { zoneId: hero.zoneId, archetype: hero.archetype });
+  return true;
+}
+
+function updateDrone(state, hero) {
+  const level = hero.upgrades.drone;
+  if (!level || hero.droneCooldown > 0) return;
+  const orbit = state.time * (1.28 + level * 0.08) + hero.zoneId * 1.7;
+  const origin = { x: hero.x + Math.cos(orbit) * 34, y: hero.y + Math.sin(orbit) * 34 };
+  const target = nearestEnemy(state, origin, 230 + level * 20, (enemy) => enemy.targetZoneId === hero.zoneId);
+  if (!target) return;
+  const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
+  makeProjectile(state, hero, angle, {
+    x: origin.x,
+    y: origin.y,
+    speed: 520,
+    damage: 10 + level * 6,
+    radius: 2.7,
+    color: "#c898ff",
+    source: "drone",
+  });
+  hero.droneCooldown = Math.max(0.24, 0.58 - level * 0.08);
+}
+
+function deployTower(state, hero, kind, forced = false) {
+  const level = hero.upgrades[kind];
+  const cooldownKey = kind === "sentry" ? "sentryCooldown" : "empCooldown";
+  if (!level || (!forced && hero[cooldownKey] > 0)) {
+    emit(state, "buildDenied", { kind, zoneId: hero.zoneId });
+    return false;
+  }
+  const sameKind = state.towers.filter((tower) => tower.zoneId === hero.zoneId && tower.kind === kind);
+  const maximum = kind === "sentry" ? 2 + Math.floor(level / 2) : 1 + Math.floor(level / 3);
+  if (sameKind.length >= maximum) sameKind.sort((a, b) => a.life - b.life)[0].life = 0;
+  const angle = hero.angle + Math.PI;
+  const life = kind === "sentry" ? 36 + level * 9 : 26 + level * 7;
+  const tower = {
+    id: uid(state, kind),
+    kind,
+    zoneId: hero.zoneId,
+    ownerZoneId: hero.zoneId,
+    x: hero.x + Math.cos(angle) * 34,
+    y: hero.y + Math.sin(angle) * 34,
+    angle: 0,
+    life,
+    maxLife: life,
+    level,
+    cooldown: 0.2,
+    pulse: 0,
+  };
+  clampToZone(state, tower, hero.zoneId, 8);
+  state.towers.push(tower);
+  hero[cooldownKey] = kind === "sentry" ? Math.max(10, 19 - level * 2) : Math.max(15, 27 - level * 2);
+  addParticles(state, tower.x, tower.y, kind === "sentry" ? "#ffbf54" : "#b77cff", 11, 95);
+  emit(state, "build", { kind, zoneId: hero.zoneId });
+  return true;
+}
+
+function updateTowers(state, dt) {
+  for (const tower of state.towers) {
+    tower.life -= dt;
+    tower.cooldown -= dt;
+    tower.pulse = Math.max(0, tower.pulse - dt);
+    if (tower.kind === "sentry") {
+      const target = nearestEnemy(state, tower, 205 + tower.level * 24, (enemy) => enemy.targetZoneId === tower.zoneId);
+      if (target) {
+        const desired = Math.atan2(target.y - tower.y, target.x - tower.x);
+        tower.angle += normalizeAngle(desired - tower.angle) * Math.min(1, dt * 12);
+      }
+      if (target && tower.cooldown <= 0) {
+        const owner = state.heroes[tower.ownerZoneId];
+        makeProjectile(state, owner, tower.angle, {
+          x: tower.x + Math.cos(tower.angle) * 14,
+          y: tower.y + Math.sin(tower.angle) * 14,
+          speed: 540,
+          damage: 13 + tower.level * 7,
+          color: "#ffc257",
+          source: "sentry",
+        });
+        tower.cooldown = Math.max(0.24, 0.52 - tower.level * 0.06);
+        emit(state, "towerShot", { zoneId: tower.zoneId });
+      }
+    } else if (tower.cooldown <= 0) {
+      tower.cooldown = Math.max(2.2, 3.5 - tower.level * 0.25);
+      tower.pulse = 0.45;
+      const radius = 112 + tower.level * 20;
+      for (const enemy of state.enemies) {
+        if (!enemy.dead && enemy.targetZoneId === tower.zoneId && distance(tower, enemy) < radius) {
+          damageEnemy(state, enemy, 10 + tower.level * 5, tower.ownerZoneId, "emp");
+          enemy.slow = 2.1 + tower.level * 0.35;
+        }
+      }
+      state.beams.push({ x1: tower.x, y1: tower.y, x2: tower.x, y2: tower.y, radius, ring: true, color: "#b97cff", width: 3.5, life: 0.4 });
+      emit(state, "empPulse", { zoneId: tower.zoneId });
+    }
+  }
+  state.towers = state.towers.filter((tower) => tower.life > 0 && state.zones[tower.zoneId].status === "active");
+}
+
+function getAiMovement(state, hero) {
+  const zone = state.zones[hero.zoneId];
+  const target = nearestEnemy(state, hero, 330, (enemy) => enemy.targetZoneId === hero.zoneId);
+  if (!target) {
+    const homeX = zone.x + zone.width / 2;
+    const homeY = zone.y + zone.height / 2;
+    const dx = homeX - hero.x;
+    const dy = homeY - hero.y;
+    const length = Math.hypot(dx, dy) || 1;
+    return Math.hypot(dx, dy) > 28 ? { x: dx / length * 0.45, y: dy / length * 0.45, target: null } : { x: 0, y: 0, target: null };
+  }
+  const dx = target.x - hero.x;
+  const dy = target.y - hero.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const crowd = enemiesForZone(state, hero.zoneId).filter((enemy) => distance(hero, enemy) < 88).length;
+  let forward = length > hero.stats.range * 0.72 ? 0.62 : length < 92 ? -1 : 0;
+  if (crowd >= 3) forward = -1;
+  const strafe = Math.sin(state.time * 1.7 + hero.zoneId * 2.2) * 0.72;
+  return {
+    x: dx / length * forward + -dy / length * strafe,
+    y: dy / length * forward + dx / length * strafe,
+    target,
+    crowd,
+  };
+}
+
+function updateHero(state, hero, input, dt) {
+  if (hero.dead) return;
+  hero.fireCooldown -= dt;
+  hero.droneCooldown -= dt;
+  hero.dashCooldown = Math.max(0, hero.dashCooldown - dt);
+  hero.dashRemaining = Math.max(0, hero.dashRemaining - dt);
+  hero.sentryCooldown = Math.max(0, hero.sentryCooldown - dt);
+  hero.empCooldown = Math.max(0, hero.empCooldown - dt);
+  hero.invulnerability = Math.max(0, hero.invulnerability - dt);
+  hero.hitFlash = Math.max(0, hero.hitFlash - dt);
+  hero.hp = Math.min(hero.maxHp, hero.hp + hero.stats.regen * dt);
+  hero.shield = Math.max(0, hero.shield - dt * 0.7);
+
+  const manuallyControlled = state.controlledZoneId === hero.zoneId;
+  let moveX = 0;
+  let moveY = 0;
+  let crowd = 0;
+  if (manuallyControlled) {
+    moveX = (input.right ? 1 : 0) - (input.left ? 1 : 0);
+    moveY = (input.down ? 1 : 0) - (input.up ? 1 : 0);
+  } else {
+    const ai = getAiMovement(state, hero);
+    moveX = ai.x;
+    moveY = ai.y;
+    crowd = ai.crowd || 0;
+  }
+  const magnitude = Math.hypot(moveX, moveY);
+  if (magnitude > 1) {
+    moveX /= magnitude;
+    moveY /= magnitude;
+  }
+
+  const wantsDash = manuallyControlled ? input.dashPressed : crowd >= 4;
+  if (wantsDash && hero.dashCooldown <= 0) {
+    const dashX = magnitude ? moveX : Math.cos(hero.angle);
+    const dashY = magnitude ? moveY : Math.sin(hero.angle);
+    hero.vx = dashX * 480;
+    hero.vy = dashY * 480;
+    hero.dashRemaining = 0.15;
+    hero.dashCooldown = 2.4;
+    hero.invulnerability = 0.23;
+    emit(state, "dash", { zoneId: hero.zoneId });
+  }
+  if (hero.dashRemaining <= 0) {
+    const targetVx = moveX * hero.speed;
+    const targetVy = moveY * hero.speed;
+    const ease = 1 - Math.exp(-dt * (magnitude ? 10 : 15));
+    hero.vx += (targetVx - hero.vx) * ease;
+    hero.vy += (targetVy - hero.vy) * ease;
+  }
+  hero.x += hero.vx * dt;
+  hero.y += hero.vy * dt;
+  clampToZone(state, hero, hero.zoneId, hero.radius * 0.35);
+  if (Math.hypot(hero.vx, hero.vy) > 12) hero.targetAngle = Math.atan2(hero.vy, hero.vx);
+  hero.angle += normalizeAngle(hero.targetAngle - hero.angle) * Math.min(1, dt * 12);
+
+  if (manuallyControlled && input.deploySentryPressed) deployTower(state, hero, "sentry");
+  if (manuallyControlled && input.deployEmpPressed) deployTower(state, hero, "emp");
+  if (!manuallyControlled) {
+    const threatCount = enemiesForZone(state, hero.zoneId).filter((enemy) => distance(hero, enemy) < 185).length;
+    if (threatCount >= 7 && hero.upgrades.sentry && hero.sentryCooldown <= 0) deployTower(state, hero, "sentry");
+    if (threatCount >= 10 && hero.upgrades.emp && hero.empCooldown <= 0) deployTower(state, hero, "emp");
+  }
+  if (hero.fireCooldown <= 0) fireHeroWeapon(state, hero);
+  updateDrone(state, hero);
+}
+
+function updateProjectiles(state, dt) {
+  for (const projectile of state.projectiles) {
+    projectile.x += projectile.vx * dt;
+    projectile.y += projectile.vy * dt;
+    projectile.life -= dt;
+    for (const enemy of state.enemies) {
+      if (enemy.dead || projectile.hit.has(enemy.id)) continue;
+      if (distance(projectile, enemy) <= projectile.radius + enemy.radius) {
+        projectile.hit.add(enemy.id);
+        damageEnemy(state, enemy, projectile.damage, projectile.ownerZoneId, projectile.source);
+        addParticles(state, projectile.x, projectile.y, projectile.color, 4, 82);
+        emit(state, "enemyHit", { source: projectile.source });
+        if (projectile.pierce > 0) projectile.pierce -= 1;
+        else {
+          projectile.life = 0;
+          break;
+        }
+      }
+    }
+  }
+  state.projectiles = state.projectiles.filter((shot) => shot.life > 0 && shot.x > -30 && shot.x < GAME_WIDTH + 30 && shot.y > -30 && shot.y < GAME_HEIGHT + 30);
+}
+
+function damageHero(state, hero, rawDamage) {
+  if (!hero || hero.dead || hero.invulnerability > 0 || state.status !== "running") return;
+  let damage = rawDamage;
+  if (hero.shield > 0) {
+    const absorbed = Math.min(hero.shield, damage);
+    hero.shield -= absorbed;
+    damage -= absorbed;
+  }
+  if (damage <= 0) return;
+  hero.hp -= damage;
+  hero.invulnerability = 0.36;
+  hero.hitFlash = 0.16;
+  state.shake = Math.max(state.shake, 0.26);
+  state.dangerPulse = 0.35;
+  addParticles(state, hero.x, hero.y, "#ff536d", 8, 130);
+  emit(state, "playerHit", { zoneId: hero.zoneId });
+  if (hero.hp <= 0) fallZone(state, hero.zoneId);
+}
+
+export function fallZone(state, zoneId) {
+  const zone = state.zones[zoneId];
+  const hero = state.heroes[zoneId];
+  if (!zone || zone.status === "fallen") return false;
+  zone.status = "fallen";
+  zone.fallTime = state.time;
+  hero.hp = 0;
+  hero.dead = true;
+  hero.vx = 0;
+  hero.vy = 0;
+  if (state.controlledZoneId === zoneId) state.controlledZoneId = null;
+  state.towers = state.towers.filter((tower) => tower.zoneId !== zoneId);
+  const remaining = livingZoneIds(state);
+  for (const activeZoneId of remaining) state.zones[activeZoneId].invasionLevel += 1;
+  for (const enemy of state.enemies) {
+    if (enemy.dead || enemy.targetZoneId !== zoneId) continue;
+    const targetZoneId = chooseInvasionTarget(state, zoneId);
+    if (targetZoneId !== null) {
+      enemy.targetZoneId = targetZoneId;
+      enemy.migrating = true;
+      enemy.speed *= 1.12;
+    }
+  }
+  state.runStats.zonesLost += 1;
+  state.runStats.invasions += remaining.length;
+  state.invasionFlash = 4;
+  emit(state, "zoneFall", { zoneId, targets: remaining });
+  emit(state, "invasion", { zoneId, targets: remaining });
+  if (!remaining.length) {
+    state.status = "defeat";
+    emit(state, "defeat");
+  }
+  return true;
+}
+
+function fireEnemyShot(state, enemy, hero) {
+  const angle = Math.atan2(hero.y - enemy.y, hero.x - enemy.x);
+  const count = enemy.boss ? 3 : 1;
+  for (let index = 0; index < count; index += 1) {
+    const current = angle + (index - (count - 1) / 2) * 0.18;
+    state.enemyShots.push({
+      id: uid(state, "enemy-shot"),
+      targetHeroId: hero.id,
+      x: enemy.x + Math.cos(current) * enemy.radius,
+      y: enemy.y + Math.sin(current) * enemy.radius,
+      vx: Math.cos(current) * (enemy.boss ? 230 : 190),
+      vy: Math.sin(current) * (enemy.boss ? 230 : 190),
+      radius: enemy.boss ? 5 : 3.6,
+      damage: enemy.damage,
+      life: 3.2,
+      color: state.zones[enemy.originZoneId].accent,
+    });
+  }
+  emit(state, "enemyShot", { zoneId: enemy.targetZoneId });
+}
+
+function retargetEnemy(state, enemy) {
+  const next = chooseInvasionTarget(state, enemy.targetZoneId);
+  if (next === null) return null;
+  enemy.targetZoneId = next;
+  enemy.migrating = true;
+  return state.heroes[next];
+}
+
+function updateEnemies(state, dt) {
+  for (let index = 0; index < state.enemies.length; index += 1) {
+    const enemy = state.enemies[index];
+    if (enemy.dead) continue;
+    enemy.hitFlash = Math.max(0, enemy.hitFlash - dt);
+    enemy.contactCooldown = Math.max(0, enemy.contactCooldown - dt);
+    enemy.attackCooldown -= dt;
+    enemy.slow = Math.max(0, enemy.slow - dt);
+    let hero = state.heroes[enemy.targetZoneId];
+    if (!hero || hero.dead) hero = retargetEnemy(state, enemy);
+    if (!hero) continue;
+    const dx = hero.x - enemy.x;
+    const dy = hero.y - enemy.y;
+    const currentDistance = Math.hypot(dx, dy) || 1;
+    const desired = Math.atan2(dy, dx);
+    enemy.angle += normalizeAngle(desired - enemy.angle) * Math.min(1, dt * 7);
+    let speed = enemy.speed * (enemy.slow > 0 ? 0.44 : 1) * (enemy.migrating ? 1.12 : 1);
+    if (enemy.ranged && currentDistance < (enemy.boss ? 190 : 150)) speed *= -0.25;
+    let sepX = 0;
+    let sepY = 0;
+    for (let otherIndex = Math.max(0, index - 5); otherIndex < Math.min(state.enemies.length, index + 6); otherIndex += 1) {
+      const other = state.enemies[otherIndex];
+      if (other === enemy || other.dead) continue;
+      const apart = distance(enemy, other);
+      const minimum = enemy.radius + other.radius + 2;
+      if (apart > 0 && apart < minimum) {
+        sepX += (enemy.x - other.x) / apart * (minimum - apart) * 4;
+        sepY += (enemy.y - other.y) / apart * (minimum - apart) * 4;
+      }
+    }
+    const ease = 1 - Math.exp(-dt * 5);
+    enemy.vx += (Math.cos(desired) * speed + sepX - enemy.vx) * ease;
+    enemy.vy += (Math.sin(desired) * speed + sepY - enemy.vy) * ease;
+    enemy.x += enemy.vx * dt;
+    enemy.y += enemy.vy * dt;
+    const destination = state.zones[enemy.targetZoneId];
+    if (enemy.migrating && enemy.x > destination.x && enemy.x < destination.x + destination.width && enemy.y > destination.y && enemy.y < destination.y + destination.height) {
+      enemy.migrating = false;
+      enemy.zoneId = enemy.targetZoneId;
+    }
+    if (enemy.ranged && currentDistance < (enemy.boss ? 300 : 235) && enemy.attackCooldown <= 0) {
+      fireEnemyShot(state, enemy, hero);
+      enemy.attackCooldown = enemy.boss ? 1.35 : 2 + state.random() * 0.7;
+    }
+    if (currentDistance < hero.radius + enemy.radius + 2 && enemy.contactCooldown <= 0) {
+      damageHero(state, hero, enemy.damage);
+      enemy.contactCooldown = 0.82;
+      enemy.vx *= -0.7;
+      enemy.vy *= -0.7;
+    }
+  }
+  state.enemies = state.enemies.filter((enemy) => !enemy.dead);
+}
+
+function updateEnemyShots(state, dt) {
+  for (const shot of state.enemyShots) {
+    shot.x += shot.vx * dt;
+    shot.y += shot.vy * dt;
+    shot.life -= dt;
+    const hero = state.heroes.find((entry) => entry.id === shot.targetHeroId);
+    if (hero && !hero.dead && distance(shot, hero) < shot.radius + hero.radius) {
+      damageHero(state, hero, shot.damage);
+      shot.life = 0;
+    }
+  }
+  state.enemyShots = state.enemyShots.filter((shot) => shot.life > 0 && shot.x > -40 && shot.x < GAME_WIDTH + 40 && shot.y > -40 && shot.y < GAME_HEIGHT + 40);
+}
+
+function updateSpawner(state, dt) {
+  if (state.enemies.length > 128) return;
+  for (const zone of state.zones) {
+    zone.spawnCooldown -= dt;
+    if (zone.spawnCooldown > 0) continue;
+    if (zone.status === "active") {
+      const group = Math.min(4, 1 + Math.floor(state.wave / 3) + Math.floor(zone.invasionLevel / 2));
+      for (let index = 0; index < group; index += 1) spawnEnemy(state, null, zone.id);
+      const base = Math.max(0.72, 1.45 - state.wave * 0.07 - zone.invasionLevel * 0.09);
+      zone.spawnCooldown = base * (0.82 + state.random() * 0.42);
+    } else {
+      const targetZoneId = chooseInvasionTarget(state, zone.id);
+      if (targetZoneId !== null) {
+        spawnEnemy(state, state.random() > 0.72 ? "shooter" : "raider", zone.id, { targetZoneId });
+        state.runStats.invasions += 1;
+      }
+      zone.spawnCooldown = Math.max(1.5, 3 - state.wave * 0.08);
+    }
+  }
+  if (state.time >= state.duration - 42) {
+    for (const zone of state.zones) {
+      if (zone.status === "active" && !state.bossSpawnedByZone[zone.id]) {
+        state.bossSpawnedByZone[zone.id] = true;
+        spawnEnemy(state, "boss", zone.id);
+        emit(state, "bossSpawn", { zoneId: zone.id });
+      }
+    }
+  }
+}
+
+function updateEffects(state, dt) {
+  for (const particle of state.particles) {
+    particle.x += particle.vx * dt;
+    particle.y += particle.vy * dt;
+    particle.vx *= Math.pow(0.08, dt);
+    particle.vy *= Math.pow(0.08, dt);
+    particle.life -= dt;
+  }
+  state.particles = state.particles.filter((particle) => particle.life > 0);
+  for (const beam of state.beams) beam.life -= dt;
+  state.beams = state.beams.filter((beam) => beam.life > 0);
+  for (const text of state.texts) {
+    text.y -= 24 * dt;
+    text.life -= dt;
+  }
+  state.texts = state.texts.filter((text) => text.life > 0);
+  state.shake = Math.max(0, state.shake - dt * 3);
+  state.dangerPulse = Math.max(0, state.dangerPulse - dt);
+  state.invasionFlash = Math.max(0, state.invasionFlash - dt);
+}
+
+function updatePressure(state) {
+  for (const zone of state.zones) {
+    const threats = enemiesForZone(state, zone.id);
+    const boss = threats.some((enemy) => enemy.boss) ? 8 : 0;
+    zone.pressure = clamp((threats.length + boss + zone.invasionLevel * 4) / 28, 0, 1);
+  }
+}
+
+export function purchaseShopItem(state, itemId, zoneId = state.controlledZoneId) {
+  const item = SHOP_ITEMS.find((entry) => entry.id === itemId);
+  const hero = Number.isInteger(zoneId) ? state.heroes[zoneId] : null;
+  if (!item || !hero || hero.dead || state.zones[zoneId].status !== "active") return false;
+  const level = hero.upgrades[itemId] || 0;
+  if (!item.consumable && level >= item.max) return false;
+  if (itemId === "medkit" && hero.hp >= hero.maxHp) return false;
+  const cost = getShopItemCost(item, level);
+  if (state.gold < cost) {
+    emit(state, "purchaseDenied", { itemId, cost });
+    return false;
+  }
+  state.gold -= cost;
+  state.runStats.goldSpent += cost;
+  state.runStats.purchases += 1;
+  if (!item.consumable) hero.upgrades[itemId] = level + 1;
+  switch (itemId) {
+    case "arsenal":
+      hero.stats.damage *= 1.24;
+      break;
+    case "firerate":
+      hero.stats.fireInterval *= 0.86;
+      break;
+    case "vitality":
+      hero.maxHp += 30;
+      hero.hp = Math.min(hero.maxHp, hero.hp + 30);
+      break;
+    case "regen":
+      hero.stats.regen += 0.45;
+      break;
+    case "drone":
+      break;
+    case "sentry":
+      deployTower(state, hero, "sentry", true);
+      break;
+    case "emp":
+      deployTower(state, hero, "emp", true);
+      break;
+    case "medkit":
+      hero.hp = Math.min(hero.maxHp, hero.hp + 55);
+      addText(state, hero.x, hero.y - 28, "+55 HP", "#76f09c");
+      break;
+    case "barrier":
+      hero.shield = Math.min(90, hero.shield + 35);
+      addText(state, hero.x, hero.y - 28, "+35 SHIELD", "#70dfff");
+      break;
+    case "teamRepair":
+      for (const ally of state.heroes) {
+        if (!ally.dead) ally.hp = Math.min(ally.maxHp, ally.hp + 26);
+      }
+      break;
+    default:
+      break;
+  }
+  emit(state, "purchase", { item, cost, zoneId });
+  return true;
+}
+
+export function stepGame(state, input, rawDt) {
+  const dt = clamp(rawDt, 0, 0.034);
+  if (state.paused) return state;
+  updateEffects(state, dt);
+  if (state.status !== "running") return state;
+  state.time += dt;
+  state.timeLeft = Math.max(0, state.duration - state.time);
+  state.wave = 1 + Math.floor(state.time / 34);
+  for (const hero of state.heroes) updateHero(state, hero, input, dt);
+  updateSpawner(state, dt);
+  updateTowers(state, dt);
+  updateProjectiles(state, dt);
+  updateEnemies(state, dt);
+  updateEnemyShots(state, dt);
+  updatePressure(state);
+  if (state.time >= state.duration && livingZoneIds(state).length) {
+    state.status = "victory";
+    emit(state, "victory");
+  }
+  return state;
 }

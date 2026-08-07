@@ -10,12 +10,13 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Durable project decisions
 
-- The current game is an AI-adaptive survivor and tactical tower-defense hybrid, not a stealth campaign. Earlier stealth maps, detection rules, patrol contracts, and weapon-slot rules are legacy only and must not constrain the active game.
-- The core promise is visible in every run: the player creates a build, the arena AI measures damage and movement habits, and periodic counter-protocols change the enemy composition to punish over-reliance on that build.
-- Optimize the opening two minutes for judging and capture: combat begins immediately, basic enemies die in one or two hits, the first level-up arrives quickly, and the first AI counter appears within roughly forty seconds.
-- Use one polished five-minute arena run before adding more maps. The open circular arena must not contain invisible collision walls; the generated floor image and actual navigable area are the same continuous space.
-- Use project-original assets under `public/assets/survivor/`: `adaptive-arena.png`, `player.png`, `hunter.png`, `suppressor.png`, and `brute.png`. Actor PNGs are transparent top-down renders facing east and may be rotated, eased, recoiled, flashed, and squashed in-engine.
-- Preserve the visual language: near-black industrial metal, cyan player and XP feedback, red enemy prediction/counter signals, and amber deployable defenses. HUD copy should make the AI-learning premise legible during play without opening a document.
-- Controls are WASD movement, Space dash, Q sentry deployment, and E EMP pylon deployment. Player weapons auto-target so mouse aiming is optional and the game remains immediately playable on a browser.
+- The current game is a four-front survivor-command and tactical tower-defense hybrid, not a stealth campaign or a single-arena leveling game. Earlier stealth systems, one-arena counter protocols, XP gems, and level-up choice overlays are legacy only.
+- The battlefield is a 2x2 command grid with four visually distinct sectors and four distinct hero archetypes. The overview shows every front simultaneously; selecting one sector focuses the camera and gives that hero manual control while all other living heroes remain under AI control.
+- All sectors share one gold treasury. Enemies award gold immediately on death; there is no XP or scrap currency. Gold buys hero-specific permanent upgrades, sprite-backed drone/sentry/EMP skills, healing items, shields, and team repair.
+- A fallen hero permanently breaches that sector for the run. Its existing and newly spawned enemies move into surviving adjacent sectors, and every surviving front receives an invasion-level difficulty increase.
+- Keep the run at five minutes, make common enemies die in one or two hits, start combat immediately in all four sectors, and deploy a final sector warden near extraction.
+- Controls are 1-4 or pointer sector selection, WASD movement, Space dash, Q sentry, E EMP pylon, Tab/Escape overview, and B shop. Weapons auto-target so pointer aiming remains optional.
+- Health bars must stay directly above every living hero; damaged enemies, elites, and bosses also show local health bars. Map visuals and traversable play space must remain identical open arenas with no invisible collision geometry.
+- Preserve the near-black industrial base and red danger language while giving each sector a distinct accent: cryo cyan, forge amber, archive violet, and bio green. Shared gold uses amber.
+- Project-original generated deployable assets live under `public/assets/survivor/skills/`: `sentry.png`, `emp-pylon.png`, and `wingman-drone.png`. Keep them as real transparent raster sprites, not code-drawn placeholders.
 - The user will create background music separately with Suno AI. Do not add third-party music. Sound effects remain project-original and procedurally synthesized with Web Audio.
-- Level-up choices, deployable towers, enemy waves, elites, a final boss, and a result summary are required parts of a complete run. Avoid adding breadth that delays polish on this loop.
