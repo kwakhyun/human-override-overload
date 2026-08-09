@@ -47,6 +47,8 @@ const ASSET_PATHS = Object.freeze({
   drone: "./assets/survivor/skills/wingman-drone.png",
 });
 
+const BGM_PATH = "./assets/audio/overload-main-theme.mp3";
+
 const EVENT_SOUNDS = Object.freeze({
   swarmStart: "enemyAlert",
   shot: "shoot",
@@ -633,7 +635,7 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
         <ProgressHud hud={hud} />
         <div className="topbar-tools">
           <span className="timer-readout"><Timer weight="bold" /> {formatTime(hud?.time || 0)}</span>
-          <button type="button" className="icon-button" onClick={onToggleSound} aria-label={soundEnabled ? "효과음 끄기" : "효과음 켜기"}>
+          <button type="button" className="icon-button" onClick={onToggleSound} aria-label={soundEnabled ? "전체 사운드 끄기" : "전체 사운드 켜기"}>
             {soundEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}
           </button>
         </div>
@@ -704,26 +706,55 @@ export function App() {
   const [screen, setScreen] = useState("intro");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [result, setResult] = useState(null);
+  const bgmRef = useRef(null);
   const sfx = useMemo(() => createSfxEngine(), []);
 
-  useEffect(() => () => sfx.dispose(), [sfx]);
+  useEffect(() => () => {
+    bgmRef.current?.pause();
+    sfx.dispose();
+  }, [sfx]);
   useEffect(() => sfx.setEnabled(soundEnabled), [sfx, soundEnabled]);
+  useEffect(() => {
+    if (bgmRef.current) bgmRef.current.muted = !soundEnabled;
+  }, [soundEnabled]);
 
   const start = useCallback(() => {
     sfx.start();
     sfx.play("start");
+    const bgm = bgmRef.current;
+    if (bgm) {
+      bgm.currentTime = 0;
+      bgm.volume = 0.38;
+      bgm.muted = !soundEnabled;
+      bgm.play().catch(() => {
+        // Browsers may still decline playback if the initiating gesture is lost.
+      });
+    }
     setResult(null);
     setScreen("game");
-  }, [sfx]);
+  }, [sfx, soundEnabled]);
 
   const finish = useCallback((nextResult) => {
+    const bgm = bgmRef.current;
+    if (bgm) {
+      bgm.pause();
+      bgm.currentTime = 0;
+    }
     setResult(nextResult);
     setScreen("result");
   }, []);
 
   const toggleSound = useCallback(() => setSoundEnabled((enabled) => !enabled), []);
 
-  if (screen === "game") return <ArenaScreen assets={assets} soundEnabled={soundEnabled} sfx={sfx} onToggleSound={toggleSound} onFinish={finish} />;
-  if (screen === "result") return <ResultScreen result={result} assets={assets} onRestart={start} />;
-  return <IntroScreen assets={assets} assetError={assetError} onStart={start} />;
+  let content;
+  if (screen === "game") content = <ArenaScreen assets={assets} soundEnabled={soundEnabled} sfx={sfx} onToggleSound={toggleSound} onFinish={finish} />;
+  else if (screen === "result") content = <ResultScreen result={result} assets={assets} onRestart={start} />;
+  else content = <IntroScreen assets={assets} assetError={assetError} onStart={start} />;
+
+  return (
+    <>
+      {content}
+      <audio ref={bgmRef} src={BGM_PATH} loop preload="auto" hidden aria-hidden="true" />
+    </>
+  );
 }
