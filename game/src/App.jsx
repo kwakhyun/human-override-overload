@@ -42,6 +42,10 @@ const ASSET_PATHS = Object.freeze({
   suppressor: "./assets/survivor/suppressor.png",
   brute: "./assets/survivor/brute.png",
   boss: "./assets/survivor/bosses/wrong-engine.png",
+  bossPhase2: "./assets/survivor/bosses/wrong-engine-phase2.png",
+  bossPhase3: "./assets/survivor/bosses/wrong-engine-phase3.png",
+  bossPatterns: "./assets/survivor/vfx/boss-pattern-atlas.png",
+  playerOrdnance: "./assets/survivor/vfx/player-ordnance-atlas.png",
   sentry: "./assets/survivor/skills/sentry.png",
   emp: "./assets/survivor/skills/emp-pylon.png",
   drone: "./assets/survivor/skills/wingman-drone.png",
@@ -62,6 +66,8 @@ const EVENT_SOUNDS = Object.freeze({
   bossPatternTelegraph: "bossTelegraph",
   bossPatternFire: "rail",
   bossStage: "bossBreak",
+  bossStagePulse: "alert",
+  bossRageBurst: "bossTelegraph",
   bossWeakness: "core",
   bossChargeHit: "patternFail",
   squadSummon: "merge",
@@ -73,21 +79,24 @@ const EVENT_SOUNDS = Object.freeze({
   ultimateWarning: "bossTelegraph",
   ultimateFire: "rail",
   ultimateImpact: "rail",
+  overdrive: "upgrade",
   win: "bossDeath",
   loss: "capture",
 });
 
 const EVENT_BANNERS = Object.freeze({
-  swarmStart: ["MASS INCURSION", "전방위 게이트에서 적 300기가 투입됩니다."],
+  swarmStart: ["MASS INCURSION · 1,000", "전방위 게이트에서 적 1,000기가 연속 투입됩니다."],
   swarmCleared: ["DATASET PURGED", "남은 경험치를 흡수합니다. 보스 신호 감지."],
   bossIntro: ["THE WRONG ENGINE", "공격 경고선을 읽고 빈틈을 만들어내세요."],
   bossStage: ["PATTERN EVOLVED", "보스 공격 조합이 더 빨라집니다."],
+  bossStagePulse: ["⚠ BERSERK EVOLUTION", "장갑 형상과 공격 알고리즘이 다시 변이합니다."],
   bossWeakness: ["CORE EXPOSED · ×2", "돌진을 벽에 꽂았습니다. 지금 모든 화력을 집중하세요."],
   surgeWarning: ["⚠ MASS WAVE INBOUND", "게이트 신호 폭증. 대량 공세가 곧 전장에 진입합니다."],
   surgeStart: ["OVERLOAD WAVE", "사방 게이트 개방. 광역 화력으로 포위망을 찢으세요."],
   skillMastered: ["MASTER EVOLUTION", "스킬이 최종 형태로 진화했습니다. 광역 섬멸 프로토콜 가동."],
   ultimateWarning: ["ULTIMATE SUPPORT LOCKED", "공중 지원 좌표 확정. 충격 범위에서 화력을 집중하세요."],
   squadSummon: ["4-FRONT RECALL", "AEGIS · ROOK · NYX · MOSS 전투 링크가 12초간 동기화됩니다."],
+  overdrive: ["WEAPON OVERDRIVE", "처치 데이터가 화력 제한기를 해제합니다."],
 });
 
 const CATEGORY_META = Object.freeze({
@@ -193,7 +202,7 @@ function IntroScreen({ assets, assetError, onStart }) {
 
       <section className="overload-hero" aria-labelledby="game-title">
         <div className="overload-copy">
-          <div className="eyebrow"><span /> ONE PILOT · 300 HOSTILES · ONE FINAL ENGINE</div>
+          <div className="eyebrow"><span /> ONE PILOT · 1,000 HOSTILES · THREE BOSS FORMS</div>
           <h1 id="game-title">TRAIN ME <em>WRONG</em><small>OVERLOAD</small></h1>
           <p className="overload-deck">
             사격은 멈추지 않습니다. <strong>당신은 조준과 생존에만 집중하세요.</strong><br />
@@ -228,7 +237,7 @@ function IntroScreen({ assets, assetError, onStart }) {
             <img className={`overload-enemy enemy-${index + 1}`} src={assets.hunter.src} alt="" draggable="false" key={index} />
           ))}
           {assets?.boss && <img className="overload-boss" src={assets.boss.src} alt="" draggable="false" />}
-          <div className="threat-counter"><small>HOSTILE DATASET</small><strong>300</strong><span>UNITS LOCKED</span></div>
+          <div className="threat-counter"><small>HOSTILE DATASET</small><strong>1,000</strong><span>UNITS LOCKED</span></div>
           <div className="auto-fire-tag"><i /> CONTINUOUS FIRE ONLINE</div>
         </div>
       </section>
@@ -251,11 +260,11 @@ function ProgressHud({ hud }) {
       <div className="progress-heading">
         <span>{bossPhase ? `PHASE ${hud.boss.stage || 1}` : "SWARM PURGE"}</span>
         <strong>{bossPhase ? hud.boss.name || "THE WRONG ENGINE" : "HOSTILE DATASET"}</strong>
-        <b>{bossPhase ? (weakness > 0 ? `×${hud.boss.damageMultiplier || 2} CORE` : `${Math.ceil(hud.boss.hp)} HP`) : `${hud?.enemiesRemaining ?? 300} LEFT`}</b>
+        <b>{bossPhase ? (weakness > 0 ? `×${hud.boss.damageMultiplier || 2} CORE` : `${Math.ceil(hud.boss.hp)} HP`) : `${hud?.enemiesRemaining ?? 1000} LEFT`}</b>
       </div>
       <div className="progress-bar"><i style={{ width: `${(bossPhase ? bossRatio : swarmRatio) * 100}%` }} /><span /></div>
       <div className="progress-meta">
-        <span>{bossPhase ? (hud.boss.pattern ? `PATTERN · ${String(hud.boss.pattern).toUpperCase()}` : "SCANNING NEXT PATTERN") : `${hud?.kills || 0} / ${hud?.totalEnemies || 300} PURGED`}</span>
+        <span>{bossPhase ? (hud.boss.transforming ? `⚠ EVOLUTION LOCK · ${hud.boss.transformTimer.toFixed(1)}s` : hud.boss.pattern ? `PATTERN · ${String(hud.boss.pattern).toUpperCase()}` : `ENRAGE ×${Number(hud.boss.enrage || 1).toFixed(1)}`) : `${hud?.kills || 0} / ${hud?.totalEnemies || 1000} PURGED`}</span>
         <span>{bossPhase
           ? (weakness > 0 ? `CORE EXPOSED ${weakness.toFixed(1)}s` : "DODGE TELEGRAPHS")
           : hud?.surge?.warning
@@ -422,7 +431,20 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
     const context = canvas.getContext("2d", { alpha: false, desynchronized: true });
     const game = createSwarmState({ duration: 150 });
     const debugScene = import.meta.env.DEV ? new URLSearchParams(window.location.search).get("scene") : null;
-    if (debugScene === "boss" || debugScene === "weakness") {
+    if (debugScene === "arsenal") {
+      game.killedEnemies = 950;
+      game.stats.kills = 950;
+      game.player.invulnerability = 15;
+      Object.assign(game.build.weapons, { pulse: 5, scatter: 5, rail: 5, rocket: 5, orbit: 5 });
+      Object.assign(game.build.skills, { chain: 3, nova: 3, airstrike: 3, omegaLaser: 3, damage: 3, fireRate: 3, multishot: 3 });
+      game.player.damageMultiplier = 1.95;
+      game.player.fireRateMultiplier = 0.58;
+      game.player.multishot = 4;
+      game.support.chainCooldown = 0;
+      game.support.novaCooldown = 0;
+      game.support.airstrikeCooldown = 0;
+      game.support.laserCooldown = 0;
+    } else if (["boss", "weakness", "phase2", "phase3"].includes(debugScene)) {
       game.enemies.length = 0;
       game.spawnedEnemies = game.enemyBudget;
       game.killedEnemies = game.enemyBudget;
@@ -431,6 +453,15 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
       if (debugScene === "weakness") {
         game.boss.patternIndex = 4;
         game.player.invulnerability = 15;
+      } else if (debugScene === "phase2" || debugScene === "phase3") {
+        game.boss.stage = debugScene === "phase3" ? 3 : 2;
+        game.boss.hp = game.boss.maxHp * (debugScene === "phase3" ? 0.32 : 0.62);
+        game.boss.enrage = debugScene === "phase3" ? 2.15 : 1.5;
+        game.boss.transformTimer = 4;
+        game.boss.phaseFlash = 1;
+        game.boss.alertPulses = 2;
+        game.boss.alertPulseTimer = 0.42;
+        game.boss.patternCooldown = 0.2;
       }
     }
     const input = createSwarmInput();
@@ -469,11 +500,23 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
     const refreshHud = () => setHud(createHudSnapshot(game, governor.snapshot));
 
     const showBanner = (event) => {
-      const copy = EVENT_BANNERS[event.type];
+      let copy = EVENT_BANNERS[event.type];
+      if (event.type === "bossStage" || event.type === "bossStagePulse") {
+        copy = event.stage >= 3
+          ? ["⚠ CORE MELTDOWN · PHASE III", "최종 형상 전개. 다중 포신과 광폭 패턴이 최대 출력으로 가동됩니다."]
+          : ["⚠ ARMOR BREAK · PHASE II", "외부 장갑 전개. 공격 속도와 탄막 밀도가 상승합니다."];
+      } else if (event.type === "overdrive") {
+        copy = [`OVERDRIVE ${event.tier} · LIMITER OFF`, event.tier >= 3
+          ? "최종 화력 해방. 마스터 광역 공격이 전장을 연속 소거합니다."
+          : "처치 데이터가 공격 속도와 피해 출력을 증폭합니다."];
+      }
       if (!copy) return;
       window.clearTimeout(bannerTimeout);
       setBanner({ key: `${event.type}-${game.time}`, type: event.type, title: copy[0], subtitle: copy[1] });
-      bannerTimeout = window.setTimeout(() => setBanner(null), event.type === "bossIntro" ? 1900 : 1250);
+      const duration = event.type === "bossIntro" ? 1900
+        : event.type === "bossStage" || event.type === "bossStagePulse" ? 920
+          : 1250;
+      bannerTimeout = window.setTimeout(() => setBanner(null), duration);
     };
 
     const consumeEvents = () => {
@@ -701,8 +744,8 @@ function ResultScreen({ result, assets, onRestart }) {
         <div className="result-emblem">{victory ? <Trophy weight="fill" /> : <Warning weight="fill" />}</div>
         <div className="result-kicker">{victory ? "THE WRONG ENGINE TERMINATED" : "OVERLOAD SIGNAL LOST"}</div>
         <h1>{victory ? "SWARM: ERASED" : "THE SWARM ADAPTED"}</h1>
-        <p>{victory ? "300기의 공세를 빌드로 돌파하고 최종 엔진까지 파괴했습니다." : "다음 런에서는 이동 경로와 3지선다 빌드를 바꿔보세요."}</p>
-        {assets?.boss && <img className="result-boss" src={assets.boss.src} alt="The Wrong Engine" />}
+        <p>{victory ? "1,000기의 공세를 오버드라이브 화력으로 돌파하고 3단계 최종 엔진까지 파괴했습니다." : "다음 런에서는 이동 경로와 3지선다 빌드를 바꿔보세요."}</p>
+        {(assets?.bossPhase3 || assets?.boss) && <img className="result-boss" src={(assets.bossPhase3 || assets.boss).src} alt="The Wrong Engine 최종 광폭화 형상" />}
         <div className="result-stats">
           <span><small>HOSTILES PURGED</small><b>{result?.kills || result?.stats?.kills || 0}</b></span>
           <span><small>FINAL LEVEL</small><b>LV.{result?.level || 1}</b></span>

@@ -47,6 +47,8 @@ const ENEMY_DRAW_OPTIONS = Object.freeze([
   Object.freeze({ shadowAlpha: 0.26, fallback: COLORS.elite }),
   Object.freeze({ shadowAlpha: 0.2, fallback: COLORS.elite }),
 ]);
+const PLAYER_ATLAS = Object.freeze({ columns: 3, rows: 3 });
+const BOSS_ATLAS = Object.freeze({ columns: 3, rows: 2 });
 
 function finite(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
@@ -80,6 +82,53 @@ function imageReady(image) {
   if (typeof image.complete === "boolean" && !image.complete) return false;
   if ("naturalWidth" in image && image.naturalWidth === 0) return false;
   return true;
+}
+
+function drawAtlasSprite(ctx, image, atlas, column, row, x, y, width, height, angle = 0, alpha = 1) {
+  if (!imageReady(image)) return false;
+  const sourceWidth = finite(image.naturalWidth, finite(image.width));
+  const sourceHeight = finite(image.naturalHeight, finite(image.height));
+  if (sourceWidth <= 0 || sourceHeight <= 0) return false;
+  const cellWidth = sourceWidth / atlas.columns;
+  const cellHeight = sourceHeight / atlas.rows;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.globalAlpha = clamp01(alpha);
+  ctx.drawImage(
+    image,
+    column * cellWidth,
+    row * cellHeight,
+    cellWidth,
+    cellHeight,
+    -width * 0.5,
+    -height * 0.5,
+    width,
+    height,
+  );
+  ctx.restore();
+  return true;
+}
+
+function playerAtlasCell(type) {
+  if (type.includes("rocket") || type.includes("missile")) return [0, 1];
+  if (type.includes("orbit")) return [1, 1];
+  if (type.includes("chain") || type.includes("arc")) return [2, 1];
+  if (type.includes("nova")) return [0, 2];
+  if (type.includes("airstrike") || type.includes("skyfall")) return [1, 2];
+  if (type.includes("omega") || type.includes("laser")) return [2, 2];
+  if (type.includes("rail") || type.includes("heavy")) return [2, 0];
+  if (type.includes("scatter") || type.includes("rook")) return [1, 0];
+  return [0, 0];
+}
+
+function bossAtlasCell(type) {
+  if (type.includes("multicharge")) return [2, 1];
+  if (type.includes("charge") || type.includes("rush")) return [1, 1];
+  if (type.includes("ring")) return [0, 1];
+  if (type.includes("bomb")) return [2, 0];
+  if (type.includes("sweep") || type.includes("laser")) return [1, 0];
+  return [0, 0];
 }
 
 function arraysFrom(source, keys) {
@@ -556,21 +605,51 @@ function drawChargeTelegraph(ctx, item, time) {
   ctx.restore();
 }
 
-function drawTelegraph(ctx, item, time) {
+function drawTelegraphSprite(ctx, item, type, time, assets) {
+  const progress = telegraphProgress(item);
+  const alpha = 0.42 + progress * 0.48;
+  const x = finite(item.x, finite(item.targetX, GAME_WIDTH * 0.5));
+  const y = finite(item.y, finite(item.targetY, GAME_HEIGHT * 0.5));
+  if (type.includes("airstrike") || type.includes("skyfall")) {
+    const missileY = y - (1 - progress) * 92;
+    drawGlow(ctx, "amber", x, missileY, 74, 0.28 + progress * 0.2);
+    drawAtlasSprite(ctx, assets?.playerOrdnance, PLAYER_ATLAS, 1, 2, x, missileY, 62, 62, Math.PI, alpha);
+    return;
+  }
+  if (!imageReady(assets?.bossPatterns)) return;
+  const [column, row] = bossAtlasCell(type);
+  const angle = finite(item.angle, finite(item.rotation));
+  const elongated = type.includes("sweep") || type.includes("charge") || type.includes("rush");
+  const size = elongated ? 118 : type.includes("ring") ? 92 : 72;
+  drawGlow(ctx, "red", x, y, size * 1.15, 0.2 + progress * 0.22);
+  drawAtlasSprite(ctx, assets.bossPatterns, BOSS_ATLAS, column, row, x, y, size, elongated ? 76 : size, angle + time * (elongated ? 0 : 0.35), alpha);
+}
+
+function drawTelegraph(ctx, item, time, assets) {
   if (!item || item.active === false || item.expired) return;
   const type = String(item.type ?? item.kind ?? item.pattern ?? "circle").toLowerCase();
   if (Array.isArray(item.targets) && item.targets.length > 0 && (type.includes("bomb") || type.includes("radial"))) {
     for (const target of item.targets) {
       const targetX = Array.isArray(target) ? target[0] : target?.x;
       const targetY = Array.isArray(target) ? target[1] : target?.y;
-      drawCircleTelegraph(ctx, { ...item, targets: null, x: targetX, y: targetY }, time, type.includes("bomb") ? "bomb" : "radial");
+      const targetItem = { ...item, targets: null, x: targetX, y: targetY };
+      drawCircleTelegraph(ctx, targetItem, time, type.includes("bomb") ? "bomb" : "radial");
+      drawTelegraphSprite(ctx, targetItem, type, time, assets);
     }
     return;
   }
-  if (type.includes("sweep") || type.includes("laser") || type.includes("beam")) drawSweepTelegraph(ctx, item, time);
+  if (type.includes("sweep") || type.includes("laser") || type.includes("beam")) {
+    drawSweepTelegraph(ctx, item, time);
+    if (item.dual) {
+      const opposite = { ...item, dual: false, angle: finite(item.angle) + Math.PI };
+      drawSweepTelegraph(ctx, opposite, time);
+      drawTelegraphSprite(ctx, opposite, type, time, assets);
+    }
+  }
   else if (type.includes("ring") || type.includes("nova")) drawRingTelegraph(ctx, item, time);
   else if (type.includes("charge") || type.includes("rush") || type.includes("dash")) drawChargeTelegraph(ctx, item, time);
   else drawCircleTelegraph(ctx, item, time, type.includes("bomb") || type.includes("meteor") ? "bomb" : "radial");
+  drawTelegraphSprite(ctx, item, type, time, assets);
 }
 
 function inferredBossTelegraph(boss, state) {
@@ -595,24 +674,24 @@ function inferredBossTelegraph(boss, state) {
   };
 }
 
-function drawTelegraphs(ctx, state, time) {
+function drawTelegraphs(ctx, state, time, assets) {
   let explicitCount = 0;
   for (const { collection } of arraysFrom(state, ["telegraphs", "warnings", "attackZones", "dangerZones", "airstrikes"])) {
     for (const item of collection) {
-      drawTelegraph(ctx, item, time);
+      drawTelegraph(ctx, item, time, assets);
       explicitCount += 1;
     }
   }
   const boss = state?.boss;
   for (const { collection } of arraysFrom(boss, ["telegraphs", "warnings", "attackZones"])) {
     for (const item of collection) {
-      drawTelegraph(ctx, item, time);
+      drawTelegraph(ctx, item, time, assets);
       explicitCount += 1;
     }
   }
   if (explicitCount === 0 && isAlive(boss)) {
     const inferred = inferredBossTelegraph(boss, state);
-    if (inferred) drawTelegraph(ctx, inferred, time);
+    if (inferred) drawTelegraph(ctx, inferred, time, assets);
   }
 }
 
@@ -820,8 +899,13 @@ function drawBoss(ctx, state, assets, quality) {
   const x = finite(boss.x, GAME_WIDTH * 0.72);
   const y = finite(boss.y, GAME_HEIGHT * 0.5);
   const coreExposed = bossCoreIsExposed(boss, state);
+  const transforming = finite(boss.transformTimer) > 0;
+  const transformPulse = transforming ? 0.5 + Math.sin(time * 21) * 0.5 : 0;
+  const bossImage = phase >= 3 ? (assets?.bossPhase3 || assets?.boss)
+    : phase >= 2 ? (assets?.bossPhase2 || assets?.boss)
+      : assets?.boss;
 
-  drawGlow(ctx, phase >= 3 ? "amber" : "red", x, y, size * (1.55 + phaseFlash * 0.3), 0.62 + phaseFlash * 0.25);
+  drawGlow(ctx, phase >= 3 ? "amber" : "red", x, y, size * (1.55 + phaseFlash * 0.3 + transformPulse * 0.22), 0.62 + phaseFlash * 0.25);
   if (coreExposed) drawGlow(ctx, "amber", x, y, size * 0.92, 0.48);
   ctx.globalAlpha = 0.55 + phaseFlash * 0.4;
   ctx.strokeStyle = phaseFlash > 0 ? COLORS.white : COLORS.boss;
@@ -853,10 +937,21 @@ function drawBoss(ctx, state, assets, quality) {
   bossProxy.angle = boss.angle;
   bossProxy.alpha = clamp01(entrance * 1.35);
   bossProxy.hitFlash = boss.hitFlash;
-  drawActorSprite(ctx, assets?.boss, bossProxy, size * entranceScale, state, quality, {
+  drawActorSprite(ctx, bossImage, bossProxy, size * entranceScale * (1 + transformPulse * 0.07), state, quality, {
     shadowAlpha: 0.6,
     fallback: COLORS.boss,
   });
+  if (transforming) {
+    ctx.globalAlpha = 0.38 + transformPulse * 0.35;
+    ctx.strokeStyle = phase >= 3 ? "#ffd56e" : COLORS.white;
+    ctx.lineWidth = 5 + transformPulse * 5;
+    for (let ring = 0; ring < 3; ring += 1) {
+      ctx.beginPath();
+      ctx.arc(x, y, size * (0.42 + ring * 0.13) + transformPulse * 14, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
   drawBossCore(ctx, boss, state, x, y, size * entranceScale, time);
   drawHealthBar(ctx, boss, Math.min(160, size * 0.72), size * 0.62, phase >= 3 ? COLORS.warning : COLORS.boss, true);
 }
@@ -925,7 +1020,7 @@ function isEnemyProjectile(projectile, collectionKey = "") {
   return team.includes("enemy") || team.includes("boss") || projectile?.hostile === true;
 }
 
-function drawBullet(ctx, projectile, enemy, quality) {
+function drawBullet(ctx, projectile, enemy, quality, assets) {
   if (!visible(projectile, 60)) return;
   const x = finite(projectile.x);
   const y = finite(projectile.y);
@@ -933,6 +1028,26 @@ function drawBullet(ctx, projectile, enemy, quality) {
   const angle = projectileAngle(projectile);
   const color = projectile.color || (enemy ? COLORS.enemy : COLORS.player);
   const type = String(projectile.type ?? projectile.kind ?? "bullet").toLowerCase();
+
+  const atlasImage = enemy && type.includes("boss") ? assets?.bossPatterns : (!enemy ? assets?.playerOrdnance : null);
+  if (imageReady(atlasImage)) {
+    const [column, row] = enemy ? bossAtlasCell(type) : playerAtlasCell(type);
+    const isHeavy = type.includes("rail") || type.includes("rocket") || type.includes("heavy") || type.includes("moss");
+    const width = enemy ? radius * 6.6 : radius * (isHeavy ? 9.5 : 7.2);
+    const height = enemy ? radius * 6.6 : radius * (isHeavy ? 5.8 : 6.2);
+    if (quality.detailScale > 0.42) drawGlow(ctx, enemy ? "red" : (type.includes("rocket") ? "amber" : "cyan"), x, y, Math.max(width, height) * 1.15, 0.32);
+    ctx.save();
+    ctx.globalAlpha = 0.34;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1.5, radius * 1.15);
+    ctx.beginPath();
+    ctx.moveTo(x - Math.cos(angle) * Math.min(48, width), y - Math.sin(angle) * Math.min(48, width));
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.restore();
+    drawAtlasSprite(ctx, atlasImage, enemy ? BOSS_ATLAS : PLAYER_ATLAS, column, row, x, y, width, height, angle, 1);
+    return;
+  }
 
   if (type.includes("orbit")) {
     if (quality.detailScale > 0.45) drawGlow(ctx, enemy ? "red" : "cyan", x, y, radius * 7, 0.45);
@@ -1042,7 +1157,7 @@ function drawBullet(ctx, projectile, enemy, quality) {
   ctx.restore();
 }
 
-function drawProjectiles(ctx, state, quality) {
+function drawProjectiles(ctx, state, assets, quality) {
   const drawn = entitySeen;
   drawn.clear();
   for (const { key, collection } of arraysFrom(state, [
@@ -1051,12 +1166,12 @@ function drawProjectiles(ctx, state, quality) {
     for (const projectile of collection) {
       if (!projectile || projectile.dead || projectile.active === false || drawn.has(projectile)) continue;
       drawn.add(projectile);
-      drawBullet(ctx, projectile, isEnemyProjectile(projectile, key), quality);
+      drawBullet(ctx, projectile, isEnemyProjectile(projectile, key), quality, assets);
     }
   }
 }
 
-function drawBeam(ctx, beam, enemy, time) {
+function drawBeam(ctx, beam, enemy, time, assets) {
   if (!beam || beam.active === false) return;
   const x1 = finite(beam.x1, finite(beam.x, finite(beam.fromX)));
   const y1 = finite(beam.y1, finite(beam.y, finite(beam.fromY)));
@@ -1072,6 +1187,12 @@ function drawBeam(ctx, beam, enemy, time) {
   const width = clamp(finite(beam.width, 6), 1, 160);
   const color = beam.color || (enemy ? COLORS.enemy : COLORS.player);
   const charging = beam.phase === "charge" || finite(beam.charge) > 0;
+  const beamType = String(beam.type ?? beam.kind ?? "beam").toLowerCase();
+  const beamAngle = Math.atan2(y2 - y1, x2 - x1);
+  if (!enemy && beamType.includes("omega")) {
+    drawGlow(ctx, "cyan", x1, y1, 160, charging ? 0.35 : 0.72);
+    drawAtlasSprite(ctx, assets?.playerOrdnance, PLAYER_ATLAS, 2, 2, x1 + Math.cos(beamAngle) * 26, y1 + Math.sin(beamAngle) * 26, 132, 94, beamAngle, clamp01(beam.alpha ?? 1));
+  }
   if (charging) {
     ctx.save();
     ctx.globalAlpha = 0.35 + Math.sin(time * 20) * 0.12;
@@ -1103,7 +1224,7 @@ function drawBeam(ctx, beam, enemy, time) {
   ctx.globalAlpha = 1;
 }
 
-function drawChainsAndBeams(ctx, state, time) {
+function drawChainsAndBeams(ctx, state, time, assets) {
   for (const { key, collection } of arraysFrom(state, ["beams", "lasers", "rails", "chains", "lightning"])) {
     for (const beam of collection) {
       const points = beam?.points ?? beam?.links;
@@ -1120,14 +1241,16 @@ function drawChainsAndBeams(ctx, state, time) {
         }
         ctx.stroke();
         ctx.globalAlpha = 1;
-      } else drawBeam(ctx, beam, isEnemyProjectile(beam, key), time);
+        const endpoint = points[points.length - 1];
+        drawAtlasSprite(ctx, assets?.playerOrdnance, PLAYER_ATLAS, 2, 1, finite(endpoint.x), finite(endpoint.y), 42, 42, time * 2.4, clamp01(beam.alpha ?? 0.9));
+      } else drawBeam(ctx, beam, isEnemyProjectile(beam, key), time, assets);
     }
   }
 }
 
-function drawOrbitLinks(ctx, state, time) {
+function drawOrbitLinks(ctx, state, time, assets, quality) {
   const orbitals = state?.orbitals;
-  if (!Array.isArray(orbitals) || orbitals.length < 2) return;
+  if (!Array.isArray(orbitals) || orbitals.length === 0) return;
   ctx.globalAlpha = 0.28 + Math.sin(time * 6) * 0.06;
   ctx.strokeStyle = COLORS.player;
   ctx.lineWidth = 1;
@@ -1142,6 +1265,17 @@ function drawOrbitLinks(ctx, state, time) {
   }
   if (started) ctx.stroke();
   ctx.globalAlpha = 1;
+  for (const orbital of orbitals) {
+    if (!visible(orbital, 40)) continue;
+    if (quality.detailScale > 0.4) drawGlow(ctx, "cyan", finite(orbital.x), finite(orbital.y), 58, 0.3);
+    if (!drawAtlasSprite(ctx, assets?.playerOrdnance, PLAYER_ATLAS, 1, 1, finite(orbital.x), finite(orbital.y), 50, 50, finite(orbital.angle, time * 3), 1)) {
+      ctx.strokeStyle = COLORS.player;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(finite(orbital.x), finite(orbital.y), 12, 0, TAU);
+      ctx.stroke();
+    }
+  }
 }
 
 function particleRatio(particle) {
@@ -1194,7 +1328,7 @@ function drawParticles(ctx, state, quality) {
   ctx.globalAlpha = 1;
 }
 
-function drawShockwaves(ctx, state, time) {
+function drawShockwaves(ctx, state, time, assets) {
   for (const { collection } of arraysFrom(state, ["shockwaves", "rings", "explosions"])) {
     for (const effect of collection) {
       if (!effect || effect.active === false || !visible(effect, 240)) continue;
@@ -1206,6 +1340,14 @@ function drawShockwaves(ctx, state, time) {
       ctx.beginPath();
       ctx.arc(finite(effect.x), finite(effect.y), radius, 0, TAU);
       ctx.stroke();
+      const type = String(effect.type ?? effect.kind ?? "").toLowerCase();
+      if (type.includes("nova") || type.includes("orbitmaster")) {
+        const spriteSize = clamp(72 + progress * 170, 72, 242);
+        drawAtlasSprite(ctx, assets?.playerOrdnance, PLAYER_ATLAS, 0, 2, finite(effect.x), finite(effect.y), spriteSize, spriteSize, time * 0.45, (1 - progress) * 0.78);
+      } else if (type.includes("bosstransform")) {
+        const spriteSize = clamp(90 + progress * 160, 90, 250);
+        drawAtlasSprite(ctx, assets?.bossPatterns, BOSS_ATLAS, 0, 0, finite(effect.x), finite(effect.y), spriteSize, spriteSize, -time * 0.5, (1 - progress) * 0.68);
+      }
     }
   }
   ctx.globalAlpha = 1;
@@ -1433,16 +1575,16 @@ export function renderSwarm(ctx, state = {}, assets = {}, qualityInput = DEFAULT
   drawMap(ctx, assets);
   drawArenaBoundary(ctx);
   drawPickups(ctx, state, quality, time);
-  drawTelegraphs(ctx, state, time);
+  drawTelegraphs(ctx, state, time, assets);
   drawAllies(ctx, state, assets, quality);
   drawEnemies(ctx, state, assets, quality);
   drawBoss(ctx, state, assets, quality);
   drawPlayer(ctx, state, assets, quality);
-  drawOrbitLinks(ctx, state, time);
-  drawProjectiles(ctx, state, quality);
-  drawChainsAndBeams(ctx, state, time);
+  drawOrbitLinks(ctx, state, time, assets, quality);
+  drawProjectiles(ctx, state, assets, quality);
+  drawChainsAndBeams(ctx, state, time, assets);
   drawParticles(ctx, state, quality);
-  drawShockwaves(ctx, state, time);
+  drawShockwaves(ctx, state, time, assets);
   drawDamageTexts(ctx, state, quality);
   drawAim(ctx, state, time);
   ctx.restore();

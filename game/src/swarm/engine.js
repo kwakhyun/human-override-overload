@@ -3,20 +3,22 @@ export const GAME_HEIGHT = 720;
 
 const TAU = Math.PI * 2;
 const ARENA = Object.freeze({ left: 34, right: 1246, top: 34, bottom: 686 });
-const INITIAL_SWARM = 84;
-const DEFAULT_ENEMY_BUDGET = 300;
-const MAX_LIVE_ENEMIES = 156;
-const MAX_PROJECTILES = 520;
+const INITIAL_SWARM = 128;
+const DEFAULT_ENEMY_BUDGET = 1000;
+const MAX_LIVE_ENEMIES = 220;
+const MAX_PROJECTILES = 620;
 const MAX_ENEMY_PROJECTILES = 360;
 const MAX_PARTICLES = 320;
-const MAX_PICKUPS = 170;
+const MAX_PICKUPS = 220;
 const GRID_SIZE = 96;
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
 const SURGE_WAVES = Object.freeze([
-  Object.freeze({ warnAt: 6, startAt: 7.25, count: 48, rate: 34, label: "RED WAVE" }),
-  Object.freeze({ warnAt: 14, startAt: 15.4, count: 72, rate: 42, label: "BREACH WAVE" }),
-  Object.freeze({ warnAt: 23, startAt: 24.5, count: 96, rate: 54, label: "TERMINAL WAVE" }),
+  Object.freeze({ warnAt: 6, startAt: 7.25, count: 180, rate: 58, label: "RED TIDE · 180" }),
+  Object.freeze({ warnAt: 17, startAt: 18.4, count: 280, rate: 84, label: "BREACH FLOOD · 280" }),
+  Object.freeze({ warnAt: 30, startAt: 31.5, count: 412, rate: 118, label: "TERMINAL OVERLOAD · 412" }),
 ]);
+
+const OVERDRIVE_THRESHOLDS = Object.freeze([0.48, 0.72, 0.88]);
 
 export const BOSS_PATTERNS = Object.freeze(["radial", "sweep", "bombs", "rings", "charge", "multiCharge"]);
 
@@ -166,8 +168,9 @@ function spawnEnemy(state) {
   const type = chooseEnemyType(spawnIndex);
   const base = ENEMY_DATA[type];
   const elite = spawnIndex > 0 && spawnIndex % 29 === 0;
+  const datasetProgress = clamp(spawnIndex / Math.max(1, state.enemyBudget - 1), 0, 1);
   const scale = elite ? 1.3 : 1;
-  const hpScale = elite ? 2.35 : 1;
+  const hpScale = (elite ? 2.35 : 1) * (1 + datasetProgress * 0.45);
   const point = edgeSpawn(state, spawnIndex);
   state.enemies.push({
     id: ++state.nextEntityId,
@@ -180,8 +183,8 @@ function spawnEnemy(state) {
     radius: base.radius * scale,
     hp: base.hp * hpScale,
     maxHp: base.hp * hpScale,
-    speed: base.speed * (elite ? 1.08 : 1),
-    damage: base.damage * (elite ? 1.55 : 1),
+    speed: base.speed * (elite ? 1.08 : 1) * (1 + datasetProgress * 0.12),
+    damage: base.damage * (elite ? 1.55 : 1) * (1 + datasetProgress * 0.22),
     xp: Math.round(base.xp * (elite ? 2.5 : 1)),
     color: base.color,
     elite,
@@ -211,8 +214,8 @@ function createPlayer() {
     angle: 0,
     radius: 18,
     speed: 245,
-    hp: 280,
-    maxHp: 280,
+    hp: 360,
+    maxHp: 360,
     shield: 0,
     shieldMax: 0,
     shieldDelay: 0,
@@ -237,6 +240,10 @@ function createPlayer() {
     fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0 },
     orbitAngle: 0,
     orbitMasterTimer: 0,
+    overdriveDamage: 1,
+    overdriveHaste: 1,
+    overdriveTier: 0,
+    overdriveVolleyTimer: 0,
   };
 }
 
@@ -250,8 +257,8 @@ function createBoss() {
     vy: 0,
     angle: Math.PI,
     radius: 70,
-    hp: 30000,
-    maxHp: 30000,
+    hp: 180000,
+    maxHp: 180000,
     stage: 1,
     hitFlash: 0,
     dead: false,
@@ -261,6 +268,14 @@ function createBoss() {
     contactCooldown: 0,
     weakness: 0,
     damageMultiplier: 1,
+    transformTimer: 0,
+    transformDuration: 1.8,
+    phaseFlash: 0,
+    alertPulses: 0,
+    alertPulseTimer: 0,
+    rageBurstCooldown: 5.5,
+    enrage: 1,
+    orbitHitCooldown: 0,
   };
 }
 
@@ -299,6 +314,7 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
     beams: [],
     chains: [],
     shockwaves: [],
+    orbitals: [],
     airstrikes: [],
     allies: [],
     deployables: [],
@@ -338,6 +354,7 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
       skillsMastered: 0,
       ultimateCasts: 0,
       squadCalls: 0,
+      overdriveTier: 0,
     },
     shake: 0,
     flash: 0,
@@ -520,15 +537,43 @@ function fireRadialVolley(state, kind, count, speed, damage, radius, life, extra
   }
 }
 
+function updateOverdrive(state, dt) {
+  const player = state.player;
+  const progress = state.phase === "boss"
+    ? 1
+    : clamp(state.killedEnemies / Math.max(1, state.enemyBudget), 0, 1);
+  const ramp = clamp((progress - 0.2) / 0.8, 0, 1);
+  player.overdriveDamage = 1 + Math.pow(ramp, 1.22) * 3.4;
+  player.overdriveHaste = Math.max(0.22, 1 - Math.pow(ramp, 1.08) * 0.78);
+  let tier = 0;
+  for (const threshold of OVERDRIVE_THRESHOLDS) if (progress >= threshold) tier += 1;
+  if (tier > player.overdriveTier) {
+    player.overdriveTier = tier;
+    state.stats.overdriveTier = tier;
+    player.overdriveVolleyTimer = 0;
+    state.flash = Math.max(state.flash, 0.38 + tier * 0.08);
+    state.shake = Math.max(state.shake, 6 + tier * 2);
+    addText(state, `OVERDRIVE ${tier}`, player.x, player.y - 78, tier >= 3 ? "#fff0a6" : "#8ffcff", 1.3);
+    emit(state, "overdrive", { tier, progress, damage: player.overdriveDamage, haste: player.overdriveHaste });
+  }
+  player.overdriveVolleyTimer = Math.max(0, player.overdriveVolleyTimer - dt);
+}
+
 function updateAutoWeapons(state, dt) {
   const player = state.player;
   const timers = player.fireTimers;
-  const attackSpeed = Math.max(0.38, player.fireRateMultiplier);
+  const attackSpeed = Math.max(0.16, player.fireRateMultiplier * player.overdriveHaste);
   for (const key of Object.keys(timers)) timers[key] -= dt;
 
   if (timers.pulse <= 0) {
-    const count = clamp(player.multishot, 1, 5);
+    const count = clamp(player.multishot + Math.max(0, player.overdriveTier - 1), 1, 7);
     fireBulletFan(state, "pulse", count, count > 1 ? 0.12 * (count - 1) : 0, 850, 34, 5, 1.55, { pierce: state.build.weapons.pulse >= 5 ? 2 : state.build.weapons.pulse >= 4 ? 1 : 0 });
+    if (player.overdriveTier >= 2 && player.overdriveVolleyTimer <= 0) {
+      const volleyCount = player.overdriveTier >= 3 ? 24 : 14;
+      fireRadialVolley(state, "pulseOverdrive", volleyCount, 760, player.overdriveTier >= 3 ? 52 : 38, 6, 1.1, { color: "#a7fbff", pierce: player.overdriveTier >= 3 ? 2 : 1 });
+      player.overdriveVolleyTimer = player.overdriveTier >= 3 ? 0.78 : 1.35;
+      emit(state, "masterAttack", { skill: "pulseOverdrive", count: volleyCount });
+    }
     timers.pulse += 0.145 * attackSpeed / (1 + (state.build.weapons.pulse - 1) * 0.08);
   }
 
@@ -654,6 +699,13 @@ function killEnemy(state, enemy, source = "weapon") {
   enemy.hp = 0;
   state.killedEnemies += 1;
   state.stats.kills += 1;
+  if (state.stats.kills % 25 === 0) {
+    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 6);
+    if (state.stats.kills % 100 === 0) {
+      addText(state, "COMBAT REPAIR +6", state.player.x, state.player.y - 46, "#8dffc0", 0.88);
+      burst(state, state.player.x, state.player.y, "#72f0ad", 8, 120, 0.42, 4);
+    }
+  }
   spawnXpPickup(state, enemy);
   burst(state, enemy.x, enemy.y, enemy.elite ? "#ffe06b" : enemy.color, enemy.elite ? 16 : 6, enemy.elite ? 250 : 150, 0.55, enemy.elite ? 7 : 4);
   if (enemy.elite) addText(state, "ELITE DOWN", enemy.x, enemy.y - 28, "#ffe371", 0.9);
@@ -662,7 +714,7 @@ function killEnemy(state, enemy, source = "weapon") {
 
 function damageEnemy(state, enemy, amount, source = "weapon") {
   if (!enemy || enemy.dead || amount <= 0) return 0;
-  const dealt = Math.min(enemy.hp, amount);
+  const dealt = Math.min(enemy.hp, amount * finite(state.player?.overdriveDamage, 1));
   enemy.hp -= dealt;
   enemy.hitFlash = 0.09;
   state.stats.hits += 1;
@@ -671,26 +723,40 @@ function damageEnemy(state, enemy, amount, source = "weapon") {
   return dealt;
 }
 
+function triggerBossStage(state, stage) {
+  const boss = state.boss;
+  boss.stage = stage;
+  boss.enrage = stage === 3 ? 2.15 : 1.5;
+  boss.transformTimer = boss.transformDuration;
+  boss.phaseFlash = 1;
+  boss.alertPulses = 2;
+  boss.alertPulseTimer = 0.42;
+  boss.patternCooldown = boss.transformDuration + 0.38;
+  boss.activePattern = null;
+  boss.vx = 0;
+  boss.vy = 0;
+  state.telegraphs.length = 0;
+  state.enemyProjectiles.length = 0;
+  state.shake = Math.max(state.shake, 20 + stage * 3);
+  state.flash = Math.max(state.flash, 0.72);
+  burst(state, boss.x, boss.y, stage >= 3 ? "#ff8a3d" : "#ff385d", 52, 390, 0.92, 8);
+  state.shockwaves.push({ type: "bossTransform", enemy: true, x: boss.x, y: boss.y, maxRadius: 360, life: 1.15, maxLife: 1.15, color: stage >= 3 ? "#ffad4f" : "#ff385d", width: 16 });
+  addText(state, stage >= 3 ? "CORE MELTDOWN · PHASE III" : "ARMOR BREAK · PHASE II", boss.x, boss.y - 112, "#fff0d0", 1.35);
+  emit(state, "bossStage", { stage, enrage: boss.enrage, pulses: 3 });
+}
+
 function damageBoss(state, amount, source = "weapon") {
   const boss = state.boss;
-  if (!boss.active || boss.dead || amount <= 0) return 0;
+  if (!boss.active || boss.dead || boss.transformTimer > 0 || amount <= 0) return 0;
   const multiplier = boss.weakness > 0 ? 2 : 1;
   boss.damageMultiplier = multiplier;
-  const dealt = Math.min(boss.hp, amount * multiplier);
+  const dealt = Math.min(boss.hp, amount * multiplier * finite(state.player?.overdriveDamage, 1));
   boss.hp -= dealt;
   boss.hitFlash = 0.1;
   state.stats.hits += 1;
   state.stats.damageDealt += dealt;
-  if (boss.hp <= boss.maxHp * 0.66 && boss.stage === 1) {
-    boss.stage = 2;
-    boss.patternCooldown = Math.min(boss.patternCooldown, 0.45);
-    emit(state, "bossStage", { stage: 2 });
-  }
-  if (boss.hp <= boss.maxHp * 0.33 && boss.stage === 2) {
-    boss.stage = 3;
-    boss.patternCooldown = Math.min(boss.patternCooldown, 0.35);
-    emit(state, "bossStage", { stage: 3 });
-  }
+  if (boss.hp <= boss.maxHp * 0.7 && boss.stage === 1) triggerBossStage(state, 2);
+  else if (boss.hp <= boss.maxHp * 0.38 && boss.stage === 2) triggerBossStage(state, 3);
   if (boss.hp <= 0) {
     boss.hp = 0;
     boss.dead = true;
@@ -899,7 +965,8 @@ function updatePickups(state, dt) {
 
 function updateOrbitWeapon(state, dt) {
   const level = state.build.weapons.orbit;
-  if (level <= 0 || state.phase !== "swarm") return;
+  state.orbitals.length = 0;
+  if (level <= 0) return;
   const player = state.player;
   player.orbitAngle = (player.orbitAngle + dt * (2.4 + level * 0.16)) % TAU;
   const bladeCount = Math.min(5, 1 + level);
@@ -908,6 +975,15 @@ function updateOrbitWeapon(state, dt) {
     const angle = player.orbitAngle + (index / bladeCount) * TAU;
     const x = player.x + Math.cos(angle) * distance;
     const y = player.y + Math.sin(angle) * distance;
+    state.orbitals.push({ id: index, type: "orbitBlade", x, y, angle: angle + Math.PI * 0.5, radius: 14, level });
+    if (state.phase === "boss") {
+      if (state.boss.active && !state.boss.dead && state.boss.orbitHitCooldown <= 0
+        && Math.hypot(state.boss.x - x, state.boss.y - y) <= state.boss.radius + 15) {
+        damageBoss(state, (22 + level * 10) * player.damageMultiplier, "orbit");
+        state.boss.orbitHitCooldown = 0.22;
+      }
+      continue;
+    }
     for (const enemy of nearbyEnemies(state, x, y, 34)) {
       if (!enemy.dead && enemy.orbitHitCooldown <= 0 && Math.hypot(enemy.x - x, enemy.y - y) <= enemy.radius + 14) {
         damageEnemy(state, enemy, (22 + level * 10) * player.damageMultiplier, "orbit");
@@ -948,7 +1024,7 @@ function damageArea(state, x, y, radius, damage, source) {
 }
 
 function triggerChainLightning(state, level) {
-  const limit = level >= 3 ? 14 : 3 + level * 2;
+  const limit = (level >= 3 ? 14 : 3 + level * 2) + state.player.overdriveTier * 3;
   const points = [{ x: state.player.x, y: state.player.y }];
   const used = new Set();
   let x = state.player.x;
@@ -984,12 +1060,13 @@ function triggerChainLightning(state, level) {
 }
 
 function triggerNova(state, level) {
-  const radius = level >= 3 ? 390 : 150 + level * 58;
+  const radius = (level >= 3 ? 390 : 150 + level * 58) + state.player.overdriveTier * 22;
   const damage = (64 + level * 48) * state.player.damageMultiplier;
   damageArea(state, state.player.x, state.player.y, radius, damage, "nova");
   state.shockwaves.push({ type: "nova", x: state.player.x, y: state.player.y, maxRadius: radius, life: 0.72, maxLife: 0.72, color: level >= 3 ? "#fff0a6" : "#8ffcff", width: level >= 3 ? 15 : 9 });
   if (level >= 3) {
     state.shockwaves.push({ type: "novaEcho", x: state.player.x, y: state.player.y, maxRadius: radius * 0.72, life: 1.02, maxLife: 1.02, color: "#7ef4ff", width: 8 });
+    if (state.player.overdriveTier >= 3) state.shockwaves.push({ type: "novaMaster", x: state.player.x, y: state.player.y, maxRadius: radius * 1.18, life: 1.22, maxLife: 1.22, color: "#fff0a6", width: 12 });
     state.shake = Math.max(state.shake, 13);
   }
   emit(state, level >= 3 ? "masterAttack" : "skillAttack", { skill: "nova", radius });
@@ -1004,7 +1081,7 @@ function strikeTarget(state, index) {
 }
 
 function triggerAirstrike(state, level) {
-  const count = level >= 3 ? 15 : 5 + level * 3;
+  const count = (level >= 3 ? 15 : 5 + level * 3) + state.player.overdriveTier * 3;
   for (let index = 0; index < count; index += 1) {
     const target = strikeTarget(state, index);
     const spread = level >= 3 ? 72 : 38;
@@ -1106,21 +1183,22 @@ function updateSupportSkills(state, dt) {
   support.airstrikeCooldown -= dt;
   support.laserCooldown -= dt;
 
+  const overdriveCooldownScale = Math.max(0.26, state.player.overdriveHaste * 0.94);
   if (skills.chain > 0 && support.chainCooldown <= 0) {
     triggerChainLightning(state, skills.chain);
-    support.chainCooldown += skills.chain >= 3 ? 1.65 : 3.2 - skills.chain * 0.38;
+    support.chainCooldown += (skills.chain >= 3 ? 1.65 : 3.2 - skills.chain * 0.38) * overdriveCooldownScale;
   }
   if (skills.nova > 0 && support.novaCooldown <= 0) {
     triggerNova(state, skills.nova);
-    support.novaCooldown += skills.nova >= 3 ? 3.8 : 6.4 - skills.nova * 0.7;
+    support.novaCooldown += (skills.nova >= 3 ? 3.8 : 6.4 - skills.nova * 0.7) * overdriveCooldownScale;
   }
   if (skills.airstrike > 0 && support.airstrikeCooldown <= 0) {
     triggerAirstrike(state, skills.airstrike);
-    support.airstrikeCooldown += skills.airstrike >= 3 ? 11.5 : 18.5 - skills.airstrike * 2.1;
+    support.airstrikeCooldown += (skills.airstrike >= 3 ? 11.5 : 18.5 - skills.airstrike * 2.1) * overdriveCooldownScale;
   }
   if (skills.omegaLaser > 0 && support.laserCooldown <= 0) {
     triggerOmegaLaser(state, skills.omegaLaser);
-    support.laserCooldown += skills.omegaLaser >= 3 ? 15 : 25 - skills.omegaLaser * 2.3;
+    support.laserCooldown += (skills.omegaLaser >= 3 ? 15 : 25 - skills.omegaLaser * 2.3) * overdriveCooldownScale;
   }
   updateAirstrikes(state, dt);
   updateOmegaBeams(state, dt);
@@ -1499,14 +1577,15 @@ function beginBossPattern(state) {
   const type = BOSS_PATTERNS[boss.patternIndex % BOSS_PATTERNS.length];
   boss.patternIndex += 1;
   const playerAngle = Math.atan2(state.player.y - boss.y, state.player.x - boss.x);
+  const warningScale = boss.stage === 3 ? 0.68 : boss.stage === 2 ? 0.82 : 1;
   let pattern;
   if (type === "radial") {
-    pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: playerAngle, radius: 120, width: 12, life: 0.95, maxLife: 0.95, fired: false };
+    pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: playerAngle, radius: 120, width: 12, life: 0.95 * warningScale, maxLife: 0.95 * warningScale, fired: false };
   } else if (type === "sweep") {
-    pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: playerAngle - 0.9, startAngle: playerAngle - 0.9, endAngle: playerAngle + 1.05, radius: 980, width: 28, life: 1.1, maxLife: 1.1, activeLife: 1.25, fired: false, hit: false };
+    pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: playerAngle - 0.9, startAngle: playerAngle - 0.9, endAngle: playerAngle + 1.05, radius: 980, width: 28 + boss.stage * 3, life: 1.1 * warningScale, maxLife: 1.1 * warningScale, activeLife: Math.max(0.82, 1.32 - boss.stage * 0.14), dual: boss.stage >= 3, fired: false, hit: false };
   } else if (type === "bombs") {
     const targets = [];
-    const count = 4 + boss.stage;
+    const count = 4 + boss.stage * 2;
     for (let index = 0; index < count; index += 1) {
       const lead = index * 0.12;
       targets.push({
@@ -1516,9 +1595,9 @@ function beginBossPattern(state) {
         hit: false,
       });
     }
-    pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: playerAngle, radius: 65, width: 5, targets, life: 1.15, maxLife: 1.15, fired: false };
+    pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: playerAngle, radius: 65, width: 5, targets, life: 1.15 * warningScale, maxLife: 1.15 * warningScale, fired: false };
   } else if (type === "rings") {
-    pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: 0, radius: 70, width: 15, life: 1.05, maxLife: 1.05, rings: 2 + boss.stage, fired: false };
+    pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: 0, radius: 70, width: 15 + boss.stage * 2, life: 1.05 * warningScale, maxLife: 1.05 * warningScale, rings: 2 + boss.stage * 2, fired: false };
   } else {
     const multi = type === "multiCharge";
     const direction = normalize(state.player.x - boss.x, state.player.y - boss.y);
@@ -1539,8 +1618,8 @@ function beginBossPattern(state) {
       angle: Math.atan2(direction.y, direction.x),
       radius: boundary.distance,
       width: multi ? 40 : 46,
-      life: multi ? 0.66 : 0.72,
-      maxLife: multi ? 0.66 : 0.72,
+      life: (multi ? 0.66 : 0.72) * warningScale,
+      maxLife: (multi ? 0.66 : 0.72) * warningScale,
       activeLife: multi ? 0.34 : 0.52,
       chargeCount: multi ? 2 + boss.stage : 1,
       chargeIndex: 1,
@@ -1559,10 +1638,13 @@ function fireBossPattern(state, pattern) {
   pattern.fired = true;
   emit(state, "bossPatternFire", { pattern: pattern.type });
   if (pattern.type === "radial") {
-    const count = 20 + boss.stage * 6;
+    const count = 20 + boss.stage * 10;
     const offset = boss.patternIndex * 0.21;
-    for (let index = 0; index < count; index += 1) {
-      pushEnemyProjectile(state, boss.x, boss.y, offset + (index / count) * TAU, 225 + boss.stage * 28, 7 + boss.stage * 2, "boss", 7, 5.2);
+    const volleys = boss.stage;
+    for (let volley = 0; volley < volleys; volley += 1) {
+      for (let index = 0; index < count; index += 1) {
+        pushEnemyProjectile(state, boss.x, boss.y, offset + volley * 0.095 + (index / count) * TAU, 225 + boss.stage * 38 + volley * 28, 7 + boss.stage * 3, "bossRadial", 8, 5.2);
+      }
     }
     burst(state, boss.x, boss.y, "#ff3f60", 26, 260, 0.6, 6);
     boss.activePattern = null;
@@ -1583,8 +1665,8 @@ function fireBossPattern(state, pattern) {
     boss.activePattern = null;
   } else if (pattern.type === "rings") {
     pattern.phase = "active";
-    pattern.life = 2.15;
-    pattern.maxLife = 2.15;
+    pattern.life = Math.max(1.42, 2.38 - boss.stage * 0.28);
+    pattern.maxLife = pattern.life;
     pattern.startRadius = 76;
     pattern.radius = 76;
     pattern.hitRings = new Set();
@@ -1673,7 +1755,11 @@ function updateBossPattern(state, dt) {
     pattern.angle = pattern.startAngle + (pattern.endAngle - pattern.startAngle) * progress;
     const endX = boss.x + Math.cos(pattern.angle) * pattern.radius;
     const endY = boss.y + Math.sin(pattern.angle) * pattern.radius;
-    if (!pattern.hit && pointLineDistance(state.player.x, state.player.y, boss.x, boss.y, endX, endY) <= pattern.width + state.player.radius) {
+    const hitPrimary = pointLineDistance(state.player.x, state.player.y, boss.x, boss.y, endX, endY) <= pattern.width + state.player.radius;
+    const oppositeX = boss.x - Math.cos(pattern.angle) * pattern.radius;
+    const oppositeY = boss.y - Math.sin(pattern.angle) * pattern.radius;
+    const hitSecondary = pattern.dual && pointLineDistance(state.player.x, state.player.y, boss.x, boss.y, oppositeX, oppositeY) <= pattern.width + state.player.radius;
+    if (!pattern.hit && (hitPrimary || hitSecondary)) {
       if (damagePlayer(state, 24 + boss.stage * 4, "bossSweep")) pattern.hit = true;
     }
     if (pattern.life <= 0) {
@@ -1727,17 +1813,31 @@ function updateBossPattern(state, dt) {
       }
     }
   }
-  if (!boss.activePattern && boss.patternCooldown <= 0) boss.patternCooldown = Math.max(0.6, 2.1 - boss.stage * 0.28);
+  if (!boss.activePattern && boss.patternCooldown <= 0) boss.patternCooldown = Math.max(0.48, 1.92 - boss.stage * 0.4);
 }
 
 function updateBoss(state, dt) {
   const boss = state.boss;
   boss.hitFlash = Math.max(0, boss.hitFlash - dt);
   boss.contactCooldown = Math.max(0, boss.contactCooldown - dt);
+  boss.orbitHitCooldown = Math.max(0, boss.orbitHitCooldown - dt);
   boss.weakness = Math.max(0, boss.weakness - dt);
+  boss.phaseFlash = Math.max(0, boss.phaseFlash - dt * 0.72);
+  if (boss.transformTimer > 0) {
+    boss.transformTimer = Math.max(0, boss.transformTimer - dt);
+    boss.alertPulseTimer -= dt;
+    if (boss.alertPulses > 0 && boss.alertPulseTimer <= 0) {
+      boss.alertPulses -= 1;
+      boss.alertPulseTimer = 0.48;
+      boss.phaseFlash = 1;
+      state.flash = Math.max(state.flash, 0.52);
+      state.shake = Math.max(state.shake, 16);
+      emit(state, "bossStagePulse", { stage: boss.stage, remaining: boss.alertPulses });
+    }
+  }
   boss.damageMultiplier = boss.weakness > 0 ? 2 : 1;
   const charging = boss.activePattern?.type === "charge" || boss.activePattern?.type === "multiCharge";
-  if (!charging && boss.weakness <= 0) {
+  if (!charging && boss.weakness <= 0 && boss.transformTimer <= 0) {
     const desiredX = GAME_WIDTH * 0.76 + Math.sin(state.phaseTime * 0.43) * 125;
     const desiredY = GAME_HEIGHT * 0.5 + Math.sin(state.phaseTime * 0.71) * 190;
     boss.vx = (desiredX - boss.x) * 0.65;
@@ -1755,7 +1855,20 @@ function updateBoss(state, dt) {
     damagePlayer(state, 20, "bossContact");
     boss.contactCooldown = 0.9;
   }
-  updateBossPattern(state, dt);
+  if (boss.transformTimer <= 0) {
+    boss.rageBurstCooldown -= dt;
+    if (boss.stage >= 2 && boss.rageBurstCooldown <= 0 && !boss.activePattern) {
+      const count = boss.stage === 3 ? 20 : 12;
+      const offset = state.phaseTime * 0.65;
+      for (let index = 0; index < count; index += 1) {
+        pushEnemyProjectile(state, boss.x, boss.y, offset + (index / count) * TAU, 310 + boss.stage * 44, 10 + boss.stage * 3, "bossRage", 8, 4.2);
+      }
+      boss.rageBurstCooldown = boss.stage === 3 ? 3.1 : 4.7;
+      state.shake = Math.max(state.shake, 9);
+      emit(state, "bossRageBurst", { stage: boss.stage, count });
+    }
+    updateBossPattern(state, dt);
+  }
 }
 
 function updateEffects(state, dt) {
@@ -1803,6 +1916,7 @@ export function stepSwarm(state, input, dt) {
 
   updatePlayer(state, input, delta);
   if (input?.supportPressed) summonSupportSquad(state);
+  updateOverdrive(state, delta);
   updateAutoWeapons(state, delta);
   updateAllies(state, delta);
 
@@ -1817,6 +1931,7 @@ export function stepSwarm(state, input, dt) {
     updateSwarmSpawning(state, delta);
   } else if (state.phase === "boss") {
     updateBoss(state, delta);
+    updateOrbitWeapon(state, delta);
     updateSupportSkills(state, delta);
     updateProjectiles(state, delta);
     updateEnemyProjectiles(state, delta);
@@ -1870,6 +1985,9 @@ export function getSwarmHud(state) {
       dashMax: player.dashMax,
       dashInvulnerability: player.dashInvulnerability + state.build.skills.dash * 0.05,
       invulnerability: player.invulnerability,
+      overdriveTier: player.overdriveTier,
+      overdriveDamage: player.overdriveDamage,
+      overdriveHaste: player.overdriveHaste,
     },
     boss: state.boss.active ? {
       name: state.boss.name,
@@ -1879,6 +1997,9 @@ export function getSwarmHud(state) {
       pattern: state.boss.activePattern?.type ?? null,
       weakness: state.boss.weakness,
       damageMultiplier: state.boss.damageMultiplier,
+      enrage: state.boss.enrage,
+      transforming: state.boss.transformTimer > 0,
+      transformTimer: state.boss.transformTimer,
     } : null,
     rewards: {
       pending: state.levelupPending,

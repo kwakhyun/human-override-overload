@@ -52,6 +52,33 @@
 투명 PNG화했습니다. 런타임 사본은 표시 크기에 맞춘 premultiplied-alpha Lanczos PNG로
 최적화했으며 전체 해상도 원본은 `reference/source-assets/`에 보존합니다.
 
+### Three-form boss and combat VFX atlases
+
+- 생성일: 2026-08-09
+- 생성 도구: OpenAI 내장 ImageGen
+- 런타임 경로:
+  - `public/assets/survivor/bosses/wrong-engine-phase2.png`
+  - `public/assets/survivor/bosses/wrong-engine-phase3.png`
+  - `public/assets/survivor/vfx/boss-pattern-atlas.png`
+  - `public/assets/survivor/vfx/player-ordnance-atlas.png`
+- 크로마키 원본: 동일한 하위 구조의 `reference/source-assets/public/assets/survivor/` 경로
+- 후처리: 내장 ImageGen의 균일한 `#ff00ff` 또는 `#00ff00` 배경을 프로젝트 크로마키 제거
+  도구로 알파 PNG화한 뒤, 보스는 512×512, 보스 패턴은 768×512, 플레이어 병기는
+  768×768로 축소했습니다.
+- 최종 프롬프트 세트:
+
+  > Phase 2: preserve THE WRONG ENGINE's red central reactor, ivory armor, black mechanical frame and radial identity; unfold the outer armor into segmented blades, enlarge weapon pods, expose amber cooling vents and internal mechanisms; one centered top-down three-quarter game sprite on a perfectly flat magenta chroma-key background; no shadow, floor, text or watermark.
+
+  > Phase 3: evolve the same machine into a catastrophic overclocked form with three concentric white-hot reactor rings, retracted and fractured armor, longer weapon limbs, rail barrels, charge blades and molten red-orange energy veins; preserve the radial identity; one centered isolated sprite on flat magenta chroma key; no smoke, loose particles, shadow, text or watermark.
+
+  > Boss pattern atlas: exactly six isolated sprites in a 3×2 atlas—radial plasma saw orb, sweep laser blade, reactor bomb, segmented shock-ring shard, charge drill spear and triple multi-charge lance—in the boss's ivory/black/red industrial style; uniform green chroma key, no grid lines, text, shadow or extra objects.
+
+  > Player ordnance atlas: exactly nine isolated sprites in a 3×3 atlas—pulse bolt, scatter shard, rail lance, guided rocket, orbit blade, arc capacitor, zero-point nova reactor, airstrike missile and omega laser cannon—in the player's ivory/black/cyan style; uniform magenta chroma key, no grid lines, text, shadow or extra objects.
+
+보스 단계 이미지는 체력 70%와 38% 변환에 직접 연결됩니다. 두 아틀라스는 캔버스가 셀 좌표를
+잘라 투사체, 텔레그래프, 궤도 칼날, 공중 폭격, 노바와 오메가 레이저에 사용하며 외부 에셋은
+포함하지 않습니다.
+
 ## Original procedural sound
 
 - 외부 효과음 파일을 사용하지 않습니다.

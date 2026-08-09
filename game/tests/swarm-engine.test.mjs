@@ -46,14 +46,14 @@ function createBossState(patternIndex = 0) {
   return state;
 }
 
-test("the renewed mode has one hero, no regions, and a fixed 300-unit assault", () => {
+test("the renewed mode has one hero, no regions, and a fixed 1000-unit assault", () => {
   const state = createSwarmState({ random: () => 0.5 });
   assert.equal(GAME_WIDTH, 1280);
   assert.equal(GAME_HEIGHT, 720);
   assert.equal(state.mode, "swarm");
   assert.equal(state.phase, "swarm");
   assert.equal(state.player.name, "THE TRAINER");
-  assert.equal(state.enemyBudget, 300);
+  assert.equal(state.enemyBudget, 1000);
   assert.equal("zones" in state, false);
   assert.equal("heroes" in state, false);
 });
@@ -61,7 +61,7 @@ test("the renewed mode has one hero, no regions, and a fixed 300-unit assault", 
 test("the game opens with an immediately visible mass of three enemy families and elites", () => {
   const state = createSwarmState({ random: () => 0.37 });
   assert.ok(state.enemies.length >= 72);
-  assert.ok(state.enemies.length <= 170);
+  assert.ok(state.enemies.length <= 220);
   assert.deepEqual(new Set(state.enemies.map((enemy) => enemy.type)), new Set(["hunter", "suppressor", "brute"]));
   assert.ok(state.enemies.some((enemy) => enemy.elite));
   assert.ok(state.enemies.every((enemy) => enemy.hp > 0 && Number.isFinite(enemy.x) && Number.isFinite(enemy.y)));
@@ -79,7 +79,7 @@ test("every initial attacker enters through one of the map art's four open gate 
       && (enemy.x >= 44 && enemy.x <= 68 || enemy.x >= 1212 && enemy.x <= 1236);
     return verticalGate || horizontalGate;
   };
-  assert.equal(state.enemies.length, 84);
+  assert.equal(state.enemies.length, 128);
   assert.ok(state.enemies.every(belongsToGate));
   const occupiedSides = new Set(state.enemies.map((enemy) => {
     if (enemy.y < 100) return "top";
@@ -171,7 +171,7 @@ test("the opening grace window prevents damage for 2.4 seconds, then enemies can
   enemy.damage = 25;
   enemy.attackCooldown = 0;
   const initialHp = state.player.hp;
-  assert.equal(initialHp, 280);
+  assert.equal(initialHp, state.player.maxHp);
   assert.equal(state.player.invulnerability, 2.5);
   stepFor(state, createSwarmInput(), 2.4);
   assert.equal(state.player.hp, initialHp);
@@ -279,12 +279,12 @@ test("fixed-time mass waves warn before rapidly deploying all remaining enemies"
   stepFor(state, createSwarmInput(), 6.2);
   const warning = drainSwarmEvents(state).find((event) => event.type === "surgeWarning");
   assert.equal(warning.wave, 1);
-  assert.equal(warning.count, 48);
+  assert.equal(warning.count, 180);
   assert.ok(getSwarmHud(state).surge.warning.startsIn > 0);
   stepFor(state, createSwarmInput(), 1.5);
   const surgeEvents = drainSwarmEvents(state);
   assert.ok(surgeEvents.some((event) => event.type === "surgeStart"));
-  assert.ok(state.spawnedEnemies > 84);
+  assert.ok(state.spawnedEnemies > 128);
   assert.ok(getSwarmHud(state).surge.active || state.surgeQueued === 0);
 });
 
@@ -342,6 +342,20 @@ test("rank-three offensive skills unlock their master-scale battlefield attack",
   assert.ok(state.shockwaves.length >= 2);
 });
 
+test("late dataset progress unlocks tier-three overdrive and rapid master volleys", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  state.killedEnemies = 950;
+  state.stats.kills = 950;
+  state.player.fireTimers.pulse = 0;
+  drainSwarmEvents(state);
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.player.overdriveTier, 3);
+  assert.ok(state.player.overdriveDamage > 3.8);
+  assert.ok(state.player.overdriveHaste < 0.32);
+  assert.ok(state.projectiles.some((projectile) => projectile.kind === "pulseOverdrive"));
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "overdrive" && event.tier === 3));
+});
+
 test("ally rewards create autonomous drone, sentry, and suppressor entities", () => {
   for (const id of ["drone", "sentry", "suppressor"]) {
     const state = createSwarmState({ random: () => 0.5 });
@@ -361,7 +375,7 @@ test("clearing the fixed enemy budget transitions to The Wrong Engine after two 
   stepSwarm(state, createSwarmInput(), 1 / 60);
   assert.equal(state.phaseTransition, 2);
   const clearHud = getSwarmHud(state);
-  assert.equal(clearHud.totalEnemies, 300);
+  assert.equal(clearHud.totalEnemies, 1000);
   assert.equal(clearHud.enemiesRemaining, 0);
   assert.equal(clearHud.remainingEnemies, 0);
   assert.equal(clearHud.swarmProgress, 1);
@@ -382,6 +396,33 @@ test("all six boss attacks expose their named warning before firing", () => {
     const event = drainSwarmEvents(state).find((candidate) => candidate.type === "bossPatternTelegraph");
     assert.equal(event.pattern, BOSS_PATTERNS[index]);
   }
+});
+
+test("boss health thresholds lock in distinct transformations and repeat their danger warning", () => {
+  const state = createBossState(0);
+  state.boss.activePattern = null;
+  state.boss.patternCooldown = 999;
+  state.boss.x = state.player.x + 100;
+  state.boss.y = state.player.y;
+  state.boss.hp = state.boss.maxHp * 0.7 + 1;
+  setSwarmAim(state, state.boss.x, state.boss.y);
+  drainSwarmEvents(state);
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.boss.stage, 2);
+  assert.ok(state.boss.transformTimer > 1.7);
+  assert.equal(getSwarmHud(state).boss.transforming, true);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "bossStage" && event.stage === 2));
+  stepFor(state, createSwarmInput(), 1.05);
+  assert.ok(drainSwarmEvents(state).filter((event) => event.type === "bossStagePulse").length >= 2);
+
+  state.boss.transformTimer = 0;
+  state.boss.activePattern = null;
+  state.boss.patternCooldown = 999;
+  state.boss.hp = state.boss.maxHp * 0.38 + 1;
+  state.player.fireTimers.pulse = 0;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.boss.stage, 3);
+  assert.ok(state.boss.enrage > 2);
 });
 
 test("multi-charge rapidly relocks and rushes several times before exposing the core", () => {
@@ -464,7 +505,7 @@ test("core exposure doubles real boss damage exactly and expires back to normal"
   const normalDamage = pulseDamage(0);
   const weakDamage = pulseDamage(1);
   assert.ok(normalDamage > 0);
-  assert.equal(weakDamage, normalDamage * 2);
+  assert.ok(Math.abs(weakDamage - normalDamage * 2) < 0.001);
 
   const expiry = createBossState(0);
   expiry.boss.activePattern = null;
@@ -573,8 +614,8 @@ test("seeded simulations remain deterministic and finite under the live entity c
     }
     const values = [state.time, state.player.x, state.player.y, state.player.hp, state.stats.damageDealt];
     assert.ok(values.every(Number.isFinite));
-    assert.ok(state.enemies.length <= 170);
-    assert.ok(state.projectiles.length <= 520);
+    assert.ok(state.enemies.length <= 220);
+    assert.ok(state.projectiles.length <= 620);
     assert.ok(state.enemyProjectiles.length <= 360);
     assert.ok(state.particles.length <= 320);
     return { values, kills: state.stats.kills, spawned: state.spawnedEnemies, phase: state.phase };

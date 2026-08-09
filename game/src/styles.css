@@ -2297,9 +2297,31 @@ kbd {
 .xp-hud > b { color: #658087; font-size: 7px; font-weight: 400; text-align: right; }
 
 .banner-bossIntro,
-.banner-bossStage {
+.banner-bossStage,
+.banner-bossStagePulse {
   border-color: var(--red);
 }
+
+.banner-bossStage,
+.banner-bossStagePulse {
+  background: linear-gradient(90deg, transparent, rgba(62, 3, 10, 0.97) 14%, rgba(31, 2, 5, 0.98) 50%, rgba(62, 3, 10, 0.97) 86%, transparent);
+  animation: banner-in 170ms ease-out both, danger-pulse 360ms steps(2, end) infinite;
+}
+
+.banner-bossStage strong,
+.banner-bossStagePulse strong {
+  color: #fff3e4;
+  text-shadow: 0 0 18px #ff243f, 0 0 42px rgba(255, 104, 43, 0.78);
+}
+
+.banner-overdrive {
+  border-color: #73f7ff;
+  background: linear-gradient(90deg, transparent, rgba(2, 32, 39, 0.96) 16%, rgba(3, 16, 22, 0.98) 84%, transparent);
+  animation: banner-in 190ms ease-out both, danger-pulse 520ms steps(2, end) 3;
+}
+
+.banner-overdrive strong { color: #e8fdff; text-shadow: 0 0 30px rgba(74, 235, 255, 0.82); }
+.banner-overdrive span { color: #87cbd4; }
 
 .banner-swarmCleared {
   border-color: var(--cyan);
