@@ -5,7 +5,9 @@ import {
   createInputState,
   damageEnemy,
   fallZone,
+  getArenaGroups,
   purchaseShopItem,
+  returnToOverview,
   selectControlledZone,
   spawnEnemy,
   stepGame,
@@ -106,4 +108,82 @@ test("a fallen front redirects its enemies and raises invasion levels elsewhere"
   assert.equal(state.zones.slice(1).every((zone) => zone.invasionLevel === 1), true);
   assert.equal(invaders.every((enemy) => enemy.targetZoneId !== 0 && enemy.migrating), true);
   assert.equal(state.runStats.zonesLost, 1);
+});
+
+test("the battlefield converges from four arenas to two joined arenas and then one final arena", () => {
+  const state = createGameState({ random: () => 0.5 });
+  stopSpawns(state);
+  assert.deepEqual(getArenaGroups(state), [[0], [1], [2], [3]]);
+
+  state.time = 99.99;
+  stepGame(state, createInputState(), 0.02);
+  assert.equal(state.phaseLevel, 1);
+  assert.deepEqual(getArenaGroups(state), [[0, 2], [1, 3]]);
+
+  state.time = 209.99;
+  stepGame(state, createInputState(), 0.02);
+  assert.equal(state.phaseLevel, 2);
+  assert.deepEqual(getArenaGroups(state), [[0, 1, 2, 3]]);
+  assert.equal(state.finalBossSpawned, true);
+  assert.equal(state.enemies.some((enemy) => enemy.finalBoss), true);
+});
+
+test("manual squad movement trains every hero in the selected merged arena", () => {
+  const state = createGameState({ random: () => 0.5 });
+  stopSpawns(state);
+  state.time = 99.99;
+  stepGame(state, createInputState(), 0.02);
+  selectControlledZone(state, 0);
+  const input = createInputState();
+  input.right = true;
+  const starts = [state.heroes[0].x, state.heroes[2].x];
+  for (let frame = 0; frame < 90; frame += 1) stepGame(state, input, 1 / 60);
+  assert.ok(state.heroes[0].x > starts[0] + 15);
+  assert.ok(state.heroes[2].x > starts[1] + 15);
+  assert.ok(state.heroes[0].aiProfile.training > 0);
+  assert.ok(state.heroes[2].aiProfile.training > 0);
+});
+
+test("clearing a final boss pattern deals percentage damage and exposes the core", () => {
+  const state = createGameState({ random: () => 0.5 });
+  stopSpawns(state);
+  state.enemies = [];
+  state.time = 209.99;
+  stepGame(state, createInputState(), 0.02);
+  const boss = state.enemies.find((enemy) => enemy.finalBoss);
+  assert.ok(boss);
+  const initialHp = boss.hp;
+  for (let frame = 0; frame < 430 && state.runStats.patternsCleared === 0; frame += 1) {
+    stepGame(state, createInputState(), 1 / 60);
+  }
+  assert.equal(state.runStats.patternsCleared, 1);
+  assert.ok(boss.hp < initialHp - boss.maxHp * 0.06);
+  assert.ok(boss.weakness > 0);
+});
+
+test("autopilot safety override escapes a lethal final-boss telegraph", () => {
+  const state = createGameState({ random: () => 0.5 });
+  stopSpawns(state);
+  state.enemies = [];
+  state.time = 209.99;
+  stepGame(state, createInputState(), 0.02);
+  const boss = state.enemies.find((enemy) => enemy.finalBoss);
+  const hero = state.heroes[0];
+  hero.x = boss.x;
+  hero.y = boss.y - 120;
+  hero.vx = 0;
+  hero.vy = 0;
+  state.bossPattern = {
+    type: "crossfire",
+    stage: "telegraph",
+    timeLeft: 1,
+    total: 2,
+    markers: [],
+    angle: 0,
+  };
+  returnToOverview(state);
+  const startX = hero.x;
+  stepGame(state, createInputState(), 1 / 60);
+  assert.equal(hero.aiProfile.safetyOverride, true);
+  assert.ok(hero.x > startX);
 });

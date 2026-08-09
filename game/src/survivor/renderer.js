@@ -1,6 +1,47 @@
 import { GAME_HEIGHT, GAME_WIDTH, REGIONS } from "./data.js";
+import { getArenaBounds, getArenaGroups } from "./engine.js";
 
 const TAU = Math.PI * 2;
+const DEFAULT_QUALITY = { filters: true, shadows: true, scanlines: true };
+let activeQuality = DEFAULT_QUALITY;
+let groundLayer = null;
+let overlayLayer = null;
+let shadowTexture = null;
+
+function createLayer(width = GAME_WIDTH, height = GAME_HEIGHT) {
+  if (typeof document === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  return canvas;
+}
+
+function getShadowTexture() {
+  if (shadowTexture) return shadowTexture;
+  shadowTexture = createLayer(128, 64);
+  const ctx = shadowTexture?.getContext("2d");
+  if (!ctx) return null;
+  const gradient = ctx.createRadialGradient(64, 34, 2, 64, 34, 52);
+  gradient.addColorStop(0, "rgba(0,0,0,.7)");
+  gradient.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 128, 64);
+  return shadowTexture;
+}
+
+function pointIsVisible(state, x, y, padding = 90) {
+  if (state.phaseLevel !== 0 || !Number.isInteger(state.controlledZoneId)) return true;
+  const zone = state.zones[state.controlledZoneId];
+  return x >= zone.x - padding && x <= zone.x + zone.width + padding
+    && y >= zone.y - padding && y <= zone.y + zone.height + padding;
+}
+
+function entityIsVisible(state, entity) {
+  if (state.phaseLevel !== 0 || !Number.isInteger(state.controlledZoneId)) return true;
+  const zoneId = entity.zoneId ?? entity.targetZoneId ?? entity.ownerZoneId;
+  if (Number.isInteger(zoneId)) return zoneId === state.controlledZoneId;
+  return pointIsVisible(state, entity.x, entity.y);
+}
 
 function roundedRect(ctx, x, y, width, height, radius) {
   ctx.beginPath();
@@ -8,13 +49,13 @@ function roundedRect(ctx, x, y, width, height, radius) {
 }
 
 function drawShadow(ctx, x, y, radius, alpha = 0.34) {
-  const gradient = ctx.createRadialGradient(x, y + 3, 1, x, y + 3, radius);
-  gradient.addColorStop(0, `rgba(0,0,0,${alpha})`);
-  gradient.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.ellipse(x, y + 5, radius, radius * 0.42, 0, 0, TAU);
-  ctx.fill();
+  if (!activeQuality.shadows || alpha <= 0) return;
+  const texture = getShadowTexture();
+  if (!texture) return;
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, alpha / 0.7);
+  ctx.drawImage(texture, x - radius, y + 3 - radius * 0.45, radius * 2, radius * 0.9);
+  ctx.restore();
 }
 
 function drawSprite(ctx, image, entity, size, state, options = {}) {
@@ -28,8 +69,8 @@ function drawSprite(ctx, image, entity, size, state, options = {}) {
   ctx.rotate(entity.angle || 0);
   const squash = 1 + Math.sin(state.time * 15 + (options.seed || 0)) * motion * 0.018;
   ctx.scale(squash, 1 / squash);
-  if (options.filter) ctx.filter = options.filter;
-  if (entity.hitFlash > 0) ctx.filter = "brightness(2.8) saturate(.35)";
+  if (activeQuality.filters && options.filter) ctx.filter = options.filter;
+  if (activeQuality.filters && entity.hitFlash > 0) ctx.filter = "brightness(2.8) saturate(.35)";
   ctx.globalAlpha = options.alpha ?? 1;
   ctx.drawImage(image, -size / 2, -size / 2, size, size);
   ctx.restore();
@@ -135,6 +176,36 @@ function drawRegionGround(ctx, state, region) {
   ctx.restore();
 }
 
+function getGroundLayer(state) {
+  if (groundLayer) return groundLayer;
+  groundLayer = createLayer();
+  const ctx = groundLayer?.getContext("2d", { alpha: false });
+  if (!ctx) return null;
+  ctx.fillStyle = "#03070b";
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  const staticState = { ...state, time: 0 };
+  for (const region of REGIONS) drawRegionGround(ctx, staticState, region);
+  return groundLayer;
+}
+
+function getOverlayLayer() {
+  if (overlayLayer) return overlayLayer;
+  overlayLayer = createLayer();
+  const ctx = overlayLayer?.getContext("2d");
+  if (!ctx) return null;
+  const vignette = ctx.createRadialGradient(GAME_WIDTH / 2, GAME_HEIGHT / 2, 150, GAME_WIDTH / 2, GAME_HEIGHT / 2, 760);
+  vignette.addColorStop(0, "rgba(0,0,0,0)");
+  vignette.addColorStop(0.72, "rgba(0,0,0,.03)");
+  vignette.addColorStop(1, "rgba(0,0,0,.46)");
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  ctx.globalAlpha = 0.035;
+  ctx.fillStyle = "#a5f4ff";
+  for (let y = 0; y < GAME_HEIGHT; y += 4) ctx.fillRect(0, y, GAME_WIDTH, 1);
+  ctx.globalAlpha = 1;
+  return overlayLayer;
+}
+
 function drawHealthBar(ctx, entity, width, yOffset, color, options = {}) {
   const ratio = Math.max(0, Math.min(1, entity.hp / Math.max(1, entity.maxHp)));
   const x = entity.x - width / 2;
@@ -154,6 +225,7 @@ function drawHealthBar(ctx, entity, width, yOffset, color, options = {}) {
 
 function drawTowers(ctx, state, assets) {
   for (const tower of state.towers) {
+    if (!entityIsVisible(state, tower)) continue;
     const image = tower.kind === "sentry" ? assets?.sentry : assets?.emp;
     const size = tower.kind === "sentry" ? 47 : 50;
     drawSprite(ctx, image, tower, size, state, { seed: Number(tower.id.split("-").at(-1)), shadowAlpha: 0.45 });
@@ -168,7 +240,7 @@ function drawTowers(ctx, state, assets) {
 
 function drawDrones(ctx, state, assets) {
   for (const hero of state.heroes) {
-    if (hero.dead || !hero.upgrades.drone) continue;
+    if (hero.dead || !hero.upgrades.drone || !entityIsVisible(state, hero)) continue;
     const angle = state.time * (1.28 + hero.upgrades.drone * 0.08) + hero.zoneId * 1.7;
     const drone = {
       x: hero.x + Math.cos(angle) * 34,
@@ -182,14 +254,31 @@ function drawDrones(ctx, state, assets) {
 }
 
 function drawEnemies(ctx, state, assets) {
-  const sorted = [...state.enemies].sort((a, b) => a.y - b.y);
-  for (const enemy of sorted) {
-    let size = enemy.type === "raider" ? 42 : enemy.type === "shooter" ? 49 : 63;
+  for (const enemy of state.enemies) {
+    if (enemy.dead || !entityIsVisible(state, enemy)) continue;
+    let size = enemy.type === "raider" ? 48 : enemy.type === "shooter" ? 55 : 70;
     if (enemy.elite) size *= 1.12;
-    if (enemy.boss) size = 88;
+    if (enemy.boss) size = 98;
+    if (enemy.finalBoss) size = 210;
     const region = state.zones[enemy.originZoneId];
     const hue = [0, 42, 122, 215][enemy.originZoneId] || 0;
-    const filter = enemy.hitFlash > 0 ? "brightness(2.7)" : `hue-rotate(${hue}deg) saturate(1.12)`;
+    const filter = enemy.hitFlash > 0
+      ? "brightness(3.2) saturate(.45)"
+      : enemy.finalBoss
+        ? `drop-shadow(0 0 ${enemy.weakness > 0 ? 24 : 12}px ${enemy.weakness > 0 ? "#fff18a" : "#ff344f"})`
+        : `hue-rotate(${hue}deg) saturate(1.12)`;
+    if (enemy.finalBoss) {
+      const aura = ctx.createRadialGradient(enemy.x, enemy.y, 24, enemy.x, enemy.y, 142);
+      aura.addColorStop(0, enemy.weakness > 0 ? "rgba(255,240,114,.32)" : "rgba(255,42,65,.25)");
+      aura.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = aura;
+      ctx.fillRect(enemy.x - 150, enemy.y - 150, 300, 300);
+      ctx.strokeStyle = enemy.weakness > 0 ? "#fff18a" : "rgba(255,69,91,.55)";
+      ctx.lineWidth = enemy.weakness > 0 ? 5 : 2;
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, 91 + Math.sin(state.time * 4) * 4, 0, TAU);
+      ctx.stroke();
+    }
     drawSprite(ctx, assets?.[enemy.sprite], enemy, size, state, { seed: Number(enemy.id.split("-").at(-1)), filter });
     if (enemy.migrating) {
       ctx.strokeStyle = region.accent;
@@ -200,28 +289,35 @@ function drawEnemies(ctx, state, assets) {
       ctx.stroke();
       ctx.setLineDash([]);
     }
-    if (enemy.boss || enemy.elite || enemy.hp < enemy.maxHp) {
-      drawHealthBar(ctx, enemy, enemy.boss ? 70 : Math.max(26, enemy.radius * 2), enemy.boss ? 47 : enemy.radius + 15, enemy.boss ? "#ffd066" : "#ff596d");
+    if (!enemy.finalBoss && (enemy.boss || enemy.elite || enemy.hp < enemy.maxHp)) {
+      drawHealthBar(ctx, enemy, enemy.boss ? 76 : Math.max(31, enemy.radius * 2), enemy.boss ? 53 : enemy.radius + 18, enemy.boss ? "#ffd066" : "#ff596d");
     }
   }
 }
 
 function drawHeroes(ctx, state, assets) {
   for (const hero of state.heroes) {
-    if (hero.dead) continue;
-    if (hero.dashRemaining > 0) {
+    if (hero.dead || !entityIsVisible(state, hero)) continue;
+    if (hero.dashRemaining > 0 && activeQuality.shadows) {
       for (let index = 3; index >= 1; index -= 1) {
         drawSprite(ctx, assets?.[hero.sprite], {
           ...hero,
           x: hero.x - Math.cos(hero.angle) * index * 11,
           y: hero.y - Math.sin(hero.angle) * index * 11,
-        }, hero.radius > 20 ? 61 : 53, state, { alpha: 0.09 * (4 - index), shadowAlpha: 0 });
+        }, hero.radius > 20 ? 76 : 67, state, { alpha: 0.09 * (4 - index), shadowAlpha: 0 });
       }
     }
     const filter = hero.hitFlash > 0 ? "brightness(2.7)" : `drop-shadow(0 0 5px ${hero.color})`;
-    drawSprite(ctx, assets?.[hero.sprite], hero, hero.radius > 20 ? 63 : 54, state, { seed: hero.zoneId + 1, filter });
-    drawHealthBar(ctx, hero, hero.radius > 20 ? 56 : 48, hero.radius + 22, hero.color, { shield: hero.shield });
-    if (state.controlledZoneId === hero.zoneId) {
+    drawSprite(ctx, assets?.[hero.sprite], hero, hero.radius > 20 ? 78 : 68, state, { seed: hero.zoneId + 1, filter });
+    drawHealthBar(ctx, hero, hero.radius > 20 ? 68 : 60, hero.radius + 31, hero.color, { shield: hero.shield });
+    if (hero.combo >= 3) {
+      ctx.fillStyle = hero.combo >= 10 ? "#fff18a" : "#ffffff";
+      ctx.font = "800 13px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(`${hero.combo}x CHAIN`, hero.x, hero.y - hero.radius - 41);
+    }
+    const manualArena = Number.isInteger(state.controlledArenaId) && state.controlledArenaId === getArenaGroups(state).findIndex((group) => group.includes(hero.zoneId));
+    if (manualArena) {
       ctx.strokeStyle = hero.color;
       ctx.lineWidth = 1.7;
       ctx.beginPath();
@@ -234,9 +330,12 @@ function drawHeroes(ctx, state, assets) {
 function drawProjectiles(ctx, state) {
   ctx.lineCap = "round";
   for (const shot of state.projectiles) {
+    if (!entityIsVisible(state, shot)) continue;
     ctx.strokeStyle = shot.color;
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = shot.color;
+    if (activeQuality.filters) {
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = shot.color;
+    }
     ctx.lineWidth = shot.radius * 0.8 + 1;
     ctx.beginPath();
     ctx.moveTo(shot.x - shot.vx * 0.025, shot.y - shot.vy * 0.025);
@@ -244,9 +343,12 @@ function drawProjectiles(ctx, state) {
     ctx.stroke();
   }
   for (const shot of state.enemyShots) {
+    if (!pointIsVisible(state, shot.x, shot.y)) continue;
     ctx.strokeStyle = shot.color;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = shot.color;
+    if (activeQuality.filters) {
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = shot.color;
+    }
     ctx.lineWidth = shot.radius;
     ctx.beginPath();
     ctx.moveTo(shot.x - shot.vx * 0.04, shot.y - shot.vy * 0.04);
@@ -258,11 +360,14 @@ function drawProjectiles(ctx, state) {
 
 function drawBeams(ctx, state) {
   for (const beam of state.beams) {
+    if (!pointIsVisible(state, beam.x1, beam.y1) && !pointIsVisible(state, beam.x2, beam.y2)) continue;
     ctx.save();
     ctx.globalAlpha = Math.min(1, beam.life * 7);
     ctx.strokeStyle = beam.color;
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = beam.color;
+    if (activeQuality.filters) {
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = beam.color;
+    }
     ctx.lineWidth = beam.width;
     if (beam.ring) {
       const progress = 1 - beam.life / 0.4;
@@ -291,19 +396,23 @@ function drawBeams(ctx, state) {
 
 function drawEffects(ctx, state) {
   for (const particle of state.particles) {
+    if (!pointIsVisible(state, particle.x, particle.y, 24)) continue;
     ctx.globalAlpha = Math.max(0, particle.life / particle.maxLife);
     ctx.fillStyle = particle.color;
-    ctx.shadowBlur = 7;
-    ctx.shadowColor = particle.color;
+    if (activeQuality.filters) {
+      ctx.shadowBlur = 7;
+      ctx.shadowColor = particle.color;
+    }
     ctx.beginPath();
     ctx.arc(particle.x, particle.y, particle.size * particle.life / particle.maxLife, 0, TAU);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
-  ctx.font = "600 9px 'IBM Plex Mono', monospace";
+  ctx.font = "700 12px 'IBM Plex Mono', monospace";
   ctx.textAlign = "center";
   for (const text of state.texts) {
+    if (!pointIsVisible(state, text.x, text.y, 30)) continue;
     ctx.globalAlpha = Math.max(0, text.life / text.maxLife);
     ctx.fillStyle = text.color;
     ctx.fillText(text.text, text.x, text.y);
@@ -313,6 +422,7 @@ function drawEffects(ctx, state) {
 
 function drawZoneState(ctx, state, zone) {
   const hero = state.heroes[zone.id];
+  const labelY = zone.y === 0 ? zone.y + 66 : zone.y + 12;
   ctx.save();
   if (zone.status === "fallen") {
     ctx.fillStyle = "rgba(18,0,5,.68)";
@@ -334,63 +444,153 @@ function drawZoneState(ctx, state, zone) {
   } else {
     const pressureColor = zone.pressure > 0.72 ? "#ff5268" : zone.accent;
     ctx.fillStyle = "rgba(2,7,12,.74)";
-    roundedRect(ctx, zone.x + 12, zone.y + 12, 196, 32, 5);
+    roundedRect(ctx, zone.x + 12, labelY, 196, 32, 5);
     ctx.fill();
     ctx.fillStyle = pressureColor;
-    ctx.fillRect(zone.x + 12, zone.y + 12, 3, 32);
+    ctx.fillRect(zone.x + 12, labelY, 3, 32);
     ctx.textAlign = "left";
     ctx.fillStyle = "#edfaff";
     ctx.font = "700 11px 'IBM Plex Mono', monospace";
-    ctx.fillText(`${zone.code} / ${zone.name}`, zone.x + 24, zone.y + 27);
+    ctx.fillText(`${zone.code} / ${zone.name}`, zone.x + 24, labelY + 15);
     ctx.fillStyle = "rgba(216,238,244,.58)";
     ctx.font = "600 8px 'IBM Plex Mono', monospace";
-    ctx.fillText(`${hero.name} · ${state.controlledZoneId === zone.id ? "MANUAL CONTROL" : "AI AUTOPILOT"}`, zone.x + 24, zone.y + 38);
+    ctx.fillText(`${hero.name} · ${state.controlledZoneId === zone.id ? "MANUAL CONTROL" : "AI AUTOPILOT"}`, zone.x + 24, labelY + 26);
   }
   ctx.restore();
 }
 
+function drawArenaStates(ctx, state) {
+  if (state.phaseLevel === 0) {
+    for (const zone of state.zones) drawZoneState(ctx, state, zone);
+  }
+}
+
 function drawZoneDividers(ctx, state) {
   ctx.fillStyle = "#02060a";
-  ctx.fillRect(GAME_WIDTH / 2 - 5, 0, 10, GAME_HEIGHT);
-  ctx.fillRect(0, GAME_HEIGHT / 2 - 5, GAME_WIDTH, 10);
-  for (const zone of state.zones) {
-    ctx.strokeStyle = state.controlledZoneId === zone.id ? zone.accent : "rgba(139,213,228,.2)";
-    ctx.lineWidth = state.controlledZoneId === zone.id ? 3 : 1;
-    ctx.strokeRect(zone.x + 5, zone.y + 5, zone.width - 10, zone.height - 10);
+  if (state.phaseLevel <= 1) ctx.fillRect(GAME_WIDTH / 2 - 5, 0, 10, GAME_HEIGHT);
+  if (state.phaseLevel === 0) ctx.fillRect(0, GAME_HEIGHT / 2 - 5, GAME_WIDTH, 10);
+  getArenaGroups(state).forEach((members, arenaId) => {
+    const bounds = getArenaBounds(state, arenaId);
+    const accent = REGIONS[members[0]].accent;
+    ctx.strokeStyle = state.controlledArenaId === arenaId ? accent : "rgba(139,213,228,.22)";
+    ctx.lineWidth = state.controlledArenaId === arenaId ? 3 : 1;
+    ctx.strokeRect(bounds.x + 5, bounds.y + 5, bounds.width - 10, bounds.height - 10);
+  });
+  if (state.phaseLevel === 0) {
+    ctx.fillStyle = "#0a1720";
+    ctx.beginPath();
+    ctx.arc(GAME_WIDTH / 2, GAME_HEIGHT / 2, 22, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = state.invasionFlash > 0 ? "#ff536a" : "#5eeaff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(GAME_WIDTH / 2, GAME_HEIGHT / 2, 14 + Math.sin(state.time * 4) * 2, 0, TAU);
+    ctx.stroke();
   }
-  ctx.fillStyle = "#0a1720";
-  ctx.beginPath();
-  ctx.arc(GAME_WIDTH / 2, GAME_HEIGHT / 2, 22, 0, TAU);
+}
+
+function drawBossPattern(ctx, state) {
+  const pattern = state.bossPattern;
+  const boss = state.enemies.find((enemy) => enemy.finalBoss && !enemy.dead);
+  if (!pattern || !boss || pattern.stage !== "telegraph") return;
+  const urgency = 1 - pattern.timeLeft / pattern.total;
+  const alpha = 0.12 + urgency * 0.24 + Math.sin(state.time * 18) * 0.04;
+  ctx.save();
+  ctx.fillStyle = `rgba(255,48,73,${alpha})`;
+  ctx.strokeStyle = `rgba(255,96,117,${0.48 + urgency * 0.45})`;
+  ctx.lineWidth = 3 + urgency * 4;
+  ctx.setLineDash([13, 9]);
+  if (pattern.type === "crossfire") {
+    ctx.fillRect(0, boss.y - 62, GAME_WIDTH, 124);
+    ctx.fillRect(boss.x - 62, 0, 124, GAME_HEIGHT);
+    ctx.strokeRect(0, boss.y - 62, GAME_WIDTH, 124);
+    ctx.strokeRect(boss.x - 62, 0, 124, GAME_HEIGHT);
+  } else if (pattern.type === "deadZone") {
+    ctx.beginPath();
+    ctx.arc(boss.x, boss.y, 292, 0, TAU);
+    ctx.arc(boss.x, boss.y, 132, 0, TAU, true);
+    ctx.fill("evenodd");
+    ctx.beginPath();
+    ctx.arc(boss.x, boss.y, 292, 0, TAU);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(boss.x, boss.y, 132, 0, TAU);
+    ctx.stroke();
+  } else if (pattern.type === "bombardment") {
+    for (const marker of pattern.markers) {
+      ctx.beginPath();
+      ctx.arc(marker.x, marker.y, 78 * (0.65 + urgency * 0.35), 0, TAU);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(marker.x - 16, marker.y);
+      ctx.lineTo(marker.x + 16, marker.y);
+      ctx.moveTo(marker.x, marker.y - 16);
+      ctx.lineTo(marker.x, marker.y + 16);
+      ctx.stroke();
+    }
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(boss.x, boss.y);
+    ctx.arc(boss.x, boss.y, 760, pattern.angle - 0.48, pattern.angle + 0.48);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawFocusMask(ctx, state) {
+  if (state.phaseLevel !== 1 || !Number.isInteger(state.controlledArenaId)) return;
+  const otherBounds = getArenaBounds(state, state.controlledArenaId === 0 ? 1 : 0);
+  ctx.fillStyle = "rgba(0,2,5,.42)";
+  ctx.fillRect(otherBounds.x, otherBounds.y, otherBounds.width, otherBounds.height);
+}
+
+function drawBossHud(ctx, state) {
+  const boss = state.enemies.find((enemy) => enemy.finalBoss && !enemy.dead);
+  if (!boss) return;
+  const ratio = Math.max(0, boss.hp / boss.maxHp);
+  ctx.save();
+  const width = 620;
+  const x = (GAME_WIDTH - width) / 2;
+  const y = 74;
+  ctx.fillStyle = "rgba(3,5,9,.94)";
+  roundedRect(ctx, x - 18, y - 12, width + 36, 53, 7);
   ctx.fill();
-  ctx.strokeStyle = state.invasionFlash > 0 ? "#ff536a" : "#5eeaff";
+  ctx.strokeStyle = boss.weakness > 0 ? "#fff18a" : "rgba(255,80,104,.64)";
   ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(GAME_WIDTH / 2, GAME_HEIGHT / 2, 14 + Math.sin(state.time * 4) * 2, 0, TAU);
   ctx.stroke();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "800 15px 'IBM Plex Mono', monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("THE WRONG ENGINE", x, y + 4);
+  ctx.textAlign = "right";
+  ctx.fillStyle = boss.weakness > 0 ? "#fff18a" : "#ff7287";
+  ctx.fillText(boss.weakness > 0 ? `CORE EXPOSED ${boss.weakness.toFixed(1)}s` : `${Math.ceil(boss.hp).toLocaleString()} HP`, x + width, y + 4);
+  ctx.fillStyle = "rgba(255,255,255,.09)";
+  ctx.fillRect(x, y + 14, width, 12);
+  ctx.fillStyle = boss.weakness > 0 ? "#fff18a" : "#ff405d";
+  ctx.fillRect(x, y + 14, width * ratio, 12);
+  ctx.restore();
 }
 
 function drawVignette(ctx, state) {
-  const vignette = ctx.createRadialGradient(GAME_WIDTH / 2, GAME_HEIGHT / 2, 150, GAME_WIDTH / 2, GAME_HEIGHT / 2, 760);
-  vignette.addColorStop(0, "rgba(0,0,0,0)");
-  vignette.addColorStop(0.72, "rgba(0,0,0,.03)");
-  vignette.addColorStop(1, "rgba(0,0,0,.46)");
-  ctx.fillStyle = vignette;
-  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  const overlay = getOverlayLayer();
+  if (overlay) ctx.drawImage(overlay, 0, 0);
   if (state.dangerPulse > 0) {
     ctx.fillStyle = `rgba(255,35,65,${state.dangerPulse * 0.1})`;
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
   }
-  ctx.globalAlpha = 0.035;
-  ctx.fillStyle = "#a5f4ff";
-  for (let y = 0; y < GAME_HEIGHT; y += 4) ctx.fillRect(0, y, GAME_WIDTH, 1);
-  ctx.globalAlpha = 1;
 }
 
-export function renderGame(ctx, state, assets) {
+export function renderGame(ctx, state, assets, quality = DEFAULT_QUALITY) {
   if (!ctx || !state) return;
+  activeQuality = quality || DEFAULT_QUALITY;
   ctx.save();
   ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-  const focused = Number.isInteger(state.controlledZoneId);
+  const focused = Number.isInteger(state.controlledZoneId) && state.phaseLevel === 0;
   if (focused) {
     const zone = state.zones[state.controlledZoneId];
     ctx.scale(2, 2);
@@ -398,16 +598,25 @@ export function renderGame(ctx, state, assets) {
   }
   const shake = state.shake > 0 ? state.shake * 3 : 0;
   ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
-  for (const region of REGIONS) drawRegionGround(ctx, state, region);
+  const background = getGroundLayer(state);
+  if (background) ctx.drawImage(background, 0, 0);
+  else for (const region of REGIONS) drawRegionGround(ctx, state, region);
   drawTowers(ctx, state, assets);
   drawBeams(ctx, state);
+  drawBossPattern(ctx, state);
   drawEnemies(ctx, state, assets);
   drawDrones(ctx, state, assets);
   drawHeroes(ctx, state, assets);
   drawProjectiles(ctx, state);
   drawEffects(ctx, state);
-  for (const zone of state.zones) drawZoneState(ctx, state, zone);
+  drawFocusMask(ctx, state);
+  if (!focused) drawArenaStates(ctx, state);
   if (!focused) drawZoneDividers(ctx, state);
   ctx.restore();
-  drawVignette(ctx, state);
+  if (activeQuality.scanlines) drawVignette(ctx, state);
+  else if (state.dangerPulse > 0) {
+    ctx.fillStyle = `rgba(255,35,65,${state.dangerPulse * 0.1})`;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  }
+  drawBossHud(ctx, state);
 }

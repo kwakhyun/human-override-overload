@@ -1,100 +1,122 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowCounterClockwise,
+  ArrowDown,
   ArrowLeft,
+  ArrowRight,
+  ArrowUp,
   Brain,
-  Broadcast,
-  CaretRight,
-  Check,
-  Coins,
   Crosshair,
-  Drone,
-  FirstAid,
-  Heartbeat,
   Lightning,
-  Pause,
   Play,
-  ShieldCheck,
+  Pulse,
   ShieldChevron,
-  ShoppingCart,
   SpeakerHigh,
   SpeakerSlash,
-  Strategy,
+  Sparkle,
+  Target,
   Timer,
   Trophy,
-  UsersThree,
   Warning,
-  WaveSine,
 } from "@phosphor-icons/react";
 import { createSfxEngine } from "./audio/sfx.js";
 import {
+  chooseLevelReward,
   clearPressedInput,
-  createGameState,
-  createInputState,
-  drainEvents,
-  purchaseShopItem,
-  returnToOverview,
-  selectControlledZone,
-  stepGame,
-} from "./survivor/engine.js";
-import {
-  formatTime,
+  createSwarmInput,
+  createSwarmState,
+  drainSwarmEvents,
   GAME_HEIGHT,
   GAME_WIDTH,
-  getShopItemCost,
-  SHOP_ITEMS,
-} from "./survivor/data.js";
-import { renderGame } from "./survivor/renderer.js";
+  getSwarmHud,
+  setSwarmAim,
+  stepSwarm,
+} from "./swarm/engine.js";
+import { renderSwarm } from "./swarm/renderer.js";
+import { advanceRenderClock, createPerformanceGovernor } from "./swarm/performance.js";
 
-const ICONS = {
-  Broadcast,
-  Crosshair,
-  Drone,
-  FirstAid,
-  Heartbeat,
-  Lightning,
-  ShieldCheck,
-  ShieldChevron,
-  UsersThree,
-  WaveSine,
-};
-
-const EVENT_SOUNDS = {
-  playerShot: "shoot",
-  enemyShot: "enemyShot",
-  enemyHit: "enemyHit",
-  enemyKilled: "kill",
-  goldEarned: "collect",
-  playerHit: "playerHit",
-  dash: "dash",
-  purchase: "upgrade",
-  purchaseDenied: "denied",
-  build: "build",
-  buildDenied: "denied",
-  towerShot: "towerShot",
-  empPulse: "emp",
-  arc: "arc",
-  zoneFall: "counter",
-  invasion: "boss",
-  bossSpawn: "boss",
-  focus: "reward",
-  victory: "victory",
-  defeat: "capture",
-};
-
-const ASSET_PATHS = {
+const ASSET_PATHS = Object.freeze({
+  map: "./assets/survivor/swarm-arena.png",
   player: "./assets/survivor/player.png",
   hunter: "./assets/survivor/hunter.png",
   suppressor: "./assets/survivor/suppressor.png",
   brute: "./assets/survivor/brute.png",
+  boss: "./assets/survivor/bosses/wrong-engine.png",
   sentry: "./assets/survivor/skills/sentry.png",
   emp: "./assets/survivor/skills/emp-pylon.png",
   drone: "./assets/survivor/skills/wingman-drone.png",
-};
+});
+
+const EVENT_SOUNDS = Object.freeze({
+  swarmStart: "enemyAlert",
+  shot: "shoot",
+  enemyKilled: "kill",
+  levelUp: "analysis",
+  rewardChosen: "upgrade",
+  dash: "dash",
+  playerHit: "playerHit",
+  swarmCleared: "merge",
+  bossIntro: "boss",
+  bossPatternTelegraph: "bossTelegraph",
+  bossPatternFire: "rail",
+  bossStage: "bossBreak",
+  bossWeakness: "core",
+  bossChargeHit: "patternFail",
+  win: "bossDeath",
+  loss: "capture",
+});
+
+const EVENT_BANNERS = Object.freeze({
+  swarmStart: ["MASS INCURSION", "전방위 게이트에서 적 300기가 투입됩니다."],
+  swarmCleared: ["DATASET PURGED", "남은 경험치를 흡수합니다. 보스 신호 감지."],
+  bossIntro: ["THE WRONG ENGINE", "공격 경고선을 읽고 빈틈을 만들어내세요."],
+  bossStage: ["PATTERN EVOLVED", "보스 공격 조합이 더 빨라집니다."],
+  bossWeakness: ["CORE EXPOSED · ×2", "돌진을 벽에 꽂았습니다. 지금 모든 화력을 집중하세요."],
+});
+
+const CATEGORY_META = Object.freeze({
+  weapon: { label: "NEW WEAPON", korean: "무기", color: "cyan" },
+  skill: { label: "CORE SKILL", korean: "기술", color: "amber" },
+  ally: { label: "COMBAT ALLY", korean: "동료", color: "violet" },
+});
+
+const BUILD_LABELS = Object.freeze({
+  pulse: "PULSE",
+  scatter: "SCATTER",
+  rail: "RAIL",
+  rocket: "ROCKET",
+  orbit: "ORBIT",
+  damage: "POWER",
+  fireRate: "CLOCK",
+  multishot: "FORK",
+  shield: "AEGIS",
+  dash: "PHASE",
+  regen: "REPAIR",
+  drone: "DRONE",
+  sentry: "SENTRY",
+  suppressor: "WISP",
+});
+
+const REWARD_COPY = Object.freeze({
+  scatter: "근거리 부채꼴 탄막으로 밀집한 적을 한 번에 찢습니다.",
+  rail: "한 줄의 적을 끝까지 관통하는 고출력 레일 탄을 발사합니다.",
+  rocket: "밀집 지점에 광역 폭발을 일으키는 유도 로켓을 추가합니다.",
+  orbit: "플레이어 주위를 회전하며 접근한 적을 절단합니다.",
+  damage: "모든 무기와 동료가 주는 피해가 25% 증가합니다.",
+  fireRate: "전체 무기의 공격 주기가 19% 빨라집니다.",
+  multishot: "기본 펄스 사격에 추가 투사체 한 발을 결합합니다.",
+  shield: "피격 후 다시 충전되는 40의 보호막을 획득합니다.",
+  dash: "대시 재사용 시간이 줄고 무적 시간이 길어집니다.",
+  regen: "손상된 체력을 전투 중 지속적으로 복구합니다.",
+  drone: "가까운 적을 자율 추적하는 기동형 전투 드론입니다.",
+  sentry: "현재 위치에 고속 연사 센트리를 설치합니다.",
+  suppressor: "밀집한 적을 감속시키고 연쇄 충격을 가하는 동료입니다.",
+});
 
 function loadImage(source) {
   return new Promise((resolve, reject) => {
     const image = new Image();
+    image.decoding = "async";
     image.onload = () => resolve(image);
     image.onerror = reject;
     image.src = source;
@@ -102,430 +124,549 @@ function loadImage(source) {
 }
 
 function useGameAssets() {
-  const [assets, setAssets] = useState(null);
-  const [error, setError] = useState(false);
+  const [state, setState] = useState({ assets: null, error: false });
   useEffect(() => {
     let cancelled = false;
     Promise.all(Object.entries(ASSET_PATHS).map(async ([key, source]) => [key, await loadImage(source)]))
       .then((entries) => {
-        if (!cancelled) setAssets(Object.fromEntries(entries));
+        if (!cancelled) setState({ assets: Object.fromEntries(entries), error: false });
       })
       .catch(() => {
-        if (!cancelled) setError(true);
+        if (!cancelled) setState({ assets: null, error: true });
       });
     return () => {
       cancelled = true;
     };
   }, []);
-  return { assets, error };
+  return state;
 }
 
-function buildHud(state) {
-  const zones = state.zones.map((zone) => {
-    const hero = state.heroes[zone.id];
-    const threats = state.enemies.filter((enemy) => !enemy.dead && enemy.targetZoneId === zone.id).length;
-    return {
-      id: zone.id,
-      code: zone.code,
-      name: zone.name,
-      korean: zone.korean,
-      accent: zone.accent,
-      status: zone.status,
-      pressure: zone.pressure,
-      invasionLevel: zone.invasionLevel,
-      threats,
-      hero: {
-        name: hero.name,
-        role: hero.role,
-        hp: hero.hp,
-        maxHp: hero.maxHp,
-        shield: hero.shield,
-        kills: hero.kills,
-        dead: hero.dead,
-        color: hero.color,
-        upgrades: { ...hero.upgrades },
-        damage: hero.stats.damage,
-        fireInterval: hero.stats.fireInterval,
-        regen: hero.stats.regen,
-        sentryCooldown: hero.sentryCooldown,
-        empCooldown: hero.empCooldown,
-        dashCooldown: hero.dashCooldown,
-      },
-    };
-  });
-  const selected = Number.isInteger(state.controlledZoneId) ? zones[state.controlledZoneId] : null;
-  return {
-    status: state.status,
-    time: state.time,
-    timeLeft: state.timeLeft,
-    wave: state.wave,
-    gold: state.gold,
-    controlledZoneId: state.controlledZoneId,
-    zones,
-    selected,
-    alive: zones.filter((zone) => zone.status === "active").length,
-    enemies: state.enemies.length,
-    runStats: { ...state.runStats },
-    invasionFlash: state.invasionFlash,
-  };
+function formatTime(seconds) {
+  const safe = Math.max(0, Math.floor(Number(seconds) || 0));
+  return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
 }
 
-function IntroScreen({ assetsReady, assetError, onStart }) {
-  const sectors = [
-    ["01", "CRYO RELAY", "AEGIS / 돌격"],
-    ["02", "EMBER FORGE", "ROOK / 화력"],
-    ["03", "NEON ARCHIVE", "NYX / 전격"],
-    ["04", "VERDANT VAULT", "MOSS / 생존"],
-  ];
+function isTerminal(game) {
+  return game?.status === "victory" || game?.status === "defeat"
+    || game?.phase === "victory" || game?.phase === "defeat";
+}
+
+function createHudSnapshot(game, performance) {
+  return { ...getSwarmHud(game), quality: performance };
+}
+
+function IntroScreen({ assets, assetError, onStart }) {
   return (
-    <main className="intro-shell">
-      <div className="intro-grid" aria-hidden="true">
-        {sectors.map(([number], index) => <i key={number} className={`sector-light sector-${index + 1}`} />)}
-      </div>
-      <section className="intro-copy" aria-labelledby="game-title">
-        <div className="eyebrow"><span /> MULTI-FRONT SURVIVAL COMMAND</div>
-        <h1 id="game-title">TRAIN ME <em>WRONG</em></h1>
-        <p className="intro-lead">
-          네 전선, 네 영웅, 하나의 자금망.<br />
-          <b>한 곳은 직접 지휘하고 나머지는 AI에게 맡기세요.</b>
-        </p>
-        <div className="sector-preview" aria-label="방어 구역 목록">
-          {sectors.map(([number, name, hero], index) => (
-            <article key={name} style={{ "--sector": index }}>
-              <span>{number}</span>
-              <div><strong>{name}</strong><small>{hero}</small></div>
-            </article>
-          ))}
+    <main className="overload-intro">
+      <div className="ambient-grid" aria-hidden="true" />
+      <header className="intro-header">
+        <div className="brand-lockup">
+          <span className="brand-mark"><Crosshair weight="bold" /></span>
+          <span><b>NULL LABS</b><small>OVERLOAD SURVIVAL DIVISION</small></span>
         </div>
-        <div className="intro-actions">
-          <button type="button" className="primary-cta" onClick={onStart} disabled={!assetsReady}>
-            <Play weight="fill" />
-            {assetError ? "에셋 로딩 실패" : assetsReady ? "4개 전선 가동" : "전술 자산 로딩 중"}
+        <div className="build-chip"><i /> NAN 2026 PLAYABLE BUILD</div>
+      </header>
+
+      <section className="overload-hero" aria-labelledby="game-title">
+        <div className="overload-copy">
+          <div className="eyebrow"><span /> ONE PILOT · 300 HOSTILES · ONE FINAL ENGINE</div>
+          <h1 id="game-title">TRAIN ME <em>WRONG</em><small>OVERLOAD</small></h1>
+          <p className="overload-deck">
+            사격은 멈추지 않습니다. <strong>당신은 조준과 생존에만 집중하세요.</strong><br />
+            적의 경험치를 흡수해 무기·기술·동료를 진화시키고 최종 보스를 무너뜨리세요.
+          </p>
+
+          <div className="overload-loop" aria-label="핵심 플레이 루프">
+            <article><span>01</span><Crosshair weight="bold" /><div><b>AIM</b><small>포인터로 탄막을 지휘</small></div></article>
+            <article><span>02</span><Sparkle weight="fill" /><div><b>EVOLVE</b><small>3지선다로 빌드 완성</small></div></article>
+            <article><span>03</span><Warning weight="fill" /><div><b>BREAK</b><small>패턴을 피해 보스 처치</small></div></article>
+          </div>
+
+          <button className="primary-cta" type="button" onClick={onStart} disabled={!assets && !assetError}>
+            <span>{assets || assetError ? "오버로드 시작" : "전투 에셋 로딩 중"}</span>
+            {assets || assetError ? <Play weight="fill" /> : <i className="loading-ring" />}
           </button>
-          <div className="run-spec"><Timer weight="duotone" /><span><strong>05:00</strong> SHARED GOLD RUN</span></div>
+          {assetError && <p className="asset-warning"><Warning /> 일부 이미지 대신 안전 렌더링을 사용합니다.</p>}
+
+          <div className="control-legend overload-controls">
+            <span><kbd>WASD</kbd> 이동</span>
+            <span><kbd>SPACE</kbd> 대시</span>
+            <span><kbd>MOUSE</kbd> 조준</span>
+            <strong><Pulse weight="fill" /> AUTO FIRE</strong>
+          </div>
         </div>
-        <div className="control-primer">
-          <span><kbd>1–4</kbd> 전선 선택</span>
-          <span><kbd>WASD</kbd> 직접 이동</span>
-          <span><kbd>SPACE</kbd> 대시</span>
-          <span><kbd>Q / E</kbd> 설치 스킬</span>
-          <span><kbd>TAB</kbd> 전체 상황판</span>
-          <span><kbd>B</kbd> 전술 상점</span>
+
+        <div className="overload-visual" aria-hidden="true">
+          {assets?.map && <img className="overload-map" src={assets.map.src} alt="" draggable="false" />}
+          <div className="arena-scan" />
+          {assets?.player && <img className="overload-player" src={assets.player.src} alt="" draggable="false" />}
+          {assets?.hunter && Array.from({ length: 7 }, (_, index) => (
+            <img className={`overload-enemy enemy-${index + 1}`} src={assets.hunter.src} alt="" draggable="false" key={index} />
+          ))}
+          {assets?.boss && <img className="overload-boss" src={assets.boss.src} alt="" draggable="false" />}
+          <div className="threat-counter"><small>HOSTILE DATASET</small><strong>300</strong><span>UNITS LOCKED</span></div>
+          <div className="auto-fire-tag"><i /> CONTINUOUS FIRE ONLINE</div>
         </div>
       </section>
-      <aside className="intro-doctrine">
-        <Brain weight="fill" />
-        <span>COMMAND DOCTRINE</span>
-        <p>한 전선이 무너지면 그곳의 적은 멈추지 않습니다. 살아남은 구역으로 이동해 침공 레벨을 높입니다.</p>
-      </aside>
+
+      <footer className="intro-footer">
+        <span>PROJECT-ORIGINAL ART · PROCEDURAL WEB AUDIO · BROWSER-LOCAL SIMULATION</span>
+        <span>BUILD 1.0 / OVERLOAD REBOOT</span>
+      </footer>
     </main>
   );
 }
 
-function ZoneCard({ zone, selected, onSelect }) {
-  const hp = Math.max(0, zone.hero.hp / Math.max(1, zone.hero.maxHp) * 100);
-  const pressure = Math.round(zone.pressure * 100);
+function ProgressHud({ hud }) {
+  const bossPhase = hud?.phase === "boss" && hud?.boss;
+  const weakness = Math.max(0, Number(bossPhase?.weakness) || 0);
+  const bossRatio = bossPhase ? Math.max(0, Math.min(1, hud.boss.hp / Math.max(1, hud.boss.maxHp))) : 0;
+  const swarmRatio = Math.max(0, Math.min(1, Number(hud?.swarmProgress) || 0));
   return (
-    <button
-      type="button"
-      className={`zone-card ${selected ? "selected" : ""} ${zone.status === "fallen" ? "fallen" : ""}`}
-      style={{ "--zone-accent": zone.accent }}
-      onClick={() => zone.status === "active" && onSelect(zone.id)}
-      disabled={zone.status === "fallen"}
-      aria-label={`${zone.korean} ${zone.status === "fallen" ? "함락" : "선택"}`}
-    >
-      <span className="zone-index">0{zone.id + 1}</span>
-      <div className="zone-card-main">
-        <strong>{zone.name}</strong>
-        <small>{zone.status === "fallen" ? "SECTOR BREACHED" : `${zone.hero.name} · ${selected ? "MANUAL" : "AI"}`}</small>
-        <div className="micro-bars">
-          <i><b style={{ width: `${hp}%` }} /></i>
-          <i className="pressure"><b style={{ width: `${pressure}%` }} /></i>
-        </div>
+    <div className={bossPhase ? `progress-hud is-boss${weakness > 0 ? " has-weakness" : ""}` : "progress-hud"}>
+      <div className="progress-heading">
+        <span>{bossPhase ? `PHASE ${hud.boss.stage || 1}` : "SWARM PURGE"}</span>
+        <strong>{bossPhase ? hud.boss.name || "THE WRONG ENGINE" : "HOSTILE DATASET"}</strong>
+        <b>{bossPhase ? (weakness > 0 ? `×${hud.boss.damageMultiplier || 2} CORE` : `${Math.ceil(hud.boss.hp)} HP`) : `${hud?.enemiesRemaining ?? 300} LEFT`}</b>
       </div>
-      <div className="zone-threat">
-        <small>HOSTILES</small>
-        <b>{String(zone.threats).padStart(2, "0")}</b>
+      <div className="progress-bar"><i style={{ width: `${(bossPhase ? bossRatio : swarmRatio) * 100}%` }} /><span /></div>
+      <div className="progress-meta">
+        <span>{bossPhase ? (hud.boss.pattern ? `PATTERN · ${String(hud.boss.pattern).toUpperCase()}` : "SCANNING NEXT PATTERN") : `${hud?.kills || 0} / ${hud?.totalEnemies || 300} PURGED`}</span>
+        <span>{bossPhase ? (weakness > 0 ? `CORE EXPOSED ${weakness.toFixed(1)}s` : "DODGE TELEGRAPHS") : `${hud?.liveEnemies || 0} ACTIVE`}</span>
       </div>
-      {zone.invasionLevel > 0 && zone.status === "active" ? <em>INVASION +{zone.invasionLevel}</em> : null}
-    </button>
-  );
-}
-
-function CommandHud({ hud, audioEnabled, shopOpen, onToggleAudio, onSelectZone, onOverview, onToggleShop }) {
-  const focused = hud.selected;
-  return (
-    <>
-      <header className="command-header">
-        <div className="command-brand"><Brain weight="fill" /><span>TRAIN ME <b>WRONG</b></span></div>
-        <div className="shared-gold"><Coins weight="fill" /><div><small>SHARED WAR CHEST</small><strong>{Math.floor(hud.gold).toLocaleString()} G</strong></div></div>
-        <div className="front-status"><small>FRONTS ONLINE</small><strong>{hud.alive}<i>/4</i></strong><span>{hud.enemies} HOSTILES</span></div>
-        <div className="wave-status"><small>ASSAULT WAVE</small><strong>{String(hud.wave).padStart(2, "0")}</strong></div>
-        <div className="run-timer"><Timer weight="duotone" /><div><small>EXTRACTION IN</small><strong>{formatTime(hud.timeLeft)}</strong></div></div>
-        <button type="button" className="icon-button" onClick={onToggleAudio} aria-label={audioEnabled ? "효과음 끄기" : "효과음 켜기"}>
-          {audioEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash weight="fill" />}
-        </button>
-      </header>
-
-      <nav className="zone-deck" aria-label="전선 선택">
-        {hud.zones.map((zone) => (
-          <ZoneCard key={zone.id} zone={zone} selected={hud.controlledZoneId === zone.id} onSelect={onSelectZone} />
-        ))}
-      </nav>
-
-      <div className="view-actions">
-        {focused ? (
-          <button type="button" onClick={onOverview}><ArrowLeft /> 전체 전선 <kbd>TAB</kbd></button>
-        ) : (
-          <div className="overview-callout"><Strategy weight="duotone" /><span>전선을 클릭하거나 <kbd>1–4</kbd>를 눌러 직접 지휘</span></div>
-        )}
-        <button type="button" className={`shop-toggle ${shopOpen ? "active" : ""}`} onClick={onToggleShop} disabled={!focused}>
-          <ShoppingCart weight="duotone" /> 전술 상점 <kbd>B</kbd>
-        </button>
-      </div>
-
-      {focused ? <HeroReadout zone={focused} /> : null}
-      {hud.invasionFlash > 0 ? (
-        <div className="invasion-banner"><Warning weight="fill" /><div><span>FRONT COLLAPSED</span><strong>적 병력이 생존 구역으로 침공합니다</strong></div></div>
-      ) : null}
-    </>
-  );
-}
-
-function HeroReadout({ zone }) {
-  const hero = zone.hero;
-  const hp = Math.max(0, hero.hp / Math.max(1, hero.maxHp) * 100);
-  return (
-    <aside className="hero-readout" style={{ "--zone-accent": zone.accent }}>
-      <header><span>MANUAL LINK / 0{zone.id + 1}</span><i>LIVE</i></header>
-      <div className="hero-name"><small>{hero.role}</small><strong>{hero.name}</strong><em>{zone.korean}</em></div>
-      <div className="hero-health"><span>INTEGRITY</span><strong>{Math.ceil(hero.hp)} / {hero.maxHp}</strong><i><b style={{ width: `${hp}%` }} /></i></div>
-      {hero.shield > 0 ? <div className="shield-line"><ShieldCheck weight="fill" /> BARRIER {Math.ceil(hero.shield)}</div> : null}
-      <dl>
-        <div><dt>DMG</dt><dd>{Math.round(hero.damage)}</dd></div>
-        <div><dt>RATE</dt><dd>{(1 / hero.fireInterval).toFixed(1)}/s</dd></div>
-        <div><dt>REGEN</dt><dd>{hero.regen.toFixed(1)}</dd></div>
-        <div><dt>KILLS</dt><dd>{hero.kills}</dd></div>
-      </dl>
-      <footer>
-        <span className={!hero.upgrades.sentry ? "locked" : ""}><kbd>Q</kbd> SENTRY {hero.upgrades.sentry ? `LV.${hero.upgrades.sentry}` : "LOCK"}</span>
-        <span className={!hero.upgrades.emp ? "locked" : ""}><kbd>E</kbd> EMP {hero.upgrades.emp ? `LV.${hero.upgrades.emp}` : "LOCK"}</span>
-      </footer>
-    </aside>
-  );
-}
-
-function ShopDrawer({ hud, onBuy, onClose }) {
-  const zone = hud.selected;
-  if (!zone) return null;
-  return (
-    <div className="shop-backdrop">
-      <aside className="shop-drawer" style={{ "--zone-accent": zone.accent }} aria-label="전술 상점">
-        <header>
-          <div><span>PAUSED / SHARED ECONOMY</span><h2><ShoppingCart weight="duotone" /> 전술 상점</h2><p>{zone.hero.name} · {zone.korean} 강화</p></div>
-          <button type="button" onClick={onClose} aria-label="상점 닫기"><CaretRight /></button>
-        </header>
-        <div className="shop-wallet"><Coins weight="fill" /><span>공유 골드</span><strong>{Math.floor(hud.gold)} G</strong></div>
-        <div className="shop-list">
-          {SHOP_ITEMS.map((item) => {
-            const level = zone.hero.upgrades[item.id] || 0;
-            const cost = getShopItemCost(item, level);
-            const maxed = !item.consumable && level >= item.max;
-            const unavailable = maxed || hud.gold < cost || (item.id === "medkit" && zone.hero.hp >= zone.hero.maxHp);
-            const Icon = ICONS[item.icon] || Crosshair;
-            return (
-              <button type="button" key={item.id} onClick={() => onBuy(item.id)} disabled={unavailable}>
-                <Icon weight="duotone" />
-                <div><span>{item.tag}</span><strong>{item.korean}</strong><small>{item.description}</small></div>
-                <i>{maxed ? <Check weight="bold" /> : `${cost} G`}</i>
-                {!item.consumable ? <em>LV.{level}/{item.max}</em> : null}
-              </button>
-            );
-          })}
-        </div>
-        <footer><Pause weight="fill" /> 상점이 열린 동안 모든 전선은 일시 정지됩니다.</footer>
-      </aside>
     </div>
   );
 }
 
-function ResultScreen({ result, onRestart }) {
-  const victory = result.status === "victory";
-  const alive = result.heroes.filter((hero) => !hero.dead).length;
+function PilotHud({ hud }) {
+  const player = hud?.player || { hp: 1, maxHp: 1, shield: 0, shieldMax: 0, dashCooldown: 0, dashMax: 1 };
+  const hpRatio = Math.max(0, Math.min(1, player.hp / Math.max(1, player.maxHp)));
+  const shieldRatio = Math.max(0, Math.min(1, player.shield / Math.max(1, player.shieldMax || 1)));
+  const dashReady = Number(player.dashCooldown || 0) <= 0;
   return (
-    <main className={`result-shell ${victory ? "victory" : "defeat"}`}>
-      <div className="result-grid-bg" aria-hidden="true" />
-      <section className="result-card">
-        <div className="result-emblem">{victory ? <Trophy weight="duotone" /> : <Warning weight="duotone" />}</div>
-        <div className="eyebrow"><span /> {victory ? "EXTRACTION WINDOW SECURED" : "ALL DEFENSE FRONTS LOST"}</div>
-        <h1>{victory ? "FOUR FRONTS. ONE COMMAND." : "THE INVASION CASCADED"}</h1>
-        <p>{victory ? "공유 골드와 전선 전환으로 적의 연쇄 침공을 견뎠습니다." : "첫 함락 이후 병력 이동을 막지 못했습니다. 다음 작전에서는 위험 전선을 더 일찍 강화하세요."}</p>
-        <div className="result-stats">
-          <div><span>FRONTS SAVED</span><strong>{alive} / 4</strong></div>
-          <div><span>ELIMINATIONS</span><strong>{result.runStats.kills}</strong></div>
-          <div><span>GOLD EARNED</span><strong>{result.runStats.goldEarned}</strong></div>
-          <div><span>INVASIONS</span><strong>{result.runStats.invasions}</strong></div>
+    <aside className="overload-pilot glass-panel">
+      <div className="pilot-identity"><Crosshair weight="bold" /><span><small>THE TRAINER</small><b>AEGIS / LV.{hud?.level || 1}</b></span></div>
+      <div className="pilot-bar"><i style={{ width: `${hpRatio * 100}%` }} /></div>
+      {player.shieldMax > 0 && <div className="shield-bar"><i style={{ width: `${shieldRatio * 100}%` }} /></div>}
+      <div className="pilot-meta"><span>HP {Math.ceil(Math.max(0, player.hp))}</span><b className={dashReady ? "is-ready" : ""}>DASH {dashReady ? "READY" : `${Number(player.dashCooldown).toFixed(1)}s`}</b></div>
+    </aside>
+  );
+}
+
+function BuildHud({ build }) {
+  const groups = [
+    ["WPN", build?.weapons, "weapon"],
+    ["SKL", build?.skills, "skill"],
+    ["ALLY", build?.allies, "ally"],
+  ];
+  return (
+    <aside className="build-hud glass-panel" aria-label="현재 빌드">
+      <div className="panel-heading"><span><Brain weight="fill" /> ACTIVE BUILD</span><i className="live-dot">LIVE</i></div>
+      {groups.map(([label, values, category]) => {
+        const active = Object.entries(values || {}).filter(([, level]) => Number(level) > 0);
+        return (
+          <div className="build-row" key={label}>
+            <small>{label}</small>
+            <div>{active.length ? active.map(([id, level]) => (
+              <span className={`build-chip-small is-${category}`} key={id}>{BUILD_LABELS[id] || id}<b>+{level}</b></span>
+            )) : <i>EMPTY</i>}</div>
+          </div>
+        );
+      })}
+    </aside>
+  );
+}
+
+function RewardArtwork({ option, assets }) {
+  const id = String(option?.id || "");
+  const source = id.includes("drone") ? assets?.drone
+    : id.includes("sentry") ? assets?.sentry
+      : id.includes("suppress") ? assets?.emp
+        : null;
+  if (source) return <img src={source.src} alt="" />;
+  if (option?.category === "weapon") return <Target weight="fill" />;
+  if (id.includes("shield") || id.includes("regen")) return <ShieldChevron weight="fill" />;
+  return <Lightning weight="fill" />;
+}
+
+function LevelUpOverlay({ offer, level, assets, onChoose }) {
+  const firstOptionRef = useRef(null);
+  const modalRef = useRef(null);
+  const offerKey = offer?.map((option) => option.id).join("|") || "";
+  useEffect(() => {
+    if (!offerKey) return undefined;
+    const previouslyFocused = document.activeElement;
+    const frame = requestAnimationFrame(() => firstOptionRef.current?.focus());
+    const trapFocus = (event) => {
+      if (event.key !== "Tab") return;
+      const buttons = modalRef.current?.querySelectorAll("button:not([disabled])");
+      if (!buttons?.length) return;
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", trapFocus);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", trapFocus);
+      previouslyFocused?.focus?.();
+    };
+  }, [offerKey]);
+  if (!offer?.length) return null;
+  return (
+    <div className="reward-backdrop" role="dialog" aria-modal="true" aria-labelledby="reward-title">
+      <section className="reward-modal" ref={modalRef}>
+        <div className="reward-kicker"><Sparkle weight="fill" /> NEURAL LOADOUT EVOLUTION · LV.{level}</div>
+        <h2 id="reward-title">CHOOSE YOUR OVERLOAD</h2>
+        <p>전투는 일시 정지되었습니다. 무기·기술·동료 중 하나를 즉시 설치하세요.</p>
+        <div className="reward-options">
+          {offer.map((option, index) => {
+            const meta = CATEGORY_META[option.category] || CATEGORY_META.skill;
+            return (
+              <button ref={index === 0 ? firstOptionRef : null} className={`reward-card is-${meta.color}`} key={option.id} type="button" onClick={() => onChoose(option.id)}>
+                <span className="reward-index">0{index + 1}</span>
+                <div className="reward-art"><RewardArtwork option={option} assets={assets} /></div>
+                <small>{meta.label} · {meta.korean}</small>
+                <strong>{option.name}</strong>
+                <p>{REWARD_COPY[option.id] || option.description}</p>
+                <div><span>{option.level ? `RANK ${option.level} → ${option.nextLevel || option.level + 1}` : "INSTALL NEW"}</span><b>SELECT <ArrowRight /></b></div>
+              </button>
+            );
+          })}
         </div>
-        <button type="button" className="primary-cta" onClick={onRestart}><ArrowCounterClockwise weight="bold" /> 새 작전 시작</button>
+        <span className="reward-note">클릭 또는 숫자키 1–3으로 선택</span>
       </section>
+    </div>
+  );
+}
+
+function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
+  const canvasRef = useRef(null);
+  const gameRef = useRef(null);
+  const inputRef = useRef(null);
+  const governorRef = useRef(null);
+  const finishReportedRef = useRef(false);
+  const [hud, setHud] = useState(null);
+  const [banner, setBanner] = useState(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return undefined;
+    const context = canvas.getContext("2d", { alpha: false, desynchronized: true });
+    const game = createSwarmState({ duration: 150 });
+    const debugScene = import.meta.env.DEV ? new URLSearchParams(window.location.search).get("scene") : null;
+    if (debugScene === "boss" || debugScene === "weakness") {
+      game.enemies.length = 0;
+      game.spawnedEnemies = game.enemyBudget;
+      game.killedEnemies = game.enemyBudget;
+      game.stats.kills = game.enemyBudget;
+      game.phaseTransition = 0.01;
+      if (debugScene === "weakness") {
+        game.boss.patternIndex = 4;
+        game.player.invulnerability = 15;
+      }
+    }
+    const input = createSwarmInput();
+    const governor = createPerformanceGovernor({ environment: window });
+    const reducedMotion = Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+    gameRef.current = game;
+    inputRef.current = input;
+    governorRef.current = governor;
+    finishReportedRef.current = false;
+
+    let animationFrame = 0;
+    let lastTime = performance.now();
+    let simulationAccumulator = 0;
+    let renderAccumulator = 0;
+    let hudAccumulator = 0;
+    let bannerTimeout = 0;
+    let cachedQualityId = "";
+    let cachedRenderQuality = null;
+    let lastRewardPending = false;
+    let stopped = false;
+    const fixedStep = 1 / 60;
+
+    const syncCanvas = () => {
+      const preset = governor.preset;
+      const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, preset.dprCap || 1));
+      const bounds = canvas.getBoundingClientRect();
+      const width = Math.max(1, Math.round(bounds.width * dpr));
+      const height = Math.max(1, Math.round(bounds.height * dpr));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+    };
+
+    const refreshHud = () => setHud(createHudSnapshot(game, governor.snapshot));
+
+    const showBanner = (event) => {
+      const copy = EVENT_BANNERS[event.type];
+      if (!copy) return;
+      window.clearTimeout(bannerTimeout);
+      setBanner({ key: `${event.type}-${game.time}`, type: event.type, title: copy[0], subtitle: copy[1] });
+      bannerTimeout = window.setTimeout(() => setBanner(null), event.type === "bossIntro" ? 1900 : 1250);
+    };
+
+    const consumeEvents = () => {
+      for (const event of drainSwarmEvents(game) || []) {
+        const sound = EVENT_SOUNDS[event.type];
+        if (sound) sfx.play(sound);
+        showBanner(event);
+      }
+    };
+
+    const render = () => {
+      syncCanvas();
+      context.setTransform(canvas.width / GAME_WIDTH, 0, 0, canvas.height / GAME_HEIGHT, 0, 0);
+      const preset = governor.preset;
+      if (cachedQualityId !== preset.id) {
+        cachedQualityId = preset.id;
+        cachedRenderQuality = reducedMotion
+          ? { ...preset, reducedMotion: true, shadows: false, scanlines: false, detailScale: 0.55 }
+          : { ...preset, detailScale: preset.id === "performance" ? 0.5 : preset.id === "balanced" ? 0.75 : 1 };
+      }
+      renderSwarm(context, game, assets || {}, cachedRenderQuality);
+    };
+
+    const frame = (now) => {
+      if (stopped) return;
+      const frameMs = Math.min(50, Math.max(0, now - lastTime));
+      lastTime = now;
+      const qualityChanged = governor.sample(frameMs, now);
+      simulationAccumulator = Math.min(simulationAccumulator + frameMs / 1000, fixedStep * 4);
+
+      if (!game.levelupPending && !isTerminal(game)) {
+        let steps = 0;
+        while (simulationAccumulator >= fixedStep && steps < 4) {
+          stepSwarm(game, input, fixedStep);
+          clearPressedInput(input);
+          simulationAccumulator -= fixedStep;
+          steps += 1;
+        }
+      } else {
+        simulationAccumulator = 0;
+      }
+
+      consumeEvents();
+      hudAccumulator += frameMs;
+      const rewardStateChanged = game.levelupPending !== lastRewardPending;
+      if (rewardStateChanged || (!game.levelupPending && (hudAccumulator >= (governor.preset.hudInterval || 150) || qualityChanged))) {
+        hudAccumulator = 0;
+        lastRewardPending = game.levelupPending;
+        refreshHud();
+      }
+
+      const renderClock = advanceRenderClock(renderAccumulator, frameMs, governor.preset.renderFps, qualityChanged);
+      renderAccumulator = renderClock.accumulator;
+      if (renderClock.shouldRender) render();
+
+      if (isTerminal(game) && !finishReportedRef.current) {
+        finishReportedRef.current = true;
+        refreshHud();
+        window.setTimeout(() => {
+          if (!stopped) onFinish(createHudSnapshot(game, governor.snapshot));
+        }, 1200);
+      }
+      animationFrame = requestAnimationFrame(frame);
+    };
+
+    const setKey = (event, value) => {
+      const key = event.key.toLowerCase();
+      const interactiveTarget = event.target instanceof HTMLElement
+        && Boolean(event.target.closest("button, a, input, select, textarea, [role='button']"));
+      if (key === " " && interactiveTarget) return;
+      if (["w", "arrowup", "s", "arrowdown", "a", "arrowleft", "d", "arrowright", " ", "1", "2", "3"].includes(key)) event.preventDefault();
+      if (key === "w" || key === "arrowup") input.up = value;
+      if (key === "s" || key === "arrowdown") input.down = value;
+      if (key === "a" || key === "arrowleft") input.left = value;
+      if (key === "d" || key === "arrowright") input.right = value;
+      if (key === " " && value && !event.repeat) input.dashPressed = true;
+      const reward = game.rewardOptions?.[Number(key) - 1];
+      if (value && !event.repeat && /^[1-3]$/.test(key) && game.levelupPending && reward) {
+        chooseLevelReward(game, reward.id);
+        refreshHud();
+      }
+    };
+
+    const onKeyDown = (event) => setKey(event, true);
+    const onKeyUp = (event) => setKey(event, false);
+    const onBlur = () => {
+      input.up = false;
+      input.down = false;
+      input.left = false;
+      input.right = false;
+      input.dashPressed = false;
+    };
+    const updatePointer = (event) => {
+      const bounds = canvas.getBoundingClientRect();
+      setSwarmAim(
+        game,
+        (event.clientX - bounds.left) * GAME_WIDTH / Math.max(1, bounds.width),
+        (event.clientY - bounds.top) * GAME_HEIGHT / Math.max(1, bounds.height),
+      );
+    };
+    const onPointerMove = (event) => updatePointer(event);
+    const onPointerDown = (event) => {
+      updatePointer(event);
+      canvas.setPointerCapture?.(event.pointerId);
+    };
+    const onPointerUp = (event) => canvas.releasePointerCapture?.(event.pointerId);
+    const onContextMenu = (event) => event.preventDefault();
+
+    window.addEventListener("keydown", onKeyDown, { passive: false });
+    window.addEventListener("keyup", onKeyUp, { passive: false });
+    window.addEventListener("blur", onBlur);
+    canvas.addEventListener("pointermove", onPointerMove);
+    canvas.addEventListener("pointerdown", onPointerDown);
+    canvas.addEventListener("pointerup", onPointerUp);
+    canvas.addEventListener("pointercancel", onPointerUp);
+    canvas.addEventListener("contextmenu", onContextMenu);
+
+    refreshHud();
+    render();
+    animationFrame = requestAnimationFrame(frame);
+
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(animationFrame);
+      window.clearTimeout(bannerTimeout);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+      canvas.removeEventListener("pointermove", onPointerMove);
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointerup", onPointerUp);
+      canvas.removeEventListener("pointercancel", onPointerUp);
+      canvas.removeEventListener("contextmenu", onContextMenu);
+    };
+  }, [assets, onFinish, sfx]);
+
+  const selectReward = useCallback((id) => {
+    const game = gameRef.current;
+    if (!game?.levelupPending || !chooseLevelReward(game, id)) return;
+    setHud(createHudSnapshot(game, governorRef.current.snapshot));
+  }, []);
+
+  const setTouchDirection = useCallback((direction, active, event) => {
+    event?.preventDefault();
+    const input = inputRef.current;
+    if (!input || !(direction in input)) return;
+    input[direction] = active;
+    if (active) event?.currentTarget?.setPointerCapture?.(event.pointerId);
+    else event?.currentTarget?.releasePointerCapture?.(event.pointerId);
+  }, []);
+
+  const touchDash = useCallback((event) => {
+    event?.preventDefault();
+    if (inputRef.current) inputRef.current.dashPressed = true;
+  }, []);
+
+  const xpRatio = Math.max(0, Math.min(1, Number(hud?.xp || 0) / Math.max(1, Number(hud?.nextXp || 1))));
+
+  return (
+    <main className="overload-game">
+      <header className="overload-topbar">
+        <div className="game-brand"><Crosshair weight="bold" /><span><b>TRAIN ME WRONG</b><small>OVERLOAD</small></span></div>
+        <ProgressHud hud={hud} />
+        <div className="topbar-tools">
+          <span className="timer-readout"><Timer weight="bold" /> {formatTime(hud?.time || 0)}</span>
+          <button type="button" className="icon-button" onClick={onToggleSound} aria-label={soundEnabled ? "효과음 끄기" : "효과음 켜기"}>
+            {soundEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}
+          </button>
+        </div>
+      </header>
+
+      <section className="overload-arena-layout">
+        <div className="overload-canvas-frame">
+          <canvas ref={canvasRef} className="game-canvas" tabIndex="0" aria-label="TRAIN ME WRONG 오버로드 생존 전장" />
+          <div className="frame-corners" aria-hidden="true"><i /><i /><i /><i /></div>
+          {banner && (
+            <div key={banner.key} className={`combat-banner banner-${banner.type}`} aria-live="assertive">
+              <small>SYSTEM EVENT</small><strong>{banner.title}</strong><span>{banner.subtitle}</span>
+            </div>
+          )}
+          <div className="arena-status top-left"><i /> CHAMBER OMEGA · AUTO FIRE</div>
+          <div className="arena-status top-right">{hud?.quality?.qualityLabel || "CALIBRATING"} · {hud?.quality?.fps || 60} FPS</div>
+          <PilotHud hud={hud} />
+          <BuildHud build={hud?.build} />
+          <div className="combat-help"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> DASH</span><span><kbd>MOUSE</kbd> AIM</span><b><Pulse weight="fill" /> AUTO FIRE</b></div>
+          <div className="xp-hud"><span>LV.{hud?.level || 1}</span><div><i style={{ width: `${xpRatio * 100}%` }} /></div><b>{Math.floor(hud?.xp || 0)} / {Math.floor(hud?.nextXp || 0)} XP</b></div>
+        </div>
+
+        <div className="touch-controls" aria-label="터치 전투 조작">
+          <div className="touch-dpad">
+            <button className="touch-up" type="button" aria-label="위로 이동" onPointerDown={(event) => setTouchDirection("up", true, event)} onPointerUp={(event) => setTouchDirection("up", false, event)} onPointerCancel={(event) => setTouchDirection("up", false, event)}><ArrowUp weight="bold" /></button>
+            <button className="touch-left" type="button" aria-label="왼쪽으로 이동" onPointerDown={(event) => setTouchDirection("left", true, event)} onPointerUp={(event) => setTouchDirection("left", false, event)} onPointerCancel={(event) => setTouchDirection("left", false, event)}><ArrowLeft weight="bold" /></button>
+            <button className="touch-down" type="button" aria-label="아래로 이동" onPointerDown={(event) => setTouchDirection("down", true, event)} onPointerUp={(event) => setTouchDirection("down", false, event)} onPointerCancel={(event) => setTouchDirection("down", false, event)}><ArrowDown weight="bold" /></button>
+            <button className="touch-right" type="button" aria-label="오른쪽으로 이동" onPointerDown={(event) => setTouchDirection("right", true, event)} onPointerUp={(event) => setTouchDirection("right", false, event)} onPointerCancel={(event) => setTouchDirection("right", false, event)}><ArrowRight weight="bold" /></button>
+          </div>
+          <span>전장을 터치해 조준 · 사격은 자동</span>
+          <button className="touch-dash" type="button" aria-label="대시" onPointerDown={touchDash}><Lightning weight="fill" /> DASH</button>
+        </div>
+      </section>
+
+      <LevelUpOverlay offer={hud?.rewards?.options} level={hud?.level || 1} assets={assets} onChoose={selectReward} />
     </main>
   );
 }
 
-function GameScreen({ assets, audioEnabled, onToggleAudio, onFinish }) {
-  const canvasRef = useRef(null);
-  const gameRef = useRef(createGameState());
-  const inputRef = useRef(createInputState());
-  const shopOpenRef = useRef(false);
-  const sfxRef = useRef(null);
-  const [hud, setHud] = useState(() => buildHud(gameRef.current));
-  const [shopOpen, setShopOpen] = useState(false);
-
-  if (!sfxRef.current) sfxRef.current = createSfxEngine();
-  sfxRef.current.setEnabled(audioEnabled);
-
-  const syncHud = useCallback(() => setHud(buildHud(gameRef.current)), []);
-  const closeShop = useCallback(() => {
-    shopOpenRef.current = false;
-    gameRef.current.paused = false;
-    setShopOpen(false);
-  }, []);
-  const toggleShop = useCallback(() => {
-    if (!Number.isInteger(gameRef.current.controlledZoneId)) return;
-    const next = !shopOpenRef.current;
-    shopOpenRef.current = next;
-    gameRef.current.paused = next;
-    setShopOpen(next);
-  }, []);
-  const focusZone = useCallback((zoneId) => {
-    closeShop();
-    if (selectControlledZone(gameRef.current, zoneId)) syncHud();
-  }, [closeShop, syncHud]);
-  const overview = useCallback(() => {
-    closeShop();
-    returnToOverview(gameRef.current);
-    syncHud();
-  }, [closeShop, syncHud]);
-
-  useEffect(() => {
-    const input = inputRef.current;
-    const handleKey = (event, down) => {
-      const handled = ["KeyW", "KeyA", "KeyS", "KeyD", "Space", "KeyQ", "KeyE", "KeyB", "Tab", "Escape", "Digit1", "Digit2", "Digit3", "Digit4"].includes(event.code);
-      if (handled) event.preventDefault();
-      if (event.code === "KeyW" || event.code === "ArrowUp") input.up = down;
-      if (event.code === "KeyS" || event.code === "ArrowDown") input.down = down;
-      if (event.code === "KeyA" || event.code === "ArrowLeft") input.left = down;
-      if (event.code === "KeyD" || event.code === "ArrowRight") input.right = down;
-      if (!down || event.repeat) return;
-      if (event.code === "Space") input.dashPressed = true;
-      if (event.code === "KeyQ") input.deploySentryPressed = true;
-      if (event.code === "KeyE") input.deployEmpPressed = true;
-      if (event.code === "KeyB") toggleShop();
-      if (event.code === "Tab" || event.code === "Escape") overview();
-      if (/Digit[1-4]/.test(event.code)) focusZone(Number(event.code.at(-1)) - 1);
-    };
-    const down = (event) => handleKey(event, true);
-    const up = (event) => handleKey(event, false);
-    window.addEventListener("keydown", down, { passive: false });
-    window.addEventListener("keyup", up, { passive: false });
-    return () => {
-      window.removeEventListener("keydown", down);
-      window.removeEventListener("keyup", up);
-    };
-  }, [focusZone, overview, toggleShop]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const pixelRatio = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = Math.round(GAME_WIDTH * pixelRatio);
-    canvas.height = Math.round(GAME_HEIGHT * pixelRatio);
-    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    let frame = 0;
-    let last = performance.now();
-    let lastHud = 0;
-    let finishTimer = null;
-    sfxRef.current.start();
-    sfxRef.current.play("start");
-
-    const loop = (now) => {
-      const state = gameRef.current;
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      stepGame(state, inputRef.current, dt);
-      clearPressedInput(inputRef.current);
-      for (const event of drainEvents(state)) {
-        const sound = EVENT_SOUNDS[event.type];
-        if (sound && !(event.type === "enemyHit" && Math.random() > 0.28) && !(event.type === "enemyKilled" && Math.random() > 0.42)) sfxRef.current.play(sound);
-        if ((event.type === "victory" || event.type === "defeat") && !finishTimer) {
-          finishTimer = window.setTimeout(() => onFinish(state), 900);
-        }
-      }
-      renderGame(ctx, state, assets);
-      if (now - lastHud > 90) {
-        setHud(buildHud(state));
-        lastHud = now;
-      }
-      frame = requestAnimationFrame(loop);
-    };
-    frame = requestAnimationFrame(loop);
-    return () => {
-      cancelAnimationFrame(frame);
-      if (finishTimer) window.clearTimeout(finishTimer);
-    };
-  }, [assets, onFinish]);
-
-  const handleCanvasPointer = (event) => {
-    if (Number.isInteger(gameRef.current.controlledZoneId)) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width * GAME_WIDTH;
-    const y = (event.clientY - rect.top) / rect.height * GAME_HEIGHT;
-    const zoneId = (x >= GAME_WIDTH / 2 ? 1 : 0) + (y >= GAME_HEIGHT / 2 ? 2 : 0);
-    focusZone(zoneId);
-  };
-
-  const buy = (itemId) => {
-    purchaseShopItem(gameRef.current, itemId);
-    syncHud();
-  };
-
+function ResultScreen({ result, assets, onRestart }) {
+  const victory = result?.status === "victory" || result?.phase === "victory";
+  const accuracy = result?.stats?.shots ? Math.round((result.stats.hits || 0) / result.stats.shots * 100) : 0;
   return (
-    <main className="game-shell">
-      <canvas ref={canvasRef} width={GAME_WIDTH} height={GAME_HEIGHT} onPointerDown={handleCanvasPointer} aria-label="네 개의 방어 전선을 지휘하는 TRAIN ME WRONG 게임" />
-      <CommandHud
-        hud={hud}
-        audioEnabled={audioEnabled}
-        shopOpen={shopOpen}
-        onToggleAudio={onToggleAudio}
-        onSelectZone={focusZone}
-        onOverview={overview}
-        onToggleShop={toggleShop}
-      />
-      {shopOpen ? <ShopDrawer hud={hud} onBuy={buy} onClose={closeShop} /> : null}
+    <main className={victory ? "overload-result is-victory" : "overload-result is-defeat"}>
+      <div className="ambient-grid" aria-hidden="true" />
+      {assets?.map && <img className="result-map" src={assets.map.src} alt="" />}
+      <section className="result-card">
+        <div className="result-emblem">{victory ? <Trophy weight="fill" /> : <Warning weight="fill" />}</div>
+        <div className="result-kicker">{victory ? "THE WRONG ENGINE TERMINATED" : "OVERLOAD SIGNAL LOST"}</div>
+        <h1>{victory ? "SWARM: ERASED" : "THE SWARM ADAPTED"}</h1>
+        <p>{victory ? "300기의 공세를 빌드로 돌파하고 최종 엔진까지 파괴했습니다." : "다음 런에서는 이동 경로와 3지선다 빌드를 바꿔보세요."}</p>
+        {assets?.boss && <img className="result-boss" src={assets.boss.src} alt="The Wrong Engine" />}
+        <div className="result-stats">
+          <span><small>HOSTILES PURGED</small><b>{result?.kills || result?.stats?.kills || 0}</b></span>
+          <span><small>FINAL LEVEL</small><b>LV.{result?.level || 1}</b></span>
+          <span><small>SHOT ACCURACY</small><b>{accuracy}%</b></span>
+          <span><small>RUN TIME</small><b>{formatTime(result?.time || 0)}</b></span>
+        </div>
+        <button className="primary-cta" type="button" onClick={onRestart}><span>새 빌드로 재도전</span><ArrowCounterClockwise weight="bold" /></button>
+      </section>
     </main>
   );
 }
 
 export function App() {
-  const { assets, error } = useGameAssets();
+  const { assets, error: assetError } = useGameAssets();
   const [screen, setScreen] = useState("intro");
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [result, setResult] = useState(null);
-  const [audioEnabled, setAudioEnabled] = useState(true);
+  const sfx = useMemo(() => createSfxEngine(), []);
+
+  useEffect(() => () => sfx.dispose(), [sfx]);
+  useEffect(() => sfx.setEnabled(soundEnabled), [sfx, soundEnabled]);
 
   const start = useCallback(() => {
-    if (!assets) return;
+    sfx.start();
+    sfx.play("start");
     setResult(null);
     setScreen("game");
-  }, [assets]);
-  const finish = useCallback((state) => {
-    setResult(state);
+  }, [sfx]);
+
+  const finish = useCallback((nextResult) => {
+    setResult(nextResult);
     setScreen("result");
   }, []);
-  const toggleAudio = useCallback(() => setAudioEnabled((enabled) => !enabled), []);
-  const content = useMemo(() => {
-    if (screen === "game" && assets) return <GameScreen assets={assets} audioEnabled={audioEnabled} onToggleAudio={toggleAudio} onFinish={finish} />;
-    if (screen === "result" && result) return <ResultScreen result={result} onRestart={start} />;
-    return <IntroScreen assetsReady={Boolean(assets)} assetError={error} onStart={start} />;
-  }, [assets, audioEnabled, error, finish, result, screen, start, toggleAudio]);
-  return content;
+
+  const toggleSound = useCallback(() => setSoundEnabled((enabled) => !enabled), []);
+
+  if (screen === "game") return <ArenaScreen assets={assets} soundEnabled={soundEnabled} sfx={sfx} onToggleSound={toggleSound} onFinish={finish} />;
+  if (screen === "result") return <ResultScreen result={result} assets={assets} onRestart={start} />;
+  return <IntroScreen assets={assets} assetError={assetError} onStart={start} />;
 }

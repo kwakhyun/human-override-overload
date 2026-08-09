@@ -3,11 +3,90 @@ function safeAudioContext() {
   return AudioContext ? new AudioContext() : null;
 }
 
+const WHITE_NOISE_SECONDS = 2;
+const NORMAL_ACTIVE_VOICE_LIMIT = 16;
+const MAX_ACTIVE_VOICE_LIMIT = 24;
+
+const EVENT_COOLDOWNS_MS = {
+  shoot: 48,
+  towerShot: 68,
+  enemyShot: 78,
+  enemyHit: 72,
+  kill: 54,
+  collect: 68,
+  arc: 76,
+  detectionTick: 76,
+  click: 36,
+  dash: 80,
+  playerHit: 90,
+  boss: 280,
+  merge: 500,
+  bossTelegraph: 260,
+  bossBreak: 320,
+  patternFail: 320,
+  bossDeath: 1000,
+  victory: 1000,
+};
+
+const EVENT_VOICE_COSTS = {
+  start: 2,
+  dash: 2,
+  decoy: 2,
+  shoot: 4,
+  towerShot: 4,
+  kill: 2,
+  rail: 4,
+  enemyShot: 4,
+  enemyHit: 2,
+  playerHit: 2,
+  shieldHit: 2,
+  shield: 2,
+  emp: 2,
+  arc: 2,
+  build: 2,
+  denied: 2,
+  hacked: 4,
+  counter: 4,
+  boss: 3,
+  merge: 6,
+  bossTelegraph: 3,
+  bossBreak: 6,
+  patternFail: 2,
+  bossDeath: 7,
+  enemyAlert: 2,
+  detectionTick: 2,
+  alert: 2,
+  core: 2,
+  capture: 2,
+  analysis: 2,
+  reward: 3,
+  upgrade: 4,
+  victory: 4,
+  click: 1,
+  collect: 1,
+};
+
+const PRIORITY_EVENTS = new Set([
+  "start",
+  "counter",
+  "boss",
+  "merge",
+  "bossTelegraph",
+  "bossBreak",
+  "patternFail",
+  "bossDeath",
+  "victory",
+]);
+
 export function createSfxEngine() {
   let context = null;
   let enabled = true;
   let master = null;
   let reverb = null;
+  let whiteNoise = null;
+  let activeVoices = 0;
+  let currentVoiceLimit = NORMAL_ACTIVE_VOICE_LIMIT;
+  const lastPlayedAt = new Map();
 
   function ensureContext() {
     if (!context) {
@@ -22,6 +101,12 @@ export function createSfxEngine() {
         master = context.createGain();
         master.gain.value = 0.78;
         master.connect(compressor).connect(context.destination);
+
+        whiteNoise = context.createBuffer(1, Math.ceil(context.sampleRate * WHITE_NOISE_SECONDS), context.sampleRate);
+        const noiseData = whiteNoise.getChannelData(0);
+        for (let index = 0; index < noiseData.length; index += 1) {
+          noiseData[index] = Math.random() * 2 - 1;
+        }
 
         const impulse = context.createBuffer(2, context.sampleRate * 0.72, context.sampleRate);
         for (let channel = 0; channel < impulse.numberOfChannels; channel += 1) {
@@ -45,11 +130,37 @@ export function createSfxEngine() {
 
   function route(node, wetAmount = 0) {
     node.connect(master);
+    let send = null;
     if (reverb && wetAmount > 0) {
-      const send = context.createGain();
+      send = context.createGain();
       send.gain.value = wetAmount;
       node.connect(send).connect(reverb);
     }
+    return send;
+  }
+
+  function reserveVoice() {
+    if (activeVoices >= currentVoiceLimit) return null;
+    activeVoices += 1;
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      activeVoices = Math.max(0, activeVoices - 1);
+    };
+  }
+
+  function trackVoice(source, nodes, release) {
+    source.onended = () => {
+      for (const node of nodes) {
+        try {
+          node?.disconnect();
+        } catch {
+          // A browser may already have disconnected a completed one-shot node.
+        }
+      }
+      release();
+    };
   }
 
   function tone({
@@ -67,23 +178,30 @@ export function createSfxEngine() {
     if (!enabled) return;
     const audio = ensureContext();
     if (!audio) return;
-    const start = audio.currentTime + delay;
-    const oscillator = audio.createOscillator();
-    const filter = audio.createBiquadFilter();
-    const gain = audio.createGain();
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(Math.max(20, frequency), start);
-    oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, endFrequency), start + duration);
-    filter.type = filterType;
-    filter.frequency.value = filterFrequency;
-    filter.Q.value = 0.7;
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(volume, start + Math.max(0.002, attack));
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    oscillator.connect(filter).connect(gain);
-    route(gain, wet);
-    oscillator.start(start);
-    oscillator.stop(start + duration + 0.03);
+    const release = reserveVoice();
+    if (!release) return;
+    try {
+      const start = audio.currentTime + delay;
+      const oscillator = audio.createOscillator();
+      const filter = audio.createBiquadFilter();
+      const gain = audio.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(Math.max(20, frequency), start);
+      oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, endFrequency), start + duration);
+      filter.type = filterType;
+      filter.frequency.value = filterFrequency;
+      filter.Q.value = 0.7;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume, start + Math.max(0.002, attack));
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      oscillator.connect(filter).connect(gain);
+      const send = route(gain, wet);
+      trackVoice(oscillator, [oscillator, filter, gain, send], release);
+      oscillator.start(start);
+      oscillator.stop(start + duration + 0.03);
+    } catch {
+      release();
+    }
   }
 
   function noise({
@@ -98,27 +216,36 @@ export function createSfxEngine() {
   } = {}) {
     if (!enabled) return;
     const audio = ensureContext();
-    if (!audio) return;
-    const frameCount = Math.max(1, Math.floor(audio.sampleRate * duration));
-    const buffer = audio.createBuffer(1, frameCount, audio.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let index = 0; index < frameCount; index += 1) {
-      data[index] = Math.random() * 2 - 1;
+    if (!audio || !whiteNoise) return;
+    const release = reserveVoice();
+    if (!release) return;
+    try {
+      const source = audio.createBufferSource();
+      const filter = audio.createBiquadFilter();
+      const gain = audio.createGain();
+      const start = audio.currentTime + delay;
+      const availableOffset = Math.max(0, whiteNoise.duration - duration - 0.01);
+      const offset = availableOffset > 0 ? Math.random() * availableOffset : 0;
+      filter.type = filterType;
+      filter.frequency.value = filterFrequency;
+      filter.Q.value = q;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume, start + attack);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      source.buffer = whiteNoise;
+      source.connect(filter).connect(gain);
+      const send = route(gain, wet);
+      trackVoice(source, [source, filter, gain, send], release);
+      if (duration <= whiteNoise.duration - offset) {
+        source.start(start, offset, duration);
+      } else {
+        source.loop = true;
+        source.start(start, offset);
+        source.stop(start + duration);
+      }
+    } catch {
+      release();
     }
-    const source = audio.createBufferSource();
-    const filter = audio.createBiquadFilter();
-    const gain = audio.createGain();
-    const start = audio.currentTime + delay;
-    filter.type = filterType;
-    filter.frequency.value = filterFrequency;
-    filter.Q.value = q;
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(volume, start + attack);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    source.buffer = buffer;
-    source.connect(filter).connect(gain);
-    route(gain, wet);
-    source.start(start);
   }
 
   function weaponCrack({ body = 150, snap = 2400, volume = 0.05, tail = 0.18 } = {}) {
@@ -130,7 +257,17 @@ export function createSfxEngine() {
 
   function play(name) {
     if (!enabled) return;
-    switch (name) {
+    const now = typeof performance === "undefined" ? Date.now() : performance.now();
+    const cooldown = EVENT_COOLDOWNS_MS[name] || 0;
+    const previous = lastPlayedAt.get(name) ?? -Infinity;
+    if (now - previous < cooldown) return;
+    const voiceLimit = PRIORITY_EVENTS.has(name) ? MAX_ACTIVE_VOICE_LIMIT : NORMAL_ACTIVE_VOICE_LIMIT;
+    const voiceCost = EVENT_VOICE_COSTS[name] || 1;
+    if (activeVoices + voiceCost > voiceLimit) return;
+    lastPlayedAt.set(name, now);
+    currentVoiceLimit = voiceLimit;
+    try {
+      switch (name) {
       case "start":
         tone({ frequency: 150, endFrequency: 320, duration: 0.3, volume: 0.045, wet: 0.3 });
         tone({ frequency: 360, endFrequency: 880, duration: 0.2, delay: 0.14, volume: 0.03, wet: 0.25 });
@@ -209,6 +346,30 @@ export function createSfxEngine() {
         tone({ frequency: 78, endFrequency: 35, duration: 0.92, type: "sawtooth", volume: 0.07, filterFrequency: 720, wet: 0.48 });
         tone({ frequency: 410, endFrequency: 190, duration: 0.46, delay: 0.24, type: "square", volume: 0.032, wet: 0.5 });
         break;
+      case "merge":
+        noise({ duration: 0.62, volume: 0.05, filterFrequency: 460, q: 0.45, wet: 0.62 });
+        [110, 165, 247, 370].forEach((frequency, index) => tone({ frequency, endFrequency: frequency * 2.1, duration: 0.58, delay: index * 0.075, type: "sawtooth", volume: 0.032, filterFrequency: 2400, wet: 0.5 }));
+        tone({ frequency: 52, endFrequency: 36, duration: 0.95, type: "sine", volume: 0.075, wet: 0.35 });
+        break;
+      case "bossTelegraph":
+        tone({ frequency: 880, endFrequency: 210, duration: 0.58, type: "square", volume: 0.046, filterFrequency: 1900, wet: 0.42 });
+        tone({ frequency: 96, endFrequency: 48, duration: 0.72, delay: 0.08, type: "sawtooth", volume: 0.065, filterFrequency: 760, wet: 0.38 });
+        noise({ duration: 0.7, volume: 0.03, filterType: "bandpass", filterFrequency: 620, wet: 0.64 });
+        break;
+      case "bossBreak":
+        noise({ duration: 0.12, volume: 0.09, filterType: "highpass", filterFrequency: 2200, wet: 0.4 });
+        tone({ frequency: 1600, endFrequency: 68, duration: 0.62, type: "sawtooth", volume: 0.07, filterFrequency: 4200, wet: 0.55 });
+        [392, 523, 659, 988].forEach((frequency, index) => tone({ frequency, endFrequency: frequency * 1.06, duration: 0.3, delay: 0.12 + index * 0.055, volume: 0.034, wet: 0.56 }));
+        break;
+      case "patternFail":
+        noise({ duration: 0.4, volume: 0.065, filterFrequency: 430, q: 0.4, wet: 0.36 });
+        tone({ frequency: 240, endFrequency: 42, duration: 0.55, type: "square", volume: 0.06, filterFrequency: 920, wet: 0.28 });
+        break;
+      case "bossDeath":
+        noise({ duration: 1.15, volume: 0.08, filterFrequency: 310, q: 0.28, wet: 0.72 });
+        tone({ frequency: 82, endFrequency: 28, duration: 1.3, type: "sawtooth", volume: 0.09, filterFrequency: 700, wet: 0.5 });
+        [196, 261, 329, 523, 784].forEach((frequency, index) => tone({ frequency, endFrequency: frequency * 1.18, duration: 0.42, delay: 0.25 + index * 0.1, volume: 0.035, wet: 0.64 }));
+        break;
       case "enemyAlert":
         tone({ frequency: 620, endFrequency: 780, duration: 0.09, type: "square", volume: 0.026, filterFrequency: 1700, wet: 0.2 });
         tone({ frequency: 420, endFrequency: 360, duration: 0.13, delay: 0.11, type: "square", volume: 0.022, filterFrequency: 1400, wet: 0.22 });
@@ -251,6 +412,9 @@ export function createSfxEngine() {
       case "click":
       default:
         tone({ frequency: 520, endFrequency: 610, duration: 0.07, volume: 0.02 });
+      }
+    } finally {
+      currentVoiceLimit = NORMAL_ACTIVE_VOICE_LIMIT;
     }
   }
 
@@ -262,5 +426,15 @@ export function createSfxEngine() {
       enabled = value;
     },
     play,
+    dispose() {
+      lastPlayedAt.clear();
+      activeVoices = 0;
+      whiteNoise = null;
+      master = null;
+      reverb = null;
+      const closingContext = context;
+      context = null;
+      closingContext?.close?.().catch?.(() => {});
+    },
   };
 }

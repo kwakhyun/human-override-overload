@@ -3,6 +3,31 @@ export const GAME_HEIGHT = 720;
 export const ZONE_WIDTH = GAME_WIDTH / 2;
 export const ZONE_HEIGHT = GAME_HEIGHT / 2;
 export const RUN_DURATION = 300;
+export const CONVERGENCE_TIMES = {
+  paired: 100,
+  final: 210,
+};
+
+export const ARENA_PHASES = [
+  {
+    id: "four-fronts",
+    label: "FOUR FRONTS",
+    korean: "4개 전선",
+    groups: [[0], [1], [2], [3]],
+  },
+  {
+    id: "paired-fronts",
+    label: "TWIN FRONTS",
+    korean: "2개 연합 전선",
+    groups: [[0, 2], [1, 3]],
+  },
+  {
+    id: "final-convergence",
+    label: "FINAL CONVERGENCE",
+    korean: "최종 통합 전선",
+    groups: [[0, 1, 2, 3]],
+  },
+];
 
 export const REGIONS = [
   {
@@ -134,7 +159,7 @@ export const ENEMY_TYPES = {
     speed: 88,
     radius: 12,
     damage: 8,
-    gold: 5,
+    gold: 1,
     sprite: "hunter",
   },
   shooter: {
@@ -143,7 +168,7 @@ export const ENEMY_TYPES = {
     speed: 58,
     radius: 14,
     damage: 10,
-    gold: 9,
+    gold: 3,
     sprite: "suppressor",
     ranged: true,
   },
@@ -153,7 +178,7 @@ export const ENEMY_TYPES = {
     speed: 38,
     radius: 22,
     damage: 18,
-    gold: 17,
+    gold: 7,
     sprite: "brute",
   },
   boss: {
@@ -162,10 +187,22 @@ export const ENEMY_TYPES = {
     speed: 31,
     radius: 34,
     damage: 23,
-    gold: 90,
+    gold: 34,
     sprite: "brute",
     ranged: true,
     boss: true,
+  },
+  finalBoss: {
+    name: "THE WRONG ENGINE",
+    hp: 14800,
+    speed: 0,
+    radius: 76,
+    damage: 28,
+    gold: 500,
+    sprite: "wrongEngine",
+    ranged: true,
+    boss: true,
+    finalBoss: true,
   },
 };
 
@@ -176,7 +213,7 @@ export const SHOP_ITEMS = [
     korean: "무기 코어",
     tag: "공격 강화",
     description: "선택 영웅의 공격력이 24% 증가합니다.",
-    baseCost: 38,
+    baseCost: 92,
     max: 5,
     icon: "Crosshair",
   },
@@ -186,7 +223,7 @@ export const SHOP_ITEMS = [
     korean: "반응 서보",
     tag: "공격 강화",
     description: "선택 영웅의 공격 주기가 14% 빨라집니다.",
-    baseCost: 42,
+    baseCost: 105,
     max: 4,
     icon: "Lightning",
   },
@@ -196,7 +233,7 @@ export const SHOP_ITEMS = [
     korean: "강화 장갑",
     tag: "방어 강화",
     description: "최대 체력과 현재 체력이 30 증가합니다.",
-    baseCost: 48,
+    baseCost: 98,
     max: 4,
     icon: "ShieldChevron",
   },
@@ -206,7 +243,7 @@ export const SHOP_ITEMS = [
     korean: "나노 수복",
     tag: "생존 강화",
     description: "초당 체력 재생이 0.45 증가합니다.",
-    baseCost: 52,
+    baseCost: 116,
     max: 4,
     icon: "Heartbeat",
   },
@@ -216,7 +253,7 @@ export const SHOP_ITEMS = [
     korean: "윙맨 드론",
     tag: "자동 스킬",
     description: "보조 드론이 영웅을 따라다니며 자동 사격합니다.",
-    baseCost: 72,
+    baseCost: 138,
     max: 3,
     icon: "Drone",
   },
@@ -226,7 +263,7 @@ export const SHOP_ITEMS = [
     korean: "센트리 노드",
     tag: "설치형 스킬",
     description: "Q로 설치하는 자동 센트리를 해금·강화합니다.",
-    baseCost: 64,
+    baseCost: 124,
     max: 3,
     icon: "Broadcast",
   },
@@ -236,7 +273,7 @@ export const SHOP_ITEMS = [
     korean: "EMP 파일런",
     tag: "설치형 스킬",
     description: "E로 설치하는 감속·방해 파일런을 해금·강화합니다.",
-    baseCost: 78,
+    baseCost: 148,
     max: 3,
     icon: "WaveSine",
   },
@@ -246,7 +283,7 @@ export const SHOP_ITEMS = [
     korean: "전투 구급팩",
     tag: "소모품",
     description: "선택 영웅의 체력을 즉시 55 회복합니다.",
-    baseCost: 28,
+    baseCost: 58,
     consumable: true,
     icon: "FirstAid",
   },
@@ -256,7 +293,7 @@ export const SHOP_ITEMS = [
     korean: "방벽 셀",
     tag: "소모품",
     description: "선택 영웅에게 35의 임시 방어막을 부여합니다.",
-    baseCost: 34,
+    baseCost: 68,
     consumable: true,
     icon: "ShieldCheck",
   },
@@ -266,7 +303,7 @@ export const SHOP_ITEMS = [
     korean: "전선 동기화 수복",
     tag: "공유 보급",
     description: "생존한 모든 영웅의 체력을 26 회복합니다.",
-    baseCost: 76,
+    baseCost: 168,
     consumable: true,
     icon: "UsersThree",
   },
