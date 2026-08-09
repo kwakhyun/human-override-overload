@@ -197,7 +197,7 @@ test("common enemies die in one to three base pulse hits and produce collectible
   }
 });
 
-test("a level-up pauses combat and always offers one weapon, skill, and ally", () => {
+test("the first level-up waits for readable combat, then pauses with one weapon, skill, and ally", () => {
   const state = createSwarmState({ random: () => 0.5 });
   const enemy = state.enemies.find((candidate) => !candidate.elite);
   state.enemies = [enemy];
@@ -209,12 +209,59 @@ test("a level-up pauses combat and always offers one weapon, skill, and ally", (
   enemy.xp = state.player.nextXp;
   setSwarmAim(state, enemy.x, enemy.y);
   stepFor(state, createSwarmInput(), 1.5);
+  assert.equal(state.levelupPending, false);
+  assert.ok(state.levelFlow.queuedLevels >= 1);
+  stepFor(state, createSwarmInput(), 4.65);
+  assert.equal(state.levelupPending, false);
+  stepFor(state, createSwarmInput(), 0.4);
   assert.equal(state.levelupPending, true);
+  assert.ok(state.time >= 6.4 && state.time < 10);
   assert.deepEqual(state.rewardOptions.map((option) => option.category).sort(), ["ally", "skill", "weapon"]);
   const pausedAt = state.time;
   stepSwarm(state, createSwarmInput(), 1 / 30);
   assert.equal(state.time, pausedAt);
   assert.equal(getSwarmHud(state).rewards.pending, true);
+});
+
+test("queued levels collapse into one batch and cannot reopen before a five-second combat interval", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  state.time = 6.5;
+  state.phaseTime = 6.5;
+  state.levelFlow.queuedLevels = 1;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.levelupPending, true);
+  assert.equal(chooseLevelReward(state, state.rewardOptions[0].id), true);
+  const chosenAt = state.time;
+  state.levelFlow.queuedLevels = 5;
+  state.player.level += 5;
+  stepFor(state, createSwarmInput(), 5.2);
+  assert.equal(state.levelupPending, false);
+  stepFor(state, createSwarmInput(), 0.3);
+  assert.equal(state.levelupPending, true);
+  assert.ok(state.levelFlow.batchLevels >= 5);
+  assert.ok(state.rewardOptions.every((option) => option.levelsGained === state.levelFlow.batchLevels));
+  assert.ok(state.rewardOptions.every((option) => option.rankGain >= 1 && option.rankGain <= 3));
+  assert.ok(state.time - chosenAt >= 5.4);
+  const selected = state.rewardOptions[0];
+  const overflow = state.levelFlow.batchLevels - selected.rankGain;
+  assert.equal(chooseLevelReward(state, selected.id), true);
+  assert.equal(state.stats.batchedOverflowLevels, overflow);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "batchLevelBonus" && event.levels === overflow));
+});
+
+test("the first reward is guaranteed before ten seconds even when no XP can be collected", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  state.enemyBudget = state.spawnedEnemies;
+  for (const enemy of state.enemies) {
+    enemy.hp = 9999999;
+    enemy.maxHp = enemy.hp;
+    enemy.speed = 0;
+    enemy.damage = 0;
+  }
+  stepFor(state, createSwarmInput(), 9.8);
+  assert.equal(state.levelupPending, true);
+  assert.ok(state.time >= 9.6 && state.time < 10);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "trainingMilestone"));
 });
 
 test("weapon rewards add real scatter, rail, rocket, and orbit combat behavior", () => {
@@ -265,6 +312,42 @@ test("screen-space aiming is converted through the player-following zoom camera"
   assert.equal(setSwarmScreenAim(state, 800, 360), true);
   assert.equal(state.aim.x, 800);
   assert.equal(state.aim.y, 330);
+});
+
+test("screen-space aiming uses the renderer's clamped camera center at arena edges", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  state.camera.x = 0;
+  state.camera.y = 0;
+  state.camera.zoom = 2;
+  assert.equal(setSwarmScreenAim(state, 640, 360), true);
+  assert.equal(state.aim.x, 320);
+  assert.equal(state.aim.y, 180);
+  setSwarmScreenAim(state, 0, 0);
+  assert.equal(state.aim.x, 0);
+  assert.equal(state.aim.y, 0);
+
+  state.camera.x = GAME_WIDTH;
+  state.camera.y = GAME_HEIGHT;
+  setSwarmScreenAim(state, 640, 360);
+  assert.equal(state.aim.x, 960);
+  assert.equal(state.aim.y, 540);
+  setSwarmScreenAim(state, GAME_WIDTH, GAME_HEIGHT);
+  assert.equal(state.aim.x, GAME_WIDTH);
+  assert.equal(state.aim.y, GAME_HEIGHT);
+});
+
+test("skill cooldown HUD exposes the exact reset duration used by combat", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  forceOffer(state, "chain", "skill");
+  chooseLevelReward(state, "chain");
+  state.support.chainCooldown = 0;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  const ability = getSwarmHud(state).abilities.chain;
+  assert.ok(ability.cooldown > 0);
+  assert.equal(ability.maxCooldown, state.support.chainCooldownMax);
+  assert.equal(ability.cooldownMax, ability.maxCooldown);
+  assert.ok(ability.cooldown <= ability.maxCooldown);
+  assert.equal(getSwarmHud(state).abilities.squadRecall.maxCooldown, 30);
 });
 
 test("fixed-time mass waves warn before rapidly deploying all remaining enemies", () => {
@@ -327,6 +410,28 @@ test("airstrike and omega laser are long-cooldown attacks with real area damage"
   assert.ok(drainSwarmEvents(laser).some((event) => event.type === "ultimateFire"));
 });
 
+test("rocket splash safely reuses collision scratch after the direct-hit query completes", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  const targets = state.enemies.filter((enemy) => !enemy.elite).slice(0, 3);
+  state.enemies = targets;
+  state.spawnedEnemies = state.enemyBudget;
+  for (let index = 0; index < targets.length; index += 1) {
+    targets[index].x = state.player.x + 46 + index * 9;
+    targets[index].y = state.player.y;
+    targets[index].speed = 0;
+    targets[index].hp = 1000;
+    targets[index].maxHp = 1000;
+  }
+  forceOffer(state, "rocket", "weapon");
+  chooseLevelReward(state, "rocket");
+  state.player.fireTimers.pulse = 999;
+  state.player.fireTimers.rocket = 0;
+  setSwarmAim(state, targets[0].x, targets[0].y);
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.ok(targets.every((enemy) => enemy.hp < 1000));
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "explosion"));
+});
+
 test("rank-three offensive skills unlock their master-scale battlefield attack", () => {
   const state = createSwarmState({ random: () => 0.5 });
   for (let rank = 0; rank < 3; rank += 1) {
@@ -359,11 +464,36 @@ test("late dataset progress unlocks tier-three overdrive and rapid master volley
 test("ally rewards create autonomous drone, sentry, and suppressor entities", () => {
   for (const id of ["drone", "sentry", "suppressor"]) {
     const state = createSwarmState({ random: () => 0.5 });
+    const target = state.enemies.find((enemy) => !enemy.elite);
+    target.x = state.player.x + 80;
+    target.y = state.player.y;
+    target.speed = 0;
+    target.hp = 9999;
+    target.maxHp = target.hp;
+    const hp = target.hp;
     forceOffer(state, id, "ally");
     assert.equal(chooseLevelReward(state, id), true);
-    if (id === "sentry") assert.ok(state.deployables.some((entity) => entity.type === id));
-    else assert.ok(state.allies.some((entity) => entity.type === id));
+    if (id === "sentry") assert.ok(state.deployables.filter((entity) => entity.type === id).length >= 2);
+    else assert.ok(state.allies.filter((entity) => entity.type === id).length >= 2);
+    assert.ok(target.hp < hp, `${id} should deal an immediate deployment burst`);
+    const event = drainSwarmEvents(state).find((candidate) => candidate.type === "allyDeployed");
+    assert.equal(event.id, id);
+    assert.ok(event.damage >= 200);
   }
+});
+
+test("ally ranks scale both formation size and autonomous firepower", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  for (let rank = 0; rank < 4; rank += 1) {
+    forceOffer(state, "drone", "ally");
+    assert.equal(chooseLevelReward(state, "drone"), true);
+  }
+  assert.equal(state.build.allies.drone, 4);
+  assert.equal(state.allies.filter((ally) => ally.type === "drone" && !ally.summoned).length, 5);
+  state.projectiles.length = 0;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  const droneShot = state.projectiles.find((projectile) => projectile.kind === "drone");
+  assert.ok(droneShot?.damage >= 110);
 });
 
 test("clearing the fixed enemy budget transitions to The Wrong Engine after two seconds", () => {
@@ -384,6 +514,7 @@ test("clearing the fixed enemy budget transitions to The Wrong Engine after two 
   assert.equal(state.phase, "boss");
   assert.equal(state.boss.active, true);
   assert.equal(getSwarmHud(state).boss.name, "THE WRONG ENGINE");
+  assert.ok(state.boss.maxHp >= 800000);
   assert.ok(drainSwarmEvents(state).some((event) => event.type === "bossIntro"));
 });
 
@@ -396,6 +527,59 @@ test("all six boss attacks expose their named warning before firing", () => {
     const event = drainSwarmEvents(state).find((candidate) => candidate.type === "bossPatternTelegraph");
     assert.equal(event.pattern, BOSS_PATTERNS[index]);
   }
+});
+
+test("sweep, ring, and charge warnings expose the exact collision geometry used by gameplay", () => {
+  const sweep = createBossState(BOSS_PATTERNS.indexOf("sweep"));
+  stepSwarm(sweep, createSwarmInput(), 1 / 60);
+  const sweepPattern = sweep.boss.activePattern;
+  assert.equal(sweepPattern.geometry.kind, "sweep");
+  assert.equal(sweepPattern.geometry.collisionHalfWidth, sweepPattern.width + sweep.player.radius);
+  assert.ok(Number.isFinite(sweepPattern.geometry.primaryEndX));
+
+  const rings = createBossState(BOSS_PATTERNS.indexOf("rings"));
+  stepSwarm(rings, createSwarmInput(), 1 / 60);
+  const ringPattern = rings.boss.activePattern;
+  assert.equal(ringPattern.geometry.kind, "rings");
+  assert.equal(ringPattern.geometry.ringCount, ringPattern.rings);
+  assert.equal(ringPattern.geometry.radii.length, ringPattern.rings);
+  assert.equal(ringPattern.geometry.collisionHalfWidth, ringPattern.width + rings.player.radius);
+
+  const charge = createBossState(BOSS_PATTERNS.indexOf("charge"));
+  stepSwarm(charge, createSwarmInput(), 1 / 60);
+  const chargePattern = charge.boss.activePattern;
+  assert.equal(chargePattern.geometry.kind, "capsule");
+  assert.equal(chargePattern.geometry.bodyRadius, charge.boss.radius);
+  assert.equal(chargePattern.geometry.collisionRadius, charge.boss.radius + charge.player.radius);
+  assert.equal(chargePattern.geometry.endX, chargePattern.targetX);
+  assert.equal(chargePattern.geometry.endY, chargePattern.targetY);
+});
+
+test("direct boss body contact is critical, stuns controls, and has a retrigger cooldown", () => {
+  const state = createBossState(0);
+  state.boss.activePattern = null;
+  state.boss.patternCooldown = 999;
+  state.boss.x = state.player.x;
+  state.boss.y = state.player.y;
+  const hp = state.player.hp;
+  drainSwarmEvents(state);
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.ok(state.player.hp <= hp - 150);
+  assert.ok(state.player.stunTimer >= 0.78);
+  assert.ok(state.boss.contactCooldown >= 1.38);
+  const hud = getSwarmHud(state);
+  assert.equal(hud.player.stunned, true);
+  assert.ok(hud.player.stunTimer > 0.7);
+  const events = drainSwarmEvents(state);
+  assert.ok(events.some((event) => event.type === "playerStunned" && event.source === "bossContact"));
+  assert.ok(events.some((event) => event.type === "bossContactHit"));
+
+  state.player.invulnerability = 0;
+  state.player.x = state.boss.x;
+  state.player.y = state.boss.y;
+  const afterFirstHit = state.player.hp;
+  stepSwarm(state, createSwarmInput(), 0.2);
+  assert.equal(state.player.hp, afterFirstHit);
 });
 
 test("boss health thresholds lock in distinct transformations and repeat their danger warning", () => {
@@ -575,6 +759,8 @@ test("boss death wins and player death loses", () => {
   setSwarmAim(victory, victory.boss.x, victory.boss.y);
   stepFor(victory, createSwarmInput(), 0.3);
   assert.equal(victory.phase, "victory");
+  assert.equal(victory.boss.deathDuration, 1.25);
+  assert.ok(victory.boss.deathTimer > 0);
   assert.ok(drainSwarmEvents(victory).some((event) => event.type === "win"));
 
   const defeat = createSwarmState({ random: () => 0.5 });
@@ -588,7 +774,56 @@ test("boss death wins and player death loses", () => {
   enemy.attackCooldown = 0;
   stepSwarm(defeat, createSwarmInput(), 1 / 60);
   assert.equal(defeat.phase, "defeat");
+  assert.equal(defeat.player.deathDuration, 0.9);
+  assert.ok(defeat.player.deathTimer > 0);
   assert.ok(drainSwarmEvents(defeat).some((event) => event.type === "loss"));
+});
+
+test("combat entities expose recoil, hit-stun, attack, movement, and death animation timers", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  const enemy = state.enemies.find((candidate) => candidate.type === "hunter" && !candidate.elite);
+  state.enemies = [enemy];
+  state.spawnedEnemies = state.enemyBudget;
+  enemy.x = state.player.x + 52;
+  enemy.y = state.player.y;
+  enemy.speed = 0;
+  enemy.hp = 1;
+  setSwarmAim(state, enemy.x, enemy.y);
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.player.attackState, "pulse");
+  assert.ok(state.player.recoil > 0);
+  stepFor(state, createSwarmInput(), 0.16);
+  assert.equal(enemy.dead, true);
+  assert.equal(enemy.animationState, "death");
+  assert.ok(enemy.deathTimer > 0);
+
+  const boss = createBossState(BOSS_PATTERNS.indexOf("sweep"));
+  stepSwarm(boss, createSwarmInput(), 1 / 60);
+  assert.equal(boss.boss.animationState, "windup");
+  assert.equal(boss.boss.attackState, "windup:sweep");
+  assert.ok(boss.boss.attackTimer > 1);
+});
+
+test("crowd collision reuses spatial buckets and a stable nearby-enemy scratch buffer", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  state.spawnedEnemies = state.enemyBudget;
+  for (const enemy of state.enemies) {
+    enemy.hp = 9999999;
+    enemy.maxHp = enemy.hp;
+    enemy.speed = 0;
+    enemy.damage = 0;
+  }
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  const grid = state.spatialGrid;
+  const scratch = state.nearbyScratch;
+  const buckets = state.spatialBuckets.slice();
+  state.killedEnemies = 950;
+  for (let frame = 0; frame < 180; frame += 1) stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.spatialGrid, grid);
+  assert.equal(state.nearbyScratch, scratch);
+  assert.ok(buckets.every((bucket) => state.spatialBuckets.includes(bucket)));
+  assert.ok(state.projectiles.length <= 620);
+  assert.ok(state.nearbyScratch.length <= state.enemies.length);
 });
 
 test("seeded simulations remain deterministic and finite under the live entity caps", () => {

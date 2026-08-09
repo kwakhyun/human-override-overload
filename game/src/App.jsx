@@ -46,12 +46,16 @@ const ASSET_PATHS = Object.freeze({
   bossPhase3: "./assets/survivor/bosses/wrong-engine-phase3.png",
   bossPatterns: "./assets/survivor/vfx/boss-pattern-atlas.png",
   playerOrdnance: "./assets/survivor/vfx/player-ordnance-atlas.png",
+  playerMotion: "./assets/survivor/animation/player-motion-atlas.png",
+  enemyMotion: "./assets/survivor/animation/enemy-motion-atlas.png",
+  bossMotion: "./assets/survivor/animation/boss-motion-atlas.png",
   sentry: "./assets/survivor/skills/sentry.png",
   emp: "./assets/survivor/skills/emp-pylon.png",
   drone: "./assets/survivor/skills/wingman-drone.png",
 });
 
 const BGM_PATH = "./assets/audio/overload-main-theme.mp3";
+const OPTIONAL_ASSET_KEYS = new Set(["playerMotion", "enemyMotion", "bossMotion"]);
 
 const EVENT_SOUNDS = Object.freeze({
   swarmStart: "enemyAlert",
@@ -70,6 +74,9 @@ const EVENT_SOUNDS = Object.freeze({
   bossRageBurst: "bossTelegraph",
   bossWeakness: "core",
   bossChargeHit: "patternFail",
+  bossContact: "patternFail",
+  bossContactHit: "patternFail",
+  playerStunned: "patternFail",
   squadSummon: "merge",
   surgeWarning: "alert",
   surgeStart: "bossTelegraph",
@@ -84,6 +91,32 @@ const EVENT_SOUNDS = Object.freeze({
   loss: "capture",
 });
 
+const WEAPON_EVENT_SOUNDS = Object.freeze({
+  pulse: "shoot",
+  pulseOverdrive: "emp",
+  scatter: "shoot",
+  rail: "rail",
+  rocket: "towerShot",
+  orbit: "enemyHit",
+  chain: "arc",
+  nova: "emp",
+  airstrike: "rail",
+  omegaLaser: "rail",
+  bossRadial: "enemyShot",
+  bossRage: "enemyShot",
+  bossBomb: "bossBreak",
+  bossSweep: "bossTelegraph",
+});
+
+const IMPACT_EVENT_TYPES = new Set([
+  "weaponHit",
+  "projectileHit",
+  "skillHit",
+  "weaponImpact",
+  "explosion",
+  "skillImpact",
+]);
+
 const EVENT_BANNERS = Object.freeze({
   swarmStart: ["MASS INCURSION · 1,000", "전방위 게이트에서 적 1,000기가 연속 투입됩니다."],
   swarmCleared: ["DATASET PURGED", "남은 경험치를 흡수합니다. 보스 신호 감지."],
@@ -97,6 +130,9 @@ const EVENT_BANNERS = Object.freeze({
   ultimateWarning: ["ULTIMATE SUPPORT LOCKED", "공중 지원 좌표 확정. 충격 범위에서 화력을 집중하세요."],
   squadSummon: ["4-FRONT RECALL", "AEGIS · ROOK · NYX · MOSS 전투 링크가 12초간 동기화됩니다."],
   overdrive: ["WEAPON OVERDRIVE", "처치 데이터가 화력 제한기를 해제합니다."],
+  bossContact: ["⚠ CRUSH IMPACT", "보스 본체와 충돌했습니다. 구동계가 일시 정지됩니다."],
+  bossContactHit: ["⚠ CRUSH IMPACT", "보스 본체와 충돌했습니다. 구동계가 일시 정지됩니다."],
+  playerStunned: ["SYSTEM JAMMED", "이동과 대시가 잠시 차단됩니다."],
 });
 
 const CATEGORY_META = Object.freeze({
@@ -124,6 +160,14 @@ const BUILD_LABELS = Object.freeze({
   drone: "DRONE",
   sentry: "SENTRY",
   suppressor: "WISP",
+});
+
+const ABILITY_COOLDOWN_FALLBACK = Object.freeze({
+  squadRecall: 30,
+  chain: 4.8,
+  nova: 9,
+  airstrike: 18,
+  omegaLaser: 22,
 });
 
 const REWARD_COPY = Object.freeze({
@@ -160,7 +204,14 @@ function useGameAssets() {
   const [state, setState] = useState({ assets: null, error: false });
   useEffect(() => {
     let cancelled = false;
-    Promise.all(Object.entries(ASSET_PATHS).map(async ([key, source]) => [key, await loadImage(source)]))
+    Promise.all(Object.entries(ASSET_PATHS).map(async ([key, source]) => {
+      try {
+        return [key, await loadImage(source)];
+      } catch (error) {
+        if (OPTIONAL_ASSET_KEYS.has(key)) return [key, null];
+        throw error;
+      }
+    }))
       .then((entries) => {
         if (!cancelled) setState({ assets: Object.fromEntries(entries), error: false });
       })
@@ -186,6 +237,21 @@ function isTerminal(game) {
 
 function createHudSnapshot(game, performance) {
   return { ...getSwarmHud(game), quality: performance };
+}
+
+function resolveEventSound(event) {
+  const direct = EVENT_SOUNDS[event?.type];
+  const kind = String(event?.kind || event?.weapon || event?.skill || event?.effect || "");
+  if (event?.type === "shot" && WEAPON_EVENT_SOUNDS[kind]) return WEAPON_EVENT_SOUNDS[kind];
+  if (IMPACT_EVENT_TYPES.has(event?.type)) {
+    if (kind === "chain") return "arc";
+    if (kind === "nova" || kind === "pulseOverdrive") return "emp";
+    if (kind === "rail" || kind === "airstrike" || kind === "omegaLaser") return "rail";
+    if (kind === "rocket") return "bossBreak";
+    if (event?.type === "explosion") return "enemyHit";
+    return WEAPON_EVENT_SOUNDS[kind] || "enemyHit";
+  }
+  return direct;
 }
 
 function IntroScreen({ assets, assetError, onStart }) {
@@ -282,12 +348,15 @@ function PilotHud({ hud }) {
   const hpRatio = Math.max(0, Math.min(1, player.hp / Math.max(1, player.maxHp)));
   const shieldRatio = Math.max(0, Math.min(1, player.shield / Math.max(1, player.shieldMax || 1)));
   const dashReady = Number(player.dashCooldown || 0) <= 0;
+  const stunTimer = Math.max(0, Number(player.stunTimer ?? player.stun ?? player.stunnedFor ?? 0) || 0);
+  const stunned = Boolean(player.stunned) || stunTimer > 0;
   return (
-    <aside className="overload-pilot glass-panel">
+    <aside className={`overload-pilot glass-panel${stunned ? " is-stunned" : ""}`}>
       <div className="pilot-identity"><Crosshair weight="bold" /><span><small>THE TRAINER</small><b>AEGIS / LV.{hud?.level || 1}</b></span></div>
       <div className="pilot-bar"><i style={{ width: `${hpRatio * 100}%` }} /></div>
       {player.shieldMax > 0 && <div className="shield-bar"><i style={{ width: `${shieldRatio * 100}%` }} /></div>}
       <div className="pilot-meta"><span>HP {Math.ceil(Math.max(0, player.hp))}</span><b className={dashReady ? "is-ready" : ""}>DASH {dashReady ? "READY" : `${Number(player.dashCooldown).toFixed(1)}s`}</b></div>
+      {stunned && <div className="pilot-stun" role="status"><Warning weight="fill" /> SYSTEM JAM · {stunTimer.toFixed(1)}s</div>}
     </aside>
   );
 }
@@ -333,12 +402,16 @@ function AbilityHud({ abilities }) {
           const ability = abilities[id];
           const ready = Number(ability.cooldown) <= 0.05;
           const mastered = ability.rank >= ability.maxRank;
+          const remaining = Math.max(0, Number(ability.cooldown) || 0);
+          const cooldownMax = Math.max(0.01, Number(ability.maxCooldown ?? ability.cooldownMax ?? ability.baseCooldown) || ABILITY_COOLDOWN_FALLBACK[id] || remaining || 1);
+          const meter = Number(ability.duration) > 0 ? 1 : ready ? 1 : Math.max(0, Math.min(1, 1 - remaining / cooldownMax));
           return (
-            <div className={`${ability.ultimate ? "is-ultimate " : ""}${ability.special ? "is-special " : ""}${mastered ? "is-mastered" : ""}`} key={id}>
+            <div className={`${ability.ultimate ? "is-ultimate " : ""}${ability.special ? "is-special " : ""}${mastered ? "is-mastered " : ""}${ready ? "is-ready" : "is-cooling"}`} key={id} aria-label={`${label} ${ready ? "사용 가능" : `${remaining.toFixed(1)}초 남음`}`}>
               <span>{ability.special ? ability.key || "KEY" : ability.ultimate ? "ULT" : "AUTO"}</span>
               <strong>{label}</strong>
-              <b className={ready ? "is-ready" : ""}>{Number(ability.duration) > 0 ? `LINK ${Number(ability.duration).toFixed(1)}s` : ready ? "READY" : `${Number(ability.cooldown).toFixed(1)}s`}</b>
+              <b className={ready ? "is-ready" : ""}>{Number(ability.duration) > 0 ? `LINK ${Number(ability.duration).toFixed(1)}s` : ready ? "READY" : `${remaining.toFixed(1)}s`}</b>
               <small>{ability.special ? "SQUAD" : mastered ? "MASTER" : `R${ability.rank}`}</small>
+              <i className="ability-meter" aria-hidden="true"><i style={{ width: `${meter * 100}%` }} /></i>
             </div>
           );
         })}
@@ -359,7 +432,7 @@ function RewardArtwork({ option, assets }) {
   return <Lightning weight="fill" />;
 }
 
-function LevelUpOverlay({ offer, level, assets, onChoose }) {
+function LevelUpOverlay({ offer, level, assets, rewardState, onChoose }) {
   const firstOptionRef = useRef(null);
   const modalRef = useRef(null);
   const offerKey = offer?.map((option) => option.id).join("|") || "";
@@ -389,12 +462,23 @@ function LevelUpOverlay({ offer, level, assets, onChoose }) {
     };
   }, [offerKey]);
   if (!offer?.length) return null;
+  const queuedRewards = Math.max(0, Number(
+    rewardState?.queued
+    ?? rewardState?.queueCount
+    ?? rewardState?.pendingCount
+    ?? rewardState?.batchLevels
+    ?? rewardState?.queuedLevels
+    ?? rewardState?.remaining
+    ?? rewardState?.queue?.length
+    ?? 0,
+  ) || 0);
   return (
     <div className="reward-backdrop" role="dialog" aria-modal="true" aria-labelledby="reward-title">
-      <section className="reward-modal" ref={modalRef}>
+      <section className="reward-modal" ref={modalRef} key={offerKey}>
         <div className="reward-kicker"><Sparkle weight="fill" /> NEURAL LOADOUT EVOLUTION · LV.{level}</div>
         <h2 id="reward-title">CHOOSE YOUR OVERLOAD</h2>
-        <p>전투는 일시 정지되었습니다. 무기·기술·동료 중 하나를 즉시 설치하세요.</p>
+        <p>전투는 일시 정지되었습니다. 세 선택지는 동일한 전투 가치로 조정됩니다.</p>
+        {queuedRewards > 1 && <div className="reward-queue-status"><Timer weight="bold" /> 축적된 레벨업 {queuedRewards}회를 이번 선택 1회로 압축했습니다.</div>}
         <div className="reward-options">
           {offer.map((option, index) => {
             const meta = CATEGORY_META[option.category] || CATEGORY_META.skill;
@@ -410,7 +494,7 @@ function LevelUpOverlay({ offer, level, assets, onChoose }) {
             );
           })}
         </div>
-        <span className="reward-note">클릭 또는 숫자키 1–3으로 선택</span>
+        <span className="reward-note">클릭 또는 숫자키 1–3으로 선택 · 다음 선택은 전투 간격 후 나타납니다.</span>
       </section>
     </div>
   );
@@ -480,9 +564,26 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
     let bannerTimeout = 0;
     let cachedQualityId = "";
     let cachedRenderQuality = null;
-    let lastRewardPending = false;
+    let lastRewardToken = "";
+    let logicalPointer = { x: GAME_WIDTH * 0.82, y: GAME_HEIGHT * 0.5 };
+    let pointerClient = null;
+    let capturedPointerId = null;
     let stopped = false;
     const fixedStep = 1 / 60;
+
+    const getCanvasViewport = (bounds = canvas.getBoundingClientRect()) => {
+      const scale = Math.max(0.0001, Math.min(bounds.width / GAME_WIDTH, bounds.height / GAME_HEIGHT));
+      const width = GAME_WIDTH * scale;
+      const height = GAME_HEIGHT * scale;
+      return {
+        bounds,
+        scale,
+        left: (bounds.width - width) * 0.5,
+        top: (bounds.height - height) * 0.5,
+        width,
+        height,
+      };
+    };
 
     const syncCanvas = () => {
       const preset = governor.preset;
@@ -499,6 +600,21 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
 
     const refreshHud = () => setHud(createHudSnapshot(game, governor.snapshot));
 
+    const applyLogicalAim = () => {
+      setSwarmScreenAim(game, logicalPointer.x, logicalPointer.y);
+    };
+
+    const updatePointerFromClient = (clientX, clientY) => {
+      if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
+      pointerClient = { x: clientX, y: clientY };
+      const viewport = getCanvasViewport();
+      logicalPointer = {
+        x: Math.max(0, Math.min(GAME_WIDTH, (clientX - viewport.bounds.left - viewport.left) / viewport.scale)),
+        y: Math.max(0, Math.min(GAME_HEIGHT, (clientY - viewport.bounds.top - viewport.top) / viewport.scale)),
+      };
+      applyLogicalAim();
+    };
+
     const showBanner = (event) => {
       let copy = EVENT_BANNERS[event.type];
       if (event.type === "bossStage" || event.type === "bossStagePulse") {
@@ -513,15 +629,16 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
       if (!copy) return;
       window.clearTimeout(bannerTimeout);
       setBanner({ key: `${event.type}-${game.time}`, type: event.type, title: copy[0], subtitle: copy[1] });
-      const duration = event.type === "bossIntro" ? 1900
+      const duration = event.type === "bossIntro" ? 920
         : event.type === "bossStage" || event.type === "bossStagePulse" ? 920
+          : event.type === "bossContact" || event.type === "bossContactHit" || event.type === "playerStunned" ? 860
           : 1250;
       bannerTimeout = window.setTimeout(() => setBanner(null), duration);
     };
 
     const consumeEvents = () => {
       for (const event of drainSwarmEvents(game) || []) {
-        const sound = EVENT_SOUNDS[event.type];
+        const sound = resolveEventSound(event);
         if (sound) sfx.play(sound);
         showBanner(event);
       }
@@ -529,7 +646,14 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
 
     const render = () => {
       syncCanvas();
-      context.setTransform(canvas.width / GAME_WIDTH, 0, 0, canvas.height / GAME_HEIGHT, 0, 0);
+      applyLogicalAim();
+      const renderScale = Math.max(0.0001, Math.min(canvas.width / GAME_WIDTH, canvas.height / GAME_HEIGHT));
+      const offsetX = (canvas.width - GAME_WIDTH * renderScale) * 0.5;
+      const offsetY = (canvas.height - GAME_HEIGHT * renderScale) * 0.5;
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.fillStyle = "#020608";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.setTransform(renderScale, 0, 0, renderScale, offsetX, offsetY);
       const preset = governor.preset;
       if (cachedQualityId !== preset.id) {
         cachedQualityId = preset.id;
@@ -550,7 +674,11 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
       if (!game.levelupPending && !isTerminal(game)) {
         let steps = 0;
         while (simulationAccumulator >= fixedStep && steps < 4) {
+          applyLogicalAim();
           stepSwarm(game, input, fixedStep);
+          // Camera follow changes the world-space aim conversion each tick. Reprojecting
+          // the stored screen point keeps the rendered reticle under a stationary cursor.
+          applyLogicalAim();
           clearPressedInput(input);
           simulationAccumulator -= fixedStep;
           steps += 1;
@@ -559,12 +687,21 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
         simulationAccumulator = 0;
       }
 
+      // Gameplay is intentionally frozen after victory/defeat, but authored
+      // death dissolves still need a short visual clock before the result view.
+      if (isTerminal(game)) {
+        const visualDelta = frameMs / 1000;
+        if (game.player?.dead) game.player.deathTimer = Math.max(0, Number(game.player.deathTimer || 0) - visualDelta);
+        if (game.boss?.dead) game.boss.deathTimer = Math.max(0, Number(game.boss.deathTimer || 0) - visualDelta);
+      }
+
       consumeEvents();
       hudAccumulator += frameMs;
-      const rewardStateChanged = game.levelupPending !== lastRewardPending;
+      const rewardToken = `${Boolean(game.levelupPending)}:${game.rewardOptions?.map((option) => option.id).join("|") || ""}:${game.levelFlow?.batchLevels ?? game.levelFlow?.queuedLevels ?? game.rewardQueue?.length ?? game.pendingLevelUps ?? game.queuedRewards ?? ""}`;
+      const rewardStateChanged = rewardToken !== lastRewardToken;
       if (rewardStateChanged || (!game.levelupPending && (hudAccumulator >= (governor.preset.hudInterval || 150) || qualityChanged))) {
         hudAccumulator = 0;
-        lastRewardPending = game.levelupPending;
+        lastRewardToken = rewardToken;
         refreshHud();
       }
 
@@ -611,21 +748,40 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
       input.dashPressed = false;
       input.supportPressed = false;
     };
-    const updatePointer = (event) => {
-      const bounds = canvas.getBoundingClientRect();
-      setSwarmScreenAim(
-        game,
-        (event.clientX - bounds.left) * GAME_WIDTH / Math.max(1, bounds.width),
-        (event.clientY - bounds.top) * GAME_HEIGHT / Math.max(1, bounds.height),
-      );
-    };
-    const onPointerMove = (event) => updatePointer(event);
-    const onPointerDown = (event) => {
+    const updatePointer = (event) => updatePointerFromClient(event.clientX, event.clientY);
+    const onPointerMove = (event) => {
+      if (event.isPrimary === false) return;
       updatePointer(event);
-      canvas.setPointerCapture?.(event.pointerId);
     };
-    const onPointerUp = (event) => canvas.releasePointerCapture?.(event.pointerId);
+    const onPointerDown = (event) => {
+      if (event.isPrimary === false) return;
+      updatePointer(event);
+      capturedPointerId = event.pointerId;
+      try {
+        canvas.setPointerCapture?.(event.pointerId);
+      } catch {
+        capturedPointerId = null;
+      }
+    };
+    const onPointerUp = (event) => {
+      if (event.pointerId !== capturedPointerId) return;
+      try {
+        if (canvas.hasPointerCapture?.(event.pointerId)) canvas.releasePointerCapture?.(event.pointerId);
+      } catch {
+        // Pointer capture may already be released by the browser during a resize/blur.
+      }
+      capturedPointerId = null;
+    };
+    const onLostPointerCapture = (event) => {
+      if (event.pointerId === capturedPointerId) capturedPointerId = null;
+    };
+    const onResize = () => {
+      syncCanvas();
+      if (pointerClient) updatePointerFromClient(pointerClient.x, pointerClient.y);
+      else applyLogicalAim();
+    };
     const onContextMenu = (event) => event.preventDefault();
+    const resizeObserver = typeof ResizeObserver === "function" ? new ResizeObserver(onResize) : null;
 
     window.addEventListener("keydown", onKeyDown, { passive: false });
     window.addEventListener("keyup", onKeyUp, { passive: false });
@@ -634,7 +790,11 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", onPointerUp);
+    canvas.addEventListener("lostpointercapture", onLostPointerCapture);
     canvas.addEventListener("contextmenu", onContextMenu);
+    window.addEventListener("resize", onResize, { passive: true });
+    window.visualViewport?.addEventListener("resize", onResize, { passive: true });
+    resizeObserver?.observe(canvas);
 
     refreshHud();
     render();
@@ -651,7 +811,11 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointercancel", onPointerUp);
+      canvas.removeEventListener("lostpointercapture", onLostPointerCapture);
       canvas.removeEventListener("contextmenu", onContextMenu);
+      window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
+      resizeObserver?.disconnect();
     };
   }, [assets, onFinish, sfx]);
 
@@ -681,6 +845,8 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
   }, []);
 
   const xpRatio = Math.max(0, Math.min(1, Number(hud?.xp || 0) / Math.max(1, Number(hud?.nextXp || 1))));
+  const playerStunTime = Math.max(0, Number(hud?.player?.stunTimer ?? hud?.player?.stun ?? hud?.player?.stunnedFor ?? 0) || 0);
+  const playerStunned = Boolean(hud?.player?.stunned) || playerStunTime > 0;
 
   return (
     <main className="overload-game">
@@ -696,21 +862,27 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
       </header>
 
       <section className="overload-arena-layout">
-        <div className="overload-canvas-frame">
-          <canvas ref={canvasRef} className="game-canvas" tabIndex="0" aria-label="TRAIN ME WRONG 오버로드 생존 전장" />
-          <div className="frame-corners" aria-hidden="true"><i /><i /><i /><i /></div>
-          {banner && (
-            <div key={banner.key} className={`combat-banner banner-${banner.type}`} aria-live="assertive">
-              <small>SYSTEM EVENT</small><strong>{banner.title}</strong><span>{banner.subtitle}</span>
-            </div>
-          )}
-          <div className="arena-status top-left"><i /> CHAMBER OMEGA · AUTO FIRE</div>
-          <div className="arena-status top-right">{hud?.quality?.qualityLabel || "CALIBRATING"} · {hud?.quality?.fps || 60} FPS</div>
+        <div className="overload-battle-grid">
+          <div className="overload-canvas-frame">
+            <canvas ref={canvasRef} className="game-canvas" tabIndex="0" aria-label="TRAIN ME WRONG 오버로드 생존 전장. 포인터 위치가 조준점입니다." />
+            <div className="frame-corners" aria-hidden="true"><i /><i /><i /><i /></div>
+            {banner && (
+              <div key={banner.key} className={`combat-banner banner-${banner.type}`} aria-live="assertive">
+                <small>SYSTEM EVENT</small><strong>{banner.title}</strong><span>{banner.subtitle}</span>
+              </div>
+            )}
+            {playerStunned && <div className="stun-screen-effect" aria-hidden="true"><i /><i /><i /><i /></div>}
+            <div className="arena-status top-left"><i /> CHAMBER OMEGA · AUTO FIRE</div>
+            <div className="arena-status top-right">{hud?.quality?.qualityLabel || "CALIBRATING"} · {hud?.quality?.fps || 60} FPS</div>
+            <div className="combat-help"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> PHASE DASH</span><span><kbd>F</kbd> 4-FRONT RECALL</span><span><kbd>MOUSE</kbd> AIM</span><b><Pulse weight="fill" /> AUTO FIRE</b></div>
+            <div className="xp-hud"><span>LV.{hud?.level || 1}</span><div><i style={{ width: `${xpRatio * 100}%` }} /></div><b>{Math.floor(hud?.xp || 0)} / {Math.floor(hud?.nextXp || 0)} XP</b></div>
+          </div>
+          <aside className="overload-command-rail" aria-label="플레이어 및 전투 시스템 상태">
+            <div className="command-rail-label"><span>COMBAT TELEMETRY</span><i>LIVE</i></div>
           <PilotHud hud={hud} />
-          <BuildHud build={hud?.build} />
           <AbilityHud abilities={hud?.abilities} />
-          <div className="combat-help"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> PHASE DASH</span><span><kbd>F</kbd> 4-FRONT RECALL</span><span><kbd>MOUSE</kbd> AIM</span><b><Pulse weight="fill" /> AUTO FIRE</b></div>
-          <div className="xp-hud"><span>LV.{hud?.level || 1}</span><div><i style={{ width: `${xpRatio * 100}%` }} /></div><b>{Math.floor(hud?.xp || 0)} / {Math.floor(hud?.nextXp || 0)} XP</b></div>
+            <BuildHud build={hud?.build} />
+          </aside>
         </div>
 
         <div className="touch-controls" aria-label="터치 전투 조작">
@@ -728,7 +900,7 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
         </div>
       </section>
 
-      <LevelUpOverlay offer={hud?.rewards?.options} level={hud?.level || 1} assets={assets} onChoose={selectReward} />
+      <LevelUpOverlay offer={hud?.rewards?.options} level={hud?.level || 1} assets={assets} rewardState={hud?.rewards} onChoose={selectReward} />
     </main>
   );
 }

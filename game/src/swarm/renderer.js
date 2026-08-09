@@ -33,6 +33,7 @@ const tintedSprites = new WeakMap();
 let activeViewport = null;
 let cachedQualityInput = null;
 let cachedQuality = DEFAULT_QUALITY;
+let crowdRenderPressure = false;
 const fullViewport = Object.freeze({ left: 0, top: 0, right: GAME_WIDTH, bottom: GAME_HEIGHT });
 const viewportScratch = { left: 0, top: 0, right: GAME_WIDTH, bottom: GAME_HEIGHT };
 const collectionScratch = [];
@@ -40,15 +41,40 @@ const collectionSeen = [];
 const collectionPairPool = Array.from({ length: 16 }, () => ({ key: "", collection: null }));
 const entitySeen = new Set();
 const particleScratch = [];
+const damageTextScratch = [];
 const bossProxy = { id: 0, x: 0, y: 0, vx: 0, vy: 0, angle: 0, alpha: 1, hitFlash: 0 };
+const bossOldProxy = { id: -1, x: 0, y: 0, vx: 0, vy: 0, angle: 0, alpha: 1, hitFlash: 0 };
+const playerGhostProxy = { id: -2, x: 0, y: 0, vx: 0, vy: 0, angle: 0, alpha: 1, hitFlash: 0 };
 const ENEMY_DRAW_OPTIONS = Object.freeze([
-  Object.freeze({ shadowAlpha: 0.26, fallback: COLORS.enemy }),
-  Object.freeze({ shadowAlpha: 0.2, fallback: COLORS.enemy }),
-  Object.freeze({ shadowAlpha: 0.26, fallback: COLORS.elite }),
-  Object.freeze({ shadowAlpha: 0.2, fallback: COLORS.elite }),
+  Object.freeze({ shadowAlpha: 0.26, fallback: COLORS.enemy, role: "enemy" }),
+  Object.freeze({ shadowAlpha: 0.2, fallback: COLORS.enemy, role: "enemy" }),
+  Object.freeze({ shadowAlpha: 0.26, fallback: COLORS.elite, role: "enemy" }),
+  Object.freeze({ shadowAlpha: 0.2, fallback: COLORS.elite, role: "enemy" }),
 ]);
+const ENEMY_MOTION_DRAW_OPTIONS = Object.freeze([
+  Object.freeze({ shadowAlpha: 0.26, fallback: COLORS.enemy, role: "enemy", motionAtlas: "enemy" }),
+  Object.freeze({ shadowAlpha: 0.2, fallback: COLORS.enemy, role: "enemy", motionAtlas: "enemy" }),
+  Object.freeze({ shadowAlpha: 0.26, fallback: COLORS.elite, role: "enemy", motionAtlas: "enemy" }),
+  Object.freeze({ shadowAlpha: 0.2, fallback: COLORS.elite, role: "enemy", motionAtlas: "enemy" }),
+]);
+const ALLY_DRAW_OPTIONS = Object.freeze({ shadowAlpha: 0.31, fallback: COLORS.ally, role: "ally" });
+const PLAYER_DRAW_OPTIONS = Object.freeze({ shadowAlpha: 0.48, fallback: COLORS.player, role: "player" });
+const PLAYER_MOTION_DRAW_OPTIONS = Object.freeze({ shadowAlpha: 0.48, fallback: COLORS.player, role: "player", motionAtlas: "player" });
+const PLAYER_GHOST_OPTIONS = Object.freeze({ shadowAlpha: 0, fallback: COLORS.player, role: "player", ghost: true });
+const PLAYER_MOTION_GHOST_OPTIONS = Object.freeze({ shadowAlpha: 0, fallback: COLORS.player, role: "player", motionAtlas: "player", ghost: true });
+const BOSS_DRAW_OPTIONS = Object.freeze({ shadowAlpha: 0.6, fallback: COLORS.boss, role: "boss" });
+const BOSS_LAYER_OPTIONS = Object.freeze({ shadowAlpha: 0, fallback: COLORS.boss, role: "boss" });
+const BOSS_MOTION_DRAW_OPTIONS = Object.freeze({ shadowAlpha: 0.6, fallback: COLORS.boss, role: "boss", motionAtlas: "boss" });
+const BOSS_MOTION_LAYER_OPTIONS = Object.freeze({ shadowAlpha: 0, fallback: COLORS.boss, role: "boss", motionAtlas: "boss" });
 const PLAYER_ATLAS = Object.freeze({ columns: 3, rows: 3 });
 const BOSS_ATLAS = Object.freeze({ columns: 3, rows: 2 });
+// Optional authored motion sheet: 5 frames across, with locomotion, attack,
+// and hit/recovery rows. Static sprites keep the same procedural fallback.
+const PLAYER_MOTION_ATLAS = Object.freeze({ columns: 5, rows: 3 });
+const ENEMY_MOTION_ATLAS = Object.freeze({ columns: 5, rows: 3 });
+const BOSS_MOTION_ATLAS = Object.freeze({ columns: 5, rows: 3 });
+const inferredTelegraphScratch = { type: "charge", x: 0, y: 0, targetX: 0, targetY: 0, angle: 0, radius: 0, width: 0, progress: 0 };
+const motionScratch = { motion: 0, hit: 0, stun: 0, death: 0, anticipation: 0, attack: 0, recovery: 0, dash: 0, row: 0, column: 0, lean: 0, recoil: 0 };
 
 function finite(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
@@ -111,24 +137,24 @@ function drawAtlasSprite(ctx, image, atlas, column, row, x, y, width, height, an
 }
 
 function playerAtlasCell(type) {
-  if (type.includes("rocket") || type.includes("missile")) return [0, 1];
-  if (type.includes("orbit")) return [1, 1];
-  if (type.includes("chain") || type.includes("arc")) return [2, 1];
-  if (type.includes("nova")) return [0, 2];
-  if (type.includes("airstrike") || type.includes("skyfall")) return [1, 2];
-  if (type.includes("omega") || type.includes("laser")) return [2, 2];
-  if (type.includes("rail") || type.includes("heavy")) return [2, 0];
-  if (type.includes("scatter") || type.includes("rook")) return [1, 0];
-  return [0, 0];
+  if (type.includes("rocket") || type.includes("missile")) return 3;
+  if (type.includes("orbit")) return 4;
+  if (type.includes("chain") || type.includes("arc")) return 5;
+  if (type.includes("nova")) return 6;
+  if (type.includes("airstrike") || type.includes("skyfall")) return 7;
+  if (type.includes("omega") || type.includes("laser")) return 8;
+  if (type.includes("rail") || type.includes("heavy")) return 2;
+  if (type.includes("scatter") || type.includes("rook")) return 1;
+  return 0;
 }
 
 function bossAtlasCell(type) {
-  if (type.includes("multicharge")) return [2, 1];
-  if (type.includes("charge") || type.includes("rush")) return [1, 1];
-  if (type.includes("ring")) return [0, 1];
-  if (type.includes("bomb")) return [2, 0];
-  if (type.includes("sweep") || type.includes("laser")) return [1, 0];
-  return [0, 0];
+  if (type.includes("multicharge")) return 5;
+  if (type.includes("charge") || type.includes("rush")) return 4;
+  if (type.includes("ring")) return 3;
+  if (type.includes("bomb")) return 2;
+  if (type.includes("sweep") || type.includes("laser")) return 1;
+  return 0;
 }
 
 function arraysFrom(source, keys) {
@@ -307,8 +333,11 @@ function getTintedSprite(image, tint = "white") {
     tintedSprites.set(image, variants);
   }
   if (variants[tint]) return variants[tint];
-  const width = clamp(finite(image.naturalWidth, finite(image.width, 128)), 1, 512);
-  const height = clamp(finite(image.naturalHeight, finite(image.height, 128)), 1, 512);
+  const sourceWidth = Math.max(1, finite(image.naturalWidth, finite(image.width, 128)));
+  const sourceHeight = Math.max(1, finite(image.naturalHeight, finite(image.height, 128)));
+  const scale = Math.min(1, 512 / sourceWidth, 512 / sourceHeight);
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
   const layer = createLayer(width, height);
   const ctx = layer?.getContext("2d");
   if (!ctx) return null;
@@ -346,11 +375,8 @@ function spriteAngle(entity, fallback = 0) {
   return Math.abs(vx) + Math.abs(vy) > 0.01 ? Math.atan2(vy, vx) : fallback;
 }
 
-function drawFallbackActor(ctx, x, y, size, color, angle, alpha) {
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.translate(x, y);
-  ctx.rotate(angle);
+function drawFallbackActor(ctx, size, color, alpha, death = 0) {
+  ctx.globalAlpha = alpha * (1 - death);
   ctx.fillStyle = color;
   ctx.beginPath();
   ctx.moveTo(size * 0.46, 0);
@@ -359,7 +385,152 @@ function drawFallbackActor(ctx, x, y, size, color, angle, alpha) {
   ctx.lineTo(-size * 0.35, -size * 0.32);
   ctx.closePath();
   ctx.fill();
-  ctx.restore();
+}
+
+function actorDeathProgress(entity) {
+  if (Number.isFinite(entity?.deathProgress)) return clamp01(entity.deathProgress);
+  if (Number.isFinite(entity?.deathTimer) && (entity?.dead || Number.isFinite(entity?.deathDuration))) {
+    const bossLike = entity?.boss || entity?.finalBoss || finite(entity?.radius) >= 55 || String(entity?.name).toLowerCase().includes("engine");
+    const duration = finite(entity?.deathDuration, bossLike ? 1.25 : entity?.elite ? 0.46 : 0.32);
+    return clamp01(1 - entity.deathTimer / Math.max(0.001, duration));
+  }
+  if (Number.isFinite(entity?.deathLife) && Number.isFinite(entity?.deathMaxLife)) {
+    return clamp01(1 - entity.deathLife / Math.max(0.001, entity.deathMaxLife));
+  }
+  return entity?.dead ? 1 : 0;
+}
+
+function resolveActorMotion(entity, state, role, time, seed, motionSpeed) {
+  const motion = motionScratch;
+  const vx = finite(entity?.vx);
+  const vy = finite(entity?.vy);
+  const speed = Math.hypot(vx, vy);
+  const facing = spriteAngle(entity);
+  const velocityAngle = speed > 0.01 ? Math.atan2(vy, vx) : facing;
+  motion.motion = clamp01(speed / Math.max(1, motionSpeed));
+  motion.hit = clamp01(Math.max(
+    finite(entity?.hitFlash) * 7,
+    finite(entity?.flash) * 5,
+    finite(entity?.hitStun) / 0.1,
+    String(entity?.animationState).toLowerCase() === "hit" ? 0.72 : 0,
+  ));
+  motion.stun = clamp01(Math.max(
+    finite(entity?.stunProgress),
+    finite(entity?.stunTimer) / Math.max(0.18, finite(entity?.stunDuration, 0.7)),
+    entity?.stunned ? 1 : 0,
+  ));
+  motion.death = actorDeathProgress(entity);
+  motion.anticipation = 0;
+  motion.attack = 0;
+  motion.recovery = 0;
+  motion.dash = clamp01(finite(entity?.dashTimer) / Math.max(0.001, finite(entity?.dashDuration, 0.16)));
+  motion.row = 0;
+  motion.column = Math.floor(time * (4.5 + motion.motion * 5) + seed) % PLAYER_MOTION_ATLAS.columns;
+
+  if (motion.dash > 0) {
+    motion.row = 2;
+    motion.column = clamp(Math.floor((1 - motion.dash) * 3), 0, 2);
+  } else if (motion.stun > 0 || motion.hit > 0) {
+    motion.row = 2;
+    motion.column = 3 + (Math.floor(time * 15 + seed) & 1);
+  } else if (role === "boss" && entity?.activePattern) {
+    const pattern = entity.activePattern;
+    if (pattern.phase === "warning") motion.anticipation = telegraphProgress(pattern);
+    else motion.attack = clamp01(1 - finite(pattern.life) / Math.max(0.001, finite(pattern.maxLife, 1)));
+  } else {
+    let cooldown = NaN;
+    let cycle = 0.9;
+    const explicitAttack = finite(entity?.attackTimer);
+    if (explicitAttack > 0 || (entity?.attackState && entity.attackState !== "idle")) {
+      const heavy = String(entity?.attackState).toLowerCase().includes("rail") || String(entity?.attackState).toLowerCase().includes("rocket");
+      const duration = heavy ? 0.2 : role === "enemy" ? 0.24 : 0.1;
+      const explicitProgress = clamp01(1 - explicitAttack / duration);
+      if (explicitProgress < 0.34) motion.attack = 1 - explicitProgress * 0.45;
+      else motion.recovery = 1 - (explicitProgress - 0.34) / 0.66;
+      motion.row = 1;
+      motion.column = explicitProgress < 0.3 ? 2 : explicitProgress < 0.64 ? 3 : 4;
+    }
+    if (role === "player" && entity?.fireTimers) {
+      cooldown = finite(entity.fireTimers.pulse);
+      const pulseRank = Math.max(1, finite(state?.build?.weapons?.pulse, 1));
+      cycle = Math.max(0.028, 0.145 * Math.max(0.16, finite(entity.fireRateMultiplier, 1) * finite(entity.overdriveHaste, 1)) / (1 + (pulseRank - 1) * 0.08));
+    } else if (role === "enemy") {
+      const ranged = String(entity?.type ?? entity?.kind ?? "").toLowerCase().includes("suppress");
+      cooldown = ranged ? finite(entity?.shootCooldown) : finite(entity?.attackCooldown);
+      cycle = ranged ? (entity?.elite ? 1.05 : 1.65) : (entity?.elite ? 0.62 : 0.9);
+    } else if (Number.isFinite(entity?.fireCooldown)) {
+      cooldown = entity.fireCooldown;
+      cycle = 0.84;
+    }
+    if (Number.isFinite(cooldown) && explicitAttack <= 0) {
+      const cycleProgress = clamp01(1 - Math.max(0, cooldown) / Math.max(0.025, cycle));
+      if (cycleProgress < 0.13) {
+        motion.attack = 1 - cycleProgress / 0.13;
+        motion.row = 1;
+        motion.column = 2;
+      } else if (cycleProgress < 0.42) {
+        motion.recovery = 1 - (cycleProgress - 0.13) / 0.29;
+        motion.row = 1;
+        motion.column = cycleProgress < 0.25 ? 3 : 4;
+      } else if (cycleProgress > 0.76) {
+        motion.anticipation = clamp01((cycleProgress - 0.76) / 0.24);
+        motion.row = 1;
+        motion.column = cycleProgress > 0.91 ? 1 : 0;
+      }
+    }
+  }
+
+  if (role === "boss" && finite(entity?.weakness) > 0) motion.recovery = clamp01(finite(entity.weakness) / 3);
+  motion.lean = Math.sin(velocityAngle - facing) * motion.motion * 0.095;
+  motion.recoil = clamp(finite(entity?.recoil, finite(entity?.recoilTime) * 7), 0, 9) + motion.attack * (role === "boss" ? 5 : 3.5);
+  return motion;
+}
+
+function drawSpriteFrame(ctx, image, size, motion, atlasKind, alpha, death, seed, simpleDeath = false) {
+  const sourceWidth = finite(image.naturalWidth, finite(image.width));
+  const sourceHeight = finite(image.naturalHeight, finite(image.height));
+  if (sourceWidth <= 0 || sourceHeight <= 0) return;
+  const atlas = atlasKind === "enemy" ? ENEMY_MOTION_ATLAS : atlasKind === "boss" ? BOSS_MOTION_ATLAS : PLAYER_MOTION_ATLAS;
+  const atlasEnabled = Boolean(atlasKind);
+  const cellWidth = atlasEnabled ? sourceWidth / atlas.columns : sourceWidth;
+  const cellHeight = atlasEnabled ? sourceHeight / atlas.rows : sourceHeight;
+  const sourceX = atlasEnabled ? motion.column * cellWidth : 0;
+  const sourceY = atlasEnabled ? motion.row * cellHeight : 0;
+
+  if (death <= 0 || simpleDeath) {
+    ctx.globalAlpha = alpha * (1 - death);
+    ctx.drawImage(image, sourceX, sourceY, cellWidth, cellHeight, -size * 0.5, -size * 0.5, size, size);
+    return;
+  }
+
+  // Canvas-safe dissolve: split the authored frame into drifting strips, then
+  // add deterministic fragments. It works for both static sprites and atlases.
+  const slices = 6;
+  const sourceSlice = cellHeight / slices;
+  const destinationSlice = size / slices + 0.5;
+  const eased = death * death;
+  for (let slice = 0; slice < slices; slice += 1) {
+    const direction = ((slice + seed) & 1) ? 1 : -1;
+    ctx.globalAlpha = alpha * (1 - death) * (0.72 + slice * 0.045);
+    ctx.drawImage(
+      image,
+      sourceX,
+      sourceY + sourceSlice * slice,
+      cellWidth,
+      sourceSlice,
+      -size * 0.5 + direction * eased * size * (0.04 + slice * 0.012),
+      -size * 0.5 + destinationSlice * slice - eased * size * 0.08,
+      size,
+      destinationSlice,
+    );
+  }
+  ctx.globalAlpha = alpha * (1 - death);
+  ctx.fillStyle = "rgba(210,251,255,.82)";
+  for (let part = 0; part < 4; part += 1) {
+    const partAngle = seed * 0.73 + part * 1.71;
+    const distance = eased * size * (0.38 + part * 0.09);
+    ctx.fillRect(Math.cos(partAngle) * distance - 2, Math.sin(partAngle) * distance - 2, 4 + part, 3 + part * 0.5);
+  }
 }
 
 function drawActorSprite(ctx, image, entity, size, state, quality, options = {}) {
@@ -367,40 +538,69 @@ function drawActorSprite(ctx, image, entity, size, state, quality, options = {})
   const time = timeOf(state);
   const seed = entitySeed(entity, options.seed || 0);
   const speed = Math.hypot(finite(entity.vx), finite(entity.vy));
-  const motion = clamp01(speed / finite(options.motionSpeed, 190));
-  const bob = Math.sin(time * 11 + seed * 0.73) * (0.55 + motion * 1.25);
-  const angle = spriteAngle(entity, finite(options.angle));
-  const recoil = clamp(finite(entity.recoil, finite(entity.recoilTime) * 7), 0, 8);
-  const x = finite(entity.x) - Math.cos(angle) * recoil;
-  const y = finite(entity.y) - Math.sin(angle) * recoil + bob;
-  const alpha = clamp01(options.alpha ?? entity.alpha ?? 1);
-  const scalePulse = 1 + Math.sin(time * 13 + seed) * motion * 0.018;
+  const motion = resolveActorMotion(entity, state, options.role || "enemy", time, seed, finite(options.motionSpeed, 190));
+  if (options.motionAtlas === "enemy") {
+    const enemyType = String(entity?.type ?? entity?.kind ?? "hunter").toLowerCase();
+    motion.row = enemyType.includes("brute") || enemyType.includes("tank") || enemyType.includes("charger") ? 2
+      : enemyType.includes("suppress") || enemyType.includes("shoot") || enemyType.includes("sniper") ? 1 : 0;
+    motion.column = motion.hit > 0 || motion.stun > 0 ? 4
+      : motion.attack > 0 || motion.recovery > 0.58 ? 3
+        : motion.anticipation > 0 ? 2
+          : Math.floor(time * (4.5 + motion.motion * 4) + seed) & 1;
+  } else if (options.motionAtlas === "boss") {
+    motion.row = clamp(Math.floor(finite(entity?.stage, finite(entity?.phase, 1))) - 1, 0, 2);
+    // Pattern readability wins over the continuously refreshed hit flash. The
+    // white additive tint still communicates damage while the authored windup
+    // and release frames remain visible under late-game automatic fire.
+    motion.column = finite(entity?.transformTimer) > 0 || finite(entity?.weakness) > 0 || entity?.coreExposed ? 2
+      : motion.anticipation > 0 ? 1
+        : motion.attack > 0 || motion.recovery > 0.58 ? 3
+          : motion.hit > 0 || motion.stun > 0 ? 4 : 0;
+  }
+  const bob = Math.sin(time * (motion.motion > 0.1 ? 10.5 : 3.2) + seed * 0.73) * (0.45 + motion.motion * 1.35);
+  const baseAngle = spriteAngle(entity, finite(options.angle));
+  const angle = baseAngle + motion.lean + Math.sin(time * 49 + seed) * (motion.hit * 0.045 + motion.stun * 0.075);
+  const x = finite(entity.x) - Math.cos(baseAngle) * motion.recoil + Math.sin(time * 58 + seed) * motion.stun * 2.2;
+  const y = finite(entity.y) - Math.sin(baseAngle) * motion.recoil + bob + Math.cos(time * 51 + seed) * motion.stun * 1.5;
+  const alpha = clamp01(options.alpha ?? entity.alpha ?? 1) * (options.ghost ? 0.9 : 1);
+  const breathe = Math.sin(time * 3.5 + seed) * (1 - motion.motion) * 0.014;
+  const stretch = motion.motion * 0.035 + motion.attack * 0.12 - motion.anticipation * 0.06 - motion.hit * 0.1;
+  const squash = -motion.motion * 0.02 - motion.attack * 0.08 + motion.anticipation * 0.1 + motion.hit * 0.13;
+  const simpleDeath = options.role === "enemy" && crowdRenderPressure && motion.death > 0;
+  const scaleX = (1 + breathe + stretch) * (simpleDeath ? 1 - motion.death * 0.22 : 1);
+  const scaleY = (1 - breathe + squash) * (simpleDeath ? 1 - motion.death * 0.1 : 1);
   const fallbackColor = options.fallback || COLORS.enemy;
 
-  drawShadow(ctx, finite(entity.x), finite(entity.y), size, (options.shadowAlpha ?? 0.35) * alpha, quality);
-  if (!imageReady(image)) {
-    drawFallbackActor(ctx, x, y, size, fallbackColor, angle, alpha);
-    return;
-  }
+  if (motion.death < 0.94) drawShadow(ctx, finite(entity.x), finite(entity.y), size * (1 - motion.death * 0.35), (options.shadowAlpha ?? 0.35) * alpha * (1 - motion.death), quality);
 
   const flash = finite(entity.hitFlash, finite(entity.flash));
   ctx.save();
-  ctx.globalAlpha = alpha;
   ctx.translate(x, y);
   ctx.rotate(angle);
-  ctx.scale(scalePulse, 1 / scalePulse);
+  ctx.scale(scaleX, scaleY);
   if (options.flipY) ctx.scale(1, -1);
-  // Preserve raster detail during sustained automatic fire: the original image
-  // remains fully visible and the cached hit tint is only a restrained overlay.
-  ctx.drawImage(image, -size * 0.5, -size * 0.5, size, size);
-  if (flash > 0) {
+  if (!imageReady(image)) drawFallbackActor(ctx, size, fallbackColor, alpha, motion.death);
+  else drawSpriteFrame(ctx, image, size, motion, options.motionAtlas, alpha, motion.death, seed, simpleDeath);
+  if (imageReady(image) && flash > 0 && motion.death <= 0) {
     const tint = getTintedSprite(image, flash > 0.09 ? "white" : "red");
     if (tint) {
       ctx.globalAlpha = alpha * clamp(0.12 + flash * 2.2, 0.12, 0.4);
-      ctx.drawImage(tint, -size * 0.5, -size * 0.5, size, size);
+      drawSpriteFrame(ctx, tint, size, motion, options.motionAtlas, ctx.globalAlpha, 0, seed);
     }
   }
   ctx.restore();
+
+  if (motion.stun > 0) {
+    ctx.globalAlpha = 0.45 + motion.stun * 0.45;
+    ctx.strokeStyle = COLORS.warning;
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([4, 5]);
+    ctx.beginPath();
+    ctx.ellipse(finite(entity.x), finite(entity.y) - size * 0.58, size * 0.28, size * 0.09, time * 2.8, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
 }
 
 function ratioOf(entity, valueKey = "hp", maxKey = "maxHp") {
@@ -480,18 +680,19 @@ function telegraphAlpha(item) {
   return clamp01(item?.alpha ?? Math.max(0.18, 0.35 + telegraphProgress(item) * 0.45));
 }
 
-function drawCircleTelegraph(ctx, item, time, kind) {
-  const x = finite(item.x, finite(item.targetX, GAME_WIDTH * 0.5));
-  const y = finite(item.y, finite(item.targetY, GAME_HEIGHT * 0.5));
-  const radius = Math.max(12, finite(item.radius, kind === "bomb" ? 76 : 118));
+function drawCircleTelegraph(ctx, item, time, kind, overrideX = NaN, overrideY = NaN, overrideRadius = NaN) {
+  const x = finite(overrideX, finite(item.x, finite(item.targetX, GAME_WIDTH * 0.5)));
+  const y = finite(overrideY, finite(item.y, finite(item.targetY, GAME_HEIGHT * 0.5)));
+  const radius = Math.max(12, finite(overrideRadius, finite(item.radius, kind === "bomb" ? 76 : 118)));
   const progress = telegraphProgress(item);
   const pulse = 1 + Math.sin(time * 11 + x * 0.02) * 0.025;
+  const friendly = kind === "friendly" || item?.friendly === true || item?.team === "player";
   ctx.globalAlpha = telegraphAlpha(item);
-  ctx.fillStyle = kind === "bomb" ? "rgba(255,71,89,.11)" : "rgba(255,66,94,.09)";
+  ctx.fillStyle = friendly ? "rgba(82,229,255,.1)" : kind === "bomb" ? "rgba(255,71,89,.11)" : "rgba(255,66,94,.09)";
   ctx.beginPath();
   ctx.arc(x, y, radius * pulse, 0, TAU);
   ctx.fill();
-  ctx.strokeStyle = kind === "bomb" ? COLORS.warning : COLORS.enemy;
+  ctx.strokeStyle = friendly ? "#72ecff" : kind === "bomb" ? COLORS.warning : COLORS.enemy;
   ctx.lineWidth = 2.5;
   ctx.setLineDash(kind === "bomb" ? [9, 7] : [18, 9]);
   ctx.beginPath();
@@ -512,23 +713,72 @@ function drawCircleTelegraph(ctx, item, time, kind) {
   ctx.globalAlpha = 1;
 }
 
-function drawSweepTelegraph(ctx, item, time) {
-  const x = finite(item.x, finite(item.originX, GAME_WIDTH * 0.5));
-  const y = finite(item.y, finite(item.originY, GAME_HEIGHT * 0.5));
-  const angle = finite(item.angle, finite(item.rotation));
-  const length = Math.max(120, finite(item.length, 920));
-  const width = Math.max(16, finite(item.width, 72));
+function drawSweepTelegraph(ctx, item, time, overrideAngle = NaN) {
+  const geometry = item?.geometry;
+  const x = finite(geometry?.originX, finite(item.x, finite(item.originX, GAME_WIDTH * 0.5)));
+  const y = finite(geometry?.originY, finite(item.y, finite(item.originY, GAME_HEIGHT * 0.5)));
+  const angle = finite(overrideAngle, finite(geometry?.angle, finite(item.angle, finite(item.rotation))));
+  const length = Math.max(120, finite(geometry?.radius, finite(item.length, finite(item.radius, 920))));
+  // The engine publishes the exact player-center collision band. Drawing that
+  // value makes every lit pixel in the capsule a genuinely dangerous region.
+  const halfWidth = Math.max(8, finite(geometry?.collisionHalfWidth, finite(item.width, 36)));
+  const visualWidth = halfWidth * 2;
   const progress = telegraphProgress(item);
+  if (item.phase === "warning" && Number.isFinite(item.startAngle) && Number.isFinite(item.endAngle) && !Number.isFinite(overrideAngle)) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.globalAlpha = telegraphAlpha(item) * 0.24;
+    ctx.fillStyle = "rgba(255,52,82,.16)";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, length, item.startAngle, item.endAngle);
+    ctx.closePath();
+    ctx.fill();
+    if (item.dual) {
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, length, item.startAngle + Math.PI, item.endAngle + Math.PI);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = telegraphAlpha(item) * 0.72;
+    ctx.strokeStyle = COLORS.warning;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([13, 12]);
+    ctx.beginPath();
+    ctx.arc(0, 0, length, item.startAngle, item.endAngle);
+    ctx.moveTo(Math.cos(item.endAngle) * halfWidth, Math.sin(item.endAngle) * halfWidth);
+    ctx.lineTo(Math.cos(item.endAngle) * length, Math.sin(item.endAngle) * length);
+    if (item.dual) {
+      ctx.moveTo(Math.cos(item.endAngle + Math.PI) * halfWidth, Math.sin(item.endAngle + Math.PI) * halfWidth);
+      ctx.lineTo(Math.cos(item.endAngle + Math.PI) * length, Math.sin(item.endAngle + Math.PI) * length);
+      ctx.arc(0, 0, length, item.startAngle + Math.PI, item.endAngle + Math.PI);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
   ctx.globalAlpha = telegraphAlpha(item);
-  ctx.fillStyle = "rgba(255,48,78,.12)";
-  ctx.fillRect(0, -width * 0.5, length, width);
+  ctx.strokeStyle = "rgba(255,48,78,.12)";
+  ctx.lineWidth = visualWidth;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(length, 0);
+  ctx.stroke();
   ctx.strokeStyle = Math.sin(time * 14) > 0 ? COLORS.warning : COLORS.enemy;
   ctx.lineWidth = 2;
   ctx.setLineDash([17, 11]);
-  ctx.strokeRect(0, -width * 0.5, length, width);
+  ctx.beginPath();
+  ctx.moveTo(0, -halfWidth);
+  ctx.lineTo(length, -halfWidth);
+  ctx.arc(length, 0, halfWidth, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.lineTo(0, halfWidth);
+  ctx.arc(0, 0, halfWidth, Math.PI * 0.5, Math.PI * 1.5);
+  ctx.stroke();
   ctx.setLineDash([]);
   ctx.fillStyle = "rgba(255,205,96,.48)";
   ctx.fillRect(0, -2, length * progress, 4);
@@ -536,55 +786,115 @@ function drawSweepTelegraph(ctx, item, time) {
 }
 
 function drawRingTelegraph(ctx, item, time) {
-  const x = finite(item.x, finite(item.targetX, GAME_WIDTH * 0.5));
-  const y = finite(item.y, finite(item.targetY, GAME_HEIGHT * 0.5));
+  const geometry = item?.geometry;
+  const x = finite(geometry?.centerX, finite(item.x, finite(item.targetX, GAME_WIDTH * 0.5)));
+  const y = finite(geometry?.centerY, finite(item.y, finite(item.targetY, GAME_HEIGHT * 0.5)));
   const outer = Math.max(24, finite(item.radius, finite(item.outerRadius, 230)));
-  const thickness = Math.max(8, finite(item.thickness, finite(item.width, 36)));
+  const halfWidth = Math.max(4, finite(geometry?.collisionHalfWidth, finite(item.thickness, finite(item.width, 18))));
+  const ringCount = clamp(Math.floor(finite(geometry?.ringCount, finite(item.rings, 1))), 1, 10);
+  const spacing = Math.max(24, finite(geometry?.spacing, finite(item.spacing, 150)));
   const progress = telegraphProgress(item);
-  const current = item.contracting === false ? outer * progress : outer * (1 - progress * 0.72);
+  const active = item.phase === "active" || Number.isFinite(item.startRadius);
+  const current = active ? outer : outer;
+  if (!active && geometry) {
+    const maxTravel = Math.max(0, finite(geometry.maxTravel, 830));
+    ctx.globalAlpha = telegraphAlpha(item) * 0.34;
+    ctx.strokeStyle = "rgba(255,204,97,.72)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 14]);
+    for (let ring = 0; ring < ringCount; ring += 1) {
+      const futureRadius = finite(geometry.startRadius, outer) + maxTravel - ring * spacing;
+      if (futureRadius <= halfWidth) continue;
+      ctx.beginPath();
+      ctx.arc(x, y, futureRadius, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.globalAlpha = telegraphAlpha(item) * (0.45 + progress * 0.25);
+    ctx.fillStyle = COLORS.warning;
+    for (let arrow = 0; arrow < 4; arrow += 1) {
+      const arrowAngle = arrow * Math.PI * 0.5 + time * 0.12;
+      const arrowRadius = outer + progress * Math.min(180, maxTravel * 0.3);
+      const ax = x + Math.cos(arrowAngle) * arrowRadius;
+      const ay = y + Math.sin(arrowAngle) * arrowRadius;
+      ctx.save();
+      ctx.translate(ax, ay);
+      ctx.rotate(arrowAngle);
+      ctx.beginPath();
+      ctx.moveTo(10, 0);
+      ctx.lineTo(-5, -5);
+      ctx.lineTo(-5, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
   ctx.globalAlpha = telegraphAlpha(item);
-  ctx.strokeStyle = COLORS.warning;
-  ctx.lineWidth = thickness;
-  ctx.beginPath();
-  ctx.arc(x, y, Math.max(thickness, current), 0, TAU);
-  ctx.stroke();
+  ctx.strokeStyle = active ? "rgba(255,67,92,.33)" : "rgba(255,204,97,.24)";
+  ctx.lineWidth = halfWidth * 2;
+  for (let ring = 0; ring < ringCount; ring += 1) {
+    const ringRadius = active && Array.isArray(geometry?.radii) ? finite(geometry.radii[ring], current - ring * spacing) : current - ring * spacing;
+    if (ringRadius <= halfWidth) continue;
+    ctx.beginPath();
+    ctx.arc(x, y, ringRadius, 0, TAU);
+    ctx.stroke();
+  }
   ctx.strokeStyle = COLORS.enemy;
   ctx.lineWidth = 2;
   ctx.setLineDash([12, 9]);
-  ctx.beginPath();
-  ctx.arc(x, y, outer + Math.sin(time * 8) * 3, 0, TAU);
-  ctx.stroke();
+  for (let ring = 0; ring < ringCount; ring += 1) {
+    const ringRadius = active && Array.isArray(geometry?.radii) ? finite(geometry.radii[ring], current - ring * spacing) : current - ring * spacing;
+    if (ringRadius <= halfWidth) continue;
+    ctx.beginPath();
+    ctx.arc(x, y, ringRadius + Math.sin(time * 8 + ring) * 2, 0, TAU);
+    ctx.stroke();
+  }
   ctx.setLineDash([]);
   ctx.globalAlpha = 1;
 }
 
-function drawChargeTelegraph(ctx, item, time) {
-  const x = finite(item.x, finite(item.originX, GAME_WIDTH * 0.5));
-  const y = finite(item.y, finite(item.originY, GAME_HEIGHT * 0.5));
-  const targetX = finite(item.targetX, x + Math.cos(finite(item.angle)) * 700);
-  const targetY = finite(item.targetY, y + Math.sin(finite(item.angle)) * 700);
+function drawChargeTelegraph(ctx, item, time, bossCollisionRadius = 0) {
+  const geometry = item?.geometry;
+  const x = finite(geometry?.startX, finite(item.x, finite(item.originX, GAME_WIDTH * 0.5)));
+  const y = finite(geometry?.startY, finite(item.y, finite(item.originY, GAME_HEIGHT * 0.5)));
+  const targetX = finite(geometry?.endX, finite(item.targetX, x + Math.cos(finite(item.angle)) * 700));
+  const targetY = finite(geometry?.endY, finite(item.targetY, y + Math.sin(finite(item.angle)) * 700));
   const angle = Math.atan2(targetY - y, targetX - x);
   const length = Math.hypot(targetX - x, targetY - y);
-  const width = Math.max(34, finite(item.width, 92));
+  // Charge collision is swept with the boss radius. Prefer an explicit radius
+  // when supplied and otherwise use the live boss radius from drawTelegraphs.
+  const halfWidth = Math.max(22, finite(geometry?.collisionRadius, finite(item.collisionRadius, finite(item.bossRadius, bossCollisionRadius))), finite(item.width, 46));
+  const visualWidth = halfWidth * 2;
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(angle);
   ctx.globalAlpha = telegraphAlpha(item);
-  ctx.fillStyle = "rgba(255,52,82,.13)";
-  ctx.fillRect(0, -width * 0.5, length, width);
+  ctx.strokeStyle = "rgba(255,52,82,.13)";
+  ctx.lineWidth = visualWidth;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(length, 0);
+  ctx.stroke();
   ctx.strokeStyle = Math.sin(time * 16) > 0 ? COLORS.warning : COLORS.enemy;
   ctx.lineWidth = 3.5;
   ctx.setLineDash([22, 10]);
-  ctx.strokeRect(0, -width * 0.5, length, width);
+  ctx.beginPath();
+  ctx.moveTo(0, -halfWidth);
+  ctx.lineTo(length, -halfWidth);
+  ctx.arc(length, 0, halfWidth, -Math.PI * 0.5, Math.PI * 0.5);
+  ctx.lineTo(0, halfWidth);
+  ctx.arc(0, 0, halfWidth, Math.PI * 0.5, Math.PI * 1.5);
+  ctx.stroke();
   ctx.setLineDash([]);
   ctx.globalAlpha = Math.min(1, telegraphAlpha(item) + 0.18);
   ctx.strokeStyle = "rgba(255,232,171,.9)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(0, -width * 0.5);
-  ctx.lineTo(length, -width * 0.5);
-  ctx.moveTo(0, width * 0.5);
-  ctx.lineTo(length, width * 0.5);
+  ctx.moveTo(0, -halfWidth);
+  ctx.lineTo(length, -halfWidth);
+  ctx.moveTo(0, halfWidth);
+  ctx.lineTo(length, halfWidth);
   ctx.stroke();
   ctx.globalAlpha = telegraphAlpha(item);
   ctx.strokeStyle = COLORS.warning;
@@ -605,11 +915,11 @@ function drawChargeTelegraph(ctx, item, time) {
   ctx.restore();
 }
 
-function drawTelegraphSprite(ctx, item, type, time, assets) {
+function drawTelegraphSprite(ctx, item, type, time, assets, overrideX = NaN, overrideY = NaN, overrideAngle = NaN) {
   const progress = telegraphProgress(item);
   const alpha = 0.42 + progress * 0.48;
-  const x = finite(item.x, finite(item.targetX, GAME_WIDTH * 0.5));
-  const y = finite(item.y, finite(item.targetY, GAME_HEIGHT * 0.5));
+  const x = finite(overrideX, finite(item.x, finite(item.targetX, GAME_WIDTH * 0.5)));
+  const y = finite(overrideY, finite(item.y, finite(item.targetY, GAME_HEIGHT * 0.5)));
   if (type.includes("airstrike") || type.includes("skyfall")) {
     const missileY = y - (1 - progress) * 92;
     drawGlow(ctx, "amber", x, missileY, 74, 0.28 + progress * 0.2);
@@ -617,37 +927,40 @@ function drawTelegraphSprite(ctx, item, type, time, assets) {
     return;
   }
   if (!imageReady(assets?.bossPatterns)) return;
-  const [column, row] = bossAtlasCell(type);
-  const angle = finite(item.angle, finite(item.rotation));
+  const atlasCell = bossAtlasCell(type);
+  const column = atlasCell % BOSS_ATLAS.columns;
+  const row = Math.floor(atlasCell / BOSS_ATLAS.columns);
+  const angle = finite(overrideAngle, finite(item.angle, finite(item.rotation)));
   const elongated = type.includes("sweep") || type.includes("charge") || type.includes("rush");
   const size = elongated ? 118 : type.includes("ring") ? 92 : 72;
   drawGlow(ctx, "red", x, y, size * 1.15, 0.2 + progress * 0.22);
   drawAtlasSprite(ctx, assets.bossPatterns, BOSS_ATLAS, column, row, x, y, size, elongated ? 76 : size, angle + time * (elongated ? 0 : 0.35), alpha);
 }
 
-function drawTelegraph(ctx, item, time, assets) {
+function drawTelegraph(ctx, item, time, assets, bossCollisionRadius = 0, playerCollisionRadius = 0) {
   if (!item || item.active === false || item.expired) return;
   const type = String(item.type ?? item.kind ?? item.pattern ?? "circle").toLowerCase();
   if (Array.isArray(item.targets) && item.targets.length > 0 && (type.includes("bomb") || type.includes("radial"))) {
     for (const target of item.targets) {
       const targetX = Array.isArray(target) ? target[0] : target?.x;
       const targetY = Array.isArray(target) ? target[1] : target?.y;
-      const targetItem = { ...item, targets: null, x: targetX, y: targetY };
-      drawCircleTelegraph(ctx, targetItem, time, type.includes("bomb") ? "bomb" : "radial");
-      drawTelegraphSprite(ctx, targetItem, type, time, assets);
+      const targetRadius = Array.isArray(target) ? NaN : finite(target?.radius, finite(item.radius, 65)) + playerCollisionRadius;
+      drawCircleTelegraph(ctx, item, time, type.includes("bomb") ? "bomb" : "radial", targetX, targetY, targetRadius);
+      drawTelegraphSprite(ctx, item, type, time, assets, targetX, targetY);
     }
     return;
   }
   if (type.includes("sweep") || type.includes("laser") || type.includes("beam")) {
     drawSweepTelegraph(ctx, item, time);
     if (item.dual) {
-      const opposite = { ...item, dual: false, angle: finite(item.angle) + Math.PI };
-      drawSweepTelegraph(ctx, opposite, time);
-      drawTelegraphSprite(ctx, opposite, type, time, assets);
+      const oppositeAngle = finite(item.angle) + Math.PI;
+      drawSweepTelegraph(ctx, item, time, oppositeAngle);
+      drawTelegraphSprite(ctx, item, type, time, assets, NaN, NaN, oppositeAngle);
     }
   }
   else if (type.includes("ring") || type.includes("nova")) drawRingTelegraph(ctx, item, time);
-  else if (type.includes("charge") || type.includes("rush") || type.includes("dash")) drawChargeTelegraph(ctx, item, time);
+  else if (type.includes("charge") || type.includes("rush") || type.includes("dash")) drawChargeTelegraph(ctx, item, time, bossCollisionRadius);
+  else if (type.includes("airstrike") || type.includes("skyfall") || item.friendly === true || item.team === "player") drawCircleTelegraph(ctx, item, time, "friendly");
   else drawCircleTelegraph(ctx, item, time, type.includes("bomb") || type.includes("meteor") ? "bomb" : "radial");
   drawTelegraphSprite(ctx, item, type, time, assets);
 }
@@ -660,43 +973,41 @@ function inferredBossTelegraph(boss, state) {
     ?? state?.bossPattern
     ?? ((boss?.charging || boss?.isCharging || boss?.chargeActive) ? { type: "charge" } : null);
   if (!patternSource || patternSource === "idle") return null;
-  const pattern = typeof patternSource === "object" ? patternSource : { type: patternSource };
-  return {
-    ...pattern,
-    x: finite(pattern.x, finite(boss.x, GAME_WIDTH * 0.5)),
-    y: finite(pattern.y, finite(boss.y, GAME_HEIGHT * 0.5)),
-    targetX: finite(pattern.targetX, finite(pattern.target?.x, finite(boss.chargeTargetX, finite(boss.targetX, finite(state?.player?.x, GAME_WIDTH * 0.5))))),
-    targetY: finite(pattern.targetY, finite(pattern.target?.y, finite(boss.chargeTargetY, finite(boss.targetY, finite(state?.player?.y, GAME_HEIGHT * 0.5))))),
-    angle: finite(pattern.angle, finite(boss.patternAngle, finite(boss.angle))),
-    radius: finite(pattern.radius, finite(boss.patternRadius, 160)),
-    width: finite(pattern.width, finite(boss.patternWidth, 78)),
-    progress: finite(pattern.progress, finite(boss.chargeProgress, finite(boss.patternProgress, finite(boss.attackProgress, 0.45)))),
-  };
+  const pattern = typeof patternSource === "object" ? patternSource : null;
+  const inferred = inferredTelegraphScratch;
+  inferred.type = String(pattern?.type ?? patternSource);
+  inferred.x = finite(pattern?.x, finite(boss.x, GAME_WIDTH * 0.5));
+  inferred.y = finite(pattern?.y, finite(boss.y, GAME_HEIGHT * 0.5));
+  inferred.targetX = finite(pattern?.targetX, finite(pattern?.target?.x, finite(boss.chargeTargetX, finite(boss.targetX, finite(state?.player?.x, GAME_WIDTH * 0.5)))));
+  inferred.targetY = finite(pattern?.targetY, finite(pattern?.target?.y, finite(boss.chargeTargetY, finite(boss.targetY, finite(state?.player?.y, GAME_HEIGHT * 0.5)))));
+  inferred.angle = finite(pattern?.angle, finite(boss.patternAngle, finite(boss.angle)));
+  inferred.radius = finite(pattern?.radius, finite(boss.patternRadius, 160));
+  inferred.width = finite(pattern?.width, finite(boss.patternWidth, 78));
+  inferred.progress = finite(pattern?.progress, finite(boss.chargeProgress, finite(boss.patternProgress, finite(boss.attackProgress, 0.45))));
+  return inferred;
 }
 
 function drawTelegraphs(ctx, state, time, assets) {
   let explicitCount = 0;
+  const bossRadius = finite(state?.boss?.radius, 0);
+  const playerRadius = finite(state?.player?.radius, 0);
   for (const { collection } of arraysFrom(state, ["telegraphs", "warnings", "attackZones", "dangerZones", "airstrikes"])) {
     for (const item of collection) {
-      drawTelegraph(ctx, item, time, assets);
+      drawTelegraph(ctx, item, time, assets, bossRadius, playerRadius);
       explicitCount += 1;
     }
   }
   const boss = state?.boss;
   for (const { collection } of arraysFrom(boss, ["telegraphs", "warnings", "attackZones"])) {
     for (const item of collection) {
-      drawTelegraph(ctx, item, time, assets);
+      drawTelegraph(ctx, item, time, assets, bossRadius, playerRadius);
       explicitCount += 1;
     }
   }
   if (explicitCount === 0 && isAlive(boss)) {
     const inferred = inferredBossTelegraph(boss, state);
-    if (inferred) drawTelegraph(ctx, inferred, time, assets);
+    if (inferred) drawTelegraph(ctx, inferred, time, assets, bossRadius, playerRadius);
   }
-}
-
-function pickupPosition(pickup) {
-  return { x: finite(pickup?.x), y: finite(pickup?.y) };
 }
 
 function drawPickups(ctx, state, quality, time) {
@@ -704,7 +1015,8 @@ function drawPickups(ctx, state, quality, time) {
   for (const { collection } of arraysFrom(state, ["pickups", "xpPickups", "xpOrbs", "gems", "loot"])) {
     for (const pickup of collection) {
       if (!pickup || pickup.collected || pickup.active === false || !visible(pickup, 32)) continue;
-      const { x, y } = pickupPosition(pickup);
+      const x = finite(pickup.x);
+      const y = finite(pickup.y);
       const rare = pickup.rare || pickup.value >= 5 || pickup.kind === "chest";
       const size = rare ? 14 : 9;
       const bob = Math.sin(time * 5 + index * 1.71) * 3;
@@ -750,18 +1062,28 @@ function drawEnemies(ctx, state, assets, quality) {
   const drawn = entitySeen;
   drawn.clear();
   let visibleIndex = 0;
+  const motionImage = imageReady(assets?.enemyMotion) ? assets.enemyMotion : null;
+  let regularBarBudget = quality?.id === "performance" ? 2 : crowdRenderPressure ? 4 : 8;
+  const playerX = finite(state?.player?.x, GAME_WIDTH * 0.5);
+  const playerY = finite(state?.player?.y, GAME_HEIGHT * 0.5);
   for (const { collection } of arraysFrom(state, ["enemies", "mobs", "enemyUnits", "units"])) {
     for (const enemy of collection) {
-      if (!isAlive(enemy) || enemy === state?.boss || enemy.player || enemy.team === "player" || drawn.has(enemy)) continue;
+      const death = actorDeathProgress(enemy);
+      if ((!isAlive(enemy) && death >= 1) || enemy === state?.boss || enemy.player || enemy.team === "player" || drawn.has(enemy)) continue;
       drawn.add(enemy);
       if (!visible(enemy, 80)) continue;
       const size = enemySize(enemy);
       const elite = Boolean(enemy.elite || enemy.isElite);
       if (elite && quality.detailScale > 0.55) drawGlow(ctx, "amber", finite(enemy.x), finite(enemy.y), size * 1.65, 0.34);
       const optionIndex = (elite ? 2 : 0) + (visibleIndex % 2);
-      drawActorSprite(ctx, enemyImage(enemy, assets), enemy, size, state, quality, ENEMY_DRAW_OPTIONS[optionIndex]);
-      if (elite || finite(enemy.hp, 1) < finite(enemy.maxHp, 1) * 0.76) {
+      drawActorSprite(ctx, motionImage || enemyImage(enemy, assets), enemy, size, state, quality, motionImage ? ENEMY_MOTION_DRAW_OPTIONS[optionIndex] : ENEMY_DRAW_OPTIONS[optionIndex]);
+      const healthRatio = ratioOf(enemy);
+      const dx = finite(enemy.x) - playerX;
+      const dy = finite(enemy.y) - playerY;
+      const showRegularBar = regularBarBudget > 0 && (finite(enemy.hitFlash) > 0 || healthRatio < 0.3) && dx * dx + dy * dy < 360 * 360;
+      if (isAlive(enemy) && (elite || showRegularBar)) {
         drawHealthBar(ctx, enemy, Math.max(28, size * 0.68), size * 0.62, elite ? COLORS.elite : COLORS.enemy);
+        if (!elite) regularBarBudget -= 1;
       }
       visibleIndex += 1;
     }
@@ -794,10 +1116,7 @@ function drawAllies(ctx, state, assets, quality) {
       drawn.add(ally);
       const size = allySize(ally);
       if (ally.summoned && quality.detailScale > 0.45) drawGlow(ctx, "violet", finite(ally.x), finite(ally.y), size * 1.55, 0.34 * finite(ally.alpha, 1));
-      drawActorSprite(ctx, allyImage(ally, assets), ally, size, state, quality, {
-        shadowAlpha: 0.31,
-        fallback: ally.color || COLORS.ally,
-      });
+      drawActorSprite(ctx, allyImage(ally, assets), ally, size, state, quality, ALLY_DRAW_OPTIONS);
       if (ally.kind === "emp" || ally.type === "emp" || ally.pulseRadius) {
         ctx.globalAlpha = 0.34;
         ctx.strokeStyle = "#b879ff";
@@ -890,7 +1209,7 @@ function drawBossCore(ctx, boss, state, x, y, size, time) {
 
 function drawBoss(ctx, state, assets, quality) {
   const boss = state?.boss;
-  if (!isAlive(boss) || !visible(boss, 280)) return;
+  if (!boss || (boss.active === false && !boss.dead) || (!isAlive(boss) && actorDeathProgress(boss) >= 1) || !visible(boss, 280)) return;
   const time = timeOf(state);
   const size = clamp(finite(boss.size, finite(boss.radius) * 2 || 224), 170, 300);
   const entrance = clamp01(boss.entrance ?? boss.entranceProgress ?? state.bossEntranceProgress ?? 1);
@@ -901,9 +1220,16 @@ function drawBoss(ctx, state, assets, quality) {
   const coreExposed = bossCoreIsExposed(boss, state);
   const transforming = finite(boss.transformTimer) > 0;
   const transformPulse = transforming ? 0.5 + Math.sin(time * 21) * 0.5 : 0;
-  const bossImage = phase >= 3 ? (assets?.bossPhase3 || assets?.boss)
+  const transformProgress = transforming ? clamp01(1 - finite(boss.transformTimer) / Math.max(0.001, finite(boss.transformDuration, 1.8))) : 1;
+  const bossMotionImage = imageReady(assets?.bossMotion) ? assets.bossMotion : null;
+  const bossImage = bossMotionImage || (phase >= 3 ? (assets?.bossPhase3 || assets?.boss)
     : phase >= 2 ? (assets?.bossPhase2 || assets?.boss)
-      : assets?.boss;
+      : assets?.boss);
+  const previousBossImage = bossMotionImage || (phase >= 3 ? (assets?.bossPhase2 || assets?.boss)
+    : phase >= 2 ? assets?.boss
+      : null);
+  const bossDrawOptions = bossMotionImage ? BOSS_MOTION_DRAW_OPTIONS : BOSS_DRAW_OPTIONS;
+  const bossLayerOptions = bossMotionImage ? BOSS_MOTION_LAYER_OPTIONS : BOSS_LAYER_OPTIONS;
 
   drawGlow(ctx, phase >= 3 ? "amber" : "red", x, y, size * (1.55 + phaseFlash * 0.3 + transformPulse * 0.22), 0.62 + phaseFlash * 0.25);
   if (coreExposed) drawGlow(ctx, "amber", x, y, size * 0.92, 0.48);
@@ -937,10 +1263,47 @@ function drawBoss(ctx, state, assets, quality) {
   bossProxy.angle = boss.angle;
   bossProxy.alpha = clamp01(entrance * 1.35);
   bossProxy.hitFlash = boss.hitFlash;
-  drawActorSprite(ctx, bossImage, bossProxy, size * entranceScale * (1 + transformPulse * 0.07), state, quality, {
-    shadowAlpha: 0.6,
-    fallback: COLORS.boss,
-  });
+  bossProxy.dead = boss.dead;
+  bossProxy.deathTimer = boss.deathTimer;
+  bossProxy.deathDuration = boss.deathDuration;
+  bossProxy.hitStun = boss.hitStun;
+  bossProxy.recoil = boss.recoil;
+  bossProxy.attackTimer = boss.attackTimer;
+  bossProxy.attackState = boss.attackState;
+  bossProxy.animationState = boss.animationState;
+  bossProxy.activePattern = boss.activePattern;
+  bossProxy.weakness = boss.weakness;
+  bossProxy.coreExposed = coreExposed;
+  bossProxy.stage = phase;
+  bossProxy.transformTimer = boss.transformTimer;
+  bossProxy.transformDuration = boss.transformDuration;
+  if (transforming && imageReady(previousBossImage) && (bossMotionImage || previousBossImage !== bossImage)) {
+    bossOldProxy.id = finite(boss.id, 0) - 1;
+    bossOldProxy.x = x;
+    bossOldProxy.y = y;
+    bossOldProxy.vx = boss.vx;
+    bossOldProxy.vy = boss.vy;
+    bossOldProxy.angle = boss.angle;
+    bossOldProxy.alpha = clamp01(entrance * (1 - transformProgress));
+    bossOldProxy.hitFlash = boss.hitFlash;
+    bossOldProxy.dead = boss.dead;
+    bossOldProxy.deathTimer = boss.deathTimer;
+    bossOldProxy.deathDuration = boss.deathDuration;
+    bossOldProxy.hitStun = boss.hitStun;
+    bossOldProxy.recoil = boss.recoil;
+    bossOldProxy.attackTimer = boss.attackTimer;
+    bossOldProxy.attackState = boss.attackState;
+    bossOldProxy.animationState = boss.animationState;
+    bossOldProxy.activePattern = boss.activePattern;
+    bossOldProxy.weakness = boss.weakness;
+    bossOldProxy.coreExposed = coreExposed;
+    bossOldProxy.stage = Math.max(1, phase - 1);
+    bossOldProxy.transformTimer = boss.transformTimer;
+    bossOldProxy.transformDuration = boss.transformDuration;
+    drawActorSprite(ctx, previousBossImage, bossOldProxy, size * entranceScale * (1.05 - transformProgress * 0.08), state, quality, bossLayerOptions);
+    bossProxy.alpha *= clamp01(0.18 + transformProgress * 1.08);
+  }
+  drawActorSprite(ctx, bossImage, bossProxy, size * entranceScale * (1 + transformPulse * 0.07), state, quality, bossDrawOptions);
   if (transforming) {
     ctx.globalAlpha = 0.38 + transformPulse * 0.35;
     ctx.strokeStyle = phase >= 3 ? "#ffd56e" : COLORS.white;
@@ -953,41 +1316,52 @@ function drawBoss(ctx, state, assets, quality) {
     ctx.globalAlpha = 1;
   }
   drawBossCore(ctx, boss, state, x, y, size * entranceScale, time);
-  drawHealthBar(ctx, boss, Math.min(160, size * 0.72), size * 0.62, phase >= 3 ? COLORS.warning : COLORS.boss, true);
+  if (isAlive(boss)) drawHealthBar(ctx, boss, Math.min(160, size * 0.72), size * 0.62, phase >= 3 ? COLORS.warning : COLORS.boss, true);
 }
 
 function drawPlayer(ctx, state, assets, quality) {
   const player = state?.player ?? state?.hero;
-  if (!player || player.dead || !visible(player, 110)) return;
+  if (!player || (player.dead && actorDeathProgress(player) >= 1) || !visible(player, 110)) return;
   const time = timeOf(state);
   const size = clamp(finite(player.size, finite(player.radius) * 2 || 64), 48, 84);
   const speed = Math.hypot(finite(player.vx), finite(player.vy));
-  const dash = clamp01(player.dashTime ?? player.dashRemaining ?? player.dashTimer ?? (speed > 410 ? 1 : 0));
+  const dashRaw = finite(player.dashTime, finite(player.dashRemaining, finite(player.dashTimer, speed > 410 ? finite(player.dashDuration, 0.16) : 0)));
+  const dash = clamp01(dashRaw / Math.max(0.001, finite(player.dashDuration, 0.16)));
   const velocityAngle = speed > 1 ? Math.atan2(finite(player.vy), finite(player.vx)) : spriteAngle(player);
+  const playerMotionImage = imageReady(assets?.playerMotion) ? assets.playerMotion : null;
+  const playerImage = playerMotionImage || assets?.player;
+  const playerOptions = playerMotionImage ? PLAYER_MOTION_DRAW_OPTIONS : PLAYER_DRAW_OPTIONS;
+  const ghostOptions = playerMotionImage ? PLAYER_MOTION_GHOST_OPTIONS : PLAYER_GHOST_OPTIONS;
 
   if (dash > 0 || player.dashing) {
     const distance = clamp(speed * 0.07, 14, 42);
     for (let index = 3; index >= 1; index -= 1) {
-      const ghost = {
-        ...player,
-        x: finite(player.x) - Math.cos(velocityAngle) * distance * index,
-        y: finite(player.y) - Math.sin(velocityAngle) * distance * index,
-        alpha: (0.09 + index * 0.04) * (dash || 1),
-        hitFlash: 0,
-      };
-      drawActorSprite(ctx, assets?.player, ghost, size * (1 - index * 0.035), state, { ...quality, shadows: false }, {
-        shadowAlpha: 0,
-        fallback: COLORS.player,
-      });
+      playerGhostProxy.id = finite(player.id, 1) - index;
+      playerGhostProxy.x = finite(player.x) - Math.cos(velocityAngle) * distance * index;
+      playerGhostProxy.y = finite(player.y) - Math.sin(velocityAngle) * distance * index;
+      playerGhostProxy.vx = player.vx;
+      playerGhostProxy.vy = player.vy;
+      playerGhostProxy.angle = player.angle;
+      playerGhostProxy.alpha = (0.09 + index * 0.04) * (dash || 1);
+      playerGhostProxy.hitFlash = 0;
+      playerGhostProxy.hitStun = 0;
+      playerGhostProxy.stunTimer = 0;
+      playerGhostProxy.recoil = player.recoil;
+      playerGhostProxy.attackTimer = player.attackTimer;
+      playerGhostProxy.attackState = player.attackState;
+      playerGhostProxy.animationState = "dash";
+      playerGhostProxy.dashTimer = player.dashTimer;
+      playerGhostProxy.dashDuration = player.dashDuration;
+      playerGhostProxy.fireTimers = player.fireTimers;
+      playerGhostProxy.fireRateMultiplier = player.fireRateMultiplier;
+      playerGhostProxy.overdriveHaste = player.overdriveHaste;
+      drawActorSprite(ctx, playerImage, playerGhostProxy, size * (1 - index * 0.035), state, quality, ghostOptions);
     }
   }
 
   drawGlow(ctx, "cyan", finite(player.x), finite(player.y), size * 1.7, 0.38 + dash * 0.35);
-  drawActorSprite(ctx, assets?.player, player, size, state, quality, {
-    shadowAlpha: 0.48,
-    fallback: COLORS.player,
-  });
-  drawHealthBar(ctx, player, Math.max(48, size * 0.82), size * 0.66, COLORS.player, true);
+  drawActorSprite(ctx, playerImage, player, size, state, quality, playerOptions);
+  if (!player.dead) drawHealthBar(ctx, player, Math.max(48, size * 0.82), size * 0.66, COLORS.player, true);
   if (finite(player.shield) > 0) {
     const width = Math.max(48, size * 0.82);
     const shieldRatio = clamp01(player.shield / Math.max(1, finite(player.maxShield, finite(player.maxHp, player.shield))));
@@ -1014,6 +1388,116 @@ function projectileAngle(projectile) {
   return Math.atan2(finite(projectile?.vy), finite(projectile?.vx));
 }
 
+function isHeavyProjectileType(type) {
+  return type.includes("rail") || type.includes("rocket") || type.includes("missile")
+    || type.includes("heavy") || type.includes("moss") || type.includes("omega");
+}
+
+function drawMuzzleFlash(ctx, projectile, enemy, type, angle, quality) {
+  const age = finite(projectile?.age, 1);
+  if (age > 0.075 || quality?.reducedMotion) return;
+  const alpha = clamp01(1 - age / 0.075);
+  const radius = clamp(finite(projectile?.radius, 5), 2, 18);
+  const heavy = isHeavyProjectileType(type);
+  const x = finite(projectile?.x) - Math.cos(angle) * (radius * 1.8 + 8);
+  const y = finite(projectile?.y) - Math.sin(angle) * (radius * 1.8 + 8);
+  ctx.save();
+  ctx.globalCompositeOperation = quality?.id === "performance" ? "source-over" : "lighter";
+  ctx.globalAlpha = alpha * (heavy ? 0.88 : 0.58);
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = enemy ? "#ff506d" : heavy ? "#ffe176" : "#a6f9ff";
+  ctx.beginPath();
+  ctx.moveTo(radius * (heavy ? 6.5 : 4.2), 0);
+  ctx.lineTo(-radius * 0.9, -radius * (heavy ? 2.2 : 1.35));
+  ctx.lineTo(-radius * 0.35, 0);
+  ctx.lineTo(-radius * 0.9, radius * (heavy ? 2.2 : 1.35));
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha *= 0.68;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = Math.max(1, radius * 0.42);
+  for (let ray = -1; ray <= 1; ray += 1) {
+    ctx.beginPath();
+    ctx.moveTo(0, ray * radius * 0.5);
+    ctx.lineTo(radius * (heavy ? 7.5 : 5), ray * radius * 1.8);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawWorldDecals(ctx, state, time, quality) {
+  const pairs = arraysFrom(state, ["decals", "groundEffects"]);
+  for (const { collection } of pairs) {
+    for (const decal of collection) {
+      if (!decal || decal.active === false || !visible(decal, 120)) continue;
+      const ratio = particleRatio(decal);
+      const type = String(decal.type ?? decal.kind ?? "impact").toLowerCase();
+      const size = clamp(finite(decal.radius, finite(decal.size, 36)), 8, 180);
+      ctx.globalAlpha = ratio * (quality?.id === "performance" ? 0.18 : 0.32);
+      ctx.fillStyle = type.includes("burn") || type.includes("rocket") ? "rgba(78,18,13,.55)" : "rgba(25,90,101,.35)";
+      ctx.beginPath();
+      ctx.ellipse(finite(decal.x), finite(decal.y), size, size * 0.34, finite(decal.angle, time * 0.02), 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = type.includes("enemy") ? "rgba(255,68,88,.34)" : "rgba(111,241,255,.27)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 8]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawTypedCombatVfx(ctx, state, time, assets, quality) {
+  const pairs = arraysFrom(state, ["impacts", "muzzles", "vfx"]);
+  const performance = quality?.id === "performance";
+  ctx.save();
+  ctx.globalCompositeOperation = performance ? "source-over" : "lighter";
+  for (const { key, collection } of pairs) {
+    const stride = performance && collection.length > 50 ? 2 : 1;
+    for (let index = 0; index < collection.length; index += stride) {
+      const effect = collection[index];
+      if (!effect || effect.active === false || !visible(effect, 100)) continue;
+      const type = String(effect.type ?? effect.kind ?? key).toLowerCase();
+      const ratio = particleRatio(effect);
+      const progress = 1 - ratio;
+      const x = finite(effect.x);
+      const y = finite(effect.y);
+      const angle = finite(effect.angle, Math.atan2(finite(effect.vy), finite(effect.vx)));
+      const enemy = effect.enemy || type.includes("boss") || type.includes("enemy");
+      const heavy = isHeavyProjectileType(type) || type.includes("explosion") || type.includes("nova");
+      const radius = clamp(finite(effect.radius, finite(effect.size, heavy ? 38 : 18)), 5, 150);
+      const color = effect.color || (enemy ? COLORS.enemy : heavy ? COLORS.warning : COLORS.player);
+      ctx.globalAlpha = ratio * (heavy ? 0.8 : 0.62);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(1.5, radius * 0.12 * ratio);
+      ctx.beginPath();
+      ctx.arc(x, y, radius * (0.35 + progress * 1.15), 0, TAU);
+      ctx.stroke();
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      for (let ray = 0; ray < (performance ? 3 : heavy ? 9 : 5); ray += 1) {
+        const rayAngle = ray / (performance ? 3 : heavy ? 9 : 5) * TAU;
+        const length = radius * (0.7 + ((ray * 37) % 5) * 0.13) * ratio;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(rayAngle) * radius * 0.2, Math.sin(rayAngle) * radius * 0.2);
+        ctx.lineTo(Math.cos(rayAngle) * length, Math.sin(rayAngle) * length);
+        ctx.stroke();
+      }
+      ctx.restore();
+      if (!performance && heavy) {
+        const atlas = enemy ? assets?.bossPatterns : assets?.playerOrdnance;
+        const atlasDefinition = enemy ? BOSS_ATLAS : PLAYER_ATLAS;
+        const cell = enemy ? bossAtlasCell(type) : playerAtlasCell(type);
+        drawAtlasSprite(ctx, atlas, atlasDefinition, cell % atlasDefinition.columns, Math.floor(cell / atlasDefinition.columns), x, y, radius * 2.2, radius * 2.2, time * 0.8, ratio * 0.55);
+      }
+    }
+  }
+  ctx.restore();
+}
+
 function isEnemyProjectile(projectile, collectionKey = "") {
   if (collectionKey.toLowerCase().includes("enemy") || collectionKey.toLowerCase().includes("boss")) return true;
   const team = String(projectile?.team ?? projectile?.owner ?? projectile?.source ?? "").toLowerCase();
@@ -1028,14 +1512,20 @@ function drawBullet(ctx, projectile, enemy, quality, assets) {
   const angle = projectileAngle(projectile);
   const color = projectile.color || (enemy ? COLORS.enemy : COLORS.player);
   const type = String(projectile.type ?? projectile.kind ?? "bullet").toLowerCase();
+  const performance = quality?.id === "performance";
+  const heavy = isHeavyProjectileType(type);
+
+  drawMuzzleFlash(ctx, projectile, enemy, type, angle, quality);
 
   const atlasImage = enemy && type.includes("boss") ? assets?.bossPatterns : (!enemy ? assets?.playerOrdnance : null);
   if (imageReady(atlasImage)) {
-    const [column, row] = enemy ? bossAtlasCell(type) : playerAtlasCell(type);
-    const isHeavy = type.includes("rail") || type.includes("rocket") || type.includes("heavy") || type.includes("moss");
-    const width = enemy ? radius * 6.6 : radius * (isHeavy ? 9.5 : 7.2);
-    const height = enemy ? radius * 6.6 : radius * (isHeavy ? 5.8 : 6.2);
-    if (quality.detailScale > 0.42) drawGlow(ctx, enemy ? "red" : (type.includes("rocket") ? "amber" : "cyan"), x, y, Math.max(width, height) * 1.15, 0.32);
+    const atlasDefinition = enemy ? BOSS_ATLAS : PLAYER_ATLAS;
+    const atlasCell = enemy ? bossAtlasCell(type) : playerAtlasCell(type);
+    const column = atlasCell % atlasDefinition.columns;
+    const row = Math.floor(atlasCell / atlasDefinition.columns);
+    const width = enemy ? radius * 6.6 : radius * (heavy ? 9.5 : 7.2);
+    const height = enemy ? radius * 6.6 : radius * (heavy ? 5.8 : 6.2);
+    if (!performance && quality.detailScale > 0.42) drawGlow(ctx, enemy ? "red" : (type.includes("rocket") ? "amber" : "cyan"), x, y, Math.max(width, height) * 1.15, 0.32);
     ctx.save();
     ctx.globalAlpha = 0.34;
     ctx.strokeStyle = color;
@@ -1045,12 +1535,27 @@ function drawBullet(ctx, projectile, enemy, quality, assets) {
     ctx.lineTo(x, y);
     ctx.stroke();
     ctx.restore();
-    drawAtlasSprite(ctx, atlasImage, enemy ? BOSS_ATLAS : PLAYER_ATLAS, column, row, x, y, width, height, angle, 1);
+    if (!performance && (heavy || (entitySeed(projectile) & 3) === 0)) {
+      drawAtlasSprite(
+        ctx,
+        atlasImage,
+        atlasDefinition,
+        column,
+        row,
+        x - Math.cos(angle) * Math.min(34, width * 0.7),
+        y - Math.sin(angle) * Math.min(34, width * 0.7),
+        width * 0.82,
+        height * 0.82,
+        angle,
+        heavy ? 0.2 : 0.11,
+      );
+    }
+    drawAtlasSprite(ctx, atlasImage, atlasDefinition, column, row, x, y, width, height, angle, 1);
     return;
   }
 
   if (type.includes("orbit")) {
-    if (quality.detailScale > 0.45) drawGlow(ctx, enemy ? "red" : "cyan", x, y, radius * 7, 0.45);
+    if (!performance && quality.detailScale > 0.45) drawGlow(ctx, enemy ? "red" : "cyan", x, y, radius * 7, 0.45);
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -1083,7 +1588,7 @@ function drawBullet(ctx, projectile, enemy, quality, assets) {
   }
 
   if (type.includes("rocket") || type.includes("missile")) {
-    if (quality.detailScale > 0.5) drawGlow(ctx, enemy ? "red" : "amber", x, y, radius * 6, 0.38);
+    if (!performance && quality.detailScale > 0.5) drawGlow(ctx, enemy ? "red" : "amber", x, y, radius * 6, 0.38);
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
@@ -1160,13 +1665,21 @@ function drawBullet(ctx, projectile, enemy, quality, assets) {
 function drawProjectiles(ctx, state, assets, quality) {
   const drawn = entitySeen;
   drawn.clear();
-  for (const { key, collection } of arraysFrom(state, [
+  const pairs = arraysFrom(state, [
     "projectiles", "bullets", "playerBullets", "enemyProjectiles", "enemyBullets", "bossBullets", "rockets", "orbitals", "orbs",
-  ])) {
+  ]);
+  let density = 0;
+  for (const pair of pairs) density += pair.collection.length;
+  const playerStride = quality?.id === "performance" ? (density > 520 ? 4 : density > 300 ? 3 : density > 170 ? 2 : 1)
+    : quality?.detailScale < 0.7 && density > 480 ? 2 : 1;
+  for (const { key, collection } of pairs) {
     for (const projectile of collection) {
       if (!projectile || projectile.dead || projectile.active === false || drawn.has(projectile)) continue;
       drawn.add(projectile);
-      drawBullet(ctx, projectile, isEnemyProjectile(projectile, key), quality, assets);
+      const enemy = isEnemyProjectile(projectile, key);
+      const type = String(projectile.type ?? projectile.kind ?? "bullet").toLowerCase();
+      if (!enemy && playerStride > 1 && !isHeavyProjectileType(type) && Math.abs(entitySeed(projectile)) % playerStride !== 0) continue;
+      drawBullet(ctx, projectile, enemy, quality, assets);
     }
   }
 }
@@ -1267,7 +1780,7 @@ function drawOrbitLinks(ctx, state, time, assets, quality) {
   ctx.globalAlpha = 1;
   for (const orbital of orbitals) {
     if (!visible(orbital, 40)) continue;
-    if (quality.detailScale > 0.4) drawGlow(ctx, "cyan", finite(orbital.x), finite(orbital.y), 58, 0.3);
+    if (quality?.id !== "performance" && quality.detailScale > 0.4) drawGlow(ctx, "cyan", finite(orbital.x), finite(orbital.y), 58, 0.3);
     if (!drawAtlasSprite(ctx, assets?.playerOrdnance, PLAYER_ATLAS, 1, 1, finite(orbital.x), finite(orbital.y), 50, 50, finite(orbital.angle, time * 3), 1)) {
       ctx.strokeStyle = COLORS.player;
       ctx.lineWidth = 3;
@@ -1303,17 +1816,23 @@ function drawParticles(ctx, state, quality) {
   }
   const cap = Math.max(24, Math.floor(finite(quality.maxParticles, 190) * finite(quality.particleScale, 1)));
   const start = Math.max(0, particles.length - cap);
+  const performance = quality?.id === "performance";
+  ctx.save();
+  ctx.globalCompositeOperation = performance ? "source-over" : "lighter";
   for (let index = start; index < particles.length; index += 1) {
     const particle = particles[index];
     const alpha = particleRatio(particle);
     const size = clamp(finite(particle.size, finite(particle.radius, 3)), 1, 24);
+    const color = particleColor(particle);
+    const kind = String(particle.type ?? particle.kind ?? "spark").toLowerCase();
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = particleColor(particle);
+    ctx.fillStyle = color;
+    if (!performance && (kind.includes("smoke") || kind.includes("dust"))) ctx.globalCompositeOperation = "source-over";
     if (particle.line || particle.streak || Math.hypot(finite(particle.vx), finite(particle.vy)) > 260) {
       const vx = finite(particle.vx);
       const vy = finite(particle.vy);
       const magnitude = Math.max(1, Math.hypot(vx, vy));
-      ctx.strokeStyle = particleColor(particle);
+      ctx.strokeStyle = color;
       ctx.lineWidth = Math.max(1, size * 0.65);
       ctx.beginPath();
       ctx.moveTo(finite(particle.x), finite(particle.y));
@@ -1324,8 +1843,9 @@ function drawParticles(ctx, state, quality) {
       ctx.arc(finite(particle.x), finite(particle.y), size, 0, TAU);
       ctx.fill();
     }
+    if (!performance && (kind.includes("smoke") || kind.includes("dust"))) ctx.globalCompositeOperation = "lighter";
   }
-  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 function drawShockwaves(ctx, state, time, assets) {
@@ -1365,7 +1885,8 @@ function drawShockwaves(ctx, state, time, assets) {
 }
 
 function drawDamageTexts(ctx, state, quality) {
-  const texts = [];
+  const texts = damageTextScratch;
+  texts.length = 0;
   for (const { collection } of arraysFrom(state, ["damageTexts", "texts", "floatingTexts", "combatTexts"])) {
     for (const item of collection) if (item && visible(item, 80)) texts.push(item);
   }
@@ -1548,6 +2069,9 @@ export function renderSwarm(ctx, state = {}, assets = {}, qualityInput = DEFAULT
   }
   const quality = cachedQuality;
   const time = timeOf(state);
+  crowdRenderPressure = quality?.id === "performance"
+    || finite(state?.enemies?.length) > 120
+    || finite(state?.projectiles?.length) + finite(state?.enemyProjectiles?.length) > 360;
   const shake = finite(state.cameraShake, finite(state.shake));
   const shakeX = shake > 0 ? Math.sin(time * 91) * Math.min(8, shake) : 0;
   const shakeY = shake > 0 ? Math.cos(time * 77) * Math.min(6, shake) : 0;
@@ -1574,6 +2098,7 @@ export function renderSwarm(ctx, state = {}, assets = {}, qualityInput = DEFAULT
 
   drawMap(ctx, assets);
   drawArenaBoundary(ctx);
+  drawWorldDecals(ctx, state, time, quality);
   drawPickups(ctx, state, quality, time);
   drawTelegraphs(ctx, state, time, assets);
   drawAllies(ctx, state, assets, quality);
@@ -1584,6 +2109,7 @@ export function renderSwarm(ctx, state = {}, assets = {}, qualityInput = DEFAULT
   drawProjectiles(ctx, state, assets, quality);
   drawChainsAndBeams(ctx, state, time, assets);
   drawParticles(ctx, state, quality);
+  drawTypedCombatVfx(ctx, state, time, assets, quality);
   drawShockwaves(ctx, state, time, assets);
   drawDamageTexts(ctx, state, quality);
   drawAim(ctx, state, time);

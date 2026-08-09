@@ -79,6 +79,33 @@
 잘라 투사체, 텔레그래프, 궤도 칼날, 공중 폭격, 노바와 오메가 레이저에 사용하며 외부 에셋은
 포함하지 않습니다.
 
+### Authored combat-motion atlases
+
+- 생성일: 2026-08-09
+- 생성 도구: OpenAI 내장 ImageGen
+- 런타임 경로:
+  - `public/assets/survivor/animation/player-motion-atlas.png`
+  - `public/assets/survivor/animation/enemy-motion-atlas.png`
+  - `public/assets/survivor/animation/boss-motion-atlas.png`
+- 크로마키 생성 원본:
+  - `reference/source-assets/public/assets/survivor/animation/player-motion-atlas-chroma.png`
+  - `reference/source-assets/public/assets/survivor/animation/enemy-motion-atlas-chroma.png`
+  - `reference/source-assets/public/assets/survivor/animation/boss-motion-atlas-chroma.png`
+- 후처리: 균일한 `#00ff00` 또는 `#ff00ff` 배경을 프로젝트 크로마키 제거 도구의
+  soft-matte/despill 단계로 투명화하고, 플레이어·보스는 960×576, 적은 960×640 런타임
+  PNG로 축소했습니다.
+- 최종 프롬프트 세트:
+
+  > Player motion atlas: preserve the supplied AEGIS character exactly—white ceramic armor, dark joints, cyan visor and pulse rifle, fixed east-facing orthographic top-down silhouette. Create a clean 5×3 game-sprite atlas with consistent scale and pivot: row 1 idle-to-run locomotion, row 2 fire anticipation, charge, muzzle release, recoil and recovery, row 3 three dash frames followed by two hit-stun frames. Perfectly flat green chroma-key background; no grid, text, shadow, floor, detached effects or extra objects.
+
+  > Enemy motion atlas: preserve the supplied HUNTER, SUPPRESSOR and BRUTE designs exactly in three rows, fixed east-facing orthographic top-down silhouettes and consistent pivots. Use five columns per row: locomotion A, locomotion B, attack wind-up, attack/fire release and hit-stun. Perfectly flat green chroma-key background; no grid, text, shadow, floor, projectiles or extra units.
+
+  > Boss motion atlas: preserve the supplied three THE WRONG ENGINE forms exactly in rows 1–3, with their radial body, central reactor and phase-specific armor. Use five columns: idle, attack anticipation, core charge, attack release and hit-stagger. Keep a consistent centered pivot and top-down three-quarter game view on a perfectly flat magenta chroma-key background; no grid, text, shadow, floor, loose VFX or extra objects.
+
+런타임은 이 아틀라스를 엔진의 실제 이동 속도, 공격 예비 시간, 발사 순간, 반동, 대시,
+피격·스턴 및 보스 단계 상태에 연결합니다. 에셋 로딩에 실패하면 기존 정적 스프라이트와
+절차적 squash/stretch 모션으로 안전하게 폴백하며, 외부 게임 애니메이션은 포함하지 않습니다.
+
 ## Original procedural sound
 
 - 외부 효과음 파일을 사용하지 않습니다.
