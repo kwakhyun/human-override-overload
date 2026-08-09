@@ -29,6 +29,7 @@ let overlayLayer = null;
 let shadowTexture = null;
 const glowTextures = Object.create(null);
 const tintedSprites = new WeakMap();
+let activeViewport = null;
 
 function finite(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
@@ -84,8 +85,9 @@ function visible(entity, padding = 100) {
   const x = finite(entity?.x, -10000);
   const y = finite(entity?.y, -10000);
   const radius = finite(entity?.radius, finite(entity?.size, 30) * 0.5);
-  return x + radius >= -padding && x - radius <= GAME_WIDTH + padding
-    && y + radius >= -padding && y - radius <= GAME_HEIGHT + padding;
+  const view = activeViewport || { left: 0, top: 0, right: GAME_WIDTH, bottom: GAME_HEIGHT };
+  return x + radius >= view.left - padding && x - radius <= view.right + padding
+    && y + radius >= view.top - padding && y - radius <= view.bottom + padding;
 }
 
 function entitySeed(entity, fallback = 0) {
@@ -542,7 +544,7 @@ function inferredBossTelegraph(boss, state) {
 
 function drawTelegraphs(ctx, state, time) {
   let explicitCount = 0;
-  for (const { collection } of arraysFrom(state, ["telegraphs", "warnings", "attackZones", "dangerZones"])) {
+  for (const { collection } of arraysFrom(state, ["telegraphs", "warnings", "attackZones", "dangerZones", "airstrikes"])) {
     for (const item of collection) {
       drawTelegraph(ctx, item, time);
       explicitCount += 1;
@@ -1004,8 +1006,23 @@ function drawBeam(ctx, beam, enemy, time) {
     y2 = y1 + Math.sin(angle) * length;
   }
   const alpha = clamp01(beam.alpha ?? beam.lifeRatio ?? 1);
-  const width = clamp(finite(beam.width, 6), 1, 34);
+  const width = clamp(finite(beam.width, 6), 1, 160);
   const color = beam.color || (enemy ? COLORS.enemy : COLORS.player);
+  const charging = beam.phase === "charge" || finite(beam.charge) > 0;
+  if (charging) {
+    ctx.save();
+    ctx.globalAlpha = 0.35 + Math.sin(time * 20) * 0.12;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(2, width * 0.16);
+    ctx.setLineDash([18, 12]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+    return;
+  }
   ctx.globalAlpha = alpha * 0.28;
   ctx.strokeStyle = color;
   ctx.lineWidth = width * 3.4;
@@ -1215,6 +1232,100 @@ function drawScreenOverlay(ctx, state, quality) {
     ctx.lineWidth = 10;
     ctx.strokeRect(5, 5, GAME_WIDTH - 10, GAME_HEIGHT - 10);
   }
+  const flash = clamp01(state?.flash);
+  if (flash > 0) {
+    ctx.fillStyle = `rgba(224,253,255,${flash * 0.16})`;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  }
+}
+
+function drawMinimap(ctx, state, assets, cameraView) {
+  const x = 1050;
+  const y = 548;
+  const width = 208;
+  const height = 148;
+  const innerX = x + 8;
+  const innerY = y + 22;
+  const innerWidth = width - 16;
+  const innerHeight = height - 30;
+  ctx.save();
+  ctx.fillStyle = "rgba(1,6,9,.92)";
+  ctx.strokeStyle = state?.surgeWarning ? "rgba(255,72,94,.9)" : "rgba(98,224,245,.42)";
+  ctx.lineWidth = state?.surgeWarning ? 2 : 1;
+  roundedRect(ctx, x, y, width, height, 4);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = state?.surgeWarning ? "#ff7185" : "#8aefff";
+  ctx.font = "700 9px 'IBM Plex Mono', monospace";
+  ctx.fillText(state?.surgeWarning ? "MINIMAP · MASS WAVE" : "MINIMAP · OMEGA", x + 9, y + 14);
+  roundedRect(ctx, innerX, innerY, innerWidth, innerHeight, 2);
+  ctx.clip();
+  ctx.globalAlpha = 0.52;
+  if (imageReady(assets?.map)) ctx.drawImage(assets.map, innerX, innerY, innerWidth, innerHeight);
+  else {
+    ctx.fillStyle = "#071419";
+    ctx.fillRect(innerX, innerY, innerWidth, innerHeight);
+  }
+  ctx.globalAlpha = 1;
+  const mapX = (worldX) => innerX + clamp(worldX / GAME_WIDTH, 0, 1) * innerWidth;
+  const mapY = (worldY) => innerY + clamp(worldY / GAME_HEIGHT, 0, 1) * innerHeight;
+  const enemies = state?.enemies || [];
+  ctx.fillStyle = "rgba(255,66,91,.82)";
+  const stride = enemies.length > 120 ? 2 : 1;
+  for (let index = 0; index < enemies.length; index += stride) {
+    const enemy = enemies[index];
+    if (!isAlive(enemy)) continue;
+    ctx.fillRect(mapX(enemy.x) - 1, mapY(enemy.y) - 1, enemy.elite ? 3 : 2, enemy.elite ? 3 : 2);
+  }
+  if (isAlive(state?.boss)) {
+    ctx.fillStyle = COLORS.warning;
+    ctx.beginPath();
+    ctx.arc(mapX(state.boss.x), mapY(state.boss.y), 4, 0, TAU);
+    ctx.fill();
+  }
+  const player = state?.player;
+  if (player) {
+    ctx.fillStyle = COLORS.white;
+    ctx.beginPath();
+    ctx.arc(mapX(player.x), mapY(player.y), 3.8, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = COLORS.player;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(mapX(player.x), mapY(player.y), 6.2, 0, TAU);
+    ctx.stroke();
+  }
+  if (cameraView) {
+    ctx.strokeStyle = "rgba(194,250,255,.46)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(
+      mapX(cameraView.left),
+      mapY(cameraView.top),
+      Math.max(2, innerWidth * (cameraView.right - cameraView.left) / GAME_WIDTH),
+      Math.max(2, innerHeight * (cameraView.bottom - cameraView.top) / GAME_HEIGHT),
+    );
+  }
+  ctx.restore();
+}
+
+function drawSurgeOverlay(ctx, state, time) {
+  const warning = state?.surgeWarning;
+  const active = state?.activeSurge;
+  if (!warning && !active) return;
+  const urgent = Boolean(warning);
+  const pulse = 0.55 + Math.sin(time * (urgent ? 14 : 8)) * 0.22;
+  ctx.save();
+  ctx.strokeStyle = `rgba(255,45,72,${urgent ? pulse : pulse * 0.45})`;
+  ctx.lineWidth = urgent ? 10 : 5;
+  ctx.strokeRect(5, 5, GAME_WIDTH - 10, GAME_HEIGHT - 10);
+  if (urgent) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 110);
+    gradient.addColorStop(0, `rgba(255,25,55,${pulse * 0.24})`);
+    gradient.addColorStop(1, "rgba(255,25,55,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, GAME_WIDTH, 120);
+  }
+  ctx.restore();
 }
 
 /**
@@ -1236,7 +1347,15 @@ export function renderSwarm(ctx, state = {}, assets = {}, qualityInput = DEFAULT
   ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
   ctx.fillStyle = "#020508";
   ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-  ctx.translate(shakeX, shakeY);
+  const zoom = clamp(finite(state?.camera?.zoom, state?.phase === "boss" ? 1.36 : 1.58), 1, 1.72);
+  const halfWidth = GAME_WIDTH / (2 * zoom);
+  const halfHeight = GAME_HEIGHT / (2 * zoom);
+  const cameraX = clamp(finite(state?.camera?.x, finite(state?.player?.x, GAME_WIDTH * 0.5)), halfWidth, GAME_WIDTH - halfWidth);
+  const cameraY = clamp(finite(state?.camera?.y, finite(state?.player?.y, GAME_HEIGHT * 0.5)), halfHeight, GAME_HEIGHT - halfHeight);
+  activeViewport = { left: cameraX - halfWidth, top: cameraY - halfHeight, right: cameraX + halfWidth, bottom: cameraY + halfHeight };
+  ctx.translate(GAME_WIDTH * 0.5 + shakeX, GAME_HEIGHT * 0.5 + shakeY);
+  ctx.scale(zoom, zoom);
+  ctx.translate(-cameraX, -cameraY);
 
   drawMap(ctx, assets);
   drawArenaBoundary(ctx);
@@ -1253,8 +1372,13 @@ export function renderSwarm(ctx, state = {}, assets = {}, qualityInput = DEFAULT
   drawShockwaves(ctx, state, time);
   drawDamageTexts(ctx, state, quality);
   drawAim(ctx, state, time);
+  ctx.restore();
+  const cameraView = activeViewport;
+  activeViewport = null;
+  ctx.save();
+  drawMinimap(ctx, state, assets, cameraView);
+  drawSurgeOverlay(ctx, state, time);
   drawScreenOverlay(ctx, state, quality);
-
   ctx.restore();
 }
 

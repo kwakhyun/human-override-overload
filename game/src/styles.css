@@ -2173,6 +2173,65 @@ kbd {
 .build-chip-small.is-ally { border-color: rgba(184, 121, 255, 0.22); background: rgba(184, 121, 255, 0.06); }
 .build-chip-small.is-ally b { color: #c9a2ff; }
 
+.ability-hud {
+  position: absolute;
+  z-index: 8;
+  right: 20px;
+  bottom: 178px;
+  width: 254px;
+  padding: 10px 11px;
+  pointer-events: none;
+}
+
+.ability-hud .panel-heading {
+  padding-bottom: 7px;
+}
+
+.ability-hud .panel-heading svg { color: var(--amber); }
+.ability-hud .panel-heading > i { color: var(--green); }
+
+.ability-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.ability-grid > div {
+  position: relative;
+  display: grid;
+  min-height: 46px;
+  padding: 6px 7px;
+  overflow: hidden;
+  border: 1px solid rgba(92, 220, 239, 0.16);
+  grid-template-columns: 1fr auto;
+  background: rgba(3, 12, 15, 0.84);
+}
+
+.ability-grid > div.is-ultimate {
+  border-color: rgba(255, 186, 87, 0.32);
+  background: linear-gradient(135deg, rgba(50, 30, 6, 0.86), rgba(5, 11, 13, 0.9));
+}
+
+.ability-grid > div.is-mastered {
+  box-shadow: inset 0 0 18px rgba(255, 211, 102, 0.1);
+}
+
+.ability-grid span,
+.ability-grid b,
+.ability-grid small {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 6px;
+  letter-spacing: 0.07em;
+}
+
+.ability-grid span { color: #59757b; }
+.ability-grid strong { grid-column: 1 / -1; color: #d9f7fa; font-size: 8px; letter-spacing: 0.04em; }
+.ability-grid b { color: #819aa0; font-weight: 500; }
+.ability-grid b.is-ready { color: var(--green); text-shadow: 0 0 8px rgba(94, 255, 177, 0.55); }
+.ability-grid small { justify-self: end; color: #6c8790; }
+.ability-grid .is-ultimate strong,
+.ability-grid .is-mastered small { color: var(--amber); }
+
 .overload-canvas-frame .combat-help {
   bottom: 16px;
 }
@@ -2229,6 +2288,37 @@ kbd {
 
 .banner-bossWeakness strong { color: #fff0c4; text-shadow: 0 0 28px rgba(255, 186, 87, 0.58); }
 .banner-bossWeakness span { color: #c8a66f; }
+
+.banner-surgeWarning,
+.banner-surgeStart {
+  border-color: #ff3d59;
+  background: linear-gradient(90deg, transparent, rgba(55, 4, 14, 0.96) 16%, rgba(55, 4, 14, 0.96) 84%, transparent);
+  animation: banner-in 180ms ease-out both, danger-pulse 480ms steps(2, end) infinite;
+}
+
+.banner-surgeWarning strong,
+.banner-surgeStart strong {
+  color: #fff0f2;
+  text-shadow: 0 0 32px rgba(255, 45, 73, 0.78);
+}
+
+.banner-surgeWarning span,
+.banner-surgeStart span { color: #d58b96; }
+
+.banner-skillMastered,
+.banner-ultimateWarning {
+  border-color: var(--amber);
+  background: linear-gradient(90deg, transparent, rgba(42, 26, 3, 0.96) 17%, rgba(42, 26, 3, 0.96) 83%, transparent);
+}
+
+.banner-skillMastered strong,
+.banner-ultimateWarning strong { color: #fff2b9; text-shadow: 0 0 30px rgba(255, 190, 71, 0.65); }
+.banner-skillMastered span,
+.banner-ultimateWarning span { color: #c9a55a; }
+
+@keyframes danger-pulse {
+  50% { filter: brightness(1.38); }
+}
 
 /* Level-up selection */
 .reward-backdrop {
@@ -2514,6 +2604,7 @@ kbd {
   .overload-pilot .pilot-identity > svg { width: 16px; }
   .overload-pilot .pilot-identity b { font-size: 9px; }
   .build-hud { top: 31px; right: 10px; width: 168px; padding: 8px; }
+  .ability-hud { display: none; }
   .build-hud .panel-heading { padding-bottom: 5px; }
   .build-row { padding: 4px 0; grid-template-columns: 25px 1fr; }
   .build-chip-small { padding: 2px 3px; font-size: 5px; }

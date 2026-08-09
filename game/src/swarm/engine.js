@@ -12,13 +12,18 @@ const MAX_PARTICLES = 320;
 const MAX_PICKUPS = 170;
 const GRID_SIZE = 96;
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
+const SURGE_WAVES = Object.freeze([
+  Object.freeze({ warnAt: 6, startAt: 7.25, count: 48, rate: 34, label: "RED WAVE" }),
+  Object.freeze({ warnAt: 14, startAt: 15.4, count: 72, rate: 42, label: "BREACH WAVE" }),
+  Object.freeze({ warnAt: 23, startAt: 24.5, count: 96, rate: 54, label: "TERMINAL WAVE" }),
+]);
 
 export const BOSS_PATTERNS = Object.freeze(["radial", "sweep", "bombs", "rings", "charge"]);
 
 const ENEMY_DATA = Object.freeze({
-  hunter: Object.freeze({ hp: 30, speed: 76, radius: 14, damage: 10, xp: 4, color: "#ff526d" }),
-  suppressor: Object.freeze({ hp: 52, speed: 52, radius: 17, damage: 9, xp: 7, color: "#f3ab42" }),
-  brute: Object.freeze({ hp: 88, speed: 38, radius: 23, damage: 18, xp: 10, color: "#d93955" }),
+  hunter: Object.freeze({ hp: 38, speed: 88, radius: 14, damage: 12, xp: 4, color: "#ff526d" }),
+  suppressor: Object.freeze({ hp: 68, speed: 61, radius: 17, damage: 12, xp: 7, color: "#f3ab42" }),
+  brute: Object.freeze({ hp: 132, speed: 44, radius: 23, damage: 22, xp: 10, color: "#d93955" }),
 });
 
 export const REWARD_DEFINITIONS = Object.freeze({
@@ -32,6 +37,10 @@ export const REWARD_DEFINITIONS = Object.freeze({
   shield: Object.freeze({ id: "shield", category: "skill", name: "AEGIS LAYER", description: "Gain and refill 40 regenerating shield." }),
   dash: Object.freeze({ id: "dash", category: "skill", name: "PHASE DRIVE", description: "Shorter dash cooldown and longer invulnerability." }),
   regen: Object.freeze({ id: "regen", category: "skill", name: "NANO REPAIR", description: "Continuously repairs lost hull integrity." }),
+  chain: Object.freeze({ id: "chain", category: "skill", name: "ARC CASCADE", description: "Periodically chains lightning through packed targets. Rank 3 unlocks a full storm." }),
+  nova: Object.freeze({ id: "nova", category: "skill", name: "ZERO-POINT NOVA", description: "Detonates a radial shockwave. Rank 3 repeats it across the visible combat zone." }),
+  airstrike: Object.freeze({ id: "airstrike", category: "skill", name: "SKYFALL SUPPORT", description: "Calls a long-cooldown airstrike on dense enemy formations." }),
+  omegaLaser: Object.freeze({ id: "omegaLaser", category: "skill", name: "OMEGA LASER", description: "Charges a colossal support beam through the aimed lane." }),
   drone: Object.freeze({ id: "drone", category: "ally", name: "HUNTER DRONE", description: "A mobile drone automatically hunts nearby targets." }),
   sentry: Object.freeze({ id: "sentry", category: "ally", name: "PULSE SENTRY", description: "Deploy a rapid-fire turret at your position." }),
   suppressor: Object.freeze({ id: "suppressor", category: "ally", name: "SUPPRESSOR WISP", description: "An escort slows and shocks dense enemy packs." }),
@@ -39,8 +48,15 @@ export const REWARD_DEFINITIONS = Object.freeze({
 
 const REWARD_POOLS = Object.freeze({
   weapon: Object.freeze(["scatter", "rail", "rocket", "orbit"]),
-  skill: Object.freeze(["damage", "fireRate", "multishot", "shield", "dash", "regen"]),
+  skill: Object.freeze(["airstrike", "omegaLaser", "chain", "nova", "damage", "fireRate", "multishot", "shield", "dash", "regen"]),
   ally: Object.freeze(["drone", "sentry", "suppressor"]),
+});
+
+const MAX_REWARD_RANK = Object.freeze({
+  scatter: 5, rail: 5, rocket: 5, orbit: 5,
+  chain: 3, nova: 3, airstrike: 3, omegaLaser: 3,
+  damage: 5, fireRate: 5, multishot: 4, shield: 4, dash: 4, regen: 4,
+  drone: 4, sentry: 4, suppressor: 4,
 });
 
 function clamp(value, min, max) {
@@ -186,8 +202,8 @@ function createPlayer() {
     angle: 0,
     radius: 18,
     speed: 245,
-    hp: 340,
-    maxHp: 340,
+    hp: 280,
+    maxHp: 280,
     shield: 0,
     shieldMax: 0,
     shieldDelay: 0,
@@ -210,6 +226,7 @@ function createPlayer() {
     dead: false,
     fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0 },
     orbitAngle: 0,
+    orbitMasterTimer: 0,
   };
 }
 
@@ -257,6 +274,11 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
     spawnedEnemies: 0,
     killedEnemies: 0,
     spawnAccumulator: 0,
+    surgeIndex: 0,
+    surgeQueued: 0,
+    surgeSpawnAccumulator: 0,
+    surgeWarning: null,
+    activeSurge: null,
     phaseTransition: 0,
     nextEntityId: 0,
     enemies: [],
@@ -264,6 +286,10 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
     enemyProjectiles: [],
     particles: [],
     telegraphs: [],
+    beams: [],
+    chains: [],
+    shockwaves: [],
+    airstrikes: [],
     allies: [],
     deployables: [],
     pickups: [],
@@ -275,9 +301,17 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
     rewardCycle: 0,
     build: {
       weapons: { pulse: 1, scatter: 0, rail: 0, rocket: 0, orbit: 0 },
-      skills: { damage: 0, fireRate: 0, multishot: 0, shield: 0, dash: 0, regen: 0 },
+      skills: { damage: 0, fireRate: 0, multishot: 0, shield: 0, dash: 0, regen: 0, chain: 0, nova: 0, airstrike: 0, omegaLaser: 0 },
       allies: { drone: 0, sentry: 0, suppressor: 0 },
     },
+    lastChosenByCategory: { weapon: null, skill: null, ally: null },
+    support: {
+      chainCooldown: 0,
+      novaCooldown: 0,
+      airstrikeCooldown: 2.5,
+      laserCooldown: 5,
+    },
+    camera: { x: GAME_WIDTH * 0.5, y: GAME_HEIGHT * 0.5, zoom: 1.58 },
     stats: {
       kills: 0,
       shots: 0,
@@ -289,6 +323,8 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
       bossPatternsDodged: 0,
       bossPatternsHit: 0,
       peakEnemies: 0,
+      skillsMastered: 0,
+      ultimateCasts: 0,
     },
     shake: 0,
     flash: 0,
@@ -317,6 +353,17 @@ export function setSwarmAim(state, x, y) {
   state.aimX = state.aim.x;
   state.aimY = state.aim.y;
   return true;
+}
+
+export function setSwarmScreenAim(state, screenX, screenY) {
+  if (!state || !Number.isFinite(screenX) || !Number.isFinite(screenY)) return false;
+  const camera = state.camera || { x: GAME_WIDTH * 0.5, y: GAME_HEIGHT * 0.5, zoom: 1 };
+  const zoom = Math.max(0.1, finite(camera.zoom, 1));
+  return setSwarmAim(
+    state,
+    finite(camera.x, GAME_WIDTH * 0.5) + (screenX - GAME_WIDTH * 0.5) / zoom,
+    finite(camera.y, GAME_HEIGHT * 0.5) + (screenY - GAME_HEIGHT * 0.5) / zoom,
+  );
 }
 
 function movementDirection(input) {
@@ -380,6 +427,15 @@ function updatePlayer(state, input, dt) {
   player.x += player.vx * dt;
   player.y += player.vy * dt;
   clampPlayerToFloor(player);
+
+  const camera = state.camera;
+  if (camera) {
+    const targetZoom = state.phase === "boss" ? 1.36 : 1.58;
+    const follow = 1 - Math.exp(-dt * 7.5);
+    camera.x += (player.x - camera.x) * follow;
+    camera.y += (player.y - camera.y) * follow;
+    camera.zoom += (targetZoom - camera.zoom) * (1 - Math.exp(-dt * 3.5));
+  }
 }
 
 function pushPlayerProjectile(state, projectile) {
@@ -427,6 +483,28 @@ function fireBulletFan(state, kind, count, spread, speed, damage, radius, life, 
   }
 }
 
+function fireRadialVolley(state, kind, count, speed, damage, radius, life, extra = {}) {
+  const player = state.player;
+  for (let index = 0; index < count; index += 1) {
+    const angle = player.angle + (index / count) * TAU;
+    pushPlayerProjectile(state, {
+      kind,
+      x: player.x + Math.cos(angle) * 22,
+      y: player.y + Math.sin(angle) * 22,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      angle,
+      radius,
+      damage: damage * player.damageMultiplier,
+      color: extra.color || "#62eaff",
+      life,
+      pierce: extra.pierce ?? 0,
+      splash: extra.splash ?? 0,
+      hitIds: extra.pierce ? new Set() : null,
+    });
+  }
+}
+
 function updateAutoWeapons(state, dt) {
   const player = state.player;
   const timers = player.fireTimers;
@@ -435,25 +513,26 @@ function updateAutoWeapons(state, dt) {
 
   if (timers.pulse <= 0) {
     const count = clamp(player.multishot, 1, 5);
-    fireBulletFan(state, "pulse", count, count > 1 ? 0.12 * (count - 1) : 0, 850, 34, 5, 1.55, { pierce: state.build.weapons.pulse >= 4 ? 1 : 0 });
+    fireBulletFan(state, "pulse", count, count > 1 ? 0.12 * (count - 1) : 0, 850, 34, 5, 1.55, { pierce: state.build.weapons.pulse >= 5 ? 2 : state.build.weapons.pulse >= 4 ? 1 : 0 });
     timers.pulse += 0.145 * attackSpeed / (1 + (state.build.weapons.pulse - 1) * 0.08);
   }
 
   const scatterLevel = state.build.weapons.scatter;
   if (scatterLevel > 0 && timers.scatter <= 0) {
-    fireBulletFan(state, "scatter", 4 + scatterLevel, 0.65, 720, 18 + scatterLevel * 5, 5, 0.82, { color: "#8bf4da" });
+    fireBulletFan(state, "scatter", scatterLevel >= 5 ? 13 : 4 + scatterLevel, scatterLevel >= 5 ? 1.18 : 0.65, 720, 18 + scatterLevel * 5, 5, 0.82, { color: "#8bf4da" });
+    if (scatterLevel >= 5) fireRadialVolley(state, "scatterMaster", 16, 630, 24, 5, 0.9, { color: "#73ffe0", pierce: 1 });
     timers.scatter += Math.max(0.34, 0.76 * attackSpeed);
   }
 
   const railLevel = state.build.weapons.rail;
   if (railLevel > 0 && timers.rail <= 0) {
-    fireBulletFan(state, "rail", 1, 0, 1300, 125 + railLevel * 42, 9, 1.05, { color: "#fff4a6", pierce: 4 + railLevel * 2 });
+    fireBulletFan(state, "rail", railLevel >= 5 ? 3 : 1, railLevel >= 5 ? 0.18 : 0, 1300, 125 + railLevel * 42, railLevel >= 5 ? 12 : 9, 1.05, { color: "#fff4a6", pierce: railLevel >= 5 ? 18 : 4 + railLevel * 2 });
     timers.rail += Math.max(0.62, 1.42 * attackSpeed);
   }
 
   const rocketLevel = state.build.weapons.rocket;
   if (rocketLevel > 0 && timers.rocket <= 0) {
-    fireBulletFan(state, "rocket", 1, 0, 440, 56 + rocketLevel * 24, 10, 2.6, { color: "#ffb35a", splash: 72 + rocketLevel * 15 });
+    fireBulletFan(state, "rocket", rocketLevel >= 5 ? 3 : 1, rocketLevel >= 5 ? 0.28 : 0, 440, 56 + rocketLevel * 24, 10, 2.6, { color: "#ffb35a", splash: rocketLevel >= 5 ? 165 : 72 + rocketLevel * 15 });
     timers.rocket += Math.max(0.78, 1.78 * attackSpeed);
   }
 }
@@ -818,6 +897,215 @@ function updateOrbitWeapon(state, dt) {
       }
     }
   }
+  player.orbitMasterTimer = Math.max(0, player.orbitMasterTimer - dt);
+  if (level >= 5 && player.orbitMasterTimer <= 0) {
+    player.orbitMasterTimer = 2.15;
+    const radius = 310;
+    for (const enemy of nearbyEnemies(state, player.x, player.y, radius)) {
+      if (!enemy.dead && Math.hypot(enemy.x - player.x, enemy.y - player.y) <= radius + enemy.radius) {
+        damageEnemy(state, enemy, 105 * player.damageMultiplier, "orbitMaster");
+      }
+    }
+    state.shockwaves.push({ type: "orbitMaster", x: player.x, y: player.y, maxRadius: radius, life: 0.55, maxLife: 0.55, color: "#6fffe8", width: 10 });
+    emit(state, "masterAttack", { skill: "orbit", x: player.x, y: player.y });
+  }
+}
+
+function damageArea(state, x, y, radius, damage, source) {
+  let hits = 0;
+  if (state.phase === "boss") {
+    const boss = state.boss;
+    if (boss.active && !boss.dead && Math.hypot(boss.x - x, boss.y - y) <= radius + boss.radius) {
+      damageBoss(state, damage, source);
+      hits += 1;
+    }
+    return hits;
+  }
+  for (const enemy of nearbyEnemies(state, x, y, radius)) {
+    if (enemy.dead || Math.hypot(enemy.x - x, enemy.y - y) > radius + enemy.radius) continue;
+    damageEnemy(state, enemy, damage, source);
+    hits += 1;
+  }
+  return hits;
+}
+
+function triggerChainLightning(state, level) {
+  const limit = level >= 3 ? 14 : 3 + level * 2;
+  const points = [{ x: state.player.x, y: state.player.y }];
+  const used = new Set();
+  let x = state.player.x;
+  let y = state.player.y;
+  for (let hop = 0; hop < limit; hop += 1) {
+    let target = null;
+    let bestSq = (level >= 3 ? 430 : 260) ** 2;
+    for (const enemy of state.enemies) {
+      if (enemy.dead || used.has(enemy.id)) continue;
+      const dx = enemy.x - x;
+      const dy = enemy.y - y;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq < bestSq) {
+        bestSq = distanceSq;
+        target = enemy;
+      }
+    }
+    if (!target) break;
+    used.add(target.id);
+    points.push({ x: target.x, y: target.y });
+    damageEnemy(state, target, (48 + level * 26) * state.player.damageMultiplier, "chain");
+    x = target.x;
+    y = target.y;
+  }
+  if (state.phase === "boss" && state.boss.active) {
+    points.push({ x: state.boss.x, y: state.boss.y });
+    damageBoss(state, (90 + level * 48) * state.player.damageMultiplier, "chain");
+  }
+  if (points.length > 1) {
+    state.chains.push({ type: "chain", points, life: 0.22, maxLife: 0.22, alpha: 1, width: level >= 3 ? 7 : 4, color: level >= 3 ? "#fff2a1" : "#8ff9ff" });
+    emit(state, level >= 3 ? "masterAttack" : "skillAttack", { skill: "chain", hits: points.length - 1 });
+  }
+}
+
+function triggerNova(state, level) {
+  const radius = level >= 3 ? 390 : 150 + level * 58;
+  const damage = (64 + level * 48) * state.player.damageMultiplier;
+  damageArea(state, state.player.x, state.player.y, radius, damage, "nova");
+  state.shockwaves.push({ type: "nova", x: state.player.x, y: state.player.y, maxRadius: radius, life: 0.72, maxLife: 0.72, color: level >= 3 ? "#fff0a6" : "#8ffcff", width: level >= 3 ? 15 : 9 });
+  if (level >= 3) {
+    state.shockwaves.push({ type: "novaEcho", x: state.player.x, y: state.player.y, maxRadius: radius * 0.72, life: 1.02, maxLife: 1.02, color: "#7ef4ff", width: 8 });
+    state.shake = Math.max(state.shake, 13);
+  }
+  emit(state, level >= 3 ? "masterAttack" : "skillAttack", { skill: "nova", radius });
+}
+
+function strikeTarget(state, index) {
+  if (state.phase === "boss" && state.boss.active) return { x: state.boss.x, y: state.boss.y };
+  const live = state.enemies.filter((enemy) => !enemy.dead);
+  if (!live.length) return { x: state.player.x, y: state.player.y };
+  const enemy = live[(index * 37 + state.stats.ultimateCasts * 11) % live.length];
+  return { x: enemy.x, y: enemy.y };
+}
+
+function triggerAirstrike(state, level) {
+  const count = level >= 3 ? 15 : 5 + level * 3;
+  for (let index = 0; index < count; index += 1) {
+    const target = strikeTarget(state, index);
+    const spread = level >= 3 ? 72 : 38;
+    state.airstrikes.push({
+      id: ++state.nextEntityId,
+      type: "airstrike",
+      phase: "warning",
+      x: clamp(target.x + (state.random() - 0.5) * spread, ARENA.left + 26, ARENA.right - 26),
+      y: clamp(target.y + (state.random() - 0.5) * spread, ARENA.top + 26, ARENA.bottom - 26),
+      radius: 76 + level * 15,
+      damage: (135 + level * 88) * state.player.damageMultiplier,
+      life: 1.05 + index * 0.035,
+      maxLife: 1.05 + index * 0.035,
+    });
+  }
+  state.stats.ultimateCasts += 1;
+  emit(state, "ultimateWarning", { skill: "airstrike", count });
+}
+
+function triggerOmegaLaser(state, level) {
+  const direction = normalize(state.aim.x - state.player.x, state.aim.y - state.player.y);
+  const beam = {
+    id: ++state.nextEntityId,
+    type: "omegaLaser",
+    phase: "charge",
+    x1: state.player.x,
+    y1: state.player.y,
+    x2: state.player.x + direction.x * 1500,
+    y2: state.player.y + direction.y * 1500,
+    angle: Math.atan2(direction.y, direction.x),
+    width: level >= 3 ? 116 : 58 + level * 16,
+    damage: (105 + level * 70) * state.player.damageMultiplier,
+    charge: 0.68,
+    life: level >= 3 ? 1.95 : 1.55,
+    maxLife: level >= 3 ? 1.95 : 1.55,
+    tickTimer: 0,
+    color: level >= 3 ? "#fff2a5" : "#72f7ff",
+    alpha: 1,
+  };
+  state.beams.push(beam);
+  state.stats.ultimateCasts += 1;
+  emit(state, "ultimateWarning", { skill: "omegaLaser" });
+}
+
+function updateAirstrikes(state, dt) {
+  for (const strike of state.airstrikes) {
+    strike.life -= dt;
+    if (strike.phase === "warning" && strike.life <= 0) {
+      strike.phase = "impact";
+      strike.life = 0.32;
+      strike.maxLife = 0.32;
+      damageArea(state, strike.x, strike.y, strike.radius, strike.damage, "airstrike");
+      burst(state, strike.x, strike.y, "#ffcf68", 16, 330, 0.62, 7);
+      state.shockwaves.push({ type: "airstrike", x: strike.x, y: strike.y, maxRadius: strike.radius, life: 0.42, maxLife: 0.42, color: "#ffbd58", width: 10 });
+      state.shake = Math.max(state.shake, 8);
+      emit(state, "ultimateImpact", { skill: "airstrike", x: strike.x, y: strike.y });
+    }
+  }
+  compact(state.airstrikes, (strike) => strike.life > 0);
+}
+
+function updateOmegaBeams(state, dt) {
+  for (const beam of state.beams) {
+    beam.life -= dt;
+    beam.alpha = clamp(beam.life / Math.max(0.001, beam.maxLife * 0.45), 0, 1);
+    if (beam.phase === "charge") {
+      beam.charge -= dt;
+      if (beam.charge <= 0) {
+        beam.phase = "active";
+        state.flash = Math.max(state.flash, 0.5);
+        state.shake = Math.max(state.shake, 20);
+        emit(state, "ultimateFire", { skill: "omegaLaser" });
+      }
+      continue;
+    }
+    beam.tickTimer -= dt;
+    if (beam.tickTimer > 0) continue;
+    beam.tickTimer = 0.1;
+    if (state.phase === "boss") {
+      if (pointLineDistance(state.boss.x, state.boss.y, beam.x1, beam.y1, beam.x2, beam.y2) <= beam.width * 0.5 + state.boss.radius) {
+        damageBoss(state, beam.damage, "omegaLaser");
+      }
+    } else {
+      for (const enemy of state.enemies) {
+        if (!enemy.dead && pointLineDistance(enemy.x, enemy.y, beam.x1, beam.y1, beam.x2, beam.y2) <= beam.width * 0.5 + enemy.radius) {
+          damageEnemy(state, enemy, beam.damage, "omegaLaser");
+        }
+      }
+    }
+  }
+  compact(state.beams, (beam) => beam.life > 0);
+}
+
+function updateSupportSkills(state, dt) {
+  const skills = state.build.skills;
+  const support = state.support;
+  support.chainCooldown -= dt;
+  support.novaCooldown -= dt;
+  support.airstrikeCooldown -= dt;
+  support.laserCooldown -= dt;
+
+  if (skills.chain > 0 && support.chainCooldown <= 0) {
+    triggerChainLightning(state, skills.chain);
+    support.chainCooldown += skills.chain >= 3 ? 1.65 : 3.2 - skills.chain * 0.38;
+  }
+  if (skills.nova > 0 && support.novaCooldown <= 0) {
+    triggerNova(state, skills.nova);
+    support.novaCooldown += skills.nova >= 3 ? 3.8 : 6.4 - skills.nova * 0.7;
+  }
+  if (skills.airstrike > 0 && support.airstrikeCooldown <= 0) {
+    triggerAirstrike(state, skills.airstrike);
+    support.airstrikeCooldown += skills.airstrike >= 3 ? 11.5 : 18.5 - skills.airstrike * 2.1;
+  }
+  if (skills.omegaLaser > 0 && support.laserCooldown <= 0) {
+    triggerOmegaLaser(state, skills.omegaLaser);
+    support.laserCooldown += skills.omegaLaser >= 3 ? 15 : 25 - skills.omegaLaser * 2.3;
+  }
+  updateAirstrikes(state, dt);
+  updateOmegaBeams(state, dt);
 }
 
 function syncAllies(state) {
@@ -912,14 +1200,18 @@ function buildRewardOffer(state) {
   const categories = ["weapon", "skill", "ally"];
   for (let categoryIndex = 0; categoryIndex < categories.length; categoryIndex += 1) {
     const category = categories[categoryIndex];
-    const pool = REWARD_POOLS[category];
+    const bucket = category === "weapon" ? state.build.weapons : category === "skill" ? state.build.skills : state.build.allies;
+    let pool = REWARD_POOLS[category].filter((candidate) => (bucket[candidate] || 0) < (MAX_REWARD_RANK[candidate] || 5));
+    if (!pool.length) pool = REWARD_POOLS[category];
+    if (category === "skill" && state.rewardCycle === 0) pool = pool.filter((candidate) => ["airstrike", "omegaLaser", "chain", "nova"].includes(candidate));
+    const previous = state.lastChosenByCategory[category];
+    const repeatPrevious = previous && pool.includes(previous) && state.random() < 0.62;
     const offset = Math.floor(clamp(state.random(), 0, 0.999999) * pool.length);
-    const id = pool[(state.rewardCycle + categoryIndex + offset) % pool.length];
+    const id = repeatPrevious ? previous : pool[(state.rewardCycle + categoryIndex + offset) % pool.length];
     const definition = REWARD_DEFINITIONS[id];
-    const currentLevel = state.build[`${category}${category === "ally" ? "ies" : "s"}`]?.[id]
-      ?? (category === "weapon" ? state.build.weapons[id] : category === "skill" ? state.build.skills[id] : state.build.allies[id])
-      ?? 0;
-    offer.push({ ...definition, level: currentLevel, nextLevel: currentLevel + 1 });
+    const currentLevel = bucket[id] || 0;
+    const maxRank = MAX_REWARD_RANK[id] || 5;
+    offer.push({ ...definition, level: currentLevel, nextLevel: Math.min(maxRank, currentLevel + 1), maxRank, mastery: currentLevel + 1 >= maxRank });
   }
   return offer;
 }
@@ -927,10 +1219,14 @@ function buildRewardOffer(state) {
 function applyReward(state, id) {
   const definition = REWARD_DEFINITIONS[id];
   if (!definition) return false;
+  const bucket = definition.category === "weapon" ? state.build.weapons : definition.category === "skill" ? state.build.skills : state.build.allies;
+  const currentRank = bucket[id] || 0;
+  const maxRank = MAX_REWARD_RANK[id] || 5;
+  if (currentRank >= maxRank) return false;
   if (definition.category === "weapon") {
-    state.build.weapons[id] = (state.build.weapons[id] || 0) + 1;
+    state.build.weapons[id] = currentRank + 1;
   } else if (definition.category === "skill") {
-    state.build.skills[id] = (state.build.skills[id] || 0) + 1;
+    state.build.skills[id] = currentRank + 1;
     const level = state.build.skills[id];
     if (id === "damage") state.player.damageMultiplier *= 1.25;
     if (id === "fireRate") state.player.fireRateMultiplier *= 0.84;
@@ -942,7 +1238,7 @@ function applyReward(state, id) {
     if (id === "dash") state.player.dashMax = Math.max(0.82, 2.35 - level * 0.28);
     if (id === "regen") state.player.regen += 1.8;
   } else {
-    state.build.allies[id] = (state.build.allies[id] || 0) + 1;
+    state.build.allies[id] = currentRank + 1;
     if (id === "sentry") {
       const existing = state.deployables.find((deployable) => deployable.type === "sentry" && deployable.level < 4);
       if (existing) existing.level += 1;
@@ -951,6 +1247,14 @@ function applyReward(state, id) {
       }
     }
     syncAllies(state);
+  }
+  state.lastChosenByCategory[definition.category] = id;
+  if (currentRank + 1 === maxRank) {
+    state.stats.skillsMastered += 1;
+    state.flash = Math.max(state.flash, 0.6);
+    state.shake = Math.max(state.shake, 12);
+    emit(state, "skillMastered", { id, category: definition.category, name: definition.name });
+    addText(state, `${definition.name} · MASTER`, state.player.x, state.player.y - 72, "#fff0a6", 1.25);
   }
   return true;
 }
@@ -981,6 +1285,9 @@ function startBossPhase(state) {
   state.projectiles.length = 0;
   state.pickups.length = 0;
   state.telegraphs.length = 0;
+  state.airstrikes.length = 0;
+  state.beams.length = 0;
+  state.chains.length = 0;
   state.flash = 0.65;
   state.shake = 18;
   addText(state, "THE WRONG ENGINE", GAME_WIDTH * 0.5, 132, "#ff4b63", 1.65);
@@ -988,11 +1295,41 @@ function startBossPhase(state) {
 }
 
 function updateSwarmSpawning(state, dt) {
-  if (state.spawnedEnemies < state.enemyBudget) {
-    state.spawnAccumulator += dt * 11;
-    while (state.spawnAccumulator >= 1 && state.enemies.length < MAX_LIVE_ENEMIES && state.spawnedEnemies < state.enemyBudget) {
-      state.spawnAccumulator -= 1;
-      spawnEnemy(state);
+  const wave = SURGE_WAVES[state.surgeIndex];
+  if (wave && !state.surgeWarning && state.time >= wave.warnAt) {
+    state.surgeWarning = { index: state.surgeIndex, label: wave.label, count: wave.count, startsIn: Math.max(0, wave.startAt - state.time) };
+    emit(state, "surgeWarning", { wave: state.surgeIndex + 1, label: wave.label, count: wave.count, startsIn: wave.startAt - wave.warnAt });
+  }
+  if (wave && state.surgeWarning?.index === state.surgeIndex) {
+    state.surgeWarning.startsIn = Math.max(0, wave.startAt - state.time);
+    if (state.time >= wave.startAt) {
+      state.surgeQueued += wave.count;
+      state.activeSurge = { index: state.surgeIndex, label: wave.label, count: wave.count, remaining: state.surgeQueued, rate: wave.rate };
+      state.surgeWarning = null;
+      state.surgeIndex += 1;
+      emit(state, "surgeStart", { wave: state.surgeIndex, label: wave.label, count: wave.count });
+      state.shake = Math.max(state.shake, 7);
+    }
+  }
+
+  if (state.surgeQueued > 0 && state.spawnedEnemies < state.enemyBudget) {
+    const rate = state.activeSurge?.rate || 34;
+    state.surgeSpawnAccumulator = Math.min(12, state.surgeSpawnAccumulator + dt * rate);
+    let spawnedThisStep = 0;
+    while (state.surgeSpawnAccumulator >= 1
+      && spawnedThisStep < 5
+      && state.enemies.length < MAX_LIVE_ENEMIES
+      && state.spawnedEnemies < state.enemyBudget
+      && state.surgeQueued > 0) {
+      state.surgeSpawnAccumulator -= 1;
+      if (!spawnEnemy(state)) break;
+      state.surgeQueued -= 1;
+      spawnedThisStep += 1;
+    }
+    if (state.activeSurge) state.activeSurge.remaining = state.surgeQueued;
+    if (state.surgeQueued <= 0 && state.activeSurge) {
+      emit(state, "surgeDeployed", { wave: state.activeSurge.index + 1, label: state.activeSurge.label });
+      state.activeSurge = null;
     }
   }
   state.stats.peakEnemies = Math.max(state.stats.peakEnemies, state.enemies.length);
@@ -1254,6 +1591,13 @@ function updateEffects(state, dt) {
     text.y += text.vy * dt;
   }
   compact(state.texts, (text) => text.life > 0);
+  for (const chain of state.chains) {
+    chain.life -= dt;
+    chain.alpha = clamp(chain.life / Math.max(0.001, chain.maxLife), 0, 1);
+  }
+  compact(state.chains, (chain) => chain.life > 0);
+  for (const shockwave of state.shockwaves) shockwave.life -= dt;
+  compact(state.shockwaves, (shockwave) => shockwave.life > 0);
   compact(state.telegraphs, (telegraph) => telegraph === state.boss.activePattern || telegraph.life > 0);
 }
 
@@ -1282,12 +1626,14 @@ export function stepSwarm(state, input, dt) {
     updateEnemies(state, delta);
     rebuildEnemyGrid(state);
     updateOrbitWeapon(state, delta);
+    updateSupportSkills(state, delta);
     updateProjectiles(state, delta);
     updateEnemyProjectiles(state, delta);
     updatePickups(state, delta);
     updateSwarmSpawning(state, delta);
   } else if (state.phase === "boss") {
     updateBoss(state, delta);
+    updateSupportSkills(state, delta);
     updateProjectiles(state, delta);
     updateEnemyProjectiles(state, delta);
   }
@@ -1322,6 +1668,11 @@ export function getSwarmHud(state) {
       : 1,
     spawnedEnemies: state.spawnedEnemies,
     liveEnemies: state.enemies.length,
+    surge: {
+      warning: state.surgeWarning ? { ...state.surgeWarning } : null,
+      active: state.activeSurge ? { ...state.activeSurge } : null,
+      nextWave: state.surgeIndex < SURGE_WAVES.length ? state.surgeIndex + 1 : null,
+    },
     kills: state.stats.kills,
     level: player.level,
     xp: player.xp,
@@ -1351,6 +1702,12 @@ export function getSwarmHud(state) {
       weapons: { ...state.build.weapons },
       skills: { ...state.build.skills },
       allies: { ...state.build.allies },
+    },
+    abilities: {
+      chain: { rank: state.build.skills.chain, cooldown: Math.max(0, state.support.chainCooldown), maxRank: 3 },
+      nova: { rank: state.build.skills.nova, cooldown: Math.max(0, state.support.novaCooldown), maxRank: 3 },
+      airstrike: { rank: state.build.skills.airstrike, cooldown: Math.max(0, state.support.airstrikeCooldown), maxRank: 3, ultimate: true },
+      omegaLaser: { rank: state.build.skills.omegaLaser, cooldown: Math.max(0, state.support.laserCooldown), maxRank: 3, ultimate: true },
     },
     stats: { ...state.stats },
   };

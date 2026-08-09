@@ -29,7 +29,7 @@ import {
   GAME_HEIGHT,
   GAME_WIDTH,
   getSwarmHud,
-  setSwarmAim,
+  setSwarmScreenAim,
   stepSwarm,
 } from "./swarm/engine.js";
 import { renderSwarm } from "./swarm/renderer.js";
@@ -62,6 +62,14 @@ const EVENT_SOUNDS = Object.freeze({
   bossStage: "bossBreak",
   bossWeakness: "core",
   bossChargeHit: "patternFail",
+  surgeWarning: "alert",
+  surgeStart: "bossTelegraph",
+  skillMastered: "bossBreak",
+  skillAttack: "arc",
+  masterAttack: "emp",
+  ultimateWarning: "bossTelegraph",
+  ultimateFire: "rail",
+  ultimateImpact: "rail",
   win: "bossDeath",
   loss: "capture",
 });
@@ -72,6 +80,10 @@ const EVENT_BANNERS = Object.freeze({
   bossIntro: ["THE WRONG ENGINE", "공격 경고선을 읽고 빈틈을 만들어내세요."],
   bossStage: ["PATTERN EVOLVED", "보스 공격 조합이 더 빨라집니다."],
   bossWeakness: ["CORE EXPOSED · ×2", "돌진을 벽에 꽂았습니다. 지금 모든 화력을 집중하세요."],
+  surgeWarning: ["⚠ MASS WAVE INBOUND", "게이트 신호 폭증. 대량 공세가 곧 전장에 진입합니다."],
+  surgeStart: ["OVERLOAD WAVE", "사방 게이트 개방. 광역 화력으로 포위망을 찢으세요."],
+  skillMastered: ["MASTER EVOLUTION", "스킬이 최종 형태로 진화했습니다. 광역 섬멸 프로토콜 가동."],
+  ultimateWarning: ["ULTIMATE SUPPORT LOCKED", "공중 지원 좌표 확정. 충격 범위에서 화력을 집중하세요."],
 });
 
 const CATEGORY_META = Object.freeze({
@@ -92,6 +104,10 @@ const BUILD_LABELS = Object.freeze({
   shield: "AEGIS",
   dash: "PHASE",
   regen: "REPAIR",
+  chain: "ARC",
+  nova: "NOVA",
+  airstrike: "SKYFALL",
+  omegaLaser: "Ω LASER",
   drone: "DRONE",
   sentry: "SENTRY",
   suppressor: "WISP",
@@ -108,6 +124,10 @@ const REWARD_COPY = Object.freeze({
   shield: "피격 후 다시 충전되는 40의 보호막을 획득합니다.",
   dash: "대시 재사용 시간이 줄고 무적 시간이 길어집니다.",
   regen: "손상된 체력을 전투 중 지속적으로 복구합니다.",
+  chain: "밀집한 적 사이를 연쇄 번개가 도약합니다. RANK 3에서 전장 폭풍으로 진화합니다.",
+  nova: "주기적으로 충격파를 방출합니다. RANK 3에서 화면 전체를 휩쓰는 이중 폭발이 됩니다.",
+  airstrike: "긴 재사용 시간 뒤 적 밀집 지역을 연속 폭격합니다. 마스터 시 15발 포화 폭격을 호출합니다.",
+  omegaLaser: "조준 방향으로 거대 레이저포를 호출합니다. 마스터 시 광폭 빔이 전장을 관통합니다.",
   drone: "가까운 적을 자율 추적하는 기동형 전투 드론입니다.",
   sentry: "현재 위치에 고속 연사 센트리를 설치합니다.",
   suppressor: "밀집한 적을 감속시키고 연쇄 충격을 가하는 동료입니다.",
@@ -232,7 +252,13 @@ function ProgressHud({ hud }) {
       <div className="progress-bar"><i style={{ width: `${(bossPhase ? bossRatio : swarmRatio) * 100}%` }} /><span /></div>
       <div className="progress-meta">
         <span>{bossPhase ? (hud.boss.pattern ? `PATTERN · ${String(hud.boss.pattern).toUpperCase()}` : "SCANNING NEXT PATTERN") : `${hud?.kills || 0} / ${hud?.totalEnemies || 300} PURGED`}</span>
-        <span>{bossPhase ? (weakness > 0 ? `CORE EXPOSED ${weakness.toFixed(1)}s` : "DODGE TELEGRAPHS") : `${hud?.liveEnemies || 0} ACTIVE`}</span>
+        <span>{bossPhase
+          ? (weakness > 0 ? `CORE EXPOSED ${weakness.toFixed(1)}s` : "DODGE TELEGRAPHS")
+          : hud?.surge?.warning
+            ? `⚠ ${hud.surge.warning.label} · ${hud.surge.warning.startsIn.toFixed(1)}s`
+            : hud?.surge?.active
+              ? `${hud.surge.active.label} · ${hud.surge.active.remaining} DEPLOYING`
+              : `${hud?.liveEnemies || 0} ACTIVE`}</span>
       </div>
     </div>
   );
@@ -273,6 +299,36 @@ function BuildHud({ build }) {
           </div>
         );
       })}
+    </aside>
+  );
+}
+
+function AbilityHud({ abilities }) {
+  const entries = [
+    ["chain", "ARC CASCADE"],
+    ["nova", "ZERO NOVA"],
+    ["airstrike", "SKYFALL"],
+    ["omegaLaser", "Ω LASER"],
+  ].filter(([id]) => Number(abilities?.[id]?.rank) > 0);
+  if (!entries.length) return null;
+  return (
+    <aside className="ability-hud glass-panel" aria-label="공격 스킬 재사용 대기시간">
+      <div className="panel-heading"><span><Lightning weight="fill" /> STRIKE SYSTEMS</span><i>ACTIVE</i></div>
+      <div className="ability-grid">
+        {entries.map(([id, label]) => {
+          const ability = abilities[id];
+          const ready = Number(ability.cooldown) <= 0.05;
+          const mastered = ability.rank >= ability.maxRank;
+          return (
+            <div className={`${ability.ultimate ? "is-ultimate " : ""}${mastered ? "is-mastered" : ""}`} key={id}>
+              <span>{ability.ultimate ? "ULT" : "AUTO"}</span>
+              <strong>{label}</strong>
+              <b className={ready ? "is-ready" : ""}>{ready ? "READY" : `${Number(ability.cooldown).toFixed(1)}s`}</b>
+              <small>{mastered ? "MASTER" : `R${ability.rank}`}</small>
+            </div>
+          );
+        })}
+      </div>
     </aside>
   );
 }
@@ -335,7 +391,7 @@ function LevelUpOverlay({ offer, level, assets, onChoose }) {
                 <small>{meta.label} · {meta.korean}</small>
                 <strong>{option.name}</strong>
                 <p>{REWARD_COPY[option.id] || option.description}</p>
-                <div><span>{option.level ? `RANK ${option.level} → ${option.nextLevel || option.level + 1}` : "INSTALL NEW"}</span><b>SELECT <ArrowRight /></b></div>
+                <div><span>{option.mastery ? `RANK ${option.level} → MASTER` : option.level ? `RANK ${option.level} → ${option.nextLevel || option.level + 1}` : "INSTALL NEW"}</span><b>SELECT <ArrowRight /></b></div>
               </button>
             );
           })}
@@ -506,7 +562,7 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
     };
     const updatePointer = (event) => {
       const bounds = canvas.getBoundingClientRect();
-      setSwarmAim(
+      setSwarmScreenAim(
         game,
         (event.clientX - bounds.left) * GAME_WIDTH / Math.max(1, bounds.width),
         (event.clientY - bounds.top) * GAME_HEIGHT / Math.max(1, bounds.height),
@@ -596,6 +652,7 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
           <div className="arena-status top-right">{hud?.quality?.qualityLabel || "CALIBRATING"} · {hud?.quality?.fps || 60} FPS</div>
           <PilotHud hud={hud} />
           <BuildHud build={hud?.build} />
+          <AbilityHud abilities={hud?.abilities} />
           <div className="combat-help"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> DASH</span><span><kbd>MOUSE</kbd> AIM</span><b><Pulse weight="fill" /> AUTO FIRE</b></div>
           <div className="xp-hud"><span>LV.{hud?.level || 1}</span><div><i style={{ width: `${xpRatio * 100}%` }} /></div><b>{Math.floor(hud?.xp || 0)} / {Math.floor(hud?.nextXp || 0)} XP</b></div>
         </div>

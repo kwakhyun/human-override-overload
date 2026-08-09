@@ -11,6 +11,7 @@ import {
   drainSwarmEvents,
   getSwarmHud,
   setSwarmAim,
+  setSwarmScreenAim,
   stepSwarm,
 } from "../src/swarm/engine.js";
 
@@ -130,7 +131,7 @@ test("the opening grace window prevents damage for 2.4 seconds, then enemies can
   enemy.damage = 25;
   enemy.attackCooldown = 0;
   const initialHp = state.player.hp;
-  assert.equal(initialHp, 340);
+  assert.equal(initialHp, 280);
   assert.equal(state.player.invulnerability, 2.5);
   stepFor(state, createSwarmInput(), 2.4);
   assert.equal(state.player.hp, initialHp);
@@ -214,6 +215,91 @@ test("skill rewards materially change damage, fire rate, multishot, shield, dash
     assert.equal(chooseLevelReward(state, id), true);
     check(state);
   }
+});
+
+test("screen-space aiming is converted through the player-following zoom camera", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  state.camera.x = 700;
+  state.camera.y = 330;
+  state.camera.zoom = 1.6;
+  assert.equal(setSwarmScreenAim(state, 800, 360), true);
+  assert.equal(state.aim.x, 800);
+  assert.equal(state.aim.y, 330);
+});
+
+test("fixed-time mass waves warn before rapidly deploying all remaining enemies", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  for (const enemy of state.enemies) {
+    enemy.hp = 999999;
+    enemy.maxHp = enemy.hp;
+    enemy.speed = 0;
+    enemy.damage = 0;
+  }
+  drainSwarmEvents(state);
+  stepFor(state, createSwarmInput(), 6.2);
+  const warning = drainSwarmEvents(state).find((event) => event.type === "surgeWarning");
+  assert.equal(warning.wave, 1);
+  assert.equal(warning.count, 48);
+  assert.ok(getSwarmHud(state).surge.warning.startsIn > 0);
+  stepFor(state, createSwarmInput(), 1.5);
+  const surgeEvents = drainSwarmEvents(state);
+  assert.ok(surgeEvents.some((event) => event.type === "surgeStart"));
+  assert.ok(state.spawnedEnemies > 84);
+  assert.ok(getSwarmHud(state).surge.active || state.surgeQueued === 0);
+});
+
+test("airstrike and omega laser are long-cooldown attacks with real area damage", () => {
+  const airstrike = createSwarmState({ random: () => 0.5 });
+  const strikeTarget = airstrike.enemies.find((enemy) => !enemy.elite);
+  airstrike.enemies = [strikeTarget];
+  airstrike.spawnedEnemies = airstrike.enemyBudget;
+  strikeTarget.x = airstrike.player.x + 80;
+  strikeTarget.y = airstrike.player.y;
+  strikeTarget.speed = 0;
+  strikeTarget.hp = 9999;
+  strikeTarget.maxHp = strikeTarget.hp;
+  forceOffer(airstrike, "airstrike", "skill");
+  chooseLevelReward(airstrike, "airstrike");
+  airstrike.support.airstrikeCooldown = 0;
+  const strikeHp = strikeTarget.hp;
+  stepFor(airstrike, createSwarmInput(), 1.6);
+  assert.ok(strikeTarget.hp < strikeHp);
+  assert.ok(airstrike.support.airstrikeCooldown > 10);
+  assert.ok(drainSwarmEvents(airstrike).some((event) => event.type === "ultimateImpact"));
+
+  const laser = createSwarmState({ random: () => 0.5 });
+  const laserTarget = laser.enemies.find((enemy) => !enemy.elite);
+  laser.enemies = [laserTarget];
+  laser.spawnedEnemies = laser.enemyBudget;
+  laserTarget.x = laser.player.x + 160;
+  laserTarget.y = laser.player.y;
+  laserTarget.speed = 0;
+  laserTarget.hp = 9999;
+  laserTarget.maxHp = laserTarget.hp;
+  setSwarmAim(laser, laserTarget.x, laserTarget.y);
+  forceOffer(laser, "omegaLaser", "skill");
+  chooseLevelReward(laser, "omegaLaser");
+  laser.support.laserCooldown = 0;
+  const laserHp = laserTarget.hp;
+  stepFor(laser, createSwarmInput(), 1.05);
+  assert.ok(laserTarget.hp < laserHp);
+  assert.ok(laser.support.laserCooldown > 15);
+  assert.ok(drainSwarmEvents(laser).some((event) => event.type === "ultimateFire"));
+});
+
+test("rank-three offensive skills unlock their master-scale battlefield attack", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  for (let rank = 0; rank < 3; rank += 1) {
+    forceOffer(state, "nova", "skill");
+    assert.equal(chooseLevelReward(state, "nova"), true);
+  }
+  assert.equal(state.build.skills.nova, 3);
+  assert.equal(state.stats.skillsMastered, 1);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "skillMastered"));
+  state.support.novaCooldown = 0;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.ok(state.shockwaves.some((wave) => wave.maxRadius >= 390));
+  assert.ok(state.shockwaves.length >= 2);
 });
 
 test("ally rewards create autonomous drone, sentry, and suppressor entities", () => {
