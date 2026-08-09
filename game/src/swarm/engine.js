@@ -18,7 +18,16 @@ const SURGE_WAVES = Object.freeze([
   Object.freeze({ warnAt: 23, startAt: 24.5, count: 96, rate: 54, label: "TERMINAL WAVE" }),
 ]);
 
-export const BOSS_PATTERNS = Object.freeze(["radial", "sweep", "bombs", "rings", "charge"]);
+export const BOSS_PATTERNS = Object.freeze(["radial", "sweep", "bombs", "rings", "charge", "multiCharge"]);
+
+const SQUAD_RECALL_DURATION = 12;
+const SQUAD_RECALL_COOLDOWN = 30;
+const SQUAD_FORMATION = Object.freeze([
+  Object.freeze({ type: "vanguard", name: "AEGIS ECHO", x: -82, y: -66, color: "#63efff" }),
+  Object.freeze({ type: "gunner", name: "ROOK", x: 82, y: -66, color: "#ffad42" }),
+  Object.freeze({ type: "arcanist", name: "NYX", x: -92, y: 62, color: "#ba7dff" }),
+  Object.freeze({ type: "warden", name: "MOSS", x: 92, y: 62, color: "#76f09c" }),
+]);
 
 const ENEMY_DATA = Object.freeze({
   hunter: Object.freeze({ hp: 38, speed: 88, radius: 14, damage: 12, xp: 4, color: "#ff526d" }),
@@ -219,6 +228,7 @@ function createPlayer() {
     dashMax: 2.35,
     dashDuration: 0.16,
     dashSpeed: 790,
+    dashInvulnerability: 0.46,
     dashX: 1,
     dashY: 0,
     invulnerability: 2.5,
@@ -310,6 +320,8 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
       novaCooldown: 0,
       airstrikeCooldown: 2.5,
       laserCooldown: 5,
+      squadCooldown: 0,
+      squadDuration: 0,
     },
     camera: { x: GAME_WIDTH * 0.5, y: GAME_HEIGHT * 0.5, zoom: 1.58 },
     stats: {
@@ -325,6 +337,7 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
       peakEnemies: 0,
       skillsMastered: 0,
       ultimateCasts: 0,
+      squadCalls: 0,
     },
     shake: 0,
     flash: 0,
@@ -337,12 +350,13 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
 }
 
 export function createSwarmInput() {
-  return { up: false, down: false, left: false, right: false, dashPressed: false };
+  return { up: false, down: false, left: false, right: false, dashPressed: false, supportPressed: false };
 }
 
 export function clearPressedInput(input) {
   if (!input || typeof input !== "object") return false;
   input.dashPressed = false;
+  input.supportPressed = false;
   return true;
 }
 
@@ -413,8 +427,9 @@ function updatePlayer(state, input, dt) {
     player.dashY = dash.y;
     player.dashTimer = player.dashDuration;
     player.dashCooldown = player.dashMax;
-    player.invulnerability = Math.max(player.invulnerability, player.dashDuration + 0.08 + state.build.skills.dash * 0.04);
-    emit(state, "dash", { x: player.x, y: player.y });
+    const phaseWindow = player.dashInvulnerability + state.build.skills.dash * 0.05;
+    player.invulnerability = Math.max(player.invulnerability, phaseWindow);
+    emit(state, "dash", { x: player.x, y: player.y, invulnerability: phaseWindow });
   }
   if (player.dashTimer > 0) {
     player.dashTimer = Math.max(0, player.dashTimer - dt);
@@ -575,7 +590,10 @@ function nearbyEnemies(state, x, y, radius = 0) {
 function closestEnemy(state, x, y, maxDistance = Infinity) {
   let best = null;
   let bestSq = maxDistance * maxDistance;
-  for (const enemy of state.enemies) {
+  const candidates = Number.isFinite(maxDistance) && state.spatialGrid.size > 0
+    ? nearbyEnemies(state, x, y, maxDistance)
+    : state.enemies;
+  for (const enemy of candidates) {
     if (enemy.dead) continue;
     const dx = enemy.x - x;
     const dy = enemy.y - y;
@@ -979,7 +997,7 @@ function triggerNova(state, level) {
 
 function strikeTarget(state, index) {
   if (state.phase === "boss" && state.boss.active) return { x: state.boss.x, y: state.boss.y };
-  const live = state.enemies.filter((enemy) => !enemy.dead);
+  const live = state.enemies;
   if (!live.length) return { x: state.player.x, y: state.player.y };
   const enemy = live[(index * 37 + state.stats.ultimateCasts * 11) % live.length];
   return { x: enemy.x, y: enemy.y };
@@ -1108,6 +1126,127 @@ function updateSupportSkills(state, dt) {
   updateOmegaBeams(state, dt);
 }
 
+function summonSupportSquad(state) {
+  const support = state.support;
+  if (support.squadCooldown > 0 || support.squadDuration > 0) return false;
+  support.squadCooldown = SQUAD_RECALL_COOLDOWN;
+  support.squadDuration = SQUAD_RECALL_DURATION;
+  for (let index = 0; index < SQUAD_FORMATION.length; index += 1) {
+    const member = SQUAD_FORMATION[index];
+    state.allies.push({
+      id: ++state.nextEntityId,
+      type: member.type,
+      name: member.name,
+      color: member.color,
+      summoned: true,
+      formationIndex: index,
+      formationX: member.x,
+      formationY: member.y,
+      x: state.player.x,
+      y: state.player.y,
+      vx: 0,
+      vy: 0,
+      angle: state.player.angle,
+      fireCooldown: index * 0.07,
+      life: SQUAD_RECALL_DURATION,
+      maxLife: SQUAD_RECALL_DURATION,
+      alpha: 0,
+      active: true,
+    });
+  }
+  state.stats.squadCalls += 1;
+  state.flash = Math.max(state.flash, 0.32);
+  state.shake = Math.max(state.shake, 7);
+  state.shockwaves.push({ type: "squadRecall", x: state.player.x, y: state.player.y, maxRadius: 210, life: 0.7, maxLife: 0.7, color: "#c390ff", width: 9 });
+  burst(state, state.player.x, state.player.y, "#b879ff", 24, 260, 0.7, 6);
+  addText(state, "4-FRONT RECALL", state.player.x, state.player.y - 70, "#d9b8ff", 1.2);
+  emit(state, "squadSummon", { duration: SQUAD_RECALL_DURATION, members: SQUAD_FORMATION.map((member) => member.name) });
+  return true;
+}
+
+function fireSummonedProjectile(state, ally, kind, speed, damage, radius = 5, extra = {}, angleOverride = ally.angle) {
+  return pushPlayerProjectile(state, {
+    kind,
+    x: ally.x + Math.cos(ally.angle) * 20,
+    y: ally.y + Math.sin(ally.angle) * 20,
+    vx: Math.cos(angleOverride) * speed,
+    vy: Math.sin(angleOverride) * speed,
+    angle: angleOverride,
+    radius,
+    damage: damage * state.player.damageMultiplier,
+    color: extra.color || ally.color,
+    life: extra.life || 1.3,
+    pierce: extra.pierce || 0,
+    splash: extra.splash || 0,
+    hitIds: extra.pierce ? new Set() : null,
+  });
+}
+
+function fireSummonedAlly(state, ally, target) {
+  if (ally.type === "gunner") {
+    for (let index = -2; index <= 2; index += 1) {
+      const angle = ally.angle + index * 0.11;
+      fireSummonedProjectile(state, ally, "rookScatter", 690, 19, 4, { color: "#ffb75d", life: 0.72 }, angle);
+    }
+    ally.fireCooldown = 0.68;
+  } else if (ally.type === "arcanist") {
+    const points = [{ x: ally.x, y: ally.y }, { x: target.x, y: target.y }];
+    if (state.phase === "boss") damageBoss(state, 92 * state.player.damageMultiplier, "nyxArc");
+    else {
+      damageEnemy(state, target, 74 * state.player.damageMultiplier, "nyxArc");
+      let jumps = 0;
+      for (const enemy of nearbyEnemies(state, target.x, target.y, 170)) {
+        if (enemy.dead || enemy === target || jumps >= 3) continue;
+        damageEnemy(state, enemy, 48 * state.player.damageMultiplier, "nyxArc");
+        points.push({ x: enemy.x, y: enemy.y });
+        jumps += 1;
+      }
+    }
+    state.chains.push({ type: "nyxArc", points, life: 0.24, maxLife: 0.24, alpha: 1, width: 5, color: "#c893ff" });
+    ally.fireCooldown = 0.82;
+  } else if (ally.type === "warden") {
+    fireSummonedProjectile(state, ally, "mossHeavy", 590, 112, 9, { color: "#8cffaa", life: 1.5, pierce: 3 });
+    ally.fireCooldown = 0.94;
+  } else {
+    fireSummonedProjectile(state, ally, "aegisEcho", 820, 45, 5, { color: "#6af4ff", life: 1.2, pierce: 1 });
+    ally.fireCooldown = 0.34;
+  }
+}
+
+function updateSummonedSquad(state, dt) {
+  const support = state.support;
+  support.squadCooldown = Math.max(0, support.squadCooldown - dt);
+  support.squadDuration = Math.max(0, support.squadDuration - dt);
+  let activeMembers = 0;
+  for (const ally of state.allies) {
+    if (!ally.summoned || ally.active === false) continue;
+    ally.life = Math.max(0, ally.life - dt);
+    if (ally.life <= 0) {
+      ally.active = false;
+      continue;
+    }
+    activeMembers += 1;
+    const targetX = state.player.x + ally.formationX;
+    const targetY = state.player.y + ally.formationY;
+    const follow = Math.min(1, dt * 9);
+    const previousX = ally.x;
+    const previousY = ally.y;
+    ally.x += (targetX - ally.x) * follow;
+    ally.y += (targetY - ally.y) * follow;
+    ally.vx = (ally.x - previousX) / Math.max(0.001, dt);
+    ally.vy = (ally.y - previousY) / Math.max(0.001, dt);
+    ally.alpha = clamp(Math.min((ally.maxLife - ally.life) * 4, ally.life * 2.5), 0, 1);
+    ally.fireCooldown -= dt;
+    const target = closestEnemy(state, ally.x, ally.y, 650);
+    if (!target) continue;
+    ally.angle = Math.atan2(target.y - ally.y, target.x - ally.x);
+    if (ally.fireCooldown <= 0) fireSummonedAlly(state, ally, target);
+  }
+  if (support.squadDuration <= 0 && activeMembers === 0) {
+    compact(state.allies, (ally) => !ally.summoned);
+  }
+}
+
 function syncAllies(state) {
   const wantedDrones = Math.min(4, state.build.allies.drone);
   const wantedSuppressors = Math.min(3, state.build.allies.suppressor);
@@ -1122,10 +1261,12 @@ function syncAllies(state) {
 }
 
 function updateAllies(state, dt) {
+  updateSummonedSquad(state, dt);
   syncAllies(state);
   const total = Math.max(1, state.allies.length);
   for (let index = 0; index < state.allies.length; index += 1) {
     const ally = state.allies[index];
+    if (ally.summoned) continue;
     ally.orbit += dt * (ally.type === "drone" ? 0.75 : -0.55);
     const radius = ally.type === "drone" ? 78 : 105;
     const targetX = state.player.x + Math.cos(ally.orbit + (index / total) * TAU) * radius;
@@ -1157,7 +1298,7 @@ function updateAllies(state, dt) {
         ally.fireCooldown = 0.62;
       }
       if (ally.type === "suppressor" && ally.pulseCooldown <= 0) {
-        for (const enemy of state.enemies) {
+        for (const enemy of nearbyEnemies(state, ally.x, ally.y, 170)) {
           if (!enemy.dead && Math.hypot(enemy.x - ally.x, enemy.y - ally.y) < 170) {
             enemy.slow = Math.max(enemy.slow, 1.1);
             damageEnemy(state, enemy, (8 + state.build.allies.suppressor * 4) * state.player.damageMultiplier, "suppressorAlly");
@@ -1379,6 +1520,7 @@ function beginBossPattern(state) {
   } else if (type === "rings") {
     pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: 0, radius: 70, width: 15, life: 1.05, maxLife: 1.05, rings: 2 + boss.stage, fired: false };
   } else {
+    const multi = type === "multiCharge";
     const direction = normalize(state.player.x - boss.x, state.player.y - boss.y);
     const boundary = rayToEllipseBoundary(boss.x, boss.y, direction, boss.radius * 0.72);
     pattern = {
@@ -1396,10 +1538,12 @@ function beginBossPattern(state) {
       directionY: direction.y,
       angle: Math.atan2(direction.y, direction.x),
       radius: boundary.distance,
-      width: 46,
-      life: 0.72,
-      maxLife: 0.72,
-      activeLife: 0.52,
+      width: multi ? 40 : 46,
+      life: multi ? 0.66 : 0.72,
+      maxLife: multi ? 0.66 : 0.72,
+      activeLife: multi ? 0.34 : 0.52,
+      chargeCount: multi ? 2 + boss.stage : 1,
+      chargeIndex: 1,
       fired: false,
       hit: false,
       reachedBoundary: false,
@@ -1444,15 +1588,50 @@ function fireBossPattern(state, pattern) {
     pattern.startRadius = 76;
     pattern.radius = 76;
     pattern.hitRings = new Set();
-  } else if (pattern.type === "charge") {
+  } else if (pattern.type === "charge" || pattern.type === "multiCharge") {
     pattern.phase = "active";
     pattern.life = pattern.activeLife;
     pattern.maxLife = pattern.activeLife;
     const distance = Math.max(1, Math.hypot(pattern.targetX - boss.x, pattern.targetY - boss.y));
-    pattern.chargeSpeed = distance / 0.47;
+    pattern.chargeSpeed = distance / pattern.activeLife;
     boss.vx = pattern.directionX * pattern.chargeSpeed;
     boss.vy = pattern.directionY * pattern.chargeSpeed;
   }
+}
+
+function queueNextMultiCharge(state, pattern) {
+  const boss = state.boss;
+  pattern.chargeIndex += 1;
+  boss.x = pattern.targetX;
+  boss.y = pattern.targetY;
+  boss.vx = 0;
+  boss.vy = 0;
+  const direction = normalize(state.player.x - boss.x, state.player.y - boss.y);
+  const boundary = rayToEllipseBoundary(boss.x, boss.y, direction, boss.radius * 0.72);
+  pattern.phase = "warning";
+  pattern.x = boss.x;
+  pattern.y = boss.y;
+  pattern.originX = boss.x;
+  pattern.originY = boss.y;
+  pattern.playerTargetX = state.player.x;
+  pattern.playerTargetY = state.player.y;
+  pattern.targetX = boundary.x;
+  pattern.targetY = boundary.y;
+  pattern.directionX = direction.x;
+  pattern.directionY = direction.y;
+  pattern.angle = Math.atan2(direction.y, direction.x);
+  pattern.radius = boundary.distance;
+  pattern.life = 0.32;
+  pattern.maxLife = 0.32;
+  pattern.activeLife = 0.34;
+  pattern.fired = false;
+  pattern.hit = false;
+  emit(state, "bossPatternTelegraph", {
+    pattern: "multiCharge",
+    duration: pattern.maxLife,
+    charge: pattern.chargeIndex,
+    total: pattern.chargeCount,
+  });
 }
 
 function exposeBossCore(state, pattern) {
@@ -1518,19 +1697,22 @@ function updateBossPattern(state, dt) {
       if (pattern.hitRings.size === 0) state.stats.bossPatternsDodged += 1;
       boss.activePattern = null;
     }
-  } else if (pattern.type === "charge") {
+  } else if (pattern.type === "charge" || pattern.type === "multiCharge") {
     const remainingX = pattern.targetX - boss.x;
     const remainingY = pattern.targetY - boss.y;
     const remainingDistance = Math.hypot(remainingX, remainingY);
     const travel = pattern.chargeSpeed * dt;
     if (travel >= remainingDistance || pattern.life <= 0) {
-      exposeBossCore(state, pattern);
+      if (pattern.type === "multiCharge" && pattern.chargeIndex < pattern.chargeCount) queueNextMultiCharge(state, pattern);
+      else exposeBossCore(state, pattern);
     } else {
+      const previousX = boss.x;
+      const previousY = boss.y;
       boss.vx = pattern.directionX * pattern.chargeSpeed;
       boss.vy = pattern.directionY * pattern.chargeSpeed;
       boss.x += boss.vx * dt;
       boss.y += boss.vy * dt;
-      if (Math.hypot(state.player.x - boss.x, state.player.y - boss.y) <= state.player.radius + boss.radius) {
+      if (pointLineDistance(state.player.x, state.player.y, previousX, previousY, boss.x, boss.y) <= state.player.radius + boss.radius) {
         if (damagePlayer(state, 48 + boss.stage * 6, "bossCharge")) {
           pattern.hit = true;
           pattern.life = 0;
@@ -1554,7 +1736,8 @@ function updateBoss(state, dt) {
   boss.contactCooldown = Math.max(0, boss.contactCooldown - dt);
   boss.weakness = Math.max(0, boss.weakness - dt);
   boss.damageMultiplier = boss.weakness > 0 ? 2 : 1;
-  if (boss.activePattern?.type !== "charge" && boss.weakness <= 0) {
+  const charging = boss.activePattern?.type === "charge" || boss.activePattern?.type === "multiCharge";
+  if (!charging && boss.weakness <= 0) {
     const desiredX = GAME_WIDTH * 0.76 + Math.sin(state.phaseTime * 0.43) * 125;
     const desiredY = GAME_HEIGHT * 0.5 + Math.sin(state.phaseTime * 0.71) * 190;
     boss.vx = (desiredX - boss.x) * 0.65;
@@ -1566,7 +1749,7 @@ function updateBoss(state, dt) {
     boss.vy = 0;
   }
   boss.angle = Math.atan2(state.player.y - boss.y, state.player.x - boss.x);
-  if (boss.activePattern?.type !== "charge"
+  if (!charging
     && Math.hypot(state.player.x - boss.x, state.player.y - boss.y) <= state.player.radius + boss.radius
     && boss.contactCooldown <= 0) {
     damagePlayer(state, 20, "bossContact");
@@ -1619,6 +1802,7 @@ export function stepSwarm(state, input, dt) {
   }
 
   updatePlayer(state, input, delta);
+  if (input?.supportPressed) summonSupportSquad(state);
   updateAutoWeapons(state, delta);
   updateAllies(state, delta);
 
@@ -1684,6 +1868,8 @@ export function getSwarmHud(state) {
       shieldMax: player.shieldMax,
       dashCooldown: player.dashCooldown,
       dashMax: player.dashMax,
+      dashInvulnerability: player.dashInvulnerability + state.build.skills.dash * 0.05,
+      invulnerability: player.invulnerability,
     },
     boss: state.boss.active ? {
       name: state.boss.name,
@@ -1708,6 +1894,14 @@ export function getSwarmHud(state) {
       nova: { rank: state.build.skills.nova, cooldown: Math.max(0, state.support.novaCooldown), maxRank: 3 },
       airstrike: { rank: state.build.skills.airstrike, cooldown: Math.max(0, state.support.airstrikeCooldown), maxRank: 3, ultimate: true },
       omegaLaser: { rank: state.build.skills.omegaLaser, cooldown: Math.max(0, state.support.laserCooldown), maxRank: 3, ultimate: true },
+      squadRecall: {
+        rank: 1,
+        cooldown: Math.max(0, state.support.squadCooldown),
+        duration: Math.max(0, state.support.squadDuration),
+        maxRank: 1,
+        special: true,
+        key: "F",
+      },
     },
     stats: { ...state.stats },
   };

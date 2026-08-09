@@ -64,6 +64,7 @@ const EVENT_SOUNDS = Object.freeze({
   bossStage: "bossBreak",
   bossWeakness: "core",
   bossChargeHit: "patternFail",
+  squadSummon: "merge",
   surgeWarning: "alert",
   surgeStart: "bossTelegraph",
   skillMastered: "bossBreak",
@@ -86,6 +87,7 @@ const EVENT_BANNERS = Object.freeze({
   surgeStart: ["OVERLOAD WAVE", "사방 게이트 개방. 광역 화력으로 포위망을 찢으세요."],
   skillMastered: ["MASTER EVOLUTION", "스킬이 최종 형태로 진화했습니다. 광역 섬멸 프로토콜 가동."],
   ultimateWarning: ["ULTIMATE SUPPORT LOCKED", "공중 지원 좌표 확정. 충격 범위에서 화력을 집중하세요."],
+  squadSummon: ["4-FRONT RECALL", "AEGIS · ROOK · NYX · MOSS 전투 링크가 12초간 동기화됩니다."],
 });
 
 const CATEGORY_META = Object.freeze({
@@ -307,6 +309,7 @@ function BuildHud({ build }) {
 
 function AbilityHud({ abilities }) {
   const entries = [
+    ["squadRecall", "4-FRONT RECALL"],
     ["chain", "ARC CASCADE"],
     ["nova", "ZERO NOVA"],
     ["airstrike", "SKYFALL"],
@@ -322,11 +325,11 @@ function AbilityHud({ abilities }) {
           const ready = Number(ability.cooldown) <= 0.05;
           const mastered = ability.rank >= ability.maxRank;
           return (
-            <div className={`${ability.ultimate ? "is-ultimate " : ""}${mastered ? "is-mastered" : ""}`} key={id}>
-              <span>{ability.ultimate ? "ULT" : "AUTO"}</span>
+            <div className={`${ability.ultimate ? "is-ultimate " : ""}${ability.special ? "is-special " : ""}${mastered ? "is-mastered" : ""}`} key={id}>
+              <span>{ability.special ? ability.key || "KEY" : ability.ultimate ? "ULT" : "AUTO"}</span>
               <strong>{label}</strong>
-              <b className={ready ? "is-ready" : ""}>{ready ? "READY" : `${Number(ability.cooldown).toFixed(1)}s`}</b>
-              <small>{mastered ? "MASTER" : `R${ability.rank}`}</small>
+              <b className={ready ? "is-ready" : ""}>{Number(ability.duration) > 0 ? `LINK ${Number(ability.duration).toFixed(1)}s` : ready ? "READY" : `${Number(ability.cooldown).toFixed(1)}s`}</b>
+              <small>{ability.special ? "SQUAD" : mastered ? "MASTER" : `R${ability.rank}`}</small>
             </div>
           );
         })}
@@ -453,9 +456,10 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
     const syncCanvas = () => {
       const preset = governor.preset;
       const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, preset.dprCap || 1));
+      const renderScale = Math.max(0.65, Math.min(1, preset.renderScale || 1));
       const bounds = canvas.getBoundingClientRect();
-      const width = Math.max(1, Math.round(bounds.width * dpr));
-      const height = Math.max(1, Math.round(bounds.height * dpr));
+      const width = Math.max(1, Math.round(bounds.width * dpr * renderScale));
+      const height = Math.max(1, Math.round(bounds.height * dpr * renderScale));
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
@@ -540,12 +544,13 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
       const interactiveTarget = event.target instanceof HTMLElement
         && Boolean(event.target.closest("button, a, input, select, textarea, [role='button']"));
       if (key === " " && interactiveTarget) return;
-      if (["w", "arrowup", "s", "arrowdown", "a", "arrowleft", "d", "arrowright", " ", "1", "2", "3"].includes(key)) event.preventDefault();
+      if (["w", "arrowup", "s", "arrowdown", "a", "arrowleft", "d", "arrowright", " ", "f", "1", "2", "3"].includes(key)) event.preventDefault();
       if (key === "w" || key === "arrowup") input.up = value;
       if (key === "s" || key === "arrowdown") input.down = value;
       if (key === "a" || key === "arrowleft") input.left = value;
       if (key === "d" || key === "arrowright") input.right = value;
       if (key === " " && value && !event.repeat) input.dashPressed = true;
+      if (key === "f" && value && !event.repeat) input.supportPressed = true;
       const reward = game.rewardOptions?.[Number(key) - 1];
       if (value && !event.repeat && /^[1-3]$/.test(key) && game.levelupPending && reward) {
         chooseLevelReward(game, reward.id);
@@ -561,6 +566,7 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
       input.left = false;
       input.right = false;
       input.dashPressed = false;
+      input.supportPressed = false;
     };
     const updatePointer = (event) => {
       const bounds = canvas.getBoundingClientRect();
@@ -626,6 +632,11 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
     if (inputRef.current) inputRef.current.dashPressed = true;
   }, []);
 
+  const touchRecall = useCallback((event) => {
+    event?.preventDefault();
+    if (inputRef.current) inputRef.current.supportPressed = true;
+  }, []);
+
   const xpRatio = Math.max(0, Math.min(1, Number(hud?.xp || 0) / Math.max(1, Number(hud?.nextXp || 1))));
 
   return (
@@ -655,7 +666,7 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
           <PilotHud hud={hud} />
           <BuildHud build={hud?.build} />
           <AbilityHud abilities={hud?.abilities} />
-          <div className="combat-help"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> DASH</span><span><kbd>MOUSE</kbd> AIM</span><b><Pulse weight="fill" /> AUTO FIRE</b></div>
+          <div className="combat-help"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> PHASE DASH</span><span><kbd>F</kbd> 4-FRONT RECALL</span><span><kbd>MOUSE</kbd> AIM</span><b><Pulse weight="fill" /> AUTO FIRE</b></div>
           <div className="xp-hud"><span>LV.{hud?.level || 1}</span><div><i style={{ width: `${xpRatio * 100}%` }} /></div><b>{Math.floor(hud?.xp || 0)} / {Math.floor(hud?.nextXp || 0)} XP</b></div>
         </div>
 
@@ -667,7 +678,10 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
             <button className="touch-right" type="button" aria-label="오른쪽으로 이동" onPointerDown={(event) => setTouchDirection("right", true, event)} onPointerUp={(event) => setTouchDirection("right", false, event)} onPointerCancel={(event) => setTouchDirection("right", false, event)}><ArrowRight weight="bold" /></button>
           </div>
           <span>전장을 터치해 조준 · 사격은 자동</span>
-          <button className="touch-dash" type="button" aria-label="대시" onPointerDown={touchDash}><Lightning weight="fill" /> DASH</button>
+          <div className="touch-action-stack">
+            <button className="touch-recall" type="button" aria-label="4구역 동료 호출" onPointerDown={touchRecall}><Sparkle weight="fill" /> RECALL</button>
+            <button className="touch-dash" type="button" aria-label="무적 대시" onPointerDown={touchDash}><Lightning weight="fill" /> DASH</button>
+          </div>
         </div>
       </section>
 

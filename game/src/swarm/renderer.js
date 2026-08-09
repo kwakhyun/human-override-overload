@@ -26,10 +26,27 @@ const COLORS = Object.freeze({
 
 let fallbackMapLayer = null;
 let overlayLayer = null;
+let surgeWarningLayer = null;
 let shadowTexture = null;
 const glowTextures = Object.create(null);
 const tintedSprites = new WeakMap();
 let activeViewport = null;
+let cachedQualityInput = null;
+let cachedQuality = DEFAULT_QUALITY;
+const fullViewport = Object.freeze({ left: 0, top: 0, right: GAME_WIDTH, bottom: GAME_HEIGHT });
+const viewportScratch = { left: 0, top: 0, right: GAME_WIDTH, bottom: GAME_HEIGHT };
+const collectionScratch = [];
+const collectionSeen = [];
+const collectionPairPool = Array.from({ length: 16 }, () => ({ key: "", collection: null }));
+const entitySeen = new Set();
+const particleScratch = [];
+const bossProxy = { id: 0, x: 0, y: 0, vx: 0, vy: 0, angle: 0, alpha: 1, hitFlash: 0 };
+const ENEMY_DRAW_OPTIONS = Object.freeze([
+  Object.freeze({ shadowAlpha: 0.26, fallback: COLORS.enemy }),
+  Object.freeze({ shadowAlpha: 0.2, fallback: COLORS.enemy }),
+  Object.freeze({ shadowAlpha: 0.26, fallback: COLORS.elite }),
+  Object.freeze({ shadowAlpha: 0.2, fallback: COLORS.elite }),
+]);
 
 function finite(value, fallback = 0) {
   return Number.isFinite(value) ? value : fallback;
@@ -66,15 +83,18 @@ function imageReady(image) {
 }
 
 function arraysFrom(source, keys) {
-  const result = [];
-  const seen = new Set();
+  collectionScratch.length = 0;
+  collectionSeen.length = 0;
   for (const key of keys) {
     const collection = source?.[key];
-    if (!Array.isArray(collection) || seen.has(collection)) continue;
-    seen.add(collection);
-    result.push({ key, collection });
+    if (!Array.isArray(collection) || collectionSeen.includes(collection)) continue;
+    collectionSeen.push(collection);
+    const pair = collectionPairPool[collectionScratch.length];
+    pair.key = key;
+    pair.collection = collection;
+    collectionScratch.push(pair);
   }
-  return result;
+  return collectionScratch;
 }
 
 function isAlive(entity) {
@@ -85,7 +105,7 @@ function visible(entity, padding = 100) {
   const x = finite(entity?.x, -10000);
   const y = finite(entity?.y, -10000);
   const radius = finite(entity?.radius, finite(entity?.size, 30) * 0.5);
-  const view = activeViewport || { left: 0, top: 0, right: GAME_WIDTH, bottom: GAME_HEIGHT };
+  const view = activeViewport || fullViewport;
   return x + radius >= view.left - padding && x - radius <= view.right + padding
     && y + radius >= view.top - padding && y - radius <= view.bottom + padding;
 }
@@ -178,6 +198,19 @@ function buildOverlay() {
   ctx.fillStyle = "rgba(130,238,248,.026)";
   for (let y = 0; y < GAME_HEIGHT; y += 4) ctx.fillRect(0, y, GAME_WIDTH, 1);
   return overlayLayer;
+}
+
+function buildSurgeWarningLayer() {
+  if (surgeWarningLayer) return surgeWarningLayer;
+  surgeWarningLayer = createLayer(GAME_WIDTH, 120);
+  const ctx = surgeWarningLayer?.getContext("2d");
+  if (!ctx) return null;
+  const gradient = ctx.createLinearGradient(0, 0, 0, 110);
+  gradient.addColorStop(0, "rgba(255,25,55,.24)");
+  gradient.addColorStop(1, "rgba(255,25,55,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, GAME_WIDTH, 120);
+  return surgeWarningLayer;
 }
 
 function getShadowTexture() {
@@ -343,15 +376,35 @@ function drawHealthBar(ctx, entity, width, offset, color, force = false) {
 }
 
 function drawMap(ctx, assets) {
+  const view = activeViewport || fullViewport;
+  const padding = 12;
+  const left = clamp(view.left - padding, 0, GAME_WIDTH);
+  const top = clamp(view.top - padding, 0, GAME_HEIGHT);
+  const right = clamp(view.right + padding, 0, GAME_WIDTH);
+  const bottom = clamp(view.bottom + padding, 0, GAME_HEIGHT);
+  const width = Math.max(1, right - left);
+  const height = Math.max(1, bottom - top);
   ctx.fillStyle = "#020508";
-  ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  ctx.fillRect(left, top, width, height);
   if (imageReady(assets?.map)) {
     // The bitmap and simulation share the exact 1280x720 arena coordinate space.
-    ctx.drawImage(assets.map, 0, 0, GAME_WIDTH, GAME_HEIGHT);
+    const sourceWidth = finite(assets.map.naturalWidth, finite(assets.map.width, GAME_WIDTH));
+    const sourceHeight = finite(assets.map.naturalHeight, finite(assets.map.height, GAME_HEIGHT));
+    ctx.drawImage(
+      assets.map,
+      left / GAME_WIDTH * sourceWidth,
+      top / GAME_HEIGHT * sourceHeight,
+      width / GAME_WIDTH * sourceWidth,
+      height / GAME_HEIGHT * sourceHeight,
+      left,
+      top,
+      width,
+      height,
+    );
     return;
   }
   const fallback = buildFallbackMap();
-  if (fallback) ctx.drawImage(fallback, 0, 0);
+  if (fallback) ctx.drawImage(fallback, left, top, width, height, left, top, width, height);
 }
 
 function drawArenaBoundary(ctx) {
@@ -615,7 +668,8 @@ function enemySize(enemy) {
 }
 
 function drawEnemies(ctx, state, assets, quality) {
-  const drawn = new Set();
+  const drawn = entitySeen;
+  drawn.clear();
   let visibleIndex = 0;
   for (const { collection } of arraysFrom(state, ["enemies", "mobs", "enemyUnits", "units"])) {
     for (const enemy of collection) {
@@ -625,11 +679,8 @@ function drawEnemies(ctx, state, assets, quality) {
       const size = enemySize(enemy);
       const elite = Boolean(enemy.elite || enemy.isElite);
       if (elite && quality.detailScale > 0.55) drawGlow(ctx, "amber", finite(enemy.x), finite(enemy.y), size * 1.65, 0.34);
-      drawActorSprite(ctx, enemyImage(enemy, assets), enemy, size, state, quality, {
-        seed: visibleIndex,
-        shadowAlpha: visibleIndex % 2 === 0 ? 0.26 : 0.2,
-        fallback: elite ? COLORS.elite : COLORS.enemy,
-      });
+      const optionIndex = (elite ? 2 : 0) + (visibleIndex % 2);
+      drawActorSprite(ctx, enemyImage(enemy, assets), enemy, size, state, quality, ENEMY_DRAW_OPTIONS[optionIndex]);
       if (elite || finite(enemy.hp, 1) < finite(enemy.maxHp, 1) * 0.76) {
         drawHealthBar(ctx, enemy, Math.max(28, size * 0.68), size * 0.62, elite ? COLORS.elite : COLORS.enemy);
       }
@@ -642,8 +693,10 @@ function allyImage(ally, assets) {
   const key = String(ally?.sprite ?? ally?.type ?? ally?.kind ?? "drone").toLowerCase();
   if (key.includes("sentry") || key.includes("turret")) return assets?.sentry;
   if (key.includes("emp") || key.includes("pylon")) return assets?.emp;
-  if (key.includes("suppress") || key.includes("gunner")) return assets?.suppressor;
-  if (key.includes("player") || key.includes("merc") || key.includes("wingman")) return assets?.player;
+  if (key.includes("suppress") || key.includes("gunner") || key.includes("rook")) return assets?.suppressor;
+  if (key.includes("arcanist") || key.includes("nyx")) return assets?.hunter;
+  if (key.includes("warden") || key.includes("moss")) return assets?.brute;
+  if (key.includes("vanguard") || key.includes("aegis") || key.includes("player") || key.includes("merc") || key.includes("wingman")) return assets?.player;
   return assets?.drone;
 }
 
@@ -654,15 +707,17 @@ function allySize(ally) {
 }
 
 function drawAllies(ctx, state, assets, quality) {
-  const drawn = new Set();
+  const drawn = entitySeen;
+  drawn.clear();
   for (const { collection } of arraysFrom(state, ["deployables", "towers", "allies", "companions", "drones"])) {
     for (const ally of collection) {
       if (!isAlive(ally) || drawn.has(ally) || !visible(ally, 80)) continue;
       drawn.add(ally);
       const size = allySize(ally);
+      if (ally.summoned && quality.detailScale > 0.45) drawGlow(ctx, "violet", finite(ally.x), finite(ally.y), size * 1.55, 0.34 * finite(ally.alpha, 1));
       drawActorSprite(ctx, allyImage(ally, assets), ally, size, state, quality, {
         shadowAlpha: 0.31,
-        fallback: COLORS.ally,
+        fallback: ally.color || COLORS.ally,
       });
       if (ally.kind === "emp" || ally.type === "emp" || ally.pulseRadius) {
         ctx.globalAlpha = 0.34;
@@ -790,8 +845,15 @@ function drawBoss(ctx, state, assets, quality) {
   }
 
   const entranceScale = 0.42 + entrance * 0.58;
-  const proxy = { ...boss, x, y, alpha: clamp01(entrance * 1.35) };
-  drawActorSprite(ctx, assets?.boss, proxy, size * entranceScale, state, quality, {
+  bossProxy.id = boss.id;
+  bossProxy.x = x;
+  bossProxy.y = y;
+  bossProxy.vx = boss.vx;
+  bossProxy.vy = boss.vy;
+  bossProxy.angle = boss.angle;
+  bossProxy.alpha = clamp01(entrance * 1.35);
+  bossProxy.hitFlash = boss.hitFlash;
+  drawActorSprite(ctx, assets?.boss, bossProxy, size * entranceScale, state, quality, {
     shadowAlpha: 0.6,
     fallback: COLORS.boss,
   });
@@ -981,7 +1043,8 @@ function drawBullet(ctx, projectile, enemy, quality) {
 }
 
 function drawProjectiles(ctx, state, quality) {
-  const drawn = new Set();
+  const drawn = entitySeen;
+  drawn.clear();
   for (const { key, collection } of arraysFrom(state, [
     "projectiles", "bullets", "playerBullets", "enemyProjectiles", "enemyBullets", "bossBullets", "rockets", "orbitals", "orbs",
   ])) {
@@ -1099,7 +1162,8 @@ function particleColor(particle) {
 }
 
 function drawParticles(ctx, state, quality) {
-  const particles = [];
+  const particles = particleScratch;
+  particles.length = 0;
   for (const { collection } of arraysFrom(state, ["particles", "effects", "debris", "sparks"])) {
     for (const particle of collection) if (particle && visible(particle, 50)) particles.push(particle);
   }
@@ -1319,11 +1383,12 @@ function drawSurgeOverlay(ctx, state, time) {
   ctx.lineWidth = urgent ? 10 : 5;
   ctx.strokeRect(5, 5, GAME_WIDTH - 10, GAME_HEIGHT - 10);
   if (urgent) {
-    const gradient = ctx.createLinearGradient(0, 0, 0, 110);
-    gradient.addColorStop(0, `rgba(255,25,55,${pulse * 0.24})`);
-    gradient.addColorStop(1, "rgba(255,25,55,0)");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, GAME_WIDTH, 120);
+    const warning = buildSurgeWarningLayer();
+    if (warning) {
+      ctx.globalAlpha = pulse;
+      ctx.drawImage(warning, 0, 0);
+      ctx.globalAlpha = 1;
+    }
   }
   ctx.restore();
 }
@@ -1335,7 +1400,11 @@ function drawSurgeOverlay(ctx, state, time) {
  */
 export function renderSwarm(ctx, state = {}, assets = {}, qualityInput = DEFAULT_QUALITY) {
   if (!ctx) return;
-  const quality = { ...DEFAULT_QUALITY, ...(qualityInput || {}) };
+  if (qualityInput !== cachedQualityInput) {
+    cachedQualityInput = qualityInput;
+    cachedQuality = { ...DEFAULT_QUALITY, ...(qualityInput || {}) };
+  }
+  const quality = cachedQuality;
   const time = timeOf(state);
   const shake = finite(state.cameraShake, finite(state.shake));
   const shakeX = shake > 0 ? Math.sin(time * 91) * Math.min(8, shake) : 0;
@@ -1352,7 +1421,11 @@ export function renderSwarm(ctx, state = {}, assets = {}, qualityInput = DEFAULT
   const halfHeight = GAME_HEIGHT / (2 * zoom);
   const cameraX = clamp(finite(state?.camera?.x, finite(state?.player?.x, GAME_WIDTH * 0.5)), halfWidth, GAME_WIDTH - halfWidth);
   const cameraY = clamp(finite(state?.camera?.y, finite(state?.player?.y, GAME_HEIGHT * 0.5)), halfHeight, GAME_HEIGHT - halfHeight);
-  activeViewport = { left: cameraX - halfWidth, top: cameraY - halfHeight, right: cameraX + halfWidth, bottom: cameraY + halfHeight };
+  viewportScratch.left = cameraX - halfWidth;
+  viewportScratch.top = cameraY - halfHeight;
+  viewportScratch.right = cameraX + halfWidth;
+  viewportScratch.bottom = cameraY + halfHeight;
+  activeViewport = viewportScratch;
   ctx.translate(GAME_WIDTH * 0.5 + shakeX, GAME_HEIGHT * 0.5 + shakeY);
   ctx.scale(zoom, zoom);
   ctx.translate(-cameraX, -cameraY);

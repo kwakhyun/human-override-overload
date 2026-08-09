@@ -118,6 +118,46 @@ test("movement and dash stay on the map art's open elliptical floor", () => {
   assert.ok(normalized <= 1.000001, `player escaped floor: ${normalized}`);
 });
 
+test("phase dash grants enough invulnerability to cross the boss arena ring", () => {
+  const state = createBossState(3);
+  const input = createSwarmInput();
+  state.player.x = state.boss.x - 104;
+  state.player.y = state.boss.y;
+  input.left = true;
+  stepFor(state, input, 1.04);
+  const hp = state.player.hp;
+  input.dashPressed = true;
+  stepSwarm(state, input, 1 / 60);
+  assert.ok(state.player.invulnerability >= 0.42);
+  clearPressedInput(input);
+  stepFor(state, input, 0.5);
+  assert.equal(state.player.hp, hp);
+});
+
+test("F recalls all four legacy front allies for autonomous combat", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  const input = createSwarmInput();
+  input.supportPressed = true;
+  stepSwarm(state, input, 1 / 60);
+  clearPressedInput(input);
+  const recalled = state.allies.filter((ally) => ally.summoned);
+  assert.deepEqual(new Set(recalled.map((ally) => ally.type)), new Set(["vanguard", "gunner", "arcanist", "warden"]));
+  assert.equal(recalled.length, 4);
+  assert.ok(state.support.squadDuration > 11.9);
+  assert.ok(state.support.squadCooldown > 29.9);
+  assert.equal(state.stats.squadCalls, 1);
+  assert.ok(state.projectiles.some((projectile) => ["aegisEcho", "rookScatter", "mossHeavy"].includes(projectile.kind)));
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "squadSummon"));
+
+  input.supportPressed = true;
+  stepSwarm(state, input, 1 / 60);
+  assert.equal(state.allies.filter((ally) => ally.summoned).length, 4);
+  assert.equal(state.stats.squadCalls, 1);
+  const hud = getSwarmHud(state);
+  assert.equal(hud.abilities.squadRecall.key, "F");
+  assert.ok(hud.abilities.squadRecall.duration > 0);
+});
+
 test("the opening grace window prevents damage for 2.4 seconds, then enemies can hurt the player", () => {
   const state = createSwarmState({ random: () => 0.5 });
   const enemy = state.enemies.find((candidate) => candidate.type === "hunter" && !candidate.elite);
@@ -333,7 +373,7 @@ test("clearing the fixed enemy budget transitions to The Wrong Engine after two 
   assert.ok(drainSwarmEvents(state).some((event) => event.type === "bossIntro"));
 });
 
-test("all five boss attacks expose their named warning before firing", () => {
+test("all six boss attacks expose their named warning before firing", () => {
   for (let index = 0; index < BOSS_PATTERNS.length; index += 1) {
     const state = createBossState(index);
     stepSwarm(state, createSwarmInput(), 1 / 60);
@@ -342,6 +382,20 @@ test("all five boss attacks expose their named warning before firing", () => {
     const event = drainSwarmEvents(state).find((candidate) => candidate.type === "bossPatternTelegraph");
     assert.equal(event.pattern, BOSS_PATTERNS[index]);
   }
+});
+
+test("multi-charge rapidly relocks and rushes several times before exposing the core", () => {
+  const state = createBossState(BOSS_PATTERNS.indexOf("multiCharge"));
+  state.player.invulnerability = 10;
+  stepFor(state, createSwarmInput(), 2.8);
+  const events = drainSwarmEvents(state);
+  const rushes = events.filter((event) => event.type === "bossPatternFire" && event.pattern === "multiCharge");
+  const relocks = events.filter((event) => event.type === "bossPatternTelegraph" && event.pattern === "multiCharge");
+  assert.equal(rushes.length, 3);
+  assert.equal(relocks.length, 3);
+  assert.equal(state.boss.activePattern, null);
+  assert.ok(state.boss.weakness > 2.4);
+  assert.ok(events.some((event) => event.type === "bossWeakness"));
 });
 
 test("charge locks a line warning before the boss begins its half-second rush", () => {

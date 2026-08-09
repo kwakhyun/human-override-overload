@@ -58,6 +58,9 @@ test("quality presets reduce expensive effects and pixel density together", () =
   assert.ok(QUALITY_PRESETS.cinematic.dprCap > QUALITY_PRESETS.balanced.dprCap);
   assert.ok(QUALITY_PRESETS.balanced.dprCap > QUALITY_PRESETS.performance.dprCap);
   assert.ok(QUALITY_PRESETS.cinematic.maxParticles > QUALITY_PRESETS.performance.maxParticles);
+  assert.ok(QUALITY_PRESETS.cinematic.renderScale > QUALITY_PRESETS.balanced.renderScale);
+  assert.ok(QUALITY_PRESETS.balanced.renderScale > QUALITY_PRESETS.performance.renderScale);
+  assert.ok(QUALITY_PRESETS.performance.renderFps >= 40);
   assert.equal(QUALITY_PRESETS.performance.filters, false);
   assert.equal(QUALITY_PRESETS.performance.shadows, false);
 });
