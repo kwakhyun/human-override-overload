@@ -1,21 +1,49 @@
 export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
+export const WORLD_WIDTH = 1920;
+export const WORLD_HEIGHT = 1080;
+export const EXPEDITION_WORLD_WIDTH = 13200;
 
 const TAU = Math.PI * 2;
 const ARENA = Object.freeze({ left: 34, right: 1246, top: 34, bottom: 686 });
-const INITIAL_SWARM = 128;
+const EXPEDITION_ARENA = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 54, bottom: 1026 });
+const INITIAL_SWARM = 36;
 const DEFAULT_ENEMY_BUDGET = 1000;
 const MAX_LIVE_ENEMIES = 220;
 const MAX_PROJECTILES = 620;
 const MAX_ENEMY_PROJECTILES = 360;
 const MAX_PARTICLES = 320;
 const MAX_PICKUPS = 220;
+const ROUTE_HEALING_KITS = 14;
 const GRID_SIZE = 96;
+const LEGACY_WORLD_SIZE = Object.freeze({ width: GAME_WIDTH, height: GAME_HEIGHT });
+const BOSS_WORLD_SIZE = Object.freeze({ width: WORLD_WIDTH, height: WORLD_HEIGHT });
+const EXPEDITION_WORLD_SIZE = Object.freeze({ width: EXPEDITION_WORLD_WIDTH, height: WORLD_HEIGHT });
+const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket"]);
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
+const EXPEDITION_FLOOR_ELLIPSE = Object.freeze({ x: 960, y: 540, rx: 840, ry: 460 });
+const EXPEDITION_ROUTE_LENGTH = 12000;
+const EXPEDITION_BOSS_GATE = 11200;
+const EXPEDITION_GATE_LOCK_DISTANCE = 10680;
+const EXPEDITION_ROUTE_ORIGIN_X = 580;
+const EXPEDITION_CORRIDOR = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 64, bottom: 1016 });
+const EXPEDITION_SPAWN_GATES = Object.freeze([
+  Object.freeze({ id: "east-upper", offsetX: 520, y: 270 }),
+  Object.freeze({ id: "east-lower", offsetX: 520, y: 810 }),
+  Object.freeze({ id: "north-rail", offsetX: 400, y: 235 }),
+  Object.freeze({ id: "south-rail", offsetX: 400, y: 845 }),
+  Object.freeze({ id: "rear-breach", offsetX: -500, y: 540 }),
+]);
+const EXPEDITION_TRACES = Object.freeze([
+  Object.freeze({ id: "rook", distance: 2200, y: 360, kind: "helmet", beat: "rook-trace" }),
+  Object.freeze({ id: "nyx", distance: 5600, y: 760, kind: "weapon", beat: "nyx-trace" }),
+  Object.freeze({ id: "moss", distance: 8600, y: 510, kind: "body", beat: "moss-trace" }),
+]);
 const SURGE_WAVES = Object.freeze([
-  Object.freeze({ warnAt: 6, startAt: 7.25, count: 180, rate: 58, label: "RED TIDE · 180" }),
-  Object.freeze({ warnAt: 17, startAt: 18.4, count: 280, rate: 84, label: "BREACH FLOOD · 280" }),
-  Object.freeze({ warnAt: 30, startAt: 31.5, count: 412, rate: 118, label: "TERMINAL OVERLOAD · 412" }),
+  Object.freeze({ warnAt: 8, startAt: 9.25, count: 124, rate: 20, label: "GATE PRESSURE · TIER I" }),
+  Object.freeze({ warnAt: 33, startAt: 34.5, count: 180, rate: 30, label: "BREACH FLOOD · TIER II" }),
+  Object.freeze({ warnAt: 66, startAt: 67.5, count: 260, rate: 42, label: "SOVEREIGN SURGE · TIER III" }),
+  Object.freeze({ warnAt: 104, startAt: 105.5, count: 400, rate: 60, label: "TERMINAL OVERLOAD · MAXIMUM" }),
 ]);
 
 const OVERDRIVE_THRESHOLDS = Object.freeze([0.48, 0.72, 0.88]);
@@ -26,21 +54,83 @@ const MAX_BATCH_REWARD_RANKS = 3;
 const BOSS_CONTACT_STUN = 0.8;
 const BOSS_CONTACT_COOLDOWN = 1.4;
 
+export const REGION_COMBAT_CONFIGS = Object.freeze({
+  "wrong-engine-core": Object.freeze({
+    id: "wrong-engine-core",
+    chapterId: "chapter-01",
+    bossName: "THE WRONG ENGINE",
+    bossHp: 840000,
+    objective: "ADVANCE TO THE ENGINE",
+    chamber: "THE ENGINE CHAMBER",
+    deploymentBeat: "deployment",
+    encounterBeat: "engine-encounter",
+    victoryBeat: "engine-destroyed",
+    traces: true,
+  }),
+  "glass-dune": Object.freeze({
+    id: "glass-dune",
+    chapterId: "chapter-02",
+    bossName: "MIRROR TYRANT",
+    bossHp: 960000,
+    objective: "CROSS THE GLASS DUNE",
+    chamber: "BURIED SOLAR OBSERVATORY",
+    deploymentBeat: "glass-dune-deployment",
+    encounterBeat: "glass-dune-encounter",
+    victoryBeat: "glass-dune-destroyed",
+    traces: false,
+  }),
+  "abyssal-archive": Object.freeze({
+    id: "abyssal-archive",
+    chapterId: "chapter-02",
+    bossName: "DROWNED ORACLE",
+    bossHp: 1120000,
+    objective: "DESCEND INTO THE ARCHIVE",
+    chamber: "ABYSSAL MEMORY VAULT",
+    deploymentBeat: "abyssal-archive-deployment",
+    encounterBeat: "abyssal-archive-encounter",
+    victoryBeat: "abyssal-archive-destroyed",
+    traces: false,
+  }),
+});
+
 export const BOSS_PATTERNS = Object.freeze(["radial", "sweep", "bombs", "rings", "charge", "multiCharge"]);
 
-const SQUAD_RECALL_DURATION = 12;
-const SQUAD_RECALL_COOLDOWN = 30;
-const SQUAD_FORMATION = Object.freeze([
-  Object.freeze({ type: "vanguard", name: "AEGIS ECHO", x: -82, y: -66, color: "#63efff" }),
-  Object.freeze({ type: "gunner", name: "ROOK", x: 82, y: -66, color: "#ffad42" }),
-  Object.freeze({ type: "arcanist", name: "NYX", x: -92, y: 62, color: "#ba7dff" }),
-  Object.freeze({ type: "warden", name: "MOSS", x: 92, y: 62, color: "#76f09c" }),
-]);
+export const REGION_BOSS_PATTERNS = Object.freeze({
+  "wrong-engine-core": BOSS_PATTERNS,
+  "glass-dune": Object.freeze(["radial", "prismLattice", "sweep", "solarFlare", "bombs", "rings", "charge", "multiCharge"]),
+  "abyssal-archive": Object.freeze(["radial", "memorySpiral", "sweep", "depthCollapse", "bombs", "rings", "charge", "multiCharge"]),
+});
+
+export const REGION_ENEMY_PROFILES = Object.freeze({
+  "wrong-engine-core": Object.freeze({
+    opening: Object.freeze({ weights: Object.freeze({ hunter: 6, suppressor: 3, brute: 1 }), offset: 0 }),
+    reinforcement: Object.freeze({ weights: Object.freeze({ hunter: 5, suppressor: 3, brute: 2 }), offset: 2 }),
+  }),
+  "glass-dune": Object.freeze({
+    opening: Object.freeze({ weights: Object.freeze({ hunter: 2, suppressor: 3, brute: 5 }), offset: 1 }),
+    reinforcement: Object.freeze({ weights: Object.freeze({ hunter: 1, suppressor: 3, brute: 6 }), offset: 3 }),
+  }),
+  "abyssal-archive": Object.freeze({
+    opening: Object.freeze({ weights: Object.freeze({ hunter: 8, suppressor: 1, brute: 1 }), offset: 2 }),
+    reinforcement: Object.freeze({ weights: Object.freeze({ hunter: 7, suppressor: 2, brute: 1 }), offset: 4 }),
+  }),
+});
+
+const ENEMY_TYPE_ORDER = Object.freeze(["hunter", "suppressor", "brute"]);
+
+export const MANUAL_ACTIVE_ABILITIES = Object.freeze({
+  gravitySnare: Object.freeze({ id: "gravitySnare", key: "Q", name: "NULL SNARE", baseCooldown: 18 }),
+  aegisWard: Object.freeze({ id: "aegisWard", key: "E", name: "AEGIS WARD", baseCooldown: 28 }),
+  stratosRun: Object.freeze({ id: "stratosRun", key: "F", name: "STRATOS RUN", baseCooldown: 34 }),
+  helixTempest: Object.freeze({ id: "helixTempest", key: "R", name: "HELIX TEMPEST", baseCooldown: 72 }),
+});
+const MANUAL_ABILITY_KEYS = Object.freeze(["gravitySnare", "aegisWard", "stratosRun", "helixTempest"]);
+const MANUAL_INPUT_FIELDS = Object.freeze(["gravitySnarePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]);
 
 const ENEMY_DATA = Object.freeze({
-  hunter: Object.freeze({ hp: 38, speed: 88, radius: 14, damage: 12, xp: 4, color: "#ff526d" }),
-  suppressor: Object.freeze({ hp: 68, speed: 61, radius: 17, damage: 12, xp: 7, color: "#f3ab42" }),
-  brute: Object.freeze({ hp: 132, speed: 44, radius: 23, damage: 22, xp: 10, color: "#d93955" }),
+  hunter: Object.freeze({ role: "suicideDrone", hp: 38, speed: 118, radius: 22, damage: 78, xp: 4, color: "#ff526d" }),
+  suppressor: Object.freeze({ role: "rifleman", hp: 68, speed: 64, radius: 27, damage: 10, xp: 7, color: "#f3ab42" }),
+  brute: Object.freeze({ role: "sniper", hp: 132, speed: 48, radius: 36, damage: 44, xp: 10, color: "#d93955" }),
 });
 
 export const REWARD_DEFINITIONS = Object.freeze({
@@ -58,9 +148,9 @@ export const REWARD_DEFINITIONS = Object.freeze({
   nova: Object.freeze({ id: "nova", category: "skill", name: "ZERO-POINT NOVA", description: "Detonates a radial shockwave. Rank 3 repeats it across the visible combat zone." }),
   airstrike: Object.freeze({ id: "airstrike", category: "skill", name: "SKYFALL SUPPORT", description: "Calls a long-cooldown airstrike on dense enemy formations." }),
   omegaLaser: Object.freeze({ id: "omegaLaser", category: "skill", name: "OMEGA LASER", description: "Charges a colossal support beam through the aimed lane." }),
-  drone: Object.freeze({ id: "drone", category: "ally", name: "HUNTER DRONE", description: "Deploys a drone wing with high-speed hunter cannons." }),
-  sentry: Object.freeze({ id: "sentry", category: "ally", name: "PULSE SENTRY", description: "Drops a paired rapid-fire sentry battery immediately." }),
-  suppressor: Object.freeze({ id: "suppressor", category: "ally", name: "SUPPRESSOR WISP", description: "Deploys EMP escorts and detonates an immediate shock field." }),
+  drone: Object.freeze({ id: "drone", category: "ally", name: "HUNTER DRONE", description: "Mobile pursuit wing: long-range high-velocity fire gains armor pierce." }),
+  sentry: Object.freeze({ id: "sentry", category: "ally", name: "PULSE SENTRY", description: "Stationary lane battery: paired rapid fire grows into piercing crossfire." }),
+  suppressor: Object.freeze({ id: "suppressor", category: "ally", name: "SUPPRESSOR WISP", description: "Control escort: repeated EMP blooms slow and erase packed formations." }),
 });
 
 const REWARD_POOLS = Object.freeze({
@@ -90,16 +180,37 @@ function normalize(x, y, fallbackX = 1, fallbackY = 0) {
   return { x: x / length, y: y / length };
 }
 
+function activeArena(state) {
+  return state?.expedition ? EXPEDITION_ARENA : ARENA;
+}
+
+function activeWorldSize(state) {
+  if (state?.expedition) return state.phase === "swarm" ? EXPEDITION_WORLD_SIZE : BOSS_WORLD_SIZE;
+  return LEGACY_WORLD_SIZE;
+}
+
+export function getEnemyPressureCap(state) {
+  if (!state?.expedition) return MAX_LIVE_ENEMIES;
+  const levelPressure = clamp((finite(state.player?.level, 1) - 1) * 9, 0, 78);
+  const clearPressure = clamp(finite(state.killedEnemies) / Math.max(1, finite(state.enemyBudget, DEFAULT_ENEMY_BUDGET)) * 90, 0, 90);
+  const timePressure = clamp(finite(state.time) / 120 * 48, 0, 48);
+  return Math.round(clamp(INITIAL_SWARM + levelPressure + clearPressure + timePressure, INITIAL_SWARM, MAX_LIVE_ENEMIES));
+}
+
+function activeBossFloor(state) {
+  return state?.expedition ? EXPEDITION_FLOOR_ELLIPSE : FLOOR_ELLIPSE;
+}
+
 function xpRequirementForLevel(level) {
   if (level <= 1) return 84;
   return Math.round(60 + Math.pow(level, 1.32) * 24);
 }
 
-function rayToEllipseBoundary(x, y, direction, padding = 0) {
-  const rx = Math.max(1, FLOOR_ELLIPSE.rx - padding);
-  const ry = Math.max(1, FLOOR_ELLIPSE.ry - padding);
-  const ox = x - FLOOR_ELLIPSE.x;
-  const oy = y - FLOOR_ELLIPSE.y;
+function rayToEllipseBoundary(floor, x, y, direction, padding = 0) {
+  const rx = Math.max(1, floor.rx - padding);
+  const ry = Math.max(1, floor.ry - padding);
+  const ox = x - floor.x;
+  const oy = y - floor.y;
   const a = (direction.x * direction.x) / (rx * rx) + (direction.y * direction.y) / (ry * ry);
   const b = 2 * ((ox * direction.x) / (rx * rx) + (oy * direction.y) / (ry * ry));
   const c = (ox * ox) / (rx * rx) + (oy * oy) / (ry * ry) - 1;
@@ -108,8 +219,8 @@ function rayToEllipseBoundary(x, y, direction, padding = 0) {
   const rootB = (-b - Math.sqrt(discriminant)) / (2 * a);
   const distance = Math.max(rootA, rootB, 0);
   return {
-    x: FLOOR_ELLIPSE.x + clamp(ox + direction.x * distance, -rx, rx),
-    y: FLOOR_ELLIPSE.y + clamp(oy + direction.y * distance, -ry, ry),
+    x: floor.x + clamp(ox + direction.x * distance, -rx, rx),
+    y: floor.y + clamp(oy + direction.y * distance, -ry, ry),
     distance,
   };
 }
@@ -121,6 +232,22 @@ function compact(array, keep) {
     if (keep(value)) array[write++] = value;
   }
   array.length = write;
+}
+
+function keepAliveEntity(entity) {
+  return !entity.dead;
+}
+
+function keepEnemyPresentation(enemy) {
+  return !enemy.dead || enemy.deathTimer > 0;
+}
+
+function keepPositiveLife(entity) {
+  return entity.life > 0;
+}
+
+function keepIncompleteLane(lane) {
+  return lane.phase !== "done";
 }
 
 function emit(state, type, payload = {}) {
@@ -156,6 +283,32 @@ function burst(state, x, y, color, count, speed = 190, life = 0.55, size = 5) {
 }
 
 function edgeSpawn(state, index) {
+  if (state.expedition) {
+    const streamIndex = Math.floor(index / 8);
+    const gate = EXPEDITION_SPAWN_GATES[streamIndex % EXPEDITION_SPAWN_GATES.length];
+    const slot = index % 8;
+    const x = clamp(state.player.x + gate.offsetX, EXPEDITION_ARENA.left + 34, EXPEDITION_ARENA.right - 34);
+    const y = clamp(gate.y + (slot - 3.5) * 8, EXPEDITION_ARENA.top + 12, EXPEDITION_ARENA.bottom - 12);
+    const gateActive = state.spawnPortals.some((portal) => portal.gateId === gate.id && portal.life > 0.32);
+    if (slot === 0 || !gateActive) {
+      state.spawnPortals.push({
+        id: ++state.nextEntityId,
+        type: "spawnGate",
+        gateId: gate.id,
+        x,
+        y: gate.y,
+        life: 1.35,
+        maxLife: 1.35,
+      });
+      emit(state, "spawnGate", { gate: gate.id, x, y: gate.y });
+    }
+    return {
+      x,
+      y,
+      gateId: gate.id,
+      gateSlot: slot,
+    };
+  }
   const side = index % 4;
   const padding = 10 + state.random() * 24;
   // The authored map has exactly four open entry ramps. Keeping every spawn
@@ -167,16 +320,25 @@ function edgeSpawn(state, index) {
   return { x: ARENA.left + padding, y: FLOOR_ELLIPSE.y + (state.random() - 0.5) * 120 };
 }
 
-function chooseEnemyType(index) {
-  if (index % 11 === 0) return "brute";
-  if (index % 4 === 0) return "suppressor";
+function chooseEnemyType(state, index) {
+  const tier = index < INITIAL_SWARM ? "opening" : "reinforcement";
+  const profile = state.enemyProfile?.[tier] ?? REGION_ENEMY_PROFILES["wrong-engine-core"][tier];
+  const weights = profile.weights;
+  const totalWeight = ENEMY_TYPE_ORDER.reduce((total, type) => total + Math.max(0, finite(weights[type])), 0);
+  if (totalWeight <= 0) return "hunter";
+  let slot = ((index * 7 + finite(profile.offset)) % totalWeight + totalWeight) % totalWeight;
+  for (const type of ENEMY_TYPE_ORDER) {
+    const weight = Math.max(0, finite(weights[type]));
+    if (slot < weight) return type;
+    slot -= weight;
+  }
   return "hunter";
 }
 
 function spawnEnemy(state) {
-  if (state.spawnedEnemies >= state.enemyBudget || state.enemies.length >= MAX_LIVE_ENEMIES) return false;
+  if (state.spawnedEnemies >= state.enemyBudget || state.enemies.length >= getEnemyPressureCap(state)) return false;
   const spawnIndex = state.spawnedEnemies;
-  const type = chooseEnemyType(spawnIndex);
+  const type = chooseEnemyType(state, spawnIndex);
   const base = ENEMY_DATA[type];
   const elite = spawnIndex > 0 && spawnIndex % 29 === 0;
   const datasetProgress = clamp(spawnIndex / Math.max(1, state.enemyBudget - 1), 0, 1);
@@ -186,6 +348,7 @@ function spawnEnemy(state) {
   state.enemies.push({
     id: ++state.nextEntityId,
     type,
+    combatRole: base.role,
     x: point.x,
     y: point.y,
     vx: 0,
@@ -203,7 +366,16 @@ function spawnEnemy(state) {
     hitFlash: 0,
     attackCooldown: state.random() * 0.8,
     shootCooldown: 0.5 + state.random(),
+    burstShots: 0,
+    burstTimer: 0,
+    aimTimer: 0,
+    aimDuration: 0,
+    lockedAimX: 0,
+    lockedAimY: 0,
+    lockedStartX: 0,
+    lockedStartY: 0,
     slow: 0,
+    disabledTimer: 0,
     orbitHitCooldown: 0,
     animationState: "spawn",
     animationTimer: 0.24,
@@ -213,17 +385,58 @@ function spawnEnemy(state) {
     hitStun: 0,
     deathTimer: 0,
     moveBlend: 0,
+    spawnGateId: point.gateId ?? null,
+    spawnDelay: state.expedition
+      ? spawnIndex < INITIAL_SWARM
+        ? 0.08 + finite(point.gateSlot) * 0.008
+        : 0.38 + finite(point.gateSlot) * 0.025
+      : 0,
+    spawnDuration: state.expedition ? 0.58 : 0,
   });
   state.spawnedEnemies += 1;
   return true;
 }
 
 function spawnInitialSwarm(state) {
-  const count = Math.min(INITIAL_SWARM, state.enemyBudget, MAX_LIVE_ENEMIES);
+  const count = Math.min(INITIAL_SWARM, state.enemyBudget, getEnemyPressureCap(state));
   for (let index = 0; index < count; index += 1) spawnEnemy(state);
 }
 
-function createPlayer() {
+function spawnRouteHealingKits(state) {
+  if (!state.expedition) return;
+  const routeStart = finite(state.expedition.originX, EXPEDITION_ROUTE_ORIGIN_X);
+  const routeEnd = routeStart + finite(state.expedition.gateLockDistance, EXPEDITION_GATE_LOCK_DISTANCE) - 260;
+  const span = Math.max(1, routeEnd - routeStart - 760);
+  for (let index = 0; index < ROUTE_HEALING_KITS; index += 1) {
+    const laneProgress = (index + 0.55 + (state.random() - 0.5) * 0.36) / ROUTE_HEALING_KITS;
+    state.healthKits.push({
+      id: ++state.nextEntityId,
+      type: "healthKit",
+      x: clamp(routeStart + 520 + span * laneProgress, routeStart + 420, routeEnd),
+      y: clamp(150 + state.random() * 780, EXPEDITION_CORRIDOR.top + 50, EXPEDITION_CORRIDOR.bottom - 50),
+      radius: 25,
+      heal: 92,
+      age: state.random() * 2,
+      dead: false,
+    });
+  }
+}
+
+function sanitizeCombatBonuses(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return Object.freeze({
+    damageMultiplier: clamp(finite(source.damageMultiplier, 1), 1, 1.5),
+    xpGainMultiplier: clamp(finite(source.xpGainMultiplier, 1), 1, 1.5),
+    moveSpeedMultiplier: clamp(finite(source.moveSpeedMultiplier, 1), 1, 1.35),
+    fireRateMultiplier: clamp(finite(source.fireRateMultiplier, 1), 1, 1.4),
+    maxHpFlat: clamp(finite(source.maxHpFlat, 0), 0, 240),
+    healingMultiplier: clamp(finite(source.healingMultiplier, 1), 1, 1.6),
+  });
+}
+
+function createPlayer(combatBonuses) {
+  const bonuses = sanitizeCombatBonuses(combatBonuses);
+  const maxHp = 360 + bonuses.maxHpFlat;
   return {
     name: "THE TRAINER",
     x: GAME_WIDTH * 0.5,
@@ -231,18 +444,26 @@ function createPlayer() {
     vx: 0,
     vy: 0,
     angle: 0,
-    radius: 18,
-    speed: 245,
-    hp: 360,
-    maxHp: 360,
+    radius: 15,
+    speed: 245 * bonuses.moveSpeedMultiplier,
+    hp: maxHp,
+    maxHp,
     shield: 0,
     shieldMax: 0,
     shieldDelay: 0,
+    aegisWardShield: 0,
+    aegisWardShieldMax: 0,
+    aegisWardTimer: 0,
+    aegisWardDuration: 0,
+    aegisWardDamageReduction: 0,
     level: 1,
     xp: 0,
     nextXp: xpRequirementForLevel(1),
-    damageMultiplier: 1,
-    fireRateMultiplier: 1,
+    damageMultiplier: bonuses.damageMultiplier,
+    fireRateMultiplier: bonuses.fireRateMultiplier,
+    xpGainMultiplier: bonuses.xpGainMultiplier,
+    healingMultiplier: bonuses.healingMultiplier,
+    baseCombatBonuses: bonuses,
     multishot: 1,
     regen: 0,
     dashTimer: 0,
@@ -277,9 +498,10 @@ function createPlayer() {
   };
 }
 
-function createBoss() {
+function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
   return {
-    name: "THE WRONG ENGINE",
+    name: regionConfig.bossName,
+    patterns: REGION_BOSS_PATTERNS[regionConfig.id] ?? BOSS_PATTERNS,
     active: false,
     x: GAME_WIDTH * 0.78,
     y: GAME_HEIGHT * 0.5,
@@ -287,8 +509,8 @@ function createBoss() {
     vy: 0,
     angle: Math.PI,
     radius: 70,
-    hp: 840000,
-    maxHp: 840000,
+    hp: regionConfig.bossHp,
+    maxHp: regionConfig.bossHp,
     stage: 1,
     hitFlash: 0,
     dead: false,
@@ -317,8 +539,9 @@ function createBoss() {
   };
 }
 
-export function createSwarmState({ random = Math.random, duration = 180 } = {}) {
+export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {} } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
+  const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
   const state = {
     mode: "swarm",
     phase: "swarm",
@@ -328,8 +551,18 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
     timeLeft: Math.max(30, finite(duration, 180)),
     phaseTime: 0,
     random: safeRandom,
-    player: createPlayer(),
-    boss: createBoss(),
+    regionId: regionConfig.id,
+    enemyProfile: REGION_ENEMY_PROFILES[regionConfig.id] ?? REGION_ENEMY_PROFILES["wrong-engine-core"],
+    chapterId: regionConfig.chapterId,
+    regionObjective: regionConfig.objective,
+    bossChamber: regionConfig.chamber,
+    storyBeats: {
+      deployment: regionConfig.deploymentBeat,
+      encounter: regionConfig.encounterBeat,
+      victory: regionConfig.victoryBeat,
+    },
+    player: createPlayer(combatBonuses),
+    boss: createBoss(regionConfig),
     aim: { x: GAME_WIDTH * 0.82, y: GAME_HEIGHT * 0.5 },
     aimX: GAME_WIDTH * 0.82,
     aimY: GAME_HEIGHT * 0.5,
@@ -343,6 +576,25 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
     surgeWarning: null,
     activeSurge: null,
     phaseTransition: 0,
+    expedition: expedition ? {
+      distance: 0,
+      originX: EXPEDITION_ROUTE_ORIGIN_X,
+      routeLength: EXPEDITION_ROUTE_LENGTH,
+      bossGate: EXPEDITION_BOSS_GATE,
+      gateLockDistance: EXPEDITION_GATE_LOCK_DISTANCE,
+      progress: 0,
+      checkpointIndex: 0,
+      objective: regionConfig.objective,
+      reachedGate: false,
+      gateLocked: true,
+      gateUnlocked: false,
+      gateWarningShown: false,
+      entryPrompted: false,
+      awaitingBossEntry: false,
+      bossEntryConfirmed: false,
+      bossRoom: false,
+      traces: regionConfig.traces ? EXPEDITION_TRACES.map((trace) => ({ ...trace, triggered: false })) : [],
+    } : null,
     nextEntityId: 0,
     enemies: [],
     projectiles: [],
@@ -352,15 +604,23 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
     beams: [],
     chains: [],
     shockwaves: [],
+    spawnPortals: [],
     orbitals: [],
     airstrikes: [],
+    gravitySnares: [],
+    aegisWards: [],
+    stratosRuns: [],
+    helixTempests: [],
     allies: [],
     deployables: [],
     pickups: [],
+    healthKits: [],
     texts: [],
     events: [],
     spatialGrid: new Map(),
     spatialBuckets: [],
+    activeSpatialBuckets: [],
+    spatialBounds: { minColumn: 0, maxColumn: -1, minRow: 0, maxRow: -1 },
     nearbyScratch: [],
     levelupPending: false,
     rewardOptions: [],
@@ -385,12 +645,16 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
       chainCooldownMax: 0,
       novaCooldown: 0,
       novaCooldownMax: 0,
-      airstrikeCooldown: 2.5,
-      airstrikeCooldownMax: 2.5,
-      laserCooldown: 5,
-      laserCooldownMax: 5,
-      squadCooldown: 0,
-      squadDuration: 0,
+      airstrikeCooldown: 0,
+      airstrikeCooldownMax: 0,
+      omegaLaserCooldown: 0,
+      omegaLaserCooldownMax: 0,
+    },
+    manualAbilities: {
+      gravitySnare: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.gravitySnare.baseCooldown },
+      aegisWard: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.aegisWard.baseCooldown },
+      stratosRun: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.stratosRun.baseCooldown },
+      helixTempest: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.helixTempest.baseCooldown },
     },
     camera: { x: GAME_WIDTH * 0.5, y: GAME_HEIGHT * 0.5, zoom: 1.58 },
     stats: {
@@ -406,7 +670,7 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
       peakEnemies: 0,
       skillsMastered: 0,
       ultimateCasts: 0,
-      squadCalls: 0,
+      activeAbilityCasts: { gravitySnare: 0, aegisWard: 0, stratosRun: 0, helixTempest: 0 },
       overdriveTier: 0,
       batchedOverflowLevels: 0,
     },
@@ -414,27 +678,59 @@ export function createSwarmState({ random = Math.random, duration = 180 } = {}) 
     flash: 0,
     lastShotEvent: -10,
   };
+  if (state.expedition) {
+    state.player.name = "AEGIS";
+    state.player.x = 580;
+    state.player.y = WORLD_HEIGHT * 0.5;
+    state.boss.x = WORLD_WIDTH * 0.8;
+    state.boss.y = WORLD_HEIGHT * 0.5;
+    state.boss.radius = 110;
+    state.aim.x = 1180;
+    state.aim.y = WORLD_HEIGHT * 0.5;
+    state.aimX = state.aim.x;
+    state.aimY = state.aim.y;
+    state.camera.x = state.player.x;
+    state.camera.y = WORLD_HEIGHT * 0.5;
+    state.camera.zoom = 1.08;
+    spawnRouteHealingKits(state);
+  }
   spawnInitialSwarm(state);
   state.stats.peakEnemies = state.enemies.length;
   emit(state, "swarmStart", { enemies: state.enemies.length, budget: state.enemyBudget });
+  if (state.expedition) emit(state, "scenario", { beat: state.storyBeats.deployment, regionId: state.regionId });
   return state;
 }
 
 export function createSwarmInput() {
-  return { up: false, down: false, left: false, right: false, dashPressed: false, supportPressed: false };
+  return {
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+    dashPressed: false,
+    gravitySnarePressed: false,
+    aegisWardPressed: false,
+    stratosRunPressed: false,
+    helixTempestPressed: false,
+  };
 }
 
 export function clearPressedInput(input) {
   if (!input || typeof input !== "object") return false;
   input.dashPressed = false;
-  input.supportPressed = false;
+  input.gravitySnarePressed = false;
+  input.aegisWardPressed = false;
+  input.stratosRunPressed = false;
+  input.helixTempestPressed = false;
   return true;
 }
 
 export function setSwarmAim(state, x, y) {
   if (!state || !Number.isFinite(x) || !Number.isFinite(y)) return false;
-  state.aim.x = clamp(x, 0, GAME_WIDTH);
-  state.aim.y = clamp(y, 0, GAME_HEIGHT);
+  const worldWidth = state.expedition ? WORLD_WIDTH : GAME_WIDTH;
+  const worldHeight = state.expedition ? WORLD_HEIGHT : GAME_HEIGHT;
+  state.aim.x = state.expedition ? x : clamp(x, 0, worldWidth);
+  state.aim.y = state.expedition ? y : clamp(y, 0, worldHeight);
   state.aimX = state.aim.x;
   state.aimY = state.aim.y;
   return true;
@@ -442,12 +738,18 @@ export function setSwarmAim(state, x, y) {
 
 export function setSwarmScreenAim(state, screenX, screenY) {
   if (!state || !Number.isFinite(screenX) || !Number.isFinite(screenY)) return false;
-  const camera = state.camera || { x: GAME_WIDTH * 0.5, y: GAME_HEIGHT * 0.5, zoom: 1 };
+  const worldWidth = state.expedition ? WORLD_WIDTH : GAME_WIDTH;
+  const worldHeight = state.expedition ? WORLD_HEIGHT : GAME_HEIGHT;
+  const camera = state.camera || { x: worldWidth * 0.5, y: worldHeight * 0.5, zoom: 1 };
   const zoom = Math.max(0.1, finite(camera.zoom, 1));
   const halfWidth = GAME_WIDTH / (2 * zoom);
   const halfHeight = GAME_HEIGHT / (2 * zoom);
-  const cameraX = clamp(finite(camera.x, GAME_WIDTH * 0.5), halfWidth, GAME_WIDTH - halfWidth);
-  const cameraY = clamp(finite(camera.y, GAME_HEIGHT * 0.5), halfHeight, GAME_HEIGHT - halfHeight);
+  const cameraX = state.expedition
+    ? finite(camera.x, worldWidth * 0.5)
+    : clamp(finite(camera.x, worldWidth * 0.5), halfWidth, worldWidth - halfWidth);
+  const cameraY = state.expedition
+    ? finite(camera.y, worldHeight * 0.5)
+    : clamp(finite(camera.y, worldHeight * 0.5), halfHeight, worldHeight - halfHeight);
   return setSwarmAim(
     state,
     cameraX + (screenX - GAME_WIDTH * 0.5) / zoom,
@@ -455,16 +757,20 @@ export function setSwarmScreenAim(state, screenX, screenY) {
   );
 }
 
-function movementDirection(input) {
-  return normalize(
-    (input?.right ? 1 : 0) - (input?.left ? 1 : 0),
-    (input?.down ? 1 : 0) - (input?.up ? 1 : 0),
-    0,
-    0,
-  );
-}
-
-function clampPlayerToFloor(player) {
+function clampPlayerToFloor(player, expedition = null) {
+  if (expedition) {
+    const minX = EXPEDITION_CORRIDOR.left + player.radius;
+    const routeLimit = finite(expedition.originX, EXPEDITION_ROUTE_ORIGIN_X)
+      + (expedition.gateUnlocked ? finite(expedition.routeLength, EXPEDITION_ROUTE_LENGTH) : finite(expedition.gateLockDistance, EXPEDITION_GATE_LOCK_DISTANCE));
+    const maxX = Math.min(EXPEDITION_CORRIDOR.right - player.radius, routeLimit);
+    const minY = EXPEDITION_CORRIDOR.top + player.radius;
+    const maxY = EXPEDITION_CORRIDOR.bottom - player.radius;
+    player.x = clamp(player.x, minX, maxX);
+    player.y = clamp(player.y, minY, maxY);
+    if ((player.x <= minX && player.vx < 0) || (player.x >= maxX && player.vx > 0)) player.vx = 0;
+    if ((player.y <= minY && player.vy < 0) || (player.y >= maxY && player.vy > 0)) player.vy = 0;
+    return;
+  }
   const rx = FLOOR_ELLIPSE.rx - player.radius;
   const ry = FLOOR_ELLIPSE.ry - player.radius;
   const dx = player.x - FLOOR_ELLIPSE.x;
@@ -493,19 +799,39 @@ function updatePlayer(state, input, dt) {
   player.animationTimer = Math.max(0, player.animationTimer - dt);
   player.recoil = Math.max(0, player.recoil - dt * 8.5);
   player.shieldDelay = Math.max(0, player.shieldDelay - dt);
-  if (player.regen > 0 && player.hp > 0) player.hp = Math.min(player.maxHp, player.hp + player.regen * dt);
+  player.aegisWardTimer = Math.max(0, finite(player.aegisWardTimer) - dt);
+  if (player.aegisWardTimer <= 0) {
+    player.aegisWardShield = 0;
+    player.aegisWardShieldMax = 0;
+    player.aegisWardDamageReduction = 0;
+  }
+  if (player.regen > 0 && player.hp > 0) player.hp = Math.min(player.maxHp, player.hp + player.regen * player.healingMultiplier * dt);
   if (player.shieldMax > 0 && player.shieldDelay <= 0) {
     player.shield = Math.min(player.shieldMax, player.shield + (4 + player.shieldMax * 0.035) * dt);
   }
 
   const stunned = player.stunTimer > 0;
-  const move = stunned ? { x: 0, y: 0 } : movementDirection(input);
-  const aim = normalize(state.aim.x - player.x, state.aim.y - player.y);
-  player.angle = Math.atan2(aim.y, aim.x);
+  let moveX = 0;
+  let moveY = 0;
+  if (!stunned) {
+    const rawX = (input?.right ? 1 : 0) - (input?.left ? 1 : 0);
+    const rawY = (input?.down ? 1 : 0) - (input?.up ? 1 : 0);
+    const moveLength = Math.hypot(rawX, rawY);
+    if (Number.isFinite(moveLength) && moveLength >= 0.00001) {
+      moveX = rawX / moveLength;
+      moveY = rawY / moveLength;
+    }
+  }
+  const aimDx = state.aim.x - player.x;
+  const aimDy = state.aim.y - player.y;
+  const aimLength = Math.hypot(aimDx, aimDy);
+  const aimX = Number.isFinite(aimLength) && aimLength >= 0.00001 ? aimDx / aimLength : 1;
+  const aimY = Number.isFinite(aimLength) && aimLength >= 0.00001 ? aimDy / aimLength : 0;
+  player.angle = Math.atan2(aimY, aimX);
   if (!stunned && input?.dashPressed && player.dashCooldown <= 0) {
-    const dash = Math.hypot(move.x, move.y) > 0 ? move : aim;
-    player.dashX = dash.x;
-    player.dashY = dash.y;
+    const hasMovement = moveX !== 0 || moveY !== 0;
+    player.dashX = hasMovement ? moveX : aimX;
+    player.dashY = hasMovement ? moveY : aimY;
     player.dashTimer = player.dashDuration;
     player.dashCooldown = player.dashMax;
     const phaseWindow = player.dashInvulnerability + state.build.skills.dash * 0.05;
@@ -522,12 +848,12 @@ function updatePlayer(state, input, dt) {
     player.vx = player.dashX * player.dashSpeed;
     player.vy = player.dashY * player.dashSpeed;
   } else {
-    player.vx = move.x * player.speed;
-    player.vy = move.y * player.speed;
+    player.vx = moveX * player.speed;
+    player.vy = moveY * player.speed;
   }
   player.x += player.vx * dt;
   player.y += player.vy * dt;
-  clampPlayerToFloor(player);
+  clampPlayerToFloor(player, state.expedition);
 
   const moving = Math.hypot(player.vx, player.vy) > 12;
   player.moveBlend += ((moving ? 1 : 0) - player.moveBlend) * (1 - Math.exp(-dt * 12));
@@ -541,25 +867,52 @@ function updatePlayer(state, input, dt) {
 
   const camera = state.camera;
   if (camera) {
-    const targetZoom = state.phase === "boss" ? 1.36 : 1.58;
-    const follow = 1 - Math.exp(-dt * 7.5);
-    camera.x += (player.x - camera.x) * follow;
-    camera.y += (player.y - camera.y) * follow;
+    const targetZoom = state.phase === "boss" ? 0.78 : state.expedition ? 1.08 : 1.58;
+    camera.x = player.x;
+    camera.y = player.y;
     camera.zoom += (targetZoom - camera.zoom) * (1 - Math.exp(-dt * 3.5));
+  }
+}
+
+function updateExpedition(state) {
+  const expedition = state.expedition;
+  if (!expedition || state.phase !== "swarm") return;
+  const allHostilesKilled = state.spawnedEnemies >= state.enemyBudget
+    && state.killedEnemies >= state.enemyBudget
+    && !hasLivingEnemy(state.enemies);
+  expedition.gateUnlocked = allHostilesKilled;
+  expedition.gateLocked = !allHostilesKilled;
+  const maximumDistance = allHostilesKilled ? expedition.routeLength : expedition.gateLockDistance;
+  expedition.distance = clamp(state.player.x - expedition.originX, 0, maximumDistance);
+  expedition.progress = clamp(expedition.distance / expedition.routeLength, 0, 1);
+  expedition.reachedGate = allHostilesKilled && expedition.distance >= expedition.routeLength;
+  expedition.objective = expedition.awaitingBossEntry
+    ? `${state.bossChamber} · ENTRY DECISION`
+    : expedition.reachedGate
+      ? `${state.bossChamber} READY`
+    : allHostilesKilled
+      ? `REACH ${state.bossChamber}`
+      : expedition.distance >= EXPEDITION_GATE_LOCK_DISTANCE - 4
+        ? "PURGE ALL HOSTILES · GATE SEALED"
+        : state.regionObjective;
+
+  for (const trace of expedition.traces) {
+    if (trace.triggered || expedition.distance < trace.distance) continue;
+    trace.triggered = true;
+    expedition.checkpointIndex += 1;
+    emit(state, "scenario", { beat: trace.beat, trace: trace.kind, checkpoint: expedition.checkpointIndex });
   }
 }
 
 function pushPlayerProjectile(state, projectile) {
   if (state.projectiles.length >= MAX_PROJECTILES) return false;
-  state.projectiles.push({
-    id: ++state.nextEntityId,
-    px: projectile.x,
-    py: projectile.y,
-    age: 0,
-    animationState: "flight",
-    dead: false,
-    ...projectile,
-  });
+  projectile.id = ++state.nextEntityId;
+  projectile.px = projectile.x;
+  projectile.py = projectile.y;
+  projectile.age = 0;
+  projectile.animationState = "flight";
+  projectile.dead = false;
+  state.projectiles.push(projectile);
   state.stats.shots += 1;
   return true;
 }
@@ -652,7 +1005,8 @@ function updateAutoWeapons(state, dt) {
   const player = state.player;
   const timers = player.fireTimers;
   const attackSpeed = Math.max(0.16, player.fireRateMultiplier * player.overdriveHaste);
-  for (const key of Object.keys(timers)) timers[key] -= dt;
+  for (let index = 0; index < FIRE_TIMER_KEYS.length; index += 1) timers[FIRE_TIMER_KEYS[index]] -= dt;
+  if (player.stunTimer > 0) return;
 
   if (timers.pulse <= 0) {
     const count = clamp(player.multishot + Math.max(0, player.overdriveTier - 1), 1, 7);
@@ -692,9 +1046,16 @@ function gridKey(column, row) {
 
 function rebuildEnemyGrid(state) {
   const grid = state.spatialGrid;
-  for (const bucket of state.spatialBuckets) bucket.length = 0;
+  const activeBuckets = state.activeSpatialBuckets;
+  const bounds = state.spatialBounds;
+  for (let index = 0; index < activeBuckets.length; index += 1) activeBuckets[index].length = 0;
+  activeBuckets.length = 0;
+  bounds.minColumn = Infinity;
+  bounds.maxColumn = -Infinity;
+  bounds.minRow = Infinity;
+  bounds.maxRow = -Infinity;
   for (const enemy of state.enemies) {
-    if (enemy.dead) continue;
+    if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
     const column = Math.floor(enemy.x / GRID_SIZE);
     const row = Math.floor(enemy.y / GRID_SIZE);
     const key = gridKey(column, row);
@@ -704,7 +1065,12 @@ function rebuildEnemyGrid(state) {
       grid.set(key, bucket);
       state.spatialBuckets.push(bucket);
     }
+    if (bucket.length === 0) activeBuckets.push(bucket);
     bucket.push(enemy);
+    if (column < bounds.minColumn) bounds.minColumn = column;
+    if (column > bounds.maxColumn) bounds.maxColumn = column;
+    if (row < bounds.minRow) bounds.minRow = row;
+    if (row > bounds.maxRow) bounds.maxRow = row;
   }
 }
 
@@ -720,9 +1086,20 @@ function nearbyEnemies(state, x, y, radius = 0) {
   const reach = Math.max(1, Math.ceil(radius / GRID_SIZE));
   const column = Math.floor(x / GRID_SIZE);
   const row = Math.floor(y / GRID_SIZE);
-  for (let dx = -reach; dx <= reach; dx += 1) {
-    for (let dy = -reach; dy <= reach; dy += 1) {
-      const bucket = state.spatialGrid.get(gridKey(column + dx, row + dy));
+  let minColumn = column - reach;
+  let maxColumn = column + reach;
+  let minRow = row - reach;
+  let maxRow = row + reach;
+  if (reach > 2) {
+    const bounds = state.spatialBounds;
+    minColumn = Math.max(minColumn, bounds.minColumn);
+    maxColumn = Math.min(maxColumn, bounds.maxColumn);
+    minRow = Math.max(minRow, bounds.minRow);
+    maxRow = Math.min(maxRow, bounds.maxRow);
+  }
+  for (let gridColumn = minColumn; gridColumn <= maxColumn; gridColumn += 1) {
+    for (let gridRow = minRow; gridRow <= maxRow; gridRow += 1) {
+      const bucket = state.spatialGrid.get(gridKey(gridColumn, gridRow));
       if (!bucket) continue;
       for (let index = 0; index < bucket.length; index += 1) found.push(bucket[index]);
     }
@@ -733,17 +1110,43 @@ function nearbyEnemies(state, x, y, radius = 0) {
 function closestEnemy(state, x, y, maxDistance = Infinity) {
   let best = null;
   let bestSq = maxDistance * maxDistance;
-  const candidates = Number.isFinite(maxDistance) && state.spatialGrid.size > 0
-    ? nearbyEnemies(state, x, y, maxDistance)
-    : state.enemies;
-  for (const enemy of candidates) {
-    if (enemy.dead) continue;
-    const dx = enemy.x - x;
-    const dy = enemy.y - y;
-    const distanceSq = dx * dx + dy * dy;
-    if (distanceSq < bestSq) {
-      best = enemy;
-      bestSq = distanceSq;
+  if (Number.isFinite(maxDistance) && state.spatialGrid.size > 0) {
+    const reach = Math.max(1, Math.ceil(maxDistance / GRID_SIZE));
+    const column = Math.floor(x / GRID_SIZE);
+    const row = Math.floor(y / GRID_SIZE);
+    const bounds = state.spatialBounds;
+    const minColumn = Math.max(column - reach, bounds.minColumn);
+    const maxColumn = Math.min(column + reach, bounds.maxColumn);
+    const minRow = Math.max(row - reach, bounds.minRow);
+    const maxRow = Math.min(row + reach, bounds.maxRow);
+    for (let gridColumn = minColumn; gridColumn <= maxColumn; gridColumn += 1) {
+      for (let gridRow = minRow; gridRow <= maxRow; gridRow += 1) {
+        const bucket = state.spatialGrid.get(gridKey(gridColumn, gridRow));
+        if (!bucket) continue;
+        for (let index = 0; index < bucket.length; index += 1) {
+          const enemy = bucket[index];
+          if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
+          const dx = enemy.x - x;
+          const dy = enemy.y - y;
+          const distanceSq = dx * dx + dy * dy;
+          if (distanceSq < bestSq) {
+            best = enemy;
+            bestSq = distanceSq;
+          }
+        }
+      }
+    }
+  } else {
+    for (let index = 0; index < state.enemies.length; index += 1) {
+      const enemy = state.enemies[index];
+      if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
+      const dx = enemy.x - x;
+      const dy = enemy.y - y;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq < bestSq) {
+        best = enemy;
+        bestSq = distanceSq;
+      }
     }
   }
   if (state.phase === "boss" && state.boss.active && !state.boss.dead) {
@@ -755,9 +1158,16 @@ function closestEnemy(state, x, y, maxDistance = Infinity) {
   return best;
 }
 
+function hasLivingEnemy(enemies) {
+  for (let index = 0; index < enemies.length; index += 1) {
+    if (!enemies[index].dead) return true;
+  }
+  return false;
+}
+
 function gainXp(state, amount) {
   const player = state.player;
-  player.xp += amount;
+  player.xp += amount * player.xpGainMultiplier;
   let gainedLevels = 0;
   while (player.xp >= player.nextXp && player.level < 99) {
     player.xp -= player.nextXp;
@@ -777,7 +1187,7 @@ function gainXp(state, amount) {
 }
 
 function updateLevelFlow(state) {
-  if (state.levelupPending || state.phase !== "swarm") return;
+  if (state.levelupPending || state.phase !== "swarm" || state.expedition?.awaitingBossEntry) return;
   const flow = state.levelFlow;
   const player = state.player;
   if (state.rewardCycle === 0 && flow.queuedLevels === 0 && state.time >= flow.firstDeadline) {
@@ -841,20 +1251,20 @@ function killEnemy(state, enemy, source = "weapon") {
   state.killedEnemies += 1;
   state.stats.kills += 1;
   if (state.stats.kills % 25 === 0) {
-    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 6);
+    state.player.hp = Math.min(state.player.maxHp, state.player.hp + 6 * state.player.healingMultiplier);
     if (state.stats.kills % 100 === 0) {
       addText(state, "COMBAT REPAIR +6", state.player.x, state.player.y - 46, "#8dffc0", 0.88);
       burst(state, state.player.x, state.player.y, "#72f0ad", 8, 120, 0.42, 4);
     }
   }
-  spawnXpPickup(state, enemy);
+  if (source !== "selfDestruct") spawnXpPickup(state, enemy);
   burst(state, enemy.x, enemy.y, enemy.elite ? "#ffe06b" : enemy.color, enemy.elite ? 16 : 6, enemy.elite ? 250 : 150, 0.55, enemy.elite ? 7 : 4);
   if (enemy.elite) addText(state, "ELITE DOWN", enemy.x, enemy.y - 28, "#ffe371", 0.9);
   if (state.killedEnemies % 4 === 0 || enemy.elite) emit(state, "enemyKilled", { type: enemy.type, elite: enemy.elite, source });
 }
 
 function damageEnemy(state, enemy, amount, source = "weapon") {
-  if (!enemy || enemy.dead || amount <= 0) return 0;
+  if (!enemy || enemy.dead || finite(enemy.spawnDelay) > 0 || amount <= 0) return 0;
   const dealt = Math.min(enemy.hp, amount * finite(state.player?.overdriveDamage, 1));
   enemy.hp -= dealt;
   enemy.hitFlash = 0.09;
@@ -870,6 +1280,7 @@ function damageEnemy(state, enemy, amount, source = "weapon") {
 function triggerBossStage(state, stage) {
   const boss = state.boss;
   boss.stage = stage;
+  if (state.expedition) boss.radius = stage === 3 ? 150 : 130;
   boss.enrage = stage === 3 ? 2.15 : 1.5;
   boss.transformTimer = boss.transformDuration;
   boss.phaseFlash = 1;
@@ -925,8 +1336,14 @@ function damageBoss(state, amount, source = "weapon") {
     state.shake = 26;
     state.flash = 0.75;
     burst(state, boss.x, boss.y, "#ff385d", 80, 440, 1.2, 9);
-    addText(state, "THE WRONG ENGINE DESTROYED", boss.x, boss.y - 100, "#ffffff", 1.5);
-    emit(state, "win", { kills: state.stats.kills, level: state.player.level });
+    addText(state, `${boss.name} DESTROYED`, boss.x, boss.y - 100, "#ffffff", 1.5);
+    if (state.expedition) emit(state, "scenario", { beat: state.storyBeats.victory, regionId: state.regionId });
+    emit(state, "win", {
+      kills: state.stats.kills,
+      level: state.player.level,
+      regionId: state.regionId,
+      chapterId: state.chapterId,
+    });
   }
   return dealt;
 }
@@ -946,7 +1363,56 @@ function explodeRocket(state, projectile) {
   emit(state, "explosion", { x: projectile.x, y: projectile.y });
 }
 
+function collidePlayerProjectile(state, projectile, enemy) {
+  if (enemy.dead || projectile.dead) return false;
+  if (projectile.hitIds?.includes(enemy.id)) return false;
+  const dx = projectile.x - enemy.x;
+  const dy = projectile.y - enemy.y;
+  const collisionRadius = projectile.radius + enemy.radius;
+  if (dx * dx + dy * dy > collisionRadius * collisionRadius) return false;
+  damageEnemy(state, enemy, projectile.damage, projectile.kind);
+  if (projectile.kind === "rocket") {
+    projectile.dead = true;
+    return true;
+  }
+  if (projectile.pierce > 0) {
+    projectile.hitIds?.push(enemy.id);
+    projectile.pierce -= 1;
+  } else {
+    projectile.dead = true;
+  }
+  return false;
+}
+
+function collideProjectileWithEnemyGrid(state, projectile) {
+  let rocketImpact = false;
+  if (state.spatialGrid.size === 0) {
+    for (let index = 0; index < state.enemies.length; index += 1) {
+      rocketImpact = collidePlayerProjectile(state, projectile, state.enemies[index]);
+      if (rocketImpact || projectile.dead) break;
+    }
+    return rocketImpact;
+  }
+  const queryRadius = projectile.radius + 28;
+  const reach = Math.max(1, Math.ceil(queryRadius / GRID_SIZE));
+  const column = Math.floor(projectile.x / GRID_SIZE);
+  const row = Math.floor(projectile.y / GRID_SIZE);
+  collisionBuckets:
+  for (let dxCell = -reach; dxCell <= reach; dxCell += 1) {
+    for (let dyCell = -reach; dyCell <= reach; dyCell += 1) {
+      const bucket = state.spatialGrid.get(gridKey(column + dxCell, row + dyCell));
+      if (!bucket) continue;
+      for (let index = 0; index < bucket.length; index += 1) {
+        rocketImpact = collidePlayerProjectile(state, projectile, bucket[index]);
+        if (rocketImpact || projectile.dead) break collisionBuckets;
+      }
+    }
+  }
+  return rocketImpact;
+}
+
 function updateProjectiles(state, dt) {
+  const world = activeWorldSize(state);
   for (const projectile of state.projectiles) {
     if (projectile.dead) continue;
     projectile.age += dt;
@@ -955,7 +1421,7 @@ function updateProjectiles(state, dt) {
     projectile.py = projectile.y;
     projectile.x += projectile.vx * dt;
     projectile.y += projectile.vy * dt;
-    if (projectile.life <= 0 || projectile.x < -80 || projectile.x > GAME_WIDTH + 80 || projectile.y < -80 || projectile.y > GAME_HEIGHT + 80) {
+    if (projectile.life <= 0 || projectile.x < -80 || projectile.x > world.width + 80 || projectile.y < -80 || projectile.y > world.height + 80) {
       if (projectile.kind === "rocket" && projectile.life <= 0) explodeRocket(state, projectile);
       projectile.dead = true;
       continue;
@@ -971,29 +1437,12 @@ function updateProjectiles(state, dt) {
       continue;
     }
 
-    const candidates = nearbyEnemies(state, projectile.x, projectile.y, projectile.radius + 28);
-    let rocketImpact = false;
-    for (const enemy of candidates) {
-      if (enemy.dead || projectile.dead) continue;
-      if (projectile.hitIds?.includes(enemy.id)) continue;
-      if (Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y) > projectile.radius + enemy.radius) continue;
-      damageEnemy(state, enemy, projectile.damage, projectile.kind);
-      if (projectile.kind === "rocket") {
-        projectile.dead = true;
-        rocketImpact = true;
-        break;
-      } else if (projectile.pierce > 0) {
-        projectile.hitIds?.push(enemy.id);
-        projectile.pierce -= 1;
-      } else {
-        projectile.dead = true;
-      }
-    }
-    // Finish the outer scratch-buffer iteration before the splash query reuses
-    // that same buffer. This keeps the zero-allocation hot path nested-query safe.
+    const rocketImpact = collideProjectileWithEnemyGrid(state, projectile);
+    // Splash runs only after the direct bucket walk, so its shared AoE scratch
+    // buffer cannot invalidate an in-progress projectile query.
     if (rocketImpact) explodeRocket(state, projectile);
   }
-  compact(state.projectiles, (projectile) => !projectile.dead);
+  compact(state.projectiles, keepAliveEntity);
 }
 
 function pushEnemyProjectile(state, x, y, angle, speed, damage, kind = "enemy", radius = 7, life = 4) {
@@ -1011,7 +1460,7 @@ function pushEnemyProjectile(state, x, y, angle, speed, damage, kind = "enemy", 
     speed,
     damage,
     radius,
-    color: kind === "boss" ? "#ff385d" : "#ff9f57",
+    color: String(kind).includes("sniper") ? "#ff3d68" : kind === "boss" ? "#ff385d" : "#ff9f57",
     age: 0,
     animationState: "flight",
     life,
@@ -1023,7 +1472,16 @@ function pushEnemyProjectile(state, x, y, angle, speed, damage, kind = "enemy", 
 function damagePlayer(state, amount, source, options = {}) {
   const player = state.player;
   if (player.dead || player.invulnerability > 0 || amount <= 0 || state.phase === "victory" || state.phase === "defeat") return false;
+  const rawAmount = amount;
+  const wardActive = player.aegisWardTimer > 0;
+  const damageReduction = wardActive ? clamp(finite(player.aegisWardDamageReduction), 0, 0.75) : 0;
+  amount *= 1 - damageReduction;
   let remaining = amount;
+  if (player.aegisWardShield > 0) {
+    const absorbed = Math.min(player.aegisWardShield, remaining);
+    player.aegisWardShield -= absorbed;
+    remaining -= absorbed;
+  }
   if (player.shield > 0) {
     const absorbed = Math.min(player.shield, remaining);
     player.shield -= absorbed;
@@ -1033,8 +1491,8 @@ function damagePlayer(state, amount, source, options = {}) {
   player.shieldDelay = 3.5;
   player.invulnerability = Math.max(player.invulnerability, finite(options.invulnerability, 0.48));
   player.hitFlash = 0.16;
-  player.hitStun = Math.max(player.hitStun, finite(options.hitStun, 0.18));
-  if (options.stun > 0) {
+  if (!wardActive) player.hitStun = Math.max(player.hitStun, finite(options.hitStun, 0.18));
+  if (!wardActive && options.stun > 0) {
     player.stunTimer = Math.max(player.stunTimer, options.stun);
     player.stunDuration = Math.max(player.stunDuration, options.stun);
     player.dashTimer = 0;
@@ -1046,7 +1504,15 @@ function damagePlayer(state, amount, source, options = {}) {
   state.shake = Math.max(state.shake, options.critical ? 18 : 10);
   burst(state, player.x, player.y, options.critical ? "#ffcf62" : "#ff4968", options.critical ? 22 : 12, options.critical ? 320 : 220, 0.48, options.critical ? 7 : 5);
   addText(state, options.critical ? `CRITICAL -${Math.round(amount)}` : `-${Math.round(amount)}`, player.x, player.y - 34, options.critical ? "#ffe08a" : "#ff647a", options.critical ? 1.1 : 0.9);
-  emit(state, "playerHit", { damage: amount, source, critical: Boolean(options.critical), stun: options.stun || 0 });
+  emit(state, "playerHit", {
+    damage: amount,
+    rawDamage: rawAmount,
+    reducedBy: rawAmount - amount,
+    source,
+    critical: Boolean(options.critical),
+    stun: wardActive ? 0 : options.stun || 0,
+    statusImmune: wardActive,
+  });
   if (player.hp <= 0) {
     player.hp = 0;
     player.dead = true;
@@ -1064,6 +1530,7 @@ function damagePlayer(state, amount, source, options = {}) {
 
 function updateEnemyProjectiles(state, dt) {
   const player = state.player;
+  const world = activeWorldSize(state);
   for (const projectile of state.enemyProjectiles) {
     if (projectile.dead) continue;
     projectile.age += dt;
@@ -1072,31 +1539,45 @@ function updateEnemyProjectiles(state, dt) {
     projectile.py = projectile.y;
     projectile.x += projectile.vx * dt;
     projectile.y += projectile.vy * dt;
-    if (projectile.life <= 0 || projectile.x < -100 || projectile.x > GAME_WIDTH + 100 || projectile.y < -100 || projectile.y > GAME_HEIGHT + 100) {
+    if (projectile.life <= 0 || projectile.x < -100 || projectile.x > world.width + 100 || projectile.y < -100 || projectile.y > world.height + 100) {
       projectile.dead = true;
       continue;
     }
-    if (Math.hypot(projectile.x - player.x, projectile.y - player.y) <= projectile.radius + player.radius) {
+    const dx = projectile.x - player.x;
+    const dy = projectile.y - player.y;
+    const collisionRadius = projectile.radius + player.radius;
+    if (dx * dx + dy * dy <= collisionRadius * collisionRadius) {
       if (damagePlayer(state, projectile.damage, projectile.kind)) {
         if (projectile.kind === "boss") state.stats.bossPatternsHit += 1;
       }
       projectile.dead = true;
     }
   }
-  compact(state.enemyProjectiles, (projectile) => !projectile.dead);
+  compact(state.enemyProjectiles, keepAliveEntity);
 }
 
 function updateEnemies(state, dt) {
   const player = state.player;
+  const arena = activeArena(state);
+  let deathDamping = 0;
+  const moveBlendRate = 1 - Math.exp(-dt * 10);
   for (const enemy of state.enemies) {
     if (enemy.dead) {
+      if (deathDamping === 0) deathDamping = Math.pow(0.018, dt);
       enemy.deathTimer = Math.max(0, enemy.deathTimer - dt);
       enemy.animationTimer = Math.max(0, enemy.animationTimer - dt);
-      const damping = Math.pow(0.018, dt);
-      enemy.vx *= damping;
-      enemy.vy *= damping;
+      enemy.vx *= deathDamping;
+      enemy.vy *= deathDamping;
       enemy.x += enemy.vx * dt;
       enemy.y += enemy.vy * dt;
+      continue;
+    }
+    if (finite(enemy.spawnDelay) > 0) {
+      enemy.spawnDelay = Math.max(0, enemy.spawnDelay - dt);
+      enemy.vx = 0;
+      enemy.vy = 0;
+      enemy.animationState = "spawn";
+      if (enemy.spawnDelay <= 0) emit(state, "enemyMaterialized", { enemy: enemy.type, gate: enemy.spawnGateId });
       continue;
     }
     enemy.hitFlash = Math.max(0, enemy.hitFlash - dt);
@@ -1106,32 +1587,113 @@ function updateEnemies(state, dt) {
     enemy.animationTimer = Math.max(0, enemy.animationTimer - dt);
     enemy.attackCooldown -= dt;
     enemy.shootCooldown -= dt;
+    enemy.burstTimer = Math.max(0, finite(enemy.burstTimer) - dt);
+    const wasAiming = finite(enemy.aimTimer) > 0;
+    enemy.aimTimer = Math.max(0, finite(enemy.aimTimer) - dt);
     enemy.slow = Math.max(0, enemy.slow - dt);
+    enemy.disabledTimer = Math.max(0, finite(enemy.disabledTimer) - dt);
     enemy.orbitHitCooldown = Math.max(0, enemy.orbitHitCooldown - dt);
     const dx = player.x - enemy.x;
     const dy = player.y - enemy.y;
     const distance = Math.max(0.001, Math.hypot(dx, dy));
-    const toward = { x: dx / distance, y: dy / distance };
+    const towardX = dx / distance;
+    const towardY = dy / distance;
     const slowScale = enemy.slow > 0 ? 0.48 : 1;
-    let movement = 1;
-    if (enemy.type === "suppressor" && distance < 270) movement = distance < 210 ? -0.4 : 0;
-    enemy.vx = toward.x * enemy.speed * slowScale * movement;
-    enemy.vy = toward.y * enemy.speed * slowScale * movement;
-    enemy.x = clamp(enemy.x + enemy.vx * dt, ARENA.left, ARENA.right);
-    enemy.y = clamp(enemy.y + enemy.vy * dt, ARENA.top, ARENA.bottom);
-    enemy.angle = Math.atan2(dy, dx);
-    enemy.moveBlend += (Math.min(1, Math.hypot(enemy.vx, enemy.vy) / Math.max(1, enemy.speed)) - enemy.moveBlend) * (1 - Math.exp(-dt * 10));
-
-    if (enemy.type === "suppressor" && distance < 430 && enemy.shootCooldown <= 0) {
-      pushEnemyProjectile(state, enemy.x, enemy.y, enemy.angle, 270, enemy.damage, "suppressor", 6, 2.4);
-      enemy.shootCooldown = enemy.elite ? 1.05 : 1.65;
-      enemy.attackState = "shoot";
-      enemy.attackTimer = 0.24;
-      enemy.animationState = "attack";
-      enemy.animationTimer = 0.24;
-      enemy.recoil = 1;
+    const role = enemy.combatRole ?? ENEMY_DATA[enemy.type]?.role ?? "rifleman";
+    if (enemy.disabledTimer > 0) {
+      enemy.vx = 0;
+      enemy.vy = 0;
+      enemy.animationState = "hit";
+      enemy.attackState = "disabled";
+      enemy.attackTimer = Math.max(enemy.attackTimer, enemy.disabledTimer);
+      continue;
     }
-    if (distance <= enemy.radius + player.radius + 2 && enemy.attackCooldown <= 0) {
+    let movement = 1;
+    if (role === "rifleman" && distance < 520) movement = distance < 285 ? -0.5 : 0;
+    if (role === "sniper") movement = wasAiming ? 0 : distance < 520 ? -0.62 : distance < 820 ? 0 : 1;
+    enemy.vx = towardX * enemy.speed * slowScale * movement;
+    enemy.vy = towardY * enemy.speed * slowScale * movement;
+    enemy.x = clamp(enemy.x + enemy.vx * dt, arena.left, arena.right);
+    enemy.y = clamp(enemy.y + enemy.vy * dt, arena.top, arena.bottom);
+    enemy.angle = wasAiming
+      ? Math.atan2(enemy.lockedAimY - enemy.lockedStartY, enemy.lockedAimX - enemy.lockedStartX)
+      : Math.atan2(dy, dx);
+    enemy.moveBlend += (Math.min(1, Math.hypot(enemy.vx, enemy.vy) / Math.max(1, enemy.speed)) - enemy.moveBlend) * moveBlendRate;
+
+    if (role === "rifleman" && enemy.burstShots <= 0 && distance < 610 && enemy.shootCooldown <= 0) {
+      enemy.burstShots = enemy.elite ? 5 : 3;
+      enemy.burstTimer = 0;
+      enemy.shootCooldown = enemy.elite ? 1.18 : 1.82;
+    }
+    if (role === "rifleman" && enemy.burstShots > 0 && enemy.burstTimer <= 0) {
+      const spread = (state.random() - 0.5) * (enemy.elite ? 0.055 : 0.085);
+      pushEnemyProjectile(state, enemy.x, enemy.y, enemy.angle + spread, enemy.elite ? 590 : 520, enemy.damage, "rifleman", 4, 2.35);
+      enemy.burstShots -= 1;
+      enemy.burstTimer = enemy.elite ? 0.075 : 0.105;
+      enemy.attackState = "shoot";
+      enemy.attackTimer = 0.16;
+      enemy.animationState = "attack";
+      enemy.animationTimer = 0.16;
+      enemy.recoil = 0.72;
+      emit(state, "enemyShot", { role, kind: "rifleman", x: enemy.x, y: enemy.y });
+    }
+    if (role === "sniper" && wasAiming && enemy.aimTimer <= 0) {
+      const shot = normalize(enemy.lockedAimX - enemy.lockedStartX, enemy.lockedAimY - enemy.lockedStartY);
+      const shotAngle = Math.atan2(shot.y, shot.x);
+      pushEnemyProjectile(state, enemy.lockedStartX, enemy.lockedStartY, shotAngle, enemy.elite ? 1120 : 980, enemy.damage, "sniper", 7, 2.2);
+      enemy.shootCooldown = enemy.elite ? 2.35 : 3.15;
+      enemy.attackState = "shoot";
+      enemy.attackTimer = 0.32;
+      enemy.animationState = "attack";
+      enemy.animationTimer = 0.32;
+      enemy.recoil = 1.25;
+      emit(state, "enemyShot", { role, kind: "sniper", x: enemy.x, y: enemy.y });
+    } else if (role === "sniper" && !wasAiming && distance < 1020 && enemy.shootCooldown <= 0) {
+      const lead = 0.42;
+      enemy.lockedStartX = enemy.x;
+      enemy.lockedStartY = enemy.y;
+      enemy.lockedAimX = clamp(player.x + player.vx * lead, arena.left, arena.right);
+      enemy.lockedAimY = clamp(player.y + player.vy * lead, arena.top, arena.bottom);
+      enemy.aimDuration = enemy.elite ? 0.68 : 0.92;
+      enemy.aimTimer = enemy.aimDuration;
+      const aimAngle = Math.atan2(enemy.lockedAimY - enemy.lockedStartY, enemy.lockedAimX - enemy.lockedStartX);
+      state.telegraphs.push({
+        id: ++state.nextEntityId,
+        type: "sniperAim",
+        enemy: true,
+        life: enemy.aimDuration,
+        maxLife: enemy.aimDuration,
+        geometry: {
+          startX: enemy.lockedStartX,
+          startY: enemy.lockedStartY,
+          endX: enemy.lockedAimX,
+          endY: enemy.lockedAimY,
+          angle: aimAngle,
+          collisionHalfWidth: 7,
+        },
+      });
+      enemy.attackState = "aim";
+      enemy.attackTimer = enemy.aimDuration;
+      enemy.animationState = "attack";
+      enemy.animationTimer = enemy.aimDuration;
+      emit(state, "sniperLock", { x: enemy.x, y: enemy.y, targetX: enemy.lockedAimX, targetY: enemy.lockedAimY });
+    }
+    const contactDx = player.x - enemy.x;
+    const contactDy = player.y - enemy.y;
+    const contactDistanceSq = contactDx * contactDx + contactDy * contactDy;
+    const suicideRadius = enemy.radius + player.radius + 4;
+    if (role === "suicideDrone" && contactDistanceSq <= suicideRadius * suicideRadius) {
+      const damage = enemy.damage;
+      damagePlayer(state, damage, "suicideDrone", { critical: true, invulnerability: 0.62, hitStun: 0.28 });
+      state.shockwaves.push({ type: "enemySelfDestruct", enemy: true, x: enemy.x, y: enemy.y, maxRadius: 118, life: 0.48, maxLife: 0.48, color: "#ff405f", width: 12 });
+      burst(state, enemy.x, enemy.y, "#ff5d42", enemy.elite ? 34 : 24, enemy.elite ? 420 : 340, 0.72, enemy.elite ? 9 : 7);
+      state.shake = Math.max(state.shake, enemy.elite ? 20 : 15);
+      emit(state, "enemySelfDestruct", { damage, elite: enemy.elite, x: enemy.x, y: enemy.y });
+      killEnemy(state, enemy, "selfDestruct");
+      continue;
+    }
+    const contactRadius = enemy.radius + player.radius + 2;
+    if (role !== "suicideDrone" && contactDistanceSq <= contactRadius * contactRadius && enemy.attackCooldown <= 0) {
       damagePlayer(state, enemy.damage, enemy.type);
       enemy.attackCooldown = enemy.elite ? 0.62 : 0.9;
       enemy.attackState = "melee";
@@ -1144,7 +1706,7 @@ function updateEnemies(state, dt) {
     else if (enemy.animationTimer <= 0) enemy.animationState = enemy.moveBlend > 0.08 ? "move" : "idle";
     if (enemy.attackTimer <= 0) enemy.attackState = "idle";
   }
-  compact(state.enemies, (enemy) => !enemy.dead || enemy.deathTimer > 0);
+  compact(state.enemies, keepEnemyPresentation);
 }
 
 function updatePickups(state, dt) {
@@ -1168,13 +1730,38 @@ function updatePickups(state, dt) {
       emit(state, "xp", { amount: pickup.value });
     }
   }
-  compact(state.pickups, (pickup) => !pickup.dead);
+  compact(state.pickups, keepAliveEntity);
+}
+
+function updateHealingKits(state, dt) {
+  const player = state.player;
+  for (const kit of state.healthKits) {
+    if (kit.dead) continue;
+    kit.age += dt;
+    const dx = player.x - kit.x;
+    const dy = player.y - kit.y;
+    const pickupRadius = player.radius + kit.radius + 7;
+    if (dx * dx + dy * dy > pickupRadius * pickupRadius) continue;
+    kit.dead = true;
+    const missing = Math.max(0, player.maxHp - player.hp);
+    const scaledHeal = kit.heal * player.healingMultiplier;
+    const healed = Math.min(missing, scaledHeal);
+    player.hp = Math.min(player.maxHp, player.hp + scaledHeal);
+    player.shieldDelay = Math.min(player.shieldDelay, 0.45);
+    addText(state, healed > 0 ? `FIELD REPAIR +${Math.round(healed)}` : "FIELD REPAIR FULL", player.x, player.y - 50, "#8dffc0", 0.94);
+    burst(state, kit.x, kit.y, "#74f4ff", 14, 170, 0.62, 5);
+    state.shockwaves.push({ type: "healthKit", x: kit.x, y: kit.y, maxRadius: 86, life: 0.5, maxLife: 0.5, color: "#74f4ff", width: 8 });
+    emit(state, "healthKitPicked", { x: kit.x, y: kit.y, healed });
+  }
+  compact(state.healthKits, keepAliveEntity);
 }
 
 function updateOrbitWeapon(state, dt) {
   const level = state.build.weapons.orbit;
-  state.orbitals.length = 0;
-  if (level <= 0) return;
+  if (level <= 0) {
+    state.orbitals.length = 0;
+    return;
+  }
   const player = state.player;
   player.orbitAngle = (player.orbitAngle + dt * (2.4 + level * 0.16)) % TAU;
   const bladeCount = Math.min(5, 1 + level);
@@ -1183,7 +1770,16 @@ function updateOrbitWeapon(state, dt) {
     const angle = player.orbitAngle + (index / bladeCount) * TAU;
     const x = player.x + Math.cos(angle) * distance;
     const y = player.y + Math.sin(angle) * distance;
-    state.orbitals.push({ id: index, type: "orbitBlade", x, y, angle: angle + Math.PI * 0.5, radius: 14, level });
+    let orbital = state.orbitals[index];
+    if (!orbital) {
+      orbital = { id: index, type: "orbitBlade", x, y, angle: angle + Math.PI * 0.5, radius: 14, level };
+      state.orbitals[index] = orbital;
+    } else {
+      orbital.x = x;
+      orbital.y = y;
+      orbital.angle = angle + Math.PI * 0.5;
+      orbital.level = level;
+    }
     if (state.phase === "boss") {
       if (state.boss.active && !state.boss.dead && state.boss.orbitHitCooldown <= 0
         && Math.hypot(state.boss.x - x, state.boss.y - y) <= state.boss.radius + 15) {
@@ -1199,6 +1795,7 @@ function updateOrbitWeapon(state, dt) {
       }
     }
   }
+  state.orbitals.length = bladeCount;
   player.orbitMasterTimer = Math.max(0, player.orbitMasterTimer - dt);
   if (level >= 5 && player.orbitMasterTimer <= 0) {
     player.orbitMasterTimer = 2.15;
@@ -1262,7 +1859,7 @@ function triggerChainLightning(state, level) {
     damageBoss(state, (90 + level * 48) * state.player.damageMultiplier, "chain");
   }
   if (points.length > 1) {
-    state.chains.push({ type: "chain", points, life: 0.22, maxLife: 0.22, alpha: 1, width: level >= 3 ? 7 : 4, color: level >= 3 ? "#fff2a1" : "#8ff9ff" });
+    state.chains.push({ type: "chain", points, life: 0.36, maxLife: 0.36, alpha: 1, width: level >= 3 ? 7 : 4, color: level >= 3 ? "#fff2a1" : "#8ff9ff" });
     emit(state, level >= 3 ? "masterAttack" : "skillAttack", { skill: "chain", hits: points.length - 1 });
   }
 }
@@ -1288,19 +1885,20 @@ function strikeTarget(state, index) {
   return { x: enemy.x, y: enemy.y };
 }
 
-function triggerAirstrike(state, level) {
-  const count = (level >= 3 ? 15 : 5 + level * 3) + state.player.overdriveTier * 3;
+function triggerAirstrike(state, upgradeRank) {
+  const count = (upgradeRank >= 3 ? 15 : 6 + upgradeRank * 3) + state.player.overdriveTier * 3;
+  const arena = activeArena(state);
   for (let index = 0; index < count; index += 1) {
     const target = strikeTarget(state, index);
-    const spread = level >= 3 ? 72 : 38;
+    const spread = upgradeRank >= 3 ? 72 : 34 + upgradeRank * 8;
     state.airstrikes.push({
       id: ++state.nextEntityId,
       type: "airstrike",
       phase: "warning",
-      x: clamp(target.x + (state.random() - 0.5) * spread, ARENA.left + 26, ARENA.right - 26),
-      y: clamp(target.y + (state.random() - 0.5) * spread, ARENA.top + 26, ARENA.bottom - 26),
-      radius: 76 + level * 15,
-      damage: (135 + level * 88) * state.player.damageMultiplier,
+      x: clamp(target.x + (state.random() - 0.5) * spread, arena.left + 26, arena.right - 26),
+      y: clamp(target.y + (state.random() - 0.5) * spread, arena.top + 26, arena.bottom - 26),
+      radius: 91 + upgradeRank * 15,
+      damage: (223 + upgradeRank * 88) * state.player.damageMultiplier,
       life: 1.05 + index * 0.035,
       maxLife: 1.05 + index * 0.035,
     });
@@ -1309,7 +1907,7 @@ function triggerAirstrike(state, level) {
   emit(state, "ultimateWarning", { skill: "airstrike", count });
 }
 
-function triggerOmegaLaser(state, level) {
+function triggerOmegaLaser(state, upgradeRank) {
   const direction = normalize(state.aim.x - state.player.x, state.aim.y - state.player.y);
   const beam = {
     id: ++state.nextEntityId,
@@ -1320,13 +1918,14 @@ function triggerOmegaLaser(state, level) {
     x2: state.player.x + direction.x * 1500,
     y2: state.player.y + direction.y * 1500,
     angle: Math.atan2(direction.y, direction.x),
-    width: level >= 3 ? 116 : 58 + level * 16,
-    damage: (105 + level * 70) * state.player.damageMultiplier,
+    width: upgradeRank >= 3 ? 116 : 72 + upgradeRank * 14,
+    damage: (175 + upgradeRank * 70) * state.player.damageMultiplier,
     charge: 0.68,
-    life: level >= 3 ? 1.95 : 1.55,
-    maxLife: level >= 3 ? 1.95 : 1.55,
+    chargeMax: 0.68,
+    life: upgradeRank >= 3 ? 1.95 : 1.55,
+    maxLife: upgradeRank >= 3 ? 1.95 : 1.55,
     tickTimer: 0,
-    color: level >= 3 ? "#fff2a5" : "#72f7ff",
+    color: upgradeRank >= 3 ? "#fff2a5" : "#72f7ff",
     alpha: 1,
   };
   state.beams.push(beam);
@@ -1348,7 +1947,7 @@ function updateAirstrikes(state, dt) {
       emit(state, "ultimateImpact", { skill: "airstrike", x: strike.x, y: strike.y });
     }
   }
-  compact(state.airstrikes, (strike) => strike.life > 0);
+  compact(state.airstrikes, keepPositiveLife);
 }
 
 function updateOmegaBeams(state, dt) {
@@ -1380,7 +1979,7 @@ function updateOmegaBeams(state, dt) {
       }
     }
   }
-  compact(state.beams, (beam) => beam.life > 0);
+  compact(state.beams, keepPositiveLife);
 }
 
 function supportCooldownDuration(state, skill) {
@@ -1388,8 +1987,413 @@ function supportCooldownDuration(state, skill) {
   const overdriveCooldownScale = Math.max(0.26, state.player.overdriveHaste * 0.94);
   if (skill === "chain") return (rank >= 3 ? 1.65 : 3.2 - Math.max(1, rank) * 0.38) * overdriveCooldownScale;
   if (skill === "nova") return (rank >= 3 ? 3.8 : 6.4 - Math.max(1, rank) * 0.7) * overdriveCooldownScale;
-  if (skill === "airstrike") return (rank >= 3 ? 11.5 : 18.5 - Math.max(1, rank) * 2.1) * overdriveCooldownScale;
-  return (rank >= 3 ? 15 : 25 - Math.max(1, rank) * 2.3) * overdriveCooldownScale;
+  if (skill === "airstrike") return (rank >= 3 ? 14 : 26 - Math.max(1, rank) * 3) * overdriveCooldownScale;
+  return (rank >= 3 ? 20 : 34 - Math.max(1, rank) * 4) * overdriveCooldownScale;
+}
+
+function manualAbilityCooldownDuration(_state, ability) {
+  return MANUAL_ACTIVE_ABILITIES[ability]?.baseCooldown ?? 0;
+}
+
+function hasManualCombatTarget(state) {
+  if (state.phase === "boss") return Boolean(state.boss.active && !state.boss.dead);
+  return state.enemies.some((enemy) => !enemy.dead);
+}
+
+function manualAbilityAvailable(state, ability) {
+  const entry = state.manualAbilities[ability];
+  if (!entry || state.player.dead || state.player.stunTimer > 0 || entry.cooldown > 0) return false;
+  return ability === "stratosRun" || ability === "helixTempest" ? hasManualCombatTarget(state) : true;
+}
+
+function rejectManualAbility(state, ability, reason) {
+  const definition = MANUAL_ACTIVE_ABILITIES[ability];
+  const entry = state.manualAbilities[ability];
+  emit(state, "manualAbilityRejected", {
+    ability,
+    key: definition.key,
+    reason,
+    cooldown: Math.max(0, finite(entry.cooldown)),
+  });
+  return false;
+}
+
+function commitManualAbility(state, ability, payload = {}) {
+  const definition = MANUAL_ACTIVE_ABILITIES[ability];
+  const entry = state.manualAbilities[ability];
+  const cooldown = manualAbilityCooldownDuration(state, ability);
+  entry.cooldown = cooldown;
+  entry.maxCooldown = cooldown;
+  state.stats.activeAbilityCasts[ability] += 1;
+  emit(state, "manualAbilityActivated", {
+    ability,
+    key: definition.key,
+    name: definition.name,
+    cooldown,
+    ...payload,
+  });
+  return true;
+}
+
+function triggerGravitySnare(state) {
+  const ability = "gravitySnare";
+  const radius = 300;
+  const duration = 3;
+  const arena = activeArena(state);
+  const x = clamp(state.aim.x, arena.left + 24, arena.right - 24);
+  const y = clamp(state.aim.y, arena.top + 24, arena.bottom - 24);
+  const geometry = { kind: "circle", x, y, radius, collisionRadius: radius };
+  state.gravitySnares.push({
+    id: ++state.nextEntityId,
+    type: "gravitySnare",
+    x,
+    y,
+    radius,
+    pullSpeed: 310,
+    projectileCurve: 520,
+    projectileDamageFloor: 0.42,
+    life: duration,
+    maxLife: duration,
+    geometry,
+  });
+  const directDamage = 8 * state.player.damageMultiplier;
+  damageArea(state, x, y, radius, directDamage, "gravitySnare");
+  emit(state, "gravitySnareDeployed", { x, y, radius, duration, directDamage, geometry: { ...geometry } });
+  return commitManualAbility(state, ability, { x, y, radius, duration });
+}
+
+function triggerAegisWard(state) {
+  const ability = "aegisWard";
+  const healAmount = 36;
+  const shield = 96;
+  const duration = 5;
+  const damageReduction = 0.38;
+  const previousHp = state.player.hp;
+  state.player.hp = Math.min(state.player.maxHp, state.player.hp + healAmount * state.player.healingMultiplier);
+  const healed = state.player.hp - previousHp;
+  state.player.aegisWardShield = Math.max(state.player.aegisWardShield, shield);
+  state.player.aegisWardShieldMax = Math.max(state.player.aegisWardShieldMax, shield);
+  state.player.aegisWardTimer = Math.max(state.player.aegisWardTimer, duration);
+  state.player.aegisWardDuration = duration;
+  state.player.aegisWardDamageReduction = damageReduction;
+  const ward = {
+    id: ++state.nextEntityId,
+    type: "aegisWard",
+    x: state.player.x,
+    y: state.player.y,
+    radius: 132,
+    life: duration,
+    maxLife: duration,
+    damageReduction,
+    geometry: { kind: "circle", x: state.player.x, y: state.player.y, radius: 132 },
+  };
+  state.aegisWards.length = 0;
+  state.aegisWards.push(ward);
+  emit(state, "aegisWardActivated", {
+    x: ward.x,
+    y: ward.y,
+    radius: ward.radius,
+    healed,
+    shield,
+    duration,
+    damageReduction,
+    statusImmune: true,
+    geometry: { ...ward.geometry },
+  });
+  return commitManualAbility(state, ability, { healed, shield });
+}
+
+function createStratosLane(state, centerX, centerY, direction, offset, index) {
+  const perpendicular = { x: -direction.y, y: direction.x };
+  const halfLength = 1080;
+  const laneX = centerX + perpendicular.x * offset;
+  const laneY = centerY + perpendicular.y * offset;
+  const startX = laneX - direction.x * halfLength;
+  const startY = laneY - direction.y * halfLength;
+  const endX = laneX + direction.x * halfLength;
+  const endY = laneY + direction.y * halfLength;
+  return {
+    id: ++state.nextEntityId,
+    type: "stratosRunLane",
+    laneIndex: index,
+    phase: "warning",
+    warning: 0.72 + index * 0.18,
+    warningMax: 0.72 + index * 0.18,
+    sweepDuration: 0.68,
+    progress: 0,
+    damage: 190 * state.player.damageMultiplier,
+    hitIds: [],
+    bossHit: false,
+    geometry: {
+      kind: "capsule",
+      startX,
+      startY,
+      endX,
+      endY,
+      angle: Math.atan2(direction.y, direction.x),
+      collisionHalfWidth: 24,
+      sweepProgress: 0,
+      laneIndex: index,
+    },
+  };
+}
+
+function triggerStratosRun(state) {
+  const ability = "stratosRun";
+  if (!hasManualCombatTarget(state)) return rejectManualAbility(state, ability, "no-target");
+  const direction = normalize(state.aim.x - state.player.x, state.aim.y - state.player.y);
+  const centerX = state.aim.x;
+  const centerY = state.aim.y;
+  const lanes = [-112, 0, 112].map((offset, index) => createStratosLane(state, centerX, centerY, direction, offset, index));
+  state.stratosRuns.push(...lanes);
+  emit(state, "stratosRunWarning", {
+    x: centerX,
+    y: centerY,
+    laneCount: lanes.length,
+    lanes: lanes.map((lane) => ({ ...lane.geometry })),
+  });
+  return commitManualAbility(state, ability, { x: centerX, y: centerY, laneCount: lanes.length });
+}
+
+function updateHelixGeometry(tempest) {
+  tempest.lances = Array.from({ length: 4 }, (_, index) => {
+    const angle = tempest.angle + (index / 4) * TAU;
+    return {
+      kind: "capsule",
+      index,
+      angle,
+      startX: tempest.x + Math.cos(angle) * tempest.innerRadius,
+      startY: tempest.y + Math.sin(angle) * tempest.innerRadius,
+      endX: tempest.x + Math.cos(angle) * tempest.radius,
+      endY: tempest.y + Math.sin(angle) * tempest.radius,
+      collisionHalfWidth: tempest.collisionHalfWidth,
+    };
+  });
+}
+
+function triggerHelixTempest(state) {
+  const ability = "helixTempest";
+  if (!hasManualCombatTarget(state)) return rejectManualAbility(state, ability, "no-target");
+  const duration = 3.2;
+  const tempest = {
+    id: ++state.nextEntityId,
+    type: "helixTempest",
+    x: state.player.x,
+    y: state.player.y,
+    angle: state.player.angle,
+    angularSpeed: TAU * 2.25,
+    innerRadius: 38,
+    radius: 570,
+    collisionHalfWidth: 23,
+    damage: 165 * state.player.damageMultiplier,
+    life: duration,
+    maxLife: duration,
+    pulseTimer: 0,
+    hitCooldowns: {},
+    lances: [],
+  };
+  updateHelixGeometry(tempest);
+  state.helixTempests.push(tempest);
+  emit(state, "helixTempestStarted", {
+    x: tempest.x,
+    y: tempest.y,
+    duration,
+    lanceCount: tempest.lances.length,
+    angularSpeed: tempest.angularSpeed,
+    radius: tempest.radius,
+    lances: tempest.lances.map((lance) => ({ ...lance })),
+  });
+  return commitManualAbility(state, ability, { duration, lanceCount: tempest.lances.length, radius: tempest.radius });
+}
+
+function updateGravitySnares(state, dt) {
+  const arena = activeArena(state);
+  for (const snare of state.gravitySnares) {
+    snare.life -= dt;
+    if (snare.life <= 0) continue;
+    for (const enemy of state.enemies) {
+      if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
+      const dx = snare.x - enemy.x;
+      const dy = snare.y - enemy.y;
+      const distance = Math.max(0.001, Math.hypot(dx, dy));
+      if (distance > snare.radius + enemy.radius) continue;
+      const falloff = clamp(1 - distance / snare.radius, 0.18, 1);
+      const pull = snare.pullSpeed * falloff * (enemy.elite ? 0.48 : 1) * dt;
+      enemy.x = clamp(enemy.x + (dx / distance) * pull, arena.left + enemy.radius, arena.right - enemy.radius);
+      enemy.y = clamp(enemy.y + (dy / distance) * pull, arena.top + enemy.radius, arena.bottom - enemy.radius);
+      enemy.slow = Math.max(enemy.slow, 0.22);
+    }
+    for (const projectile of state.enemyProjectiles) {
+      if (projectile.dead) continue;
+      const dx = snare.x - projectile.x;
+      const dy = snare.y - projectile.y;
+      const distance = Math.max(0.001, Math.hypot(dx, dy));
+      if (distance > snare.radius + projectile.radius) continue;
+      if (!Number.isFinite(projectile.gravitySnareBaseDamage)) projectile.gravitySnareBaseDamage = projectile.damage;
+      const falloff = clamp(1 - distance / snare.radius, 0.12, 1);
+      projectile.vx += (dx / distance) * snare.projectileCurve * falloff * dt;
+      projectile.vy += (dy / distance) * snare.projectileCurve * falloff * dt;
+      projectile.speed = Math.hypot(projectile.vx, projectile.vy);
+      projectile.angle = Math.atan2(projectile.vy, projectile.vx);
+      projectile.damage = Math.max(
+        projectile.gravitySnareBaseDamage * snare.projectileDamageFloor,
+        projectile.damage * Math.pow(0.58, dt),
+      );
+      projectile.gravitySnareWeakened = true;
+    }
+  }
+  compact(state.gravitySnares, keepPositiveLife);
+}
+
+function updateAegisWards(state, dt) {
+  for (const ward of state.aegisWards) {
+    ward.life = Math.min(ward.life - dt, state.player.aegisWardTimer);
+    ward.x = state.player.x;
+    ward.y = state.player.y;
+    ward.geometry.x = ward.x;
+    ward.geometry.y = ward.y;
+  }
+  compact(state.aegisWards, keepPositiveLife);
+}
+
+function syncAegisWardGeometry(state) {
+  for (const ward of state.aegisWards) {
+    ward.x = state.player.x;
+    ward.y = state.player.y;
+    ward.geometry.x = ward.x;
+    ward.geometry.y = ward.y;
+  }
+}
+
+function lineProgress(x, y, geometry) {
+  const dx = geometry.endX - geometry.startX;
+  const dy = geometry.endY - geometry.startY;
+  const lengthSq = dx * dx + dy * dy;
+  return lengthSq > 0 ? clamp(((x - geometry.startX) * dx + (y - geometry.startY) * dy) / lengthSq, 0, 1) : 0;
+}
+
+function updateStratosRuns(state, dt) {
+  for (const lane of state.stratosRuns) {
+    if (lane.phase === "warning") {
+      lane.warning -= dt;
+      if (lane.warning <= 0) {
+        lane.phase = "sweep";
+        emit(state, "stratosRunSweep", { laneIndex: lane.laneIndex, geometry: { ...lane.geometry } });
+      }
+      continue;
+    }
+    if (lane.phase !== "sweep") continue;
+    const previous = lane.progress;
+    lane.progress = clamp(lane.progress + dt / lane.sweepDuration, 0, 1);
+    lane.geometry.sweepProgress = lane.progress;
+    const intersectsSweep = (x, y, radius) => {
+      if (pointLineDistance(x, y, lane.geometry.startX, lane.geometry.startY, lane.geometry.endX, lane.geometry.endY)
+        > lane.geometry.collisionHalfWidth + radius) return false;
+      const progress = lineProgress(x, y, lane.geometry);
+      return progress >= previous - 0.035 && progress <= lane.progress + 0.035;
+    };
+    if (state.phase === "boss") {
+      const boss = state.boss;
+      if (!lane.bossHit && boss.active && !boss.dead && intersectsSweep(boss.x, boss.y, boss.radius)) {
+        damageBoss(state, lane.damage, "stratosRun");
+        lane.bossHit = true;
+      }
+    } else {
+      for (const enemy of state.enemies) {
+        if (enemy.dead || lane.hitIds.includes(enemy.id) || !intersectsSweep(enemy.x, enemy.y, enemy.radius)) continue;
+        damageEnemy(state, enemy, lane.damage, "stratosRun");
+        lane.hitIds.push(enemy.id);
+      }
+    }
+    if (lane.progress >= 1) lane.phase = "done";
+  }
+  compact(state.stratosRuns, keepIncompleteLane);
+}
+
+function updateHelixTempests(state, dt) {
+  for (const tempest of state.helixTempests) {
+    tempest.life -= dt;
+    if (tempest.life <= 0) {
+      emit(state, "helixTempestEnded", { id: tempest.id });
+      continue;
+    }
+    tempest.x = state.player.x;
+    tempest.y = state.player.y;
+    tempest.angle = (tempest.angle + tempest.angularSpeed * dt) % TAU;
+    updateHelixGeometry(tempest);
+    for (const key of Object.keys(tempest.hitCooldowns)) {
+      tempest.hitCooldowns[key] -= dt;
+      if (tempest.hitCooldowns[key] <= 0) delete tempest.hitCooldowns[key];
+    }
+    const intersectsLance = (x, y, radius) => tempest.lances.some((lance) => (
+      pointLineDistance(x, y, lance.startX, lance.startY, lance.endX, lance.endY)
+      <= lance.collisionHalfWidth + radius
+    ));
+    if (state.phase === "boss") {
+      const boss = state.boss;
+      if (boss.active && !boss.dead && !tempest.hitCooldowns.boss && intersectsLance(boss.x, boss.y, boss.radius)) {
+        damageBoss(state, tempest.damage, "helixTempest");
+        tempest.hitCooldowns.boss = 0.22;
+      }
+    } else {
+      for (const enemy of state.enemies) {
+        if (enemy.dead || tempest.hitCooldowns[enemy.id] || !intersectsLance(enemy.x, enemy.y, enemy.radius)) continue;
+        damageEnemy(state, enemy, tempest.damage, "helixTempest");
+        tempest.hitCooldowns[enemy.id] = 0.22;
+      }
+    }
+    tempest.pulseTimer -= dt;
+    if (tempest.pulseTimer <= 0) {
+      tempest.pulseTimer += 0.28;
+      emit(state, "helixTempestPulse", {
+        id: tempest.id,
+        x: tempest.x,
+        y: tempest.y,
+        angle: tempest.angle,
+        lances: tempest.lances.map((lance) => ({ ...lance })),
+      });
+    }
+  }
+  compact(state.helixTempests, keepPositiveLife);
+}
+
+function updateManualAbilityEntities(state, dt) {
+  updateGravitySnares(state, dt);
+  updateAegisWards(state, dt);
+  updateStratosRuns(state, dt);
+  updateHelixTempests(state, dt);
+}
+
+function updateManualAbilities(state, input, dt) {
+  for (let index = 0; index < MANUAL_ABILITY_KEYS.length; index += 1) {
+    const ability = MANUAL_ABILITY_KEYS[index];
+    const entry = state.manualAbilities[ability];
+    entry.cooldown = Math.max(0, finite(entry.cooldown) - dt);
+    if (entry.cooldown <= 0) entry.maxCooldown = manualAbilityCooldownDuration(state, ability);
+  }
+  for (let index = 0; index < MANUAL_ABILITY_KEYS.length; index += 1) {
+    const ability = MANUAL_ABILITY_KEYS[index];
+    const active = input?.[MANUAL_INPUT_FIELDS[index]];
+    if (!active) continue;
+    const entry = state.manualAbilities[ability];
+    if (state.player.dead) {
+      rejectManualAbility(state, ability, "dead");
+      continue;
+    }
+    if (state.player.stunTimer > 0) {
+      rejectManualAbility(state, ability, "stunned");
+      continue;
+    }
+    if (entry.cooldown > 0) {
+      rejectManualAbility(state, ability, "cooldown");
+      continue;
+    }
+    if (ability === "gravitySnare") triggerGravitySnare(state);
+    else if (ability === "aegisWard") triggerAegisWard(state);
+    else if (ability === "stratosRun") triggerStratosRun(state);
+    else triggerHelixTempest(state);
+  }
+  updateManualAbilityEntities(state, dt);
 }
 
 function updateSupportSkills(state, dt) {
@@ -1398,7 +2402,7 @@ function updateSupportSkills(state, dt) {
   support.chainCooldown -= dt;
   support.novaCooldown -= dt;
   support.airstrikeCooldown -= dt;
-  support.laserCooldown -= dt;
+  support.omegaLaserCooldown -= dt;
 
   if (skills.chain > 0 && support.chainCooldown <= 0) {
     triggerChainLightning(state, skills.chain);
@@ -1415,151 +2419,13 @@ function updateSupportSkills(state, dt) {
     support.airstrikeCooldownMax = supportCooldownDuration(state, "airstrike");
     support.airstrikeCooldown += support.airstrikeCooldownMax;
   }
-  if (skills.omegaLaser > 0 && support.laserCooldown <= 0) {
+  if (skills.omegaLaser > 0 && support.omegaLaserCooldown <= 0) {
     triggerOmegaLaser(state, skills.omegaLaser);
-    support.laserCooldownMax = supportCooldownDuration(state, "omegaLaser");
-    support.laserCooldown += support.laserCooldownMax;
+    support.omegaLaserCooldownMax = supportCooldownDuration(state, "omegaLaser");
+    support.omegaLaserCooldown += support.omegaLaserCooldownMax;
   }
   updateAirstrikes(state, dt);
   updateOmegaBeams(state, dt);
-}
-
-function summonSupportSquad(state) {
-  const support = state.support;
-  if (support.squadCooldown > 0 || support.squadDuration > 0) return false;
-  support.squadCooldown = SQUAD_RECALL_COOLDOWN;
-  support.squadDuration = SQUAD_RECALL_DURATION;
-  for (let index = 0; index < SQUAD_FORMATION.length; index += 1) {
-    const member = SQUAD_FORMATION[index];
-    state.allies.push({
-      id: ++state.nextEntityId,
-      type: member.type,
-      name: member.name,
-      color: member.color,
-      summoned: true,
-      formationIndex: index,
-      formationX: member.x,
-      formationY: member.y,
-      x: state.player.x,
-      y: state.player.y,
-      vx: 0,
-      vy: 0,
-      angle: state.player.angle,
-      fireCooldown: index * 0.07,
-      life: SQUAD_RECALL_DURATION,
-      maxLife: SQUAD_RECALL_DURATION,
-      alpha: 0,
-      active: true,
-      animationState: "spawn",
-      animationTimer: 0.28,
-      attackState: "idle",
-      attackTimer: 0,
-      recoil: 0,
-      moveBlend: 0,
-    });
-  }
-  state.stats.squadCalls += 1;
-  state.flash = Math.max(state.flash, 0.32);
-  state.shake = Math.max(state.shake, 7);
-  state.shockwaves.push({ type: "squadRecall", x: state.player.x, y: state.player.y, maxRadius: 210, life: 0.7, maxLife: 0.7, color: "#c390ff", width: 9 });
-  burst(state, state.player.x, state.player.y, "#b879ff", 24, 260, 0.7, 6);
-  addText(state, "4-FRONT RECALL", state.player.x, state.player.y - 70, "#d9b8ff", 1.2);
-  emit(state, "squadSummon", { duration: SQUAD_RECALL_DURATION, members: SQUAD_FORMATION.map((member) => member.name) });
-  return true;
-}
-
-function fireSummonedProjectile(state, ally, kind, speed, damage, radius = 5, extra = {}, angleOverride = ally.angle) {
-  return pushPlayerProjectile(state, {
-    kind,
-    x: ally.x + Math.cos(ally.angle) * 20,
-    y: ally.y + Math.sin(ally.angle) * 20,
-    vx: Math.cos(angleOverride) * speed,
-    vy: Math.sin(angleOverride) * speed,
-    angle: angleOverride,
-    radius,
-    damage: damage * state.player.damageMultiplier,
-    color: extra.color || ally.color,
-    life: extra.life || 1.3,
-    pierce: extra.pierce || 0,
-    splash: extra.splash || 0,
-    hitIds: extra.pierce ? [] : null,
-  });
-}
-
-function fireSummonedAlly(state, ally, target) {
-  ally.attackState = "attack";
-  ally.attackTimer = 0.2;
-  ally.animationState = "attack";
-  ally.animationTimer = 0.2;
-  ally.recoil = 1;
-  if (ally.type === "gunner") {
-    for (let index = -2; index <= 2; index += 1) {
-      const angle = ally.angle + index * 0.11;
-      fireSummonedProjectile(state, ally, "rookScatter", 690, 19, 4, { color: "#ffb75d", life: 0.72 }, angle);
-    }
-    ally.fireCooldown = 0.68;
-  } else if (ally.type === "arcanist") {
-    const points = [{ x: ally.x, y: ally.y }, { x: target.x, y: target.y }];
-    if (state.phase === "boss") damageBoss(state, 92 * state.player.damageMultiplier, "nyxArc");
-    else {
-      damageEnemy(state, target, 74 * state.player.damageMultiplier, "nyxArc");
-      let jumps = 0;
-      for (const enemy of nearbyEnemies(state, target.x, target.y, 170)) {
-        if (enemy.dead || enemy === target || jumps >= 3) continue;
-        damageEnemy(state, enemy, 48 * state.player.damageMultiplier, "nyxArc");
-        points.push({ x: enemy.x, y: enemy.y });
-        jumps += 1;
-      }
-    }
-    state.chains.push({ type: "nyxArc", points, life: 0.24, maxLife: 0.24, alpha: 1, width: 5, color: "#c893ff" });
-    ally.fireCooldown = 0.82;
-  } else if (ally.type === "warden") {
-    fireSummonedProjectile(state, ally, "mossHeavy", 590, 112, 9, { color: "#8cffaa", life: 1.5, pierce: 3 });
-    ally.fireCooldown = 0.94;
-  } else {
-    fireSummonedProjectile(state, ally, "aegisEcho", 820, 45, 5, { color: "#6af4ff", life: 1.2, pierce: 1 });
-    ally.fireCooldown = 0.34;
-  }
-}
-
-function updateSummonedSquad(state, dt) {
-  const support = state.support;
-  support.squadCooldown = Math.max(0, support.squadCooldown - dt);
-  support.squadDuration = Math.max(0, support.squadDuration - dt);
-  let activeMembers = 0;
-  for (const ally of state.allies) {
-    if (!ally.summoned || ally.active === false) continue;
-    ally.life = Math.max(0, ally.life - dt);
-    ally.attackTimer = Math.max(0, ally.attackTimer - dt);
-    ally.animationTimer = Math.max(0, ally.animationTimer - dt);
-    ally.recoil = Math.max(0, ally.recoil - dt * 7);
-    if (ally.life <= 0) {
-      ally.active = false;
-      continue;
-    }
-    activeMembers += 1;
-    const targetX = state.player.x + ally.formationX;
-    const targetY = state.player.y + ally.formationY;
-    const follow = Math.min(1, dt * 9);
-    const previousX = ally.x;
-    const previousY = ally.y;
-    ally.x += (targetX - ally.x) * follow;
-    ally.y += (targetY - ally.y) * follow;
-    ally.vx = (ally.x - previousX) / Math.max(0.001, dt);
-    ally.vy = (ally.y - previousY) / Math.max(0.001, dt);
-    ally.moveBlend += (Math.min(1, Math.hypot(ally.vx, ally.vy) / 240) - ally.moveBlend) * (1 - Math.exp(-dt * 10));
-    ally.alpha = clamp(Math.min((ally.maxLife - ally.life) * 4, ally.life * 2.5), 0, 1);
-    ally.fireCooldown -= dt;
-    if (ally.animationTimer <= 0) ally.animationState = ally.moveBlend > 0.08 ? "move" : "idle";
-    if (ally.attackTimer <= 0) ally.attackState = "idle";
-    const target = closestEnemy(state, ally.x, ally.y, 650);
-    if (!target) continue;
-    ally.angle = Math.atan2(target.y - ally.y, target.x - ally.x);
-    if (ally.fireCooldown <= 0) fireSummonedAlly(state, ally, target);
-  }
-  if (support.squadDuration <= 0 && activeMembers === 0) {
-    compact(state.allies, (ally) => !ally.summoned);
-  }
 }
 
 function syncAllies(state) {
@@ -1570,8 +2436,8 @@ function syncAllies(state) {
   let drones = 0;
   let suppressors = 0;
   for (const ally of state.allies) {
-    if (ally.type === "drone" && !ally.summoned) drones += 1;
-    else if (ally.type === "suppressor" && !ally.summoned) suppressors += 1;
+    if (ally.type === "drone") drones += 1;
+    else if (ally.type === "suppressor") suppressors += 1;
   }
   for (let index = drones; index < wantedDrones; index += 1) {
     state.allies.push({
@@ -1592,12 +2458,10 @@ function syncAllies(state) {
 }
 
 function updateAllies(state, dt) {
-  updateSummonedSquad(state, dt);
   syncAllies(state);
   const total = Math.max(1, state.allies.length);
   for (let index = 0; index < state.allies.length; index += 1) {
     const ally = state.allies[index];
-    if (ally.summoned) continue;
     ally.attackTimer = Math.max(0, ally.attackTimer - dt);
     ally.animationTimer = Math.max(0, ally.animationTimer - dt);
     ally.recoil = Math.max(0, ally.recoil - dt * 7);
@@ -1609,28 +2473,28 @@ function updateAllies(state, dt) {
     ally.y += (targetY - ally.y) * Math.min(1, dt * 7);
     ally.fireCooldown -= dt;
     ally.pulseCooldown -= dt;
-    const target = closestEnemy(state, ally.x, ally.y, ally.type === "drone" ? 510 : 300);
+    const target = closestEnemy(state, ally.x, ally.y, ally.type === "drone" ? 700 : 360);
     if (target) {
       ally.angle = Math.atan2(target.y - ally.y, target.x - ally.x);
       if (ally.type === "drone" && ally.fireCooldown <= 0) {
         const droneRank = state.build.allies.drone;
-        const damage = (42 + droneRank * 18) * state.player.damageMultiplier;
+        const damage = (48 + droneRank * 22) * state.player.damageMultiplier;
         pushPlayerProjectile(state, {
           kind: "drone",
           x: ally.x,
           y: ally.y,
-          vx: Math.cos(ally.angle) * 720,
-          vy: Math.sin(ally.angle) * 720,
+          vx: Math.cos(ally.angle) * 940,
+          vy: Math.sin(ally.angle) * 940,
           angle: ally.angle,
           radius: 4,
           damage,
           color: "#68f6ff",
           life: 1.2,
-          pierce: 0,
+          pierce: droneRank >= 3 ? 1 : 0,
           splash: 0,
-          hitIds: null,
+          hitIds: droneRank >= 3 ? [] : null,
         });
-        ally.fireCooldown = Math.max(0.19, 0.42 - droneRank * 0.045);
+        ally.fireCooldown = Math.max(0.16, 0.4 - droneRank * 0.05);
         ally.attackState = "shoot";
         ally.attackTimer = 0.16;
         ally.animationState = "attack";
@@ -1639,14 +2503,24 @@ function updateAllies(state, dt) {
       }
       if (ally.type === "suppressor" && ally.pulseCooldown <= 0) {
         const suppressorRank = state.build.allies.suppressor;
-        const pulseRadius = 195 + suppressorRank * 15;
+        const pulseRadius = 205 + suppressorRank * 20;
         for (const enemy of nearbyEnemies(state, ally.x, ally.y, pulseRadius)) {
           if (!enemy.dead && Math.hypot(enemy.x - ally.x, enemy.y - ally.y) < pulseRadius) {
-            enemy.slow = Math.max(enemy.slow, 1.1);
-            damageEnemy(state, enemy, (24 + suppressorRank * 14) * state.player.damageMultiplier, "suppressorAlly");
+            enemy.slow = Math.max(enemy.slow, 1.55);
+            damageEnemy(state, enemy, (36 + suppressorRank * 18) * state.player.damageMultiplier, "suppressorAlly");
           }
         }
-        ally.pulseCooldown = Math.max(0.48, 0.88 - suppressorRank * 0.07);
+        ally.pulseCooldown = Math.max(0.42, 0.82 - suppressorRank * 0.08);
+        state.shockwaves.push({
+          type: "suppressorPulse",
+          x: ally.x,
+          y: ally.y,
+          maxRadius: pulseRadius,
+          life: 0.48,
+          maxLife: 0.48,
+          color: "#91f8ff",
+          width: 7,
+        });
         ally.attackState = "pulse";
         ally.attackTimer = 0.26;
         ally.animationState = "attack";
@@ -1664,7 +2538,7 @@ function updateAllies(state, dt) {
     sentry.animationTimer = Math.max(0, sentry.animationTimer - dt);
     sentry.recoil = Math.max(0, sentry.recoil - dt * 8);
     sentry.fireCooldown -= dt;
-    const target = closestEnemy(state, sentry.x, sentry.y, 560);
+    const target = closestEnemy(state, sentry.x, sentry.y, 700);
     if (!target) continue;
     sentry.angle = Math.atan2(target.y - sentry.y, target.x - sentry.x);
     if (sentry.fireCooldown <= 0) {
@@ -1676,14 +2550,14 @@ function updateAllies(state, dt) {
         vy: Math.sin(sentry.angle) * 760,
         angle: sentry.angle,
         radius: 4,
-        damage: (38 + sentry.level * 16) * state.player.damageMultiplier,
+        damage: (52 + sentry.level * 22) * state.player.damageMultiplier,
         color: "#ffe86d",
         life: 1.3,
-        pierce: 0,
+        pierce: sentry.level >= 3 ? 2 : sentry.level >= 2 ? 1 : 0,
         splash: 0,
-        hitIds: null,
+        hitIds: sentry.level >= 2 ? [] : null,
       });
-      sentry.fireCooldown = Math.max(0.18, 0.38 - sentry.level * 0.035);
+      sentry.fireCooldown = Math.max(0.15, 0.34 - sentry.level * 0.04);
       sentry.attackState = "shoot";
       sentry.attackTimer = 0.16;
       sentry.animationState = "attack";
@@ -1702,8 +2576,11 @@ function buildRewardOffer(state, batchLevels = 1) {
     const category = categories[categoryIndex];
     const bucket = category === "weapon" ? state.build.weapons : category === "skill" ? state.build.skills : state.build.allies;
     let pool = REWARD_POOLS[category].filter((candidate) => (bucket[candidate] || 0) < (MAX_REWARD_RANK[candidate] || 5));
+    if (category === "skill" && state.rewardCycle === 0) {
+      const openingCombatSkills = pool.filter((candidate) => ["airstrike", "omegaLaser", "chain", "nova"].includes(candidate));
+      if (openingCombatSkills.length) pool = openingCombatSkills;
+    }
     if (!pool.length) pool = REWARD_POOLS[category];
-    if (category === "skill" && state.rewardCycle === 0) pool = pool.filter((candidate) => ["airstrike", "omegaLaser", "chain", "nova"].includes(candidate));
     const previous = state.lastChosenByCategory[category];
     const repeatPrevious = previous && pool.includes(previous) && state.random() < 0.62;
     const offset = Math.floor(clamp(state.random(), 0, 0.999999) * pool.length);
@@ -1774,7 +2651,7 @@ function applyReward(state, id, requestedRanks = 1) {
   } else {
     state.build.allies[id] = finalRank;
     if (id === "sentry") {
-      const wanted = Math.min(4, finalRank + 1);
+      const wanted = Math.min(5, finalRank + 1);
       const sentries = state.deployables.filter((deployable) => deployable.type === "sentry");
       for (const sentry of sentries) sentry.level = finalRank;
       for (let index = sentries.length; index < wanted; index += 1) {
@@ -1849,19 +2726,68 @@ function startBossPhase(state) {
   state.phaseTransition = 0;
   state.boss.active = true;
   state.boss.patternCooldown = 1.45;
-  state.player.hp = Math.min(state.player.maxHp, state.player.hp + state.player.maxHp * 0.4);
+  state.player.hp = Math.min(state.player.maxHp, state.player.hp + state.player.maxHp * 0.4 * state.player.healingMultiplier);
   state.player.shield = state.player.shieldMax;
   state.enemyProjectiles.length = 0;
   state.projectiles.length = 0;
   state.pickups.length = 0;
+  state.healthKits.length = 0;
   state.telegraphs.length = 0;
   state.airstrikes.length = 0;
+  state.spawnPortals.length = 0;
   state.beams.length = 0;
   state.chains.length = 0;
   state.flash = 0.65;
   state.shake = 18;
-  addText(state, "THE WRONG ENGINE", GAME_WIDTH * 0.5, 132, "#ff4b63", 1.65);
-  emit(state, "bossIntro", { hp: state.boss.hp, patterns: BOSS_PATTERNS });
+  if (state.expedition) {
+    state.expedition.distance = state.expedition.routeLength;
+    state.expedition.progress = 1;
+    state.expedition.reachedGate = true;
+    state.expedition.gateLocked = false;
+    state.expedition.gateUnlocked = true;
+    state.expedition.awaitingBossEntry = false;
+    state.expedition.bossEntryConfirmed = true;
+    state.expedition.bossRoom = true;
+    state.expedition.objective = `DESTROY ${state.boss.name}`;
+    state.camera.zoom = 0.78;
+    state.camera.x = state.player.x;
+    state.camera.y = state.player.y;
+    emit(state, "scenario", { beat: state.storyBeats.encounter, regionId: state.regionId });
+  }
+  if (!state.expedition) addText(state, state.boss.name, GAME_WIDTH * 0.5, 132, "#ff4b63", 1.65);
+  emit(state, "bossIntro", { hp: state.boss.hp, patterns: state.boss.patterns, regionId: state.regionId });
+}
+
+export function enterBossRoom(state) {
+  const expedition = state?.expedition;
+  const allHostilesKilled = state?.spawnedEnemies >= state?.enemyBudget
+    && state?.killedEnemies >= state?.enemyBudget
+    && !state?.enemies?.some((enemy) => !enemy.dead);
+  if (!expedition
+    || state.status !== "running"
+    || state.phase !== "swarm"
+    || !allHostilesKilled
+    || !expedition.reachedGate
+    || !expedition.awaitingBossEntry) return false;
+
+  expedition.awaitingBossEntry = false;
+  expedition.bossEntryConfirmed = true;
+  state.player.x = 820;
+  state.player.y = WORLD_HEIGHT * 0.5;
+  state.player.vx = 0;
+  state.player.vy = 0;
+  state.player.dashTimer = 0;
+  state.player.invulnerability = Math.max(state.player.invulnerability, 2.2);
+  state.boss.x = 1390;
+  state.boss.y = WORLD_HEIGHT * 0.5;
+  state.boss.vx = 0;
+  state.boss.vy = 0;
+  state.aim.x = state.boss.x;
+  state.aim.y = state.boss.y;
+  state.aimX = state.aim.x;
+  state.aimY = state.aim.y;
+  startBossPhase(state);
+  return true;
 }
 
 function updateSwarmSpawning(state, dt) {
@@ -1883,12 +2809,13 @@ function updateSwarmSpawning(state, dt) {
   }
 
   if (state.surgeQueued > 0 && state.spawnedEnemies < state.enemyBudget) {
-    const rate = state.activeSurge?.rate || 34;
+    const rate = state.activeSurge?.rate || 20;
+    const pressureCap = getEnemyPressureCap(state);
     state.surgeSpawnAccumulator = Math.min(12, state.surgeSpawnAccumulator + dt * rate);
     let spawnedThisStep = 0;
     while (state.surgeSpawnAccumulator >= 1
       && spawnedThisStep < 5
-      && state.enemies.length < MAX_LIVE_ENEMIES
+      && state.enemies.length < pressureCap
       && state.spawnedEnemies < state.enemyBudget
       && state.surgeQueued > 0) {
       state.surgeSpawnAccumulator -= 1;
@@ -1904,6 +2831,32 @@ function updateSwarmSpawning(state, dt) {
   }
   state.stats.peakEnemies = Math.max(state.stats.peakEnemies, state.enemies.length);
   if (state.spawnedEnemies >= state.enemyBudget && state.killedEnemies >= state.enemyBudget && state.enemies.length === 0) {
+    if (state.expedition) {
+      if (!state.expedition.reachedGate) {
+        state.expedition.gateLocked = false;
+        state.expedition.gateUnlocked = true;
+        state.expedition.objective = `REACH ${state.bossChamber}`;
+        if (!state.expedition.gateWarningShown) {
+          state.expedition.gateWarningShown = true;
+          emit(state, "routeOpen", { distance: state.expedition.distance, bossGate: state.expedition.bossGate });
+        }
+        return;
+      }
+
+      if (!state.expedition.entryPrompted) {
+        if (state.levelFlow.queuedLevels > 0) {
+          state.levelFlow.nextOfferAt = Math.min(state.levelFlow.nextOfferAt, state.time);
+          return;
+        }
+        state.expedition.entryPrompted = true;
+        state.expedition.awaitingBossEntry = true;
+        state.expedition.objective = `${state.bossChamber} · ENTRY DECISION`;
+        emit(state, "swarmCleared", { kills: state.killedEnemies });
+        emit(state, "bossGatePrompt", { kills: state.killedEnemies, chamber: state.bossChamber, bossName: state.boss.name, regionId: state.regionId });
+        addText(state, "SWARM PURGED", WORLD_WIDTH * 0.5, WORLD_HEIGHT * 0.45, "#72f2ff", 1.45);
+      }
+      return;
+    }
     if (state.phaseTransition <= 0) {
       state.phaseTransition = 2;
       emit(state, "swarmCleared", { kills: state.killedEnemies });
@@ -1939,18 +2892,55 @@ function createChargeGeometry(boss, player, originX, originY, targetX, targetY) 
   };
 }
 
+function openingWrongEngineChargeAssist(state) {
+  return state.regionId === "wrong-engine-core" && state.boss.stage === 1;
+}
+
 function beginBossPattern(state) {
   const boss = state.boss;
-  const type = BOSS_PATTERNS[boss.patternIndex % BOSS_PATTERNS.length];
+  const arena = activeArena(state);
+  const patterns = boss.patterns ?? BOSS_PATTERNS;
+  const type = patterns[boss.patternIndex % patterns.length];
   boss.patternIndex += 1;
   const playerAngle = Math.atan2(state.player.y - boss.y, state.player.x - boss.x);
   const warningScale = boss.stage === 3 ? 0.68 : boss.stage === 2 ? 0.82 : 1;
   let pattern;
   if (type === "radial") {
     pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: playerAngle, radius: 120, width: 12, life: 0.95 * warningScale, maxLife: 0.95 * warningScale, fired: false };
+  } else if (type === "prismLattice") {
+    const centerX = clamp(state.player.x + state.player.vx * 0.24, arena.left + 80, arena.right - 80);
+    const centerY = clamp(state.player.y + state.player.vy * 0.24, arena.top + 80, arena.bottom - 80);
+    const range = state.expedition ? 1450 : 980;
+    const beamHalfWidth = 22 + boss.stage * 3;
+    const collisionHalfWidth = beamHalfWidth + state.player.radius;
+    const angles = [playerAngle, playerAngle + Math.PI * 0.5];
+    const lanes = angles.map((angle, index) => ({
+      index,
+      angle,
+      startX: centerX - Math.cos(angle) * range,
+      startY: centerY - Math.sin(angle) * range,
+      endX: centerX + Math.cos(angle) * range,
+      endY: centerY + Math.sin(angle) * range,
+      beamHalfWidth,
+      collisionHalfWidth,
+    }));
+    pattern = {
+      type, phase: "warning", x: centerX, y: centerY, angle: playerAngle,
+      radius: 96, width: beamHalfWidth, life: 0.98 * warningScale, maxLife: 0.98 * warningScale,
+      fired: false, hit: false,
+      geometry: {
+        kind: "prismLattice",
+        centerX,
+        centerY,
+        laneCount: lanes.length,
+        beamHalfWidth,
+        collisionHalfWidth,
+        lanes,
+      },
+    };
   } else if (type === "sweep") {
     const startAngle = playerAngle - 0.9;
-    const radius = 980;
+    const radius = state.expedition ? 1450 : 980;
     const beamHalfWidth = 28 + boss.stage * 3;
     const dual = boss.stage >= 3;
     pattern = {
@@ -1973,24 +2963,117 @@ function beginBossPattern(state) {
         secondaryEndY: boss.y - Math.sin(startAngle) * radius,
       },
     };
+  } else if (type === "solarFlare") {
+    const centerX = clamp(state.player.x + state.player.vx * 0.3, arena.left + 90, arena.right - 90);
+    const centerY = clamp(state.player.y + state.player.vy * 0.3, arena.top + 90, arena.bottom - 90);
+    const count = 3 + boss.stage;
+    const targetRadius = 68 + boss.stage * 6;
+    const targets = Array.from({ length: count }, (_, index) => {
+      const orbit = index === 0 ? 0 : 145 + (index % 2) * 78;
+      const angle = playerAngle + index * (TAU / Math.max(1, count - 1));
+      return {
+        x: clamp(centerX + Math.cos(angle) * orbit, arena.left + targetRadius, arena.right - targetRadius),
+        y: clamp(centerY + Math.sin(angle) * orbit, arena.top + targetRadius, arena.bottom - targetRadius),
+        radius: targetRadius,
+        delay: index * 0.08,
+        hit: false,
+      };
+    });
+    pattern = {
+      type, phase: "warning", x: centerX, y: centerY, angle: playerAngle,
+      radius: targetRadius, width: 6, targets,
+      life: 1.08 * warningScale, maxLife: 1.08 * warningScale, fired: false, hit: false,
+      geometry: {
+        kind: "solarFlare",
+        centerX,
+        centerY,
+        targetCount: targets.length,
+        targets,
+      },
+    };
   } else if (type === "bombs") {
     const targets = [];
     const count = 4 + boss.stage * 2;
     for (let index = 0; index < count; index += 1) {
       const lead = index * 0.12;
       targets.push({
-        x: clamp(state.player.x + state.player.vx * lead + (state.random() - 0.5) * 210, ARENA.left + 50, ARENA.right - 50),
-        y: clamp(state.player.y + state.player.vy * lead + (state.random() - 0.5) * 170, ARENA.top + 50, ARENA.bottom - 50),
+        x: clamp(state.player.x + state.player.vx * lead + (state.random() - 0.5) * 210, arena.left + 50, arena.right - 50),
+        y: clamp(state.player.y + state.player.vy * lead + (state.random() - 0.5) * 170, arena.top + 50, arena.bottom - 50),
         radius: 58 + boss.stage * 5,
         hit: false,
       });
     }
     pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: playerAngle, radius: 65, width: 5, targets, life: 1.15 * warningScale, maxLife: 1.15 * warningScale, fired: false };
+  } else if (type === "memorySpiral") {
+    const armCount = 2 + boss.stage;
+    const innerRadius = boss.radius * 0.72;
+    const outerRadius = state.expedition ? 1320 : 880;
+    const beamHalfWidth = 18 + boss.stage * 3;
+    const collisionHalfWidth = beamHalfWidth + state.player.radius;
+    const baseAngle = playerAngle;
+    const rotations = 0.72 + boss.stage * 0.12;
+    const segments = Array.from({ length: armCount }, (_, index) => {
+      const angle = baseAngle + index * TAU / armCount;
+      return {
+        index,
+        angle,
+        startX: boss.x + Math.cos(angle) * innerRadius,
+        startY: boss.y + Math.sin(angle) * innerRadius,
+        endX: boss.x + Math.cos(angle) * outerRadius,
+        endY: boss.y + Math.sin(angle) * outerRadius,
+        collisionHalfWidth,
+      };
+    });
+    pattern = {
+      type, phase: "warning", x: boss.x, y: boss.y, angle: baseAngle,
+      radius: outerRadius, width: beamHalfWidth,
+      life: 1.02 * warningScale, maxLife: 1.02 * warningScale,
+      activeLife: Math.max(1.05, 1.62 - boss.stage * 0.12), fired: false, hit: false,
+      geometry: {
+        kind: "memorySpiral",
+        centerX: boss.x,
+        centerY: boss.y,
+        armCount,
+        innerRadius,
+        outerRadius,
+        beamHalfWidth,
+        collisionHalfWidth,
+        baseAngle,
+        rotations,
+        segments,
+      },
+    };
+  } else if (type === "depthCollapse") {
+    const ringCount = 3 + boss.stage;
+    const bandHalfWidth = 17 + boss.stage * 2;
+    const collisionHalfWidth = bandHalfWidth + state.player.radius;
+    const outerRadius = state.expedition ? 940 : 550;
+    const spacing = state.expedition ? 180 : 130;
+    const endRadius = boss.radius * 0.62;
+    const startRadii = Array.from({ length: ringCount }, (_, index) => outerRadius + index * spacing);
+    pattern = {
+      type, phase: "warning", x: boss.x, y: boss.y, angle: 0,
+      radius: outerRadius, width: bandHalfWidth,
+      life: 1.08 * warningScale, maxLife: 1.08 * warningScale,
+      activeLife: Math.max(1.35, 2.05 - boss.stage * 0.13), fired: false,
+      geometry: {
+        kind: "depthCollapse",
+        centerX: boss.x,
+        centerY: boss.y,
+        ringCount,
+        bandHalfWidth,
+        collisionHalfWidth,
+        startRadii,
+        radii: [...startRadii],
+        endRadius,
+        maxTravel: startRadii[startRadii.length - 1] - endRadius,
+      },
+    };
   } else if (type === "rings") {
     const rings = 2 + boss.stage * 2;
     const bandHalfWidth = 15 + boss.stage * 2;
     const startRadius = 76;
-    const spacing = 150;
+    const spacing = state.expedition ? 190 : 150;
     pattern = {
       type, phase: "warning", x: boss.x, y: boss.y, angle: 0, radius: startRadius,
       width: bandHalfWidth, life: 1.05 * warningScale, maxLife: 1.05 * warningScale,
@@ -2004,14 +3087,15 @@ function beginBossPattern(state) {
         collisionHalfWidth: bandHalfWidth + state.player.radius,
         startRadius,
         spacing,
-        maxTravel: 830,
+        maxTravel: state.expedition ? 1250 : 830,
         radii: Array.from({ length: rings }, (_, index) => startRadius - index * spacing),
       },
     };
   } else {
     const multi = type === "multiCharge";
+    const openingAssist = openingWrongEngineChargeAssist(state);
     const direction = normalize(state.player.x - boss.x, state.player.y - boss.y);
-    const boundary = rayToEllipseBoundary(boss.x, boss.y, direction, boss.radius * 0.72);
+    const boundary = rayToEllipseBoundary(activeBossFloor(state), boss.x, boss.y, direction, boss.radius * 0.72);
     pattern = {
       type,
       phase: "warning",
@@ -2028,9 +3112,10 @@ function beginBossPattern(state) {
       angle: Math.atan2(direction.y, direction.x),
       radius: boundary.distance,
       width: boss.radius,
-      life: (multi ? 0.66 : 0.72) * warningScale,
-      maxLife: (multi ? 0.66 : 0.72) * warningScale,
-      activeLife: multi ? 0.34 : 0.52,
+      life: (openingAssist ? multi ? 0.92 : 1.05 : multi ? 0.66 : 0.72) * warningScale,
+      maxLife: (openingAssist ? multi ? 0.92 : 1.05 : multi ? 0.66 : 0.72) * warningScale,
+      activeLife: openingAssist ? multi ? 0.46 : 0.68 : multi ? 0.34 : 0.52,
+      openingAssist,
       chargeCount: multi ? 2 + boss.stage : 1,
       chargeIndex: 1,
       fired: false,
@@ -2068,11 +3153,38 @@ function fireBossPattern(state, pattern) {
     }
     burst(state, boss.x, boss.y, "#ff3f60", 26, 260, 0.6, 6);
     boss.activePattern = null;
+  } else if (pattern.type === "prismLattice") {
+    const hitLane = pattern.geometry.lanes.find((lane) => (
+      pointLineDistance(
+        state.player.x,
+        state.player.y,
+        lane.startX,
+        lane.startY,
+        lane.endX,
+        lane.endY,
+      ) <= lane.collisionHalfWidth
+    ));
+    if (hitLane && damagePlayer(state, 30 + boss.stage * 6, "bossPrismLattice")) {
+      pattern.hit = true;
+      state.stats.bossPatternsHit += 1;
+    } else {
+      state.stats.bossPatternsDodged += 1;
+    }
+    for (const lane of pattern.geometry.lanes) {
+      burst(state, (lane.startX + lane.endX) * 0.5, (lane.startY + lane.endY) * 0.5, "#8df8ff", 18, 270, 0.52, 6);
+    }
+    boss.activePattern = null;
   } else if (pattern.type === "sweep") {
     pattern.phase = "active";
     pattern.life = pattern.activeLife;
     pattern.maxLife = pattern.activeLife;
     pattern.angle = pattern.startAngle;
+  } else if (pattern.type === "solarFlare") {
+    pattern.phase = "active";
+    pattern.elapsed = 0;
+    pattern.nextTarget = 0;
+    pattern.life = pattern.targets[pattern.targets.length - 1].delay + 0.12;
+    pattern.maxLife = pattern.life;
   } else if (pattern.type === "bombs") {
     let anyHit = false;
     for (const target of pattern.targets) {
@@ -2083,6 +3195,16 @@ function fireBossPattern(state, pattern) {
     }
     if (!anyHit) state.stats.bossPatternsDodged += 1;
     boss.activePattern = null;
+  } else if (pattern.type === "memorySpiral") {
+    pattern.phase = "active";
+    pattern.life = pattern.activeLife;
+    pattern.maxLife = pattern.activeLife;
+    pattern.hit = false;
+  } else if (pattern.type === "depthCollapse") {
+    pattern.phase = "active";
+    pattern.life = pattern.activeLife;
+    pattern.maxLife = pattern.activeLife;
+    pattern.hitRings = new Set();
   } else if (pattern.type === "rings") {
     pattern.phase = "active";
     pattern.life = Math.max(1.42, 2.38 - boss.stage * 0.28);
@@ -2109,7 +3231,7 @@ function queueNextMultiCharge(state, pattern) {
   boss.vx = 0;
   boss.vy = 0;
   const direction = normalize(state.player.x - boss.x, state.player.y - boss.y);
-  const boundary = rayToEllipseBoundary(boss.x, boss.y, direction, boss.radius * 0.72);
+  const boundary = rayToEllipseBoundary(activeBossFloor(state), boss.x, boss.y, direction, boss.radius * 0.72);
   pattern.phase = "warning";
   pattern.x = boss.x;
   pattern.y = boss.y;
@@ -2124,9 +3246,11 @@ function queueNextMultiCharge(state, pattern) {
   pattern.angle = Math.atan2(direction.y, direction.x);
   pattern.radius = boundary.distance;
   pattern.width = boss.radius;
-  pattern.life = 0.32;
-  pattern.maxLife = 0.32;
-  pattern.activeLife = 0.34;
+  const openingAssist = openingWrongEngineChargeAssist(state);
+  pattern.life = openingAssist ? 0.46 : 0.32;
+  pattern.maxLife = pattern.life;
+  pattern.activeLife = openingAssist ? 0.46 : 0.34;
+  pattern.openingAssist = openingAssist;
   pattern.fired = false;
   pattern.hit = false;
   pattern.geometry = createChargeGeometry(boss, state.player, boss.x, boss.y, boundary.x, boundary.y);
@@ -2176,7 +3300,86 @@ function updateBossPattern(state, dt) {
     if (pattern.life <= 0) fireBossPattern(state, pattern);
     return;
   }
-  if (pattern.type === "sweep") {
+  if (pattern.type === "solarFlare") {
+    pattern.elapsed += dt;
+    while (pattern.nextTarget < pattern.targets.length
+      && pattern.targets[pattern.nextTarget].delay <= pattern.elapsed) {
+      const target = pattern.targets[pattern.nextTarget];
+      target.detonated = true;
+      if (Math.hypot(state.player.x - target.x, state.player.y - target.y) <= target.radius + state.player.radius) {
+        if (damagePlayer(state, 24 + boss.stage * 5, "bossSolarFlare")) {
+          target.hit = true;
+          pattern.hit = true;
+          state.stats.bossPatternsHit += 1;
+        }
+      }
+      burst(state, target.x, target.y, "#ffd86a", 18, 280, 0.58, 7);
+      pattern.nextTarget += 1;
+    }
+    if (pattern.life <= 0) {
+      if (!pattern.hit) state.stats.bossPatternsDodged += 1;
+      boss.activePattern = null;
+    }
+  } else if (pattern.type === "memorySpiral") {
+    const progress = clamp(1 - pattern.life / pattern.maxLife, 0, 1);
+    const geometry = pattern.geometry;
+    geometry.centerX = boss.x;
+    geometry.centerY = boss.y;
+    pattern.x = boss.x;
+    pattern.y = boss.y;
+    pattern.angle = geometry.baseAngle + progress * TAU * geometry.rotations;
+    for (const segment of geometry.segments) {
+      const angle = pattern.angle + segment.index * TAU / geometry.armCount;
+      segment.angle = angle;
+      segment.startX = boss.x + Math.cos(angle) * geometry.innerRadius;
+      segment.startY = boss.y + Math.sin(angle) * geometry.innerRadius;
+      segment.endX = boss.x + Math.cos(angle) * geometry.outerRadius;
+      segment.endY = boss.y + Math.sin(angle) * geometry.outerRadius;
+    }
+    if (!pattern.hit && geometry.segments.some((segment) => (
+      pointLineDistance(
+        state.player.x,
+        state.player.y,
+        segment.startX,
+        segment.startY,
+        segment.endX,
+        segment.endY,
+      ) <= segment.collisionHalfWidth
+    ))) {
+      if (damagePlayer(state, 22 + boss.stage * 5, "bossMemorySpiral")) {
+        pattern.hit = true;
+        state.stats.bossPatternsHit += 1;
+      }
+    }
+    if (pattern.life <= 0) {
+      if (!pattern.hit) state.stats.bossPatternsDodged += 1;
+      boss.activePattern = null;
+    }
+  } else if (pattern.type === "depthCollapse") {
+    const progress = clamp(1 - pattern.life / pattern.maxLife, 0, 1);
+    const geometry = pattern.geometry;
+    geometry.centerX = boss.x;
+    geometry.centerY = boss.y;
+    pattern.x = boss.x;
+    pattern.y = boss.y;
+    const playerDistance = Math.hypot(state.player.x - boss.x, state.player.y - boss.y);
+    for (let ring = 0; ring < geometry.ringCount; ring += 1) {
+      const radius = geometry.startRadii[ring]
+        + (geometry.endRadius - geometry.startRadii[ring]) * progress;
+      geometry.radii[ring] = radius;
+      if (pattern.hitRings.has(ring)) continue;
+      if (Math.abs(playerDistance - radius) <= geometry.collisionHalfWidth) {
+        if (damagePlayer(state, 18 + boss.stage * 4, "bossDepthCollapse")) {
+          pattern.hitRings.add(ring);
+          state.stats.bossPatternsHit += 1;
+        }
+      }
+    }
+    if (pattern.life <= 0) {
+      if (pattern.hitRings.size === 0) state.stats.bossPatternsDodged += 1;
+      boss.activePattern = null;
+    }
+  } else if (pattern.type === "sweep") {
     const progress = 1 - pattern.life / pattern.maxLife;
     pattern.angle = pattern.startAngle + (pattern.endAngle - pattern.startAngle) * progress;
     const endX = boss.x + Math.cos(pattern.angle) * pattern.radius;
@@ -2239,7 +3442,9 @@ function updateBossPattern(state, dt) {
       pattern.geometry.currentX = boss.x;
       pattern.geometry.currentY = boss.y;
       if (pointLineDistance(state.player.x, state.player.y, previousX, previousY, boss.x, boss.y) <= pattern.geometry.collisionRadius) {
-        const chargeDamage = Math.max(108, state.player.maxHp * 0.36) + boss.stage * 8;
+        const chargeDamage = openingWrongEngineChargeAssist(state)
+          ? Math.max(82, state.player.maxHp * 0.27) + 6
+          : Math.max(108, state.player.maxHp * 0.36) + boss.stage * 8;
         if (damagePlayer(state, chargeDamage, "bossCharge", {
           critical: true,
           stun: BOSS_CONTACT_STUN,
@@ -2290,12 +3495,15 @@ function updateBoss(state, dt) {
     && boss.activePattern?.phase === "active";
   const warning = boss.activePattern?.phase === "warning";
   if (!charging && !warning && boss.weakness <= 0 && boss.transformTimer <= 0) {
-    const desiredX = GAME_WIDTH * 0.76 + Math.sin(state.phaseTime * 0.43) * 125;
-    const desiredY = GAME_HEIGHT * 0.5 + Math.sin(state.phaseTime * 0.71) * 190;
+    const arena = activeArena(state);
+    const desiredX = (state.expedition ? WORLD_WIDTH : GAME_WIDTH) * 0.76
+      + Math.sin(state.phaseTime * 0.43) * (state.expedition ? 190 : 125);
+    const desiredY = (state.expedition ? WORLD_HEIGHT : GAME_HEIGHT) * 0.5
+      + Math.sin(state.phaseTime * 0.71) * (state.expedition ? 265 : 190);
     boss.vx = (desiredX - boss.x) * 0.65;
     boss.vy = (desiredY - boss.y) * 0.65;
-    boss.x = clamp(boss.x + boss.vx * dt, ARENA.left + boss.radius, ARENA.right - boss.radius);
-    boss.y = clamp(boss.y + boss.vy * dt, ARENA.top + boss.radius, ARENA.bottom - boss.radius);
+    boss.x = clamp(boss.x + boss.vx * dt, arena.left + boss.radius, arena.right - boss.radius);
+    boss.y = clamp(boss.y + boss.vy * dt, arena.top + boss.radius, arena.bottom - boss.radius);
   } else if (warning || boss.weakness > 0) {
     boss.vx = 0;
     boss.vy = 0;
@@ -2317,7 +3525,7 @@ function updateBoss(state, dt) {
       state.player.y = boss.y + direction.y * separation;
       state.player.vx = direction.x * 150;
       state.player.vy = direction.y * 150;
-      clampPlayerToFloor(state.player);
+      clampPlayerToFloor(state.player, state.expedition);
       boss.contactCooldown = BOSS_CONTACT_COOLDOWN;
       state.shake = Math.max(state.shake, 22);
       emit(state, "bossContactHit", { damage: contactDamage, stun: BOSS_CONTACT_STUN, cooldown: BOSS_CONTACT_COOLDOWN });
@@ -2349,27 +3557,40 @@ function updateBoss(state, dt) {
 function updateEffects(state, dt) {
   state.shake = Math.max(0, state.shake - dt * 28);
   state.flash = Math.max(0, state.flash - dt * 2.4);
-  for (const particle of state.particles) {
-    particle.life -= dt;
-    particle.x += particle.vx * dt;
-    particle.y += particle.vy * dt;
-    particle.vx *= Math.pow(0.04, dt);
-    particle.vy *= Math.pow(0.04, dt);
+  if (state.particles.length > 0) {
+    const particleDamping = Math.pow(0.04, dt);
+    for (const particle of state.particles) {
+      particle.life -= dt;
+      particle.x += particle.vx * dt;
+      particle.y += particle.vy * dt;
+      particle.vx *= particleDamping;
+      particle.vy *= particleDamping;
+    }
+    compact(state.particles, keepPositiveLife);
   }
-  compact(state.particles, (particle) => particle.life > 0);
   for (const text of state.texts) {
     text.life -= dt;
     text.y += text.vy * dt;
   }
-  compact(state.texts, (text) => text.life > 0);
+  compact(state.texts, keepPositiveLife);
   for (const chain of state.chains) {
     chain.life -= dt;
     chain.alpha = clamp(chain.life / Math.max(0.001, chain.maxLife), 0, 1);
   }
-  compact(state.chains, (chain) => chain.life > 0);
+  compact(state.chains, keepPositiveLife);
   for (const shockwave of state.shockwaves) shockwave.life -= dt;
-  compact(state.shockwaves, (shockwave) => shockwave.life > 0);
-  compact(state.telegraphs, (telegraph) => telegraph === state.boss.activePattern || telegraph.life > 0);
+  compact(state.shockwaves, keepPositiveLife);
+  for (const portal of state.spawnPortals) portal.life -= dt;
+  compact(state.spawnPortals, keepPositiveLife);
+  for (const telegraph of state.telegraphs) {
+    if (telegraph !== state.boss.activePattern) telegraph.life = finite(telegraph.life) - dt;
+  }
+  let write = 0;
+  for (let read = 0; read < state.telegraphs.length; read += 1) {
+    const telegraph = state.telegraphs[read];
+    if (telegraph === state.boss.activePattern || telegraph.life > 0) state.telegraphs[write++] = telegraph;
+  }
+  state.telegraphs.length = write;
 }
 
 export function stepSwarm(state, input, dt) {
@@ -2377,6 +3598,7 @@ export function stepSwarm(state, input, dt) {
   const delta = clamp(finite(dt, 0), 0, 0.05);
   if (delta <= 0) return state;
   if (state.levelupPending) return state;
+  if (state.expedition?.awaitingBossEntry) return state;
 
   state.time = Math.min(state.duration, state.time + delta);
   state.timeLeft = Math.max(0, state.duration - state.time);
@@ -2390,9 +3612,10 @@ export function stepSwarm(state, input, dt) {
   }
 
   updatePlayer(state, input, delta);
-  if (input?.supportPressed && state.player.stunTimer <= 0) summonSupportSquad(state);
+  updateExpedition(state, input, delta);
+  updateManualAbilities(state, input, delta);
   updateOverdrive(state, delta);
-  if (state.player.stunTimer <= 0) updateAutoWeapons(state, delta);
+  updateAutoWeapons(state, delta);
   updateAllies(state, delta);
 
   if (state.phase === "swarm") {
@@ -2403,6 +3626,7 @@ export function stepSwarm(state, input, dt) {
     updateProjectiles(state, delta);
     updateEnemyProjectiles(state, delta);
     updatePickups(state, delta);
+    updateHealingKits(state, delta);
     updateSwarmSpawning(state, delta);
   } else if (state.phase === "boss") {
     updateBoss(state, delta);
@@ -2412,6 +3636,7 @@ export function stepSwarm(state, input, dt) {
     updateEnemyProjectiles(state, delta);
   }
 
+  syncAegisWardGeometry(state);
   updateLevelFlow(state);
   updateEffects(state, delta);
   return state;
@@ -2431,14 +3656,57 @@ export function getSwarmHud(state) {
   const chainMax = cooldownMax("chain", state.support.chainCooldown, state.support.chainCooldownMax);
   const novaMax = cooldownMax("nova", state.support.novaCooldown, state.support.novaCooldownMax);
   const airstrikeMax = cooldownMax("airstrike", state.support.airstrikeCooldown, state.support.airstrikeCooldownMax);
-  const laserMax = cooldownMax("omegaLaser", state.support.laserCooldown, state.support.laserCooldownMax);
+  const omegaLaserMax = cooldownMax("omegaLaser", state.support.omegaLaserCooldown, state.support.omegaLaserCooldownMax);
+  const manualHud = (ability) => {
+    const definition = MANUAL_ACTIVE_ABILITIES[ability];
+    const entry = state.manualAbilities[ability];
+    const maxCooldown = entry.cooldown > 0 ? entry.maxCooldown : manualAbilityCooldownDuration(state, ability);
+    return {
+      id: definition.id,
+      name: definition.name,
+      rank: 1,
+      upgradeRank: 0,
+      base: true,
+      cooldown: Math.max(0, entry.cooldown),
+      maxCooldown,
+      cooldownMax: maxCooldown,
+      ready: entry.cooldown <= 0.05,
+      available: manualAbilityAvailable(state, ability),
+      maxRank: 3,
+      manual: true,
+      ultimate: ability === "helixTempest",
+      key: definition.key,
+    };
+  };
   return {
+    regionId: state.regionId,
+    chapterId: state.chapterId,
     phase: state.phase,
     status: state.status,
     time: state.time,
     timeLeft: state.timeLeft,
     remaining: state.timeLeft,
     phaseTime: state.phaseTime,
+    expedition: state.expedition ? {
+      distance: state.expedition.distance,
+      routeLength: state.expedition.routeLength,
+      bossGate: state.expedition.bossGate,
+      progress: state.expedition.progress,
+      checkpoint: state.expedition.checkpointIndex,
+      objective: state.expedition.objective,
+      reachedGate: state.expedition.reachedGate,
+      gateLocked: state.expedition.gateLocked,
+      gateUnlocked: state.expedition.gateUnlocked,
+      awaitingBossEntry: state.expedition.awaitingBossEntry,
+      bossEntryConfirmed: state.expedition.bossEntryConfirmed,
+      bossRoom: state.expedition.bossRoom,
+      traces: state.expedition.traces.map((trace) => ({
+        id: trace.id,
+        kind: trace.kind,
+        distance: trace.distance,
+        triggered: trace.triggered,
+      })),
+    } : null,
     enemiesRemaining: remaining,
     remainingEnemies: remaining,
     totalEnemies: state.enemyBudget,
@@ -2448,6 +3716,7 @@ export function getSwarmHud(state) {
       : 1,
     spawnedEnemies: state.spawnedEnemies,
     liveEnemies: state.enemies.length,
+    enemyPressureCap: getEnemyPressureCap(state),
     surge: {
       warning: state.surgeWarning ? { ...state.surgeWarning } : null,
       active: state.activeSurge ? { ...state.activeSurge } : null,
@@ -2462,6 +3731,12 @@ export function getSwarmHud(state) {
       maxHp: player.maxHp,
       shield: player.shield,
       shieldMax: player.shieldMax,
+      aegisWardShield: player.aegisWardShield,
+      aegisWardShieldMax: player.aegisWardShieldMax,
+      aegisWardTimer: player.aegisWardTimer,
+      aegisWardDuration: player.aegisWardDuration,
+      aegisWardDamageReduction: player.aegisWardDamageReduction,
+      statusImmune: player.aegisWardTimer > 0,
       dashCooldown: player.dashCooldown,
       dashMax: player.dashMax,
       dashInvulnerability: player.dashInvulnerability + state.build.skills.dash * 0.05,
@@ -2509,19 +3784,13 @@ export function getSwarmHud(state) {
     abilities: {
       chain: { rank: state.build.skills.chain, cooldown: Math.max(0, state.support.chainCooldown), maxCooldown: chainMax, cooldownMax: chainMax, maxRank: 3 },
       nova: { rank: state.build.skills.nova, cooldown: Math.max(0, state.support.novaCooldown), maxCooldown: novaMax, cooldownMax: novaMax, maxRank: 3 },
-      airstrike: { rank: state.build.skills.airstrike, cooldown: Math.max(0, state.support.airstrikeCooldown), maxCooldown: airstrikeMax, cooldownMax: airstrikeMax, maxRank: 3, ultimate: true },
-      omegaLaser: { rank: state.build.skills.omegaLaser, cooldown: Math.max(0, state.support.laserCooldown), maxCooldown: laserMax, cooldownMax: laserMax, maxRank: 3, ultimate: true },
-      squadRecall: {
-        rank: 1,
-        cooldown: Math.max(0, state.support.squadCooldown),
-        maxCooldown: SQUAD_RECALL_COOLDOWN,
-        cooldownMax: SQUAD_RECALL_COOLDOWN,
-        duration: Math.max(0, state.support.squadDuration),
-        maxRank: 1,
-        special: true,
-        key: "F",
-      },
+      airstrike: { rank: state.build.skills.airstrike, cooldown: Math.max(0, state.support.airstrikeCooldown), maxCooldown: airstrikeMax, cooldownMax: airstrikeMax, maxRank: 3 },
+      omegaLaser: { rank: state.build.skills.omegaLaser, cooldown: Math.max(0, state.support.omegaLaserCooldown), maxCooldown: omegaLaserMax, cooldownMax: omegaLaserMax, maxRank: 3 },
+      gravitySnare: manualHud("gravitySnare"),
+      aegisWard: manualHud("aegisWard"),
+      stratosRun: manualHud("stratosRun"),
+      helixTempest: manualHud("helixTempest"),
     },
-    stats: { ...state.stats },
+    stats: { ...state.stats, activeAbilityCasts: { ...state.stats.activeAbilityCasts } },
   };
 }

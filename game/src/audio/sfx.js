@@ -19,6 +19,9 @@ const EVENT_COOLDOWNS_MS = {
   click: 36,
   dash: 80,
   playerHit: 90,
+  explosion: 110,
+  spawnGate: 260,
+  autoToggle: 80,
   boss: 280,
   merge: 500,
   bossTelegraph: 260,
@@ -39,6 +42,9 @@ const EVENT_VOICE_COSTS = {
   enemyShot: 4,
   enemyHit: 2,
   playerHit: 2,
+  explosion: 5,
+  spawnGate: 3,
+  autoToggle: 2,
   shieldHit: 2,
   shield: 2,
   emp: 2,
@@ -75,6 +81,7 @@ const PRIORITY_EVENTS = new Set([
   "bossBreak",
   "patternFail",
   "bossDeath",
+  "explosion",
   "victory",
 ]);
 
@@ -300,12 +307,28 @@ export function createSfxEngine() {
         weaponCrack({ body: 105, snap: 1800, volume: 0.038, tail: 0.21 });
         break;
       case "enemyHit":
-        noise({ duration: 0.09, volume: 0.042, filterFrequency: 1150, q: 1.2, wet: 0.28 });
-        tone({ frequency: 240, endFrequency: 68, duration: 0.11, type: "square", volume: 0.028, filterFrequency: 1300 });
+        noise({ duration: 0.045, volume: 0.048, filterType: "highpass", filterFrequency: 2600, q: 0.55, wet: 0.16 });
+        noise({ duration: 0.12, volume: 0.034, filterFrequency: 980, q: 1.25, wet: 0.3 });
+        tone({ frequency: 330, endFrequency: 72, duration: 0.13, type: "square", volume: 0.03, filterFrequency: 1450 });
         break;
       case "playerHit":
         noise({ duration: 0.22, volume: 0.065, filterFrequency: 720, q: 0.65, wet: 0.18 });
         tone({ frequency: 130, endFrequency: 42, duration: 0.34, type: "sawtooth", volume: 0.055, filterFrequency: 980 });
+        break;
+      case "explosion":
+        noise({ duration: 0.055, volume: 0.09, filterType: "highpass", filterFrequency: 2100, q: 0.3 });
+        noise({ duration: 0.52, volume: 0.065, delay: 0.012, filterFrequency: 380, q: 0.38, wet: 0.62 });
+        tone({ frequency: 105, endFrequency: 34, duration: 0.48, type: "sawtooth", volume: 0.078, filterFrequency: 760, wet: 0.28 });
+        tone({ frequency: 52, endFrequency: 28, duration: 0.6, type: "sine", volume: 0.085, delay: 0.018 });
+        break;
+      case "spawnGate":
+        tone({ frequency: 92, endFrequency: 420, duration: 0.42, type: "sawtooth", volume: 0.038, filterFrequency: 1500, wet: 0.46 });
+        noise({ duration: 0.34, volume: 0.028, filterType: "bandpass", filterFrequency: 820, q: 0.7, wet: 0.5 });
+        tone({ frequency: 740, endFrequency: 1260, duration: 0.2, delay: 0.18, type: "square", volume: 0.018, wet: 0.38 });
+        break;
+      case "autoToggle":
+        tone({ frequency: 420, endFrequency: 860, duration: 0.09, type: "square", volume: 0.024, filterFrequency: 1900, wet: 0.18 });
+        tone({ frequency: 860, endFrequency: 610, duration: 0.11, delay: 0.07, type: "triangle", volume: 0.02, wet: 0.2 });
         break;
       case "shieldHit":
         noise({ duration: 0.1, volume: 0.03, filterType: "highpass", filterFrequency: 3200, wet: 0.4 });
@@ -373,6 +396,10 @@ export function createSfxEngine() {
       case "enemyAlert":
         tone({ frequency: 620, endFrequency: 780, duration: 0.09, type: "square", volume: 0.026, filterFrequency: 1700, wet: 0.2 });
         tone({ frequency: 420, endFrequency: 360, duration: 0.13, delay: 0.11, type: "square", volume: 0.022, filterFrequency: 1400, wet: 0.22 });
+        break;
+      case "collect":
+        tone({ frequency: 420, endFrequency: 720, duration: 0.16, type: "sine", volume: 0.028, wet: 0.36 });
+        tone({ frequency: 720, endFrequency: 1040, duration: 0.2, delay: 0.08, type: "triangle", volume: 0.022, wet: 0.42 });
         break;
       case "detectionTick":
         tone({ frequency: 880, endFrequency: 620, duration: 0.07, type: "square", volume: 0.026, filterFrequency: 1900 });
