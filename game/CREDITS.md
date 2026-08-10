@@ -666,6 +666,25 @@ OMEGA의 광선 길이, Q/E의 원형 범위와 실제 피해·보호 타이밍�
 RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사용 회선을 구분해 설명하며,
 이후 HAVEN-09 관제실에서 동일 브리핑을 다시 열 수 있습니다.
 
+### 활성 대사 포트레이트 매핑 — 기존 프로젝트 원본 재사용
+
+- 신규 생성·외부 이미지: 없음
+- AEGIS: `public/assets/overload/hero/survivor-portrait.png`
+- RHEA 및 시나리오의 `OPERATOR` 화자:
+  `public/assets/overload/ui/npcs/rhea-control-officer.png`
+- HANA·ILYA·LARK: 기존
+  `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`의 0·1·2번 프레임
+- THE WRONG ENGINE: `public/assets/overload/boss/wrong-engine-forms-atlas.png`
+- MIRROR TYRANT:
+  `public/assets/overload/regions/glass-dune/boss-forms-atlas.png`
+- DROWNED ORACLE:
+  `public/assets/overload/regions/abyssal-archive/boss-forms-atlas.png`
+
+주인공·관제관·기지 NPC는 위에 기록된 기존 원본만 화자별로 다시 연결합니다. 지역 보스는 선택
+지역의 3단계 형상 아틀라스에서 현재 단계 프레임을 사용하고, 해당 대사 패널과 보스 단계가 필요할
+때만 마운트합니다. 이 매핑을 위해 별도의 NPC 일러스트를 새로 만들거나 외부 이미지를 추가하지
+않았습니다.
+
 ### 초반 스킬 가이드 실전 예시 이미지
 
 - 생성일: 2026-08-10
@@ -813,24 +832,9 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 - 여성 캐릭터 피격 음성은 외부 파일 없이 신뢰할 수 있는 사람 음질로 합성할 수 없어 현재 포함하지
   않습니다. 사용자 제공 또는 생성 권리가 명확한 짧은 mono WAV/OGG 변형을 받으면 기존 전체
   사운드 토글과 동시 음성 제한에 연결할 수 있습니다.
-
-## Browser-native character TTS
-
-- 기반 코드: `src/audio/characterTts.js`
-- 현재 상태: 첫 스킬 브리핑과 실전 HUD 가이드의 RHEA, HAVEN-09 NPC 대화, AEGIS·관제실·
-  세 지역 보스의 활성 시나리오 대사에 연결했습니다. 문장 전환·화면 종료·전체 음소거 시 이전
-  발화를 취소해 음성이 겹치지 않습니다.
-- 음성 출처: 외부 TTS 서비스, 음성 복제 모델 또는 캐릭터 전용 음원 파일이 아니라 사용자의
-  브라우저/OS가 제공하는 Web Speech API와 로컬에 설치된 음성 목록입니다.
-- 선택 방식: `ko-KR`과 기타 한국어 음성을 우선하며 AEGIS·RHEA·HANA·ILYA·LARK·OPERATOR,
-  WRONG ENGINE·MIRROR TYRANT·DROWNED ORACLE에 각각 결정적인 pitch/rate/volume 프로필을
-  적용합니다. 프로필은 브라우저 음색을 조절할 뿐 별도 성우 음성이나 전용 생성 음성을 만들지 않습니다.
-- 재생 제약: 첫 사용자 클릭·키·터치 제스처 이후에만 발화하고, Web Speech API가 없거나
-  브라우저 정책으로 차단된 환경에서는 대화 진행을 멈추지 않은 채 무음으로 폴백하도록 설계했습니다.
-- 장치 차이: 실제 목소리, 발음과 음질은 장치·운영체제·브라우저·설치된 한국어 음성 팩에 따라
-  달라지며 프로젝트가 동일한 결과를 보증하지 않습니다. 2026-08-10 Codex 인앱 브라우저에는
-  Web Speech API가 노출되지 않아 실제 음성은 무음 폴백으로 확인했고, 모의 음성 합성기 테스트로
-  선택·교체·취소·음소거 계약을 검증했습니다.
+- 캐릭터 대사는 텍스트와 화자별 일러스트로만 제공하며, 런타임 TTS·브라우저 음성 합성·음성
+  복제·외부 음성 서비스는 포함하지 않습니다. 이 제거는 위의 절차적 효과음과 사용자 제공 BGM에
+  영향을 주지 않습니다.
 
 ## Legacy project originals
 
@@ -858,4 +862,10 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 - Rajdhani — SIL Open Font License 1.1
 - IBM Plex Mono — SIL Open Font License 1.1
 
-정확한 버전은 `package-lock.json`에 고정되어 있습니다.
+Rajdhani와 IBM Plex Mono는 번들 크기와 한국어 가독성을 위해 Latin 서브셋만 로드합니다.
+Rajdhani는 영문 브랜드·표제 장식, IBM Plex Mono는 영문 텔레메트리·코드·키·숫자에만
+사용합니다. 한국어 본문·대사·버튼은 별도 웹폰트 다운로드 없이 `Pretendard Variable`,
+Pretendard, `Noto Sans KR`, `Apple SD Gothic Neo`, `Malgun Gothic`/`맑은 고딕`, system-ui와
+플랫폼 sans 순서의 로컬 시스템 서체를 사용하므로 추가 폰트 파일 출처는 없습니다.
+
+정확한 의존성 버전은 `package-lock.json`에 고정되어 있습니다.
