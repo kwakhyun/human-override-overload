@@ -168,3 +168,17 @@ test("airstrike banner dedupe and independent manual ability SFX stay separate",
   const onEvent = app.slice(onEventStart, onEventEnd);
   assert.ok(onEvent.indexOf("sfx.play(sound)") < onEvent.indexOf("showBanner(event)"), "SFX must play before optional banner suppression");
 });
+
+test("result actions keep retry and base return as two readable responsive buttons", async () => {
+  const [app, styles] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
+  ]);
+  const result = app.slice(app.indexOf("function ResultScreen"), app.indexOf("function App"));
+  assert.match(result, /className="result-actions"/);
+  assert.match(result, /같은 구역 재도전/);
+  assert.match(result, /className="result-base-return"[\s\S]*헤이븐-09로 귀환[\s\S]*<HouseLine/);
+  assert.match(styles, /\.result-actions \{[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /\.result-actions \.primary-cta,[\s\S]*\.result-base-return \{[\s\S]*width: 100%;[\s\S]*min-width: 0;/);
+  assert.match(styles, /@media \(max-width: 1120px\)[\s\S]*\.result-actions \{ grid-template-columns: 1fr; \}/);
+});

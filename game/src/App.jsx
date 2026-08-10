@@ -10,6 +10,7 @@ import {
   Lightning,
   MapPin,
   MapTrifold,
+  HouseLine,
   NavigationArrow,
   Play,
   Pulse,
@@ -1937,8 +1938,10 @@ function ResultScreen({ result, assets, region, onRestart, onBase }) {
           <span><small>명중률</small><b>{accuracy}%</b></span>
           <span><small>작전 시간</small><b>{formatTime(result?.time || 0)}</b></span>
         </div>
-        <button className="primary-cta" type="button" onClick={onRestart}><span>같은 구역 재도전</span><ArrowCounterClockwise weight="bold" /></button>
-        {onBase && <button className="result-base-return" type="button" onClick={onBase}>헤이븐-09로 귀환</button>}
+        <div className="result-actions">
+          <button className="primary-cta" type="button" onClick={onRestart}><span>같은 구역 재도전</span><ArrowCounterClockwise weight="bold" /></button>
+          {onBase && <button className="result-base-return" type="button" onClick={onBase}><span>헤이븐-09로 귀환</span><HouseLine weight="bold" /></button>}
+        </div>
       </section>
     </main>
   );
