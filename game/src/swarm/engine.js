@@ -233,6 +233,14 @@ export function getEnemyPressureCap(state) {
   ));
 }
 
+export function getSniperLockCap(state) {
+  if (!state?.expedition) return 5;
+  const routeProgress = clamp(finite(state.expedition.progress), 0, 1);
+  if (routeProgress < 0.34) return 3;
+  if (routeProgress < 0.72) return 5;
+  return 7;
+}
+
 function activeBossFloor(state) {
   return state?.expedition ? EXPEDITION_FLOOR_ELLIPSE : FLOOR_ELLIPSE;
 }
@@ -1321,6 +1329,7 @@ function spawnXpPickup(state, enemy) {
 
 function killEnemy(state, enemy, source = "weapon") {
   if (enemy.dead) return;
+  cancelSniperAim(state, enemy);
   enemy.dead = true;
   enemy.hp = 0;
   enemy.deathTimer = enemy.elite ? 0.46 : 0.32;
@@ -1340,6 +1349,16 @@ function killEnemy(state, enemy, source = "weapon") {
   burst(state, enemy.x, enemy.y, enemy.elite ? "#ffe06b" : enemy.color, enemy.elite ? 16 : 6, enemy.elite ? 250 : 150, 0.55, enemy.elite ? 7 : 4);
   if (enemy.elite) addText(state, "ELITE DOWN", enemy.x, enemy.y - 28, "#ffe371", 0.9);
   if (state.killedEnemies % 4 === 0 || enemy.elite) emit(state, "enemyKilled", { type: enemy.type, elite: enemy.elite, source });
+}
+
+function cancelSniperAim(state, enemy) {
+  if (!enemy || finite(enemy.aimTimer) <= 0) return false;
+  enemy.aimTimer = 0;
+  enemy.attackState = "idle";
+  for (const telegraph of state.telegraphs) {
+    if (telegraph.type === "sniperAim" && telegraph.ownerEnemyId === enemy.id) telegraph.life = 0;
+  }
+  return true;
 }
 
 function damageEnemy(state, enemy, amount, source = "weapon") {
@@ -1653,6 +1672,14 @@ function updateEnemies(state, dt) {
   const arena = activeArena(state);
   let deathDamping = 0;
   const moveBlendRate = 1 - Math.exp(-dt * 10);
+  const sniperLockCap = getSniperLockCap(state);
+  let activeSniperLocks = 0;
+  for (const enemy of state.enemies) {
+    if (enemy.dead || finite(enemy.aimTimer) <= 0 || finite(enemy.disabledTimer) > 0) continue;
+    const role = enemy.combatRole ?? ENEMY_DATA[enemy.type]?.role;
+    const deepPursuit = Boolean(state.expedition && player.x - enemy.x > EXPEDITION_DEEP_PURSUIT_DISTANCE);
+    if (role === "sniper" && !deepPursuit) activeSniperLocks += 1;
+  }
   for (const enemy of state.enemies) {
     if (enemy.dead) {
       if (deathDamping === 0) deathDamping = Math.pow(0.018, dt);
@@ -1692,8 +1719,8 @@ function updateEnemies(state, dt) {
     const towardY = dy / distance;
     const deepPursuit = Boolean(state.expedition && dx > EXPEDITION_DEEP_PURSUIT_DISTANCE);
     if (deepPursuit && wasAiming) {
-      enemy.aimTimer = 0;
-      enemy.attackState = "idle";
+      cancelSniperAim(state, enemy);
+      activeSniperLocks = Math.max(0, activeSniperLocks - 1);
       wasAiming = false;
     }
     if (deepPursuit) enemy.burstShots = 0;
@@ -1740,6 +1767,7 @@ function updateEnemies(state, dt) {
       emit(state, "enemyShot", { role, kind: "rifleman", x: enemy.x, y: enemy.y });
     }
     if (role === "sniper" && wasAiming && enemy.aimTimer <= 0) {
+      activeSniperLocks = Math.max(0, activeSniperLocks - 1);
       const shot = normalize(enemy.lockedAimX - enemy.lockedStartX, enemy.lockedAimY - enemy.lockedStartY);
       const shotAngle = Math.atan2(shot.y, shot.x);
       pushEnemyProjectile(state, enemy.lockedStartX, enemy.lockedStartY, shotAngle, enemy.elite ? 1120 : 980, enemy.damage, "sniper", 7, 2.2);
@@ -1750,7 +1778,14 @@ function updateEnemies(state, dt) {
       enemy.animationTimer = 0.32;
       enemy.recoil = 1.25;
       emit(state, "enemyShot", { role, kind: "sniper", x: enemy.x, y: enemy.y });
-    } else if (!deepPursuit && role === "sniper" && !wasAiming && distance < 1020 && enemy.shootCooldown <= 0) {
+    } else if (
+      !deepPursuit
+      && role === "sniper"
+      && !wasAiming
+      && distance < 1020
+      && enemy.shootCooldown <= 0
+      && activeSniperLocks < sniperLockCap
+    ) {
       const lead = 0.42;
       enemy.lockedStartX = enemy.x;
       enemy.lockedStartY = enemy.y;
@@ -1762,6 +1797,7 @@ function updateEnemies(state, dt) {
       state.telegraphs.push({
         id: ++state.nextEntityId,
         type: "sniperAim",
+        ownerEnemyId: enemy.id,
         enemy: true,
         life: enemy.aimDuration,
         maxLife: enemy.aimDuration,
@@ -1778,6 +1814,7 @@ function updateEnemies(state, dt) {
       enemy.attackTimer = enemy.aimDuration;
       enemy.animationState = "attack";
       enemy.animationTimer = enemy.aimDuration;
+      activeSniperLocks += 1;
       emit(state, "sniperLock", { x: enemy.x, y: enemy.y, targetX: enemy.lockedAimX, targetY: enemy.lockedAimY });
     }
     const contactDx = player.x - enemy.x;
@@ -2166,7 +2203,7 @@ function triggerEmpPulse(state) {
     enemy.disabledTimer = Math.max(finite(enemy.disabledTimer), duration);
     enemy.attackCooldown = Math.max(finite(enemy.attackCooldown), duration);
     enemy.shootCooldown = Math.max(finite(enemy.shootCooldown), duration);
-    enemy.aimTimer = 0;
+    cancelSniperAim(state, enemy);
     enemy.burstShots = 0;
     enemy.vx = 0;
     enemy.vy = 0;

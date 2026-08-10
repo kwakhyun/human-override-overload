@@ -119,6 +119,8 @@ export function createOverloadGame(
         liveEnemies: state?.enemies?.length ?? 0,
         playerProjectiles: state?.projectiles?.length ?? 0,
         enemyProjectiles: state?.enemyProjectiles?.length ?? 0,
+        sniperLocks: state?.enemies?.filter((enemy: any) => enemy?.aimTimer > 0).length ?? 0,
+        sniperTelegraphs: state?.telegraphs?.filter((telegraph: any) => telegraph?.type === "sniperAim").length ?? 0,
         bossStage: state?.boss?.stage,
         bossPattern: state?.boss?.activePattern?.type ?? null,
       };

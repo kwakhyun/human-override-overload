@@ -14,6 +14,7 @@ import {
   createSwarmState,
   drainSwarmEvents,
   getEnemyPressureCap,
+  getSniperLockCap,
   getSwarmHud,
   setSwarmAim,
   setSwarmScreenAim,
@@ -461,6 +462,40 @@ test("SOVEREIGN fields suicide drones, burst riflemen, and warned long-range sni
   stepFor(sniperState, createSwarmInput(), 0.92);
   assert.ok(sniperState.enemyProjectiles.some((projectile) => projectile.kind === "sniper"));
   assert.ok(drainSwarmEvents(sniperState).some((event) => event.type === "enemyShot" && event.kind === "sniper"));
+});
+
+test("sniper lanes stay readable under pressure and cancelled locks disappear", () => {
+  const state = createSwarmState({ expedition: true, regionId: "glass-dune", random: () => 0.5 });
+  const template = state.enemies.find((enemy) => enemy.combatRole === "sniper" && !enemy.elite);
+  assert.ok(template);
+  state.enemies = Array.from({ length: 16 }, (_, index) => ({
+    ...template,
+    id: 10_000 + index,
+    x: state.player.x + 560 + (index % 4) * 34,
+    y: state.player.y - 210 + Math.floor(index / 4) * 140,
+    spawnDelay: 0,
+    shootCooldown: 0,
+    aimTimer: 0,
+    disabledTimer: 0,
+    dead: false,
+  }));
+  state.spawnedEnemies = state.enemyBudget;
+  delayPlayerWeapons(state);
+  state.player.invulnerability = 30;
+
+  assert.equal(getSniperLockCap(state), 3);
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.enemies.filter((enemy) => enemy.aimTimer > 0).length, 3);
+  assert.equal(state.telegraphs.filter((telegraph) => telegraph.type === "sniperAim").length, 3);
+  assert.equal(drainSwarmEvents(state).filter((event) => event.type === "sniperLock").length, 3);
+
+  state.player.x += 1800;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.enemies.filter((enemy) => enemy.aimTimer > 0).length, 0);
+  assert.equal(state.telegraphs.filter((telegraph) => telegraph.type === "sniperAim").length, 0);
+
+  state.expedition.progress = 0.9;
+  assert.equal(getSniperLockCap(state), 7);
 });
 
 test("deterministic route healing kits repair hull on contact", () => {

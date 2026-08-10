@@ -90,6 +90,30 @@ function applyDebugScene(game: any, debugScene: string | null) {
     for (const ability of Object.values(game.manualAbilities) as any[]) ability.cooldown = 0;
     return;
   }
+  if (debugScene === "sniperPressure") {
+    game.player.invulnerability = 30;
+    for (const key of Object.keys(game.player.fireTimers)) game.player.fireTimers[key] = 3_600;
+    game.levelFlow.firstDeadline = 3_600;
+    game.levelFlow.nextOfferAt = 3_600;
+    for (let index = 0; index < game.enemies.length; index += 1) {
+      const enemy = game.enemies[index];
+      enemy.type = "brute";
+      enemy.combatRole = "sniper";
+      enemy.x = game.player.x + 520 + (index % 6) * 54;
+      enemy.y = game.player.y - 260 + Math.floor(index / 6) * 92;
+      enemy.hp = 1_000_000_000;
+      enemy.maxHp = enemy.hp;
+      enemy.speed = 0;
+      enemy.damage = 0;
+      enemy.spawnDelay = 0;
+      enemy.shootCooldown = 0;
+      enemy.aimTimer = 0;
+      enemy.disabledTimer = 0;
+    }
+    game.spawnedEnemies = game.enemyBudget;
+    game.events.length = 0;
+    return;
+  }
   if (debugScene === "laser") {
     game.player.invulnerability = 30;
     game.build.skills.omegaLaser = 3;

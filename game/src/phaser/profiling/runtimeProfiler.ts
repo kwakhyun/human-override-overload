@@ -17,6 +17,8 @@ export type ProfilingContext = Readonly<{
   liveEnemies?: number;
   playerProjectiles?: number;
   enemyProjectiles?: number;
+  sniperLocks?: number;
+  sniperTelegraphs?: number;
   bossStage?: number;
   bossPattern?: string | null;
 }>;
