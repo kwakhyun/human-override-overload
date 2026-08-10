@@ -1026,12 +1026,19 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 - 적용: 타이틀 화면에서만 metadata-only로 불러와 반복 재생합니다. 브라우저 자동 재생 정책이
   막으면 타이틀의 명시적 음악 버튼이 같은 트랙을 시작하며, 화면을 벗어나면 정지합니다.
 
-## Planned Suno regional music
+## User-provided base and regional background music
 
-- 헤이븐-09 로비, 유리 사구, 심해 기록고용 제작 프롬프트는 `SUNO_BGM_PROMPTS.md`에 기록했습니다.
-- 아직 생성·제공되지 않은 세 음원을 임의의 외부 음악이나 기존 1구역 BGM으로 대체하지 않습니다.
-- 최종 Suno 파일을 제공받으면 사용 플랜·생성 일자·선택 프롬프트·원본 파일명·런타임 경로를 이
-  문서에 추가합니다.
+- 헤이븐-09 로비: 원본 `Last Light in Haven-09.mp3` → 런타임
+  `public/assets/audio/last-light-in-haven-09.mp3`, 3,778,159 bytes,
+  SHA-256 `78B56D8BDE8A0E464213508488C237B850855B8194DC3B8054261807A46AF091`.
+- 2구역 유리 사구: 원본 `2구역_Refraction War.mp3` → 런타임
+  `public/assets/audio/refraction-war-glass-dune.mp3`, 1,374,864 bytes,
+  SHA-256 `3C3D87A9B5A2516615B46D0D0B7B2C139860CBAEFC0D20ADA3340C2A4DC0D874`.
+- 3구역 심해 기록고: 원본 `3구역_Memory Below Pressure.mp3` → 런타임
+  `public/assets/audio/memory-below-pressure-abyssal-archive.mp3`, 1,417,582 bytes,
+  SHA-256 `8D483B6CD68D8DB96A117741A205EC55DD4C7DB93B76586D6652C22E1E53BFCE`.
+- 세 런타임 파일은 사용자가 제공한 원본의 byte-identical 이름 변경 사본이며 재인코딩·편집하지
+  않았습니다. `SUNO_BGM_PROMPTS.md`에는 제작 브리프와 최종 적용 슬롯을 함께 보존합니다.
 
 ## Google Cloud AI-agent callouts
 

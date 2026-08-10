@@ -31,8 +31,7 @@ Instrumental dark sci-fi combat music for ABYSSAL ARCHIVE, a drowned machine mem
 ## 적용 슬롯
 
 - 타이틀: 사용자 제공 `잿빛 하늘 아래` 적용 완료
-- 헤이븐-09 로비: 위 프롬프트로 생성할 새 음원 대기
+- 헤이븐-09 로비: 사용자 제공 `Last Light in Haven-09.mp3` 적용 완료
 - 1구역 오답 엔진 중앙로: 기존 `overload-main-theme.mp3`만 사용
-- 2구역 유리 사구: 위 프롬프트로 생성할 새 음원 대기
-- 3구역 심해 기록고: 위 프롬프트로 생성할 새 음원 대기
-
+- 2구역 유리 사구: 사용자 제공 `2구역_Refraction War.mp3` 적용 완료
+- 3구역 심해 기록고: 사용자 제공 `3구역_Memory Below Pressure.mp3` 적용 완료

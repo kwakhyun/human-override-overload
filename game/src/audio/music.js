@@ -13,9 +13,9 @@ export function resolveMusicTrack(screen, regionId) {
 
 export function musicTrackLabel(screen, regionId) {
   if (screen === "intro") return "잿빛 하늘 아래";
-  if (screen === "base") return "헤이븐-09 로비";
+  if (screen === "base") return "LAST LIGHT IN HAVEN-09";
   if (screen === "game" && regionId === "wrong-engine-core") return "OVERLOAD MAIN THEME";
-  if (screen === "game" && regionId === "glass-dune") return "유리 사구 전투";
-  if (screen === "game" && regionId === "abyssal-archive") return "심해 기록고 전투";
+  if (screen === "game" && regionId === "glass-dune") return "REFRACTION WAR";
+  if (screen === "game" && regionId === "abyssal-archive") return "MEMORY BELOW PRESSURE";
   return "배경음악 없음";
 }

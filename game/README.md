@@ -370,10 +370,11 @@ App 런타임에서는 호출하지 않습니다.
 사격, 금속 피격, 중량 폭발, 적 게이트 개방, XP 흡수, 레벨업, 대시, 위험 경보와 보스 패턴 효과음은 외부 음원 파일 없이
 `src/audio/sfx.js`의 Web Audio 합성으로 생성하는 프로젝트 원본입니다. 타이틀은 사용자가 제공한
 `public/assets/audio/under-ashen-skies-title.mp3`를 metadata-only로 불러와 반복 재생하며, 자동 재생이
-차단되면 타이틀의 명시적 음악 버튼으로 시작합니다. 기존 `overload-main-theme.mp3`는 1구역
-오답 엔진 중앙로 전투에서만 재생합니다. 헤이븐-09, 유리 사구, 심해 기록고는 별도 Suno 음원이
-제공되기 전까지 무음이며 기존 곡으로 임시 대체하지 않습니다. 제작용 프롬프트는
-`SUNO_BGM_PROMPTS.md`에 기록했습니다.
+차단되면 타이틀의 명시적 음악 버튼으로 시작합니다. 헤이븐-09 로비는 `last-light-in-haven-09.mp3`,
+1구역 오답 엔진 중앙로는 기존 `overload-main-theme.mp3`, 2구역 유리 사구는
+`refraction-war-glass-dune.mp3`, 3구역 심해 기록고는
+`memory-below-pressure-abyssal-archive.mp3`를 각각 metadata-only로 불러와 반복 재생합니다.
+출격 영상 중에는 로비 음악을 멈추고 영상 종료 뒤 선택 지역 음악만 시작합니다.
 
 캐릭터 대사는 텍스트와 화자별 일러스트로만 제공합니다. 브라우저 음성 합성·음성 복제는 계속
 사용하지 않습니다. 사용자가 새로 요청한 Q/E/F/R 탑재 AI 영어 안내는 Google Cloud

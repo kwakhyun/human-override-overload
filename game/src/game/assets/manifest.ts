@@ -246,11 +246,11 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
 });
 
 export const TITLE_BGM_PATH = "./assets/audio/under-ashen-skies-title.mp3";
-export const BASE_BGM_PATH = null;
+export const BASE_BGM_PATH = "./assets/audio/last-light-in-haven-09.mp3";
 export const REGION_BGM_PATHS = Object.freeze({
   "wrong-engine-core": "./assets/audio/overload-main-theme.mp3",
-  "glass-dune": null,
-  "abyssal-archive": null,
+  "glass-dune": "./assets/audio/refraction-war-glass-dune.mp3",
+  "abyssal-archive": "./assets/audio/memory-below-pressure-abyssal-archive.mp3",
 });
 
 export const AGENT_VOICE_PATHS = Object.freeze({
