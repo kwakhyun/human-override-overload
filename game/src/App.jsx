@@ -228,6 +228,14 @@ const EVENT_SOUNDS = Object.freeze({
   bossWeakness: "core",
   bossGroggy: "core",
   bossChargeHit: "patternFail",
+  bossParryWindow: "bossTelegraph",
+  bossParrySuccess: "core",
+  bossParryFailed: "patternFail",
+  bossSiren: "alert",
+  bossBombSequenceArmed: "bossTelegraph",
+  bossBombDefused: "collect",
+  bossBombSequenceCleared: "core",
+  bossBombSequenceFailed: "explosion",
   bossContact: "patternFail",
   bossContactHit: "patternFail",
   playerStunned: "patternFail",
@@ -302,6 +310,10 @@ const EVENT_BANNERS = Object.freeze({
   bossContactHit: ["⚠ 본체 충돌", "보스 본체와 충돌해 구동계가 잠시 정지됩니다."],
   playerStunned: ["구동계 교란", "이동과 대시가 잠시 차단됩니다."],
   bossGateLocked: ["보스 구역 봉쇄", "남은 적을 모두 처치해야 입구가 열립니다."],
+  bossSiren: ["⚠ 전역 폭발 경보", "시한폭탄을 화면에 표시된 숫자 순서대로 클릭해 해제하세요."],
+  bossBombSequenceArmed: ["시한폭탄 활성화", "1번부터 차례대로 클릭하세요. 순서가 틀리면 모두 폭발합니다."],
+  bossBombSequenceCleared: ["폭탄 해제 완료", "보스 회로가 정지했습니다. 지금 화력을 집중하세요."],
+  bossBombSequenceFailed: ["폭탄 해제 실패", "폭발 충격으로 이지스 구동계가 손상되었습니다."],
 });
 
 const ULTIMATE_WARNING_BANNERS = Object.freeze({
@@ -312,8 +324,12 @@ const ULTIMATE_WARNING_BANNERS = Object.freeze({
 const SIGNATURE_PATTERN_BANNERS = Object.freeze({
   prismLattice: ["⚠ 프리즘 격자", "교차 광선이 고정됩니다. 두 경고선 밖으로 이탈하세요."],
   solarFlare: ["⚠ 태양 폭발", "표식 순서대로 집광 폭발이 연쇄 점화됩니다."],
+  refractionSweep: ["⚠ 굴절 스윕", "평행 광선 세 줄이 전장을 절단합니다. 틈 사이로 이동하세요."],
+  mirrorShards: ["⚠ 거울 파편", "다중 반사 표식이 짧은 간격으로 연쇄 폭발합니다."],
   memorySpiral: ["⚠ 기억 나선", "회전하는 광선을 따라 안전 구역도 움직입니다."],
   depthCollapse: ["⚠ 심해 붕괴", "외곽 압력 고리가 코어 방향으로 연속 수축합니다."],
+  archiveEcho: ["⚠ 기록 잔향", "방금 지나온 이동 경로가 지연 폭발로 되살아납니다."],
+  undertow: ["⚠ 심해 저류", "압력장이 이지스를 코어로 끌어당깁니다. 바깥쪽으로 저항하세요."],
 });
 
 const SCENARIO_SCRIPT = Object.freeze({
@@ -567,10 +583,10 @@ function resolveEventSound(event) {
   const direct = EVENT_SOUNDS[event?.type];
   const kind = String(event?.kind || event?.weapon || event?.skill || event?.effect || "");
   if (event?.type === "bossPatternFire") {
-    if (event.pattern === "solarFlare") return "explosion";
-    if (event.pattern === "memorySpiral") return "arc";
-    if (event.pattern === "depthCollapse") return "emp";
-    if (event.pattern === "prismLattice") return "rail";
+    if (event.pattern === "solarFlare" || event.pattern === "mirrorShards") return "explosion";
+    if (event.pattern === "memorySpiral" || event.pattern === "archiveEcho") return "arc";
+    if (event.pattern === "depthCollapse" || event.pattern === "undertow") return "emp";
+    if (event.pattern === "prismLattice" || event.pattern === "refractionSweep") return "rail";
   }
   if (event?.type === "shot" && WEAPON_EVENT_SOUNDS[kind]) return WEAPON_EVENT_SOUNDS[kind];
   if (IMPACT_EVENT_TYPES.has(event?.type)) {
@@ -1793,9 +1809,16 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     : Math.max(0, Math.min(1, Number(hud?.expedition?.progress || 0)));
   const playerStunTime = Math.max(0, Number(hud?.player?.stunTimer ?? hud?.player?.stun ?? hud?.player?.stunnedFor ?? 0) || 0);
   const playerStunned = Boolean(hud?.player?.stunned) || playerStunTime > 0;
+  const parry = hud?.boss?.parry;
+  const parryActive = Boolean(parry?.life > 0);
+  const parryProgress = parryActive
+    ? Math.max(0, Math.min(1, Number(parry.life || 0) / Math.max(0.001, Number(parry.duration || 1))))
+    : 0;
+  const bossSiren = Boolean(hud?.boss?.siren?.active);
+  const bombSequence = hud?.boss?.bombSequence;
 
   return (
-    <main className="expedition-game is-phaser-runtime">
+    <main className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}`}>
       <section className="expedition-stage">
           <div className="expedition-canvas-frame">
             <div
@@ -1838,6 +1861,29 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
                 <strong>{banner.title}</strong><span>{banner.subtitle}</span>
               </div>
             )}
+            {parryActive && (
+              <button
+                className="boss-parry-prompt"
+                type="button"
+                onClick={() => controllerRef.current?.parry?.()}
+                style={{ "--parry-progress": `${Math.round(parryProgress * 360)}deg` }}
+                aria-label="지금 Shift를 눌러 보스 공격 패링"
+              >
+                <span><kbd>SHIFT</kbd><strong>지금 패링</strong></span>
+                <small>공격이 닿기 전에 반사</small>
+              </button>
+            )}
+            {bombSequence && (
+              <div className={`boss-bomb-directive is-${bombSequence.phase}`} role="status" aria-live="assertive">
+                <Warning weight="fill" />
+                <span>
+                  <small>{bombSequence.phase === "siren" ? "전역 폭발 경보" : "숫자 순서대로 폭탄 클릭"}</small>
+                  <strong>{bombSequence.phase === "siren" ? `${bombSequence.count}개 설치 중` : `다음 번호 ${bombSequence.expectedOrder}`}</strong>
+                </span>
+                <b>{Math.max(0, Number(bombSequence.timer || 0)).toFixed(1)}초</b>
+              </div>
+            )}
+            {(parryActive || bossSiren) && <div className="boss-crisis-screen" aria-hidden="true"><i /><i /></div>}
             {playerStunned && <div className="stun-screen-effect" aria-hidden="true"><i /><i /><i /><i /></div>}
             {!dialogue && <RouteMinimap hud={hud} />}
             {!dialogue && <GateLockedNotice notice={hud?.expedition?.gateNotice} />}

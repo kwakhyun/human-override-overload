@@ -3997,6 +3997,8 @@ function updateBossBombSequence(state, input, dt) {
       emit(state, "bossBombDefused", {
         tier: sequence.tier,
         order: clicked.order,
+        x: clicked.x,
+        y: clicked.y,
         remaining: sequence.count - clicked.order,
         nextOrder: sequence.expectedOrder <= sequence.count ? sequence.expectedOrder : null,
       });

@@ -47,9 +47,13 @@ function normalizedPatternId(type: unknown) {
 function resolvePatternRow(type: unknown): Readonly<{ atlas: BossPatternAtlasId; row: number }> | null {
   const id = normalizedPatternId(type);
   if (id.includes("prismlattice")) return { atlas: "regional", row: REGIONAL_BOSS_PATTERN_ROWS.prismLattice };
+  if (id.includes("refractionsweep")) return { atlas: "regional", row: REGIONAL_BOSS_PATTERN_ROWS.prismLattice };
   if (id.includes("solarflare")) return { atlas: "regional", row: REGIONAL_BOSS_PATTERN_ROWS.solarFlare };
+  if (id.includes("mirrorshards")) return { atlas: "regional", row: REGIONAL_BOSS_PATTERN_ROWS.solarFlare };
   if (id.includes("memoryspiral")) return { atlas: "regional", row: REGIONAL_BOSS_PATTERN_ROWS.memorySpiral };
+  if (id.includes("archiveecho")) return { atlas: "regional", row: REGIONAL_BOSS_PATTERN_ROWS.memorySpiral };
   if (id.includes("depthcollapse")) return { atlas: "regional", row: REGIONAL_BOSS_PATTERN_ROWS.depthCollapse };
+  if (id.includes("undertow")) return { atlas: "regional", row: REGIONAL_BOSS_PATTERN_ROWS.depthCollapse };
   if (id.includes("multicharge")) return { atlas: "common", row: COMMON_BOSS_PATTERN_ROWS.multiCharge };
   if (id.includes("charge") || id.includes("rush")) return { atlas: "common", row: COMMON_BOSS_PATTERN_ROWS.charge };
   if (id.includes("bomb")) return { atlas: "common", row: COMMON_BOSS_PATTERN_ROWS.bombs };

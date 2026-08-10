@@ -3073,7 +3073,9 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .pilot-stun,
   .stun-screen-effect,
-  .ability-meter > i { animation: none !important; transition: none !important; }
+  .ability-meter > i,
+  .boss-parry-prompt,
+  .boss-crisis-screen { animation: none !important; transition: none !important; }
 }
 
 /* Forward-expedition runtime: the world owns the screen, UI stays contextual. */
@@ -3111,6 +3113,111 @@ kbd {
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+.is-parry-window .phaser-host canvas {
+  filter: grayscale(1) contrast(1.2) brightness(0.78);
+  transition: filter 70ms linear;
+}
+
+.boss-parry-prompt {
+  --parry-progress: 360deg;
+  position: absolute;
+  z-index: 24;
+  top: 59%;
+  left: 50%;
+  display: grid;
+  width: 176px;
+  min-height: 74px;
+  padding: 9px 14px 8px;
+  overflow: hidden;
+  border: 2px solid rgba(231, 254, 255, 0.96);
+  border-radius: 8px;
+  place-items: center;
+  color: #f4ffff;
+  background:
+    linear-gradient(rgba(3, 8, 10, 0.92), rgba(2, 5, 7, 0.96)) padding-box,
+    conic-gradient(#ecffff 0deg var(--parry-progress), rgba(86, 120, 126, 0.24) var(--parry-progress) 360deg) border-box;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.58), 0 0 34px rgba(190, 252, 255, 0.78), inset 0 0 24px rgba(134, 240, 255, 0.12);
+  font-family: var(--font-ui);
+  text-align: center;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  animation: boss-parry-prompt-pulse 220ms steps(2, end) infinite;
+}
+
+.boss-parry-prompt > span { display: flex; align-items: center; gap: 9px; }
+.boss-parry-prompt kbd {
+  padding: 5px 8px;
+  border: 1px solid #eaffff;
+  border-radius: 3px;
+  color: #071014;
+  background: #eaffff;
+  box-shadow: 0 0 14px rgba(209, 253, 255, 0.72);
+  font-size: 15px;
+  font-weight: 900;
+}
+.boss-parry-prompt strong { font-size: 19px; letter-spacing: 0.02em; }
+.boss-parry-prompt small { color: #a9c8cd; font-size: 11px; letter-spacing: 0; }
+
+.boss-bomb-directive {
+  position: absolute;
+  z-index: 22;
+  top: 92px;
+  left: 50%;
+  display: grid;
+  min-width: 330px;
+  padding: 10px 16px;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid rgba(255, 86, 70, 0.88);
+  color: #fff3ee;
+  background: linear-gradient(100deg, rgba(48, 5, 10, 0.95), rgba(8, 5, 6, 0.94));
+  box-shadow: 0 0 34px rgba(255, 48, 45, 0.34), inset 0 0 20px rgba(255, 64, 47, 0.08);
+  font-family: var(--font-ui);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.boss-bomb-directive > svg { width: 30px; height: 30px; color: #ff624e; filter: drop-shadow(0 0 8px rgba(255, 72, 49, 0.72)); }
+.boss-bomb-directive > span { display: flex; flex-direction: column; gap: 2px; }
+.boss-bomb-directive small { color: #ff9e8c; font-size: 11px; }
+.boss-bomb-directive strong { font-size: 18px; letter-spacing: 0.01em; }
+.boss-bomb-directive > b { min-width: 58px; color: #ffe48e; font-size: 20px; text-align: right; }
+.boss-bomb-directive.is-armed { border-color: rgba(255, 195, 73, 0.9); }
+
+.boss-crisis-screen {
+  position: absolute;
+  z-index: 19;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.is-boss-siren .boss-crisis-screen {
+  box-shadow: inset 0 0 95px 24px rgba(255, 18, 43, 0.54);
+  animation: boss-siren-vignette 520ms steps(2, end) infinite;
+}
+.is-boss-siren .boss-crisis-screen::before,
+.is-boss-siren .boss-crisis-screen::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 16%;
+  background: linear-gradient(90deg, rgba(255, 22, 48, 0.38), transparent);
+  content: "";
+}
+.is-boss-siren .boss-crisis-screen::before { left: 0; }
+.is-boss-siren .boss-crisis-screen::after { right: 0; transform: scaleX(-1); }
+.is-parry-window .boss-crisis-screen { box-shadow: inset 0 0 80px 10px rgba(222, 254, 255, 0.32); }
+
+@keyframes boss-parry-prompt-pulse {
+  0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.76; transform: translate(-50%, -50%) scale(1.035); }
+}
+
+@keyframes boss-siren-vignette {
+  0%, 48% { opacity: 1; }
+  49%, 100% { opacity: 0.42; }
 }
 
 .expedition-hud {
@@ -4152,6 +4259,15 @@ kbd {
   .transient-controls { display: none; }
   .expedition-xp { top: 119px; right: 12px; bottom: auto; width: 156px; }
   .expedition-alert { top: 158px; }
+  .boss-parry-prompt { top: 62%; width: 146px; min-height: 58px; padding: 6px 9px; }
+  .boss-parry-prompt kbd { padding: 3px 6px; font-size: 11px; }
+  .boss-parry-prompt strong { font-size: 14px; }
+  .boss-parry-prompt small { font-size: 8px; }
+  .boss-bomb-directive { top: 42px; min-width: 260px; padding: 6px 10px; grid-template-columns: 25px 1fr auto; gap: 7px; }
+  .boss-bomb-directive > svg { width: 22px; height: 22px; }
+  .boss-bomb-directive small { font-size: 8px; }
+  .boss-bomb-directive strong { font-size: 13px; }
+  .boss-bomb-directive > b { min-width: 44px; font-size: 14px; }
   .gate-locked-notice { top: 34%; width: min(420px, calc(100% - 24px)); padding: 9px 12px; grid-template-columns: 25px 1fr; }
   .gate-locked-notice > svg { width: 23px; height: 23px; }
   .gate-locked-notice strong { font-size: 13px; }

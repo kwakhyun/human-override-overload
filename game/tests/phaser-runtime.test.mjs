@@ -419,6 +419,12 @@ test("boss parry and numbered bombs use repeat-safe Shift and authoritative worl
   const engine = await read("src/swarm/engine.js");
   const bridge = await read("src/phaser/adapters/sceneBridge.ts");
   const createGame = await read("src/phaser/createOverloadGame.ts");
+  const manifest = await read("src/game/assets/manifest.ts");
+  const view = await read("src/phaser/view/BattleView.ts");
+  const animation = await read("src/phaser/view/animation/bossPatternAnimation.ts");
+  const app = await read("src/App.jsx");
+  const styles = await read("src/styles.css");
+  const bombAtlas = await readBytes("public/assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png");
   assert.match(scene, /SHIFT: Phaser\.Input\.Keyboard\.KeyCodes\.SHIFT/);
   assert.match(scene, /keyboard\.on\("keydown-SHIFT"/);
   assert.match(scene, /this\.gameInput\.parryPressed = true/);
@@ -429,6 +435,16 @@ test("boss parry and numbered bombs use repeat-safe Shift and authoritative worl
   assert.match(engine, /clicked\.order !== sequence\.expectedOrder/);
   assert.match(bridge, /queueParry\(\): void/);
   assert.match(createGame, /parry: \(\) => bridge\.queueParry\(\)/);
+  assert.deepEqual([bombAtlas.readUInt32BE(16), bombAtlas.readUInt32BE(20)], [384, 128]);
+  assert.match(manifest, /timed-bomb-pixel-atlas\.png", kind: "atlas", columns: 6, rows: 2/);
+  assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.bossTimedBombPixel, 6, 2\)/);
+  assert.match(view, /syncBossTimedBombSprites\(state, time\)/);
+  assert.match(view, /setAtlasFrame\(image, Math\.min\(5, Math\.floor\(progress \* 6\)\), 1\)/);
+  assert.match(animation, /id\.includes\("refractionsweep"\)/);
+  assert.match(animation, /id\.includes\("undertow"\)/);
+  assert.match(app, /className="boss-parry-prompt"/);
+  assert.match(app, /className={`boss-bomb-directive is-\$\{bombSequence\.phase\}`}/);
+  assert.match(styles, /\.is-parry-window \.phaser-host canvas[\s\S]*filter: grayscale\(1\)/);
 });
 
 test("Phaser DEV scene shortcuts require an explicit debug opt-in", async () => {

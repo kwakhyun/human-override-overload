@@ -1067,6 +1067,34 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 - `src/audio/agentVoice.js`는 전투 진입 시에만 네 파일을 준비하고 성공한 스킬 이벤트만 재생합니다.
   브라우저 기본 TTS·런타임 Google API 호출·음성 복제는 사용하지 않습니다.
 
+## Numbered boss timed-bomb pixel atlas
+
+- 런타임: `public/assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png`
+- 규격: 384×128 RGBA, 6×2, 64px 정사각 셀, NEAREST 필터. 1행은 비활성/청색 활성/황색 경고/
+  적색 위험/해제/정지, 2행은 점화/소형 폭발/중형 폭발/최대 폭발/파편/잔광입니다. 폭탄 번호는
+  이미지에 포함하지 않고 엔진의 `order`를 Phaser 텍스트로 그립니다.
+- 도구: OpenAI built-in ImageGen whole-sheet 생성 → `remove_chroma_key.py`의 border auto-key,
+  soft matte, threshold 12/220, despill → 프로젝트 `normalize-motion-atlas.py` 6×2 공유 스케일 정규화 →
+  `normalize-pixel-vfx-atlas.py` 64px/32색/2px 안전 여백. 외부 게임 이미지나 외부 미술은 사용하지
+  않았습니다.
+- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-4b361e8a-950c-4ddb-a7da-594965ede2a3.png`
+- 보존 원본: `reference/source-assets/overload/vfx/pixel/timed-bomb-pixel-imagegen-source.png`
+- 알파 원본: `reference/source-assets/overload/vfx/pixel/timed-bomb-pixel-alpha.png`
+- QA 미리보기: `qa/timed-bomb-pixel-atlas-preview.png`
+- 정확한 ImageGen 프롬프트:
+
+```text
+Use case: stylized-concept.
+Asset type: production low-resolution pixel-art timed-bomb VFX sprite atlas for the top-down Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+Primary request: create one exact 6-column by 2-row sprite atlas, exactly 12 isolated square animation cells, read left-to-right.
+Row 1 ARMED/DEFUSE SEQUENCE: frame 1 compact dormant circular AI bomb seen from strict 90-degree overhead; frame 2 cyan status pixels activate; frame 3 amber warning segments blink; frame 4 red critical warning segments blink; frame 5 cyan defuse pulse contracts inward; frame 6 disabled dark bomb with a small cyan confirmation spark.
+Row 2 EXPLOSION SEQUENCE: frame 1 red ignition spark centered on the bomb; frame 2 compact orange pixel burst; frame 3 larger circular orange-white blast; frame 4 maximum contained circular explosion; frame 5 separated square debris fragments; frame 6 fading dark-red pixel embers.
+Style/medium: authentic hand-authored 16-bit arcade pixel art, crisp square pixel clusters, hard stair-step edges, no antialiasing, restrained 6-8 color palette, dark navy/black mechanical shell, cyan safe lights, amber/red danger lights, readable on a dark science-fiction battlefield, intentionally simple and lightweight. Strict orthographic 90-degree top-down view. Stable centered anchor and consistent bomb scale across row 1. Explosion row remains centered.
+Composition/framing: exact uniform 6x2 grid filling a 3:1 landscape canvas; equal square slots; one centered self-contained effect per slot; generous empty safety padding; no object crosses a cell boundary. The bomb has no readable number or text because runtime numbers will be drawn separately.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background covering every empty pixel. No transparency simulation, shadows, gradients, texture, glow fog, environment, floor, grid lines, borders, labels, text, numbers, logos, watermark, poster layout, extra rows, extra columns, duplicate sheets, or cropped cells. Do not use #ff00ff inside the bomb or effects.
+Constraints: exact 6 columns, exact 2 rows, exact 12 square cells; native pixel-art appearance; obvious animation progression at 64x64; no letters and no numerals.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License

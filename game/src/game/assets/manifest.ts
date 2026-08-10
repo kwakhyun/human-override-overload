@@ -30,6 +30,7 @@ export const ASSET_KEYS = Object.freeze({
   enemyDeathPixel: "overload-enemy-death-pixel-atlas",
   bossPatternCommonPixel: "overload-boss-pattern-common-pixel-atlas",
   bossPatternRegionalPixel: "overload-boss-pattern-regional-pixel-atlas",
+  bossTimedBombPixel: "overload-boss-timed-bomb-pixel-atlas",
   automaticSkillPixel: "overload-automatic-skill-pixel-atlas",
   sovereignGateMotion: "overload-sovereign-gate-motion-atlas",
   healingKitMotion: "overload-healing-kit-motion-atlas",
@@ -164,6 +165,7 @@ export const REGION_BOSS_ASSETS: Readonly<Record<RegionId, readonly AssetDefinit
     { key: ASSET_KEYS.bossMotion, path: "./assets/overload/boss/motion-v2/wrong-engine-motion-atlas.png", performancePath: "./assets/overload/boss/motion-v2/performance/wrong-engine-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
     { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
   ]),
   "glass-dune": freezeAssets([
     { key: ASSET_KEYS.glassDuneBossRoom, path: "./assets/overload/regions/glass-dune/boss-room.webp", performancePath: "./assets/overload/regions/glass-dune/performance/boss-room.webp", kind: "image" },
@@ -171,6 +173,7 @@ export const REGION_BOSS_ASSETS: Readonly<Record<RegionId, readonly AssetDefinit
     { key: ASSET_KEYS.glassDuneBossMotion, path: "./assets/overload/regions/glass-dune/motion-v2/mirror-tyrant-motion-atlas.png", performancePath: "./assets/overload/regions/glass-dune/motion-v2/performance/mirror-tyrant-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
     { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
   ]),
   "abyssal-archive": freezeAssets([
     { key: ASSET_KEYS.abyssalArchiveBossRoom, path: "./assets/overload/regions/abyssal-archive/boss-room.webp", performancePath: "./assets/overload/regions/abyssal-archive/performance/boss-room.webp", kind: "image" },
@@ -178,6 +181,7 @@ export const REGION_BOSS_ASSETS: Readonly<Record<RegionId, readonly AssetDefinit
     { key: ASSET_KEYS.abyssalArchiveBossMotion, path: "./assets/overload/regions/abyssal-archive/motion-v2/drowned-oracle-motion-atlas.png", performancePath: "./assets/overload/regions/abyssal-archive/motion-v2/performance/drowned-oracle-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
     { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
   ]),
 });
 

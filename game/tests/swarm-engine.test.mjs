@@ -1232,9 +1232,8 @@ test("boss health thresholds lock in distinct transformations and repeat their d
 test("wrong-engine phase-one charge alone has a longer warning, slower rush, and lower contact damage", () => {
   const wrong = createBossState(BOSS_PATTERNS.indexOf("charge"));
   const phaseTwo = createBossState(BOSS_PATTERNS.indexOf("charge"));
-  const glass = createBossState(REGION_BOSS_PATTERNS["glass-dune"].indexOf("charge"), "glass-dune");
   phaseTwo.boss.stage = 2;
-  for (const state of [wrong, phaseTwo, glass]) {
+  for (const state of [wrong, phaseTwo]) {
     delayPlayerWeapons(state);
     stepSwarm(state, createSwarmInput(), 1 / 60);
   }
@@ -1244,21 +1243,17 @@ test("wrong-engine phase-one charge alone has a longer warning, slower rush, and
   assert.equal(phaseTwo.boss.activePattern.openingAssist, false);
   assert.equal(phaseTwo.boss.activePattern.maxLife, 0.72 * 0.82);
   assert.equal(phaseTwo.boss.activePattern.activeLife, 0.52);
-  assert.equal(glass.boss.activePattern.openingAssist, false);
-  assert.equal(glass.boss.activePattern.maxLife, 0.72);
-  assert.equal(glass.boss.activePattern.activeLife, 0.52);
-
   stepFor(wrong, createSwarmInput(), 1.06);
-  stepFor(glass, createSwarmInput(), 0.73);
+  stepFor(phaseTwo, createSwarmInput(), 0.62);
   assert.equal(wrong.boss.activePattern.phase, "active");
-  assert.equal(glass.boss.activePattern.phase, "active");
-  assert.ok(wrong.boss.activePattern.chargeSpeed < glass.boss.activePattern.chargeSpeed);
+  assert.equal(phaseTwo.boss.activePattern.phase, "active");
+  assert.ok(wrong.boss.activePattern.chargeSpeed < phaseTwo.boss.activePattern.chargeSpeed);
   stepFor(wrong, createSwarmInput(), 0.7);
-  stepFor(glass, createSwarmInput(), 0.55);
+  stepFor(phaseTwo, createSwarmInput(), 0.55);
   const wrongHit = drainSwarmEvents(wrong).find((event) => event.type === "bossChargeHit");
-  const glassHit = drainSwarmEvents(glass).find((event) => event.type === "bossChargeHit");
-  assert.ok(wrongHit && glassHit);
-  assert.ok(wrongHit.damage < glassHit.damage);
+  const phaseTwoHit = drainSwarmEvents(phaseTwo).find((event) => event.type === "bossChargeHit");
+  assert.ok(wrongHit && phaseTwoHit);
+  assert.ok(wrongHit.damage < phaseTwoHit.damage);
 });
 
 test("multi-charge rapidly relocks and rushes several times before exposing the core", () => {
@@ -1324,15 +1319,11 @@ test("dodging the first boss charge causes a wall-impact groggy vulnerability wi
   assert.equal(hud.groggyMultiplier, 2.5);
 });
 
-test("follow-up regional bosses retain the standard wall-exposed core window", () => {
-  const state = createBossState(REGION_BOSS_PATTERNS["glass-dune"].indexOf("charge"), "glass-dune");
-  state.player.invulnerability = 10;
-  stepFor(state, createSwarmInput(), 1.9);
-  const event = drainSwarmEvents(state).find((candidate) => candidate.type === "bossWeakness");
-  assert.equal(state.boss.groggy, 0);
-  assert.ok(state.boss.weakness > 2.2);
-  assert.equal(state.boss.damageMultiplier, 2);
-  assert.deepEqual({ duration: event.duration, multiplier: event.multiplier }, { duration: 3, multiplier: 2 });
+test("follow-up regional bosses do not inherit the wrong-engine charge rotation", () => {
+  assert.equal(REGION_BOSS_PATTERNS["glass-dune"].includes("charge"), false);
+  assert.equal(REGION_BOSS_PATTERNS["glass-dune"].includes("multiCharge"), false);
+  assert.equal(REGION_BOSS_PATTERNS["abyssal-archive"].includes("charge"), false);
+  assert.equal(REGION_BOSS_PATTERNS["abyssal-archive"].includes("multiCharge"), false);
 });
 
 test("charge collision deals heavy damage and denies the weakness window", () => {

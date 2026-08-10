@@ -323,6 +323,8 @@ export class BattleView {
   private readonly manualAbilitySprites: Phaser.GameObjects.Image[] = [];
   private readonly spawnGateSprites: Phaser.GameObjects.Image[] = [];
   private readonly bossPatternSprites: Phaser.GameObjects.Image[] = [];
+  private readonly bossTimedBombSprites: Phaser.GameObjects.Image[] = [];
+  private readonly bossTimedBombLabels: Phaser.GameObjects.Text[] = [];
   private readonly impactSprites: Phaser.GameObjects.Image[] = [];
   private readonly traceSprites = new Map<string, Phaser.GameObjects.Image>();
   private readonly enemySprites = new Map<number, SpriteRecord>();
@@ -499,6 +501,7 @@ export class BattleView {
     const hasMotion = this.prepareAtlas(bossMotion, 6, 4);
     const hasCommonPatterns = this.preparePixelAtlas(ASSET_KEYS.bossPatternCommonPixel, 6, 6);
     const hasRegionalPatterns = this.preparePixelAtlas(ASSET_KEYS.bossPatternRegionalPixel, 6, 4);
+    const hasTimedBombs = this.preparePixelAtlas(ASSET_KEYS.bossTimedBombPixel, 6, 2);
     if (hasCommonPatterns && hasRegionalPatterns && this.bossPatternSprites.length === 0) {
       for (let index = 0; index < 16; index += 1) {
         const image = this.scene.add.image(0, 0, ASSET_KEYS.bossPatternCommonPixel)
@@ -506,6 +509,24 @@ export class BattleView {
           .setBlendMode(Phaser.BlendModes.ADD);
         this.bossPatternSprites.push(image);
         this.bossPatternLayer.add(image);
+      }
+    }
+    if (hasTimedBombs && this.bossTimedBombSprites.length === 0) {
+      for (let index = 0; index < 8; index += 1) {
+        const image = this.scene.add.image(0, 0, ASSET_KEYS.bossTimedBombPixel)
+          .setVisible(false)
+          .setBlendMode(Phaser.BlendModes.NORMAL);
+        const label = this.scene.add.text(0, 0, "", {
+          fontFamily: "IBM Plex Mono, Consolas, monospace",
+          fontSize: "30px",
+          fontStyle: "bold",
+          color: "#ffffff",
+          stroke: "#020609",
+          strokeThickness: 8,
+        }).setOrigin(0.5).setVisible(false);
+        this.bossTimedBombSprites.push(image);
+        this.bossTimedBombLabels.push(label);
+        this.bossPatternLayer.add([image, label]);
       }
     }
     const bossTexture = hasMotion ? bossMotion : bossForms;
@@ -532,6 +553,23 @@ export class BattleView {
       this.mainCamera.shake(90, 0.0025);
     } else if (type === "bossPatternFire" || type === "bossRageBurst") {
       this.spawnFx("weaponBlast", this.boss.x, this.boss.y, COLORS.red, type === "bossRageBurst" ? 1.8 : 1.25);
+    } else if (type === "bossParryWindow") {
+      this.mainCamera.shake(150, 0.0035);
+      this.hudCamera.flash(85, 225, 246, 255, false);
+    } else if (type === "bossParrySuccess") {
+      this.mainCamera.shake(320, 0.014);
+      this.hudCamera.flash(150, 190, 255, 255, false);
+      this.spawnFx("phaseBreak", this.player.x, this.player.y, COLORS.cyan, 1.8);
+      this.spawnFx("bossBurst", this.boss.x, this.boss.y, COLORS.white, 2.1);
+    } else if (type === "bossParryFailed" || type === "bossBombSequenceFailed") {
+      this.mainCamera.shake(380, 0.018);
+      this.hudCamera.flash(180, 255, 42, 68, false);
+      this.spawnFx("playerHit", this.player.x, this.player.y, COLORS.red, 1.7);
+    } else if (type === "bossSiren") {
+      this.mainCamera.shake(460, 0.0065);
+      this.hudCamera.flash(130, 255, 32, 55, false);
+    } else if (type === "bossBombDefused" || type === "bossBombSequenceCleared") {
+      this.spawnFx("weaponBlast", type === "bossBombDefused" ? finite(event?.x, this.player.x) : this.boss.x, type === "bossBombDefused" ? finite(event?.y, this.player.y) : this.boss.y, COLORS.green, type === "bossBombDefused" ? 0.8 : 1.9);
     } else if (type === "enemySelfDestruct") {
       this.mainCamera.shake(180, event?.elite ? 0.011 : 0.0075);
     } else if (type === "healthKitPicked") {
@@ -562,6 +600,7 @@ export class BattleView {
     this.drawShadows(state, quality);
     this.drawTelegraphs(state, time, quality);
     this.syncBossPatternSprites(state, time, quality);
+    this.syncBossTimedBombSprites(state, time);
     // PERFORMANCE keeps authoritative danger geometry and actor movement at
     // the scene cadence, while retaining cosmetic Graphics/sprite state for a
     // bounded 30 Hz update. This halves the busiest VFX rebuild path without
@@ -1081,7 +1120,10 @@ export class BattleView {
         : ASSET_KEYS.bossPatternCommonPixel;
       const active = String(pattern.phase ?? "warning").toLowerCase() === "active";
       const alpha = active ? 0.9 : 0.7 + Math.sin(time * 12) * 0.12;
-      const targetPattern = type.includes("bomb") || type.includes("solarflare");
+      const targetPattern = type.includes("bomb")
+        || type.includes("solarflare")
+        || type.includes("mirrorshards")
+        || type.includes("archiveecho");
 
       if (targetPattern && Array.isArray(pattern.targets)) {
         for (const target of pattern.targets) {
@@ -1144,6 +1186,61 @@ export class BattleView {
     }
   }
 
+  private syncBossTimedBombSprites(state: any, time: number) {
+    let cursor = 0;
+    const sequence = state?.boss?.bombSequence;
+    if (sequence && Array.isArray(sequence.bombs)) {
+      const phase = String(sequence.phase ?? "siren");
+      const urgency = clamp01(1 - finite(sequence.timer) / Math.max(0.001, finite(sequence.duration, 1)));
+      for (const bomb of sequence.bombs) {
+        if (cursor >= this.bossTimedBombSprites.length || bomb?.exploded) break;
+        const image = this.bossTimedBombSprites[cursor];
+        const label = this.bossTimedBombLabels[cursor];
+        const defused = Boolean(bomb?.defused);
+        let column = defused ? 4 : 0;
+        if (!defused && phase === "siren") column = Math.min(3, Math.floor(clamp01(finite(sequence.progress)) * 4));
+        if (!defused && phase === "armed") {
+          const blink = Math.floor(time * (urgency > 0.66 ? 12 : 7)) % 2;
+          column = urgency > 0.72 ? 3 - blink : 1 + blink;
+        }
+        setAtlasFrame(image, column, 0);
+        image
+          .setPosition(finite(bomb?.x), finite(bomb?.y))
+          .setDisplaySize(112, 112)
+          .setAlpha(defused ? 0.62 : 1)
+          .setVisible(true)
+          .clearTint();
+        label
+          .setPosition(finite(bomb?.x), finite(bomb?.y) - 2)
+          .setText(defused ? "✓" : String(bomb?.order ?? cursor + 1))
+          .setColor(defused ? "#8dffd0" : urgency > 0.72 ? "#fff1d0" : "#ffffff")
+          .setAlpha(defused ? 0.74 : 1)
+          .setVisible(true);
+        cursor += 1;
+      }
+    } else {
+      const bursts = Array.isArray(state?.bossBombBursts) ? state.bossBombBursts : [];
+      for (const burstFx of bursts) {
+        if (cursor >= this.bossTimedBombSprites.length) break;
+        const image = this.bossTimedBombSprites[cursor];
+        const progress = clamp01(1 - finite(burstFx?.life) / Math.max(0.001, finite(burstFx?.maxLife, 0.72)));
+        setAtlasFrame(image, Math.min(5, Math.floor(progress * 6)), 1);
+        image
+          .setPosition(finite(burstFx?.x), finite(burstFx?.y))
+          .setDisplaySize(150 + progress * 180, 150 + progress * 180)
+          .setAlpha(clamp01(1 - Math.max(0, progress - 0.72) / 0.28))
+          .setVisible(true)
+          .clearTint();
+        this.bossTimedBombLabels[cursor].setVisible(false);
+        cursor += 1;
+      }
+    }
+    for (let index = cursor; index < this.bossTimedBombSprites.length; index += 1) {
+      this.bossTimedBombSprites[index].setVisible(false);
+      this.bossTimedBombLabels[index].setVisible(false);
+    }
+  }
+
   private drawTelegraphs(state: any, time: number, quality: QualityPreset) {
     const graphics = this.telegraphGraphics;
     graphics.clear();
@@ -1158,7 +1255,7 @@ export class BattleView {
       const progress = clamp01(1 - finite(item.life) / Math.max(0.001, finite(item.maxLife, 1)));
       const pulse = 0.58 + Math.sin(time * 18 + finite(item.x)) * 0.22;
       const geometry = item.geometry;
-      if (type.includes("prismlattice") && Array.isArray(geometry?.lanes)) {
+      if ((type.includes("prismlattice") || type.includes("refractionsweep")) && Array.isArray(geometry?.lanes)) {
         for (const lane of geometry.lanes) {
           const width = Math.max(8, finite(lane.beamHalfWidth, 24) * 2);
           graphics.lineStyle(width * 1.45, COLORS.cyan, 0.055 + progress * 0.09);
@@ -1201,7 +1298,7 @@ export class BattleView {
         graphics.strokeCircle(geometry.centerX, geometry.centerY, Math.max(24, finite(geometry.innerRadius, 48)));
         continue;
       }
-      if (type.includes("depthcollapse") && Array.isArray(geometry?.radii)) {
+      if ((type.includes("depthcollapse") || type.includes("undertow")) && Array.isArray(geometry?.radii)) {
         for (let ring = 0; ring < geometry.radii.length; ring += 1) {
           const radius = finite(geometry.radii[ring]);
           if (radius <= 0) continue;
@@ -1218,7 +1315,7 @@ export class BattleView {
         }
         continue;
       }
-      if (type.includes("solarflare") && Array.isArray(item.targets)) {
+      if ((type.includes("solarflare") || type.includes("mirrorshards") || type.includes("archiveecho")) && Array.isArray(item.targets)) {
         for (let index = 0; index < item.targets.length; index += 1) {
           const target = item.targets[index];
           if (target.detonated) continue;
