@@ -88,6 +88,39 @@ test("route-space movement is symmetric and long-range rifle fire is not clipped
   assert.ok(right.projectiles.some((projectile) => projectile.x > 5200 && !projectile.dead));
 });
 
+test("hostiles passed on the route remain authoritative and accelerate into persistent pursuit", () => {
+  const state = createSwarmState({ random: seededRandom(49), duration: 360, expedition: true });
+  const input = createSwarmInput();
+  input.right = true;
+  const enemy = state.enemies.find((candidate) => candidate.combatRole === "rifleman") ?? state.enemies[0];
+  state.enemies.length = 1;
+  state.enemies[0] = enemy;
+  state.player.x = 5000;
+  state.player.y = 540;
+  state.camera.x = state.player.x;
+  enemy.x = state.player.x - 1200;
+  enemy.y = state.player.y;
+  enemy.spawnDelay = 0;
+  enemy.damage = 0;
+  enemy.shootCooldown = 999;
+  state.spawnedEnemies = state.enemyBudget;
+  state.killedEnemies = state.enemyBudget - 1;
+  state.stats.kills = state.killedEnemies;
+  state.player.invulnerability = 999;
+  state.player.fireTimers.pulse = 999;
+  state.levelFlow.firstDeadline = 999;
+  state.levelFlow.nextOfferAt = 999;
+  const initialGap = state.player.x - enemy.x;
+
+  for (let frame = 0; frame < 600; frame += 1) stepSwarm(state, input, 1 / 60);
+
+  const finalGap = state.player.x - enemy.x;
+  assert.equal(state.enemies.includes(enemy), true);
+  assert.equal(enemy.dead, false);
+  assert.ok(enemy.x > 6400, `expected the passed hostile to keep advancing, got x=${enemy.x}`);
+  assert.ok(finalGap < initialGap, `expected pursuit to close the gap, got ${initialGap} -> ${finalGap}`);
+});
+
 test("the engine gate hard-locks before the three-hundredth hostile is dead and warns once", () => {
   const state = createSwarmState({ random: seededRandom(23), duration: 360, expedition: true });
   const input = createSwarmInput();

@@ -29,6 +29,8 @@ const EXPEDITION_BOSS_GATE = 11200;
 const EXPEDITION_GATE_LOCK_DISTANCE = 10680;
 const EXPEDITION_ROUTE_ORIGIN_X = 580;
 const EXPEDITION_CORRIDOR = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 150, bottom: 930 });
+const EXPEDITION_DEEP_PURSUIT_DISTANCE = 720;
+const EXPEDITION_PURSUIT_SPEED_MULTIPLIER = 1.12;
 const EXPEDITION_SPAWN_GATES = Object.freeze([
   Object.freeze({ id: "east-upper", offsetX: 520, y: 270 }),
   Object.freeze({ id: "east-lower", offsetX: 520, y: 810 }),
@@ -42,10 +44,10 @@ const EXPEDITION_TRACES = Object.freeze([
   Object.freeze({ id: "moss", distance: 8600, y: 510, kind: "body", beat: "moss-trace" }),
 ]);
 const SURGE_WAVES = Object.freeze([
-  Object.freeze({ warnAt: 8, startAt: 9.25, count: 124, rate: 20, label: "GATE PRESSURE · TIER I" }),
-  Object.freeze({ warnAt: 33, startAt: 34.5, count: 180, rate: 30, label: "BREACH FLOOD · TIER II" }),
-  Object.freeze({ warnAt: 66, startAt: 67.5, count: 260, rate: 42, label: "SOVEREIGN SURGE · TIER III" }),
-  Object.freeze({ warnAt: 104, startAt: 105.5, count: 400, rate: 60, label: "TERMINAL OVERLOAD · MAXIMUM" }),
+  Object.freeze({ warnAt: 8, startAt: 9.25, progressAt: 0.1, warningLead: 1.25, count: 124, rate: 20, label: "GATE PRESSURE · TIER I" }),
+  Object.freeze({ warnAt: 33, startAt: 34.5, progressAt: 0.34, warningLead: 1.35, count: 180, rate: 30, label: "BREACH FLOOD · TIER II" }),
+  Object.freeze({ warnAt: 66, startAt: 67.5, progressAt: 0.6, warningLead: 1.45, count: 260, rate: 42, label: "SOVEREIGN SURGE · TIER III" }),
+  Object.freeze({ warnAt: 104, startAt: 105.5, progressAt: 0.82, warningLead: 1.5, count: 400, rate: 60, label: "TERMINAL OVERLOAD · MAXIMUM" }),
 ]);
 
 const OVERDRIVE_THRESHOLDS = Object.freeze([0.48, 0.72, 0.88]);
@@ -200,10 +202,19 @@ function activeWorldSize(state) {
 
 export function getEnemyPressureCap(state) {
   if (!state?.expedition) return MAX_LIVE_ENEMIES;
-  const levelPressure = clamp((finite(state.player?.level, 1) - 1) * 9, 0, 78);
-  const clearPressure = clamp(finite(state.killedEnemies) / Math.max(1, finite(state.enemyBudget, DEFAULT_ENEMY_BUDGET)) * 90, 0, 90);
-  const timePressure = clamp(finite(state.time) / 120 * 48, 0, 48);
-  return Math.round(clamp(INITIAL_SWARM + levelPressure + clearPressure + timePressure, INITIAL_SWARM, MAX_LIVE_ENEMIES));
+  const routeProgress = clamp(finite(state.expedition.progress), 0, 1);
+  const levelPressure = clamp((finite(state.player?.level, 1) - 1) * 6, 0, 48);
+  const clearPressure = clamp(finite(state.killedEnemies) / Math.max(1, finite(state.enemyBudget, DEFAULT_ENEMY_BUDGET)) * 36, 0, 36);
+  const timePressure = clamp(finite(state.time) / 180 * 20, 0, 20);
+  // Route depth is the dominant crowd signal. The convex curve keeps the
+  // deployment readable, then opens substantially more live slots near the
+  // second half and terminal approach without changing the authored budget.
+  const routePressure = Math.pow(routeProgress, 1.55) * 132;
+  return Math.round(clamp(
+    INITIAL_SWARM + levelPressure + clearPressure + timePressure + routePressure,
+    INITIAL_SWARM,
+    MAX_LIVE_ENEMIES,
+  ));
 }
 
 function activeBossFloor(state) {
@@ -1630,7 +1641,7 @@ function updateEnemies(state, dt) {
     enemy.attackCooldown -= dt;
     enemy.shootCooldown -= dt;
     enemy.burstTimer = Math.max(0, finite(enemy.burstTimer) - dt);
-    const wasAiming = finite(enemy.aimTimer) > 0;
+    let wasAiming = finite(enemy.aimTimer) > 0;
     enemy.aimTimer = Math.max(0, finite(enemy.aimTimer) - dt);
     enemy.slow = Math.max(0, enemy.slow - dt);
     enemy.disabledTimer = Math.max(0, finite(enemy.disabledTimer) - dt);
@@ -1640,6 +1651,13 @@ function updateEnemies(state, dt) {
     const distance = Math.max(0.001, Math.hypot(dx, dy));
     const towardX = dx / distance;
     const towardY = dy / distance;
+    const deepPursuit = Boolean(state.expedition && dx > EXPEDITION_DEEP_PURSUIT_DISTANCE);
+    if (deepPursuit && wasAiming) {
+      enemy.aimTimer = 0;
+      enemy.attackState = "idle";
+      wasAiming = false;
+    }
+    if (deepPursuit) enemy.burstShots = 0;
     const slowScale = enemy.slow > 0 ? 0.48 : 1;
     const role = enemy.combatRole ?? ENEMY_DATA[enemy.type]?.role ?? "rifleman";
     if (enemy.disabledTimer > 0) {
@@ -1651,10 +1669,13 @@ function updateEnemies(state, dt) {
       continue;
     }
     let movement = 1;
-    if (role === "rifleman" && distance < 520) movement = distance < 285 ? -0.5 : 0;
-    if (role === "sniper") movement = wasAiming ? 0 : distance < 520 ? -0.62 : distance < 820 ? 0 : 1;
-    enemy.vx = towardX * enemy.speed * slowScale * movement;
-    enemy.vy = towardY * enemy.speed * slowScale * movement;
+    if (!deepPursuit && role === "rifleman" && distance < 520) movement = distance < 285 ? -0.5 : 0;
+    if (!deepPursuit && role === "sniper") movement = wasAiming ? 0 : distance < 520 ? -0.62 : distance < 820 ? 0 : 1;
+    const movementSpeed = deepPursuit
+      ? Math.max(enemy.speed, finite(player.speed, 245) * EXPEDITION_PURSUIT_SPEED_MULTIPLIER)
+      : enemy.speed;
+    enemy.vx = towardX * movementSpeed * slowScale * movement;
+    enemy.vy = towardY * movementSpeed * slowScale * movement;
     enemy.x = clamp(enemy.x + enemy.vx * dt, arena.left, arena.right);
     enemy.y = clamp(enemy.y + enemy.vy * dt, arena.top, arena.bottom);
     enemy.angle = wasAiming
@@ -1662,7 +1683,7 @@ function updateEnemies(state, dt) {
       : Math.atan2(dy, dx);
     enemy.moveBlend += (Math.min(1, Math.hypot(enemy.vx, enemy.vy) / Math.max(1, enemy.speed)) - enemy.moveBlend) * moveBlendRate;
 
-    if (role === "rifleman" && enemy.burstShots <= 0 && distance < 610 && enemy.shootCooldown <= 0) {
+    if (!deepPursuit && role === "rifleman" && enemy.burstShots <= 0 && distance < 610 && enemy.shootCooldown <= 0) {
       enemy.burstShots = enemy.elite ? 5 : 3;
       enemy.burstTimer = 0;
       enemy.shootCooldown = enemy.elite ? 1.18 : 1.82;
@@ -1690,7 +1711,7 @@ function updateEnemies(state, dt) {
       enemy.animationTimer = 0.32;
       enemy.recoil = 1.25;
       emit(state, "enemyShot", { role, kind: "sniper", x: enemy.x, y: enemy.y });
-    } else if (role === "sniper" && !wasAiming && distance < 1020 && enemy.shootCooldown <= 0) {
+    } else if (!deepPursuit && role === "sniper" && !wasAiming && distance < 1020 && enemy.shootCooldown <= 0) {
       const lead = 0.42;
       enemy.lockedStartX = enemy.x;
       enemy.lockedStartY = enemy.y;
@@ -2894,13 +2915,30 @@ function updateRouteClearTransition(state, dt) {
 
 function updateSwarmSpawning(state, dt) {
   const wave = SURGE_WAVES[state.surgeIndex];
-  if (wave && !state.surgeWarning && state.time >= wave.warnAt) {
-    state.surgeWarning = { index: state.surgeIndex, label: wave.label, count: wave.count, startsIn: Math.max(0, wave.startAt - state.time) };
-    emit(state, "surgeWarning", { wave: state.surgeIndex + 1, label: wave.label, count: wave.count, startsIn: wave.startAt - wave.warnAt });
+  const triggerReached = state.expedition
+    ? finite(state.expedition.progress) >= finite(wave?.progressAt, 1)
+    : state.time >= finite(wave?.warnAt, Infinity);
+  if (wave && !state.surgeWarning && !state.activeSurge && state.surgeQueued <= 0 && triggerReached) {
+    const startAt = state.expedition ? state.time + finite(wave.warningLead, 1.25) : wave.startAt;
+    state.surgeWarning = {
+      index: state.surgeIndex,
+      label: wave.label,
+      count: wave.count,
+      startAt,
+      startsIn: Math.max(0, startAt - state.time),
+    };
+    emit(state, "surgeWarning", {
+      wave: state.surgeIndex + 1,
+      label: wave.label,
+      count: wave.count,
+      startsIn: Math.max(0, startAt - state.time),
+      progressAt: state.expedition ? wave.progressAt : null,
+    });
   }
   if (wave && state.surgeWarning?.index === state.surgeIndex) {
-    state.surgeWarning.startsIn = Math.max(0, wave.startAt - state.time);
-    if (state.time >= wave.startAt) {
+    const startAt = finite(state.surgeWarning.startAt, wave.startAt);
+    state.surgeWarning.startsIn = Math.max(0, startAt - state.time);
+    if (state.time >= startAt) {
       state.surgeQueued += wave.count;
       state.activeSurge = { index: state.surgeIndex, label: wave.label, count: wave.count, remaining: state.surgeQueued, rate: wave.rate };
       state.surgeWarning = null;

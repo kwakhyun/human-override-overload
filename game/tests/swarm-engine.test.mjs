@@ -118,8 +118,26 @@ test("the expedition opens with a readable force that scales with player growth"
   state.player.level = 8;
   state.killedEnemies = 420;
   state.time = 64;
+  state.expedition.progress = 0.7;
   assert.ok(getEnemyPressureCap(state) >= 155);
   assert.ok(getEnemyPressureCap(state) <= 220);
+});
+
+test("expedition pressure rises primarily with route depth and remains capped", () => {
+  const state = createSwarmState({ random: () => 0.37, expedition: true, regionId: "glass-dune" });
+  state.player.level = 1;
+  state.killedEnemies = 0;
+  state.time = 0;
+  const caps = [0, 0.25, 0.5, 0.75, 1].map((progress) => {
+    state.expedition.progress = progress;
+    return getEnemyPressureCap(state);
+  });
+  assert.equal(caps[0], 36);
+  assert.ok(caps.every((cap, index) => index === 0 || cap > caps[index - 1]), `expected rising caps, got ${caps}`);
+  state.player.level = 20;
+  state.killedEnemies = state.enemyBudget;
+  state.time = 180;
+  assert.equal(getEnemyPressureCap(state), 220);
 });
 
 test("each campaign region deterministically fields a distinct opening and reinforcement mix", () => {
@@ -671,7 +689,7 @@ test("skill cooldown HUD exposes the exact reset duration used by combat", () =>
   assert.equal("squadRecall" in manual, false);
 });
 
-test("growth-paced gate waves warn before filling only the current pressure cap", () => {
+test("route-paced gate waves wait for forward progress, then warn before filling only the current pressure cap", () => {
   const state = createSwarmState({ random: () => 0.5, expedition: true });
   for (const enemy of state.enemies) {
     enemy.hp = 999999;
@@ -684,9 +702,13 @@ test("growth-paced gate waves warn before filling only the current pressure cap"
   state.levelFlow.nextOfferAt = 999;
   drainSwarmEvents(state);
   stepFor(state, createSwarmInput(), 8.2);
+  assert.equal(drainSwarmEvents(state).some((event) => event.type === "surgeWarning"), false);
+  state.player.x = state.expedition.originX + state.expedition.routeLength * 0.11;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
   const warning = drainSwarmEvents(state).find((event) => event.type === "surgeWarning");
   assert.equal(warning.wave, 1);
   assert.equal(warning.count, 124);
+  assert.equal(warning.progressAt, 0.1);
   assert.ok(getSwarmHud(state).surge.warning.startsIn > 0);
   stepFor(state, createSwarmInput(), 1.4);
   const surgeEvents = drainSwarmEvents(state);
