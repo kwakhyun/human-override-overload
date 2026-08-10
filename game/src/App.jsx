@@ -24,7 +24,6 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import { createSfxEngine } from "./audio/sfx.js";
-import { createCharacterTts } from "./audio/characterTts.js";
 import { BGM_PATH, DOM_PREVIEW_ASSET_PATHS } from "./game/assets/manifest.ts";
 import {
   BASE_NPCS,
@@ -772,21 +771,8 @@ function ExpeditionCombatDock({ hud, onDash, onActivateAbility, tutorialAbilityI
   );
 }
 
-function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onSkip, onNarration }) {
+function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onSkip }) {
   const ability = MANUAL_ABILITY_GUIDE[stepIndex];
-
-  useEffect(() => {
-    if (!ability || !onNarration) return undefined;
-    const id = `combat-overlay-${ability.id}`;
-    onNarration({
-      id,
-      speaker: "RHEA",
-      text: `${ability.overlayPrompt} 아래에서 빛나는 ${ability.key} 버튼을 확인해.`,
-      kind: "combat-overlay",
-      priority: "important",
-    });
-    return () => onNarration({ id, cancel: true });
-  }, [ability, onNarration]);
 
   useEffect(() => {
     if (!ability) return undefined;
@@ -1435,7 +1421,7 @@ function RouteMinimap({ hud }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, onNarration }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete }) {
   const hostRef = useRef(null);
   const controllerRef = useRef(null);
   const finishReportedRef = useRef(false);
@@ -1593,22 +1579,6 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     return () => window.removeEventListener("keydown", handleDialogueKey);
   }, [advanceDialogue, dialogue]);
 
-  useEffect(() => {
-    if (!dialogue || !onNarration) return undefined;
-    const line = SCENARIO_SCRIPT[dialogue.beat]?.[dialogue.index];
-    if (!line) return undefined;
-    const id = `scenario-${dialogue.beat}-${dialogue.index}`;
-    const hostile = ["THE WRONG ENGINE", "MIRROR TYRANT", "DROWNED ORACLE"].includes(line.speaker);
-    onNarration({
-      id,
-      speaker: line.speaker,
-      text: line.text,
-      kind: "scenario-dialogue",
-      priority: hostile ? "critical" : "important",
-    });
-    return () => onNarration({ id, cancel: true });
-  }, [dialogue, onNarration]);
-
   const rewardOpen = Boolean(hud?.rewards?.options?.length);
 
   useEffect(() => {
@@ -1740,7 +1710,6 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
                 onNext={advanceCombatTutorial}
                 onBack={rewindCombatTutorial}
                 onSkip={finishCombatTutorial}
-                onNarration={onNarration}
               />
             )}
             {banner && (
@@ -1822,7 +1791,6 @@ export function App() {
   const [guideReturnScreen, setGuideReturnScreen] = useState("game");
   const bgmRef = useRef(null);
   const sfx = useMemo(() => createSfxEngine(), []);
-  const tts = useMemo(() => createCharacterTts({ enabled: true }), []);
   const regions = useMemo(() => getCampaignRegions(), []);
   const npcs = useMemo(() => Object.values(BASE_NPCS), []);
   const activeSlot = useMemo(
@@ -1893,19 +1861,14 @@ export function App() {
   useEffect(() => () => {
     bgmRef.current?.pause();
     sfx.dispose();
-    tts.dispose();
-  }, [sfx, tts]);
+  }, [sfx]);
   useEffect(() => sfx.setEnabled(soundEnabled), [sfx, soundEnabled]);
-  useEffect(() => {
-    tts.setEnabled(soundEnabled);
-  }, [soundEnabled, tts]);
   useEffect(() => {
     if (bgmRef.current) bgmRef.current.muted = !soundEnabled;
   }, [soundEnabled]);
 
   const startAudio = useCallback((restart = false) => {
     sfx.start();
-    tts.activateFromUserGesture();
     const bgm = bgmRef.current;
     if (bgm) {
       if (restart) bgm.currentTime = 0;
@@ -1915,16 +1878,7 @@ export function App() {
         // Browsers may still decline playback if the initiating gesture is lost.
       });
     }
-  }, [sfx, soundEnabled, tts]);
-
-  const narrate = useCallback((request = {}) => {
-    if (request.cancel) return tts.cancel();
-    return tts.speak({
-      speaker: request.speaker,
-      text: request.text,
-      priority: request.priority || (request.kind === "npc-dialogue" ? "normal" : "important"),
-    });
-  }, [tts]);
+  }, [sfx, soundEnabled]);
 
   const openSaveSlots = useCallback(() => {
     sfx.start();
@@ -2067,11 +2021,8 @@ export function App() {
 
   const toggleSound = useCallback(() => {
     const nextEnabled = !soundEnabled;
-    tts.setEnabled(nextEnabled);
-    if (nextEnabled) tts.activateFromUserGesture();
-    else tts.cancel();
     setSoundEnabled(nextEnabled);
-  }, [soundEnabled, tts]);
+  }, [soundEnabled]);
 
   let content;
   if (screen === "save") {
@@ -2082,7 +2033,6 @@ export function App() {
         assets={campaignAssets}
         onComplete={finishAbilityGuide}
         onBack={guideReturnScreen === "base" ? () => setScreen("base") : null}
-        onNarration={narrate}
       />
     );
   } else if (screen === "base" && campaignView) {
@@ -2103,7 +2053,6 @@ export function App() {
         onCloseFacility={closeFacility}
         onBoard={() => { closeNpc(); closeFacility(); setScreen("regions"); }}
         onTitle={() => { closeNpc(); closeFacility(); setScreen("save"); }}
-        onNarration={narrate}
       />
     );
   } else if (screen === "regions" && campaignView) {
@@ -2122,7 +2071,6 @@ export function App() {
         onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null}
         showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass)}
         onCombatTutorialComplete={finishCombatOverlay}
-        onNarration={narrate}
       />
     );
   } else if (screen === "result") {

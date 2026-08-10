@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   AirplaneTilt,
   ArrowLeft,
@@ -261,16 +261,10 @@ function NpcWorldFigure({ npc, assets }) {
   );
 }
 
-export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, onFacility, onInteraction, onNarration }) {
+export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, onFacility, onInteraction }) {
   const lines = npc?.dialogue || [];
   const line = localizeWorldText(lines[Math.min(lineIndex, Math.max(0, lines.length - 1))] || "통신 기록이 없습니다.");
   const final = lineIndex >= lines.length - 1;
-  useEffect(() => {
-    if (!npc || !onNarration) return;
-    const id = `npc-${npc.id}-${lineIndex}`;
-    onNarration({ id, speaker: npc.name, text: line, kind: "npc-dialogue" });
-    return () => onNarration({ id, cancel: true });
-  }, [line, lineIndex, npc?.id, npc?.name, onNarration]);
   if (!npc) return null;
   const display = NPC_DISPLAY[npc.id] || { name: npc.name, role: npc.role };
   return (
@@ -351,7 +345,7 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
   );
 }
 
-export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCloseFacility, onBoard, onTitle, onNarration }) {
+export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCloseFacility, onBoard, onTitle }) {
   const background = assetSource(assets?.homeBase);
   const completed = campaign?.completedRegionIds?.length || 0;
   return (
@@ -399,13 +393,13 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
         <button type="button" onClick={onTitle}>저장 슬롯 화면</button>
       </aside>
 
-      <NpcDialoguePanel npc={activeNpc} assets={assets} lineIndex={lineIndex} onAdvance={onAdvanceNpc} onClose={onCloseNpc} onFacility={onOpenFacility} onInteraction={onNpcInteraction} onNarration={onNarration} />
+      <NpcDialoguePanel npc={activeNpc} assets={assets} lineIndex={lineIndex} onAdvance={onAdvanceNpc} onClose={onCloseNpc} onFacility={onOpenFacility} onInteraction={onNpcInteraction} />
       <BaseFacilityPanel facility={activeFacility} onPurchase={onPurchaseUpgrade} onClose={onCloseFacility} />
     </main>
   );
 }
 
-export function AbilityGuideScreen({ assets, onComplete, onBack, onNarration }) {
+export function AbilityGuideScreen({ assets, onComplete, onBack }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const ability = MANUAL_ABILITY_GUIDE[activeIndex];
   const ActiveIcon = ABILITY_ICON[ability.icon] || Crosshair;
@@ -413,18 +407,6 @@ export function AbilityGuideScreen({ assets, onComplete, onBack, onNarration }) 
   const background = assetSource(assets?.homeBase);
   const example = assetSource(assets?.[ability.exampleAssetKey]);
   const final = activeIndex === MANUAL_ABILITY_GUIDE.length - 1;
-
-  useEffect(() => {
-    if (!onNarration) return undefined;
-    const id = `ability-guide-${ability.id}`;
-    onNarration({
-      id,
-      speaker: "RHEA",
-      text: `${ability.quote} ${ability.summary}`,
-      kind: "ability-guide",
-    });
-    return () => onNarration({ id, cancel: true });
-  }, [ability, onNarration]);
 
   return (
     <main className="campaign-shell ability-guide-screen">
