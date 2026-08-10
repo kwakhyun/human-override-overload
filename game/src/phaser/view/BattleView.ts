@@ -331,6 +331,7 @@ export class BattleView {
   private readonly allyPool: Phaser.GameObjects.Image[] = [];
   private readonly damageTexts: Phaser.GameObjects.Text[];
   private readonly viewFx: ViewFx[] = [];
+  private visibleEnemyCount = 0;
   private readonly preparedAtlases = new Set<string>();
   private readonly stratosGroupScratch: StratosGroupScratch[] = Array.from(
     { length: 3 },
@@ -533,7 +534,6 @@ export class BattleView {
       this.spawnFx("weaponBlast", this.boss.x, this.boss.y, COLORS.red, type === "bossRageBurst" ? 1.8 : 1.25);
     } else if (type === "enemySelfDestruct") {
       this.mainCamera.shake(180, event?.elite ? 0.011 : 0.0075);
-      this.spawnFx("enemyBurst", finite(event?.x), finite(event?.y), COLORS.red, event?.elite ? 1.8 : 1.35);
     } else if (type === "healthKitPicked") {
       this.spawnFx("weaponBlast", finite(event?.x), finite(event?.y), COLORS.green, 0.95);
     } else if (type === "routeClearWarning") {
@@ -839,6 +839,7 @@ export class BattleView {
     const view = this.mainCamera.worldView;
     const margin = 120;
     const animationHz = quality.id === "performance" ? 10 : quality.id === "cinematic" ? 24 : 16;
+    let visibleEnemyCount = 0;
     for (let index = 0; index < enemies.length; index += 1) {
       const entity = enemies[index];
       const id = finite(entity?.id, index + 1);
@@ -859,6 +860,7 @@ export class BattleView {
         }
         continue;
       }
+      visibleEnemyCount += 1;
       const profile = getActorAnimationProfile("enemy", entity);
       const selectedClip = selectActorClip(profile, entity);
       if (!record) {
@@ -931,6 +933,7 @@ export class BattleView {
       this.enemyPool.push(record.image);
       this.enemySprites.delete(id);
     }
+    this.visibleEnemyCount = visibleEnemyCount;
   }
 
   private syncAllies(state: any, time: number, quality: QualityPreset) {
@@ -1026,7 +1029,10 @@ export class BattleView {
     graphics.clear();
     if (quality.shadows === false) return;
     graphics.fillStyle(0x000000, 0.34);
-    for (const enemy of state?.enemies ?? []) {
+    const enemies = state?.enemies ?? [];
+    const shadowStride = this.visibleEnemyCount > 120 ? 3 : this.visibleEnemyCount > 72 ? 2 : 1;
+    for (let index = 0; index < enemies.length; index += shadowStride) {
+      const enemy = enemies[index];
       if (enemy?.dead || finite(enemy?.spawnDelay) > 0) continue;
       const x = finite(enemy.x);
       const y = finite(enemy.y);
@@ -1944,7 +1950,10 @@ export class BattleView {
     const graphics = this.projectileGraphics;
     graphics.clear();
     const playerProjectiles = state?.projectiles ?? [];
-    const spriteCap = quality.id === "performance" ? 220 : quality.id === "cinematic" ? 620 : 420;
+    // Friendly bullets are already represented by muzzle flashes, hit sparks,
+    // and impact state. Sample only their flight sprites under extreme volume;
+    // hostile projectiles below remain unsampled because they deal damage.
+    const spriteCap = quality.id === "performance" ? 180 : quality.id === "cinematic" ? 480 : 320;
     const stride = Math.max(1, Math.ceil(playerProjectiles.length / spriteCap));
     let visibleProjectiles = 0;
     for (let index = 0; index < playerProjectiles.length; index += stride) {
@@ -2037,14 +2046,14 @@ export class BattleView {
       scale: Math.max(0.25, finite(scale, 1)),
       seed: (this.viewFx.length * 97 + Math.floor(finite(x) * 13 + finite(y) * 7)) & 0xffff,
     });
-    const fxCap = this.currentQualityId === "performance" ? 48 : this.currentQualityId === "cinematic" ? 120 : 84;
+    const fxCap = this.currentQualityId === "performance" ? 36 : this.currentQualityId === "cinematic" ? 88 : 60;
     if (this.viewFx.length > fxCap) this.viewFx.splice(0, this.viewFx.length - fxCap);
   }
 
   private drawImpactFx(time: number, quality: QualityPreset) {
     const graphics = this.impactGraphics;
     graphics.clear();
-    const maxVisible = quality.id === "performance" ? 24 : quality.id === "cinematic" ? 96 : 64;
+    const maxVisible = quality.id === "performance" ? 18 : quality.id === "cinematic" ? 64 : 40;
     const start = Math.max(0, this.viewFx.length - maxVisible);
     let write = 0;
     let spriteCount = 0;
@@ -2060,15 +2069,16 @@ export class BattleView {
       const bossScale = fx.kind === "bossBurst" || fx.kind === "phaseBreak" ? 2.4 : 1;
       const radius = (hit ? 5 + progress * 24 : 12 + progress * 48) * scale * bossScale;
       if (!this.isCircleVisible(fx.x, fx.y, radius * 2.1, 40)) continue;
+      const enemyExplosion = fx.kind === "enemyBurst";
 
-      if (spriteCount < (quality.id === "performance" ? 14 : 46)) {
+      const impactSpriteCap = quality.id === "performance" ? 12 : quality.id === "cinematic" ? 48 : 30;
+      if (spriteCount < impactSpriteCap) {
         let image = this.impactSprites[spriteCount];
         if (!image) {
           image = this.scene.add.image(0, 0, ASSET_KEYS.combatFx).setBlendMode(Phaser.BlendModes.ADD);
           this.worldFront.add(image);
           this.impactSprites.push(image);
         }
-        const enemyExplosion = fx.kind === "enemyBurst";
         const explosion = enemyExplosion || fx.kind === "bossBurst" || fx.kind === "phaseBreak";
         if (enemyExplosion) {
           image.setTexture(ASSET_KEYS.enemyDeathPixel);
@@ -2089,6 +2099,11 @@ export class BattleView {
           .setTint(enemyExplosion ? 0xffffff : fx.color);
         spriteCount += 1;
       }
+
+      // Enemy deaths own a six-frame pixel explosion. Drawing the legacy
+      // circles and twelve procedural rays on top both muddied that authored
+      // animation and multiplied Graphics tessellation during mass kills.
+      if (enemyExplosion) continue;
 
       graphics.fillStyle(COLORS.white, alpha * (hit ? 0.85 : 0.62));
       graphics.fillCircle(fx.x, fx.y, Math.max(2, (hit ? 7 : 13) * scale * (1 - progress)));

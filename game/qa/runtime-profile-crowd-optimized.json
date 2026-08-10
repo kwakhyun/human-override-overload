@@ -1,0 +1,2555 @@
+{
+  "generatedAt": "2026-08-10T12:29:49.360Z",
+  "baseUrl": "http://127.0.0.1:4174/",
+  "executablePath": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+  "sampleFrames": 240,
+  "emulateLowEnd": false,
+  "cpuThrottleRate": 1,
+  "results": [
+    {
+      "id": "desktop-1440x810/wrong-engine-route-220x620",
+      "viewport": "desktop-1440x810",
+      "scenario": "wrong-engine-route-220x620",
+      "fixture": {
+        "liveEnemies": 220,
+        "playerProjectiles": 620,
+        "enemyProjectiles": 0,
+        "note": "DEV-only deterministic fixture; current debug runtime state was mutated and all three optional ally atlases were requested. Simulation rules and campaign saves were not changed."
+      },
+      "playerVfxTextures": [
+        {
+          "key": "overload-manual-ability-pixel-atlas",
+          "width": 384,
+          "height": 256,
+          "decodedRgba8Bytes": 393216
+        },
+        {
+          "key": "overload-automatic-skill-pixel-atlas",
+          "width": 384,
+          "height": 256,
+          "decodedRgba8Bytes": 393216
+        },
+        {
+          "key": "overload-sovereign-gate-motion-atlas",
+          "width": 1152,
+          "height": 192,
+          "decodedRgba8Bytes": 884736
+        }
+      ],
+      "screenshot": "runtime-profile-screenshots/desktop-1440x810-wrong-engine-route-220x620.png",
+      "snapshot": {
+        "version": 1,
+        "generatedAt": "2026-08-10T12:29:27.561Z",
+        "context": {
+          "scene": "OverloadBattle",
+          "debugScene": "arsenal",
+          "regionId": "wrong-engine-core",
+          "phase": "swarm",
+          "quality": "performance",
+          "assetProfile": "full",
+          "autoQualityCeiling": "cinematic",
+          "deviceQuality": "cinematic",
+          "deviceReasons": [],
+          "liveEnemies": 220,
+          "playerProjectiles": 620,
+          "enemyProjectiles": 0,
+          "bossStage": 1,
+          "bossPattern": null
+        },
+        "renderer": {
+          "kind": "WebGLRenderer2",
+          "width": 1280,
+          "height": 720,
+          "resolution": 0.7,
+          "maxTextureSize": 16384,
+          "gpuVendor": "Google Inc. (NVIDIA)",
+          "gpuRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Ti (0x00002803) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+        },
+        "frames": {
+          "targetFrameMs": 16.667,
+          "raf": {
+            "count": 900,
+            "minMs": 2.3,
+            "maxMs": 19.9,
+            "meanMs": 6.96,
+            "p50Ms": 6.9,
+            "p95Ms": 7.1,
+            "p99Ms": 7.1,
+            "budgetMs": 25,
+            "overBudgetRatio": 0,
+            "droppedFrameRatio": 0
+          },
+          "scene": {
+            "count": 240,
+            "minMs": 22,
+            "maxMs": 50.9,
+            "meanMs": 33.329,
+            "p50Ms": 34.6,
+            "p95Ms": 35.7,
+            "p99Ms": 37.9,
+            "budgetMs": 25,
+            "overBudgetRatio": 0.996,
+            "droppedFrameRatio": 0.996
+          },
+          "phaserDelta": {
+            "count": 241,
+            "minMs": 33.623,
+            "maxMs": 40.167,
+            "meanMs": 37.266,
+            "p50Ms": 37.263,
+            "p95Ms": 40.077,
+            "p99Ms": 40.137,
+            "budgetMs": 25,
+            "overBudgetRatio": 1,
+            "droppedFrameRatio": 1
+          },
+          "sceneUpdateCpu": {
+            "count": 241,
+            "minMs": 1,
+            "maxMs": 5.1,
+            "meanMs": 2.134,
+            "p50Ms": 2,
+            "p95Ms": 3.4,
+            "p99Ms": 4.5,
+            "budgetMs": 16.667,
+            "overBudgetRatio": 0
+          },
+          "renderSubmitCpu": {
+            "count": 241,
+            "minMs": 1.9,
+            "maxMs": 7,
+            "meanMs": 2.82,
+            "p50Ms": 2.7,
+            "p95Ms": 4.1,
+            "p99Ms": 5,
+            "budgetMs": 16.667,
+            "overBudgetRatio": 0
+          }
+        },
+        "textureMemory": {
+          "method": "texture-source-rgba8-estimate",
+          "loadedTextureScope": "same-document-asset-image-resource-timing",
+          "loadedTextureBytes": 10855845,
+          "loadedTextureBytesKnownSources": 36,
+          "decodedRgba8Bytes": 50961968,
+          "sourceCount": 71,
+          "textureKeyCount": 71,
+          "categories": {
+            "route": {
+              "loadedTextureBytes": 902122,
+              "decodedRgba8Bytes": 19049472,
+              "sourceCount": 4,
+              "keys": [
+                "overload-sector-01",
+                "overload-sector-02",
+                "overload-sector-03",
+                "overload-squad-traces-atlas"
+              ]
+            },
+            "boss": {
+              "loadedTextureBytes": 0,
+              "decodedRgba8Bytes": 0,
+              "sourceCount": 0,
+              "keys": []
+            },
+            "common": {
+              "loadedTextureBytes": 9953723,
+              "decodedRgba8Bytes": 31912496,
+              "sourceCount": 67,
+              "keys": [
+                "07032556-237a-4c3f-a9ff-1c64bec1605d",
+                "0f732265-8b32-48a5-843a-12e8501a666a",
+                "1a292cd8-abc4-4142-9f40-ef720db644ff",
+                "1ba17f7b-8c15-4635-9497-5feee724e991",
+                "1d7ac090-e847-46ff-866f-9db0a3041bea",
+                "23b8d8a7-5db9-42f5-adc9-940ad1f3d657",
+                "23c7cfdd-9054-4f7c-8563-f77f07291252",
+                "28b86f49-3334-4201-8bbb-ca3e1d0f5b4b",
+                "2f1ce8ac-fe74-42f6-9950-e6cc021b3f10",
+                "423d1ef7-7695-47f7-b4ea-82ed00098b39",
+                "4d877e30-158a-4568-9efb-6ea24cb35332",
+                "5e8a6708-78d8-4f41-9d1b-d482ca79f8ed",
+                "6026ab5c-ff5c-42fb-a8dd-213e8f7020f3",
+                "69c42c5c-19f9-47f8-9bdb-f2fb8ca3cd8f",
+                "6a6343a2-55eb-413f-886c-3cfa85c105ae",
+                "7a86ab09-ada8-4d9e-b82c-0bd87123b3d0",
+                "7d3a5acf-b9fa-4450-9b44-66fe0f84e9fe",
+                "841c7504-adba-4992-8e34-c5484561b86c",
+                "8599bfad-07d4-49c0-9cbc-3f91e674bd8e",
+                "9644313b-d72a-438c-b590-ce9edf265211",
+                "9978eb82-9f7a-4c55-9e6c-c4937fea420f",
+                "9db09fb7-bc38-4a62-bd19-88e3d31d001e",
+                "a7445643-7148-4752-a6f7-691f6929ff33",
+                "aa722c35-b5d1-42db-9d4f-fb4207497382",
+                "aa8679b0-37d2-42ef-afa8-9932ba2a44f7",
+                "aada811f-0cc2-4c43-afc4-de4051c3541d",
+                "b5f319c2-79db-4114-9780-282dc7085bd2",
+                "ba0c21fe-6ca5-4dd4-89a6-bb200cc573a9",
+                "bb7f3f86-260f-49f0-9d8a-aa03b71e2ff4",
+                "bd5d63e4-e596-4450-b3fc-3e16348ddb3d",
+                "bef53c95-5252-4618-81ea-2e36207213f5",
+                "cdaca49e-d70e-4a56-83b9-41573d03dfe6",
+                "d6fab4fe-a89d-40da-8dac-9318618b19d7",
+                "d70ac57c-48bc-4e71-a2a8-445e4f052dd1",
+                "dae1afff-5cfc-480b-8233-c1fc2830d5a4",
+                "df694228-b601-4cef-8fd5-4447d5866113",
+                "e4a8bb05-8c69-474d-8384-c3d8f5d31dbb",
+                "eacf345b-34b6-4554-b53b-535370aec790",
+                "ec4413b7-e2a3-40c5-a4b0-e083f189fdfc",
+                "f0725564-787b-4647-b706-76aa68c8a497",
+                "f4a93f64-7744-4f32-9edd-8b86e0180129",
+                "ff0d4de3-e13f-4228-a44d-658782e8990e",
+                "overload-ally-aegis-echo",
+                "overload-ally-emp-pylon",
+                "overload-ally-hunter-drone",
+                "overload-ally-hunter-drone-motion-v2",
+                "overload-ally-moss",
+                "overload-ally-nyx",
+                "overload-ally-pulse-sentry",
+                "overload-ally-pulse-sentry-motion-v2",
+                "overload-ally-rook",
+                "overload-ally-suppressor-drone",
+                "overload-ally-suppressor-drone-motion-v2",
+                "overload-automatic-skill-pixel-atlas",
+                "overload-combat-fx-atlas",
+                "overload-enemy-death-pixel-atlas",
+                "overload-enemy-hunter-motion-v2",
+                "overload-enemy-hunter-static",
+                "overload-enemy-rifleman-motion-v2",
+                "overload-enemy-rifleman-static",
+                "overload-enemy-sniper-motion-v2",
+                "overload-enemy-sniper-static",
+                "overload-healing-kit-motion-atlas",
+                "overload-manual-ability-pixel-atlas",
+                "overload-sovereign-gate-motion-atlas",
+                "survivor-directional-aim-atlas",
+                "survivor-motion-atlas"
+              ]
+            },
+            "internal": {
+              "loadedTextureBytes": 0,
+              "decodedRgba8Bytes": 0,
+              "sourceCount": 0,
+              "keys": []
+            }
+          },
+          "sources": [
+            {
+              "id": "url:blob:http://127.0.0.1:4174/a7f04b01-def9-45e9-8eef-15922295b8b8",
+              "width": 1536,
+              "height": 1728,
+              "decodedRgba8Bytes": 10616832,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "survivor-motion-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/a7f04b01-def9-45e9-8eef-15922295b8b8"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/1d1ae80c-e1c1-40ae-8380-dd2255929c05",
+              "width": 1600,
+              "height": 900,
+              "decodedRgba8Bytes": 5760000,
+              "loadedTextureBytes": null,
+              "category": "route",
+              "keys": [
+                "overload-sector-03"
+              ],
+              "url": "blob:http://127.0.0.1:4174/1d1ae80c-e1c1-40ae-8380-dd2255929c05"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/8481a7b4-2e44-4a70-88ba-89e8a41be415",
+              "width": 1600,
+              "height": 900,
+              "decodedRgba8Bytes": 5760000,
+              "loadedTextureBytes": null,
+              "category": "route",
+              "keys": [
+                "overload-sector-02"
+              ],
+              "url": "blob:http://127.0.0.1:4174/8481a7b4-2e44-4a70-88ba-89e8a41be415"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/88acd3d0-cbeb-4269-96b4-68afdc8c855d",
+              "width": 1600,
+              "height": 900,
+              "decodedRgba8Bytes": 5760000,
+              "loadedTextureBytes": null,
+              "category": "route",
+              "keys": [
+                "overload-sector-01"
+              ],
+              "url": "blob:http://127.0.0.1:4174/88acd3d0-cbeb-4269-96b4-68afdc8c855d"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/1125d2ea-0d70-4071-a1ba-34215017c5a2",
+              "width": 1024,
+              "height": 768,
+              "decodedRgba8Bytes": 3145728,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-combat-fx-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/1125d2ea-0d70-4071-a1ba-34215017c5a2"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/451afdc5-8844-4103-b1f3-876a140672d5",
+              "width": 960,
+              "height": 640,
+              "decodedRgba8Bytes": 2457600,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-sniper-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/451afdc5-8844-4103-b1f3-876a140672d5"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/790f019c-5536-4b60-b9bc-5dece8356048",
+              "width": 960,
+              "height": 640,
+              "decodedRgba8Bytes": 2457600,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-hunter-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/790f019c-5536-4b60-b9bc-5dece8356048"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/f7363d0e-cb17-4833-b823-b6ac94bd41e5",
+              "width": 960,
+              "height": 640,
+              "decodedRgba8Bytes": 2457600,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-rifleman-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/f7363d0e-cb17-4833-b823-b6ac94bd41e5"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/93b74375-7496-4781-bbb1-30cb50f59aac",
+              "width": 1152,
+              "height": 384,
+              "decodedRgba8Bytes": 1769472,
+              "loadedTextureBytes": null,
+              "category": "route",
+              "keys": [
+                "overload-squad-traces-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/93b74375-7496-4781-bbb1-30cb50f59aac"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/222d19f8-5d15-478b-a430-ee1fe79b4e4d",
+              "width": 1024,
+              "height": 384,
+              "decodedRgba8Bytes": 1572864,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "survivor-directional-aim-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/222d19f8-5d15-478b-a430-ee1fe79b4e4d"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/24a60b13-1685-4b69-ab8e-84402724857d",
+              "width": 640,
+              "height": 512,
+              "decodedRgba8Bytes": 1310720,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-pulse-sentry-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/24a60b13-1685-4b69-ab8e-84402724857d"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/c670e217-4a87-4583-a36a-4dc88caee858",
+              "width": 640,
+              "height": 512,
+              "decodedRgba8Bytes": 1310720,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-hunter-drone-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/c670e217-4a87-4583-a36a-4dc88caee858"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/e1dfd280-b1bb-4f80-b033-e7f8e52940ff",
+              "width": 640,
+              "height": 512,
+              "decodedRgba8Bytes": 1310720,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-suppressor-drone-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/e1dfd280-b1bb-4f80-b033-e7f8e52940ff"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/8f426ce6-1d9d-4274-8c88-c83931f11fe4",
+              "width": 1152,
+              "height": 192,
+              "decodedRgba8Bytes": 884736,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-sovereign-gate-motion-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/8f426ce6-1d9d-4274-8c88-c83931f11fe4"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/a8ec74c6-4002-48fb-8bd5-e5a95c14c0f2",
+              "width": 768,
+              "height": 192,
+              "decodedRgba8Bytes": 589824,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-healing-kit-motion-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/a8ec74c6-4002-48fb-8bd5-e5a95c14c0f2"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/1cb6cf90-7605-4957-ac52-0e2ba1e2ddc7",
+              "width": 384,
+              "height": 256,
+              "decodedRgba8Bytes": 393216,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-manual-ability-pixel-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/1cb6cf90-7605-4957-ac52-0e2ba1e2ddc7"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/91138847-2ae0-4422-baa3-1c9f256c73c8",
+              "width": 384,
+              "height": 256,
+              "decodedRgba8Bytes": 393216,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-automatic-skill-pixel-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/91138847-2ae0-4422-baa3-1c9f256c73c8"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/10c3c530-77c0-4887-8523-100afff20801",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-suppressor-drone"
+              ],
+              "url": "blob:http://127.0.0.1:4174/10c3c530-77c0-4887-8523-100afff20801"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/21db19e2-4a90-4c1f-893a-0f295bb84569",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-moss"
+              ],
+              "url": "blob:http://127.0.0.1:4174/21db19e2-4a90-4c1f-893a-0f295bb84569"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/5e01c2cf-68f8-4d6f-9c34-ad1b5fb067aa",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-rifleman-static"
+              ],
+              "url": "blob:http://127.0.0.1:4174/5e01c2cf-68f8-4d6f-9c34-ad1b5fb067aa"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/5e168f52-70c9-4dd1-9b7f-372250673e93",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-sniper-static"
+              ],
+              "url": "blob:http://127.0.0.1:4174/5e168f52-70c9-4dd1-9b7f-372250673e93"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/6e46232a-655e-494d-8980-9c455c47c8ef",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-aegis-echo"
+              ],
+              "url": "blob:http://127.0.0.1:4174/6e46232a-655e-494d-8980-9c455c47c8ef"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/6f6a5df4-ebf2-4663-9cee-32c52f59e6be",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-rook"
+              ],
+              "url": "blob:http://127.0.0.1:4174/6f6a5df4-ebf2-4663-9cee-32c52f59e6be"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/71239094-61e5-4d99-a823-502d1810b6ff",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-hunter-static"
+              ],
+              "url": "blob:http://127.0.0.1:4174/71239094-61e5-4d99-a823-502d1810b6ff"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/a06a8dd9-0780-415b-9c08-20260c1ef6d0",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-pulse-sentry"
+              ],
+              "url": "blob:http://127.0.0.1:4174/a06a8dd9-0780-415b-9c08-20260c1ef6d0"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/a4241490-7f26-4044-a898-4af4e6a55371",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-emp-pylon"
+              ],
+              "url": "blob:http://127.0.0.1:4174/a4241490-7f26-4044-a898-4af4e6a55371"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/c2bd12c3-bfbd-4a62-acc1-db6214be297e",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-nyx"
+              ],
+              "url": "blob:http://127.0.0.1:4174/c2bd12c3-bfbd-4a62-acc1-db6214be297e"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/dfea4c01-4102-4600-be52-2f593a68f10c",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-hunter-drone"
+              ],
+              "url": "blob:http://127.0.0.1:4174/dfea4c01-4102-4600-be52-2f593a68f10c"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/67560f7c-79e3-4b23-abd3-2a5eeb6542d0",
+              "width": 384,
+              "height": 64,
+              "decodedRgba8Bytes": 98304,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-death-pixel-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/67560f7c-79e3-4b23-abd3-2a5eeb6542d0"
+            },
+            {
+              "id": "object:16",
+              "width": 94,
+              "height": 21,
+              "decodedRgba8Bytes": 7896,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "7a86ab09-ada8-4d9e-b82c-0bd87123b3d0"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:2",
+              "width": 94,
+              "height": 21,
+              "decodedRgba8Bytes": 7896,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "0f732265-8b32-48a5-843a-12e8501a666a"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:1",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "07032556-237a-4c3f-a9ff-1c64bec1605d"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:10",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "423d1ef7-7695-47f7-b4ea-82ed00098b39"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:11",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "4d877e30-158a-4568-9efb-6ea24cb35332"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:12",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "5e8a6708-78d8-4f41-9d1b-d482ca79f8ed"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:13",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "6026ab5c-ff5c-42fb-a8dd-213e8f7020f3"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:14",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "69c42c5c-19f9-47f8-9bdb-f2fb8ca3cd8f"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:15",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "6a6343a2-55eb-413f-886c-3cfa85c105ae"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:17",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "7d3a5acf-b9fa-4450-9b44-66fe0f84e9fe"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:18",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "841c7504-adba-4992-8e34-c5484561b86c"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:19",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "8599bfad-07d4-49c0-9cbc-3f91e674bd8e"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:20",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "9644313b-d72a-438c-b590-ce9edf265211"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:21",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "9978eb82-9f7a-4c55-9e6c-c4937fea420f"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:22",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "9db09fb7-bc38-4a62-bd19-88e3d31d001e"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:23",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "a7445643-7148-4752-a6f7-691f6929ff33"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:24",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "aa722c35-b5d1-42db-9d4f-fb4207497382"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:25",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "aa8679b0-37d2-42ef-afa8-9932ba2a44f7"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:26",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "aada811f-0cc2-4c43-afc4-de4051c3541d"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:27",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "b5f319c2-79db-4114-9780-282dc7085bd2"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:28",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "ba0c21fe-6ca5-4dd4-89a6-bb200cc573a9"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:29",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "bb7f3f86-260f-49f0-9d8a-aa03b71e2ff4"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:3",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "1a292cd8-abc4-4142-9f40-ef720db644ff"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:30",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "bd5d63e4-e596-4450-b3fc-3e16348ddb3d"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:31",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "bef53c95-5252-4618-81ea-2e36207213f5"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:32",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "cdaca49e-d70e-4a56-83b9-41573d03dfe6"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:33",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "d6fab4fe-a89d-40da-8dac-9318618b19d7"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:34",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "d70ac57c-48bc-4e71-a2a8-445e4f052dd1"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:35",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "dae1afff-5cfc-480b-8233-c1fc2830d5a4"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:36",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "df694228-b601-4cef-8fd5-4447d5866113"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:37",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "e4a8bb05-8c69-474d-8384-c3d8f5d31dbb"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:38",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "eacf345b-34b6-4554-b53b-535370aec790"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:39",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "ec4413b7-e2a3-40c5-a4b0-e083f189fdfc"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:4",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "1ba17f7b-8c15-4635-9497-5feee724e991"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:40",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "f0725564-787b-4647-b706-76aa68c8a497"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:41",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "f4a93f64-7744-4f32-9edd-8b86e0180129"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:42",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "ff0d4de3-e13f-4228-a44d-658782e8990e"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:5",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "1d7ac090-e847-46ff-866f-9db0a3041bea"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:6",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "23b8d8a7-5db9-42f5-adc9-940ad1f3d657"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:7",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "23c7cfdd-9054-4f7c-8563-f77f07291252"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:8",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "28b86f49-3334-4201-8bbb-ca3e1d0f5b4b"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:9",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "2f1ce8ac-fe74-42f6-9950-e6cc021b3f10"
+              ],
+              "url": null
+            }
+          ],
+          "loadedResources": [
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/hero/survivor-motion-atlas-v2.png",
+              "loadedTextureBytes": 1998542,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/hero/survivor-portrait.png",
+              "loadedTextureBytes": 1658995,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/ui/npcs/haven-npc-portraits-atlas.png",
+              "loadedTextureBytes": 826548,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/motion-v2/sniper-motion-atlas.png",
+              "loadedTextureBytes": 569240,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/motion-v2/suicide-drone-motion-atlas.png",
+              "loadedTextureBytes": 459696,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/ui/npcs/rhea-control-officer.png",
+              "loadedTextureBytes": 436648,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/campaign/squad-traces-atlas.png",
+              "loadedTextureBytes": 427572,
+              "category": "route"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/combat-fx-atlas.png",
+              "loadedTextureBytes": 412094,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/campaign/airship-region-map-v2.webp",
+              "loadedTextureBytes": 347090,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/motion-v2/rifleman-motion-atlas.png",
+              "loadedTextureBytes": 345020,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/intro/start-screen-key-art.webp",
+              "loadedTextureBytes": 320834,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/campaign/haven-09-base.webp",
+              "loadedTextureBytes": 317484,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/hero/survivor-directional-aim-atlas.png",
+              "loadedTextureBytes": 307079,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/motion-v2/pulse-sentry-motion-atlas.png",
+              "loadedTextureBytes": 304047,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/ui/buttons/command-button-states-atlas.png",
+              "loadedTextureBytes": 266188,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/motion-v2/suppressor-drone-motion-atlas.png",
+              "loadedTextureBytes": 245567,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/gates/sovereign-gate-motion-atlas.png",
+              "loadedTextureBytes": 229874,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/motion-v2/hunter-drone-motion-atlas.png",
+              "loadedTextureBytes": 214271,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/environment/sector-03-engine-causeway.webp",
+              "loadedTextureBytes": 179084,
+              "category": "route"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/environment/sector-02-flooded-memorial.webp",
+              "loadedTextureBytes": 170210,
+              "category": "route"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/items/healing-kit-motion-atlas.png",
+              "loadedTextureBytes": 165194,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/environment/sector-01-shattered-approach.webp",
+              "loadedTextureBytes": 125256,
+              "category": "route"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/suppressor-drone.png",
+              "loadedTextureBytes": 59929,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/pulse-sentry.png",
+              "loadedTextureBytes": 59410,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/rook.png",
+              "loadedTextureBytes": 53319,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/hunter-drone.png",
+              "loadedTextureBytes": 52057,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/brute.png",
+              "loadedTextureBytes": 51998,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/emp-pylon.png",
+              "loadedTextureBytes": 46310,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/moss.png",
+              "loadedTextureBytes": 36477,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/hunter.png",
+              "loadedTextureBytes": 33223,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/suppressor.png",
+              "loadedTextureBytes": 32624,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/aegis-echo.png",
+              "loadedTextureBytes": 30240,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/nyx.png",
+              "loadedTextureBytes": 29667,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png",
+              "loadedTextureBytes": 21963,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png",
+              "loadedTextureBytes": 17506,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/pixel/enemy-death-pixel-atlas.png",
+              "loadedTextureBytes": 4589,
+              "category": "common"
+            }
+          ],
+          "limitation": "loadedTextureBytes uses Resource Timing encoded body sizes for same-document image assets and can include DOM preview images as well as Phaser-loaded images. RGBA8 source dimensions are TextureManager-only and deduplicated by URL/object identity. Browser APIs do not expose physical GPU allocation, driver padding, mipmaps, render targets, compositor copies, or decoded-image cache residency."
+        },
+        "limitations": [
+          "Frame timings are wall-clock CPU observations. renderSubmitCpu ends after command submission and does not wait for GPU completion.",
+          "Physical VRAM allocation is unavailable to normal browser JavaScript; textureMemory is a deduplicated decoded RGBA8 source estimate.",
+          "Headless browser GPU identity and performance can differ from a visible browser on the same device."
+        ]
+      }
+    },
+    {
+      "id": "mobile-landscape-812x375/wrong-engine-route-220x620",
+      "viewport": "mobile-landscape-812x375",
+      "scenario": "wrong-engine-route-220x620",
+      "fixture": {
+        "liveEnemies": 220,
+        "playerProjectiles": 620,
+        "enemyProjectiles": 0,
+        "note": "DEV-only deterministic fixture; current debug runtime state was mutated and all three optional ally atlases were requested. Simulation rules and campaign saves were not changed."
+      },
+      "playerVfxTextures": [
+        {
+          "key": "overload-manual-ability-pixel-atlas",
+          "width": 384,
+          "height": 256,
+          "decodedRgba8Bytes": 393216
+        },
+        {
+          "key": "overload-automatic-skill-pixel-atlas",
+          "width": 384,
+          "height": 256,
+          "decodedRgba8Bytes": 393216
+        },
+        {
+          "key": "overload-sovereign-gate-motion-atlas",
+          "width": 1152,
+          "height": 192,
+          "decodedRgba8Bytes": 884736
+        }
+      ],
+      "screenshot": "runtime-profile-screenshots/mobile-landscape-812x375-wrong-engine-route-220x620.png",
+      "snapshot": {
+        "version": 1,
+        "generatedAt": "2026-08-10T12:29:48.814Z",
+        "context": {
+          "scene": "OverloadBattle",
+          "debugScene": "arsenal",
+          "regionId": "wrong-engine-core",
+          "phase": "swarm",
+          "quality": "performance",
+          "assetProfile": "full",
+          "autoQualityCeiling": "cinematic",
+          "deviceQuality": "cinematic",
+          "deviceReasons": [],
+          "liveEnemies": 220,
+          "playerProjectiles": 620,
+          "enemyProjectiles": 0,
+          "bossStage": 1,
+          "bossPattern": null
+        },
+        "renderer": {
+          "kind": "WebGLRenderer2",
+          "width": 1280,
+          "height": 720,
+          "resolution": 0.7,
+          "maxTextureSize": 16384,
+          "gpuVendor": "Google Inc. (NVIDIA)",
+          "gpuRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Ti (0x00002803) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+        },
+        "frames": {
+          "targetFrameMs": 16.667,
+          "raf": {
+            "count": 900,
+            "minMs": 6.3,
+            "maxMs": 41.6,
+            "meanMs": 7.261,
+            "p50Ms": 6.9,
+            "p95Ms": 7.1,
+            "p99Ms": 20.8,
+            "budgetMs": 25,
+            "overBudgetRatio": 0.009,
+            "droppedFrameRatio": 0.009
+          },
+          "scene": {
+            "count": 240,
+            "minMs": 11.6,
+            "maxMs": 66,
+            "meanMs": 33.307,
+            "p50Ms": 34.4,
+            "p95Ms": 36.2,
+            "p99Ms": 48.7,
+            "budgetMs": 25,
+            "overBudgetRatio": 0.975,
+            "droppedFrameRatio": 0.975
+          },
+          "phaserDelta": {
+            "count": 241,
+            "minMs": 33.337,
+            "maxMs": 54.01,
+            "meanMs": 37.68,
+            "p50Ms": 37.457,
+            "p95Ms": 43,
+            "p99Ms": 49.87,
+            "budgetMs": 25,
+            "overBudgetRatio": 1,
+            "droppedFrameRatio": 1
+          },
+          "sceneUpdateCpu": {
+            "count": 241,
+            "minMs": 1.5,
+            "maxMs": 5,
+            "meanMs": 2.283,
+            "p50Ms": 2.1,
+            "p95Ms": 3.5,
+            "p99Ms": 4.3,
+            "budgetMs": 16.667,
+            "overBudgetRatio": 0
+          },
+          "renderSubmitCpu": {
+            "count": 241,
+            "minMs": 1.9,
+            "maxMs": 5.4,
+            "meanMs": 2.809,
+            "p50Ms": 2.6,
+            "p95Ms": 4.2,
+            "p99Ms": 5.1,
+            "budgetMs": 16.667,
+            "overBudgetRatio": 0
+          }
+        },
+        "textureMemory": {
+          "method": "texture-source-rgba8-estimate",
+          "loadedTextureScope": "same-document-asset-image-resource-timing",
+          "loadedTextureBytes": 10855845,
+          "loadedTextureBytesKnownSources": 36,
+          "decodedRgba8Bytes": 50961968,
+          "sourceCount": 71,
+          "textureKeyCount": 71,
+          "categories": {
+            "route": {
+              "loadedTextureBytes": 902122,
+              "decodedRgba8Bytes": 19049472,
+              "sourceCount": 4,
+              "keys": [
+                "overload-sector-01",
+                "overload-sector-02",
+                "overload-sector-03",
+                "overload-squad-traces-atlas"
+              ]
+            },
+            "boss": {
+              "loadedTextureBytes": 0,
+              "decodedRgba8Bytes": 0,
+              "sourceCount": 0,
+              "keys": []
+            },
+            "common": {
+              "loadedTextureBytes": 9953723,
+              "decodedRgba8Bytes": 31912496,
+              "sourceCount": 67,
+              "keys": [
+                "03da2594-4395-4026-bd32-92b60e50444c",
+                "2e0d6dd4-8d65-46ef-a512-180b70dee8ef",
+                "36c8db31-76a9-4f46-9a9d-823db6b237c6",
+                "3b5c38b2-5634-4a6e-9ec3-f51debc621ad",
+                "3c21661b-ef88-4429-801f-41a9f273a974",
+                "3d995c19-f133-45ef-917e-398a6c8c4dc4",
+                "3e2028dc-ce06-4b5d-a60e-f931af9343b8",
+                "4602b1bb-d536-4058-b634-81425b0bf387",
+                "48ecc1b7-c53b-43ed-b7d6-146c2cf3c477",
+                "4aebcd27-6fe0-40c3-80f0-0c934c289731",
+                "4d288c3b-f5f6-4712-a389-de1723a7599c",
+                "532622a9-fd91-430f-b34e-afab3741c46e",
+                "5419e0ca-bfd1-4812-ba81-6de6969afd9d",
+                "6382c8d3-6620-4f8b-aa8a-3664293b04c9",
+                "64405ee6-409a-4f7c-af76-26961b06db8d",
+                "684ad5d1-fbc1-455b-beb1-a7013f4bc699",
+                "6af93bf1-2741-4678-9509-c219339b4cb9",
+                "6d3a33ac-9a66-4c87-a6a7-e68fe14cda17",
+                "6e777a3e-6a72-462b-9e6a-e592798176a2",
+                "708917b0-c041-415f-9389-d1200bd6f452",
+                "72c45055-c3d1-425e-b27d-36d1e9409bed",
+                "79166956-09c9-4964-b6d4-9199f8440acb",
+                "81fa6997-2692-4e9d-a420-26e107d8c78b",
+                "83dd4113-bedc-43c6-80cc-10b9fe3d09bb",
+                "856e2165-9e40-4a9a-9ea5-ff75bf2e7ae5",
+                "89836174-2261-4429-837c-003172c2e118",
+                "89ddc2b2-a04b-422c-b841-a9c4b599f157",
+                "8a9c465f-a174-4715-9cee-d2600b258d40",
+                "8dee9b20-9aa2-41a8-8968-337a59d8ef16",
+                "90255a93-4a3c-44ec-a553-c9234647567d",
+                "a0fc5d71-3bef-465a-8b67-af426e57ba8b",
+                "ab452362-77a5-4bd3-addd-207010d1b98e",
+                "adcf85fc-6406-44a6-ba42-9c6bedd613f5",
+                "b6c8c548-65b5-44ac-9816-c109a2798cad",
+                "b993a007-070e-42c5-82cd-4db9be13efa8",
+                "c2700fa2-3cb7-444a-a1d7-c765999938a4",
+                "c6966f48-a7ae-4e52-8c5d-485a8fd0186d",
+                "c9666479-8acd-4044-8b6f-728e05911025",
+                "d469bb80-68ed-4a54-8b4d-9ca8603ecbcc",
+                "d9f31802-849d-4721-800e-5933ee29f3fc",
+                "dc250ca0-c224-4e5c-9779-f9a3a1b06214",
+                "eb467ecd-f4f5-45a6-957c-991eef1b4aa0",
+                "overload-ally-aegis-echo",
+                "overload-ally-emp-pylon",
+                "overload-ally-hunter-drone",
+                "overload-ally-hunter-drone-motion-v2",
+                "overload-ally-moss",
+                "overload-ally-nyx",
+                "overload-ally-pulse-sentry",
+                "overload-ally-pulse-sentry-motion-v2",
+                "overload-ally-rook",
+                "overload-ally-suppressor-drone",
+                "overload-ally-suppressor-drone-motion-v2",
+                "overload-automatic-skill-pixel-atlas",
+                "overload-combat-fx-atlas",
+                "overload-enemy-death-pixel-atlas",
+                "overload-enemy-hunter-motion-v2",
+                "overload-enemy-hunter-static",
+                "overload-enemy-rifleman-motion-v2",
+                "overload-enemy-rifleman-static",
+                "overload-enemy-sniper-motion-v2",
+                "overload-enemy-sniper-static",
+                "overload-healing-kit-motion-atlas",
+                "overload-manual-ability-pixel-atlas",
+                "overload-sovereign-gate-motion-atlas",
+                "survivor-directional-aim-atlas",
+                "survivor-motion-atlas"
+              ]
+            },
+            "internal": {
+              "loadedTextureBytes": 0,
+              "decodedRgba8Bytes": 0,
+              "sourceCount": 0,
+              "keys": []
+            }
+          },
+          "sources": [
+            {
+              "id": "url:blob:http://127.0.0.1:4174/c8c401cf-076a-4d61-aedc-ad178704e19c",
+              "width": 1536,
+              "height": 1728,
+              "decodedRgba8Bytes": 10616832,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "survivor-motion-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/c8c401cf-076a-4d61-aedc-ad178704e19c"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/7abcb20c-b4a0-4df3-9bcd-3d853cc92a3b",
+              "width": 1600,
+              "height": 900,
+              "decodedRgba8Bytes": 5760000,
+              "loadedTextureBytes": null,
+              "category": "route",
+              "keys": [
+                "overload-sector-02"
+              ],
+              "url": "blob:http://127.0.0.1:4174/7abcb20c-b4a0-4df3-9bcd-3d853cc92a3b"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/a0dde864-9154-4967-8540-30aed039b1af",
+              "width": 1600,
+              "height": 900,
+              "decodedRgba8Bytes": 5760000,
+              "loadedTextureBytes": null,
+              "category": "route",
+              "keys": [
+                "overload-sector-03"
+              ],
+              "url": "blob:http://127.0.0.1:4174/a0dde864-9154-4967-8540-30aed039b1af"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/e638ca84-a7e7-428a-98a1-aee5429e8207",
+              "width": 1600,
+              "height": 900,
+              "decodedRgba8Bytes": 5760000,
+              "loadedTextureBytes": null,
+              "category": "route",
+              "keys": [
+                "overload-sector-01"
+              ],
+              "url": "blob:http://127.0.0.1:4174/e638ca84-a7e7-428a-98a1-aee5429e8207"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/372342b0-3c06-4394-ad50-a54095b9e209",
+              "width": 1024,
+              "height": 768,
+              "decodedRgba8Bytes": 3145728,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-combat-fx-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/372342b0-3c06-4394-ad50-a54095b9e209"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/056736ce-cdef-431c-8e47-64153c5f09ab",
+              "width": 960,
+              "height": 640,
+              "decodedRgba8Bytes": 2457600,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-hunter-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/056736ce-cdef-431c-8e47-64153c5f09ab"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/ac495c8c-e702-4b32-aefa-ba272fd91e5a",
+              "width": 960,
+              "height": 640,
+              "decodedRgba8Bytes": 2457600,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-sniper-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/ac495c8c-e702-4b32-aefa-ba272fd91e5a"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/be965ce8-186c-4a6a-859b-6385b6bd2167",
+              "width": 960,
+              "height": 640,
+              "decodedRgba8Bytes": 2457600,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-rifleman-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/be965ce8-186c-4a6a-859b-6385b6bd2167"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/cf4485c2-da37-4278-8649-6dc7a125a211",
+              "width": 1152,
+              "height": 384,
+              "decodedRgba8Bytes": 1769472,
+              "loadedTextureBytes": null,
+              "category": "route",
+              "keys": [
+                "overload-squad-traces-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/cf4485c2-da37-4278-8649-6dc7a125a211"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/564c87af-25f1-4af5-b252-5be7d9ec9b9e",
+              "width": 1024,
+              "height": 384,
+              "decodedRgba8Bytes": 1572864,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "survivor-directional-aim-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/564c87af-25f1-4af5-b252-5be7d9ec9b9e"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/1f5e7e57-2db1-4775-b5d5-a1076d2892d6",
+              "width": 640,
+              "height": 512,
+              "decodedRgba8Bytes": 1310720,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-hunter-drone-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/1f5e7e57-2db1-4775-b5d5-a1076d2892d6"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/26809389-66f3-4b8c-9ae4-7bb0367e8443",
+              "width": 640,
+              "height": 512,
+              "decodedRgba8Bytes": 1310720,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-suppressor-drone-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/26809389-66f3-4b8c-9ae4-7bb0367e8443"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/72928947-e993-481d-95d1-09384328a595",
+              "width": 640,
+              "height": 512,
+              "decodedRgba8Bytes": 1310720,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-pulse-sentry-motion-v2"
+              ],
+              "url": "blob:http://127.0.0.1:4174/72928947-e993-481d-95d1-09384328a595"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/44411d93-0ee5-419f-9996-a8941ca06828",
+              "width": 1152,
+              "height": 192,
+              "decodedRgba8Bytes": 884736,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-sovereign-gate-motion-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/44411d93-0ee5-419f-9996-a8941ca06828"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/5c27ad8b-260c-458b-bd45-6c4016569b06",
+              "width": 768,
+              "height": 192,
+              "decodedRgba8Bytes": 589824,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-healing-kit-motion-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/5c27ad8b-260c-458b-bd45-6c4016569b06"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/5d1e978f-7e4e-4946-8a94-77c78bb1b3ae",
+              "width": 384,
+              "height": 256,
+              "decodedRgba8Bytes": 393216,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-manual-ability-pixel-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/5d1e978f-7e4e-4946-8a94-77c78bb1b3ae"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/df02a45a-3f7b-4082-ad82-cc891d337abd",
+              "width": 384,
+              "height": 256,
+              "decodedRgba8Bytes": 393216,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-automatic-skill-pixel-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/df02a45a-3f7b-4082-ad82-cc891d337abd"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/389f8d99-03e1-4808-a1a3-a84834fb341b",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-hunter-static"
+              ],
+              "url": "blob:http://127.0.0.1:4174/389f8d99-03e1-4808-a1a3-a84834fb341b"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/4870c2a5-1658-4336-9aaf-576f624e5344",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-rook"
+              ],
+              "url": "blob:http://127.0.0.1:4174/4870c2a5-1658-4336-9aaf-576f624e5344"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/4f890841-0599-4c96-9e14-bd1630548da9",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-emp-pylon"
+              ],
+              "url": "blob:http://127.0.0.1:4174/4f890841-0599-4c96-9e14-bd1630548da9"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/7e470fbe-80d8-4337-9109-a3d35d6dc118",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-sniper-static"
+              ],
+              "url": "blob:http://127.0.0.1:4174/7e470fbe-80d8-4337-9109-a3d35d6dc118"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/825866dd-2a35-4e5e-b828-947294c36c51",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-suppressor-drone"
+              ],
+              "url": "blob:http://127.0.0.1:4174/825866dd-2a35-4e5e-b828-947294c36c51"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/a2ff7050-7e79-4bfe-84ab-14c188ac9f78",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-nyx"
+              ],
+              "url": "blob:http://127.0.0.1:4174/a2ff7050-7e79-4bfe-84ab-14c188ac9f78"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/a4d2b33b-85e1-454e-9783-37b0584d9d0a",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-hunter-drone"
+              ],
+              "url": "blob:http://127.0.0.1:4174/a4d2b33b-85e1-454e-9783-37b0584d9d0a"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/a8e07aac-3717-4511-9da1-a619a5a21ed6",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-aegis-echo"
+              ],
+              "url": "blob:http://127.0.0.1:4174/a8e07aac-3717-4511-9da1-a619a5a21ed6"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/ad67bef6-7863-47df-9619-c653fa1634ca",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-pulse-sentry"
+              ],
+              "url": "blob:http://127.0.0.1:4174/ad67bef6-7863-47df-9619-c653fa1634ca"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/c5e7f0a0-ae51-4856-8c83-46e4182f7179",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-ally-moss"
+              ],
+              "url": "blob:http://127.0.0.1:4174/c5e7f0a0-ae51-4856-8c83-46e4182f7179"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/d88e9893-115d-4277-88b0-a814a41b0158",
+              "width": 256,
+              "height": 256,
+              "decodedRgba8Bytes": 262144,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-rifleman-static"
+              ],
+              "url": "blob:http://127.0.0.1:4174/d88e9893-115d-4277-88b0-a814a41b0158"
+            },
+            {
+              "id": "url:blob:http://127.0.0.1:4174/76b637b9-1ebe-43a8-a013-ce3738a27e4e",
+              "width": 384,
+              "height": 64,
+              "decodedRgba8Bytes": 98304,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "overload-enemy-death-pixel-atlas"
+              ],
+              "url": "blob:http://127.0.0.1:4174/76b637b9-1ebe-43a8-a013-ce3738a27e4e"
+            },
+            {
+              "id": "object:14",
+              "width": 94,
+              "height": 21,
+              "decodedRgba8Bytes": 7896,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "6382c8d3-6620-4f8b-aa8a-3664293b04c9"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:38",
+              "width": 94,
+              "height": 21,
+              "decodedRgba8Bytes": 7896,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "c9666479-8acd-4044-8b6f-728e05911025"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:1",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "03da2594-4395-4026-bd32-92b60e50444c"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:10",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "4aebcd27-6fe0-40c3-80f0-0c934c289731"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:11",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "4d288c3b-f5f6-4712-a389-de1723a7599c"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:12",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "532622a9-fd91-430f-b34e-afab3741c46e"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:13",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "5419e0ca-bfd1-4812-ba81-6de6969afd9d"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:15",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "64405ee6-409a-4f7c-af76-26961b06db8d"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:16",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "684ad5d1-fbc1-455b-beb1-a7013f4bc699"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:17",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "6af93bf1-2741-4678-9509-c219339b4cb9"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:18",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "6d3a33ac-9a66-4c87-a6a7-e68fe14cda17"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:19",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "6e777a3e-6a72-462b-9e6a-e592798176a2"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:2",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "2e0d6dd4-8d65-46ef-a512-180b70dee8ef"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:20",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "708917b0-c041-415f-9389-d1200bd6f452"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:21",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "72c45055-c3d1-425e-b27d-36d1e9409bed"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:22",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "79166956-09c9-4964-b6d4-9199f8440acb"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:23",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "81fa6997-2692-4e9d-a420-26e107d8c78b"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:24",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "83dd4113-bedc-43c6-80cc-10b9fe3d09bb"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:25",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "856e2165-9e40-4a9a-9ea5-ff75bf2e7ae5"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:26",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "89836174-2261-4429-837c-003172c2e118"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:27",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "89ddc2b2-a04b-422c-b841-a9c4b599f157"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:28",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "8a9c465f-a174-4715-9cee-d2600b258d40"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:29",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "8dee9b20-9aa2-41a8-8968-337a59d8ef16"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:3",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "36c8db31-76a9-4f46-9a9d-823db6b237c6"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:30",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "90255a93-4a3c-44ec-a553-c9234647567d"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:31",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "a0fc5d71-3bef-465a-8b67-af426e57ba8b"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:32",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "ab452362-77a5-4bd3-addd-207010d1b98e"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:33",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "adcf85fc-6406-44a6-ba42-9c6bedd613f5"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:34",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "b6c8c548-65b5-44ac-9816-c109a2798cad"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:35",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "b993a007-070e-42c5-82cd-4db9be13efa8"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:36",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "c2700fa2-3cb7-444a-a1d7-c765999938a4"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:37",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "c6966f48-a7ae-4e52-8c5d-485a8fd0186d"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:39",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "d469bb80-68ed-4a54-8b4d-9ca8603ecbcc"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:4",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "3b5c38b2-5634-4a6e-9ec3-f51debc621ad"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:40",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "d9f31802-849d-4721-800e-5933ee29f3fc"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:41",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "dc250ca0-c224-4e5c-9779-f9a3a1b06214"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:42",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "eb467ecd-f4f5-45a6-957c-991eef1b4aa0"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:5",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "3c21661b-ef88-4429-801f-41a9f273a974"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:6",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "3d995c19-f133-45ef-917e-398a6c8c4dc4"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:7",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "3e2028dc-ce06-4b5d-a60e-f931af9343b8"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:8",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "4602b1bb-d536-4058-b634-81425b0bf387"
+              ],
+              "url": null
+            },
+            {
+              "id": "object:9",
+              "width": 4,
+              "height": 21,
+              "decodedRgba8Bytes": 336,
+              "loadedTextureBytes": null,
+              "category": "common",
+              "keys": [
+                "48ecc1b7-c53b-43ed-b7d6-146c2cf3c477"
+              ],
+              "url": null
+            }
+          ],
+          "loadedResources": [
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/hero/survivor-motion-atlas-v2.png",
+              "loadedTextureBytes": 1998542,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/hero/survivor-portrait.png",
+              "loadedTextureBytes": 1658995,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/ui/npcs/haven-npc-portraits-atlas.png",
+              "loadedTextureBytes": 826548,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/motion-v2/sniper-motion-atlas.png",
+              "loadedTextureBytes": 569240,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/motion-v2/suicide-drone-motion-atlas.png",
+              "loadedTextureBytes": 459696,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/ui/npcs/rhea-control-officer.png",
+              "loadedTextureBytes": 436648,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/campaign/squad-traces-atlas.png",
+              "loadedTextureBytes": 427572,
+              "category": "route"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/combat-fx-atlas.png",
+              "loadedTextureBytes": 412094,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/campaign/airship-region-map-v2.webp",
+              "loadedTextureBytes": 347090,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/motion-v2/rifleman-motion-atlas.png",
+              "loadedTextureBytes": 345020,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/intro/start-screen-key-art.webp",
+              "loadedTextureBytes": 320834,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/campaign/haven-09-base.webp",
+              "loadedTextureBytes": 317484,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/hero/survivor-directional-aim-atlas.png",
+              "loadedTextureBytes": 307079,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/motion-v2/pulse-sentry-motion-atlas.png",
+              "loadedTextureBytes": 304047,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/ui/buttons/command-button-states-atlas.png",
+              "loadedTextureBytes": 266188,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/motion-v2/suppressor-drone-motion-atlas.png",
+              "loadedTextureBytes": 245567,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/gates/sovereign-gate-motion-atlas.png",
+              "loadedTextureBytes": 229874,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/motion-v2/hunter-drone-motion-atlas.png",
+              "loadedTextureBytes": 214271,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/environment/sector-03-engine-causeway.webp",
+              "loadedTextureBytes": 179084,
+              "category": "route"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/environment/sector-02-flooded-memorial.webp",
+              "loadedTextureBytes": 170210,
+              "category": "route"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/items/healing-kit-motion-atlas.png",
+              "loadedTextureBytes": 165194,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/environment/sector-01-shattered-approach.webp",
+              "loadedTextureBytes": 125256,
+              "category": "route"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/suppressor-drone.png",
+              "loadedTextureBytes": 59929,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/pulse-sentry.png",
+              "loadedTextureBytes": 59410,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/rook.png",
+              "loadedTextureBytes": 53319,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/hunter-drone.png",
+              "loadedTextureBytes": 52057,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/brute.png",
+              "loadedTextureBytes": 51998,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/emp-pylon.png",
+              "loadedTextureBytes": 46310,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/moss.png",
+              "loadedTextureBytes": 36477,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/hunter.png",
+              "loadedTextureBytes": 33223,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/enemies/suppressor.png",
+              "loadedTextureBytes": 32624,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/aegis-echo.png",
+              "loadedTextureBytes": 30240,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/allies/nyx.png",
+              "loadedTextureBytes": 29667,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png",
+              "loadedTextureBytes": 21963,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png",
+              "loadedTextureBytes": 17506,
+              "category": "common"
+            },
+            {
+              "url": "http://127.0.0.1:4174/assets/overload/vfx/pixel/enemy-death-pixel-atlas.png",
+              "loadedTextureBytes": 4589,
+              "category": "common"
+            }
+          ],
+          "limitation": "loadedTextureBytes uses Resource Timing encoded body sizes for same-document image assets and can include DOM preview images as well as Phaser-loaded images. RGBA8 source dimensions are TextureManager-only and deduplicated by URL/object identity. Browser APIs do not expose physical GPU allocation, driver padding, mipmaps, render targets, compositor copies, or decoded-image cache residency."
+        },
+        "limitations": [
+          "Frame timings are wall-clock CPU observations. renderSubmitCpu ends after command submission and does not wait for GPU completion.",
+          "Physical VRAM allocation is unavailable to normal browser JavaScript; textureMemory is a deduplicated decoded RGBA8 source estimate.",
+          "Headless browser GPU identity and performance can differ from a visible browser on the same device."
+        ]
+      }
+    }
+  ],
+  "errors": []
+}

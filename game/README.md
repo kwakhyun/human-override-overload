@@ -326,6 +326,17 @@ drop 2.1%였지만, 이는 최저 사양 보장치가 아니라 병목 경계를
 결과입니다. 최종 결과는
 [`qa/runtime-profile-low-end-final.md`](./qa/runtime-profile-low-end-final.md)에 있습니다.
 
+추가 군중 렌더링 패스에서는 적 사망 도트 애니메이션 위에 중복되던 절차적 원·12방향 광선을
+제거하고, 화면 안 적 본체·적 투사체·저격선·게이트는 전부 유지한 채 그림자와 아군 탄도 비행
+스프라이트만 밀도에 따라 샘플링합니다. 최신 220기/620발 240프레임 재현에서 RTX 4060 Ti의
+render-submit CPU P95는 데스크톱 4.1ms, 모바일 4.2ms였고 오류는 0개였습니다. 2코어/2GiB
+PERFORMANCE 에뮬레이션은 896×504/30fps, render-submit P95 4.0ms, Phaser RGBA8 18.968MiB를
+기록했습니다. CPU ×4 스트레스는 render-submit P95 26.9ms로 33.3ms 예산 안에 있었지만 scene
+drop 17%가 발생하므로 최저 사양 보장값이 아니라 병목 상한으로만 봅니다. 결과는
+[`qa/runtime-profile-crowd-optimized.md`](./qa/runtime-profile-crowd-optimized.md),
+[`qa/runtime-profile-crowd-optimized-low-end.md`](./qa/runtime-profile-crowd-optimized-low-end.md),
+[`qa/runtime-profile-crowd-optimized-cpu4.md`](./qa/runtime-profile-crowd-optimized-cpu4.md)에 있습니다.
+
 현재 반영한 최적화와 다음 개선 우선순위는 [`qa/phaser-quality-review-2026-08-10.md`](./qa/phaser-quality-review-2026-08-10.md)에 정리했습니다.
 
 조준은 CSS 캔버스의 16:9 레터박스, 내부 렌더 해상도와 카메라 줌을 모두 동일한 좌표식으로

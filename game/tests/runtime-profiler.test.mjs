@@ -54,10 +54,11 @@ test("texture snapshots dedupe shared sources and retain route, boss, common, an
 });
 
 test("the runtime exposes profiling only behind Vite DEV and tears it down with the game", async () => {
-  const [createGame, profiler, fixture] = await Promise.all([
+  const [createGame, profiler, fixture, harness] = await Promise.all([
     read("src/phaser/createOverloadGame.ts"),
     read("src/phaser/profiling/runtimeProfiler.ts"),
     read("src/phaser/profiling/deterministicArsenal.ts"),
+    read("qa/profile-phaser-runtime.mjs"),
   ]);
   assert.match(createGame, /import\.meta\.env\.DEV\s*\? installDevRuntimeProfiler/);
   assert.match(createGame, /query\.get\("region"\)/);
@@ -72,4 +73,7 @@ test("the runtime exposes profiling only behind Vite DEV and tears it down with 
   assert.match(fixture, /const PROJECTILE_TARGET = 620/);
   assert.doesNotMatch(fixture, /setQuality\?\.\("cinematic"\)/);
   assert.match(fixture, /simulation rules and campaign saves were not/i);
+  assert.match(harness, /\.home-base-screen/);
+  assert.match(harness, /\.airship-hotspot/);
+  assert.match(harness, /\.region-sortie-launch/);
 });

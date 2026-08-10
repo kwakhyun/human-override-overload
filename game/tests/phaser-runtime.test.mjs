@@ -172,6 +172,7 @@ test("PERFORMANCE rendering culls invisible work without dropping authoritative 
   const projectiles = view.slice(view.indexOf("private drawProjectiles"), view.indexOf("private spawnFx"));
   const foreground = view.slice(view.indexOf("private drawForeground"), view.indexOf("private drawExpeditionMarkers"));
   const gates = view.slice(view.indexOf("private syncSpawnGates"), view.indexOf("private drawProjectiles"));
+  const impacts = view.slice(view.indexOf("private drawImpactFx"), view.indexOf("private drawForeground"));
   assert.match(view, /private isCircleVisible/);
   assert.match(view, /private isSegmentVisible/);
   assert.match(view, /if \(image\.frame\.name !== name\) image\.setFrame\(name\)/);
@@ -190,6 +191,13 @@ test("PERFORMANCE rendering culls invisible work without dropping authoritative 
   assert.doesNotMatch(gates, /quality\.id === "performance"/);
   assert.doesNotMatch(foreground, /\[\.\.\.\(state\?\.beams/);
   assert.match(view, /quality\.id === "performance" \? 18/);
+  assert.match(view, /const shadowStride = this\.visibleEnemyCount > 120 \? 3/);
+  assert.match(projectiles, /const spriteCap = quality\.id === "performance" \? 180/);
+  assert.match(impacts, /if \(enemyExplosion\) continue/);
+  assert.ok(
+    impacts.indexOf("if (enemyExplosion) continue") < impacts.indexOf("graphics.fillStyle(COLORS.white"),
+    "pixel enemy deaths must skip the legacy procedural rings and rays",
+  );
   assert.match(view, /const ghostCount = quality\.id === "performance" \? 1/);
   assert.match(view, /state\?\.aegisWards/);
   assert.match(view, /geometry\.collisionHalfWidth/);
