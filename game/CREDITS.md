@@ -138,7 +138,7 @@
 - 제작 원본:
   - `reference/source-assets/overload/hero/silver-aegis-right-shoulder-seed-chroma.png`
   - `reference/source-assets/overload/hero/silver-aegis-right-shoulder-motion-atlas-chroma.png`
-- 이전 런타임 경로: `public/assets/overload/hero/survivor-motion-atlas.png` (현재 v2 제작 기준으로만 보존)
+- 삭제한 과거 런타임 경로: `public/assets/overload/hero/survivor-motion-atlas.png`
 - 후처리: ImageGen `remove_chroma_key.py`의 border auto-key, soft matte, edge-contract 1,
   despill 후 `scripts/normalize-motion-atlas.py`로 공통 스케일·중앙 피벗의 5×3·1280×768
   투명 PNG를 제작했습니다.
@@ -164,7 +164,7 @@ Phaser는 이 아틀라스를 자동 사격 투사체, 소총 머즐 플래시, 
 전용 장갑 피격과 적 폭발에 사용합니다. 동시 표시량은 품질 단계별로 제한하며 판정은 기존
 결정론적 엔진이 계속 소유합니다.
 
-### Active multi-motion skill and spawn-gate atlas
+### Retired multi-motion skill and spawn-gate source atlas
 
 - 생성·적용일: 2026-08-10
 - 생성 도구: OpenAI 내장 ImageGen
@@ -174,7 +174,7 @@ Phaser는 이 아틀라스를 자동 사격 투사체, 소총 머즐 플래시, 
   - `public/assets/overload/ui/rewards/omegaLaser.webp`
 - 크로마키 제작 원본: `reference/source-assets/overload/vfx/skill-motion-atlas-chroma.png`
 - 알파 보존 원본: `reference/source-assets/overload/vfx/skill-motion-atlas-alpha.png`
-- 런타임 경로: `public/assets/overload/vfx/skill-motion-atlas.png`
+- 삭제한 과거 런타임 경로: `public/assets/overload/vfx/skill-motion-atlas.png`
 - QA 미리보기: `qa/skill-motion-atlas-preview.png`
 - 후처리: ImageGen `remove_chroma_key.py`의 border auto-key, soft matte, despill로
   `#ff00ff` 배경을 제거한 뒤 `scripts/normalize-motion-atlas.py`로 한 번에 공통 스케일과
@@ -188,7 +188,7 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
 2행은 제작 이력과 호환성을 위해 보존하지만 활성 OMEGA LASER에는 사용하지 않습니다. 시각
 프레임은 성능 품질별 풀 크기만 바꾸며 실제 피해·충전·스폰 지연은 결정론적 엔진 값에 종속됩니다.
 
-### Active dedicated Omega Laser and route healing-kit motion atlases
+### Retired Omega Laser source and active route healing-kit motion atlas
 
 - 생성·적용일: 2026-08-10
 - 생성 도구: OpenAI 내장 ImageGen
@@ -199,7 +199,7 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
 - OMEGA LASER:
   - ImageGen 원본: `reference/source-assets/overload/omega-laser-motion-atlas-imagegen-source.png`
   - 알파 보존 원본: `reference/source-assets/overload/omega-laser-motion-atlas-alpha.png`
-  - 런타임 경로: `public/assets/overload/vfx/omega-laser-motion-atlas.png`
+  - 삭제한 과거 런타임 경로: `public/assets/overload/vfx/omega-laser-motion-atlas.png`
   - QA 미리보기: `qa/omega-laser-motion-atlas-preview.png`
 - 회복 키트:
   - ImageGen 원본: `reference/source-assets/overload/healing-kit-motion-imagegen-source.png`
@@ -254,7 +254,8 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
   - 런타임: `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`
 - 비행선 지역 선택 지도
   - 제작 원본: `reference/source-assets/overload/campaign/airship-region-map-imagegen-source.png`
-  - 런타임: `public/assets/overload/campaign/airship-region-map.webp`
+  - 삭제한 v1 런타임: `public/assets/overload/campaign/airship-region-map.webp`
+  - 활성 v2 런타임: `public/assets/overload/campaign/airship-region-map-v2.webp`
 - GLASS DUNE
   - 루트 원본 / 런타임: `reference/source-assets/overload/regions/glass-dune/route-imagegen-source.png` / `public/assets/overload/regions/glass-dune/route.webp`
   - 보스방 원본 / 런타임: `reference/source-assets/overload/regions/glass-dune/boss-room-imagegen-source.png` / `public/assets/overload/regions/glass-dune/boss-room.webp`
@@ -371,8 +372,8 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
 - 런타임 규격: 8열 × 9행, 192×192 셀, 투명 PNG, 총 72프레임
 - 행 계약: 전진 / 후진 / 조준축 기준 상향 스트레이프 / 하향 스트레이프 / 대기 / 정지 사격 /
   대시 / 피격·스턴 / 전투불능
-- 캐릭터 기준 원본: `public/assets/overload/hero/survivor-motion-atlas.png`의 strict-overhead AEGIS와
-  `reference/source-assets/overload/hero/`에 보존한 사용자 제공 은발 AEGIS 일러스트
+- 캐릭터 기준 원본: `reference/source-assets/overload/hero/silver-aegis-right-shoulder-motion-atlas-chroma.png`의
+  strict-overhead AEGIS와 `reference/source-assets/overload/hero/`에 보존한 사용자 제공 은발 AEGIS 일러스트
 - 보존한 제작 원본과 중간 결과:
   - `reference/source-assets/overload/animation-v2/hero/hero-fire-8-chroma.png`
   - `reference/source-assets/overload/animation-v2/hero/hero-reactive-8x4-chroma-v2.png`
@@ -548,12 +549,12 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
 
 - 생성일: 2026-08-10
 - 생성 도구: OpenAI 내장 ImageGen
-- 과거 런타임 경로(현재 manifest에서 로드하지 않음):
+- 삭제한 과거 런타임 경로(현재 manifest에서 로드하지 않음):
   `public/assets/overload/vfx/manual/manual-ability-motion-atlas.png`
 - 규격: 6열 × 4행, 192×192 셀, 24프레임, 투명 PNG
 - 행 계약: NULL SNARE(Q) / AEGIS WARD(E) / STRATOS RUN(F) / HELIX TEMPEST(R)
 - 승인 스타일 참조:
-  - `public/assets/overload/vfx/skill-motion-atlas.png`
+  - `reference/source-assets/overload/vfx/skill-motion-atlas-alpha.png`
   - `public/assets/overload/vfx/combat-fx-atlas.png`
 - ImageGen 원본:
   - 1차: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-20a02c7e-0e06-4561-8fda-737d5932a8ff.png`
@@ -597,9 +598,9 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
   - `reference/source-assets/overload/vfx/pixel/automatic-skill-pixel-imagegen-source.png`
   - `reference/source-assets/overload/vfx/pixel/automatic-skill-pixel-alpha.png`
 - 기능 참조 seed:
-  - `public/assets/overload/vfx/manual/manual-ability-motion-atlas.png`
-  - `public/assets/overload/vfx/skill-motion-atlas.png`
-  - `public/assets/overload/vfx/omega-laser-motion-atlas.png`
+  - `reference/source-assets/overload/active-abilities/manual-ability-motion-imagegen-corrected-source.png`
+  - `reference/source-assets/overload/vfx/skill-motion-atlas-alpha.png`
+  - `reference/source-assets/overload/omega-laser-motion-atlas-alpha.png`
 - 후처리: 내장 `remove_chroma_key.py`의 border auto-key, soft-matte, despill을 거친 뒤
   `scripts/normalize-pixel-vfx-atlas.py --columns 6 --rows 4 --cell-size 64 --colors 32 --border 2`로
   네이티브 64px 셀, 제한 팔레트, 투명 안전 경계를 만들었습니다. 런타임은 두 시트에
