@@ -350,7 +350,24 @@
 - 자동 회귀 193/193, TypeScript, production build, Sites worker 4/4가 통과했습니다.
   `http://127.0.0.1:4174/` 로컬 서버는 QA를 위해 종료하지 않고 계속 실행 중입니다.
 
-## 현재 판단 — Iteration 15 passed
+### Iteration 16 — partial · Google ADC pending
+
+- 사용자 제공 `잿빛 하늘 아래.mp3`를 재인코딩 없이
+  `public/assets/audio/under-ashen-skies-title.mp3`로 복사하고 타이틀에만 연결했습니다. Edge의
+  사용자 제스처 필수 자동 재생 정책에서 명시적 음악 버튼을 누른 뒤 0.34 볼륨으로 재생되고,
+  저장 슬롯 화면으로 나가면 audio source가 제거되고 즉시 정지하는 것을 확인했습니다. 파일은
+  1,510,724 bytes, 브라우저 재생 길이 59.8135초이며 console/page 오류는 0개였습니다.
+- 기존 `overload-main-theme.mp3`는 오답 엔진 중앙로 전투에만 남겼습니다. 헤이븐-09 로비·유리
+  사구·심해 기록고는 전용 음원이 제공되기 전까지 무음이고, 각 지역의 분위기·템포·악기·루프·
+  제외 요소를 포함한 Suno Instrumental 프롬프트를 `SUNO_BGM_PROMPTS.md`에 기록했습니다.
+- Q/E/F/R 탑재 AI 안내는 Google Cloud Text-to-Speech의 `en-US-Chirp3-HD-Kore`로 생성할 영어
+  대사·파일명·REST v1 MP3 요청을 확정했습니다. 생성기는 토큰을 브라우저나 저장소에 기록하지 않고
+  ADC 또는 일시 접근 토큰만 사용합니다. 현재 PC에는 gcloud·ADC·프로젝트 ID가 없어 실제 네 MP3와
+  런타임 이벤트 연결은 보류 상태이며, 거절했던 브라우저 TTS나 비공식 엔드포인트로 우회하지 않았습니다.
+- 자동 회귀 197/197, TypeScript, production build, Sites worker 4/4가 통과했습니다.
+  `http://127.0.0.1:4174/` 서버는 HTTP 200으로 계속 실행 중입니다.
+
+## 현재 판단 — Iteration 16 partial
 
 - Iteration 11까지의 저사양 PERFORMANCE 기준선과 회귀 결과는 유효합니다.
 - 시작 화면은 제공된 원본을 충실히 보존하며 필요한 정보만 표시함.
@@ -372,5 +389,6 @@
   출격 수치에 연결됨.
 - Phaser는 전투 진입 때만 내려오고 선택 지역의 일반 전장과 보스 자산도 두 단계로 지연 로드됨.
 
-final result: passed — 자동 테스트 193/193, TypeScript, production build, Sites 4/4와
-Edge 1440×810·812×375 플레이 QA(`errors: []`)를 통과했으며 로컬 서버는 계속 실행 중
+final result: partial — 타이틀/지역 BGM 라우팅, Suno 프롬프트, 자동 테스트 197/197,
+TypeScript, production build, Sites 4/4와 Edge 타이틀 음악 QA(`errors: []`)는 통과했습니다.
+Google Chirp 3 HD Q/E/F/R 정적 음원 생성과 실제 이벤트 연결만 ADC 인증을 기다리고 있습니다.
