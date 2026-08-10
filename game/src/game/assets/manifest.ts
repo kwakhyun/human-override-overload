@@ -15,6 +15,7 @@ export const ASSET_KEYS = Object.freeze({
   sector3: "overload-sector-03",
   bossRoom: "overload-boss-chamber",
   playerMotion: "survivor-motion-atlas",
+  playerDirectionalAim: "survivor-directional-aim-atlas",
   enemyMotion: "overload-enemy-motion-atlas",
   enemyHunter: "overload-enemy-hunter-static",
   enemyRifleman: "overload-enemy-rifleman-static",
@@ -76,6 +77,7 @@ export function resolveRegionId(regionId?: string): RegionId {
 
 export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
   { key: ASSET_KEYS.playerMotion, path: "./assets/overload/hero/survivor-motion-atlas-v2.png", performancePath: "./assets/overload/hero/performance/survivor-motion-atlas-v2.png", kind: "motion", columns: 8, rows: 9 },
+  { key: ASSET_KEYS.playerDirectionalAim, path: "./assets/overload/hero/survivor-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-directional-aim-atlas.png", kind: "motion", columns: 8, rows: 3 },
   { key: ASSET_KEYS.enemyHunter, path: "./assets/overload/enemies/hunter.png", kind: "image" },
   { key: ASSET_KEYS.enemyRifleman, path: "./assets/overload/enemies/suppressor.png", kind: "image" },
   { key: ASSET_KEYS.enemySniper, path: "./assets/overload/enemies/brute.png", kind: "image" },

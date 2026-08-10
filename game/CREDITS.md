@@ -414,6 +414,30 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
 이전에 제공된 검은 단발 캐릭터 원본과 생성 스트립은 제작 이력 보존 목적으로
 `reference/source-assets/overload/hero/`에 남아 있지만 활성 매니페스트에서는 더 이상 사용하지 않습니다.
 
+### AEGIS 상·수평·하 조준 아틀라스
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen (기존 8×9 활성 아틀라스를 편집 참조로 사용)
+- 활성 런타임 경로:
+  - `public/assets/overload/hero/survivor-directional-aim-atlas.png` (8×3, 128px 셀)
+  - `public/assets/overload/hero/performance/survivor-directional-aim-atlas.png` (8×3, 96px 셀)
+- 크로마키 원본: `reference/source-assets/overload/hero/silver-aegis-directional-aim-atlas-chroma.png`
+- ImageGen 원본 경로:
+  `C:/Users/82105/.codex/generated_images/019feaad-b25d-7603-9a36-51ea149f536c/exec-2b28696a-0165-4456-b4e0-4229098f4831.png`
+- 후처리: `remove_chroma_key.py`의 border auto-key, soft matte, despill로 `#00ff00`을 제거한 뒤
+  `scripts/normalize-motion-atlas.py`가 24개 셀을 공유 스케일·중앙 피벗·투명 안전 여백으로 정규화했습니다.
+  검증 시트는 `qa/survivor-directional-aim-preview.png`입니다.
+- 최종 프롬프트:
+
+  > Use case: precise-object-edit
+  > Asset type: production top-down browser-game sprite atlas extension
+  > Input image: the provided approved 8×9 AEGIS sprite atlas is the sole identity, costume, palette, silhouette, and rendering reference.
+  > Primary request: create one exact 8 columns × 3 rows sprite sheet of the SAME silver-haired female AEGIS character, strict 90-degree true-nadir ceiling camera, head always at the top of every cell and feet always at the bottom, rifle buttstock seated in her right shoulder, right trigger hand and left support hand coherent. Row 1: rifle aimed diagonally toward upper-right at about -42 degrees. Row 2: rifle aimed directly screen-right. Row 3: rifle aimed diagonally toward lower-right at about +42 degrees. Across each row, columns 1–4 are a restrained eight-frame locomotion cycle beginning with two neutral/ready poses, columns 5–8 are a restrained firing cycle with at most 2 px-equivalent recoil and a small muzzle glow only in columns 6–7. Keep body orientation upright in all 24 cells; NEVER rotate the whole body toward the weapon.
+  > Layout: exact evenly spaced 8×3 grid, identical centered anchor and scale in every cell, generous equal padding, no overlap between cells.
+  > Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for removal, one uniform color with no shadows, gradients, texture, reflections, or lighting variation.
+  > Style: match the approved source exactly: polished semi-realistic cyberpunk game sprite, silver-white hair, black tactical exosuit, white split coat tails, cyan rifle accents, strict overhead readable silhouette.
+  > Constraints: same character and proportions in every slot; exact frame count and slot layout; no scenery, labels, dividers, text, UI, watermark, cast shadow, contact shadow, face-front view, chest-front view, side view, three-quarter tilt, perspective convergence, additional characters, extra weapons, duplicated limbs, or #00ff00 anywhere in the subject. Production asset sheet, not concept art.
+
 ### 적·동료·지역 보스 전용 고프레임 모션 아틀라스 v3
 
 - 생성일: 2026-08-10

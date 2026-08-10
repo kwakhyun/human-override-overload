@@ -86,7 +86,7 @@ test("frame sampling is deterministic for looping and one-shot clips", () => {
   assert.equal(animation.calculateClipFrame(death, -4), 0);
 });
 
-test("hero v2 uses aim-relative movement rows with a screen-right rotation anchor", () => {
+test("hero v2 fallback keeps aim-relative movement rows", () => {
   assert.equal(animation.resolveHeroMovementRow({ angle: 0, vx: 100, vy: 0 }), animation.HERO_MOTION_ROWS.forward);
   assert.equal(animation.resolveHeroMovementRow({ angle: 0, vx: -100, vy: 0 }), animation.HERO_MOTION_ROWS.backward);
   assert.equal(animation.resolveHeroMovementRow({ angle: 0, vx: 0, vy: -100 }), animation.HERO_MOTION_ROWS.strafeUp);
@@ -96,6 +96,52 @@ test("hero v2 uses aim-relative movement rows with a screen-right rotation ancho
   const movingFire = animation.sampleActorAnimation("hero", { angle: 0, vx: 0, vy: -100, attackTimer: 0.1 }, 0.25);
   assert.equal(movingFire.clipId, "move");
   assert.equal(movingFire.fallbackAtlasFrame.row, animation.HERO_MOTION_ROWS.strafeUp);
+});
+
+test("upright hero presentation selects upper, level, and lower aim rows with left-side mirroring", () => {
+  assert.deepEqual(animation.HERO_DIRECTIONAL_AIM_LAYOUT, { columns: 8, rows: 3 });
+  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: -Math.PI / 2 }), {
+    band: "upper", row: animation.HERO_DIRECTIONAL_AIM_ROWS.upper, flipX: false,
+  });
+  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: 0 }), {
+    band: "level", row: animation.HERO_DIRECTIONAL_AIM_ROWS.level, flipX: false,
+  });
+  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: Math.PI / 2 }), {
+    band: "lower", row: animation.HERO_DIRECTIONAL_AIM_ROWS.lower, flipX: false,
+  });
+  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: -Math.PI * 0.75 }), {
+    band: "upper", row: animation.HERO_DIRECTIONAL_AIM_ROWS.upper, flipX: true,
+  });
+  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: Math.PI * 0.75 }), {
+    band: "lower", row: animation.HERO_DIRECTIONAL_AIM_ROWS.lower, flipX: true,
+  });
+
+  const upperMove = animation.sampleActorAnimation("hero", { angle: -Math.PI / 2, vx: 80 }, 0.25);
+  const lowerFire = animation.sampleActorAnimation("hero", { angle: Math.PI / 2, attackTimer: 0.1 }, 0.2);
+  assert.equal(animation.resolveHeroDirectionalAimFrame(upperMove, { angle: -Math.PI / 2 }).row, 0);
+  assert.ok(animation.resolveHeroDirectionalAimFrame(upperMove, { angle: -Math.PI / 2 }).column < 4);
+  assert.equal(animation.resolveHeroDirectionalAimFrame(lowerFire, { angle: Math.PI / 2 }).row, 2);
+  assert.ok(animation.resolveHeroDirectionalAimFrame(lowerFire, { angle: Math.PI / 2 }).column >= 4);
+  const dash = animation.sampleActorAnimation("hero", { angle: 0, dashTimer: 0.1 }, 0.04);
+  assert.equal(animation.resolveHeroDirectionalAimFrame(dash, { angle: 0 }), null);
+});
+
+test("directional rifle muzzle anchors follow every row and horizontal flip", () => {
+  const upperRight = animation.resolveHeroMuzzleAnchor({ angle: -Math.PI / 2 }, 100);
+  const levelRight = animation.resolveHeroMuzzleAnchor({ angle: 0 }, 100);
+  const lowerRight = animation.resolveHeroMuzzleAnchor({ angle: Math.PI / 2 }, 100);
+  const upperLeft = animation.resolveHeroMuzzleAnchor({ angle: -Math.PI * 0.75 }, 100);
+  const levelLeft = animation.resolveHeroMuzzleAnchor({ angle: Math.PI }, 100);
+  const lowerLeft = animation.resolveHeroMuzzleAnchor({ angle: Math.PI * 0.75 }, 100);
+
+  assert.ok(upperRight.x > 0 && upperRight.y < 0 && upperRight.angle < 0);
+  assert.ok(levelRight.x > upperRight.x && Math.abs(levelRight.y) < 4 && levelRight.angle === 0);
+  assert.ok(lowerRight.x > 0 && lowerRight.y > 0 && lowerRight.angle > 0);
+  assert.ok(upperLeft.x < 0 && upperLeft.y < 0 && upperLeft.angle > Math.PI);
+  assert.ok(levelLeft.x < 0 && Math.abs(levelLeft.y) < 4 && levelLeft.angle === Math.PI);
+  assert.ok(lowerLeft.x < 0 && lowerLeft.y > 0 && lowerLeft.angle > Math.PI / 2);
+  assert.equal(Math.abs(upperLeft.x), Math.abs(upperRight.x));
+  assert.equal(Math.abs(lowerLeft.x), Math.abs(lowerRight.x));
 });
 
 test("hero dash and death frames follow their engine countdowns", () => {

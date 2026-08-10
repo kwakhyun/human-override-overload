@@ -516,6 +516,33 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   private configureInput() {
+    const onWheel = (
+      _pointer: Phaser.Input.Pointer,
+      _currentlyOver: Phaser.GameObjects.GameObject[],
+      _deltaX: number,
+      deltaY: number,
+      _deltaZ: number,
+      event?: WheelEvent,
+    ) => {
+      event?.preventDefault?.();
+      if (!this.view || this.externallySuspended || this.isRuntimeInterrupted()) return;
+      this.view.adjustCameraZoom(deltaY);
+      this.view.syncCamera(this.state);
+      this.view.render(this.state, this.governor.preset);
+    };
+    const blockCanvasWheel = (event: WheelEvent) => event.preventDefault();
+    this.input.on(Phaser.Input.Events.POINTER_WHEEL, onWheel);
+    this.game.canvas?.addEventListener("wheel", blockCanvasWheel, { passive: false });
+    let wheelCleanupPending = true;
+    const cleanupWheel = () => {
+      if (!wheelCleanupPending) return;
+      wheelCleanupPending = false;
+      this.input.off(Phaser.Input.Events.POINTER_WHEEL, onWheel);
+      this.game.canvas?.removeEventListener("wheel", blockCanvasWheel);
+    };
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanupWheel);
+    this.events.once(Phaser.Scenes.Events.DESTROY, cleanupWheel);
+
     const keyboard = this.input.keyboard;
     if (!keyboard) return;
     this.cursorKeys = keyboard.createCursorKeys();

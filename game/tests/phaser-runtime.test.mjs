@@ -165,6 +165,7 @@ test("PERFORMANCE rendering culls invisible work without dropping authoritative 
   const enemies = view.slice(view.indexOf("private syncEnemies"), view.indexOf("private syncAllies"));
   const projectiles = view.slice(view.indexOf("private drawProjectiles"), view.indexOf("private spawnFx"));
   const foreground = view.slice(view.indexOf("private drawForeground"), view.indexOf("private drawExpeditionMarkers"));
+  const gates = view.slice(view.indexOf("private syncSpawnGates"), view.indexOf("private drawProjectiles"));
   assert.match(view, /private isCircleVisible/);
   assert.match(view, /private isSegmentVisible/);
   assert.match(view, /if \(image\.frame\.name !== name\) image\.setFrame\(name\)/);
@@ -172,17 +173,20 @@ test("PERFORMANCE rendering culls invisible work without dropping authoritative 
   assert.match(render, /Math\.floor\(this\.scene\.time\.now \/ \(1000 \/ 30\)\)/);
   assert.ok(render.indexOf("drawTelegraphs") < render.indexOf("cosmeticTick"), "danger warnings stay at the scene cadence");
   assert.match(enemies, /if \(!inView\)/);
+  assert.match(enemies, /for \(let index = 0; index < enemies\.length; index \+= 1\)/);
   assert.doesNotMatch(enemies, /strideBucket|dangerPriority/);
+  assert.doesNotMatch(enemies, /quality\.id === "performance"[^\n]*(?:continue|slice|filter)/);
   assert.doesNotMatch(enemies, /new Set/);
   assert.match(projectiles, /this\.isCircleVisible\(x, y/);
   assert.match(projectiles, /const enemySpriteCap = 360/);
   assert.doesNotMatch(projectiles, /enemyStride|visibleOrdinaryProjectile/);
+  assert.match(gates, /const cap = 10/);
+  assert.doesNotMatch(gates, /quality\.id === "performance"/);
   assert.doesNotMatch(foreground, /\[\.\.\.\(state\?\.beams/);
   assert.match(view, /quality\.id === "performance" \? 18/);
   assert.match(view, /const ghostCount = quality\.id === "performance" \? 1/);
   assert.match(view, /state\?\.aegisWards/);
   assert.match(view, /geometry\.collisionHalfWidth/);
-  assert.match(view, /const cap = 10/);
   assert.match(view, /geometry\.collisionRadius/);
 });
 
@@ -420,13 +424,15 @@ test("level-up cards load authored reward illustrations for every active option"
   }
 });
 
-test("all gameplay actors use centered strict-overhead art and rotate to their world heading", async () => {
+test("AEGIS stays upright while other strict-overhead actors retain world-heading rotation", async () => {
   const view = await read("src/phaser/view/BattleView.ts");
   const pipeline = await read("scripts/prepare-overload-art.py");
   assert.match(view, /Phaser\.Math\.Angle\.RotateTo\(record\.image\.rotation, angle/);
-  assert.match(view, /\.setRotation\(visualAngle\)[\s\S]*?\.setFlipX\(false\)/);
   assert.match(view, /\.setRotation\(actorAngle\(entity\)\)[\s\S]*?\.setFlipX\(false\)/);
-  assert.doesNotMatch(view, /setFlipX\(Math\.cos/);
+  const player = view.slice(view.indexOf("private syncPlayer"), view.indexOf("private syncBoss"));
+  assert.match(player, /resolveHeroAimPresentation\(entity\)/);
+  assert.match(player, /\.setRotation\(0\)[\s\S]*?\.setFlipX\(presentation\.flipX\)/);
+  assert.doesNotMatch(player, /Angle\.RotateTo\(this\.player\.rotation/);
   assert.match(pipeline, /parser\.add_argument\("--player", required=True\)/);
   assert.match(pipeline, /anchor: str = "center"/);
 });
@@ -443,9 +449,50 @@ test("expanded expedition framing makes every hostile larger than AEGIS and stab
   assert.match(view, /const baseSize = role === 2 \? 138 : role === 1 \? 108 : 92/);
   assert.match(view, /const recoil = animation\.clipId === "attack" \?/);
   assert.match(view, /setAtlasFrame\(ghost, Math\.max\(0, animation\.clipFrameIndex - index - 1\), HERO_MOTION_ROWS\.dash\)/);
-  assert.match(view, /Phaser\.Math\.Angle\.RotateTo\(this\.player\.rotation, angle, 0\.14\)/);
+  assert.match(view, /resolveHeroDirectionalAimFrame\(animation, entity\)/);
+  assert.match(view, /resolveHeroMuzzleAnchor\(entity, size\)/);
   assert.match(view, /const bossSize = stage === 3 \? 640 : stage === 2 \? 560 : 480/);
   assert.match(app, /hud\?\.expedition\?\.bossRoom \? 4 : Math\.min\(3,/);
+});
+
+test("directional hero art, rifle-origin projectiles, reticle cue, and wheel zoom stay presentation-only", async () => {
+  const manifest = await read("src/game/assets/manifest.ts");
+  const view = await read("src/phaser/view/BattleView.ts");
+  const scene = await read("src/phaser/scenes/OverloadScene.ts");
+  const player = view.slice(view.indexOf("private syncPlayer"), view.indexOf("private syncBoss"));
+  const projectiles = view.slice(view.indexOf("private drawProjectiles"), view.indexOf("private spawnFx"));
+  const foreground = view.slice(view.indexOf("private drawForeground"), view.indexOf("private drawExpeditionMarkers"));
+  const camera = view.slice(view.indexOf("adjustCameraZoom"), view.indexOf("private syncPlayer"));
+
+  assert.match(manifest, /survivor-directional-aim-atlas\.png/);
+  assert.match(manifest, /performance\/survivor-directional-aim-atlas\.png/);
+  assert.match(player, /ASSET_KEYS\.playerDirectionalAim/);
+  assert.match(player, /\.setPosition\(finite\(entity\?\.x\) \+ muzzle\.x, finite\(entity\?\.y\) \+ muzzle\.y\)/);
+  assert.match(projectiles, /launchAge < 0\.05/);
+  assert.match(projectiles, /originX = finite\(state\?\.player\?\.x\) \+ muzzle\.x/);
+  assert.match(projectiles, /displayX = originX \+ \(x - originX\) \* launchBlend/);
+  assert.match(foreground, /drawPixelDottedLine\([\s\S]*?COLORS\.cyan[\s\S]*?0\.32/);
+  assert.match(foreground, /graphics\.strokeCircle\(aimX, aimY, 4\)/);
+  assert.match(camera, /this\.userZoomFactor = clamp/);
+  assert.match(camera, /bossStageActive[\s\S]*?0\.68, 0\.94[\s\S]*?0\.84, 1\.34/);
+  assert.match(scene, /Phaser\.Input\.Events\.POINTER_WHEEL/);
+  assert.match(scene, /addEventListener\("wheel", blockCanvasWheel, \{ passive: false \}\)/);
+  assert.match(scene, /event\?\.preventDefault\?\.\(\)/);
+});
+
+test("route-clear warning phases render together without exposing the boss map off-stage", async () => {
+  const view = await read("src/phaser/view/BattleView.ts");
+  const camera = view.slice(view.indexOf("syncCamera(state"), view.indexOf("private syncPlayer"));
+  const overlay = view.slice(view.indexOf("private drawHudOverlay"));
+  assert.match(view, /type === "routeClearWarning"/);
+  assert.match(view, /type === "routeClearPanic"/);
+  assert.match(view, /type === "bossAutoTransition"/);
+  assert.match(view, /clearTransition\?\.phase/);
+  assert.match(overlay, /\["warning", "panic", "swap"\]\.includes\(clearPhase\)/);
+  assert.match(overlay, /strokeCircle\(WIDTH \* 0\.5, HEIGHT \* 0\.5, ringRadius\)/);
+  assert.match(camera, /const bossStageActive = Boolean\(expedition\?\.bossRoom \|\| state\?\.phase === "boss"\)/);
+  assert.doesNotMatch(camera, /distance >= bossGate && gateUnlocked/);
+  assert.match(camera, /nextSector = lastRouteIndex/);
 });
 
 test("the route and boss room are separated by an explicit player-confirmed transition", async () => {

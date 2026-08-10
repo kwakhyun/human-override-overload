@@ -24,6 +24,20 @@ export type AtlasFrameCoordinate = Readonly<{
   row: number;
 }>;
 
+export type HeroAimBand = "upper" | "level" | "lower";
+
+export type HeroAimPresentation = Readonly<{
+  band: HeroAimBand;
+  row: number;
+  flipX: boolean;
+}>;
+
+export type HeroMuzzleAnchor = Readonly<{
+  x: number;
+  y: number;
+  angle: number;
+}>;
+
 export type ActorAtlasLayout = Readonly<{
   columns: number;
   rows: number;
@@ -87,6 +101,7 @@ export type ActorAnimationSample = Readonly<{
 
 export const LEGACY_FIVE_BY_THREE_LAYOUT: ActorAtlasLayout = Object.freeze({ columns: 5, rows: 3 });
 export const HERO_MOTION_V2_LAYOUT: ActorAtlasLayout = Object.freeze({ columns: 8, rows: 9 });
+export const HERO_DIRECTIONAL_AIM_LAYOUT: ActorAtlasLayout = Object.freeze({ columns: 8, rows: 3 });
 export const ENEMY_MOTION_V2_LAYOUT: ActorAtlasLayout = Object.freeze({ columns: 6, rows: 4 });
 export const ALLY_MOTION_V2_LAYOUT: ActorAtlasLayout = Object.freeze({ columns: 5, rows: 4 });
 export const BOSS_MOTION_V2_LAYOUT: ActorAtlasLayout = Object.freeze({ columns: 6, rows: 4 });
@@ -103,6 +118,12 @@ export const HERO_MOTION_ROWS = Object.freeze({
   dash: 6,
   hit: 7,
   death: 8,
+} as const);
+
+export const HERO_DIRECTIONAL_AIM_ROWS = Object.freeze({
+  upper: 0,
+  level: 1,
+  lower: 2,
 } as const);
 
 const CLIP_PRIORITY = Object.freeze({
@@ -239,6 +260,54 @@ export function resolveHeroMovementRow(state: ActorAnimationState): number {
   if (forward > 0.5) return HERO_MOTION_ROWS.forward;
   if (forward < -0.5) return HERO_MOTION_ROWS.backward;
   return Math.sin(relativeAngle) < 0 ? HERO_MOTION_ROWS.strafeUp : HERO_MOTION_ROWS.strafeDown;
+}
+
+/**
+ * Gameplay headings remain fully continuous, but the upright AEGIS artwork is
+ * intentionally quantized into three readable aim bands. Horizontal mirroring
+ * covers the left hemisphere without ever rotating her head below her feet.
+ */
+export function resolveHeroAimPresentation(state: ActorAnimationState): HeroAimPresentation {
+  const angle = typeof state.angle === "number" && Number.isFinite(state.angle) ? state.angle : 0;
+  const vertical = Math.sin(angle);
+  const band: HeroAimBand = vertical < -0.34 ? "upper" : vertical > 0.34 ? "lower" : "level";
+  return Object.freeze({
+    band,
+    row: HERO_DIRECTIONAL_AIM_ROWS[band],
+    flipX: Math.cos(angle) < 0,
+  });
+}
+
+export function resolveHeroMuzzleAnchor(state: ActorAnimationState, displaySize = 74): HeroMuzzleAnchor {
+  const presentation = resolveHeroAimPresentation(state);
+  const size = Math.max(1, finite(displaySize, 74));
+  const normalizedAnchor = presentation.band === "upper"
+    ? { x: 0.23, y: -0.41, angle: -Math.PI / 4 }
+    : presentation.band === "lower"
+      ? { x: 0.27, y: 0.39, angle: Math.PI / 4 }
+      : { x: 0.4, y: -0.025, angle: 0 };
+  return Object.freeze({
+    x: normalizedAnchor.x * size * (presentation.flipX ? -1 : 1),
+    y: normalizedAnchor.y * size,
+    angle: presentation.flipX ? Math.PI - normalizedAnchor.angle : normalizedAnchor.angle,
+  });
+}
+
+/**
+ * The directional atlas reserves columns 0–3 for restrained ready/locomotion
+ * poses and 4–7 for firing. Dash, hit, and death keep their authored v2 rows.
+ */
+export function resolveHeroDirectionalAimFrame(
+  sample: ActorAnimationSample,
+  state: ActorAnimationState = {},
+): AtlasFrameCoordinate | null {
+  if (sample.clipId === "dash" || sample.clipId === "hit" || sample.clipId === "death") return null;
+  const presentation = resolveHeroAimPresentation(state);
+  const startColumn = sample.clipId === "attack" ? 4 : 0;
+  return atlasFrame(
+    remapFrame(sample.clipFrameIndex, sample.clip.frameCount, startColumn, 4),
+    presentation.row,
+  );
 }
 
 function isMoving(state: ActorAnimationState) {

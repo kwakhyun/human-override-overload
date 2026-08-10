@@ -16,6 +16,7 @@ from PIL import Image
 
 
 SPECS = {
+    "hero-directional-aim": ("public/assets/overload/hero/survivor-directional-aim-atlas.png", 8, 3, 128),
     "enemy-suicide-drone": ("public/assets/overload/enemies/motion-v2/suicide-drone-motion-atlas.png", 6, 4, 160),
     "enemy-rifleman": ("public/assets/overload/enemies/motion-v2/rifleman-motion-atlas.png", 6, 4, 160),
     "enemy-sniper": ("public/assets/overload/enemies/motion-v2/sniper-motion-atlas.png", 6, 4, 160),
