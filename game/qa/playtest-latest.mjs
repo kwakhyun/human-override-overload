@@ -20,9 +20,34 @@ async function startFreshRun(page, scene = "", options = {}) {
   }
   const url = query.size ? `${baseUrl}?${query}` : baseUrl;
   await page.goto(url, { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "게임 시작" }).waitFor({ state: "visible" });
-  await page.getByRole("button", { name: "게임 시작" }).click();
+  if (options.region && options.region !== "wrong-engine-core") {
+    await page.evaluate(() => {
+      const key = "train-me-wrong.overload.campaign.v2";
+      const campaign = JSON.parse(localStorage.getItem(key) || '{"version":2,"slots":[null,null,null]}');
+      if (campaign.slots?.[0]) {
+        campaign.slots[0].completedRegionIds = Array.from(new Set([...(campaign.slots[0].completedRegionIds || []), "wrong-engine-core"]));
+        campaign.slots[0].homeBaseUnlocked = true;
+        campaign.slots[0].storyFlags = Array.from(new Set([...(campaign.slots[0].storyFlags || []), "home-base-unlocked", "chapter-01-cleared"]));
+        localStorage.setItem(key, JSON.stringify(campaign));
+      }
+    });
+    await page.reload({ waitUntil: "domcontentloaded" });
+  }
+  await page.locator(".intro-start").waitFor({ state: "visible" });
+  await page.locator(".intro-start").click();
   await page.locator(".save-slot-card").first().click();
+  await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
+  if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
+  await page.locator(".airship-hotspot").click();
+  const regionIndex = options.region === "glass-dune" ? 1 : options.region === "abyssal-archive" ? 2 : 0;
+  await page.locator(".region-card").nth(regionIndex).click();
+  await page.locator(".region-sortie-launch").click();
+  for (let step = 0; step < 5; step += 1) {
+    const next = page.locator(".ability-guide-next:visible");
+    if (!(await next.count())) break;
+    await next.click();
+    await page.waitForTimeout(100);
+  }
   await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
   await page.waitForTimeout(3_500);
   const initialObjective = await page.locator(".route-objective").first().innerText().catch(() => "");
@@ -68,8 +93,13 @@ async function openFirstSortieGuide(page) {
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   await page.evaluate(() => window.localStorage.clear());
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "게임 시작" }).click();
+  await page.locator(".intro-start").click();
   await page.locator(".save-slot-card").first().click();
+  await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
+  if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
+  await page.locator(".airship-hotspot").click();
+  await page.locator(".region-card").first().click();
+  await page.locator(".region-sortie-launch").click();
   await page.locator(".ability-guide-screen").waitFor({ state: "visible", timeout: 15_000 });
 }
 
@@ -82,11 +112,16 @@ async function enterFirstCombatTutorial(page) {
   }
   await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
   await page.waitForTimeout(800);
-  for (let line = 0; line < 10; line += 1) {
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    if (await page.locator(".combat-tutorial-layer:visible").count()) return;
     const nextDialogue = page.locator(".narrative-panel button:visible");
-    if (!(await nextDialogue.count())) break;
-    await nextDialogue.click();
-    await page.waitForTimeout(140);
+    if (await nextDialogue.count()) {
+      await nextDialogue.click();
+      await page.waitForTimeout(140);
+      continue;
+    }
+    await page.waitForTimeout(120);
   }
   await page.locator(".combat-tutorial-layer").waitFor({ state: "visible", timeout: 15_000 });
 }
@@ -267,7 +302,7 @@ async function openSeededBase(page) {
     }));
   });
   await page.reload({ waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "게임 시작" }).click();
+  await page.locator(".intro-start").click();
   await page.locator(".save-slot-card").first().click();
   await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
 }
@@ -424,7 +459,7 @@ try {
 
   await desktopPage.keyboard.press("KeyQ");
   await desktopPage.waitForTimeout(180);
-  await desktopPage.screenshot({ path: path.join(qaDir, "latest-gravity-snare-desktop-1440x810.png"), fullPage: true });
+  await desktopPage.screenshot({ path: path.join(qaDir, "latest-emp-pulse-desktop-1440x810.png"), fullPage: true });
 
   await startFreshRun(desktopPage, "trace1");
   await desktopPage.keyboard.press("KeyE");
