@@ -6,28 +6,29 @@ import { fileURLToPath } from "node:url";
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 export const AGENT_VOICE_OUTPUT_DIRECTORY = path.resolve(scriptDirectory, "../public/assets/audio/agent");
 export const GOOGLE_TTS_ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize";
-export const GOOGLE_TTS_VOICE = "en-US-Chirp3-HD-Kore";
+export const GOOGLE_TTS_LANGUAGE = "ko-KR";
+export const GOOGLE_TTS_VOICE = "ko-KR-Chirp3-HD-Kore";
 
 export const AGENT_VOICE_LINES = Object.freeze({
   empPulse: Object.freeze({
     key: "Q",
     file: "emp-pulse-online.mp3",
-    text: "EMP pulse deployed. Hostile systems suspended.",
+    text: "전자기 펄스 전개.",
   }),
   aegisWard: Object.freeze({
     key: "E",
     file: "aegis-ward-online.mp3",
-    text: "Aegis Ward online. Defensive envelope stabilized.",
+    text: "이지스 방벽 전개.",
   }),
   stratosRun: Object.freeze({
     key: "F",
     file: "stratos-run-confirmed.mp3",
-    text: "Stratos Run confirmed. Air support entering the combat zone.",
+    text: "공중 소사 좌표 확인.",
   }),
   helixTempest: Object.freeze({
     key: "R",
     file: "helix-tempest-authorized.mp3",
-    text: "Helix Tempest authorized. Full-spectrum assault engaged.",
+    text: "나선 폭풍 승인.",
   }),
 });
 
@@ -64,7 +65,7 @@ async function synthesize(line, credentials) {
     },
     body: JSON.stringify({
       input: { text: line.text },
-      voice: { languageCode: "en-US", name: GOOGLE_TTS_VOICE },
+      voice: { languageCode: GOOGLE_TTS_LANGUAGE, name: GOOGLE_TTS_VOICE },
       audioConfig: { audioEncoding: "MP3" },
     }),
   });
@@ -100,6 +101,7 @@ export async function generateAgentVoice() {
 function printPlan() {
   console.log(JSON.stringify({
     endpoint: GOOGLE_TTS_ENDPOINT,
+    language: GOOGLE_TTS_LANGUAGE,
     voice: GOOGLE_TTS_VOICE,
     outputDirectory: AGENT_VOICE_OUTPUT_DIRECTORY,
     lines: AGENT_VOICE_LINES,

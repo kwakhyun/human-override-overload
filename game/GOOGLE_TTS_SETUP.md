@@ -1,32 +1,32 @@
 # Google Cloud AI agent voice pipeline
 
 Q/E/F/R 시스템 음성은 브라우저 `speechSynthesis`나 런타임 네트워크 호출을 사용하지 않습니다.
-Google Cloud Text-to-Speech의 `en-US-Chirp3-HD-Kore`로 네 개의 영어 MP3를 개발 단계에서 한 번
+Google Cloud Text-to-Speech의 `ko-KR-Chirp3-HD-Kore`로 네 개의 한국어 MP3를 개발 단계에서 한 번
 생성한 뒤 정적 게임 자산으로 검수·커밋하는 구조입니다. 인증 정보는 브라우저 번들이나 저장소에
 들어가지 않습니다.
 
 ## 확정 대사
 
-- Q / EMP PULSE: `EMP pulse deployed. Hostile systems suspended.`
-- E / AEGIS WARD: `Aegis Ward online. Defensive envelope stabilized.`
-- F / STRATOS RUN: `Stratos Run confirmed. Air support entering the combat zone.`
-- R / HELIX TEMPEST: `Helix Tempest authorized. Full-spectrum assault engaged.`
+- Q / EMP PULSE: `전자기 펄스 전개.`
+- E / AEGIS WARD: `이지스 방벽 전개.`
+- F / STRATOS RUN: `공중 소사 좌표 확인.`
+- R / HELIX TEMPEST: `나선 폭풍 승인.`
 
 ## 현재 적용 상태
 
 - Google Cloud 프로젝트: `uptime402-hack-260803`
 - API: Cloud Text-to-Speech API 활성화
-- 음성: `en-US-Chirp3-HD-Kore`
+- 음성: `ko-KR-Chirp3-HD-Kore`
 - 출력: MP3 4개, `public/assets/audio/agent/`
 - 런타임: `src/audio/agentVoice.js`가 성공한 `manualAbilityActivated`만 재생
 - 인증: Cloud Shell의 일시 접근 토큰으로 개발 단계에서만 합성했으며 저장소·브라우저 번들에는 없음
 
-| 키 | 파일 | 크기 | SHA-256 |
-| --- | --- | ---: | --- |
-| Q | `emp-pulse-online.mp3` | 16,512 bytes | `afb3179c222d5493c3d8d7e8d237616006be56600a5488c2d5be892f25339456` |
-| E | `aegis-ward-online.mp3` | 19,104 bytes | `d04eebc2bdeb189c3db8752594c56ee90528407252d19ecb95c7020fa2309d0e` |
-| F | `stratos-run-confirmed.mp3` | 20,736 bytes | `5d0af56e69f52cd787432ede2118f1b379bee14de424315e0ec27317d1ff5939` |
-| R | `helix-tempest-authorized.mp3` | 19,392 bytes | `86a87a663329df3a5dc0a6441aceed39154f8d969a2aeef8dad9304fd460a1e8` |
+| 키 | 파일 | 길이 | 크기 | SHA-256 |
+| --- | --- | ---: | ---: | --- |
+| Q | `emp-pulse-online.mp3` | 2.088초 | 8,352 bytes | `1c8a53fa6da80ffb656eb4f656ca8a6c1fde5dcc58347f8290ddbaa78e286dad` |
+| E | `aegis-ward-online.mp3` | 2.136초 | 8,544 bytes | `3b6056c4e41493557a70995856ec05210fe5c56e3a26eb7360c8d08d623deb0e` |
+| F | `stratos-run-confirmed.mp3` | 1.656초 | 6,624 bytes | `61f742ac083247adadb348bdf5b81b6eaf3edee629e735a46813c2a061476623` |
+| R | `helix-tempest-authorized.mp3` | 1.776초 | 7,104 bytes | `8666c526e4cda41b4b1ef619d48b20e01f5ec3b6c35bc4347918d3b167aaeb37` |
 
 ## 공식 재생성 절차
 

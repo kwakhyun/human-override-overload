@@ -109,6 +109,12 @@ const loaded = await page.evaluate(async (names) => Promise.all(names.map(async 
   const bytes = await response.arrayBuffer();
   return { name, status: response.status, bytes: bytes.byteLength, contentType: response.headers.get("content-type") };
 })), expected);
+const metadata = await page.evaluate(async (names) => Promise.all(names.map((name) => new Promise((resolve) => {
+  const audio = new Audio(`/assets/audio/agent/${name}`);
+  audio.preload = "metadata";
+  audio.addEventListener("loadedmetadata", () => resolve({ name, duration: audio.duration }), { once: true });
+  audio.addEventListener("error", () => resolve({ name, duration: null }), { once: true });
+}))), expected);
 const playedNames = calls.map((entry) => entry.src.split("/").at(-1));
 for (const name of expected) {
   if (!playedNames.includes(name)) errors.push(`missing-play:${name}`);
@@ -116,6 +122,11 @@ for (const name of expected) {
 for (const asset of loaded) {
   if (asset.status !== 200 || asset.bytes <= 0 || !String(asset.contentType).includes("audio")) errors.push(`bad-asset:${JSON.stringify(asset)}`);
 }
+for (const asset of metadata) {
+  if (!Number.isFinite(asset.duration) || asset.duration <= 0 || asset.duration > 6) errors.push(`bad-metadata:${JSON.stringify(asset)}`);
+}
+
+await page.screenshot({ path: path.join(qaDir, "agent-voice-latest.png"), fullPage: true });
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -126,6 +137,7 @@ const report = {
   playedNames,
   resourceEntriesBeforeFetch,
   loaded,
+  metadata,
   errors,
 };
 await writeFile(path.join(qaDir, "agent-voice-latest.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");

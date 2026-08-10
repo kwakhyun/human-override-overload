@@ -974,7 +974,7 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
   않습니다. 사용자 제공 또는 생성 권리가 명확한 짧은 mono WAV/OGG 변형을 받으면 기존 전체
   사운드 토글과 동시 음성 제한에 연결할 수 있습니다.
 - 캐릭터 대사는 텍스트와 화자별 일러스트로만 제공하며 브라우저 음성 합성·음성 복제는 포함하지
-  않습니다. 사용자가 이후 요청한 Q/E/F/R 탑재 AI 영어 안내만 Google Cloud Chirp 3 HD의 정적
+  않습니다. 사용자가 이후 요청한 Q/E/F/R 탑재 AI 한국어 안내만 Google Cloud Chirp 3 HD의 정적
   MP3 생성 대상으로 분리했으며, ADC 인증과 실제 파일 생성 전에는 런타임에 연결하지 않습니다.
 
 ## Legacy project originals
@@ -1045,22 +1045,25 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 
 ## Google Cloud AI-agent callouts
 
-- 도구: Google Cloud Text-to-Speech REST v1, `en-US-Chirp3-HD-Kore`, MP3 출력.
+- 도구: Google Cloud Text-to-Speech REST v1, `ko-KR-Chirp3-HD-Kore`, MP3 출력.
 - 생성 프로젝트·일자: `uptime402-hack-260803`, 2026-08-10. Cloud Shell의 일시 접근 토큰으로
-  개발 단계에서 합성했으며 인증 토큰·키·계정 설정 파일은 저장소에 포함하지 않습니다.
+  최초 합성했고, 한국어 교체본은 서명 검증한 Google Cloud CLI 579.0.0의 로컬 ADC로 개발 단계에서
+  합성했습니다. 인증 토큰·키·계정 설정 파일은 저장소에 포함하지 않습니다.
 - 범위: Q EMP PULSE, E AEGIS WARD, F STRATOS RUN, R HELIX TEMPEST가 실제로 성공했을 때 재생할
-  짧은 영어 시스템 안내 4개. 전체 대사 TTS나 주인공 음성 복제에는 사용하지 않습니다.
+  짧은 한국어 시스템 안내 4개. 전체 대사 TTS나 주인공 음성 복제에는 사용하지 않습니다.
+- 확정 대사: Q `전자기 펄스 전개.`, E `이지스 방벽 전개.`, F `공중 소사 좌표 확인.`,
+  R `나선 폭풍 승인.` 효과 설명은 전투 중 음성 겹침을 줄이기 위해 넣지 않습니다.
 - 대사·출력 파일·공식 인증 절차는 `GOOGLE_TTS_SETUP.md`와
   `scripts/generate-google-agent-voice.mjs`에 고정했습니다.
 - 런타임 파일:
-  - `public/assets/audio/agent/emp-pulse-online.mp3` — 16,512 bytes — SHA-256
-    `afb3179c222d5493c3d8d7e8d237616006be56600a5488c2d5be892f25339456`
-  - `public/assets/audio/agent/aegis-ward-online.mp3` — 19,104 bytes — SHA-256
-    `d04eebc2bdeb189c3db8752594c56ee90528407252d19ecb95c7020fa2309d0e`
-  - `public/assets/audio/agent/stratos-run-confirmed.mp3` — 20,736 bytes — SHA-256
-    `5d0af56e69f52cd787432ede2118f1b379bee14de424315e0ec27317d1ff5939`
-  - `public/assets/audio/agent/helix-tempest-authorized.mp3` — 19,392 bytes — SHA-256
-    `86a87a663329df3a5dc0a6441aceed39154f8d969a2aeef8dad9304fd460a1e8`
+  - `public/assets/audio/agent/emp-pulse-online.mp3` — 2.088초, 8,352 bytes — SHA-256
+    `1c8a53fa6da80ffb656eb4f656ca8a6c1fde5dcc58347f8290ddbaa78e286dad`
+  - `public/assets/audio/agent/aegis-ward-online.mp3` — 2.136초, 8,544 bytes — SHA-256
+    `3b6056c4e41493557a70995856ec05210fe5c56e3a26eb7360c8d08d623deb0e`
+  - `public/assets/audio/agent/stratos-run-confirmed.mp3` — 1.656초, 6,624 bytes — SHA-256
+    `61f742ac083247adadb348bdf5b81b6eaf3edee629e735a46813c2a061476623`
+  - `public/assets/audio/agent/helix-tempest-authorized.mp3` — 1.776초, 7,104 bytes — SHA-256
+    `8666c526e4cda41b4b1ef619d48b20e01f5ec3b6c35bc4347918d3b167aaeb37`
 - `src/audio/agentVoice.js`는 전투 진입 시에만 네 파일을 준비하고 성공한 스킬 이벤트만 재생합니다.
   브라우저 기본 TTS·런타임 Google API 호출·음성 복제는 사용하지 않습니다.
 

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-10T12:08:55.667Z",
+  "generatedAt": "2026-08-10T12:57:42.260Z",
   "url": "http://127.0.0.1:4174/?debug=1",
   "requestedAbilities": [
     "empPulse",
@@ -14,10 +14,10 @@
     "helixTempest": "R 나선 폭풍. 사용 가능"
   },
   "buttonLabelsAfter": {
-    "empPulse": "Q EMP 펄스. 17.9초",
-    "aegisWard": "E 이지스 방벽. 28.0초",
-    "stratosRun": "F 공중 소사. 33.9초",
-    "helixTempest": "R 나선 폭풍. 71.9초"
+    "empPulse": "Q EMP 펄스. 17.7초",
+    "aegisWard": "E 이지스 방벽. 27.7초",
+    "stratosRun": "F 공중 소사. 33.7초",
+    "helixTempest": "R 나선 폭풍. 사용 가능"
   },
   "playedNames": [
     "emp-pulse-online.mp3",
@@ -28,69 +28,87 @@
   "resourceEntriesBeforeFetch": [
     {
       "name": "emp-pulse-online.mp3",
-      "transferSize": 16812,
-      "decodedBodySize": 16512
+      "transferSize": 8652,
+      "decodedBodySize": 8352
     },
     {
       "name": "aegis-ward-online.mp3",
-      "transferSize": 19404,
-      "decodedBodySize": 19104
+      "transferSize": 8844,
+      "decodedBodySize": 8544
     },
     {
       "name": "stratos-run-confirmed.mp3",
-      "transferSize": 21036,
-      "decodedBodySize": 20736
+      "transferSize": 6924,
+      "decodedBodySize": 6624
     },
     {
       "name": "helix-tempest-authorized.mp3",
-      "transferSize": 19692,
-      "decodedBodySize": 19392
+      "transferSize": 7404,
+      "decodedBodySize": 7104
     },
     {
       "name": "emp-pulse-online.mp3",
-      "transferSize": 16812,
-      "decodedBodySize": 16512
+      "transferSize": 8652,
+      "decodedBodySize": 8352
     },
     {
       "name": "aegis-ward-online.mp3",
-      "transferSize": 19404,
-      "decodedBodySize": 19104
+      "transferSize": 8844,
+      "decodedBodySize": 8544
     },
     {
       "name": "stratos-run-confirmed.mp3",
-      "transferSize": 21036,
-      "decodedBodySize": 20736
+      "transferSize": 6924,
+      "decodedBodySize": 6624
     },
     {
       "name": "helix-tempest-authorized.mp3",
-      "transferSize": 19692,
-      "decodedBodySize": 19392
+      "transferSize": 7404,
+      "decodedBodySize": 7104
     }
   ],
   "loaded": [
     {
       "name": "emp-pulse-online.mp3",
       "status": 200,
-      "bytes": 16512,
+      "bytes": 8352,
       "contentType": "audio/mpeg"
     },
     {
       "name": "aegis-ward-online.mp3",
       "status": 200,
-      "bytes": 19104,
+      "bytes": 8544,
       "contentType": "audio/mpeg"
     },
     {
       "name": "stratos-run-confirmed.mp3",
       "status": 200,
-      "bytes": 20736,
+      "bytes": 6624,
       "contentType": "audio/mpeg"
     },
     {
       "name": "helix-tempest-authorized.mp3",
       "status": 200,
-      "bytes": 19392,
+      "bytes": 7104,
       "contentType": "audio/mpeg"
+    }
+  ],
+  "metadata": [
+    {
+      "name": "emp-pulse-online.mp3",
+      "duration": 2.088
+    },
+    {
+      "name": "aegis-ward-online.mp3",
+      "duration": 2.136
+    },
+    {
+      "name": "stratos-run-confirmed.mp3",
+      "duration": 1.656
+    },
+    {
+      "name": "helix-tempest-authorized.mp3",
+      "duration": 1.776
     }
   ],
   "errors": []

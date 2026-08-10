@@ -29,10 +29,10 @@ class FakeAudio {
 
 test("Google Chirp ability callouts use stable manifest paths and shipped MP3 files", async () => {
   const expected = [
-    ["empPulse", "emp-pulse-online.mp3", 16512],
-    ["aegisWard", "aegis-ward-online.mp3", 19104],
-    ["stratosRun", "stratos-run-confirmed.mp3", 20736],
-    ["helixTempest", "helix-tempest-authorized.mp3", 19392],
+    ["empPulse", "emp-pulse-online.mp3", 8352],
+    ["aegisWard", "aegis-ward-online.mp3", 8544],
+    ["stratosRun", "stratos-run-confirmed.mp3", 6624],
+    ["helixTempest", "helix-tempest-authorized.mp3", 7104],
   ];
   for (const [ability, filename, bytes] of expected) {
     assert.match(manifestSource, new RegExp(`${ability}: "\\./assets/audio/agent/${filename.replaceAll(".", "\\.")}"`));
