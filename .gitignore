@@ -9,3 +9,7 @@ game/qa/implementation-sprite-dash.jpg
 game/tmp/
 game/qa/*.log
 game/scripts/__pycache__/
+game/.env
+game/.env.*
+game/.google/
+game/google-credentials*.json
