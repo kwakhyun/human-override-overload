@@ -2,11 +2,8 @@
 
 ![HUMAN OVERRIDE: OVERLOAD key art](game/public/assets/overload/intro/start-screen-key-art.webp)
 
-고도로 발달한 통치 AI **SOVEREIGN**이 장악한 세계에서, 전투원 **AEGIS**가 기계 군단을 뚫고 지역 추론핵을 파괴하는 Phaser 기반 탑다운 액션 서바이버입니다. NAN 2026 해커톤 사전 과제로 제작했습니다.
+고도로 발달한 통치 AI **SOVEREIGN**이 장악한 세계에서, 전투원 **AEGIS**가 기계 군단을 뚫고 지역 추론핵을 파괴하는 Phaser 기반 탑다운 액션 서바이버입니다.
 
-- [공개 웹 빌드](https://train-me-wrong-nan2026.khyun97.chatgpt.site)
-- [게임 소개·플레이 가이드 PDF](game/output/pdf/HUMAN_OVERRIDE_OVERLOAD_Game_Guide_KO.pdf)
-- [AI 활용 기술 문서 PDF](game/output/pdf/HUMAN_OVERRIDE_OVERLOAD_AI_Technical_Report_KO.pdf)
 - [상세 런타임 문서](game/README.md)
 - [에셋·도구·라이선스 기록](game/CREDITS.md)
 
@@ -64,8 +61,8 @@ npm run build
 
 기획, Phaser 전면 이전, 구현, 리팩터링, 브라우저 QA, 성능 계측, 문서화와 Git 작업을 **OpenAI Codex Desktop** 중심의 바이브코딩 워크플로로 진행했습니다. ChatGPT / OpenAI ImageGen은 캐릭터·보스·전장·UI·스프라이트 제작, Grok은 구역별 출격 영상, Suno AI는 타이틀·기지·지역 BGM, Gemini는 이미지·영상·음원 제작의 참고 검토, Google Cloud TTS는 짧은 한국어 전술 음성 제작에 활용했습니다.
 
-게임의 적 이동·공격·보스 패턴은 생성형 API가 아니라 브라우저에서 실행되는 결정론적 게임 로직입니다. 상세 프롬프트, 선택 기준, 후처리, 원본·런타임 경로와 라이선스는 [AI 활용 기술 문서](game/docs/submission/ai-usage-technical-report-ko.md)와 [CREDITS](game/CREDITS.md)에 기록했습니다.
+게임의 적 이동·공격·보스 패턴은 생성형 API가 아니라 브라우저에서 실행되는 결정론적 게임 로직입니다. 상세 프롬프트, 선택 기준, 후처리, 원본·런타임 경로와 라이선스는 [CREDITS](game/CREDITS.md)에 기록했습니다.
 
 ## 저장소 안내
 
-공개 저장소에는 실행에 필요한 소스와 런타임 에셋, 제출 문서만 포함합니다. 로컬 QA 캡처, 생성 중간본, 브라우저 프로파일, 세션 인계 파일과 인증 정보는 제외합니다. 프로젝트 전용 AI 생성 에셋의 개별 재배포·재판매는 허용되지 않으며, 오픈소스 의존성은 각 원 라이선스를 따릅니다.
+공개 저장소에는 실행에 필요한 소스와 런타임 에셋만 포함합니다. 로컬 QA 캡처, 생성 중간본, 브라우저 프로파일, 세션 인계 파일과 인증 정보는 제외합니다. 프로젝트 전용 AI 생성 에셋의 개별 재배포·재판매는 허용되지 않으며, 오픈소스 의존성은 각 원 라이선스를 따릅니다.
