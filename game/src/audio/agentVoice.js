@@ -34,6 +34,10 @@ export function createAgentVoice({
     const audio = new AudioCtor(paths[ability]);
     audio.preload = "auto";
     audio.volume = volume;
+    // Request the media pipeline immediately when combat mounts. Creating an
+    // Audio element alone does not guarantee that Chromium starts fetching or
+    // decoding it before the first key press.
+    audio.load?.();
     audio.onended = () => {
       if (current !== audio) return;
       current = null;

@@ -8,6 +8,7 @@ export const AGENT_VOICE_OUTPUT_DIRECTORY = path.resolve(scriptDirectory, "../pu
 export const GOOGLE_TTS_ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize";
 export const GOOGLE_TTS_LANGUAGE = "ko-KR";
 export const GOOGLE_TTS_VOICE = "ko-KR-Chirp3-HD-Kore";
+export const GOOGLE_TTS_SPEAKING_RATE = 1.3;
 
 export const AGENT_VOICE_LINES = Object.freeze({
   empPulse: Object.freeze({
@@ -34,7 +35,16 @@ export const AGENT_VOICE_LINES = Object.freeze({
 
 function gcloud(args) {
   try {
-    return execFileSync("gcloud", args, { encoding: "utf8", windowsHide: true }).trim();
+    const command = process.platform === "win32"
+      ? (process.env.ComSpec || "cmd.exe")
+      : "gcloud";
+    const commandArgs = process.platform === "win32"
+      ? ["/d", "/s", "/c", "gcloud.cmd", ...args]
+      : args;
+    return execFileSync(command, commandArgs, {
+      encoding: "utf8",
+      windowsHide: true,
+    }).trim();
   } catch {
     return "";
   }
@@ -66,7 +76,10 @@ async function synthesize(line, credentials) {
     body: JSON.stringify({
       input: { text: line.text },
       voice: { languageCode: GOOGLE_TTS_LANGUAGE, name: GOOGLE_TTS_VOICE },
-      audioConfig: { audioEncoding: "MP3" },
+      audioConfig: {
+        audioEncoding: "MP3",
+        speakingRate: GOOGLE_TTS_SPEAKING_RATE,
+      },
     }),
   });
   if (!response.ok) {
@@ -103,6 +116,7 @@ function printPlan() {
     endpoint: GOOGLE_TTS_ENDPOINT,
     language: GOOGLE_TTS_LANGUAGE,
     voice: GOOGLE_TTS_VOICE,
+    speakingRate: GOOGLE_TTS_SPEAKING_RATE,
     outputDirectory: AGENT_VOICE_OUTPUT_DIRECTORY,
     lines: AGENT_VOICE_LINES,
   }, null, 2));

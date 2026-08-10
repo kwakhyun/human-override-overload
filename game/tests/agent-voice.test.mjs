@@ -14,6 +14,7 @@ class FakeAudio {
     this.currentTime = 0;
     this.pauseCount = 0;
     this.playCount = 0;
+    this.loadCount = 0;
     FakeAudio.instances.push(this);
   }
 
@@ -25,14 +26,18 @@ class FakeAudio {
   pause() {
     this.pauseCount += 1;
   }
+
+  load() {
+    this.loadCount += 1;
+  }
 }
 
 test("Google Chirp ability callouts use stable manifest paths and shipped MP3 files", async () => {
   const expected = [
-    ["empPulse", "emp-pulse-online.mp3", 8352],
-    ["aegisWard", "aegis-ward-online.mp3", 8544],
-    ["stratosRun", "stratos-run-confirmed.mp3", 6624],
-    ["helixTempest", "helix-tempest-authorized.mp3", 7104],
+    ["empPulse", "emp-pulse-online.mp3", 6240],
+    ["aegisWard", "aegis-ward-online.mp3", 6720],
+    ["stratosRun", "stratos-run-confirmed.mp3", 4320],
+    ["helixTempest", "helix-tempest-authorized.mp3", 3936],
   ];
   for (const [ability, filename, bytes] of expected) {
     assert.match(manifestSource, new RegExp(`${ability}: "\\./assets/audio/agent/${filename.replaceAll(".", "\\.")}"`));
@@ -55,7 +60,9 @@ test("agent voice preloads only in combat, follows the sound toggle, and protect
   assert.equal(FakeAudio.instances.length, 0);
   voice.preload();
   assert.equal(FakeAudio.instances.length, 4);
-  assert.ok(FakeAudio.instances.every((audio) => audio.preload === "auto" && audio.volume === 0.78));
+  assert.ok(FakeAudio.instances.every((audio) => (
+    audio.preload === "auto" && audio.volume === 0.78 && audio.loadCount === 1
+  )));
 
   assert.equal(voice.play("helixTempest"), true);
   assert.equal(voice.play("empPulse"), false);

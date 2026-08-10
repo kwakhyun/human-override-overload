@@ -7,6 +7,7 @@ const pipeline = await import(new URL("../scripts/generate-google-agent-voice.mj
 test("Google Chirp 3 HD pipeline defines one concise Korean callout per manual ability", () => {
   assert.equal(pipeline.GOOGLE_TTS_LANGUAGE, "ko-KR");
   assert.equal(pipeline.GOOGLE_TTS_VOICE, "ko-KR-Chirp3-HD-Kore");
+  assert.equal(pipeline.GOOGLE_TTS_SPEAKING_RATE, 1.3);
   assert.equal(pipeline.GOOGLE_TTS_ENDPOINT, "https://texttospeech.googleapis.com/v1/text:synthesize");
   assert.deepEqual(Object.keys(pipeline.AGENT_VOICE_LINES), [
     "empPulse",
@@ -41,6 +42,7 @@ test("voice generation keeps credentials out of the browser runtime and reposito
   assert.match(source, /GOOGLE_CLOUD_TTS_ACCESS_TOKEN/);
   assert.match(source, /gcloud\(\["auth", "application-default", "print-access-token"\]\)/);
   assert.match(source, /languageCode: GOOGLE_TTS_LANGUAGE/);
+  assert.match(source, /speakingRate: GOOGLE_TTS_SPEAKING_RATE/);
   assert.doesNotMatch(source, /AIza[0-9A-Za-z_-]{20,}/);
   assert.doesNotMatch(app, /texttospeech\.googleapis\.com|GOOGLE_CLOUD|speechSynthesis/);
 });
