@@ -414,6 +414,23 @@ test("Phaser keeps basic fire automatic while Q/E/F/R share one repeat-safe acti
   assert.doesNotMatch(createGame, /recall:|toggleAutoFire/);
 });
 
+test("boss parry and numbered bombs use repeat-safe Shift and authoritative world clicks", async () => {
+  const scene = await read("src/phaser/scenes/OverloadScene.ts");
+  const engine = await read("src/swarm/engine.js");
+  const bridge = await read("src/phaser/adapters/sceneBridge.ts");
+  const createGame = await read("src/phaser/createOverloadGame.ts");
+  assert.match(scene, /SHIFT: Phaser\.Input\.Keyboard\.KeyCodes\.SHIFT/);
+  assert.match(scene, /keyboard\.on\("keydown-SHIFT"/);
+  assert.match(scene, /this\.gameInput\.parryPressed = true/);
+  assert.match(scene, /Phaser\.Input\.Events\.POINTER_DOWN/);
+  assert.match(scene, /bombSequence\?\.phase !== "armed"/);
+  assert.match(scene, /this\.cameras\.main\.getWorldPoint\(pointer\.x, pointer\.y\)/);
+  assert.match(engine, /bossMechanicClickX/);
+  assert.match(engine, /clicked\.order !== sequence\.expectedOrder/);
+  assert.match(bridge, /queueParry\(\): void/);
+  assert.match(createGame, /parry: \(\) => bridge\.queueParry\(\)/);
+});
+
 test("Phaser DEV scene shortcuts require an explicit debug opt-in", async () => {
   const createGame = await read("src/phaser/createOverloadGame.ts");
   assert.match(createGame, /query\.get\("debug"\) === "1" \? query\.get\("scene"\) : null/);

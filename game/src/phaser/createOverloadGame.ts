@@ -12,6 +12,7 @@ export type OverloadGameController = Readonly<{
   chooseReward: (id: string) => boolean;
   setDirection: (direction: Direction, active: boolean) => void;
   dash: () => void;
+  parry: () => void;
   activateAbility: (ability: ActiveAbility) => void;
   enterBossRoom: () => boolean;
   continueStory: () => void;
@@ -130,6 +131,7 @@ export function createOverloadGame(
     chooseReward: (id: string) => bridge.chooseReward(id),
     setDirection: (direction: Direction, active: boolean) => bridge.setVirtualDirection(direction, active),
     dash: () => bridge.queueDash(),
+    parry: () => bridge.queueParry(),
     activateAbility: (ability: ActiveAbility) => bridge.queueActiveAbility(ability),
     enterBossRoom: () => bridge.enterBossRoom(),
     continueStory: () => bridge.continueNarrative(),

@@ -218,6 +218,8 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private finishReported = false;
   private virtualDirections: Record<Direction, boolean> = { up: false, down: false, left: false, right: false };
   private queuedDash = false;
+  private queuedParry = false;
+  private queuedBossMechanicClick?: Readonly<{ x: number; y: number }>;
   private queuedActiveAbilities: Record<ActiveAbility, boolean> = {
     empPulse: false,
     aegisWard: false,
@@ -359,6 +361,10 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.queuedDash = true;
   }
 
+  queueParry() {
+    this.queuedParry = true;
+  }
+
   queueActiveAbility(ability: ActiveAbility) {
     this.queuedActiveAbilities[ability] = true;
   }
@@ -407,6 +413,8 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.narrativePaused = false;
     this.accumulator = 0;
     this.queuedDash = false;
+    this.queuedParry = false;
+    this.queuedBossMechanicClick = undefined;
     this.clearQueuedActiveAbilities();
     clearPressedInput(this.gameInput);
     this.focus();
@@ -416,6 +424,8 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.externallySuspended = suspended;
     this.accumulator = 0;
     this.queuedDash = false;
+    this.queuedParry = false;
+    this.queuedBossMechanicClick = undefined;
     this.clearQueuedActiveAbilities();
     this.virtualDirections = { up: false, down: false, left: false, right: false };
     clearPressedInput(this.gameInput);
@@ -492,6 +502,8 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private pauseForRuntimeInterruption() {
     this.accumulator = 0;
     this.queuedDash = false;
+    this.queuedParry = false;
+    this.queuedBossMechanicClick = undefined;
     this.clearQueuedActiveAbilities();
     this.virtualDirections = { up: false, down: false, left: false, right: false };
     clearPressedInput(this.gameInput);
@@ -531,13 +543,21 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
       this.view.render(this.state, this.governor.preset);
     };
     const blockCanvasWheel = (event: WheelEvent) => event.preventDefault();
+    const onBossMechanicPointerDown = (pointer: Phaser.Input.Pointer) => {
+      if (this.externallySuspended || this.isRuntimeInterrupted()) return;
+      if (this.state?.boss?.bombSequence?.phase !== "armed") return;
+      const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      this.queuedBossMechanicClick = { x: world.x, y: world.y };
+    };
     this.input.on(Phaser.Input.Events.POINTER_WHEEL, onWheel);
+    this.input.on(Phaser.Input.Events.POINTER_DOWN, onBossMechanicPointerDown);
     this.game.canvas?.addEventListener("wheel", blockCanvasWheel, { passive: false });
     let wheelCleanupPending = true;
     const cleanupWheel = () => {
       if (!wheelCleanupPending) return;
       wheelCleanupPending = false;
       this.input.off(Phaser.Input.Events.POINTER_WHEEL, onWheel);
+      this.input.off(Phaser.Input.Events.POINTER_DOWN, onBossMechanicPointerDown);
       this.game.canvas?.removeEventListener("wheel", blockCanvasWheel);
     };
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanupWheel);
@@ -555,6 +575,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
       E: Phaser.Input.Keyboard.KeyCodes.E,
       F: Phaser.Input.Keyboard.KeyCodes.F,
       R: Phaser.Input.Keyboard.KeyCodes.R,
+      SHIFT: Phaser.Input.Keyboard.KeyCodes.SHIFT,
       SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE,
       ONE: Phaser.Input.Keyboard.KeyCodes.ONE,
       TWO: Phaser.Input.Keyboard.KeyCodes.TWO,
@@ -574,6 +595,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
       Phaser.Input.Keyboard.KeyCodes.E,
       Phaser.Input.Keyboard.KeyCodes.F,
       Phaser.Input.Keyboard.KeyCodes.R,
+      Phaser.Input.Keyboard.KeyCodes.SHIFT,
     ]);
     // DOM-driven automation and very fast key taps can complete between two
     // render frames. Queue edge-triggered actions from the keyboard events so
@@ -595,6 +617,9 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     keyboard.on("keydown-R", (event: KeyboardEvent) => {
       if (!event.repeat) this.queueActiveAbility("helixTempest");
     });
+    keyboard.on("keydown-SHIFT", (event: KeyboardEvent) => {
+      if (!event.repeat) this.queueParry();
+    });
     keyboard.on("keydown-ONE", () => this.chooseIndexedReward(0));
     keyboard.on("keydown-TWO", () => this.chooseIndexedReward(1));
     keyboard.on("keydown-THREE", () => this.chooseIndexedReward(2));
@@ -611,7 +636,14 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     if (this.queuedActiveAbilities.aegisWard || Phaser.Input.Keyboard.JustDown(this.keys.E)) this.gameInput.aegisWardPressed = true;
     if (this.queuedActiveAbilities.stratosRun || Phaser.Input.Keyboard.JustDown(this.keys.F)) this.gameInput.stratosRunPressed = true;
     if (this.queuedActiveAbilities.helixTempest || Phaser.Input.Keyboard.JustDown(this.keys.R)) this.gameInput.helixTempestPressed = true;
+    if (this.queuedParry || Phaser.Input.Keyboard.JustDown(this.keys.SHIFT)) this.gameInput.parryPressed = true;
+    if (this.queuedBossMechanicClick) {
+      this.gameInput.bossMechanicClickX = this.queuedBossMechanicClick.x;
+      this.gameInput.bossMechanicClickY = this.queuedBossMechanicClick.y;
+    }
     this.queuedDash = false;
+    this.queuedParry = false;
+    this.queuedBossMechanicClick = undefined;
     this.clearQueuedActiveAbilities();
     if (!this.state?.levelupPending) return;
     const choices = [this.keys.ONE, this.keys.TWO, this.keys.THREE];

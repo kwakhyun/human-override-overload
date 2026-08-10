@@ -12,6 +12,7 @@ export interface BattleSceneControls {
   chooseReward(id: string): boolean;
   setVirtualDirection(direction: Direction, active: boolean): void;
   queueDash(): void;
+  queueParry(): void;
   queueActiveAbility(ability: ActiveAbility): void;
   enterBossRoom(): boolean;
   continueNarrative(): void;
@@ -48,6 +49,10 @@ export class SceneBridge {
 
   queueDash() {
     this.controls?.queueDash();
+  }
+
+  queueParry() {
+    this.controls?.queueParry();
   }
 
   queueActiveAbility(ability: ActiveAbility) {

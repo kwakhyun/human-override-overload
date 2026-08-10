@@ -974,6 +974,111 @@ test("regional bosses keep the core rotation and schedule two deterministic sign
   }
 });
 
+test("all three regional bosses own disjoint deterministic attack rotations", () => {
+  const wrong = new Set(REGION_BOSS_PATTERNS["wrong-engine-core"]);
+  const glass = new Set(REGION_BOSS_PATTERNS["glass-dune"]);
+  const abyss = new Set(REGION_BOSS_PATTERNS["abyssal-archive"]);
+  assert.deepEqual([...glass], ["prismLattice", "solarFlare", "refractionSweep", "mirrorShards"]);
+  assert.deepEqual([...abyss], ["memorySpiral", "depthCollapse", "archiveEcho", "undertow"]);
+  assert.equal([...wrong].some((pattern) => glass.has(pattern) || abyss.has(pattern)), false);
+  assert.equal([...glass].some((pattern) => abyss.has(pattern)), false);
+  for (const regionId of ["glass-dune", "abyssal-archive"]) {
+    for (const [index, type] of REGION_BOSS_PATTERNS[regionId].entries()) {
+      const state = createBossState(index, regionId);
+      stepSwarm(state, createSwarmInput(), 1 / 60);
+      assert.equal(state.boss.activePattern?.type, type);
+      assert.equal(state.boss.activePattern?.geometry?.kind, type);
+    }
+  }
+});
+
+test("boss parry opens a one-second slow window and Shift reflects the attack", () => {
+  const state = createBossState(BOSS_PATTERNS.indexOf("multiCharge"));
+  delayPlayerWeapons(state);
+  state.boss.hp = state.boss.maxHp * 0.8;
+  const input = createSwarmInput();
+  for (let frame = 0; frame < 180 && !state.boss.parryWindow; frame += 1) {
+    stepSwarm(state, input, 1 / 60);
+    clearPressedInput(input);
+  }
+  assert.equal(state.boss.activePattern?.phase, "parry");
+  assert.equal(state.boss.parryWindow?.duration, 1);
+  const timeBeforeSlowFrame = state.time;
+  stepSwarm(state, input, 1 / 60);
+  assert.ok(state.time - timeBeforeSlowFrame < 1 / 120);
+
+  input.parryPressed = true;
+  stepSwarm(state, input, 1 / 60);
+  assert.equal(state.boss.parryWindow, null);
+  assert.equal(state.boss.activePattern, null);
+  assert.equal(state.stats.bossParries, 1);
+  assert.ok(state.boss.weakness >= 1.7);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "bossParrySuccess"));
+});
+
+test("missing the boss parry window preserves the hit and low HP offers every eligible attack", () => {
+  const state = createBossState(BOSS_PATTERNS.indexOf("rings"));
+  delayPlayerWeapons(state);
+  state.boss.stage = 3;
+  state.boss.hp = state.boss.maxHp * 0.2;
+  state.boss.bombSequenceTier = 3;
+  const input = createSwarmInput();
+  for (let frame = 0; frame < 180 && !state.boss.parryWindow; frame += 1) {
+    stepSwarm(state, input, 1 / 60);
+    clearPressedInput(input);
+  }
+  assert.ok(state.boss.parryWindow);
+  const hpBefore = state.player.hp;
+  stepFor(state, input, 1.08);
+  assert.equal(state.boss.parryWindow, null);
+  assert.ok(state.player.hp < hpBefore);
+  assert.equal(state.stats.bossParryFailures, 1);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "bossParryFailed"));
+});
+
+test("low-health bosses deploy 2, 4, then 8 numbered bombs and enforce click order", () => {
+  const state = createBossState(0, "glass-dune");
+  delayPlayerWeapons(state);
+  const input = createSwarmInput();
+  const thresholds = [0.54, 0.29, 0.11];
+  const counts = [2, 4, 8];
+  for (let tier = 0; tier < counts.length; tier += 1) {
+    state.boss.hp = state.boss.maxHp * thresholds[tier];
+    state.boss.transformTimer = 0;
+    stepSwarm(state, input, 1 / 60);
+    assert.equal(state.boss.bombSequence?.phase, "siren");
+    assert.equal(state.boss.bombSequence?.bombs.length, counts[tier]);
+    stepFor(state, input, 1.2);
+    assert.equal(state.boss.bombSequence?.phase, "armed");
+    const bombs = [...state.boss.bombSequence.bombs];
+    for (const bomb of bombs) {
+      input.bossMechanicClickX = bomb.x;
+      input.bossMechanicClickY = bomb.y;
+      stepSwarm(state, input, 1 / 60);
+      clearPressedInput(input);
+    }
+    assert.equal(state.boss.bombSequence, null);
+  }
+  assert.equal(state.stats.bossBombsDefused, 14);
+  assert.equal(state.stats.bossBombFailures, 0);
+
+  const failure = createBossState(0, "abyssal-archive");
+  delayPlayerWeapons(failure);
+  failure.boss.hp = failure.boss.maxHp * 0.54;
+  const failureInput = createSwarmInput();
+  stepSwarm(failure, failureInput, 1 / 60);
+  stepFor(failure, failureInput, 1.2);
+  const second = failure.boss.bombSequence.bombs[1];
+  const hpBefore = failure.player.hp;
+  failureInput.bossMechanicClickX = second.x;
+  failureInput.bossMechanicClickY = second.y;
+  stepSwarm(failure, failureInput, 1 / 60);
+  assert.equal(failure.boss.bombSequence, null);
+  assert.ok(failure.player.hp < hpBefore);
+  assert.equal(failure.stats.bossBombFailures, 1);
+  assert.ok(drainSwarmEvents(failure).some((event) => event.type === "bossBombSequenceFailed" && event.reason === "wrongOrder"));
+});
+
 test("glass-dune signature warnings use the same lane and target geometry as their damage", () => {
   const prismIndex = REGION_BOSS_PATTERNS["glass-dune"].indexOf("prismLattice");
   const prism = createBossState(prismIndex, "glass-dune");

@@ -108,9 +108,25 @@ export const BOSS_PATTERNS = Object.freeze(["radial", "sweep", "bombs", "rings",
 
 export const REGION_BOSS_PATTERNS = Object.freeze({
   "wrong-engine-core": BOSS_PATTERNS,
-  "glass-dune": Object.freeze(["radial", "prismLattice", "sweep", "solarFlare", "bombs", "rings", "charge", "multiCharge"]),
-  "abyssal-archive": Object.freeze(["radial", "memorySpiral", "sweep", "depthCollapse", "bombs", "rings", "charge", "multiCharge"]),
+  "glass-dune": Object.freeze(["prismLattice", "solarFlare", "refractionSweep", "mirrorShards"]),
+  "abyssal-archive": Object.freeze(["memorySpiral", "depthCollapse", "archiveEcho", "undertow"]),
 });
+
+const BOSS_PARRY_WINDOW = 1;
+const BOSS_PARRY_SLOW_SCALE = 0.16;
+const BOSS_PARRY_ELIGIBLE = Object.freeze(new Set([
+  "rings",
+  "multiCharge",
+  "prismLattice",
+  "refractionSweep",
+  "memorySpiral",
+  "depthCollapse",
+  "undertow",
+]));
+const BOSS_BOMB_THRESHOLDS = Object.freeze([0.55, 0.3, 0.12]);
+const BOSS_BOMB_COUNTS = Object.freeze([2, 4, 8]);
+const BOSS_BOMB_SIREN_DURATION = 1.15;
+const BOSS_BOMB_ACTIVE_DURATION = 7.5;
 
 export const REGION_ENEMY_PROFILES = Object.freeze({
   "wrong-engine-core": Object.freeze({
@@ -537,6 +553,11 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
     patternCooldown: 1.6,
     patternIndex: 0,
     activePattern: null,
+    parryWindow: null,
+    parryEligibleCount: 0,
+    bombSequence: null,
+    bombSequenceTier: 0,
+    siren: null,
     contactCooldown: 0,
     weakness: 0,
     groggy: 0,
@@ -638,6 +659,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     aegisWards: [],
     stratosRuns: [],
     helixTempests: [],
+    bossBombBursts: [],
     allies: [],
     deployables: [],
     pickups: [],
@@ -697,6 +719,10 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       peakEnemies: 0,
       skillsMastered: 0,
       ultimateCasts: 0,
+      bossParries: 0,
+      bossParryFailures: 0,
+      bossBombsDefused: 0,
+      bossBombFailures: 0,
       activeAbilityCasts: { empPulse: 0, aegisWard: 0, stratosRun: 0, helixTempest: 0 },
       overdriveTier: 0,
       batchedOverflowLevels: 0,
@@ -739,6 +765,9 @@ export function createSwarmInput() {
     aegisWardPressed: false,
     stratosRunPressed: false,
     helixTempestPressed: false,
+    parryPressed: false,
+    bossMechanicClickX: null,
+    bossMechanicClickY: null,
   };
 }
 
@@ -749,6 +778,9 @@ export function clearPressedInput(input) {
   input.aegisWardPressed = false;
   input.stratosRunPressed = false;
   input.helixTempestPressed = false;
+  input.parryPressed = false;
+  input.bossMechanicClickX = null;
+  input.bossMechanicClickY = null;
   return true;
 }
 
@@ -1383,6 +1415,9 @@ function damageBoss(state, amount, source = "weapon") {
     boss.animationState = "death";
     boss.animationTimer = boss.deathTimer;
     boss.attackState = "idle";
+    boss.parryWindow = null;
+    boss.bombSequence = null;
+    boss.siren = null;
     state.phase = "victory";
     state.status = "victory";
     state.phaseTime = 0;
@@ -1524,7 +1559,11 @@ function pushEnemyProjectile(state, x, y, angle, speed, damage, kind = "enemy", 
 
 function damagePlayer(state, amount, source, options = {}) {
   const player = state.player;
-  if (player.dead || player.invulnerability > 0 || amount <= 0 || state.phase === "victory" || state.phase === "defeat") return false;
+  if (player.dead
+    || (!options.unavoidable && player.invulnerability > 0)
+    || amount <= 0
+    || state.phase === "victory"
+    || state.phase === "defeat") return false;
   const rawAmount = amount;
   const wardActive = player.aegisWardTimer > 0;
   const damageReduction = wardActive ? clamp(finite(player.aegisWardDamageReduction), 0, 0.75) : 0;
@@ -3026,29 +3065,38 @@ function beginBossPattern(state) {
   let pattern;
   if (type === "radial") {
     pattern = { type, phase: "warning", x: boss.x, y: boss.y, angle: playerAngle, radius: 120, width: 12, life: 0.95 * warningScale, maxLife: 0.95 * warningScale, fired: false };
-  } else if (type === "prismLattice") {
+  } else if (type === "prismLattice" || type === "refractionSweep") {
     const centerX = clamp(state.player.x + state.player.vx * 0.24, arena.left + 80, arena.right - 80);
     const centerY = clamp(state.player.y + state.player.vy * 0.24, arena.top + 80, arena.bottom - 80);
     const range = state.expedition ? 1450 : 980;
     const beamHalfWidth = 22 + boss.stage * 3;
     const collisionHalfWidth = beamHalfWidth + state.player.radius;
-    const angles = [playerAngle, playerAngle + Math.PI * 0.5];
-    const lanes = angles.map((angle, index) => ({
-      index,
-      angle,
-      startX: centerX - Math.cos(angle) * range,
-      startY: centerY - Math.sin(angle) * range,
-      endX: centerX + Math.cos(angle) * range,
-      endY: centerY + Math.sin(angle) * range,
-      beamHalfWidth,
-      collisionHalfWidth,
-    }));
+    const sweep = type === "refractionSweep";
+    const laneOffsets = sweep ? [-170, 0, 170] : [0, 0];
+    const angles = sweep
+      ? [playerAngle + Math.PI * 0.5, playerAngle + Math.PI * 0.5, playerAngle + Math.PI * 0.5]
+      : [playerAngle, playerAngle + Math.PI * 0.5];
+    const lanes = angles.map((angle, index) => {
+      const offset = laneOffsets[index];
+      const normalX = -Math.sin(angle) * offset;
+      const normalY = Math.cos(angle) * offset;
+      return {
+        index,
+        angle,
+        startX: centerX + normalX - Math.cos(angle) * range,
+        startY: centerY + normalY - Math.sin(angle) * range,
+        endX: centerX + normalX + Math.cos(angle) * range,
+        endY: centerY + normalY + Math.sin(angle) * range,
+        beamHalfWidth,
+        collisionHalfWidth,
+      };
+    });
     pattern = {
       type, phase: "warning", x: centerX, y: centerY, angle: playerAngle,
-      radius: 96, width: beamHalfWidth, life: 0.98 * warningScale, maxLife: 0.98 * warningScale,
+      radius: 96, width: beamHalfWidth, life: (sweep ? 1.08 : 0.98) * warningScale, maxLife: (sweep ? 1.08 : 0.98) * warningScale,
       fired: false, hit: false,
       geometry: {
-        kind: "prismLattice",
+        kind: type,
         centerX,
         centerY,
         laneCount: lanes.length,
@@ -3082,19 +3130,25 @@ function beginBossPattern(state) {
         secondaryEndY: boss.y - Math.sin(startAngle) * radius,
       },
     };
-  } else if (type === "solarFlare") {
+  } else if (type === "solarFlare" || type === "mirrorShards" || type === "archiveEcho") {
     const centerX = clamp(state.player.x + state.player.vx * 0.3, arena.left + 90, arena.right - 90);
     const centerY = clamp(state.player.y + state.player.vy * 0.3, arena.top + 90, arena.bottom - 90);
-    const count = 3 + boss.stage;
-    const targetRadius = 68 + boss.stage * 6;
+    const mirror = type === "mirrorShards";
+    const echo = type === "archiveEcho";
+    const count = mirror ? 5 + boss.stage : echo ? 4 + boss.stage : 3 + boss.stage;
+    const targetRadius = echo ? 76 + boss.stage * 5 : 68 + boss.stage * 6;
     const targets = Array.from({ length: count }, (_, index) => {
-      const orbit = index === 0 ? 0 : 145 + (index % 2) * 78;
-      const angle = playerAngle + index * (TAU / Math.max(1, count - 1));
+      const orbit = echo
+        ? index * 112
+        : index === 0 ? 0 : 145 + (index % 2) * 78;
+      const angle = echo
+        ? Math.atan2(-state.player.vy || -Math.sin(playerAngle), -state.player.vx || -Math.cos(playerAngle))
+        : playerAngle + index * (TAU / Math.max(1, count - 1));
       return {
         x: clamp(centerX + Math.cos(angle) * orbit, arena.left + targetRadius, arena.right - targetRadius),
         y: clamp(centerY + Math.sin(angle) * orbit, arena.top + targetRadius, arena.bottom - targetRadius),
         radius: targetRadius,
-        delay: index * 0.08,
+        delay: index * (echo ? 0.18 : mirror ? 0.06 : 0.08),
         hit: false,
       };
     });
@@ -3103,7 +3157,7 @@ function beginBossPattern(state) {
       radius: targetRadius, width: 6, targets,
       life: 1.08 * warningScale, maxLife: 1.08 * warningScale, fired: false, hit: false,
       geometry: {
-        kind: "solarFlare",
+        kind: type,
         centerX,
         centerY,
         targetCount: targets.length,
@@ -3162,7 +3216,8 @@ function beginBossPattern(state) {
         segments,
       },
     };
-  } else if (type === "depthCollapse") {
+  } else if (type === "depthCollapse" || type === "undertow") {
+    const undertow = type === "undertow";
     const ringCount = 3 + boss.stage;
     const bandHalfWidth = 17 + boss.stage * 2;
     const collisionHalfWidth = bandHalfWidth + state.player.radius;
@@ -3174,9 +3229,9 @@ function beginBossPattern(state) {
       type, phase: "warning", x: boss.x, y: boss.y, angle: 0,
       radius: outerRadius, width: bandHalfWidth,
       life: 1.08 * warningScale, maxLife: 1.08 * warningScale,
-      activeLife: Math.max(1.35, 2.05 - boss.stage * 0.13), fired: false,
+      activeLife: Math.max(1.35, (undertow ? 2.35 : 2.05) - boss.stage * 0.13), fired: false,
       geometry: {
-        kind: "depthCollapse",
+        kind: type,
         centerX: boss.x,
         centerY: boss.y,
         ringCount,
@@ -3186,6 +3241,7 @@ function beginBossPattern(state) {
         radii: [...startRadii],
         endRadius,
         maxTravel: startRadii[startRadii.length - 1] - endRadius,
+        pullStrength: undertow ? 250 + boss.stage * 55 : 0,
       },
     };
   } else if (type === "rings") {
@@ -3252,8 +3308,124 @@ function beginBossPattern(state) {
   emit(state, "bossPatternTelegraph", { pattern: type, duration: pattern.maxLife });
 }
 
+function bossParryFrequency(boss) {
+  const hpRatio = boss.maxHp > 0 ? boss.hp / boss.maxHp : 0;
+  if (hpRatio <= 0.38) return 1;
+  if (hpRatio <= 0.7) return 2;
+  return 3;
+}
+
+function beginBossParryWindow(state, pattern) {
+  const boss = state.boss;
+  if (!BOSS_PARRY_ELIGIBLE.has(pattern.type) || pattern.parryOffered) return false;
+  const hpRatio = boss.maxHp > 0 ? boss.hp / boss.maxHp : 1;
+  if (hpRatio > 0.85) return false;
+  boss.parryEligibleCount += 1;
+  const frequency = bossParryFrequency(boss);
+  if ((boss.parryEligibleCount - 1) % frequency !== 0) return false;
+  pattern.parryOffered = true;
+  pattern.phase = "parry";
+  pattern.life = BOSS_PARRY_WINDOW;
+  pattern.maxLife = BOSS_PARRY_WINDOW;
+  boss.parryWindow = {
+    pattern: pattern.type,
+    life: BOSS_PARRY_WINDOW,
+    duration: BOSS_PARRY_WINDOW,
+    progress: 0,
+    key: "Shift",
+  };
+  boss.attackState = `parry:${pattern.type}`;
+  boss.attackTimer = BOSS_PARRY_WINDOW;
+  state.flash = Math.max(state.flash, 0.28);
+  state.shake = Math.max(state.shake, 5);
+  emit(state, "bossParryWindow", {
+    pattern: pattern.type,
+    duration: BOSS_PARRY_WINDOW,
+    key: "Shift",
+    slowScale: BOSS_PARRY_SLOW_SCALE,
+  });
+  return true;
+}
+
+function resolveBossParry(state, success) {
+  const boss = state.boss;
+  const window = boss.parryWindow;
+  if (!window) return false;
+  const pattern = boss.activePattern;
+  boss.parryWindow = null;
+  boss.activePattern = null;
+  boss.vx = 0;
+  boss.vy = 0;
+  state.telegraphs.length = 0;
+  if (success) {
+    const duration = 1.8;
+    boss.weakness = Math.max(boss.weakness, duration);
+    boss.damageMultiplier = 2;
+    boss.patternCooldown = duration + 0.35;
+    boss.hitStun = Math.max(boss.hitStun, duration);
+    boss.animationState = "stagger";
+    boss.animationTimer = duration;
+    boss.attackState = "parried";
+    boss.attackTimer = duration;
+    state.enemyProjectiles.length = 0;
+    state.stats.bossParries += 1;
+    state.flash = Math.max(state.flash, 0.82);
+    state.shake = Math.max(state.shake, 22);
+    burst(state, state.player.x, state.player.y, "#d8ffff", 38, 410, 0.72, 8);
+    burst(state, boss.x, boss.y, "#76f6ff", 42, 360, 0.8, 8);
+    state.shockwaves.push({
+      type: "bossParry",
+      x: state.player.x,
+      y: state.player.y,
+      maxRadius: 520,
+      life: 0.62,
+      maxLife: 0.62,
+      color: "#d7ffff",
+      width: 18,
+    });
+    addText(state, "패링 성공 · 공격 반사", state.player.x, state.player.y - 82, "#e8ffff", 1.25);
+    emit(state, "bossParrySuccess", { pattern: window.pattern, duration, multiplier: 2 });
+    return true;
+  }
+
+  state.stats.bossParryFailures += 1;
+  const damage = Math.max(132, state.player.maxHp * (0.3 + boss.stage * 0.03));
+  damagePlayer(state, damage, `bossParryFail:${window.pattern}`, {
+    unavoidable: true,
+    critical: true,
+    stun: 0.65,
+    hitStun: 0.65,
+    invulnerability: 0.9,
+  });
+  boss.patternCooldown = 1.05;
+  state.flash = Math.max(state.flash, 0.62);
+  state.shake = Math.max(state.shake, 24);
+  burst(state, state.player.x, state.player.y, "#ff4e68", 34, 390, 0.74, 8);
+  emit(state, "bossParryFailed", { pattern: window.pattern, damage });
+  if (pattern) pattern.life = 0;
+  return true;
+}
+
+function updateBossParryWindow(state, input, dt) {
+  const window = state.boss.parryWindow;
+  if (!window) return 1;
+  if (input?.parryPressed) {
+    resolveBossParry(state, true);
+    return 1;
+  }
+  window.life = Math.max(0, window.life - dt);
+  window.progress = clamp(1 - window.life / Math.max(0.001, window.duration), 0, 1);
+  if (state.boss.activePattern) state.boss.activePattern.life = window.life;
+  if (window.life <= 0) {
+    resolveBossParry(state, false);
+    return 1;
+  }
+  return BOSS_PARRY_SLOW_SCALE;
+}
+
 function fireBossPattern(state, pattern) {
   const boss = state.boss;
+  if (beginBossParryWindow(state, pattern)) return;
   pattern.fired = true;
   boss.attackState = `attack:${pattern.type}`;
   boss.attackTimer = Math.max(0.22, pattern.activeLife || 0.28);
@@ -3272,7 +3444,7 @@ function fireBossPattern(state, pattern) {
     }
     burst(state, boss.x, boss.y, "#ff3f60", 26, 260, 0.6, 6);
     boss.activePattern = null;
-  } else if (pattern.type === "prismLattice") {
+  } else if (pattern.type === "prismLattice" || pattern.type === "refractionSweep") {
     const hitLane = pattern.geometry.lanes.find((lane) => (
       pointLineDistance(
         state.player.x,
@@ -3283,7 +3455,7 @@ function fireBossPattern(state, pattern) {
         lane.endY,
       ) <= lane.collisionHalfWidth
     ));
-    if (hitLane && damagePlayer(state, 30 + boss.stage * 6, "bossPrismLattice")) {
+    if (hitLane && damagePlayer(state, 30 + boss.stage * 6, pattern.type === "refractionSweep" ? "bossRefractionSweep" : "bossPrismLattice")) {
       pattern.hit = true;
       state.stats.bossPatternsHit += 1;
     } else {
@@ -3298,7 +3470,7 @@ function fireBossPattern(state, pattern) {
     pattern.life = pattern.activeLife;
     pattern.maxLife = pattern.activeLife;
     pattern.angle = pattern.startAngle;
-  } else if (pattern.type === "solarFlare") {
+  } else if (pattern.type === "solarFlare" || pattern.type === "mirrorShards" || pattern.type === "archiveEcho") {
     pattern.phase = "active";
     pattern.elapsed = 0;
     pattern.nextTarget = 0;
@@ -3319,7 +3491,7 @@ function fireBossPattern(state, pattern) {
     pattern.life = pattern.activeLife;
     pattern.maxLife = pattern.activeLife;
     pattern.hit = false;
-  } else if (pattern.type === "depthCollapse") {
+  } else if (pattern.type === "depthCollapse" || pattern.type === "undertow") {
     pattern.phase = "active";
     pattern.life = pattern.activeLife;
     pattern.maxLife = pattern.activeLife;
@@ -3446,19 +3618,23 @@ function updateBossPattern(state, dt) {
     if (boss.patternCooldown <= 0) beginBossPattern(state);
     return;
   }
+  if (pattern.phase === "parry") return;
   pattern.life -= dt;
   if (pattern.phase === "warning") {
     if (pattern.life <= 0) fireBossPattern(state, pattern);
     return;
   }
-  if (pattern.type === "solarFlare") {
+  if (pattern.type === "solarFlare" || pattern.type === "mirrorShards" || pattern.type === "archiveEcho") {
     pattern.elapsed += dt;
     while (pattern.nextTarget < pattern.targets.length
       && pattern.targets[pattern.nextTarget].delay <= pattern.elapsed) {
       const target = pattern.targets[pattern.nextTarget];
       target.detonated = true;
       if (Math.hypot(state.player.x - target.x, state.player.y - target.y) <= target.radius + state.player.radius) {
-        if (damagePlayer(state, 24 + boss.stage * 5, "bossSolarFlare")) {
+        const source = pattern.type === "mirrorShards"
+          ? "bossMirrorShards"
+          : pattern.type === "archiveEcho" ? "bossArchiveEcho" : "bossSolarFlare";
+        if (damagePlayer(state, 24 + boss.stage * 5, source)) {
           target.hit = true;
           pattern.hit = true;
           state.stats.bossPatternsHit += 1;
@@ -3506,7 +3682,7 @@ function updateBossPattern(state, dt) {
       if (!pattern.hit) state.stats.bossPatternsDodged += 1;
       boss.activePattern = null;
     }
-  } else if (pattern.type === "depthCollapse") {
+  } else if (pattern.type === "depthCollapse" || pattern.type === "undertow") {
     const progress = clamp(1 - pattern.life / pattern.maxLife, 0, 1);
     const geometry = pattern.geometry;
     geometry.centerX = boss.x;
@@ -3514,13 +3690,20 @@ function updateBossPattern(state, dt) {
     pattern.x = boss.x;
     pattern.y = boss.y;
     const playerDistance = Math.hypot(state.player.x - boss.x, state.player.y - boss.y);
+    if (pattern.type === "undertow" && playerDistance > boss.radius * 0.75) {
+      const pull = normalize(boss.x - state.player.x, boss.y - state.player.y);
+      const pullStrength = finite(geometry.pullStrength, 300) * (0.35 + progress * 0.65);
+      state.player.x += pull.x * pullStrength * dt;
+      state.player.y += pull.y * pullStrength * dt;
+      clampPlayerToFloor(state.player, state.expedition);
+    }
     for (let ring = 0; ring < geometry.ringCount; ring += 1) {
       const radius = geometry.startRadii[ring]
         + (geometry.endRadius - geometry.startRadii[ring]) * progress;
       geometry.radii[ring] = radius;
       if (pattern.hitRings.has(ring)) continue;
       if (Math.abs(playerDistance - radius) <= geometry.collisionHalfWidth) {
-        if (damagePlayer(state, 18 + boss.stage * 4, "bossDepthCollapse")) {
+        if (damagePlayer(state, 18 + boss.stage * 4, pattern.type === "undertow" ? "bossUndertow" : "bossDepthCollapse")) {
           pattern.hitRings.add(ring);
           state.stats.bossPatternsHit += 1;
         }
@@ -3618,7 +3801,216 @@ function updateBossPattern(state, dt) {
   if (!boss.activePattern && boss.patternCooldown <= 0) boss.patternCooldown = Math.max(0.48, 1.92 - boss.stage * 0.4);
 }
 
-function updateBoss(state, dt) {
+function startBossBombSequence(state, tier) {
+  const boss = state.boss;
+  const arena = activeArena(state);
+  const count = BOSS_BOMB_COUNTS[tier];
+  const padding = 92;
+  const centerX = (arena.left + arena.right) * 0.5;
+  const centerY = (arena.top + arena.bottom) * 0.5;
+  const spreadX = Math.max(160, (arena.right - arena.left) * 0.34);
+  const spreadY = Math.max(130, (arena.bottom - arena.top) * 0.31);
+  const regionOffset = state.regionId === "glass-dune" ? 0.48 : state.regionId === "abyssal-archive" ? 0.94 : 0;
+  const bombs = Array.from({ length: count }, (_, index) => {
+    const angle = regionOffset + tier * 0.37 + index * TAU / count;
+    const radial = index % 2 === 0 ? 1 : 0.72;
+    return {
+      id: ++state.nextEntityId,
+      order: index + 1,
+      x: clamp(centerX + Math.cos(angle) * spreadX * radial, arena.left + padding, arena.right - padding),
+      y: clamp(centerY + Math.sin(angle) * spreadY * radial, arena.top + padding, arena.bottom - padding),
+      radius: 52,
+      state: "priming",
+      defused: false,
+      exploded: false,
+    };
+  });
+  boss.bombSequenceTier = tier + 1;
+  boss.bombSequence = {
+    tier: tier + 1,
+    phase: "siren",
+    count,
+    expectedOrder: 1,
+    timer: BOSS_BOMB_SIREN_DURATION,
+    duration: BOSS_BOMB_SIREN_DURATION,
+    progress: 0,
+    bombs,
+  };
+  boss.siren = {
+    active: true,
+    tier: tier + 1,
+    intensity: 0.72 + tier * 0.14,
+    timer: BOSS_BOMB_SIREN_DURATION,
+  };
+  boss.activePattern = null;
+  boss.vx = 0;
+  boss.vy = 0;
+  state.telegraphs.length = 0;
+  state.enemyProjectiles.length = 0;
+  state.flash = Math.max(state.flash, 0.58);
+  state.shake = Math.max(state.shake, 15);
+  emit(state, "bossSiren", {
+    tier: tier + 1,
+    count,
+    duration: BOSS_BOMB_SIREN_DURATION,
+    title: "전역 폭발 경보",
+    message: `시한폭탄 ${count}개를 숫자 순서대로 해제하세요.`,
+  });
+}
+
+function explodeBossBombSequence(state, reason) {
+  const boss = state.boss;
+  const sequence = boss.bombSequence;
+  if (!sequence) return false;
+  for (const bomb of sequence.bombs) {
+    if (bomb.defused) continue;
+    bomb.exploded = true;
+    bomb.state = "exploded";
+    burst(state, bomb.x, bomb.y, "#ff7452", 24, 360, 0.82, 8);
+    state.bossBombBursts.push({
+      id: bomb.id,
+      x: bomb.x,
+      y: bomb.y,
+      life: 0.72,
+      maxLife: 0.72,
+      radius: 210,
+    });
+    state.shockwaves.push({
+      type: "bossTimedBomb",
+      x: bomb.x,
+      y: bomb.y,
+      maxRadius: 250,
+      life: 0.68,
+      maxLife: 0.68,
+      color: "#ff674c",
+      width: 14,
+    });
+  }
+  const damage = Math.max(150, state.player.maxHp * (0.32 + sequence.count * 0.018));
+  damagePlayer(state, damage, `bossTimedBomb:${reason}`, {
+    unavoidable: true,
+    critical: true,
+    stun: 0.85,
+    hitStun: 0.85,
+    invulnerability: 1,
+  });
+  state.stats.bossBombFailures += 1;
+  boss.bombSequence = null;
+  boss.siren = null;
+  boss.patternCooldown = 1.35;
+  state.flash = Math.max(state.flash, 0.88);
+  state.shake = Math.max(state.shake, 30);
+  emit(state, "bossBombSequenceFailed", { reason, count: sequence.count, damage });
+  return true;
+}
+
+function completeBossBombSequence(state, sequence) {
+  const boss = state.boss;
+  const duration = 2.4;
+  boss.bombSequence = null;
+  boss.siren = null;
+  boss.weakness = Math.max(boss.weakness, duration);
+  boss.damageMultiplier = 2;
+  boss.patternCooldown = duration + 0.4;
+  boss.hitStun = Math.max(boss.hitStun, duration);
+  boss.animationState = "stagger";
+  boss.animationTimer = duration;
+  boss.attackState = "bombs-defused";
+  boss.attackTimer = duration;
+  state.flash = Math.max(state.flash, 0.68);
+  state.shake = Math.max(state.shake, 18);
+  burst(state, boss.x, boss.y, "#82ffca", 38, 320, 0.78, 7);
+  state.shockwaves.push({
+    type: "bossBombDefused",
+    x: boss.x,
+    y: boss.y,
+    maxRadius: 390,
+    life: 0.7,
+    maxLife: 0.7,
+    color: "#72f4c2",
+    width: 13,
+  });
+  addText(state, "폭탄 해제 완료 · 보스 회로 정지", boss.x, boss.y - 104, "#8dffd0", 1.25);
+  emit(state, "bossBombSequenceCleared", { tier: sequence.tier, count: sequence.count, duration });
+}
+
+function updateBossBombSequence(state, input, dt) {
+  const boss = state.boss;
+  let sequence = boss.bombSequence;
+  if (!sequence
+    && !boss.dead
+    && !boss.parryWindow
+    && boss.transformTimer <= 0
+    && boss.bombSequenceTier < BOSS_BOMB_THRESHOLDS.length) {
+    const hpRatio = boss.maxHp > 0 ? boss.hp / boss.maxHp : 0;
+    const tier = boss.bombSequenceTier;
+    if (hpRatio <= BOSS_BOMB_THRESHOLDS[tier]) {
+      startBossBombSequence(state, tier);
+      sequence = boss.bombSequence;
+    }
+  }
+  if (!sequence) return false;
+
+  sequence.timer = Math.max(0, sequence.timer - dt);
+  sequence.progress = clamp(1 - sequence.timer / Math.max(0.001, sequence.duration), 0, 1);
+  if (boss.siren) boss.siren.timer = sequence.timer;
+  if (sequence.phase === "siren") {
+    if (sequence.timer <= 0) {
+      sequence.phase = "armed";
+      sequence.timer = BOSS_BOMB_ACTIVE_DURATION;
+      sequence.duration = BOSS_BOMB_ACTIVE_DURATION;
+      sequence.progress = 0;
+      for (const bomb of sequence.bombs) bomb.state = "armed";
+      emit(state, "bossBombSequenceArmed", {
+        tier: sequence.tier,
+        count: sequence.count,
+        duration: sequence.duration,
+        expectedOrder: 1,
+      });
+    }
+    return true;
+  }
+
+  const clickX = finite(input?.bossMechanicClickX, NaN);
+  const clickY = finite(input?.bossMechanicClickY, NaN);
+  if (Number.isFinite(clickX) && Number.isFinite(clickY)) {
+    let clicked = null;
+    let closest = Infinity;
+    for (const bomb of sequence.bombs) {
+      if (bomb.defused || bomb.exploded) continue;
+      const distance = Math.hypot(clickX - bomb.x, clickY - bomb.y);
+      if (distance <= bomb.radius + 22 && distance < closest) {
+        clicked = bomb;
+        closest = distance;
+      }
+    }
+    if (clicked) {
+      if (clicked.order !== sequence.expectedOrder) {
+        explodeBossBombSequence(state, "wrongOrder");
+        return true;
+      }
+      clicked.defused = true;
+      clicked.state = "defused";
+      sequence.expectedOrder += 1;
+      state.stats.bossBombsDefused += 1;
+      burst(state, clicked.x, clicked.y, "#72f4c2", 18, 220, 0.48, 5);
+      emit(state, "bossBombDefused", {
+        tier: sequence.tier,
+        order: clicked.order,
+        remaining: sequence.count - clicked.order,
+        nextOrder: sequence.expectedOrder <= sequence.count ? sequence.expectedOrder : null,
+      });
+      if (sequence.expectedOrder > sequence.count) {
+        completeBossBombSequence(state, sequence);
+        return true;
+      }
+    }
+  }
+  if (sequence.timer <= 0) explodeBossBombSequence(state, "timeout");
+  return true;
+}
+
+function updateBoss(state, dt, input) {
   const boss = state.boss;
   boss.hitFlash = Math.max(0, boss.hitFlash - dt);
   boss.hitStun = Math.max(0, boss.hitStun - dt);
@@ -3645,6 +4037,16 @@ function updateBoss(state, dt) {
   boss.damageMultiplier = boss.groggy > 0
     ? boss.groggyMultiplier
     : boss.weakness > 0 ? 2 : 1;
+  const bombMechanicActive = updateBossBombSequence(state, input, dt);
+  if (bombMechanicActive) {
+    boss.vx = 0;
+    boss.vy = 0;
+    boss.angle = Math.atan2(state.player.y - boss.y, state.player.x - boss.x);
+    boss.animationState = boss.bombSequence?.phase === "siren" ? "windup" : "attack";
+    boss.attackState = boss.bombSequence?.phase === "siren" ? "bomb-siren" : "timed-bombs";
+    boss.moveBlend += (0 - boss.moveBlend) * (1 - Math.exp(-dt * 8));
+    return;
+  }
   const charging = (boss.activePattern?.type === "charge" || boss.activePattern?.type === "multiCharge")
     && boss.activePattern?.phase === "active";
   const warning = boss.activePattern?.phase === "warning";
@@ -3735,6 +4137,8 @@ function updateEffects(state, dt) {
   compact(state.chains, keepPositiveLife);
   for (const shockwave of state.shockwaves) shockwave.life -= dt;
   compact(state.shockwaves, keepPositiveLife);
+  for (const burstFx of state.bossBombBursts) burstFx.life -= dt;
+  compact(state.bossBombBursts, keepPositiveLife);
   for (const portal of state.spawnPortals) portal.life -= dt;
   compact(state.spawnPortals, keepPositiveLife);
   for (const telegraph of state.telegraphs) {
@@ -3755,9 +4159,12 @@ export function stepSwarm(state, input, dt) {
   if (state.levelupPending) return state;
   if (state.expedition?.awaitingBossEntry) return state;
 
-  state.time = Math.min(state.duration, state.time + delta);
+  const timeScale = state.phase === "boss" ? updateBossParryWindow(state, input, delta) : 1;
+  const worldDelta = delta * timeScale;
+
+  state.time = Math.min(state.duration, state.time + worldDelta);
   state.timeLeft = Math.max(0, state.duration - state.time);
-  state.phaseTime += delta;
+  state.phaseTime += worldDelta;
   if (state.time >= state.duration) {
     state.phase = "defeat";
     state.status = "defeat";
@@ -3766,34 +4173,34 @@ export function stepSwarm(state, input, dt) {
     return state;
   }
 
-  updatePlayer(state, input, delta);
-  updateExpedition(state, input, delta);
-  updateManualAbilities(state, input, delta);
-  updateOverdrive(state, delta);
-  updateAutoWeapons(state, delta);
-  updateAllies(state, delta);
+  updatePlayer(state, input, worldDelta);
+  updateExpedition(state, input, worldDelta);
+  updateManualAbilities(state, input, worldDelta);
+  updateOverdrive(state, worldDelta);
+  updateAutoWeapons(state, worldDelta);
+  updateAllies(state, worldDelta);
 
   if (state.phase === "swarm") {
-    updateEnemies(state, delta);
+    updateEnemies(state, worldDelta);
     rebuildEnemyGrid(state);
-    updateOrbitWeapon(state, delta);
-    updateSupportSkills(state, delta);
-    updateProjectiles(state, delta);
-    updateEnemyProjectiles(state, delta);
-    updatePickups(state, delta);
-    updateHealingKits(state, delta);
-    updateSwarmSpawning(state, delta);
+    updateOrbitWeapon(state, worldDelta);
+    updateSupportSkills(state, worldDelta);
+    updateProjectiles(state, worldDelta);
+    updateEnemyProjectiles(state, worldDelta);
+    updatePickups(state, worldDelta);
+    updateHealingKits(state, worldDelta);
+    updateSwarmSpawning(state, worldDelta);
   } else if (state.phase === "boss") {
-    updateBoss(state, delta);
-    updateOrbitWeapon(state, delta);
-    updateSupportSkills(state, delta);
-    updateProjectiles(state, delta);
-    updateEnemyProjectiles(state, delta);
+    updateBoss(state, worldDelta, input);
+    updateOrbitWeapon(state, worldDelta);
+    updateSupportSkills(state, worldDelta);
+    updateProjectiles(state, worldDelta);
+    updateEnemyProjectiles(state, worldDelta);
   }
 
   syncAegisWardGeometry(state);
   updateLevelFlow(state);
-  updateEffects(state, delta);
+  updateEffects(state, worldDelta);
   return state;
 }
 
@@ -3989,6 +4396,24 @@ export function getSwarmHud(state) {
       attackState: state.boss.attackState,
       attackTimer: state.boss.attackTimer,
       telegraphGeometry: state.boss.activePattern?.geometry ?? null,
+      parry: state.boss.parryWindow ? { ...state.boss.parryWindow } : null,
+      siren: state.boss.siren ? { ...state.boss.siren } : null,
+      bombSequence: state.boss.bombSequence ? {
+        tier: state.boss.bombSequence.tier,
+        phase: state.boss.bombSequence.phase,
+        count: state.boss.bombSequence.count,
+        expectedOrder: state.boss.bombSequence.expectedOrder,
+        timer: state.boss.bombSequence.timer,
+        duration: state.boss.bombSequence.duration,
+        progress: state.boss.bombSequence.progress,
+        bombs: state.boss.bombSequence.bombs.map((bomb) => ({
+          id: bomb.id,
+          order: bomb.order,
+          state: bomb.state,
+          defused: bomb.defused,
+          exploded: bomb.exploded,
+        })),
+      } : null,
     } : null,
     rewards: {
       pending: state.levelupPending,
