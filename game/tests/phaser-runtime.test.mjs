@@ -48,7 +48,7 @@ test("dialogue crops the hero to a bust and mobile play is guarded for landscape
   const app = await read("src/App.jsx");
   const styles = await read("src/styles.css");
   const scene = await read("src/phaser/scenes/OverloadScene.ts");
-  assert.match(app, /className="narrative-portrait"/);
+  assert.match(app, /className=\{`narrative-portrait is-\$\{portrait\.variant\}`\}/);
   assert.match(app, /orientation: portrait/);
   assert.match(styles, /\.narrative-portrait\s*\{[^}]*overflow: hidden/s);
   assert.match(styles, /\.narrative-portrait img\s*\{[^}]*width: 166%/s);

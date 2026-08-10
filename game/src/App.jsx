@@ -363,6 +363,63 @@ const SCENARIO_SCRIPT = Object.freeze({
   ]),
 });
 
+const NARRATIVE_STANDALONE_PORTRAITS = Object.freeze({
+  AEGIS: Object.freeze({ assetKey: "portrait", variant: "hero", alt: "이지스 상반신 일러스트" }),
+  OPERATOR: Object.freeze({ assetKey: "rheaControlOfficer", variant: "operator", alt: "전술 관제관 레아 상반신 일러스트" }),
+  RHEA: Object.freeze({ assetKey: "rheaControlOfficer", variant: "operator", alt: "전술 관제관 레아 상반신 일러스트" }),
+});
+
+const NARRATIVE_NPC_IDS = Object.freeze({
+  HANA: "hana",
+  ILYA: "ilya",
+  LARK: "lark",
+});
+
+const NARRATIVE_BOSS_REGION_IDS = Object.freeze({
+  "THE WRONG ENGINE": "wrong-engine-core",
+  "MIRROR TYRANT": "glass-dune",
+  "DROWNED ORACLE": "abyssal-archive",
+});
+
+function domAssetSource(asset) {
+  return asset?.src || asset || "";
+}
+
+function resolveNarrativePortrait(speaker, assets, activeRegion, bossStage = 1) {
+  const normalizedSpeaker = String(speaker || "").toUpperCase();
+  const standalone = NARRATIVE_STANDALONE_PORTRAITS[normalizedSpeaker];
+  if (standalone) {
+    const source = domAssetSource(assets?.[standalone.assetKey]);
+    return source ? { ...standalone, source, mode: "standalone" } : null;
+  }
+
+  const npcId = NARRATIVE_NPC_IDS[normalizedSpeaker];
+  if (npcId) {
+    const npc = BASE_NPCS[npcId];
+    const source = domAssetSource(assets?.[npc?.portraitKey]);
+    return source ? {
+      source,
+      mode: "atlas",
+      variant: "support",
+      frameIndex: Math.max(0, Math.min(2, Number(npc?.portraitIndex) || 0)),
+      alt: `${localizeSpeakerName(normalizedSpeaker)} 상반신 일러스트`,
+    } : null;
+  }
+
+  const bossRegionId = NARRATIVE_BOSS_REGION_IDS[normalizedSpeaker];
+  if (!bossRegionId) return null;
+  const bossRegion = activeRegion?.id === bossRegionId ? activeRegion : getRegion(bossRegionId);
+  const source = bossRegion?.assets?.dom?.bossPortrait?.path || "";
+  const frameIndex = Math.max(0, Math.min(2, Math.floor(Number(bossStage) || 1) - 1));
+  return source ? {
+    source,
+    mode: "atlas",
+    variant: "hostile",
+    frameIndex,
+    alt: `${localizeSpeakerName(normalizedSpeaker)} ${frameIndex + 1}단계 형상`,
+  } : null;
+}
+
 const CATEGORY_META = Object.freeze({
   weapon: { label: "신규 무기", korean: "무기", color: "cyan" },
   skill: { label: "핵심 기술", korean: "기술", color: "amber" },
@@ -1310,21 +1367,40 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
   );
 }
 
-function NarrativePanel({ dialogue, portrait, onAdvance }) {
+function NarrativePortrait({ portrait }) {
+  if (!portrait?.source) return null;
+  return (
+    <div className={`narrative-portrait is-${portrait.variant}`}>
+      {portrait.mode === "atlas" ? (
+        <span
+          className="narrative-portrait-frame"
+          role="img"
+          aria-label={portrait.alt}
+          style={{
+            backgroundImage: `url(${portrait.source})`,
+            "--portrait-frame-position": `${portrait.frameIndex * 50}%`,
+          }}
+        />
+      ) : (
+        <img src={portrait.source} alt={portrait.alt} draggable="false" decoding="async" />
+      )}
+    </div>
+  );
+}
+
+function NarrativePanel({ dialogue, assets, region, bossStage, onAdvance }) {
   if (!dialogue) return null;
   const lines = SCENARIO_SCRIPT[dialogue.beat] || [];
   const line = lines[dialogue.index];
   if (!line) return null;
   const finalLine = dialogue.index >= lines.length - 1;
+  const portrait = resolveNarrativePortrait(line.speaker, assets, region, bossStage);
+  const hostile = Boolean(NARRATIVE_BOSS_REGION_IDS[line.speaker]);
   return (
     <section className="narrative-panel" role="dialog" aria-live="assertive" aria-label="시나리오 대화">
-      {portrait && (
-        <div className="narrative-portrait">
-          <img src={portrait.src} alt="이지스 생존자 상반신 일러스트" draggable="false" />
-        </div>
-      )}
+      <NarrativePortrait portrait={portrait} />
       <div className="narrative-copy">
-        <small>{["THE WRONG ENGINE", "MIRROR TYRANT", "DROWNED ORACLE"].includes(line.speaker) ? "적성 통신" : "저항군 통신"}</small>
+        <small>{hostile ? "적성 통신" : "저항군 통신"}</small>
         <strong>{localizeSpeakerName(line.speaker)}</strong>
         <p>{line.text}</p>
       </div>
@@ -1731,7 +1807,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
             <button className="touch-right" type="button" aria-label="오른쪽으로 이동" onPointerDown={(event) => setTouchDirection("right", true, event)} onPointerUp={(event) => setTouchDirection("right", false, event)} onPointerCancel={(event) => setTouchDirection("right", false, event)}><ArrowRight weight="bold" /></button>
           </div>
             </div>
-            <NarrativePanel dialogue={dialogue} portrait={assets?.portrait || assets?.player} onAdvance={advanceDialogue} />
+            <NarrativePanel dialogue={dialogue} assets={assets} region={region} bossStage={hud?.boss?.stage} onAdvance={advanceDialogue} />
             {paused && <PauseOverlay onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}
           </div>
       </section>

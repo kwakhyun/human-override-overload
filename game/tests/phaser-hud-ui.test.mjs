@@ -123,7 +123,7 @@ test("active HUD and HAVEN interactions expose Korean-first copy with in-world N
   assert.match(screens, /<NpcWorldFigure npc=\{npc\} assets=\{assets\} \/>/);
   for (const id of ["hana", "ilya", "lark", "rhea"]) assert.match(screens, new RegExp(`${id}: Object\\.freeze`));
   assert.match(styles, /\.base-hotspot > \.base-npc-world-figure \{/);
-  assert.match(styles, /background-size: 300% 100%/);
+  assert.match(styles, /background-size: auto 100%/);
 });
 
 test("Escape pause is guarded from modal states and supports resume, local restart, and unlocked base exit", async () => {
