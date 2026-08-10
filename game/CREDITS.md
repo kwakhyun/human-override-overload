@@ -5,11 +5,688 @@
 아래 이미지는 모두 이 프로젝트 전용으로 OpenAI 내장 이미지 생성 도구를 사용해 제작했습니다.
 외부 게임 에셋 팩이나 타인의 게임 이미지는 사용하지 않았습니다.
 
-### Dedicated OVERLOAD arena
+### Active unified overhead production set
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 후처리: ImageGen `remove_chroma_key.py`, Pillow 기반 `scripts/prepare-overload-art.py`
+- 공통 카메라 규칙: 인게임 배우와 장비는 천장 카메라의 엄격한 90° 정사영 탑다운,
+  중앙 회전 피벗, 화면 오른쪽 기본 전방. 정면 상반신 대사 포트레이트만 예외입니다.
+- 런타임 경로:
+  - `public/assets/overload/hero/survivor-motion-atlas-v2.png`
+  - `public/assets/overload/enemies/enemy-motion-atlas.png`
+  - `public/assets/overload/allies/*.png`
+  - `public/assets/overload/boss/wrong-engine-forms-atlas.png`
+  - `public/assets/overload/environment/sector-01-shattered-approach.webp`
+  - `public/assets/overload/environment/sector-02-flooded-memorial.webp`
+  - `public/assets/overload/environment/sector-03-engine-causeway.webp`
+  - `public/assets/overload/environment/boss-chamber.webp`
+- 보존 원본:
+  - `reference/source-assets/overload/hero/silver-aegis-true-nadir-motion-atlas-chroma.png`
+  - `reference/source-assets/overload/hero/silver-aegis-true-nadir-seed-chroma.png`
+  - `reference/source-assets/overload/hero/silver-aegis-portrait-user-chroma.png`
+  - `reference/source-assets/overload/enemies/enemy-overhead-motion-atlas-chroma.png`
+  - `reference/source-assets/overload/allies/squad-support-overhead-sheet-chroma.png`
+  - `reference/source-assets/overload/boss/wrong-engine-forms-chroma.png`
+  - `reference/source-assets/overload/environment/*-source.png`
+- 최종 캐릭터 프롬프트 세트:
+
+  > AEGIS seed: use the supplied silver-haired AEGIS portrait as the exact identity reference and the supplied combat key art only as a supporting rifle reference. Create one isolated strict 90-degree overhead orthographic ceiling-camera game sprite, centered and facing screen-right while holding the rifle. Preserve long silver-white hair, the black tactical exosuit, white split coat tails, and cyan weapon accents. Show the crown, shoulders, upper back, top weapon surfaces, and foreshortened legs; never show the face, horizon, front, side, or eye-level pose. Flat #ff00ff background; no scene, floor, shadow, text, UI, or watermark.
+
+  > AEGIS motion atlas: create exactly fifteen isolated sprites in a 5-column by 3-row atlas, using the approved overhead seed as the primary reference and the silver portrait as identity support. Preserve the same silver-haired AEGIS, black armor, white split coat tails, cyan rifle, scale, strict overhead camera, centered pivot, and screen-right heading. Row 1: restrained locomotion cycle. Row 2: rifle ready, brace, one cyan muzzle release, recoil, recovery. Row 3: dash anticipation, cyan phase dash, afterimage dash, hit recoil, kneeling defeat. Flat #ff00ff background; no extra actors, scenery, floor, shadow, labels, borders, text, UI, or watermark.
+
+  > Enemy overhead atlas: recreate exactly 15 enemy sprites in a 5×3 atlas from the same strict 90-degree ceiling camera, all centered and pointing screen-right. Row 1 is a compact flying hunter drone in hover, bank, thrust, attack, and damaged poses. Row 2 is a black-gunmetal humanoid suppression automaton with red visor and heavy rifle in ready, stride A, passing stride, stride B, and firing recoil. Row 3 is a low quadruped armored brute in prowl A, prowl B, charge, slam, and damaged poses. Show top armor, chassis, head/back and weapon surfaces; no front, side, three-quarter eye-level, or horizon. Hot red-orange hostile emissives, flat #ff00ff background, no scenery, floor, shadow, text, grid, or watermark.
+
+  > Squad/support overhead sheet: create exactly eight isolated assets in a 4×2 sheet from the same strict 90-degree ceiling camera, centered and pointing screen-right where mobile. Top row: ROOK heavy gunner and shield, NYX recon sniper, MOSS medic/engineer, AEGIS ECHO rifle operator; show crown, shoulders, upper back, top armor/weapon surfaces and foreshortened limbs, never a viewer-facing pose. Bottom row: hunter drone, twin-weapon suppressor drone, pulse sentry, four-pronged EMP pylon. Unified black/graphite gunmetal with blue/cyan team emissives and a small green medical accent for MOSS; flat #ff00ff background, no scenery, floor, shadow, text, grid, or watermark.
+
+- 전장·보스 프롬프트 세트:
+
+  > Sector 2 — Flooded Memorial: premium 16:9 top-down cyberpunk transit underpass, broad unobstructed east-west combat lane, rainwater and reflective flooded steel, violet memorial beacons, cyan route lights, abandoned squad traces and broken rescue equipment near the non-playable edges, dark black-gunmetal city ruins, no actors, UI, text, walls across the lane, or watermark.
+
+  > Sector 3 — Engine Causeway: premium 16:9 top-down industrial reactor causeway, broad unobstructed east-west combat lane leading toward the engine, black steel, red-orange reactor spill, exposed conduits, cooling vents and escalating machine damage along non-playable upper/lower edges, sparse cyan navigation lights, no actors, UI, text, walls across the lane, or watermark.
+
+  > Boss chamber: premium 16:9 strict top-down circular engine chamber with a huge open traversable center, black-gunmetal radial machinery outside the combat floor, red reactor channels and cyan alignment marks, clear perimeter and central confrontation space, no boss, actors, UI, text, obstructing central structure, or watermark.
+
+  > THE WRONG ENGINE forms: exactly three isolated centered forms in a 3×1 sheet from a strict top-down view, preserving one radial black-gunmetal engine identity and red reactor core. Phase 1 is sealed and compact; phase 2 unfolds segmented armor and weapon limbs; phase 3 exposes a white-hot triple reactor with fractured armor and molten red-orange veins. Consistent center pivot, flat #ff00ff background, no floor, shadow, text, grid, loose VFX, or watermark.
+
+모든 크로마 원본은 soft matte/despill로 투명화한 뒤 중앙 앵커 기준 256×256 인게임 프레임
+(보스 512×512)으로 정규화했습니다. 전장은 1600×900 WebP로 최적화했습니다. 피격·폭발
+효과는 외부 래스터를 추가하지 않고 Phaser Graphics로 제작한 프로젝트 원본이며,
+`CINEMATIC / BALANCED / PERFORMANCE` 품질 단계에 따라 동시 효과 수가 제한됩니다.
+
+### Colossal authored boss chamber replacement
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 런타임 경로: `public/assets/overload/environment/boss-chamber.webp`
+- ImageGen 원본 경로: `reference/source-assets/overload/environment/boss-chamber-colossus-source.png`
+- 후처리: Pillow Lanczos로 1920×1080 리사이즈, 품질 90 WebP 변환
+- 적용 방식: 일반 구간의 반복 가능한 `TileSprite`와 분리한 단일 Phaser Image. 보스전에서는
+  타일 반복·미러링·배경 스크롤 없이 확장 월드 전체에 한 번만 표시합니다.
+- 최종 프롬프트:
+
+  > Use case: stylized-concept. Asset type: final 2D game environment background for a Phaser boss arena. Image 1 is a color, material, and industrial-world style reference; Image 2 is only a reference for strict overhead camera and circular chamber language. Do not copy, tile, mirror, or repeat either image. Create a completely new colossal final-boss engine chamber for TRAIN ME WRONG: OVERLOAD, built to make a 640-pixel giant biomechanical machine boss feel at home and overwhelmingly large. Show a vast ruined subterranean cyberpunk reactor cathedral from a strict 90-degree ceiling camera with one enormous oval combat floor, a deep glowing reactor abyss beyond the floor edges, monumental turbine housings, shattered containment ribs, thick power conduits, cooling vents, mechanical buttresses, and a sealed entry lock on the far-left edge. Keep the broad center unobstructed. Add a massive broken reactor crown on the upper-right perimeter and a collapsed service gantry on the lower-left perimeter so it reads as one authored place. Match near-black gunmetal, cold cyan navigation lights, and furnace-red/orange energy. Single continuous unique 16:9 composition; not seamless; no repeated tiles or mirrored quadrants; no characters, enemies, boss, corpses, weapons, UI, HUD, text, symbols, logo, or watermark.
+
+이 원화는 기존 보스방을 늘이거나 복제한 것이 아니라, 1920×1080 확장 카메라와 단계별
+480·560·640px 보스 실루엣을 기준으로 새로 생성했습니다. 중앙은 스윕·폭탄·링·돌진 판독을
+위해 어둡고 비워 두고, 고유 랜드마크와 붉은 심연은 이동 경계 밖에 집중했습니다.
+
+### Forward expedition route
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 런타임 경로: `public/assets/overload/environment/sector-01-shattered-approach.webp`
+- 고해상도 원본: `reference/source-assets/overload/expedition-route-source.png`
+- 용도: AEGIS가 왼쪽에서 오른쪽으로 전진하는 폐허 수송로 배경
+- 최종 프롬프트:
+
+  > Horizontally scrolling top-down battlefield texture for a premium 2D Phaser action game; ruined cyberpunk megacity mood, black steel, rain-dark surfaces, cyan navigation lights and sparse red illumination; empty elevated transit deck running left to right with a broad traversable center lane; broken guard rails and machinery only along upper and lower edges; team remains and abandoned equipment silhouettes near the edges; true top-down with slight illustrative perspective; repeatable left/right edges; no central walls, arena circle, characters, enemies, boss, UI, text, logos or watermark.
+
+런타임 파일은 원본 PNG를 품질 88 WebP로 변환해 약 2.24MB에서 약 178KB로 줄였습니다.
+
+### User-provided cinematic art and active silver AEGIS identity
+
+- 생성·적용일: 2026-08-10
+- 사용자 제공 시작 화면 원본:
+  - 원본 파일명: `Codex 이미지 2026년 8월 10일 오전 03_59_23.png`
+  - 프로젝트 보존 경로: `reference/source-assets/overload/intro/start-screen-key-art-user.png`
+  - 런타임 경로: `public/assets/overload/intro/start-screen-key-art.webp`
+  - 후처리: Pillow Lanczos 1920×1080 리사이즈, 품질 90 WebP 변환. 인물·보스·배경은
+    재생성하거나 합성하지 않았습니다.
+- 사용자 제공 은발 AEGIS 원본:
+  - 원본 파일명: `Codex 이미지 2026년 8월 10일 오전 04_01_49.png`
+  - 프로젝트 보존 경로: `reference/source-assets/overload/hero/silver-aegis-portrait-user-chroma.png`
+  - 대사 런타임 경로: `public/assets/overload/hero/survivor-portrait.png`
+  - 후처리: ImageGen `remove_chroma_key.py` edge-contract 1로 초록 배경만 투명화. 인물은
+    재생성하지 않았고, React 대사 패널에서 머리·어깨·상반신만 확대 크롭합니다.
+- ImageGen 제작 원본:
+  - `reference/source-assets/overload/hero/silver-aegis-true-nadir-seed-chroma.png`
+  - `reference/source-assets/overload/hero/silver-aegis-true-nadir-motion-atlas-chroma.png`
+- 인게임 런타임 경로:
+  - `public/assets/overload/hero/survivor-motion-atlas-v2.png`
+- 생성·후처리 도구: OpenAI 내장 ImageGen, ImageGen `remove_chroma_key.py`, 프로젝트
+  `scripts/normalize-motion-atlas.py`
+- 최종 프롬프트 세트:
+
+  > Seed: use the supplied silver-haired AEGIS portrait as the exact character identity and outfit reference, and use the combat key art only for the rifle language. Create one isolated premium 2D game sprite from a strict 90-degree overhead orthographic ceiling camera, centered and facing screen-right while holding the rifle. Preserve long silver-white hair, black tactical exosuit, white split coat tails, and cyan weapon accents. Show only crown, shoulders, upper back, top armor and weapon surfaces, and foreshortened limbs; no viewer-facing face, front view, side view, eye-level angle, or horizon. Flat #ff00ff background; no scene, floor, shadow, text, UI, or watermark.
+
+  > Motion atlas: create exactly fifteen sprites in a 5-column by 3-row atlas. Image 1 is the approved strict-overhead seed and is the primary pose, camera, costume, scale, and palette reference; Image 2 supports the silver-haired AEGIS identity. Keep every frame centered, strict 90-degree overhead, and initially facing screen-right. Row 1: five restrained locomotion frames. Row 2: rifle ready, brace, one cyan muzzle release, recoil, recovery. Row 3: dash anticipation, cyan phase dash, afterimage dash, hit recoil, kneeling defeat. Preserve long silver-white hair, white split coat tails, black tactical armor, and cyan rifle accents. Flat #ff00ff background; no extras, scene, floor, shadow, labels, borders, text, UI, or watermark.
+
+크로마 원본을 투명화한 뒤 15개 셀을 분리해 하나의 공통 스케일과 중앙 회전 피벗으로
+256×256 프레임에 정규화하고, 5×3·1280×768 투명 PNG로 조립했습니다. 공격 행은 정지 시에만
+사용하며 한 발의 머즐 플래시와 억제된 반동으로 구성해 자동 사격 중 과도한 흔들림을 피합니다.
+
+#### True-nadir 360° rotation correction
+
+- 교체 사유: 첫 은발 아틀라스는 오른쪽 조준 자세에서는 자연스러웠지만 머리·상체·코트에 남은
+  약한 사선 원근 때문에 전체 스프라이트를 다른 방향으로 회전할 때 항공 시점이 흔들렸습니다.
+- 검증 이미지: `qa/silver-aegis-360-rotation-preview.png` — 런타임 첫 프레임을 중앙 피벗 기준
+  0/45/90/135/180/225/270/315도로 회전한 단일 시점 검증표입니다.
+- 최종 보정 프롬프트:
+
+  > True-nadir seed: redraw one isolated AEGIS as a perfectly vertical 90-degree nadir orthographic plan view, as if a satellite camera is directly above the crown of her head, with zero tilt, zero perspective convergence, zero horizon, and no visible face, eyes, chest front, abdomen front, or side profile. Show only crown, symmetrical shoulder tops, upper back, top armor, top arm and rifle surfaces, and foreshortened legs. Keep spine, hips, and legs on one flat plan so the sprite can rotate continuously through 360 degrees without leaning toward the viewer. Preserve silver-white hair, black exosuit, white split coat tails, cyan rifle accents, screen-right aim, compact silhouette, and flat #ff00ff background; no floor, shadow, aura, scenery, text, UI, or watermark.
+
+  > True-nadir motion atlas: create exactly fifteen isolated sprites in a 5×3 atlas from the approved true-nadir seed. Every frame must preserve the identical perfectly vertical nadir orthographic camera, flat-plan body, common center pivot, scale, and screen-right heading. Row 1 is restrained locomotion; row 2 is ready, subtle brace, one small muzzle release, tiny recoil, recovery; row 3 is dash anticipation, compact phase dash, compact afterimage, flat-plan hit recoil, and disabled pose. No face, front torso, side profile, oblique depth, extra actor, floor, cast shadow, grid, labels, text, UI, or watermark; flat #ff00ff background.
+
+기존 `silver-aegis-overhead-*` 두 원본은 보정 전 제작 이력으로만 보존합니다. 아래 오른쪽
+어깨 견착 버전은 `silver-aegis-true-nadir-*`를 시점 기준으로 삼아 최종 활성 런타임을 교체합니다.
+
+#### Right-shoulder rifle correction
+
+- 생성·적용일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 제작 원본:
+  - `reference/source-assets/overload/hero/silver-aegis-right-shoulder-seed-chroma.png`
+  - `reference/source-assets/overload/hero/silver-aegis-right-shoulder-motion-atlas-chroma.png`
+- 이전 런타임 경로: `public/assets/overload/hero/survivor-motion-atlas.png` (현재 v2 제작 기준으로만 보존)
+- 후처리: ImageGen `remove_chroma_key.py`의 border auto-key, soft matte, edge-contract 1,
+  despill 후 `scripts/normalize-motion-atlas.py`로 공통 스케일·중앙 피벗의 5×3·1280×768
+  투명 PNG를 제작했습니다.
+- 최종 프롬프트:
+
+  > Right-shoulder seed: preserve the supplied silver-haired AEGIS true-nadir identity and change only the rifle hold. The buttstock must be visibly seated into her RIGHT shoulder pocket, with the right trigger hand, right elbow, and left forward support hand anatomically coherent. Keep the barrel aimed screen-right. Maintain a perfectly vertical 90-degree nadir orthographic camera with no visible face, chest front, horizon, or oblique torso; preserve the black exosuit, white split coat tails, cyan rifle accents, centered rotation pivot, and flat #ff00ff background.
+
+  > Right-shoulder motion atlas: create exactly fifteen sprites in a 5-column by 3-row atlas from the approved right-shoulder seed. Preserve the buttstock seated in the RIGHT shoulder in every frame and keep every actor strict true-nadir, centered, and initially facing screen-right. Row 1: restrained locomotion. Row 2: shouldered ready, brace, muzzle release, tiny recoil, recovery. Row 3: dash anticipation, phase dash, afterimage, hit recoil, disabled pose. No face, front torso, oblique depth, scene, shadow, grid, labels, text, UI, or watermark; flat #ff00ff background.
+
+### Active futuristic combat VFX atlas
+
+- 생성·적용일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 제작 원본: `reference/source-assets/overload/vfx/combat-fx-atlas-chroma.png`
+- 런타임 경로: `public/assets/overload/vfx/combat-fx-atlas.png`
+- 후처리: auto-key soft matte와 despill로 크로마를 제거하고 4×3·256px 공통 셀로
+  정규화했습니다.
+- 최종 프롬프트:
+
+  > Create exactly twelve isolated premium 2D combat effects in a 4-column by 3-row atlas, matching the supplied silver AEGIS rifle and THE WRONG ENGINE industrial material language. Row 1: long cyan needle pulse tracer, five plasma flechettes, white-gold rail lance, micro-missile. Row 2: three-prong muzzle flash, armor hit burst, geometric Arc Cascade lightning, Zero-Point Nova hex bloom. Row 3: Skyfall impact spear, Omega Laser segment, Orbit Blades, red enemy explosion. Every cell is centered and readable at small tactical scale; effects must look like directed futuristic ordnance, not simple spheres. Flat #ff00ff background; no actors, floor, grid, borders, labels, text, UI, or watermark.
+
+Phaser는 이 아틀라스를 자동 사격 투사체, 소총 머즐 플래시, 노바·공중 폭격·궤도 스킬,
+전용 장갑 피격과 적 폭발에 사용합니다. 동시 표시량은 품질 단계별로 제한하며 판정은 기존
+결정론적 엔진이 계속 소유합니다.
+
+### Active multi-motion skill and spawn-gate atlas
+
+- 생성·적용일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 스타일 참조 원본:
+  - `public/assets/overload/vfx/combat-fx-atlas.png`
+  - `public/assets/overload/ui/rewards/airstrike.webp`
+  - `public/assets/overload/ui/rewards/omegaLaser.webp`
+- 크로마키 제작 원본: `reference/source-assets/overload/vfx/skill-motion-atlas-chroma.png`
+- 알파 보존 원본: `reference/source-assets/overload/vfx/skill-motion-atlas-alpha.png`
+- 런타임 경로: `public/assets/overload/vfx/skill-motion-atlas.png`
+- QA 미리보기: `qa/skill-motion-atlas-preview.png`
+- 후처리: ImageGen `remove_chroma_key.py`의 border auto-key, soft matte, despill로
+  `#ff00ff` 배경을 제거한 뒤 `scripts/normalize-motion-atlas.py`로 한 번에 공통 스케일과
+  중앙 피벗을 적용해 6×4, 192px 셀, 1152×768 투명 PNG로 정규화했습니다.
+- 최종 프롬프트:
+
+  > Use case: stylized-concept. Asset type: production VFX motion atlas for a top-down Phaser browser game. Create one exact 6-column by 4-row sprite animation atlas, 24 equal square slots total, for TRAIN ME WRONG: OVERLOAD. Match the existing combat VFX, SKYFALL, and OMEGA LASER references. Use polished realistic sci-fi game VFX with sharp metallic micro-details, luminous energy, and clear strict top-down gameplay readability; production sprite atlas, not pixel art or concept art. Exactly 6 columns and 4 rows with centered isolated slots. Row 1: SKYFALL compact target lock, descending shell, hard contact flash, expanding multi-ring blast, radial fragmentation burst, fading sparks and smoke ring. Row 2: OMEGA LASER reactor charge, focusing rings, ignition, colossal beam, sustained overcharge, cooling residual; every frame faces screen-right. Row 3: ARC CASCADE coil charge, first fork, branching bloom, maximum discharge, collapsing electric ring, fading ion motes. Row 4: SOVEREIGN dark mechanical transit gate dormant, powering up, aperture opening, fully open red-white portal, hostile materialization pulse, closing residual. Flat uniform #ff00ff chroma background; no grid, shadows, floor, characters, scenery, text, labels, borders, logos, watermark, pixelated aesthetic, or magenta inside the effects.
+
+Phaser는 1행을 다중 폭격의 경고·낙하·충돌·폭발 수명에, 3행을 ARC CASCADE와
+SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 개방과 폐쇄에 연결합니다.
+2행은 제작 이력과 호환성을 위해 보존하지만 활성 OMEGA LASER에는 사용하지 않습니다. 시각
+프레임은 성능 품질별 풀 크기만 바꾸며 실제 피해·충전·스폰 지연은 결정론적 엔진 값에 종속됩니다.
+
+### Active dedicated Omega Laser and route healing-kit motion atlases
+
+- 생성·적용일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 스타일 참조 원본:
+  - `public/assets/overload/vfx/combat-fx-atlas.png`
+  - `public/assets/overload/ui/rewards/omegaLaser.webp`
+  - `public/assets/overload/ui/rewards/regen.webp`
+- OMEGA LASER:
+  - ImageGen 원본: `reference/source-assets/overload/omega-laser-motion-atlas-imagegen-source.png`
+  - 알파 보존 원본: `reference/source-assets/overload/omega-laser-motion-atlas-alpha.png`
+  - 런타임 경로: `public/assets/overload/vfx/omega-laser-motion-atlas.png`
+  - QA 미리보기: `qa/omega-laser-motion-atlas-preview.png`
+- 회복 키트:
+  - ImageGen 원본: `reference/source-assets/overload/healing-kit-motion-imagegen-source.png`
+  - 알파 보존 원본: `reference/source-assets/overload/healing-kit-motion-atlas-alpha.png`
+  - 런타임 경로: `public/assets/overload/items/healing-kit-motion-atlas.png`
+  - QA 미리보기: `qa/healing-kit-motion-atlas-preview.png`
+- 후처리: ImageGen `remove_chroma_key.py`의 border auto-key, soft matte, despill로
+  `#00ff00` 배경을 제거하고 `scripts/normalize-motion-atlas.py`로 OMEGA LASER는 4×3,
+  256px 셀, 회복 키트는 4×1, 192px 셀의 투명 PNG로 정규화했습니다.
+- OMEGA LASER 최종 프롬프트:
+
+  > Use case: stylized-concept. Asset type: production 2D browser-game Omega Laser animation atlas. Input images: Image 1 is the approved VFX style and cyan support-emitter reference; Image 2 is the approved projectile/VFX material reference. Primary request: create one cohesive 4-column by 3-row spritesheet for a colossal futuristic cyan-white Omega Laser, facing exactly screen-right in every cell. Slot layout: exactly 12 equal cells, four cells per row, three rows. Row 1 is a compact circular mechanical muzzle/emitter charging sequence: dormant core, rings opening, core compression, firing flare. Row 2 is a seamless horizontally tileable beam-core sequence: four distinct pulse phases, each beam enters at the exact left-center edge and exits at the exact right-center edge with identical cross-section at both edges, luminous white core, cyan plasma sheath, fine electric filaments, no cannon body. Row 3 is the beam endpoint impact sequence: first contact, armor rupture, expanding cyan shock crown, fading ion fragments. Style/medium: polished high-detail sci-fi game VFX sprite atlas, matching the approved dark mechanical materials and cyan-white energy language, sharp readable silhouette at small scale. Composition/framing: fixed 4x3 grid, every effect centered inside its own equal cell with generous internal safety padding except row 2 which must touch both horizontal cell edges for seamless tiling. Consistent scale and alignment across each row. Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for local background removal. Constraints: background must be one uniform #00ff00 with no shadow, gradient, texture, reflection, floor plane, haze, or lighting variation; no green inside effects; no labels; no grid lines; no text; no watermark; no characters; no scenery; no poster composition; do not stretch or depict one long cannon-and-beam image; emitter, tileable beam core, and impact cap must remain separate modular components.
+
+- 회복 키트 최종 프롬프트:
+
+  > Use case: stylized-concept. Asset type: production 2D browser-game healing kit pickup animation strip. Input images: Image 1 is the approved cyan-white VFX material reference; Image 2 is only a thematic recovery-system reference. Primary request: create one cohesive horizontal 4-frame animation strip of the same compact futuristic field-repair kit viewed from a strict 90-degree top-down camera. Frame 1: sealed black-and-white armored med case with cyan medical cross core. Frame 2: cyan corner lights pulse. Frame 3: segmented lid opens slightly and the repair core glows. Frame 4: bright pickup flare with small cyan nanite fragments, while the kit silhouette remains recognizable. Style/medium: polished high-detail sci-fi game pickup sprite, hard-surface black and white armor, cyan emissive recovery core, readable at 44-56 pixels, matching the existing game art. Composition/framing: exactly one row of four equal slots; one centered kit per slot; identical scale, orientation, and anchor; generous padding; no perspective tilt. Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for local background removal. Constraints: background is one uniform #00ff00 with no shadow, gradient, texture, reflection, floor plane, haze, or lighting variation; do not use green in the kit; no labels except a simple geometric medical cross symbol; no text; no grid lines; no watermark; no scenery; no hands; no characters; no extra items; no poster composition.
+
+활성 OMEGA LASER는 포구, 짧은 빔 코어, 충돌 끝단을 독립 모듈로 합성합니다. 코어 셀은
+균일 비율을 유지한 채 겹쳐 반복하므로 포신이나 한 장의 이미지가 공격 거리만큼 늘어나지
+않습니다. 회복 키트는 결정론적으로 배치된 경로 아이템 위에서 4프레임 점멸 모션을 재생합니다.
+
+### Active level-up reward illustrations
+
+- 생성·적용일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 제작 원본: `reference/source-assets/overload/ui/reward-card-art-atlas.png`
+- 런타임 경로: `public/assets/overload/ui/rewards/*.webp`
+- 후처리: 5×4 아틀라스를 20개 셀로 분할하고 각 셀을 384×384, WebP 품질 88로
+  최적화했습니다.
+- 최종 프롬프트:
+
+  > Create exactly twenty intuitive square upgrade illustrations in a 5-column by 4-row atlas for a premium near-black cyberpunk action game. Row 1: scatter array, rail lance, guided rocket, orbit blades, pulse overdrive. Row 2: weapon overcharge, clock surge, forked barrel, hex shield, phase dash. Row 3: nano repair, Arc Cascade, Zero-Point Nova, Skyfall impact, Omega Laser. Row 4: hunter drone, pulse sentry, suppressor wisp, four-soldier recall link, hostile sovereign AI core. Use cinematic cyan, white-gold, amber, violet, and red energy on dark industrial backgrounds. Each cell must communicate its gameplay function immediately without text. No captions, letters, numbers, card borders, grid lines, logos, or watermark.
+
+활성 보상 18종은 각 선택 카드의 전체 폭 일러스트로 사용하며, 나머지 pulse와 AI core 셀은
+같은 제작 세트의 예비 원본으로 보존합니다.
+
+### HAVEN-09 campaign, squad traces, regional battlefields, and bosses
+
+- 생성·적용일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 외부 게임 이미지: 사용하지 않음
+- 아군 흔적 3×1 아틀라스
+  - 제작 원본: `reference/source-assets/overload/campaign/squad-traces-imagegen-source.png`
+  - 투명화 원본: `reference/source-assets/overload/campaign/squad-traces-alpha.png`
+  - 런타임: `public/assets/overload/campaign/squad-traces-atlas.png`
+- HAVEN-09 기지
+  - 제작 원본: `reference/source-assets/overload/campaign/haven-09-base-imagegen-source.png`
+  - 런타임: `public/assets/overload/campaign/haven-09-base.webp`
+- HANA·ILYA·LARK 3×1 포트레이트 아틀라스
+  - 제작 원본: `reference/source-assets/overload/campaign/haven-npc-portraits-imagegen-source.png`
+  - 투명화 원본: `reference/source-assets/overload/campaign/haven-npc-portraits-alpha.png`
+  - 런타임: `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`
+- 비행선 지역 선택 지도
+  - 제작 원본: `reference/source-assets/overload/campaign/airship-region-map-imagegen-source.png`
+  - 런타임: `public/assets/overload/campaign/airship-region-map.webp`
+- GLASS DUNE
+  - 루트 원본 / 런타임: `reference/source-assets/overload/regions/glass-dune/route-imagegen-source.png` / `public/assets/overload/regions/glass-dune/route.webp`
+  - 보스방 원본 / 런타임: `reference/source-assets/overload/regions/glass-dune/boss-room-imagegen-source.png` / `public/assets/overload/regions/glass-dune/boss-room.webp`
+  - 보스 형상 원본 / 투명화 / 런타임: `reference/source-assets/overload/regions/glass-dune/boss-forms-imagegen-source.png` / `reference/source-assets/overload/regions/glass-dune/boss-forms-alpha.png` / `public/assets/overload/regions/glass-dune/boss-forms-atlas.png`
+- ABYSSAL ARCHIVE
+  - 루트 원본 / 런타임: `reference/source-assets/overload/regions/abyssal-archive/route-imagegen-source.png` / `public/assets/overload/regions/abyssal-archive/route.webp`
+  - 보스방 원본 / 런타임: `reference/source-assets/overload/regions/abyssal-archive/boss-room-imagegen-source.png` / `public/assets/overload/regions/abyssal-archive/boss-room.webp`
+  - 보스 형상 원본 / 투명화 / 런타임: `reference/source-assets/overload/regions/abyssal-archive/boss-forms-imagegen-source.png` / `reference/source-assets/overload/regions/abyssal-archive/boss-forms-alpha.png` / `public/assets/overload/regions/abyssal-archive/boss-forms-atlas.png`
+- 후처리: 환경 이미지는 1920×1080 WebP 품질 88로 최적화했습니다. 크로마키 아틀라스는
+  border auto-key, soft matte, despill로 투명화하고 3×1 고정 셀로 정규화했습니다.
+
+- 아군 흔적 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: production 2D top-down game evidence/casualty atlas for TRAIN ME WRONG: OVERLOAD.
+  > Primary request: create exactly one horizontal 3-column by 1-row atlas, three equal square-safe cells, showing three distinct fallen allied traces found along a ruined AI-occupied transit route. Cell 1 ROOK: a fallen heavy rifleman in black gunmetal armor with amber squad accents, collapsed from a strict 90-degree overhead ceiling camera, rifle beside one arm and several empty magazines, non-graphic. Cell 2 NYX: a broken cyan-violet phase blade, severed cable spool, torn tactical cloak and damaged data recorder, no body required. Cell 3 MOSS: a fallen broad shield operator in dark armor with restrained green-cyan accents, one hand still holding a hexagonal bulkhead access key, non-graphic.
+  > Style/medium: premium high-detail realistic anime sci-fi game sprite art, near-black industrial materials, cyan system light, red hostile scorch marks, consistent with a polished Phaser action game rather than pixel art.
+  > Composition/framing: exact 3x1 layout, one centered isolated trace per equal cell, strict 90-degree true-nadir view, identical apparent scale, generous padding, no perspective tilt, no overlap between cells.
+  > Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for local removal.
+  > Constraints: one uniform green background with no shadow, floor, gradient, texture, reflection, smoke, or lighting variation; no green in subjects; no gore; no exposed organs; no labels; no grid lines; no text; no watermark; no scenery; no living standing characters; every item fully inside its cell.
+
+- HAVEN-09 기지 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: full-screen main-base environment for a premium 2D sci-fi browser game.
+  > Primary request: an authored wide 16:9 interior of humanity's hidden mobile command base after an AI occupation, called HAVEN-09. The same space must visibly contain four readable interaction zones: a cyan-lit operations console on the left, a white-and-amber engineering workshop on the right, a compact medical/research alcove at the upper center, and a large docked stealth airship with an illuminated boarding ramp at the rear. Keep a broad uncluttered central floor where UI hotspots can be placed.
+  > Style/medium: cinematic high-detail realistic anime sci-fi environment concept art painted as production game background, dark graphite machinery, worn white armor panels, cyan navigation light, warm amber human work lamps, restrained red warning accents.
+  > Composition/framing: wide 16:9, elevated three-quarter tactical camera, strong depth but stable readable zones, central negative space, airship clearly identifiable, no cropped essential stations.
+  > Lighting/mood: protected refuge after catastrophe, cool industrial shadows with pockets of warm human light.
+  > Constraints: no text, labels, logos, watermark, UI, floating cards, speech bubbles, giant characters, enemies, combat, poster composition, or repeated/tiled architecture.
+
+- NPC 포트레이트 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: production dialogue portrait atlas for HAVEN-09 NPCs in TRAIN ME WRONG: OVERLOAD.
+  > Primary request: create exactly one horizontal 3-column by 1-row portrait atlas with three different waist-up NPCs, each centered in an equal cell and facing the viewer. Cell 1 HANA, Korean female mission operator in her early 30s, short black bob, calm sharp expression, compact neural headset, black command uniform with white collar and cyan signal lines. Cell 2 ILYA, weathered male chief engineer in his late 50s, silver stubble, warm tired eyes, heavy graphite mechanic coat, amber tool harness and one cybernetic forearm. Cell 3 LARK, androgynous reconnaissance android with a porcelain-white faceplate, subtle human features, pale blue optical irises, hooded dark scout mantle and cyan sensor collar.
+  > Style/medium: premium detailed realistic anime sci-fi character illustration, coherent with a silver-haired heroine in a black tactical exosuit and white coat, crisp game dialogue art, shared lighting and scale.
+  > Composition/framing: exact 3x1 layout, equal cells, head shoulders upper torso and waist visible, consistent eye line, generous padding, no overlap.
+  > Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for local removal.
+  > Constraints: uniform green background without gradient, floor, shadow, texture, reflection, or lighting variation; no green in clothing or effects; no text, names, labels, grid lines, logos, UI, watermark, weapons crossing cell boundaries, scenery, extra people, or poster composition.
+
+- 비행선 지역 지도 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: full-screen airship deployment region-selection background for a premium sci-fi game.
+  > Primary request: a wide 16:9 holographic strategic view seen from inside a stealth airship command deck. Three geographically separate mission zones must be immediately readable as clickable destinations without any text: left, a rain-soaked ruined megacity transit corridor with cyan emergency lights; center, an amber glass desert filled with shattered solar mirrors and a colossal buried AI observatory; right, a midnight-blue flooded data vault beneath a stormy polar sea with vertical server towers. Connect the three zones with restrained cyan flight-path arcs and place a small human resistance airship silhouette near the lower center.
+  > Style/medium: cinematic high-detail realistic anime sci-fi tactical map illustration, dark glass command table, luminous but restrained holographic materials, production game menu background.
+  > Composition/framing: wide 16:9, three clearly separated large destination masses with generous surrounding space for DOM buttons, center region slightly dominant but none cropped.
+  > Constraints: no text, numbers, labels, logos, UI cards, buttons, watermark, characters, enemy montage, Earth globe, generic star map, or poster title.
+
+- GLASS DUNE 루트 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: production top-down route environment for Chapter 2 of TRAIN ME WRONG: OVERLOAD.
+  > Primary request: create a wide 16:9 battlefield showing the GLASS DUNE solar graveyard, a long open east-west combat route across a black vitrified desert. The broad center lane is smooth cracked obsidian and pale ceramic plates; outer edges contain shattered heliostat mirrors, buried SOVEREIGN pylons, wind-carved glass fins, and amber energy conduits. Five plausible mechanical transit-gate mouths are built into the far edges without blocking the lane.
+  > Style/medium: premium high-detail realistic anime sci-fi environment, production 2D game background, same dark industrial fidelity as a rain-soaked ruined megacity but transformed into an amber-white glass desert.
+  > Composition/framing: strict 90-degree true-nadir ceiling camera, wide 16:9, traversable central 70 percent, east-west forward movement, no perspective convergence, stable terrain scale, seamless enough for long horizontal TileSprite use.
+  > Lighting/mood: hard moonlight, amber energy reflected across obsidian, lonely and hostile.
+  > Constraints: no characters, corpses, enemies, boss, projectiles, UI, text, labels, logos, watermark, vehicle, giant central obstacle, fake screen border, perspective horizon, or poster composition.
+
+- GLASS DUNE 보스방 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: dedicated Chapter 2 boss chamber environment for TRAIN ME WRONG: OVERLOAD.
+  > Primary request: create the immense buried solar observatory chamber beneath GLASS DUNE. A wide oval black-glass combat floor dominates the center; a broken concentric heliostat crown and molten amber reactor well loom on the right; a sealed resistance entry lock is on the left; collapsed white ceramic gantries and mirror shards frame the perimeter. The floor must remain open for a tiny player and an overwhelmingly large mechanical boss.
+  > Style/medium: premium high-detail realistic anime sci-fi production game background, graphite, bone-white ceramic, molten amber and restrained hostile red.
+  > Composition/framing: strict 90-degree true-nadir camera, authored asymmetric 16:9 room, stable single image, broad oval playable floor with no central obstacle, left entry and right boss origin visually clear.
+  > Constraints: no boss, characters, enemies, corpses, weapons, projectiles, text, UI, labels, logos, watermark, repeated tiles, mirrored halves, perspective horizon, or poster composition.
+
+- ABYSSAL ARCHIVE 루트 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: production top-down route environment for Chapter 3 of TRAIN ME WRONG: OVERLOAD.
+  > Primary request: create a wide 16:9 battlefield inside the ABYSSAL ARCHIVE, a drowned SOVEREIGN data cathedral beneath a polar sea. A long raised east-west armored causeway occupies the broad center; deep moving water, glass pressure windows, vertical server monoliths, fiber-optic roots and cyan-violet bioluminescent coolant fill the outer edges. Visible gate machinery at the perimeter can release enemies without blocking movement.
+  > Style/medium: premium high-detail realistic anime sci-fi environment, production 2D game background, near-black titanium, wet blue steel, icy cyan and violet data light.
+  > Composition/framing: strict 90-degree true-nadir ceiling camera, wide 16:9, traversable central 70 percent, east-west forward path, no perspective convergence, stable scale, suitable for long horizontal TileSprite use.
+  > Lighting/mood: crushing ocean darkness, cold pressure lights, ancient machine intelligence waking below.
+  > Constraints: no characters, corpses, enemies, boss, fish, projectiles, UI, text, labels, logos, watermark, giant central obstacle, perspective horizon, or poster composition.
+
+- ABYSSAL ARCHIVE 보스방 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: dedicated Chapter 3 boss chamber environment for TRAIN ME WRONG: OVERLOAD.
+  > Primary request: create the central memory-vault chamber of the ABYSSAL ARCHIVE. An open dark oval combat floor sits inside a vast pressure dome; a fractured archive iris and vertical abyssal data shaft dominate the right side; the left side has a reinforced airlock entry; flooded server stacks, thick cable roots, blue-violet coolant pools and cracked observation glass frame the edges. The center must remain clear for a tiny player and a colossal boss.
+  > Style/medium: premium high-detail realistic anime sci-fi production game background, wet black metal, icy cyan, deep cobalt, restrained violet and hostile red indicators.
+  > Composition/framing: strict 90-degree true-nadir camera, asymmetric authored 16:9 room, single stable image, broad oval playable floor, left entry and right boss origin visually distinct.
+  > Constraints: no boss, characters, enemies, corpses, sea creatures, projectiles, text, UI, labels, logos, watermark, repeated tiles, mirrored halves, perspective horizon, or poster composition.
+
+- MIRROR TYRANT 3단계 보스 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: production 2D boss forms atlas for Chapter 2 of TRAIN ME WRONG: OVERLOAD.
+  > Primary request: create exactly one horizontal 3-column by 1-row atlas showing three escalating forms of the same colossal SOVEREIGN boss, MIRROR TYRANT. It is a circular buried-solar-observatory war machine seen from a strict 90-degree overhead ceiling camera. Form 1 sealed: dense graphite and bone-white ceramic core, four folded heliostat blade arms, compact amber reactor. Form 2 armor break: eight mirror scythe arms unfold, red targeting lenses and molten amber focusing rings exposed. Form 3 solar meltdown: sixteen asymmetric mirror blades form a radiant lethal corona, central white-amber fusion aperture overloading with restrained red fractures.
+  > Style/medium: premium high-detail realistic anime sci-fi game sprite, polished mechanical micro-detail, imposing readable silhouette, coherent with black gunmetal SOVEREIGN drones and a giant radial inference core.
+  > Composition/framing: exact 3x1 layout, three equal square cells, same boss identity, centered pivot and apparent scale in each cell, strict true-nadir view, generous padding, no overlap.
+  > Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for local removal.
+  > Constraints: uniform green background without shadow, gradient, floor, texture, smoke, reflection, haze, or lighting variation; no green in boss; no text, labels, grid lines, UI, watermark, scenery, player, extra enemies, detached projectiles, poster composition, oblique camera, visible horizon, or cropped limbs.
+
+- DROWNED ORACLE 3단계 보스 최종 프롬프트:
+
+  > Use case: stylized-concept
+  > Asset type: production 2D boss forms atlas for Chapter 3 of TRAIN ME WRONG: OVERLOAD.
+  > Primary request: create exactly one horizontal 3-column by 1-row atlas showing three escalating forms of the same colossal SOVEREIGN boss, DROWNED ORACLE. It is an abyssal archive guardian seen from a strict 90-degree overhead ceiling camera: a massive concentric sensor organism made of wet black titanium, pressure glass, cable roots and cold data light. Form 1 sealed: compact circular archive iris, six folded cable limbs, cyan central eye. Form 2 memory breach: twelve articulated cable-scythe limbs unfold, violet auxiliary eyes and rotating data rings exposed. Form 3 abyssal revelation: a huge asymmetric many-limbed radial crown, brilliant cyan-white center, violent cobalt-violet energy channels and restrained hostile red fractures.
+  > Style/medium: premium high-detail realistic anime sci-fi game sprite, wet mechanical surfaces, polished micro-detail, oppressive readable silhouette, coherent with SOVEREIGN machine forces.
+  > Composition/framing: exact 3x1 layout, three equal square cells, same boss identity, centered pivot and apparent scale in each cell, strict true-nadir view, generous padding, no overlap.
+  > Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for local removal.
+  > Constraints: uniform green background without shadow, gradient, floor, texture, water, smoke, reflection, haze, or lighting variation; no green in boss; no text, labels, grid lines, UI, watermark, scenery, player, extra enemies, detached projectiles, poster composition, oblique camera, visible horizon, or cropped limbs.
+
+### AEGIS aim-relative 72-frame motion atlas v2
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 활성 런타임 경로: `public/assets/overload/hero/survivor-motion-atlas-v2.png`
+- 런타임 규격: 8열 × 9행, 192×192 셀, 투명 PNG, 총 72프레임
+- 행 계약: 전진 / 후진 / 조준축 기준 상향 스트레이프 / 하향 스트레이프 / 대기 / 정지 사격 /
+  대시 / 피격·스턴 / 전투불능
+- 캐릭터 기준 원본: `public/assets/overload/hero/survivor-motion-atlas.png`의 strict-overhead AEGIS와
+  `reference/source-assets/overload/hero/`에 보존한 사용자 제공 은발 AEGIS 일러스트
+- 보존한 제작 원본과 중간 결과:
+  - `reference/source-assets/overload/animation-v2/hero/hero-fire-8-chroma.png`
+  - `reference/source-assets/overload/animation-v2/hero/hero-reactive-8x4-chroma-v2.png`
+  - `reference/source-assets/overload/animation-v2/hero/hero-locomotion-8x4-chroma.png`
+  - `reference/source-assets/overload/animation-v2/hero/hero-locomotion-7x4-chroma-v2.png`
+  - 같은 폴더의 `*-alpha.png`, `*-normalized*.png`, edit-canvas 및 seed 파일
+- ImageGen 원본 경로:
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d86d9558-2fee-4ab0-a553-73e320d4878f.png`
+    (정지 사격)
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-8169474a-f7fd-4428-8af6-800feebac54c.png`
+    (대기·대시·피격·전투불능 수정본)
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5dd388f0-9c8b-4440-9380-f77284bd6cca.png`
+    (조준 상대 이동)
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-ddef8066-4fd2-4832-b747-47c1952a0da9.png`
+    (셀 안전 여백 수정 참조본)
+- 후처리: ImageGen의 균일한 `#ff00ff` 배경을
+  `remove_chroma_key.py`의 border auto-key, soft matte, despill로 투명화했습니다. 생성기가 조준 상대
+  이동 시트를 7박자로 출력한 사실을 숨기지 않고, `scripts/normalize-overflow-grid-atlas.py`가 연결 성분으로
+  셀 경계를 넘은 소총·코트까지 배우 단위로 복원한 뒤 첫 접지 포즈를 마지막 프레임에 한 번 반복해
+  결정론적 8프레임 루프를 닫았습니다. `scripts/compose-atlas-rows.py`가 승인된 행만 8×9 런타임
+  아틀라스로 조립합니다. 생성기 출력 원본은 삭제하거나 덮어쓰지 않았습니다.
+
+- 정지 사격 최종 프롬프트:
+
+  > Use case: stylized-concept. Asset type: production eight-frame stationary-fire strip for a top-down Phaser game. Preserve the supplied silver-haired female AEGIS survivor exactly: strict 90-degree true-nadir camera, black tactical exosuit, white split coat tails, cyan-accented futuristic rifle, rifle buttstock seated in the right shoulder, right trigger hand and left support hand coherent. Create exactly one horizontal 8-column strip with a stable center pivot and screen-right aim: ready, trigger take-up, small cyan muzzle ignition, peak muzzle flash, short energy bloom, restrained recoil, mechanical recovery, ready-loop return. Keep the feet and torso planted; recoil may move the weapon and shoulder only a few pixels, never shake or rotate the whole actor. Flat solid #ff00ff chroma background, generous isolated cell gutters, no cell overlap, no projectiles crossing cells, no text, grid, shadow, floor, scenery, UI, watermark, oblique view, visible face, or cropped weapon.
+
+- 대기·반응 8×4 최종 프롬프트:
+
+  > Use case: stylized-concept. Asset type: production reactive motion atlas for the same strict-overhead AEGIS survivor. Create exactly an 8-column by 4-row atlas with one complete actor per cell, screen-right rifle aim and consistent centered pivot. Row 1: subtle breathing and coat/hair settling idle loop with the rifle shouldered. Row 2: phase-dash anticipation, forward lean, three high-speed travel poses, then controlled recovery without changing the aim anchor. Row 3: armor impact, short hit-stun compression, balance recovery and return to ready. Row 4: terminal defeat sequence from stagger through knee collapse to a readable prone strict-overhead silhouette. Preserve identity, outfit, weapon grip, true-nadir camera and scale in all 32 frames. Flat #ff00ff background, no VFX, trails, floor, labels, grid, text, shadow, extra actors, detached weapon pieces, oblique anatomy, or cross-cell pixels. Scale every actor down enough that hair, coat, boots and rifle remain entirely inside its cell.
+
+- 조준 상대 이동 최종 프롬프트:
+
+  > Use case: stylized-concept. Asset type: production aim-relative locomotion atlas for a top-down Phaser game. Create the same silver-haired female AEGIS survivor in four movement rows while her rifle and whole upper body stay aimed screen-right: forward advance, backward backpedal, strafe up, strafe down. Each row is a complete foot-contact cycle with stable crown and shoulder pivot, coherent right-shoulder rifle mount, restrained tactical gait, subtle coat and hair follow-through, no upper-body rocking, and a strict 90-degree true-nadir ceiling camera. Use a flat #ff00ff chroma-key background and generous safety gutters. No labels, text, guides, borders, shadows, floor, scenery, VFX, loose projectiles, extra props, detached fragments, cell overlap, oblique camera, visible face/chest front, horizontal flip, or cropped rifle and coat.
+
+- 셀 여백 수정 프롬프트:
+
+  > Targeted production cleanup of the supplied exact 8-column by 4-row top-down character locomotion sprite atlas. Preserve the same silver-haired female AEGIS survivor, strict true-nadir camera, right-shouldered futuristic rifle aimed screen-right in every frame, the same four row meanings and the same movement cadence. Scale each complete character including rifle muzzle, coat tails, boots, hair and every silhouette element down by about 25 percent inside its own cell, then independently center each actor within that cell. Leave a generous uninterrupted flat #ff00ff magenta safety gutter around every actor on all four sides. Absolutely no body part, rifle fragment, coat fragment, shadow, particle, speck, or pixel may cross a cell boundary or appear in a neighboring cell. Keep consistent scale and stable screen position. No labels, text, guide lines, borders, shadows, effects, extra props, partial duplicate fragments, identity redesign, or pose redesign.
+
+이전에 제공된 검은 단발 캐릭터 원본과 생성 스트립은 제작 이력 보존 목적으로
+`reference/source-assets/overload/hero/`에 남아 있지만 활성 매니페스트에서는 더 이상 사용하지 않습니다.
+
+### 적·동료·지역 보스 전용 고프레임 모션 아틀라스 v3
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 공통 제작 방식: 승인된 프로젝트 단일 배우/3단계 보스 시드를 ImageGen의 전체 시트 편집 참조로
+  사용하고, 균일한 `#ff00ff` 크로마키를 프로젝트 `remove_chroma_key.py`의 border auto-key,
+  soft matte, despill로 제거했습니다. `normalize-motion-atlas.py` 또는
+  `normalize-overflow-grid-atlas.py`가 연결 성분을 배우 단위로 복원하고 공유 스케일·중앙 피벗·셀 안전
+  여백을 맞췄습니다. 셀 밖 분리 파편만 `sanitize-motion-atlas.py`로 제거했습니다.
+- 활성 런타임 경로와 규격:
+  - `public/assets/overload/enemies/motion-v2/suicide-drone-motion-atlas.png`
+  - `public/assets/overload/enemies/motion-v2/rifleman-motion-atlas.png`
+  - `public/assets/overload/enemies/motion-v2/sniper-motion-atlas.png`
+  - 위 적 3종: 각각 6열 × 4행, 160×160 셀, 24프레임
+  - `public/assets/overload/allies/motion-v2/hunter-drone-motion-atlas.png`
+  - `public/assets/overload/allies/motion-v2/pulse-sentry-motion-atlas.png`
+  - `public/assets/overload/allies/motion-v2/suppressor-drone-motion-atlas.png`
+  - 위 동료 3종: 각각 5열 × 4행, 128×128 셀, 20프레임
+  - `public/assets/overload/boss/motion-v2/wrong-engine-motion-atlas.png`
+  - `public/assets/overload/regions/glass-dune/motion-v2/mirror-tyrant-motion-atlas.png`
+  - `public/assets/overload/regions/abyssal-archive/motion-v2/drowned-oracle-motion-atlas.png`
+  - 위 보스 3종: 각각 6열 × 4행, 320×320 셀, 24프레임
+- 런타임 행 계약:
+  - 적: 접근·대기 / 공격 / 피격·과열 / 파괴·자폭
+  - 동료: 전개 / 대기·이동 / 공격 / 피격·리콜
+  - 보스: 1·2·3단계의 대기 A/B, 예고 A/B, 공격 A/B와 공통 변신·코어 노출·붕괴 행
+- 승인 시드:
+  - `public/assets/overload/enemies/hunter.png`
+  - `public/assets/overload/enemies/suppressor.png`
+  - `public/assets/overload/enemies/brute.png`
+  - `public/assets/overload/allies/hunter-drone.png`
+  - `public/assets/overload/allies/pulse-sentry.png`
+  - `public/assets/overload/allies/suppressor-drone.png`
+  - `public/assets/overload/boss/wrong-engine-forms-atlas.png`
+  - `public/assets/overload/regions/glass-dune/boss-forms-atlas.png`
+  - `public/assets/overload/regions/abyssal-archive/boss-forms-atlas.png`
+- 보존 원본·중간 결과: `reference/source-assets/overload/animation-v3/`
+- ImageGen 선택 원본:
+  - 자폭 드론: `C:/Users/82105/.codex/generated_images/019fe9ec-02f3-7e00-abab-60a877f9d538/exec-c60f2d41-9dbb-48e2-bd8c-b5abf5b50366.png`
+  - 소총수: 같은 폴더의 `exec-546518e0-e3ab-49d0-8471-2cd9e2997ed4.png`
+    (`exec-f726ec44-0103-4146-b8b1-cb1c799e398e.png` 7열 반려본도 보존)
+  - 저격수: 같은 폴더의 `exec-b2b70e88-251e-4cc0-b0e5-51310d324aa3.png`
+  - 헌터 드론: 같은 폴더의 `exec-65577cc6-7c6c-4237-809d-77fab74bcc77.png`
+  - 펄스 센트리: 같은 폴더의 `exec-540ff7a2-1711-45ae-99c5-6bc39fb5d2ef.png`
+  - 억제 드론: 같은 폴더의 `exec-66862e54-66da-4bb0-a860-bd49309868c3.png`
+  - THE WRONG ENGINE: `C:/Users/82105/.codex/generated_images/019fe9ec-3c94-75e3-a563-a957de5623e9/exec-be5db030-734d-4837-b8f6-5116ab45766c.png`
+  - MIRROR TYRANT: 같은 폴더의 `exec-5a5d9a1d-6666-4bc0-bf68-4d85425037f6.png`
+  - DROWNED ORACLE: 같은 폴더의 `exec-7732ee0e-7f22-4bff-ac5b-b36c908bbb58.png`
+
+- 적 3종 공통 최종 프롬프트 조건:
+
+  > Use case: style-transfer. Asset type: production 2D browser-game top-down enemy motion atlas. Edit the supplied identity seed into exactly twenty-four animation frames in a precise 6-column by 4-row grid. Strict orthographic 90-degree overhead view, screen-right facing, stable centered pivot and scale. Row 1 is a six-frame approach/idle loop; row 2 a six-frame attack loop; row 3 hit/overheat and recovery; row 4 death or self-destruct. Polished high-detail hand-painted sci-fi game sprite matching the approved seed. Exactly one fully contained actor per cell with generous gutters. Perfectly flat uniform solid #ff00ff chroma-key background. No oblique view, horizon, crop, overlap, duplicate actors, grid, label, text, floor, shadow, scenery, UI, watermark, or magenta in the subject.
+
+- 자폭 드론 개별 프롬프트:
+
+  > Preserve the same compact black gunmetal suicide drone, sharp four-fin silhouette, red central optic and warning lights. Approach uses restrained fin flex and optic pulse. Attack charges the optic and braces the fins, ending in a compact attached red energy flash. Hit/overheat spreads orange-red heat seams with restrained sparks. Self-destruct accelerates warning lights, separates armor petals, bursts the red-white core, and ends as a compact dissipating debris and energy flare without smoke crossing cells.
+
+- 소총수 개별 프롬프트와 6열 교정:
+
+  > Preserve the same bulky black gunmetal humanoid combat robot, segmented armor, small red optics and normal-length integrated rifle. Approach uses an armored leg cycle; attack braces, charges and fires a compact three-round orange-red muzzle sequence with controlled recoil; overheat spreads through torso and weapon; death collapses armor inward to a compact wreck. Never stretch the rifle.
+
+  > Precise-object-edit: preserve the exact rifleman identity, overhead artwork, palette, action progression and effects, but change the generated seven-frame rows to exactly six frames per row and four rows. Place frame centers at x 128, 384, 640, 896, 1152 and 1408 and y 128, 384, 640 and 896. Condense each seven-beat row while retaining its first pose, climax and final recovery/destruction. No seventh actor or column; keep the uniform #ff00ff background.
+
+- 저격수 개별 프롬프트:
+
+  > Preserve the same broad black gunmetal quadruped heavy robotic sniper, four armored stabilizer legs, red rear/core optic and long-range weapon assembly. The six-frame crawl alternates stabilizer legs; attack plants them wide, charges the red focusing rails, releases one needle-like muzzle flash and recovers; hit frames overheat the shell; death folds the stabilizers and ruptures the core into a compact wreck. Never elongate the body or weapon.
+
+- 동료 3종 공통 최종 프롬프트 조건:
+
+  > Use case: style-transfer. Asset type: production 2D browser-game top-down allied unit motion atlas. Edit the supplied identity seed into exactly twenty frames in a precise 5-column by 4-row grid. Strict orthographic 90-degree overhead view, screen-right facing, stable centered pivot and scale. Row 1 is five-frame cyan holographic deployment; row 2 idle/move; row 3 attack; row 4 hit then holographic recall. The final recall frame is a compact cyan afterimage, not a destroyed wreck. Polished high-detail hand-painted sci-fi game sprite matching the approved seed. Exactly one fully contained actor/action per cell with generous gutters. Perfectly flat uniform #ff00ff chroma-key. No oblique view, horizon, crop, overlap, extra frame, grid, text, floor, shadow, scenery, UI, watermark, or magenta in the subject.
+
+- 헌터 드론 개별 프롬프트:
+
+  > Preserve the sleek silver-black hunter drone, long narrow fuselage, swept four-fin silhouette, cyan-blue engine and circuit lights. Deploy from a warp glint and holographic outline as the fins unfold; idle/move uses restrained fin compensation and thruster pulse; attack charges the nose emitter and releases one attached blue-white pulse flash with controlled recoil; recall contracts the holographic wireframe inward. Never stretch the fuselage.
+
+- 펄스 센트리 개별 프롬프트:
+
+  > Preserve the squat rectangular silver-black sentry platform, blue-lit chassis, four corner stabilizer feet and paired normal-length screen-right barrels. Deploy extends the feet and unfolds the barrels; idle uses reactor pulse and micro tracking; attack alternates blue-white muzzle flashes and controlled recoil; recall converts the whole chassis to a cyan wireframe and contracts it inward. Never stretch or smear the barrels.
+
+- 억제 드론 개별 프롬프트:
+
+  > Preserve the round silver-black armored drone, blue central sensor, two symmetric screen-right suppressor cannons, compact rear fins and cyan weapon lights. Deploy materializes and unfolds normal-length cannons; idle uses symmetric hover compensation and tracking; attack alternates blue-white suppression bursts with compact recoil; recall becomes a cyan wireframe and contracts inward. Never stretch or smear the cannons.
+
+- 지역 보스 공통 최종 프롬프트 조건:
+
+  > Use case: identity-preserve. Asset type: production 2D browser-game boss motion spritesheet. Create one 6-column by 4-row sheet with 24 isolated frames and a strict orthographic 90-degree overhead camera. Keep one centered core/pivot, stable scale, generous cell padding and the approved three-stage identity. Rows 1–3 each lock one approved phase across idle A, idle/move B, windup A, windup B, attack/fire A and recoil/attack B. Row 4 is transform start, transform peak, core exposed/hit, defeat start, collapse and final destroyed state. Restrained mechanical articulation, no random redesign, no camera rotation or scale drift. Perfectly flat #ff00ff chroma-key; no grid, borders, labels, text, floor, shadow, scenery, particles, detached objects, motion blur or watermark.
+
+- THE WRONG ENGINE 개별 프롬프트와 보정:
+
+  > Preserve the exact industrial black/gunmetal circular reactor machine, red core, cyan/orange auxiliary reactors and phase-specific limbs. Phase 1 keeps four large articulated gun/claw limbs, phase 2 keeps four pronounced curved blade/claw arms with radial armor spikes, and phase 3 keeps the many-spoke overloaded red starburst body. The terminal sequence unlocks the shell, expands through the phases, exposes and breaks the core, folds limbs inward and fully darkens the final core.
+
+  > Precise-object-edit: lock every cell in rows 1–3 to its approved phase identity. Then change only row 1 columns 3–4 so their windup retains the compact phase-1 four-limb silhouette, and row 4 column 6 so it is an unmistakable inert destroyed machine with a dark core and folded/broken limb remnants. Preserve every other cell and the exact 6×4 layout.
+
+- MIRROR TYRANT 개별 프롬프트:
+
+  > Preserve the circular white ceramic/ivory mirror-armor machine, black gunmetal framework, amber core and indicator lights. Phase 1 keeps four rigid ivory cross-blades, phase 2 exactly the curved multi-scythe silhouette, and phase 3 the dense radial ivory shard crown. The terminal sequence unlocks plates, expands scythes, exposes the phase-3 core, shatters symmetry, folds shards inward and ends as an inert collapsed mirror mechanism. Do not substitute red/blue steel for the ivory, black and amber identity.
+
+- DROWNED ORACLE 개별 프롬프트:
+
+  > Preserve the biomechanical circular abyssal machine: wet black ribbed metal, cyan iris/core and circuit light, restrained violet nodes. Phase 1 keeps four broad rounded ribbed fins, phase 2 eight long curled tentacle arms, and phase 3 the dense many-tentacled blue-violet corona. The terminal sequence unlocks fins, expands toward the corona, exposes and hits the core, breaks symmetry, folds tentacles inward and ends with a dark inert core. No water, bubbles, smoke or detached pieces.
+
+모든 9개 최종 시트는 `scripts/audit-motion-atlases.py`에서 전체 셀 nonempty, 4px 투명 안전 경계,
+불투명 크로마 잔류 0을 통과합니다. 파일 합계는 약 9.85 MiB, RGBA8 완전 디코딩 합계는
+38.91 MiB입니다. 적 시트만 공통 전투 로드에 포함하고, 동료 시트는 해당 보상을 실제 획득했을 때,
+지역 보스 시트는 보스방 입장을 확정했을 때만 지연 로드합니다.
+
+### 독립 수동 기술 모션 아틀라스 (고해상도 비활성 참고본)
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 과거 런타임 경로(현재 manifest에서 로드하지 않음):
+  `public/assets/overload/vfx/manual/manual-ability-motion-atlas.png`
+- 규격: 6열 × 4행, 192×192 셀, 24프레임, 투명 PNG
+- 행 계약: NULL SNARE(Q) / AEGIS WARD(E) / STRATOS RUN(F) / HELIX TEMPEST(R)
+- 승인 스타일 참조:
+  - `public/assets/overload/vfx/skill-motion-atlas.png`
+  - `public/assets/overload/vfx/combat-fx-atlas.png`
+- ImageGen 원본:
+  - 1차: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-20a02c7e-0e06-4561-8fda-737d5932a8ff.png`
+  - 수량 교정 최종본: 같은 폴더의 `exec-da07c643-7edd-4eac-94fd-f260f6a0ef50.png`
+- 프로젝트 보존 원본:
+  - `reference/source-assets/overload/active-abilities/manual-ability-motion-imagegen-source.png`
+  - `reference/source-assets/overload/active-abilities/manual-ability-motion-imagegen-corrected-source.png`
+  - `reference/source-assets/overload/active-abilities/manual-ability-motion-corrected-alpha.png`
+- 후처리: `remove_chroma_key.py`의 border auto-key, soft matte, despill로 배경을 제거한 뒤
+  `scripts/normalize-motion-atlas.py`로 공유 중심·스케일·8px 안전 여백을 적용했습니다.
+- 최초 생성 프롬프트:
+
+  > Use case: identity-preserve. Asset type: production transparent-background visual-effects animation spritesheet for the browser game TRAIN ME WRONG: OVERLOAD. References: Image 1 and Image 2 define the existing premium realistic-anime sci-fi VFX rendering, crisp luminous cyan/white/amber energy, black-gunmetal technology, strict top-down readability, isolated sprite framing, and production-level detail. Do NOT copy any existing bomb circle, straight laser cannon, lightning ring, projectile, or old automatic skill. Create four wholly new MANUAL ability identities. Create ONE complete landscape spritesheet arranged as exactly 6 equal columns by 4 equal rows, 3:2 overall aspect ratio, 24 isolated frames. Strict orthographic 90-degree overhead/nadir camera in every frame. Each cell has one centered effect stage, consistent center/scale per row, generous uniform padding, and no content crossing cell boundaries. Adjacent columns must form smooth readable animation with restrained evolution, not six unrelated concepts. ROW 1 — NULL SNARE (Q), a cyan-violet gravity-control field, no explosion: c1 tiny dark gravity seed with thin orbital ticks; c2 two warped concentric rings; c3 wider spiraling inward arcs and bent cyan tracer fragments; c4 full stable vortex lattice with a dark center; c5 strongest inward distortion and visibly curved projectile trails; c6 rings contract and dissolve. It must read as pull/slow/trajectory bending, never direct blast damage. ROW 2 — AEGIS WARD (E), a player-following white-cyan hardlight defense: c1 small hexagonal emitter petals; c2 translucent six-sided shield facets assembling; c3 complete layered hex ward with a subtle medical cross-like pulse made only from light geometry and no text; c4 strongest protective shell with outward deflection sparks; c5 cracked-but-holding shield facets; c6 clean soft dissolution. No dome perspective; top-down circular/hex footprint. ROW 3 — STRATOS RUN (F), three parallel fighter strafing lanes: c1 three slim cyan target rails and tiny overhead fighter silhouettes entering from left; c2 fighters advance one-third with restrained muzzle streaks; c3 three staggered strafing streams at mid-pass; c4 fighters pass the center with bright white-cyan impacts along all three separate lanes; c5 fighters exit right leaving hot parallel trails; c6 trails fragment and fade. Keep exactly three clearly separated parallel lanes. No circular bombardment markers and no single stretched cannon. ROW 4 — HELIX TEMPEST (R), long-cooldown player-centered rotary ultimate: c1 compact central gunmetal rotor core deploying four short luminous lances at 90-degree spacing; c2 four longer cyan-white lances begin a clockwise helix rotation; c3 broad four-arm rotating sweep with curved motion ribbons; c4 maximum-radius 360-degree rotary storm with four distinct energy lances and a stable empty safe center; c5 over-rotation/recoil with white-hot lance tips; c6 rotor retracts into a fading circular afterimage. It must read as several rapid full rotations around the player, never a static ring and never one straight beam. Style/medium: high-detail premium 2D game VFX sprite art, sharp luminous cores, controlled bloom, crisp mechanical emitters, cyan/white base with small violet accents for Q and restrained amber accents only for F impacts. Stable silhouette and energy continuity, no pixel art, no motion blur that destroys shape readability. Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background across the entire canvas for local removal. No grid lines, borders, labels, letters, key names, numbers, text, UI, scenery, floor, shadows, reflections, smoke clouds, watermarks, duplicate sheets, or extra objects. Do not use #ff00ff inside any effect. Crisp separated edges with no magenta rim.
+
+- 수량·연속성 교정 프롬프트:
+
+  > Use case: precise-object-edit. Image 1 is the selected production 6-column × 4-row manual-ability VFX spritesheet. Preserve its exact 6×4 layout, colors, rendering, flat chroma background, camera, scale, spacing, first two rows, and all design choices except the explicitly requested count corrections. Make only these count/continuity corrections: ROW 3 STRATOS RUN: every one of the six cells must contain exactly THREE parallel horizontal strafing lanes, no fourth lane. When fighters are visible, show exactly THREE matching tiny overhead fighter silhouettes, one per lane. Preserve the smooth left-to-right timeline: enter, advance, mid-pass, center impacts, exit, three fading trails. Keep the lanes equally spaced and fully within each cell. ROW 4 HELIX TEMPEST: columns 1 through 5 must show exactly FOUR luminous lance/blade arms attached to the same central rotor, at 90-degree spacing. Rotate the same four-arm assembly clockwise a little farther in each adjacent frame. Do not reduce it to three arms. Column 6 remains the retracted central rotor with a fading circular afterimage and no extended arm. Do not change ROW 1 NULL SNARE or ROW 2 AEGIS WARD. Exactly one complete sheet, 6 equal columns × 4 equal rows, strict orthographic 90-degree overhead view, stable centered pivots, generous gutters, no crossing cell boundaries. Perfectly uniform flat solid #ff00ff background across the canvas. No grid lines, borders, text, labels, numbers, UI, scenery, shadows, duplicate sheets, watermark, or new objects. Do not use #ff00ff in the effects.
+
+기존 레벨업 자동 폭격·오메가 레이저의 상태, 판정, 이벤트 및 모션 시트는 이 수동 기술에
+재사용하지 않습니다. 전용 시트의 행은 엔진이 소유하는 네 수동 기술의 독립 수명과 기하 판정에
+연결됩니다.
+
+### 활성 16-bit 도트 스킬 VFX 아틀라스
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 `image_gen.imagegen` whole-sheet 생성
+- 활성 런타임 경로:
+  - `public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png`
+  - `public/assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png`
+  - `public/assets/overload/vfx/gates/sovereign-gate-motion-atlas.png`
+- 런타임 규격:
+  - 수동 Q/E/F/R: 384×256, 6×4, 64×64 셀
+  - 자동 SKYFALL/ARC/NOVA/OMEGA: 384×256, 6×4, 64×64 셀
+  - SOVEREIGN 게이트: 기존 고품질 시트 4번째 행을 보존한 1152×192, 6×1
+- ImageGen 선택 원본:
+  - 수동: `C:/Users/82105/.codex/generated_images/019fea33-753f-7a60-a8fd-ada52c2f858a/exec-2427d437-131f-404c-b0d7-f6beff26f786.png`
+  - 자동: `C:/Users/82105/.codex/generated_images/019fea33-753f-7a60-a8fd-ada52c2f858a/exec-064bb9ed-9c59-4d96-893a-ee7e2d331e60.png`
+- 프로젝트 보존 원본:
+  - `reference/source-assets/overload/vfx/pixel/manual-ability-pixel-imagegen-source.png`
+  - `reference/source-assets/overload/vfx/pixel/manual-ability-pixel-alpha.png`
+  - `reference/source-assets/overload/vfx/pixel/automatic-skill-pixel-imagegen-source.png`
+  - `reference/source-assets/overload/vfx/pixel/automatic-skill-pixel-alpha.png`
+- 기능 참조 seed:
+  - `public/assets/overload/vfx/manual/manual-ability-motion-atlas.png`
+  - `public/assets/overload/vfx/skill-motion-atlas.png`
+  - `public/assets/overload/vfx/omega-laser-motion-atlas.png`
+- 후처리: 내장 `remove_chroma_key.py`의 border auto-key, soft-matte, despill을 거친 뒤
+  `scripts/normalize-pixel-vfx-atlas.py --columns 6 --rows 4 --cell-size 64 --colors 32 --border 2`로
+  네이티브 64px 셀, 제한 팔레트, 투명 안전 경계를 만들었습니다. 런타임은 두 시트에
+  `Phaser.Textures.FilterMode.NEAREST`를 강제합니다. 게이트는 `scripts/compose-atlas-rows.py`로
+  기존 시트의 행 3만 추출했습니다.
+- 미리보기:
+  - `qa/manual-ability-pixel-atlas-preview.png`
+  - `qa/automatic-skill-pixel-atlas-preview.png`
+- 디코딩 메모리: 과거 세 대형 스킬 시트 9.75 MiB에서 새 도트 시트 두 장과 게이트 행
+  1.59375 MiB로 감소해 8.15625 MiB(약 83.65%)를 절감합니다.
+
+- 수동 도트 VFX 정확한 프롬프트:
+
+```text
+Use case: stylized-concept
+Asset type: production low-resolution pixel-art VFX sprite atlas for the top-down Phaser browser game TRAIN ME WRONG: OVERLOAD.
+Input images: Image 1 is a gameplay-function reference only for the four manual abilities and six motion beats. Do not trace, blur, downsample, or pixel-filter the reference. Redesign every effect from scratch as authored pixel art.
+Primary request: create one exact 6-column by 4-row sprite atlas, exactly 24 isolated square animation cells, read left-to-right. Row 1 NULL SNARE: tiny dark-violet gravity seed, expanding dotted cyan/violet spiral, stable sparse orbit dots, then clean collapse. Row 2 AEGIS WARD: compact cyan cross seed, hard-light pixel hex ring building outward, stable sparse shield, then shards fading. Row 3 STRATOS RUN: exactly three parallel miniature top-down fighter silhouettes and three straight cyan dotted tracer lanes in every cell; warning reticles in frames 1-2, fighters advancing in frames 3-5, three small pixel impact blooms in frame 6. Never merge the lanes and never show more or fewer than three. Row 4 HELIX TEMPEST: exactly four equal pixel energy arms at 90-degree spacing around a small central core in every cell; ignition, four rapid rotation poses, collapse in frame 6. Never show more or fewer than four arms.
+Style/medium: authentic hand-authored 16-bit arcade pixel VFX, crisp square pixel clusters, hard stair-step edges, no antialiasing, restrained 5-7 color palette per row, dark navy outlines, cyan/white/violet primary colors with minimal amber only for STRATOS impacts, highly readable silhouettes, intentionally simple and lightweight, production sprite asset not concept art.
+Composition/framing: exact uniform 6x4 grid filling a 3:2 landscape canvas; equal square slots; one complete centered effect per slot; consistent size and center anchor inside each row; generous empty separation and safety padding; no objects crossing cell boundaries.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background covering every empty pixel. No transparency simulation, shadows, gradients, texture, glow fog, environment, floor, grid lines, borders, labels, text, numbers, logos, watermark, poster layout, extra rows, extra columns, duplicate sheets, or partially cropped cells. Do not use #ff00ff anywhere in any effect.
+Constraints: exact 6 columns, exact 4 rows, exact 24 cells; square cell aspect; pixel art at native low resolution; animation progression must be obvious at 64x64; all STRATOS cells contain exactly three lanes/fighters; all HELIX cells contain exactly four arms.
+```
+
+- 자동 도트 VFX 정확한 프롬프트:
+
+```text
+Use case: stylized-concept
+Asset type: production low-resolution pixel-art automatic-skill VFX sprite atlas for the top-down Phaser browser game TRAIN ME WRONG: OVERLOAD.
+Input images: Images 1 and 2 are gameplay-function references only for air support, electrical arc, nova, and modular laser beats. Do not trace, blur, downsample, or pixel-filter either reference. Redesign every effect from scratch as authored low-color pixel art.
+Primary request: create one exact 6-column by 4-row sprite atlas, exactly 24 isolated square cells, read left-to-right. Row 1 automatic SKYFALL: a dotted amber target reticle in frames 1-2, then a single compact top-down pixel bomber silhouette arriving and one contained orange pixel blast growing and fading in frames 3-6; never draw a long vehicle. Row 2 ARC CASCADE: six successive small cyan/white electrical dot-cluster nodes and short branching pixel sparks, centered, no long continuous lightning painted across cells. Row 3 ZERO-POINT NOVA: tiny cyan core, expanding sparse dotted circular wave, bright pixel ring, fragmented ring, then fading dots; each remains centered and circular. Row 4 automatic OMEGA LASER modular parts: frames 1-2 are compact side-facing cyan pixel emitter/cannon charge states contained inside the square; frames 3-4 are seamless short horizontal pixel beam-core tiles with matching left and right edges; frames 5-6 are compact endpoint impact blooms. No cannon or impact may be stretched across a full beam.
+Style/medium: authentic hand-authored 16-bit arcade pixel VFX, crisp square pixel clusters, hard stair-step edges, no antialiasing, restrained 5-7 color palette, dark navy outlines, cyan/white with amber only for SKYFALL, readable on a dark sci-fi battlefield, intentionally simple and lightweight, production sprite asset not concept art.
+Composition/framing: exact uniform 6x4 grid filling a 3:2 landscape canvas; equal square slots; one centered self-contained effect per slot; consistent size/anchor within each row; generous empty separation and safety padding; no objects cross cell boundaries. OMEGA beam tiles in row 4 frames 3-4 must be short square-cell modules, not full-length beams.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background covering every empty pixel. No transparency simulation, shadows, gradients, texture, glow fog, environment, floor, grid lines, borders, labels, text, numbers, logos, watermark, poster layout, extra rows, extra columns, duplicate sheets, or partially cropped cells. Do not use #ff00ff inside any effect.
+Constraints: exact 6 columns, exact 4 rows, exact 24 cells; square cell aspect; pixel art at native low resolution; clear animation progression at 64x64; row 4 frames 3-4 must tile horizontally and frames 1-2/5-6 remain square compact objects.
+```
+
+도트 시트는 시각 표현만 담당합니다. STRATOS의 3개 캡슐 lane, HELIX의 4개 회전 lance,
+OMEGA의 광선 길이, Q/E의 원형 범위와 실제 피해·보호 타이밍은 계속 결정론적 엔진 geometry가
+소유합니다. 정사각 셀을 긴 공격 범위로 늘이지 않고 점선 geometry와 반복 beam-core 모듈을
+같은 판정 좌표 위에 배치합니다.
+
+### RHEA 관제실 NPC 대화 일러스트
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 활성 런타임 경로: `public/assets/overload/ui/npcs/rhea-control-officer.png`
+- 규격: 640×640 투명 상반신 대화 일러스트
+- 승인 스타일 참조:
+  - `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`
+  - `reference/source-assets/overload/campaign/haven-09-base-imagegen-source.png`
+- ImageGen 선택 원본:
+  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-eb7bcb94-7ac1-49f1-b209-19186fcd0db7.png`
+- 프로젝트 보존 원본:
+  - `reference/source-assets/overload/campaign/rhea-control-officer-imagegen-source.png`
+  - `reference/source-assets/overload/campaign/rhea-control-officer-alpha.png`
+- 후처리: `remove_chroma_key.py`의 border auto-key, soft matte, despill로 배경을 제거하고
+  `scripts/prepare-dialogue-portrait.py`로 인물 전체를 보존한 채 상반신 UI 프레이밍과 투명
+  안전 여백을 정규화했습니다.
+- 최종 프롬프트:
+
+  > Use case: stylized-concept. Asset type: production transparent upper-body dialogue portrait for the browser game TRAIN ME WRONG: OVERLOAD. References: Image 1 is the approved HAVEN-09 three-NPC portrait atlas and defines the premium realistic-anime rendering, black industrial clothing, crisp transparent portrait edges, cyan/amber accents, and adult character proportions. Image 2 is the approved HAVEN-09 command-base environment and defines the near-black gunmetal, cyan control-room lighting, and restrained amber warning palette. Primary request: create exactly one new adult woman, age 27, named RHEA, HAVEN-09 tactical control officer and first-sortie ability guide. She must be clearly a new person, not a recolor of HANA. Give her an attractive cute-and-confident face, playful slightly mischievous half-smile, one eyebrow subtly raised, warm amber eyes, a short tousled silver-lilac bob with a tiny cyan star hair clip, and an asymmetrical command headset with two slim luminous antenna arcs. Her personality should read as charmingly quirky: one small floating holographic cat-face diagnostic icon perched beside the headset and a stylus held backward in one gloved hand as if she forgot which end to use. Outfit: tasteful fitted adult black tactical control bodysuit, high collar, elegant white cropped command jacket with cyan piping, modest neckline, utility belt edge barely visible, no exposed midriff; stylish, glamorous, cute, and combat-world credible without pin-up exaggeration. Show head, shoulders, chest and upper waist so the portrait can be cropped responsively in tutorial dialogue. Style/medium: premium high-detail realistic anime sci-fi game character illustration, polished production portrait, coherent with the reference atlas, precise facial rendering, clean materials, subtle rim light, readable at UI size. Composition/framing: one centered single character, front-facing three-quarter head turn toward the viewer, upper-body portrait, full hair and both shoulders contained, generous empty safety margin, no crop, no other people. Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background for local removal. No shadow, floor, environment, gradient, glow field, smoke, texture, reflection, frame, UI panel, text, labels, logo, watermark, duplicate body, extra arms, or detached props. Do not use #ff00ff in the character. The small cat diagnostic is a compact cyan hologram attached close to the headset silhouette and must remain fully inside the portrait bounds.
+
+RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사용 회선을 구분해 설명하며,
+이후 HAVEN-09 관제실에서 동일 브리핑을 다시 열 수 있습니다.
+
+### 초반 스킬 가이드 실전 예시 이미지
+
+- 생성일: 2026-08-10
+- 출처: 이 프로젝트의 로컬 Phaser 런타임을 1440×810에서 직접 캡처한 QA 이미지이며
+  외부 게임 이미지나 별도 생성 이미지를 사용하지 않습니다.
+- 런타임 경로:
+  - `public/assets/overload/ui/tutorial/null-snare-gameplay.jpg`
+  - `public/assets/overload/ui/tutorial/aegis-ward-gameplay.jpg`
+  - `public/assets/overload/ui/tutorial/stratos-run-gameplay.jpg`
+  - `public/assets/overload/ui/tutorial/helix-tempest-gameplay.jpg`
+- 원본 경로: 각각 `qa/latest-null-snare-desktop-1440x810.png`,
+  `qa/latest-aegis-ward-desktop-1440x810.png`, `qa/latest-stratos-run-desktop-1440x810.png`,
+  `qa/latest-helix-tempest-desktop-1440x810.png`
+- 후처리: 각 원본의 `x=180, y=0, width=1080, height=810` 영역을 잘라
+  800×600으로 HighQualityBicubic 축소하고 JPEG 품질 88로 저장했습니다. 최종 픽셀 VFX
+  브라우저 검증 뒤 같은 프로젝트 런타임 경로의 최신 캡처로 다시 생성합니다.
+- React 가이드는 이 이미지 위에 조준점·효과 범위·HUD 슬롯 콜아웃을 DOM으로 배치하며,
+  첫 전투에서는 별도 이미지가 아니라 실제 하단 Q/E/F/R 버튼을 직접 스포트라이트합니다.
+
+### PERFORMANCE 저메모리 파생 에셋
+
+- 생성일: 2026-08-10
+- 생성 도구: `scripts/build-performance-assets.py`, Python Pillow(PIL)
+- 원본: 이 문서에 기록된 프로젝트 원본 런타임 에셋만 사용
+- 런타임 경로: 각 원본 디렉터리 아래 `performance/` 폴더
+- 처리 방식:
+  - 모션/효과 아틀라스는 각 셀을 먼저 분리한 뒤 PIL LANCZOS로 50% 또는 75% 축소하고
+    원래와 같은 행·열 순서로 다시 합성해 인접 프레임 번짐을 방지합니다.
+  - 일반 전장·보스방 WebP는 50%로 축소해 WebP quality 82/method 6으로 저장합니다.
+  - PNG는 optimize/compress level 9로 저장합니다.
+- 파생 대상: AEGIS 8×9 모션, 적 3종 6×4 모션, 동료 3종 5×4 모션, 지역 보스 3종
+  6×4 모션, 보스 3×1 폼, 전투 VFX, 전송 게이트, 회복 키트, 아군 흔적, WRONG ENGINE의
+  세 루트 섹터와 보스방, GLASS DUNE/ABYSSAL ARCHIVE의 루트와 보스방
+- 런타임 계약: `src/game/assets/manifest.ts`의 `performancePath`가 원본과 동일한 texture key와
+  atlas grid를 유지하며, Phaser 시작 시 PERFORMANCE 프로필이 선택된 경우에만 로드합니다.
+  한 인스턴스에서 원본과 파생본을 동시에 디코딩하지 않습니다.
+- 생성 프롬프트: 없음
+- ImageGen/외부 이미지: 사용하지 않음. 새 미술이 아니라 프로젝트 원본의 결정론적 저메모리
+  파생본이므로 원본 제작 기록과 라이선스를 그대로 따릅니다.
+
+### Legacy dedicated OVERLOAD arena (inactive runtime removed)
 
 - 생성일: 2026-08-09
 - 생성 도구: OpenAI 내장 ImageGen
-- 런타임 경로: `public/assets/survivor/swarm-arena.png`
+- 과거 런타임 경로: `public/assets/survivor/swarm-arena.png` (현재 production에서 삭제)
 - 고해상도 원본: `reference/source-assets/public/assets/survivor/swarm-arena-source.png`
 - 용도: 단일 캐릭터 물량전과 보스전을 모두 수용하는 전용 오픈 아레나
 - 주요 프롬프트:
@@ -20,11 +697,11 @@
 일치하도록 설계했습니다. 고해상도 생성본은 출처 보존용으로 유지하고, 런타임 사본은 브라우저
 표시 크기에 맞춰 최적화했습니다.
 
-### Characters, enemies, boss, and support equipment
+### Legacy enemies, boss, and support equipment (inactive runtime removed)
 
-- `public/assets/survivor/player.png`
-  - 흰 세라믹 장갑, 암청색 관절, 시안 바이저와 펄스 라이플을 가진 플레이어
-    `AEGIS / SUBJECT 01`.
+아래 경로는 이전 아레나 런타임의 제작 기록입니다. 활성 매니페스트에서 분리한 뒤 production
+용량 절감을 위해 파일을 삭제했으며, 생성 원본은 `reference/source-assets/`에 보존합니다.
+
 - `public/assets/survivor/hunter.png`
   - 빠르게 거리를 좁히는 4족 근접 추적 드론.
 - `public/assets/survivor/suppressor.png`
@@ -52,7 +729,7 @@
 투명 PNG화했습니다. 런타임 사본은 표시 크기에 맞춘 premultiplied-alpha Lanczos PNG로
 최적화했으며 전체 해상도 원본은 `reference/source-assets/`에 보존합니다.
 
-### Three-form boss and combat VFX atlases
+### Legacy three-form boss and combat VFX atlases (inactive runtime removed)
 
 - 생성일: 2026-08-09
 - 생성 도구: OpenAI 내장 ImageGen
@@ -79,39 +756,57 @@
 잘라 투사체, 텔레그래프, 궤도 칼날, 공중 폭격, 노바와 오메가 레이저에 사용하며 외부 에셋은
 포함하지 않습니다.
 
-### Authored combat-motion atlases
+### Legacy authored combat-motion atlases (inactive runtime removed)
 
 - 생성일: 2026-08-09
 - 생성 도구: OpenAI 내장 ImageGen
 - 런타임 경로:
-  - `public/assets/survivor/animation/player-motion-atlas.png`
   - `public/assets/survivor/animation/enemy-motion-atlas.png`
   - `public/assets/survivor/animation/boss-motion-atlas.png`
 - 크로마키 생성 원본:
-  - `reference/source-assets/public/assets/survivor/animation/player-motion-atlas-chroma.png`
   - `reference/source-assets/public/assets/survivor/animation/enemy-motion-atlas-chroma.png`
   - `reference/source-assets/public/assets/survivor/animation/boss-motion-atlas-chroma.png`
 - 후처리: 균일한 `#00ff00` 또는 `#ff00ff` 배경을 프로젝트 크로마키 제거 도구의
-  soft-matte/despill 단계로 투명화하고, 플레이어·보스는 960×576, 적은 960×640 런타임
+  soft-matte/despill 단계로 투명화하고, 보스는 960×576, 적은 960×640 런타임
   PNG로 축소했습니다.
 - 최종 프롬프트 세트:
-
-  > Player motion atlas: preserve the supplied AEGIS character exactly—white ceramic armor, dark joints, cyan visor and pulse rifle, fixed east-facing orthographic top-down silhouette. Create a clean 5×3 game-sprite atlas with consistent scale and pivot: row 1 idle-to-run locomotion, row 2 fire anticipation, charge, muzzle release, recoil and recovery, row 3 three dash frames followed by two hit-stun frames. Perfectly flat green chroma-key background; no grid, text, shadow, floor, detached effects or extra objects.
 
   > Enemy motion atlas: preserve the supplied HUNTER, SUPPRESSOR and BRUTE designs exactly in three rows, fixed east-facing orthographic top-down silhouettes and consistent pivots. Use five columns per row: locomotion A, locomotion B, attack wind-up, attack/fire release and hit-stun. Perfectly flat green chroma-key background; no grid, text, shadow, floor, projectiles or extra units.
 
   > Boss motion atlas: preserve the supplied three THE WRONG ENGINE forms exactly in rows 1–3, with their radial body, central reactor and phase-specific armor. Use five columns: idle, attack anticipation, core charge, attack release and hit-stagger. Keep a consistent centered pivot and top-down three-quarter game view on a perfectly flat magenta chroma-key background; no grid, text, shadow, floor, loose VFX or extra objects.
 
-런타임은 이 아틀라스를 엔진의 실제 이동 속도, 공격 예비 시간, 발사 순간, 반동, 대시,
-피격·스턴 및 보스 단계 상태에 연결합니다. 에셋 로딩에 실패하면 기존 정적 스프라이트와
-절차적 squash/stretch 모션으로 안전하게 폴백하며, 외부 게임 애니메이션은 포함하지 않습니다.
+이 레거시 아틀라스는 현재 런타임에서 로드하지 않습니다. 활성 게임은 위의
+`public/assets/overload/` 탑다운 아틀라스를 엔진 이동·공격·피격·보스 단계 상태에 연결하며,
+외부 게임 애니메이션은 포함하지 않습니다.
 
 ## Original procedural sound
 
 - 외부 효과음 파일을 사용하지 않습니다.
 - `src/audio/sfx.js`에서 필터 노이즈, 오실레이터, 다이내믹 컴프레서와 절차적 공간 잔향을
-  조합해 자동 사격, 피격, 적 처치, XP 흡수, 레벨업, 대시, 보스 진입, 위험 텔레그래프와
-  약점 노출 효과음을 실시간 합성합니다.
+  조합해 상시 자동 기본 사격, 소총수 사격, 저격 경고, 드론 자폭, 금속 피격, 다층 폭발,
+  SOVEREIGN 게이트 개방, 적 처치, XP·회복 키트 흡수, 레벨업, 대시, 보스 진입,
+  위험 텔레그래프와 약점 노출 효과음을 실시간 합성합니다.
+- 여성 캐릭터 피격 음성은 외부 파일 없이 신뢰할 수 있는 사람 음질로 합성할 수 없어 현재 포함하지
+  않습니다. 사용자 제공 또는 생성 권리가 명확한 짧은 mono WAV/OGG 변형을 받으면 기존 전체
+  사운드 토글과 동시 음성 제한에 연결할 수 있습니다.
+
+## Browser-native character TTS
+
+- 기반 코드: `src/audio/characterTts.js`
+- 현재 상태: 첫 스킬 브리핑과 실전 HUD 가이드의 RHEA, HAVEN-09 NPC 대화, AEGIS·관제실·
+  세 지역 보스의 활성 시나리오 대사에 연결했습니다. 문장 전환·화면 종료·전체 음소거 시 이전
+  발화를 취소해 음성이 겹치지 않습니다.
+- 음성 출처: 외부 TTS 서비스, 음성 복제 모델 또는 캐릭터 전용 음원 파일이 아니라 사용자의
+  브라우저/OS가 제공하는 Web Speech API와 로컬에 설치된 음성 목록입니다.
+- 선택 방식: `ko-KR`과 기타 한국어 음성을 우선하며 AEGIS·RHEA·HANA·ILYA·LARK·OPERATOR,
+  WRONG ENGINE·MIRROR TYRANT·DROWNED ORACLE에 각각 결정적인 pitch/rate/volume 프로필을
+  적용합니다. 프로필은 브라우저 음색을 조절할 뿐 별도 성우 음성이나 전용 생성 음성을 만들지 않습니다.
+- 재생 제약: 첫 사용자 클릭·키·터치 제스처 이후에만 발화하고, Web Speech API가 없거나
+  브라우저 정책으로 차단된 환경에서는 대화 진행을 멈추지 않은 채 무음으로 폴백하도록 설계했습니다.
+- 장치 차이: 실제 목소리, 발음과 음질은 장치·운영체제·브라우저·설치된 한국어 음성 팩에 따라
+  달라지며 프로젝트가 동일한 결과를 보증하지 않습니다. 2026-08-10 Codex 인앱 브라우저에는
+  Web Speech API가 노출되지 않아 실제 음성은 무음 폴백으로 확인했고, 모의 음성 합성기 테스트로
+  선택·교체·취소·음소거 계약을 검증했습니다.
 
 ## Legacy project originals
 
@@ -131,6 +826,8 @@
 
 ## Open-source dependencies
 
+- Phaser 4.2.1 — MIT License
+- TypeScript 5.9.3 — Apache License 2.0
 - React — MIT License
 - Vite — MIT License
 - Phosphor Icons — MIT License
