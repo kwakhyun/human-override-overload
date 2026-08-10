@@ -14,6 +14,8 @@ test("the title screen is a full-bleed user key art composition with only essent
   assert.match(manifest, /intro: "\.\/assets\/overload\/intro\/start-screen-key-art\.webp"/);
   assert.match(intro, /className="intro-key-art"/);
   assert.match(intro, /className="intro-minimal-content"/);
+  assert.match(intro, /<span>HUMAN<\/span><em>OVERRIDE<\/em><b>OVERLOAD<\/b>/);
+  assert.doesNotMatch(intro, /TRAIN ME|>WRONG</);
   assert.match(intro, /게임 시작/);
   assert.match(intro, /세계를 지배한 초지능 AI의 기계 군단/);
   assert.match(engine, /const FIRST_REGION_ENEMY_BUDGET = 300/);

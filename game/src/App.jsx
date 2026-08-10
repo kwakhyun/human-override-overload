@@ -598,7 +598,7 @@ function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic 
       )}
       <section className="intro-minimal-content" aria-labelledby="game-title">
         <small>NAN 2026 · 소버린 점령지 · 기지 캠페인</small>
-        <h1 id="game-title"><span>TRAIN ME</span><em>WRONG</em><b>OVERLOAD</b></h1>
+        <h1 id="game-title"><span>HUMAN</span><em>OVERRIDE</em><b>OVERLOAD</b></h1>
         <p>헤이븐-09에서 대원들과 작전을 준비하고, 세계를 지배한 초지능 AI의 기계 군단과 지역 추론핵을 파괴하세요.</p>
         <button
           className="primary-cta intro-start command-ui-button"
@@ -1342,7 +1342,7 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
   return (
     <main className="overload-game">
       <header className="overload-topbar">
-        <div className="game-brand"><Crosshair weight="bold" /><span><b>TRAIN ME WRONG</b><small>OVERLOAD</small></span></div>
+        <div className="game-brand"><Crosshair weight="bold" /><span><b>HUMAN OVERRIDE</b><small>OVERLOAD</small></span></div>
         <ProgressHud hud={hud} />
         <div className="topbar-tools">
           <span className="timer-readout"><Timer weight="bold" /> {formatTime(hud?.time || 0)}</span>
@@ -1355,7 +1355,7 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
       <section className="overload-arena-layout">
         <div className="overload-battle-grid">
           <div className="overload-canvas-frame">
-            <canvas ref={canvasRef} className="game-canvas" tabIndex="0" aria-label="TRAIN ME WRONG 오버로드 생존 전장. 포인터 위치가 조준점입니다." />
+            <canvas ref={canvasRef} className="game-canvas" tabIndex="0" aria-label="HUMAN OVERRIDE 오버로드 생존 전장. 포인터 위치가 조준점입니다." />
             <div className="frame-corners" aria-hidden="true"><i /><i /><i /><i /></div>
             {banner && (
               <div key={banner.key} className={`combat-banner banner-${banner.type}`} aria-live="assertive">
@@ -1803,7 +1803,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
               className="game-canvas phaser-host"
               role="application"
               tabIndex="0"
-              aria-label="TRAIN ME WRONG Phaser 전진형 생존 전장. 포인터 위치가 조준점입니다."
+              aria-label="HUMAN OVERRIDE Phaser 전진형 생존 전장. 포인터 위치가 조준점입니다."
               onPointerDown={() => controllerRef.current?.focus()}
             />
             <div className="expedition-hud" aria-label="필수 전투 정보">

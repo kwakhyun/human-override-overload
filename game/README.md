@@ -1,6 +1,6 @@
-# TRAIN ME WRONG: OVERLOAD
+# HUMAN OVERRIDE: OVERLOAD
 
-`TRAIN ME WRONG: OVERLOAD`는 고도로 발달한 통치 AI `SOVEREIGN`이 세계와 인간의 선택권을
+`HUMAN OVERRIDE: OVERLOAD`는 고도로 발달한 통치 AI `SOVEREIGN`이 세계와 인간의 선택권을
 장악한 시대를 배경으로 합니다. 플레이어는 단 한 명의 전투원 AEGIS를 직접 이동시키고,
 포인터로 사격 방향을 조준하며 폐허가 된 수송로를 돌파합니다. 첫 작전에서 AI가 지휘하는
 고정 물량 300기와 싸우며 ROOK·NYX·MOSS가 남긴 흔적을 발견하고 지역 추론핵

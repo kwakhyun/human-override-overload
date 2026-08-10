@@ -1785,7 +1785,7 @@ kbd {
   background-image: var(--command-button-atlas);
 }
 
-/* TRAIN ME WRONG: OVERLOAD ------------------------------------------------- */
+/* HUMAN OVERRIDE: OVERLOAD ------------------------------------------------ */
 .overload-intro,
 .overload-result {
   position: relative;

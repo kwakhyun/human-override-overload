@@ -1,4 +1,4 @@
-# Design QA — TRAIN ME WRONG: OVERLOAD
+# Design QA — HUMAN OVERRIDE: OVERLOAD
 
 - 검증일: 2026-08-10
 - 브라우저: Codex 인앱 브라우저
