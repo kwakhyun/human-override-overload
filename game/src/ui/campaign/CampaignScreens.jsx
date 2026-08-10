@@ -22,6 +22,57 @@ function assetSource(asset, fallback = "") {
   return asset?.src || asset || fallback;
 }
 
+const NPC_DISPLAY = Object.freeze({
+  hana: Object.freeze({ name: "하나", role: "기지 지휘관 · 연구실" }),
+  ilya: Object.freeze({ name: "일리야", role: "장비 기술자 · 정비소" }),
+  lark: Object.freeze({ name: "라크", role: "비행선 조종사 · 격납고" }),
+  rhea: Object.freeze({ name: "레아", role: "전술 관제관 · 관제실" }),
+});
+
+const BOSS_DISPLAY = Object.freeze({
+  "THE WRONG ENGINE": "오답 엔진",
+  "MIRROR TYRANT": "거울 폭군",
+  "DROWNED ORACLE": "침몰한 예언자",
+});
+
+const ABILITY_CATEGORY_KO = Object.freeze({
+  "TACTICAL UTILITY": "전술 유틸리티",
+  "SURVIVAL SUPPORT": "생존 지원",
+  "FIRE SUPPORT": "화력 지원",
+  "ROTARY ULTIMATE": "회전형 필살기",
+});
+
+const WORLD_TERM_KO = Object.freeze({
+  "WRONG ENGINE": "오답 엔진",
+  "GLASS DUNE": "유리 사구",
+  "ABYSSAL ARCHIVE": "심해 기록고",
+  "SOVEREIGN": "소버린",
+  "AEGIS": "이지스",
+  "HAVEN-09": "헤이븐-09",
+  "NIGHTJAR": "나이트자",
+});
+
+function localizeWorldText(value = "") {
+  return Object.entries(WORLD_TERM_KO).reduce(
+    (copy, [term, korean]) => copy.replaceAll(term, korean),
+    String(value),
+  );
+}
+
+function localizeThreatText(value = "") {
+  return localizeWorldText(value)
+    .replaceAll("DRONE", "자폭 드론")
+    .replaceAll("RIFLE", "소총수")
+    .replaceAll("SNIPER", "저격수")
+    .replaceAll("RADIAL", "방사 탄막")
+    .replaceAll("SWEEP", "전장 휩쓸기")
+    .replaceAll("RAPID CHARGE", "연속 돌진")
+    .replaceAll("PRISM LATTICE", "프리즘 격자")
+    .replaceAll("SOLAR FLARE", "태양 폭발")
+    .replaceAll("MEMORY SPIRAL", "기억 나선")
+    .replaceAll("DEPTH COLLAPSE", "심해 붕괴");
+}
+
 function formatUpdatedAt(value) {
   const date = value ? new Date(value) : null;
   if (!date || Number.isNaN(date.getTime())) return "기록 없음";
@@ -40,7 +91,7 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
       <div className="campaign-grid" aria-hidden="true" />
       <header className="campaign-heading">
         <button type="button" className="campaign-back" onClick={onBack}><ArrowLeft weight="bold" /> 타이틀</button>
-        <small>HAVEN-09 · CAMPAIGN ARCHIVE</small>
+        <small>헤이븐-09 · 작전 기록 보관소</small>
         <h1>작전 기록 선택</h1>
         <p>보스 격파와 지역 해금 정보는 선택한 슬롯에 자동 저장됩니다.</p>
       </header>
@@ -55,11 +106,11 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
               onClick={() => onSelect(index)}
               key={`slot-${index + 1}`}
             >
-              <span className="save-slot-number">SLOT 0{index + 1}</span>
+              <span className="save-slot-number">슬롯 0{index + 1}</span>
               {slot ? (
                 <>
                   <FloppyDisk weight="fill" />
-                  <strong>{slot.homeBaseUnlocked ? "HAVEN-09 복귀 기록" : "첫 출격 준비"}</strong>
+                  <strong>{slot.homeBaseUnlocked ? "헤이븐-09 복귀 기록" : "첫 출격 준비"}</strong>
                   <p>{completed} / 3 지역 해방 · {progress}%</p>
                   <i><i style={{ width: `${progress}%` }} /></i>
                   <small>{formatUpdatedAt(slot.updatedAt)}</small>
@@ -69,7 +120,7 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
                 <>
                   <span className="empty-slot-mark">+</span>
                   <strong>새 캠페인</strong>
-                  <p>AEGIS의 첫 번째 추론핵 공격부터 시작합니다.</p>
+                  <p>이지스의 첫 번째 추론핵 공격부터 시작합니다.</p>
                   <b>새 작전 생성 <Play weight="fill" /></b>
                 </>
               )}
@@ -113,15 +164,15 @@ export const MANUAL_ABILITY_GUIDE = Object.freeze([
     category: "SURVIVAL SUPPORT",
     cooldown: 28,
     icon: "ward",
-    summary: "위험 경고가 보이면 E. 5초간 회복·방어막이 AEGIS를 따라옵니다.",
+    summary: "위험 경고가 보이면 E. 5초간 회복·방어막이 이지스를 따라옵니다.",
     details: ["즉시 체력을 조금 회복하고 임시 실드를 얻습니다.", "피해와 상태 이상을 줄여 연속 공격을 버팁니다."],
     timing: "맞은 뒤보다 보스 경고 직전에 누르는 것이 좋습니다.",
     quote: "선체가 비명 지르기 전에 E. 기계한테 타이밍으로 지면 좀 창피하잖아?",
     exampleAssetKey: "tutorialAegisWard",
-    exampleAlt: "실제 전투에서 AEGIS WARD 육각 방벽이 주인공을 감싸는 장면",
+    exampleAlt: "실제 전투에서 이지스 방벽이 주인공을 감싸는 장면",
     overlayPrompt: "보스 경고나 포위 직전에 E 또는 강조된 버튼으로 방벽을 켜세요.",
     callouts: Object.freeze([
-      Object.freeze({ label: "AEGIS를 따라오는 방벽", x: 50, y: 50 }),
+      Object.freeze({ label: "이지스를 따라오는 방벽", x: 50, y: 50 }),
       Object.freeze({ label: "5초 보호 범위", x: 35, y: 31 }),
       Object.freeze({ label: "실제 E 슬롯", x: 44, y: 92 }),
     ]),
@@ -137,7 +188,7 @@ export const MANUAL_ABILITY_GUIDE = Object.freeze([
     summary: "긴 적 대열을 가리키고 F. 세 편대가 평행 항로를 연속 소사합니다.",
     details: ["밝은 경고선 세 줄이 실제 타격 경로입니다.", "소총수·저격수가 길게 늘어섰을 때 강합니다."],
     timing: "포인터로 적 대열을 가로지르는 공격 축을 정하세요.",
-    quote: "적들이 줄을 섰다? 포인터로 길을 그리고 F. STRATOS가 세 줄로 긁고 갈게.",
+    quote: "적들이 줄을 섰다? 포인터로 길을 그리고 F. 성층권 편대가 세 줄로 긁고 갈게.",
     exampleAssetKey: "tutorialStratosRun",
     exampleAlt: "실제 전투에서 세 개의 STRATOS RUN 소사 항로가 적 대열을 통과하는 장면",
     overlayPrompt: "포인터로 적 대열을 가로지른 뒤 F 또는 강조된 버튼을 누르세요.",
@@ -164,7 +215,7 @@ export const MANUAL_ABILITY_GUIDE = Object.freeze([
     exampleAlt: "실제 전투에서 네 개의 HELIX TEMPEST 랜스가 주인공 주위를 회전하는 장면",
     overlayPrompt: "포위됐을 때 R 또는 강조된 버튼. 긴 쿨타임의 비상 화력입니다.",
     callouts: Object.freeze([
-      Object.freeze({ label: "AEGIS 중심", x: 50, y: 50 }),
+      Object.freeze({ label: "이지스 중심", x: 50, y: 50 }),
       Object.freeze({ label: "360° 회전 랜스", x: 78, y: 37 }),
       Object.freeze({ label: "실제 R 슬롯", x: 72, y: 92 }),
     ]),
@@ -194,9 +245,25 @@ function NpcPortrait({ npc, assets }) {
   );
 }
 
+function NpcWorldFigure({ npc, assets }) {
+  const standalone = npc.portraitMode === "standalone";
+  const source = assetSource(standalone ? assets?.controlOfficer : assets?.npcPortraits);
+  if (!source) return null;
+  return (
+    <span
+      className={`base-npc-world-figure${standalone ? " is-standalone" : ""}`}
+      aria-hidden="true"
+      style={{
+        backgroundImage: `url(${source})`,
+        backgroundPosition: standalone ? "center 16%" : `${(npc.portraitIndex || 0) * 50}% center`,
+      }}
+    />
+  );
+}
+
 export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, onFacility, onInteraction, onNarration }) {
   const lines = npc?.dialogue || [];
-  const line = lines[Math.min(lineIndex, Math.max(0, lines.length - 1))] || "통신 기록이 없습니다.";
+  const line = localizeWorldText(lines[Math.min(lineIndex, Math.max(0, lines.length - 1))] || "통신 기록이 없습니다.");
   const final = lineIndex >= lines.length - 1;
   useEffect(() => {
     if (!npc || !onNarration) return;
@@ -205,12 +272,13 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
     return () => onNarration({ id, cancel: true });
   }, [line, lineIndex, npc?.id, npc?.name, onNarration]);
   if (!npc) return null;
+  const display = NPC_DISPLAY[npc.id] || { name: npc.name, role: npc.role };
   return (
     <section className="base-dialogue" role="dialog" aria-modal="true" aria-labelledby="base-dialogue-name">
       <NpcPortrait npc={npc} assets={assets} />
       <div>
-        <small>{npc.role}</small>
-        <h2 id="base-dialogue-name">{npc.name}</h2>
+        <small>{display.role}</small>
+        <h2 id="base-dialogue-name">{display.name}</h2>
         <p>{line}</p>
         <footer>
           {npc.facilityId && onFacility && (
@@ -262,7 +330,7 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
               <header>
                 <span>{String(upgrade.order || 1).padStart(2, "0")}</span>
                 <div><small>{upgrade.category}</small><h3>{upgrade.name}</h3></div>
-                <b>RANK {upgrade.rank} / {upgrade.maxRank}</b>
+                <b>랭크 {upgrade.rank} / {upgrade.maxRank}</b>
               </header>
               <div className="upgrade-ranks" aria-label={`${upgrade.maxRank}랭크 중 ${upgrade.rank}랭크`}>
                 {Array.from({ length: upgrade.maxRank }, (_, index) => <i className={index < upgrade.rank ? "is-active" : ""} key={index} />)}
@@ -273,7 +341,7 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
                 <div><dt>{maxed ? "완료" : "다음 랭크"}</dt><dd>{maxed ? "최대 출력 도달" : upgrade.nextEffect}</dd></div>
               </dl>
               <button type="button" disabled={disabled} onClick={() => onPurchase(upgrade.id)}>
-                {maxed ? <><CheckCircle weight="fill" /> MAX RANK</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><FacilityIcon weight="bold" /> {upgrade.nextCost} {facility.currencyShortLabel}</>}
+                {maxed ? <><CheckCircle weight="fill" /> 최대 랭크</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><FacilityIcon weight="bold" /> {upgrade.nextCost} {facility.currencyShortLabel}</>}
               </button>
             </article>
           );
@@ -288,42 +356,44 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
   const completed = campaign?.completedRegionIds?.length || 0;
   return (
     <main className="campaign-shell home-base-screen">
-      {background && <img className="campaign-background" src={background} alt="인류 저항군의 이동 기지 HAVEN-09" />}
+      {background && <img className="campaign-background" src={background} alt="인류 저항군의 이동 기지 헤이븐-09" />}
       <div className="base-vignette" aria-hidden="true" />
       <header className="base-status">
-        <div><small>MAIN BASE</small><strong>HAVEN-09</strong></div>
-        <span><FloppyDisk weight="fill" /> SLOT {(campaign?.slotIndex ?? 0) + 1} · AUTO SAVED</span>
-        <b>{campaign?.progression?.researchData || 0} DATA · {campaign?.progression?.equipmentParts || 0} PARTS · {completed} / 3 NODES</b>
+        <div><small>주 기지</small><strong>헤이븐-09</strong></div>
+        <span><FloppyDisk weight="fill" /> 슬롯 {(campaign?.slotIndex ?? 0) + 1} · 자동 저장</span>
+        <b>연구 자료 {campaign?.progression?.researchData || 0} · 장비 부품 {campaign?.progression?.equipmentParts || 0} · 해방 {completed} / 3</b>
       </header>
 
       {(npcs || []).map((npc) => {
         const Icon = NPC_ICON[npc.id] || User;
+        const display = NPC_DISPLAY[npc.id] || { name: npc.name, role: npc.role };
         return (
           <button
             type="button"
             className={`base-hotspot npc-${npc.id}`}
             onClick={() => onNpc(npc)}
-            aria-label={`${npc.name}와 대화`}
+            aria-label={`${display.name}와 대화`}
             key={npc.id}
           >
-            <Icon weight="fill" /><span><small>{npc.role}</small><b>{npc.name}</b></span>
+            <NpcWorldFigure npc={npc} assets={assets} />
+            <Icon weight="fill" /><span className="base-hotspot-copy"><small>{display.role}</small><b>{display.name}</b></span>
           </button>
         );
       })}
 
       <button type="button" className="base-hotspot airship-hotspot" onClick={onBoard}>
-        <AirplaneTilt weight="fill" /><span><small>STEALTH AIRSHIP</small><b>구역 선택 및 출격</b></span>
+        <AirplaneTilt weight="fill" /><span><small>스텔스 비행선</small><b>구역 선택 및 출격</b></span>
       </button>
 
       <aside className="base-objective">
         <small>현재 작전</small>
-        <strong>{completed >= 3 ? "SOVEREIGN ORBITAL UPLINK 발견" : "지역 추론핵을 추적하십시오"}</strong>
+        <strong>{completed >= 3 ? "소버린 궤도 연결망 발견" : "지역 추론핵을 추적하세요"}</strong>
         <p>{completed >= 3 ? "세 지역 신호가 하나의 궤도 통제망을 가리킵니다." : "비행선에서 다음 전투 구역을 선택할 수 있습니다."}</p>
         {campaign?.lastRegionRewards && (
           <div className="base-reward-receipt">
-            <span>RECOVERED</span>
-            <b>+{campaign.lastRegionRewards.researchData} DATA</b>
-            <b>+{campaign.lastRegionRewards.equipmentParts} PARTS</b>
+            <span>회수 자원</span>
+            <b>연구 +{campaign.lastRegionRewards.researchData}</b>
+            <b>부품 +{campaign.lastRegionRewards.equipmentParts}</b>
           </div>
         )}
         <button type="button" onClick={onTitle}>저장 슬롯 화면</button>
@@ -358,25 +428,25 @@ export function AbilityGuideScreen({ assets, onComplete, onBack, onNarration }) 
 
   return (
     <main className="campaign-shell ability-guide-screen">
-      {background && <img className="campaign-background" src={background} alt="HAVEN-09 전술 관제실" />}
+      {background && <img className="campaign-background" src={background} alt="헤이븐-09 전술 관제실" />}
       <div className="ability-guide-shade" aria-hidden="true" />
-      <aside className="ability-guide-rhea" aria-label="전술 관제관 RHEA">
-        {portrait && <img src={portrait} alt="은빛 보랏빛 단발과 전술 헤드셋을 착용한 관제관 RHEA" />}
-        <div><small>TACTICAL CONTROL · RHEA</small><strong>“{ability.quote}”</strong></div>
+      <aside className="ability-guide-rhea" aria-label="전술 관제관 레아">
+        {portrait && <img src={portrait} alt="은빛 보랏빛 단발과 전술 헤드셋을 착용한 관제관 레아" />}
+        <div><small>전술 관제 · 레아</small><strong>“{ability.quote}”</strong></div>
       </aside>
 
       <section className="ability-guide-console" aria-labelledby="ability-guide-title">
         <header>
           <div>
-            <small>HAVEN-09 · 실제 전투 화면으로 배우기</small>
+            <small>헤이븐-09 · 실제 전투 화면으로 배우기</small>
             <h1 id="ability-guide-title">Q · E · F · R, 이것만 기억하세요</h1>
           </div>
           {onBack && <button type="button" className="campaign-back" onClick={onBack}><ArrowLeft weight="bold" /> 기지로</button>}
         </header>
 
         <div className="ability-circuit-separation" role="note" aria-label="자동 스킬과 수동 스킬의 차이">
-          <span><i>AUTO</i><b>레벨업 기술</b><em>자동 발동</em></span>
-          <span className="is-manual"><i>MANUAL</i><b>Q · E · F · R</b><em>직접 눌러 사용 · 자동 기술과 완전히 별개</em></span>
+          <span><i>자동</i><b>레벨업 기술</b><em>자동 발동</em></span>
+          <span className="is-manual"><i>직접</i><b>Q · E · F · R</b><em>직접 눌러 사용 · 자동 기술과 완전히 별개</em></span>
         </div>
 
         <nav className="ability-guide-tabs" aria-label="사용 스킬 선택">
@@ -390,7 +460,7 @@ export function AbilityGuideScreen({ assets, onComplete, onBack, onNarration }) 
                 onClick={() => setActiveIndex(index)}
                 key={entry.id}
               >
-                <kbd>{entry.key}</kbd><Icon weight="fill" /><span><b>{entry.name}</b><small>{entry.cooldown}초</small></span>
+                <kbd>{entry.key}</kbd><Icon weight="fill" /><span><b>{entry.koreanName}</b><small>{entry.cooldown}초</small></span>
               </button>
             );
           })}
@@ -399,7 +469,7 @@ export function AbilityGuideScreen({ assets, onComplete, onBack, onNarration }) 
         <div className={`ability-guide-detail ability-${ability.id}`}>
           <figure className="ability-guide-example">
             {example ? <img src={example} alt={ability.exampleAlt} /> : <div className="ability-guide-example-missing">전투 예시 전송 중</div>}
-            <span className="ability-guide-live-badge">ACTUAL GAMEPLAY</span>
+            <span className="ability-guide-live-badge">실제 전투 화면</span>
             {ability.callouts.map((callout) => (
               <span className="ability-example-callout" style={{ left: `${callout.x}%`, top: `${callout.y}%` }} key={callout.label}>
                 <i />{callout.label}
@@ -409,7 +479,7 @@ export function AbilityGuideScreen({ assets, onComplete, onBack, onNarration }) 
           <article className="ability-guide-copy">
             <header>
               <div className="ability-guide-emblem"><ActiveIcon weight="fill" /><kbd>{ability.key}</kbd></div>
-              <div><small>{ability.category} · {ability.cooldown}초</small><h2>{ability.name}</h2><span>{ability.koreanName}</span></div>
+              <div><small>{ABILITY_CATEGORY_KO[ability.category] || ability.category} · {ability.cooldown}초</small><h2>{ability.koreanName}</h2><span>{ability.name}</span></div>
             </header>
             <p>{ability.summary}</p>
             <ul>{ability.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>
@@ -440,9 +510,9 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
       <div className="region-map-shade" aria-hidden="true" />
       <header className="region-select-heading">
         <button type="button" className="campaign-back" onClick={onBack}><ArrowLeft weight="bold" /> 기지</button>
-        <small>SKYLINE · FLIGHT CONTROL</small>
+        <small>스카이라인 · 비행 관제</small>
         <h1>출격 구역 선택</h1>
-        <p>각 지역의 군단을 돌파하고 SOVEREIGN 지역 추론핵을 파괴하십시오.</p>
+        <p>각 지역의 군단을 돌파하고 소버린의 지역 추론핵을 파괴하세요.</p>
       </header>
       <section className="region-card-grid" aria-label="출격 가능한 지역">
         {(regions || []).map((region, index) => {
@@ -456,18 +526,18 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
               onClick={() => onSelect(region.id)}
               key={region.id}
             >
-              <span>{region.chapterLabel || `CHAPTER ${index + 1}`}</span>
-              <strong>{region.name}</strong>
-              <p>{region.summary}</p>
+              <span>작전 {String(index + 1).padStart(2, "0")}</span>
+              <strong>{region.koreanName || region.name}</strong>
+              <p>{localizeWorldText(region.summary)}</p>
               {region.threatProfile && (
                 <span className="region-threat">
-                  <i>{region.threatProfile.label}</i>
-                  <em>{region.threatProfile.composition}</em>
-                  <em>{region.threatProfile.bossSignatures}</em>
+                  <i>{localizeWorldText(region.threatProfile.label)}</i>
+                  <em>{localizeThreatText(region.threatProfile.composition)}</em>
+                  <em>{localizeThreatText(region.threatProfile.bossSignatures)}</em>
                 </span>
               )}
-              <small>{region.bossName}</small>
-              <b>{!isUnlocked ? <><Lock weight="fill" /> LOCKED</> : isCompleted ? <><CheckCircle weight="fill" /> 재출격</> : <><MapTrifold weight="fill" /> 출격</>}</b>
+              <small>보스 · {BOSS_DISPLAY[region.bossName] || region.bossName}</small>
+              <b>{!isUnlocked ? <><Lock weight="fill" /> 잠김</> : isCompleted ? <><CheckCircle weight="fill" /> 재출격</> : <><MapTrifold weight="fill" /> 출격</>}</b>
             </button>
           );
         })}

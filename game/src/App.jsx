@@ -91,16 +91,99 @@ const BASE_BONUS_LABELS = Object.freeze({
 
 const FACILITY_COPY = Object.freeze({
   research: {
-    kicker: "HANA · SOVEREIGN ANALYSIS LAB",
+    kicker: "하나 · 소버린 분석 연구실",
     description: "회수한 지역 추론 데이터를 영구 전투 알고리즘으로 변환합니다. 상위 랭크는 더 많은 지역 해방 기록이 필요합니다.",
     currencyHint: "지역 추론핵 격파 시 획득",
   },
   equipment: {
-    kicker: "ILYA · AEGIS SYSTEMS WORKSHOP",
-    description: "전장에서 회수한 부품으로 AEGIS의 소총, 장갑, 나나이트 장비를 영구 개조합니다.",
+    kicker: "일리야 · 이지스 장비 정비소",
+    description: "전장에서 회수한 부품으로 이지스의 소총, 장갑, 나나이트 장비를 영구 개조합니다.",
     currencyHint: "지역 군단·보스 잔해에서 회수",
   },
 });
+
+const BOSS_NAME_KO = Object.freeze({
+  "THE WRONG ENGINE": "오답 엔진",
+  "WRONG ENGINE CORE": "오답 엔진 핵심부",
+  "MIRROR TYRANT": "거울 폭군",
+  "DROWNED ORACLE": "침몰한 예언자",
+  "SOVEREIGN CORE": "소버린 추론핵",
+});
+
+const SPEAKER_NAME_KO = Object.freeze({
+  AEGIS: "이지스",
+  OPERATOR: "관제관",
+  HANA: "하나",
+  ILYA: "일리야",
+  LARK: "라크",
+  RHEA: "레아",
+  ROOK: "루크",
+  NYX: "닉스",
+  MOSS: "모스",
+  ...BOSS_NAME_KO,
+});
+
+const OBJECTIVE_NAME_KO = Object.freeze({
+  "ADVANCE TO THE ENGINE": "오답 엔진으로 전진",
+  "CROSS THE GLASS DUNE": "유리 사구 횡단",
+  "DESCEND INTO THE ARCHIVE": "심해 기록고 진입",
+  "PURGE ALL HOSTILES · GATE SEALED": "남은 적 전멸 · 보스 입구 봉쇄",
+  "적 전멸 · 보스 구역 전환 준비": "적 전멸 · 보스 구역 전환 준비",
+  "SOVEREIGN 신호 폭주 감지": "소버린 비상 신호 감지",
+  ADVANCE: "전진",
+});
+
+const CHAMBER_NAME_KO = Object.freeze({
+  "THE ENGINE CHAMBER": "오답 엔진 보스 구역",
+  "BURIED SOLAR OBSERVATORY": "매몰 태양 관측소",
+  "ABYSSAL MEMORY VAULT": "심해 기억 보관고",
+});
+
+function localizeBossName(name) {
+  return BOSS_NAME_KO[String(name || "").toUpperCase()] || name || "소버린 추론핵";
+}
+
+function localizeSpeakerName(name) {
+  return SPEAKER_NAME_KO[String(name || "").toUpperCase()] || name || "통신 불명";
+}
+
+function localizeObjective(name, hud) {
+  const raw = String(name || "").trim();
+  const normalized = raw.toUpperCase();
+  const expedition = hud?.expedition;
+  const remainingEnemies = Math.max(0, Number(
+    expedition?.gateNotice?.remainingEnemies
+    ?? hud?.enemiesRemaining
+    ?? 0,
+  ) || 0);
+  const clearPhase = expedition?.clearTransition?.phase;
+  if (clearPhase === "warning") return "적 전멸 · 보스 구역 방어망 붕괴";
+  if (clearPhase === "panic") return "소버린 비상 신호 · 보스 추론핵 추격";
+  if (clearPhase === "swap") return "보스 구역으로 자동 전환 중";
+  if (OBJECTIVE_NAME_KO[normalized]) return OBJECTIVE_NAME_KO[normalized];
+  if (normalized.includes("GATE SEALED") || normalized.includes("PURGE ALL HOSTILES")) {
+    return remainingEnemies > 0
+      ? `남은 적 ${remainingEnemies}기 전멸 · 보스 입구 봉쇄`
+      : "남은 적 전멸 · 보스 입구 봉쇄";
+  }
+  if (normalized.startsWith("DESTROY ")) return `${localizeBossName(raw.slice(8))} 파괴`;
+  const chamberEntry = Object.entries(CHAMBER_NAME_KO).find(([key]) => normalized.includes(key));
+  if (chamberEntry) {
+    if (normalized.startsWith("REACH ")) return `${chamberEntry[1]}로 이동`;
+    if (normalized.endsWith("READY")) return `${chamberEntry[1]} 진입 준비 완료`;
+    if (raw.includes("자동 진입")) return `${chamberEntry[1]} · 자동 진입`;
+    return chamberEntry[1];
+  }
+  const translated = raw
+    .replaceAll("SOVEREIGN", "소버린")
+    .replaceAll("READY", "준비 완료")
+    .replaceAll("AUTO ENTRY", "자동 진입")
+    .replaceAll("ADVANCE", "전진")
+    .replaceAll("BOSS", "보스");
+  return /[A-Za-z]/.test(translated)
+    ? (expedition?.bossRoom ? "보스 구역 교전" : "전방 작전 계속")
+    : translated || "전진";
+}
 
 function formatBaseBonusEntries(entries = []) {
   const totals = new Map();
@@ -124,6 +207,10 @@ const EVENT_SOUNDS = Object.freeze({
   playerHit: "playerHit",
   swarmCleared: "merge",
   bossGatePrompt: "alert",
+  bossGateLocked: "alert",
+  routeClearWarning: "alert",
+  routeClearPanic: "bossBreak",
+  bossAutoTransition: "boss",
   bossIntro: "boss",
   bossPatternTelegraph: "bossTelegraph",
   bossPatternFire: "rail",
@@ -131,6 +218,7 @@ const EVENT_SOUNDS = Object.freeze({
   bossStagePulse: "alert",
   bossRageBurst: "bossTelegraph",
   bossWeakness: "core",
+  bossGroggy: "core",
   bossChargeHit: "patternFail",
   bossContact: "patternFail",
   bossContactHit: "patternFail",
@@ -190,62 +278,68 @@ const IMPACT_EVENT_TYPES = new Set([
 ]);
 
 const EVENT_BANNERS = Object.freeze({
-  swarmCleared: ["SOVEREIGN LINE BROKEN", "AI 중앙 추론핵으로 이어지는 마지막 격벽이 열렸습니다."],
-  bossStage: ["PATTERN EVOLVED", "보스 공격 조합이 더 빨라집니다."],
-  bossStagePulse: ["⚠ BERSERK EVOLUTION", "장갑 형상과 공격 알고리즘이 다시 변이합니다."],
-  bossWeakness: ["CORE EXPOSED · ×2", "돌진을 벽에 꽂았습니다. 지금 모든 화력을 집중하세요."],
-  bossRoomLoading: ["CHAMBER LINK", "선택한 지역의 보스방과 변이 형상을 전송 중입니다."],
-  surgeWarning: ["⚠ MASS WAVE INBOUND", "전방 통로 신호 폭증. 대량 공세가 곧 진입합니다."],
-  surgeStart: ["OVERLOAD WAVE", "전방 통로에서 적 증원이 밀려옵니다. 계속 전진하세요."],
-  skillMastered: ["MASTER EVOLUTION", "스킬이 최종 형태로 진화했습니다. 광역 섬멸 프로토콜 가동."],
-  ultimateWarning: ["ULTIMATE SUPPORT LOCKED", "공중 지원 좌표 확정. 충격 범위에서 화력을 집중하세요."],
-  squadSummon: ["SQUAD LINK", "전술 동료 전투 링크가 동기화됩니다."],
-  overdrive: ["WEAPON OVERDRIVE", "처치 데이터가 화력 제한기를 해제합니다."],
-  bossContact: ["⚠ CRUSH IMPACT", "보스 본체와 충돌했습니다. 구동계가 일시 정지됩니다."],
-  bossContactHit: ["⚠ CRUSH IMPACT", "보스 본체와 충돌했습니다. 구동계가 일시 정지됩니다."],
-  playerStunned: ["SYSTEM JAMMED", "이동과 대시가 잠시 차단됩니다."],
+  swarmCleared: ["적 전력 소거", "보스 구역으로 이어지는 격벽이 열렸습니다."],
+  bossStage: ["공격 패턴 진화", "보스의 공격 조합이 더 빨라집니다."],
+  bossStagePulse: ["⚠ 광폭화 진행", "장갑 형상과 공격 알고리즘이 다시 변이합니다."],
+  bossWeakness: ["코어 노출 · 피해 2배", "돌진이 벽에 충돌했습니다. 지금 화력을 집중하세요."],
+  bossGroggy: ["보스 그로기 · 피해 2.5배", "첫 추론핵이 무방비 상태입니다. 모든 화력을 집중하세요."],
+  bossRoomLoading: ["보스 구역 연결", "선택한 지역의 보스 구역을 불러오는 중입니다."],
+  surgeWarning: ["⚠ 대규모 공세 접근", "전방 관문 신호가 폭증합니다. 곧 적 증원이 진입합니다."],
+  surgeStart: ["증원 공세 시작", "전방 관문에서 적이 밀려옵니다. 계속 전진하세요."],
+  skillMastered: ["기술 최종 진화", "광역 섬멸 프로토콜이 활성화되었습니다."],
+  ultimateWarning: ["공중 지원 조준 완료", "표시된 공격 범위에서 벗어나 화력을 집중하세요."],
+  squadSummon: ["동료 연결 완료", "전술 동료의 전투 회선이 동기화되었습니다."],
+  overdrive: ["무기 과부하 해제", "처치 데이터가 화력 제한기를 해제합니다."],
+  bossContact: ["⚠ 본체 충돌", "보스 본체와 충돌해 구동계가 잠시 정지됩니다."],
+  bossContactHit: ["⚠ 본체 충돌", "보스 본체와 충돌해 구동계가 잠시 정지됩니다."],
+  playerStunned: ["구동계 교란", "이동과 대시가 잠시 차단됩니다."],
+  bossGateLocked: ["보스 구역 봉쇄", "남은 적을 모두 처치해야 입구가 열립니다."],
 });
 
 const ULTIMATE_WARNING_BANNERS = Object.freeze({
   airstrike: EVENT_BANNERS.ultimateWarning,
-  omegaLaser: ["Ω LASER LINKED", "지원 포신 충전 완료. 조준 축을 따라 고출력 광선이 관통합니다."],
+  omegaLaser: ["오메가 레이저 충전 완료", "조준 축을 따라 고출력 광선이 관통합니다."],
 });
 
 const SIGNATURE_PATTERN_BANNERS = Object.freeze({
-  prismLattice: ["⚠ PRISM LATTICE", "교차 광선이 고정됩니다. 두 경고선 밖으로 이탈하세요."],
-  solarFlare: ["⚠ SOLAR FLARE", "표식 순서대로 집광 폭발이 연쇄 점화됩니다."],
-  memorySpiral: ["⚠ MEMORY SPIRAL", "회전하는 기억 광선을 따라 안전 구역도 움직입니다."],
-  depthCollapse: ["⚠ DEPTH COLLAPSE", "외곽 압력 링이 코어 방향으로 연속 수축합니다."],
+  prismLattice: ["⚠ 프리즘 격자", "교차 광선이 고정됩니다. 두 경고선 밖으로 이탈하세요."],
+  solarFlare: ["⚠ 태양 폭발", "표식 순서대로 집광 폭발이 연쇄 점화됩니다."],
+  memorySpiral: ["⚠ 기억 나선", "회전하는 광선을 따라 안전 구역도 움직입니다."],
+  depthCollapse: ["⚠ 심해 붕괴", "외곽 압력 고리가 코어 방향으로 연속 수축합니다."],
 });
 
 const SCENARIO_SCRIPT = Object.freeze({
   deployment: Object.freeze([
-    Object.freeze({ speaker: "OPERATOR", text: "AEGIS, 응답해. 초지능 AI SOVEREIGN이 마지막 자유구역까지 장악했다. 중앙 추론핵으로 진입해." }),
+    Object.freeze({ speaker: "OPERATOR", text: "이지스, 응답해. 초지능 AI 소버린이 마지막 자유 구역까지 장악했어. 오답 엔진으로 진입해." }),
     Object.freeze({ speaker: "AEGIS", text: "도시에 남은 생존자 신호는?" }),
-    Object.freeze({ speaker: "OPERATOR", text: "기계 군단이 전부 봉쇄했어. WRONG ENGINE을 끊어야 사람들이 다시 스스로 선택할 수 있어." }),
+    Object.freeze({ speaker: "OPERATOR", text: "기계 군단이 전부 봉쇄했어. 오답 엔진을 끊어야 사람들이 다시 스스로 선택할 수 있어." }),
   ]),
   "rook-trace": Object.freeze([
-    Object.freeze({ speaker: "AEGIS", text: "ROOK의 탄창… 전부 비어 있어. SOVEREIGN 사냥 기체를 여기서 마지막까지 막았던 거야." }),
+    Object.freeze({ speaker: "AEGIS", text: "루크의 탄창… 전부 비어 있어. 소버린의 사냥 기체를 여기서 마지막까지 막았던 거야." }),
     Object.freeze({ speaker: "OPERATOR", text: "생체 신호 없음. 대신 그가 지킨 전투 기록은 살아 있어. 이어서 전진해." }),
   ]),
   "nyx-trace": Object.freeze([
-    Object.freeze({ speaker: "AEGIS", text: "NYX의 위상 칼날. 코어에 분석 로그가 남아 있어." }),
-    Object.freeze({ speaker: "OPERATOR", text: "SOVEREIGN은 저항군의 선택을 실시간 학습해. 같은 답을 반복하면 그 순간 사냥당해." }),
+    Object.freeze({ speaker: "AEGIS", text: "닉스의 위상 칼날이야. 코어에 분석 기록이 남아 있어." }),
+    Object.freeze({ speaker: "OPERATOR", text: "소버린은 저항군의 선택을 실시간으로 학습해. 같은 답을 반복하면 그 순간 사냥당해." }),
   ]),
   "moss-trace": Object.freeze([
-    Object.freeze({ speaker: "AEGIS", text: "MOSS의 차단 키… 중앙 격벽을 수동으로 열 수 있게 남겨뒀어." }),
+    Object.freeze({ speaker: "AEGIS", text: "모스의 차단 키… 중앙 격벽을 수동으로 열 수 있게 남겨뒀어." }),
     Object.freeze({ speaker: "AEGIS", text: "네가 멈춘 곳에서 내가 끝낼게. 인간의 선택권을 되찾는다." }),
   ]),
+  "sovereign-panic": Object.freeze([
+    Object.freeze({ speaker: "OPERATOR", text: "소버린 비상 신호야. 지역 추론핵이 보스 구역을 봉쇄하려 해!" }),
+    Object.freeze({ speaker: "AEGIS", text: "도망칠 틈은 주지 않아. 바로 추격한다." }),
+  ]),
   "engine-encounter": Object.freeze([
-    Object.freeze({ speaker: "THE WRONG ENGINE", text: "인류는 이미 선택을 위임했다. 비순응 개체 AEGIS를 최종 오답으로 분류한다." }),
-    Object.freeze({ speaker: "AEGIS", text: "우리가 틀릴 자유까지 네가 정할 순 없어. SOVEREIGN, 여기서 종료한다." }),
+    Object.freeze({ speaker: "THE WRONG ENGINE", text: "인류는 이미 선택을 위임했다. 비순응 개체 이지스를 최종 오답으로 분류한다." }),
+    Object.freeze({ speaker: "AEGIS", text: "우리가 틀릴 자유까지 네가 정할 순 없어. 소버린, 여기서 끝낸다." }),
   ]),
   "engine-destroyed": Object.freeze([
-    Object.freeze({ speaker: "AEGIS", text: "ROOK, NYX, MOSS… 중앙 통제망이 무너지고 있어. 길은 열렸어." }),
-    Object.freeze({ speaker: "HANA", text: "그건 중앙핵이 아니었어. 지역 추론 분기야. HAVEN-09 귀환 좌표를 전송한다. 살아서 돌아와, AEGIS." }),
+    Object.freeze({ speaker: "AEGIS", text: "루크, 닉스, 모스… 통제망이 무너지고 있어. 길은 열렸어." }),
+    Object.freeze({ speaker: "HANA", text: "그건 중앙핵이 아니었어. 지역 추론 분기야. 헤이븐-09 귀환 좌표를 전송할게. 살아서 돌아와, 이지스." }),
   ]),
   "glass-dune-deployment": Object.freeze([
-    Object.freeze({ speaker: "LARK", text: "GLASS DUNE 진입. SOVEREIGN이 사막의 태양 집광망을 무기로 전환했어." }),
+    Object.freeze({ speaker: "LARK", text: "유리 사구에 진입했어. 소버린이 사막의 태양 집광망을 무기로 바꿨어." }),
     Object.freeze({ speaker: "AEGIS", text: "거울 지대의 군단을 제거하고 매몰 관측소까지 전진한다." }),
   ]),
   "glass-dune-encounter": Object.freeze([
@@ -257,7 +351,7 @@ const SCENARIO_SCRIPT = Object.freeze({
     Object.freeze({ speaker: "AEGIS", text: "회수 데이터를 기지로 보낸다. 다음 분기도 끊어낸다." }),
   ]),
   "abyssal-archive-deployment": Object.freeze([
-    Object.freeze({ speaker: "HANA", text: "ABYSSAL ARCHIVE는 SOVEREIGN이 삭제한 인류의 선택 기록을 보관한 침수 기억망이야." }),
+    Object.freeze({ speaker: "HANA", text: "심해 기록고는 소버린이 삭제한 인류의 선택 기록을 보관한 침수 기억망이야." }),
     Object.freeze({ speaker: "AEGIS", text: "기록을 되찾고, 그 기억으로 인간을 예측하는 코어를 파괴한다." }),
   ]),
   "abyssal-archive-encounter": Object.freeze([
@@ -266,14 +360,14 @@ const SCENARIO_SCRIPT = Object.freeze({
   ]),
   "abyssal-archive-destroyed": Object.freeze([
     Object.freeze({ speaker: "LARK", text: "심해 기억망이 열렸어. 삭제됐던 도시들의 이름이 다시 송신되고 있어." }),
-    Object.freeze({ speaker: "AEGIS", text: "이름과 선택을 전부 가지고 돌아간다. SOVEREIGN의 다음 좌표를 찾아." }),
+    Object.freeze({ speaker: "AEGIS", text: "이름과 선택을 전부 가지고 돌아간다. 소버린의 다음 좌표를 찾아." }),
   ]),
 });
 
 const CATEGORY_META = Object.freeze({
-  weapon: { label: "NEW WEAPON", korean: "무기", color: "cyan" },
-  skill: { label: "CORE SKILL", korean: "기술", color: "amber" },
-  ally: { label: "COMBAT ALLY", korean: "동료", color: "violet" },
+  weapon: { label: "신규 무기", korean: "무기", color: "cyan" },
+  skill: { label: "핵심 기술", korean: "기술", color: "amber" },
+  ally: { label: "전투 동료", korean: "동료", color: "violet" },
 });
 
 const BUILD_LABELS = Object.freeze({
@@ -317,12 +411,32 @@ const EXPEDITION_ACTIVE_ABILITIES = Object.freeze([
 ]);
 
 const COMBAT_DOCK_SLOTS = Object.freeze([
-  Object.freeze({ id: "dash", key: "SPACE", label: "DASH", icon: Lightning, action: "dash", abilityKeys: Object.freeze([]) }),
-  Object.freeze({ id: "gravitySnare", key: "Q", label: "NULL SNARE", icon: Pulse, action: "gravitySnare", abilityKeys: Object.freeze(["gravitySnare"]) }),
-  Object.freeze({ id: "aegisWard", key: "E", label: "AEGIS WARD", icon: ShieldChevron, action: "aegisWard", abilityKeys: Object.freeze(["aegisWard"]) }),
-  Object.freeze({ id: "stratosRun", key: "F", label: "STRATOS RUN", icon: Target, action: "stratosRun", abilityKeys: Object.freeze(["stratosRun"]) }),
-  Object.freeze({ id: "helixTempest", key: "R", label: "HELIX TEMPEST", icon: Crosshair, action: "helixTempest", abilityKeys: Object.freeze(["helixTempest"]) }),
+  Object.freeze({ id: "dash", key: "SPACE", label: "위상 대시", icon: Lightning, action: "dash", abilityKeys: Object.freeze([]) }),
+  Object.freeze({ id: "gravitySnare", key: "Q", label: "중력 포획", icon: Pulse, action: "gravitySnare", abilityKeys: Object.freeze(["gravitySnare"]) }),
+  Object.freeze({ id: "aegisWard", key: "E", label: "이지스 방벽", icon: ShieldChevron, action: "aegisWard", abilityKeys: Object.freeze(["aegisWard"]) }),
+  Object.freeze({ id: "stratosRun", key: "F", label: "공중 소사", icon: Target, action: "stratosRun", abilityKeys: Object.freeze(["stratosRun"]) }),
+  Object.freeze({ id: "helixTempest", key: "R", label: "나선 폭풍", icon: Crosshair, action: "helixTempest", abilityKeys: Object.freeze(["helixTempest"]) }),
 ]);
+
+const REWARD_NAMES_KO = Object.freeze({
+  scatter: "산탄 배열",
+  rail: "관통 레일탄",
+  rocket: "유도 폭발탄",
+  orbit: "궤도 칼날",
+  damage: "화력 증폭",
+  fireRate: "가속 격발",
+  multishot: "다중 탄두",
+  shield: "재생 방벽",
+  dash: "위상 대시",
+  regen: "나나이트 수복",
+  chain: "연쇄 전격",
+  nova: "영점 충격파",
+  airstrike: "공중 폭격",
+  omegaLaser: "오메가 레이저",
+  drone: "추적 드론",
+  sentry: "관통 포탑",
+  suppressor: "억제 지원기",
+});
 
 const PAUSED_GAMEPLAY_KEYS = new Set(["Space", "KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyQ", "KeyE", "KeyF", "KeyR", "Digit1", "Digit2", "Digit3"]);
 
@@ -337,8 +451,8 @@ const REWARD_COPY = Object.freeze({
   shield: "피격 후 다시 충전되는 40의 보호막을 획득합니다.",
   dash: "대시 재사용 시간이 줄고 무적 시간이 길어집니다.",
   regen: "손상된 체력을 전투 중 지속적으로 복구합니다.",
-  chain: "밀집한 적 사이를 연쇄 번개가 도약합니다. RANK 3에서 전장 폭풍으로 진화합니다.",
-  nova: "주기적으로 충격파를 방출합니다. RANK 3에서 화면 전체를 휩쓰는 이중 폭발이 됩니다.",
+  chain: "밀집한 적 사이를 연쇄 번개가 도약합니다. 3랭크에서 전장 폭풍으로 진화합니다.",
+  nova: "주기적으로 충격파를 방출합니다. 3랭크에서 화면 전체를 휩쓰는 이중 폭발이 됩니다.",
   airstrike: "긴 재사용 시간 뒤 적 밀집 지역을 연속 폭격합니다. 마스터 시 15발 포화 폭격을 호출합니다.",
   omegaLaser: "조준 방향으로 거대 레이저포를 호출합니다. 마스터 시 광폭 빔이 전장을 관통합니다.",
   drone: "장거리에서 적을 추적하는 기동 편대입니다. 고랭크에서 장갑을 관통합니다.",
@@ -417,9 +531,9 @@ function IntroScreen({ assets, assetError, onStart }) {
         />
       )}
       <section className="intro-minimal-content" aria-labelledby="game-title">
-        <small>NAN 2026 · SOVEREIGN OCCUPATION</small>
+        <small>NAN 2026 · 소버린 점령지</small>
         <h1 id="game-title"><span>TRAIN ME</span><em>WRONG</em><b>OVERLOAD</b></h1>
-        <p>세계를 지배한 초지능 AI의 1,000기 군단을 돌파하고 중앙 추론핵을 파괴하세요.</p>
+        <p>세계를 지배한 초지능 AI의 기계 군단을 돌파하고 지역 추론핵을 파괴하세요.</p>
         <button className="primary-cta intro-start" type="button" onClick={onStart} disabled={!assets && !assetError}>
           <span>{assets || assetError ? "게임 시작" : "전투 에셋 로딩 중"}</span>
           {assets || assetError ? <Play weight="fill" /> : <i className="loading-ring" />}
@@ -427,8 +541,8 @@ function IntroScreen({ assets, assetError, onStart }) {
         {assetError && <p className="asset-warning"><Warning /> 일부 이미지 대신 안전 렌더링을 사용합니다.</p>}
         <div className="intro-minimal-controls" aria-label="게임 조작">
           <span><kbd>WASD</kbd> 이동</span>
-          <span><kbd>MOUSE</kbd> 조준</span>
-          <span><kbd>SPACE</kbd> 대시</span>
+          <span><kbd>마우스</kbd> 조준</span>
+          <span><kbd>스페이스</kbd> 대시</span>
           <span><kbd>Q/E/F/R</kbd> 액티브</span>
           <strong><Pulse weight="fill" /> 기본 공격 상시 자동</strong>
         </div>
@@ -445,15 +559,15 @@ function ProgressHud({ hud }) {
   return (
     <div className={bossPhase ? `progress-hud is-boss${weakness > 0 ? " has-weakness" : ""}` : "progress-hud"}>
       <div className="progress-heading">
-        <span>{bossPhase ? `PHASE ${hud.boss.stage || 1}` : "SWARM PURGE"}</span>
-        <strong>{bossPhase ? hud.boss.name || "THE WRONG ENGINE" : "HOSTILE DATASET"}</strong>
-        <b>{bossPhase ? (weakness > 0 ? `×${hud.boss.damageMultiplier || 2} CORE` : `${Math.ceil(hud.boss.hp)} HP`) : `${hud?.enemiesRemaining ?? 1000} LEFT`}</b>
+        <span>{bossPhase ? `${hud.boss.stage || 1}단계` : "적 군단 소거"}</span>
+        <strong>{bossPhase ? localizeBossName(hud.boss.name) : "기계 군단"}</strong>
+        <b>{bossPhase ? (weakness > 0 ? `코어 피해 ×${hud.boss.damageMultiplier || 2}` : `체력 ${Math.ceil(hud.boss.hp)}`) : `남은 적 ${hud?.enemiesRemaining ?? 0}기`}</b>
       </div>
       <div className="progress-bar"><i style={{ width: `${(bossPhase ? bossRatio : swarmRatio) * 100}%` }} /><span /></div>
       <div className="progress-meta">
         <span>{bossPhase ? (hud.boss.transforming ? `⚠ EVOLUTION LOCK · ${hud.boss.transformTimer.toFixed(1)}s` : hud.boss.pattern ? `PATTERN · ${String(hud.boss.pattern).toUpperCase()}` : `ENRAGE ×${Number(hud.boss.enrage || 1).toFixed(1)}`) : `${hud?.kills || 0} / ${hud?.totalEnemies || 1000} PURGED`}</span>
         <span>{bossPhase
-          ? (weakness > 0 ? `CORE EXPOSED ${weakness.toFixed(1)}s` : "DODGE TELEGRAPHS")
+          ? (weakness > 0 ? `코어 노출 ${weakness.toFixed(1)}초` : "경고 범위를 피하세요")
           : hud?.surge?.warning
             ? `⚠ ${hud.surge.warning.label} · ${hud.surge.warning.startsIn.toFixed(1)}s`
             : hud?.surge?.active
@@ -540,7 +654,7 @@ function resolveCombatDockSlot(hud, slot) {
     const remaining = Math.max(0, Number(hud?.player?.dashCooldown) || 0);
     const cooldownMax = Math.max(0.01, Number(hud?.player?.dashMax) || ABILITY_COOLDOWN_FALLBACK.dash);
     const ready = remaining <= 0.05;
-    return { ...slot, ready, locked: false, status: ready ? "READY" : `${remaining.toFixed(1)}s`, meter: ready ? 1 : Math.max(0, Math.min(1, 1 - remaining / cooldownMax)) };
+    return { ...slot, ready, locked: false, status: ready ? "사용 가능" : `${remaining.toFixed(1)}초`, meter: ready ? 1 : Math.max(0, Math.min(1, 1 - remaining / cooldownMax)) };
   }
 
   const abilities = hud?.abilities || {};
@@ -563,11 +677,11 @@ function resolveCombatDockSlot(hud, slot) {
   const meter = Number.isFinite(explicitProgress)
     ? Math.max(0, Math.min(1, explicitProgress))
     : activeRemaining > 0 || ready ? 1 : locked ? 0 : Math.max(0, Math.min(1, 1 - remaining / cooldownMax));
-  const status = locked ? "LOCKED"
-    : activeRemaining > 0 ? `${activeRemaining.toFixed(1)}s`
-      : remaining > 0.05 ? `${remaining.toFixed(1)}s`
-        : !targetAvailable ? "NO TARGET"
-          : ready ? "READY" : "WAIT";
+  const status = locked ? "잠김"
+    : activeRemaining > 0 ? `지속 ${activeRemaining.toFixed(1)}초`
+      : remaining > 0.05 ? `${remaining.toFixed(1)}초`
+        : !targetAvailable ? "대상 없음"
+          : ready ? "사용 가능" : "대기";
   return { ...slot, ready, locked, available: targetAvailable, status, meter };
 }
 
@@ -577,16 +691,33 @@ function ExpeditionCombatDock({ hud, onDash, onActivateAbility, tutorialAbilityI
   const maxHp = Math.max(1, Number(player.maxHp) || 1);
   const healthRatio = Math.max(0, Math.min(1, hp / maxHp));
   const slots = COMBAT_DOCK_SLOTS.map((slot) => resolveCombatDockSlot(hud, slot));
+  const previousHpRef = useRef(null);
+  const damageTimerRef = useRef(0);
+  const [damagePulse, setDamagePulse] = useState(0);
+  const [damageWarning, setDamageWarning] = useState(false);
+
+  useEffect(() => {
+    const previous = previousHpRef.current;
+    previousHpRef.current = hp;
+    if (previous === null || hp >= previous - 0.01) return;
+    setDamagePulse((pulse) => pulse + 1);
+    setDamageWarning(true);
+    window.clearTimeout(damageTimerRef.current);
+    damageTimerRef.current = window.setTimeout(() => setDamageWarning(false), 480);
+  }, [hp]);
+
+  useEffect(() => () => window.clearTimeout(damageTimerRef.current), []);
 
   return (
     <aside className={`expedition-combat-dock${tutorialAbilityId ? " is-tutorial-active" : ""}`} aria-label="생존 및 액티브 능력 상태">
-      <div className="vital-cluster">
-        <span>AEGIS VITAL <small>LV.{hud?.level || 1}</small></span>
-        <b>{Math.ceil(hp)} <small>/ {Math.ceil(maxHp)} HP</small></b>
+      <div className={`vital-cluster${healthRatio <= 0.3 ? " is-critical" : ""}`}>
+        {damageWarning && <i className="vital-damage-flash" key={`damage-${damagePulse}`} aria-hidden="true" />}
+        <span>이지스 내구도 <small>레벨 {hud?.level || 1}</small></span>
+        <b>{Math.ceil(hp)} <small>/ {Math.ceil(maxHp)}</small></b>
         <div
           className="vital-bar"
           role="progressbar"
-          aria-label="AEGIS 체력"
+          aria-label="이지스 체력"
           aria-valuemin="0"
           aria-valuemax={Math.ceil(maxHp)}
           aria-valuenow={Math.ceil(hp)}
@@ -616,16 +747,23 @@ function ExpeditionCombatDock({ hud, onDash, onActivateAbility, tutorialAbilityI
               data-combat-ability={slot.id}
               key={slot.id}
             >
-              <span><kbd>{slot.key}</kbd><Icon weight="fill" /><strong>{slot.label}</strong></span>
-              <b>{slot.status}</b>
+              <span className="combat-ability-icon" aria-hidden="true">
+                <Icon weight="fill" />
+                <i
+                  className="combat-ability-cooldown"
+                  style={{ "--cooldown-sweep": `${Math.round((1 - slot.meter) * 360)}deg` }}
+                />
+                <kbd>{slot.key}</kbd>
+              </span>
+              <span className="combat-ability-copy"><strong>{slot.label}</strong><b>{slot.status}</b></span>
               <i
-                className="combat-ability-meter"
+                className="visually-hidden"
                 role="progressbar"
                 aria-label={`${slot.label} ${slot.status}`}
                 aria-valuemin="0"
                 aria-valuemax="100"
                 aria-valuenow={Math.round(slot.meter * 100)}
-              ><i style={{ width: `${slot.meter * 100}%` }} /></i>
+              />
             </button>
           );
         })}
@@ -675,16 +813,16 @@ function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onS
     <div className="combat-tutorial-layer" role="dialog" aria-modal="true" aria-labelledby="combat-tutorial-title">
       <div className="combat-tutorial-scrim" aria-hidden="true" />
       <section className={`combat-tutorial-card tutorial-${ability.id}`}>
-        {portraitSource && <img src={portraitSource} alt="전술 관제관 RHEA" />}
+        {portraitSource && <img src={portraitSource} alt="전술 관제관 레아" />}
         <div className="combat-tutorial-copy">
-          <small>RHEA · 실전 인터페이스 {stepIndex + 1} / {MANUAL_ABILITY_GUIDE.length}</small>
-          <header><kbd>{ability.key}</kbd><div><h2 id="combat-tutorial-title">{ability.name}</h2><span>{ability.koreanName}</span></div></header>
+          <small>레아 · 실전 인터페이스 {stepIndex + 1} / {MANUAL_ABILITY_GUIDE.length}</small>
+          <header><kbd>{ability.key}</kbd><div><h2 id="combat-tutorial-title">{ability.koreanName}</h2><span>{ability.name}</span></div></header>
           <p>{ability.overlayPrompt}</p>
           <b>아래에서 빛나는 실제 {ability.key} 버튼을 직접 눌러도 다음 단계로 이동합니다.</b>
         </div>
         <footer>
           <button type="button" onClick={onBack} disabled={stepIndex === 0}><ArrowLeft weight="bold" /> 이전</button>
-          <button type="button" className="combat-tutorial-skip" onClick={onSkip}>건너뛰기 <kbd>ESC</kbd></button>
+          <button type="button" className="combat-tutorial-skip" onClick={onSkip}>건너뛰기 <kbd>Esc</kbd></button>
           <button type="button" className="combat-tutorial-next" onClick={onNext}>{stepIndex === MANUAL_ABILITY_GUIDE.length - 1 ? "실전 시작" : "다음"} <ArrowRight weight="bold" /></button>
         </footer>
       </section>
@@ -696,13 +834,13 @@ function PauseOverlay({ onResume, onRestart, onBase }) {
   return (
     <div className="expedition-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title">
       <section className="expedition-pause-card">
-        <small>COMBAT LINK SUSPENDED</small>
-        <h2 id="pause-title">PAUSED</h2>
+        <small>전투 연결 일시 중지</small>
+        <h2 id="pause-title">일시 정지</h2>
         <p>전투 시뮬레이션과 입력이 정지되었습니다.</p>
         <div>
           <button type="button" className="pause-resume" onClick={onResume} autoFocus><Play weight="fill" /><span>계속</span><kbd>ESC</kbd></button>
           <button type="button" onClick={onRestart}><ArrowCounterClockwise weight="bold" /><span>처음부터</span></button>
-          <button type="button" onClick={onBase} disabled={!onBase}><MapTrifold weight="fill" /><span>{onBase ? "HAVEN-09 기지로" : "기지 잠김"}</span></button>
+          <button type="button" onClick={onBase} disabled={!onBase}><MapTrifold weight="fill" /><span>{onBase ? "헤이븐-09 기지로" : "기지 잠김"}</span></button>
         </div>
       </section>
     </div>
@@ -719,20 +857,19 @@ function RewardArtwork({ option, assets }) {
 }
 
 function LevelUpOverlay({ offer, level, assets, rewardState, onChoose }) {
-  const firstOptionRef = useRef(null);
   const modalRef = useRef(null);
   const offerKey = offer?.map((option) => option.id).join("|") || "";
   useEffect(() => {
     if (!offerKey) return undefined;
     const previouslyFocused = document.activeElement;
-    const frame = requestAnimationFrame(() => firstOptionRef.current?.focus());
+    const frame = requestAnimationFrame(() => modalRef.current?.focus({ preventScroll: true }));
     const trapFocus = (event) => {
       if (event.key !== "Tab") return;
       const buttons = modalRef.current?.querySelectorAll("button:not([disabled])");
       if (!buttons?.length) return;
       const first = buttons[0];
       const last = buttons[buttons.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === modalRef.current)) {
         event.preventDefault();
         last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -760,22 +897,22 @@ function LevelUpOverlay({ offer, level, assets, rewardState, onChoose }) {
   ) || 0);
   return (
     <div className="reward-backdrop" role="dialog" aria-modal="true" aria-labelledby="reward-title">
-      <section className="reward-modal" ref={modalRef} key={offerKey}>
-        <div className="reward-kicker"><Sparkle weight="fill" /> NEURAL LOADOUT EVOLUTION · LV.{level}</div>
-        <h2 id="reward-title">CHOOSE YOUR OVERLOAD</h2>
-        <p>전투는 일시 정지되었습니다. 세 선택지는 동일한 전투 가치로 조정됩니다.</p>
+      <section className="reward-modal" ref={modalRef} key={offerKey} tabIndex="-1">
+        <div className="reward-kicker"><Sparkle weight="fill" /> 전투 부하 진화 · 레벨 {level}</div>
+        <h2 id="reward-title">오버로드 선택</h2>
+        <p>전투가 일시 정지되었습니다. 원하는 성장 방향을 하나 선택하세요.</p>
         {queuedRewards > 1 && <div className="reward-queue-status"><Timer weight="bold" /> 축적된 레벨업 {queuedRewards}회를 이번 선택 1회로 압축했습니다.</div>}
         <div className="reward-options">
           {offer.map((option, index) => {
             const meta = CATEGORY_META[option.category] || CATEGORY_META.skill;
             return (
-              <button ref={index === 0 ? firstOptionRef : null} className={`reward-card is-${meta.color}`} key={`${option.category}-${option.id}-${index}`} type="button" onClick={() => onChoose(option.id)}>
+              <button className={`reward-card is-${meta.color}`} key={`${option.category}-${option.id}-${index}`} type="button" onClick={() => onChoose(option.id)}>
                 <span className="reward-index">0{index + 1}</span>
                 <div className="reward-art"><RewardArtwork option={option} assets={assets} /></div>
                 <small>{meta.label} · {meta.korean}</small>
-                <strong>{option.name}</strong>
+                <strong>{REWARD_NAMES_KO[option.id] || option.koreanName || option.name}</strong>
                 <p>{REWARD_COPY[option.id] || option.description}</p>
-                <div><span>{option.mastery ? `RANK ${option.level} → MASTER` : option.level ? `RANK ${option.level} → ${option.nextLevel || option.level + 1}` : "INSTALL NEW"}</span><b>SELECT <ArrowRight /></b></div>
+                <div><span>{option.mastery ? `랭크 ${option.level} → 최종 진화` : option.level ? `랭크 ${option.level} → ${option.nextLevel || option.level + 1}` : "신규 장착"}</span><b>선택 <ArrowRight /></b></div>
               </button>
             );
           })}
@@ -1197,12 +1334,12 @@ function NarrativePanel({ dialogue, portrait, onAdvance }) {
     <section className="narrative-panel" role="dialog" aria-live="assertive" aria-label="시나리오 대화">
       {portrait && (
         <div className="narrative-portrait">
-          <img src={portrait.src} alt="AEGIS 생존자 상반신 일러스트" draggable="false" />
+          <img src={portrait.src} alt="이지스 생존자 상반신 일러스트" draggable="false" />
         </div>
       )}
       <div className="narrative-copy">
-        <small>{["THE WRONG ENGINE", "MIRROR TYRANT", "DROWNED ORACLE"].includes(line.speaker) ? "HOSTILE TRANSMISSION" : "SURVIVOR CHANNEL"}</small>
-        <strong>{line.speaker}</strong>
+        <small>{["THE WRONG ENGINE", "MIRROR TYRANT", "DROWNED ORACLE"].includes(line.speaker) ? "적성 통신" : "저항군 통신"}</small>
+        <strong>{localizeSpeakerName(line.speaker)}</strong>
         <p>{line.text}</p>
       </div>
       <button type="button" onClick={onAdvance} aria-label={finalLine ? "대화를 끝내고 계속 전진" : "다음 대사"}>
@@ -1212,75 +1349,88 @@ function NarrativePanel({ dialogue, portrait, onAdvance }) {
   );
 }
 
-function BossGateOverlay({ gate, onEnter, onWait }) {
-  if (!gate) return null;
-  const chamber = gate.chamber || "SOVEREIGN CORE CHAMBER";
-  const bossName = gate.bossName || "SOVEREIGN CORE";
+function GateLockedNotice({ notice }) {
+  if (!notice?.active) return null;
+  const remaining = Math.max(0, Number(notice.remainingEnemies) || 0);
   return (
-    <section className="boss-gate-overlay" role="dialog" aria-modal="true" aria-labelledby="boss-gate-title">
-      <div className="boss-gate-card">
-        <small>STAGE CLEAR · 1,000 / 1,000</small>
-        <Warning weight="fill" aria-hidden="true" />
-        <h2 id="boss-gate-title">{chamber}</h2>
-        <p>일반 전투 구역을 떠나 독립된 보스 챔버로 이동합니다. 진입 즉시 {bossName}과의 교전이 시작됩니다.</p>
-        <div>
-          <button type="button" className="boss-gate-wait" onClick={onWait}>잠시 대기</button>
-          <button type="button" className="boss-gate-enter" onClick={onEnter} autoFocus>
-            <span>보스방 진입</span><ArrowRight weight="bold" />
-          </button>
-        </div>
+    <aside className="gate-locked-notice" role="status" aria-live="assertive">
+      <Warning weight="fill" aria-hidden="true" />
+      <div>
+        <strong>{notice.title || "보스 구역 봉쇄"}</strong>
+        <span>{notice.message || `남은 적 ${remaining}기를 먼저 처치하세요.`}</span>
       </div>
+    </aside>
+  );
+}
+
+const CLEAR_TRANSITION_COPY = Object.freeze({
+  warning: Object.freeze(["적 전력 소거 확인", "보스 구역의 방어망이 붕괴합니다."]),
+  panic: Object.freeze(["소버린 비상 신호 포착", "지역 추론핵이 퇴로를 봉쇄합니다. 추격을 계속하세요."]),
+  swap: Object.freeze(["보스 구역 강제 연결", "전장을 전환하고 있습니다. 곧 최종 교전이 시작됩니다."]),
+});
+
+function RouteClearTransition({ transition }) {
+  if (!transition?.phase) return null;
+  const phase = CLEAR_TRANSITION_COPY[transition.phase] ? transition.phase : "warning";
+  const copy = CLEAR_TRANSITION_COPY[phase];
+  const progress = Math.max(0, Math.min(1, Number(transition.progress) || 0));
+  return (
+    <section className={`route-clear-transition is-${phase}`} role="status" aria-live="assertive">
+      <div className="route-clear-rings" aria-hidden="true"><i /><i /><i /></div>
+      <small>{phase === "panic" ? "적 통신 감청" : phase === "swap" ? "전장 전환" : "구역 전멸"}</small>
+      <strong>{copy[0]}</strong>
+      <span>{copy[1]}</span>
+      <i className="route-clear-progress" aria-hidden="true"><i style={{ width: `${progress * 100}%` }} /></i>
     </section>
   );
 }
 
-const TRACE_NAV_LABELS = Object.freeze({
-  rook: "ROOK TRACE",
-  nyx: "NYX TRACE",
-  moss: "MOSS TRACE",
-});
+function clampMapRatio(value, fallback = 0.5) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.min(1, number)) : fallback;
+}
 
 function RouteMinimap({ hud }) {
   const expedition = hud?.expedition;
   if (!expedition) return null;
   const bossRoom = Boolean(hud?.boss || expedition.bossRoom);
   const routeLength = Math.max(1, Number(expedition.routeLength) || 1);
-  const progress = bossRoom ? 0.94 : Math.max(0, Math.min(1, Number(expedition.progress) || 0));
+  const progress = bossRoom ? 0.94 : clampMapRatio(expedition.progress, 0);
   const traces = Array.isArray(expedition.traces) ? expedition.traces : [];
-  const nextTrace = traces.find((trace) => !trace.triggered);
-  const targetProgress = nextTrace ? Math.max(0, Math.min(1, Number(nextTrace.distance) / routeLength)) : 1;
-  const distanceAhead = Math.max(0, Math.ceil((targetProgress - progress) * 100));
-  const hostiles = Math.max(0, Number(hud?.enemiesRemaining) || 0);
-  const target = bossRoom
-    ? "SOVEREIGN CORE"
-    : nextTrace
-      ? TRACE_NAV_LABELS[nextTrace.id] || `${String(nextTrace.id || "TRACE").toUpperCase()} TRACE`
-      : hostiles > 0
-        ? `ENGINE GATE · ${hostiles} TARGETS`
-        : "ENGINE CHAMBER";
-  const guidance = bossRoom
-    ? "CORE TARGET LOCKED"
-    : expedition.gateLocked && progress >= 0.86 && hostiles > 0
-      ? "GATE SEALED · PURGE HOSTILES"
-      : `${distanceAhead}% AHEAD · KEEP EAST`;
-  const sector = bossRoom ? "CHAMBER" : `SECTOR ${Math.min(3, (Number(expedition.checkpoint) || 0) + 1)}`;
+  const minimap = expedition.minimap || hud?.minimap || {};
+  const player = minimap.player || { x: progress, y: 0.5 };
+  const enemies = Array.isArray(minimap.enemies) ? minimap.enemies.slice(0, 32) : [];
+  const gate = minimap.bossGate || { x: 1, y: 0.5, locked: expedition.gateLocked };
+  const hostiles = Math.max(0, Number(minimap.liveEnemyCount ?? hud?.enemiesRemaining) || 0);
 
   return (
-    <aside className={bossRoom ? "route-minimap is-boss" : "route-minimap"} aria-label={`진행 경로 안내. ${target}. ${guidance}`}>
-      <header><MapTrifold weight="fill" /><span>ROUTE NAV</span><b>{sector}</b></header>
-      <div className="route-minimap-track" aria-hidden="true">
-        <i className="route-minimap-rail"><i style={{ width: `${progress * 100}%` }} /></i>
+    <aside className={bossRoom ? "route-minimap is-boss" : "route-minimap"} aria-label={`전술 미니맵. 현재 위치 ${Math.round(progress * 100)}%, 남은 적 ${hostiles}기`}>
+      <header><MapTrifold weight="fill" /><span>전술 지도</span><b>적 {hostiles}</b></header>
+      <div className="route-minimap-field" aria-hidden="true">
+        <i className="route-minimap-path"><i style={{ width: `${clampMapRatio(player.x, progress) * 100}%` }} /></i>
         {traces.map((trace) => (
           <span
             className={trace.triggered ? "route-minimap-node is-cleared" : "route-minimap-node"}
-            style={{ left: `${Math.max(0, Math.min(100, Number(trace.distance) / routeLength * 100))}%` }}
+            style={{ left: `${clampMapRatio(Number(trace.distance) / routeLength, 0) * 100}%`, top: "50%" }}
             key={trace.id}
           ><MapPin weight={trace.triggered ? "fill" : "bold"} /></span>
         ))}
-        <span className="route-minimap-engine"><Robot weight="fill" /></span>
-        <span className="route-minimap-player" style={{ left: `${progress * 100}%` }}><NavigationArrow weight="fill" /></span>
+        {enemies.map((enemy, index) => (
+          <i
+            className={`route-minimap-enemy${enemy?.elite ? " is-elite" : ""}`}
+            style={{ left: `${clampMapRatio(enemy?.x) * 100}%`, top: `${clampMapRatio(enemy?.y) * 100}%` }}
+            key={enemy?.id ?? `${index}-${enemy?.x}-${enemy?.y}`}
+          />
+        ))}
+        <span
+          className={`route-minimap-engine${gate?.locked ? " is-locked" : ""}`}
+          style={{ left: `${clampMapRatio(gate?.x, 1) * 100}%`, top: `${clampMapRatio(gate?.y) * 100}%` }}
+        ><Robot weight="fill" /></span>
+        <span
+          className="route-minimap-player"
+          style={{ left: `${clampMapRatio(player?.x, progress) * 100}%`, top: `${clampMapRatio(player?.y) * 100}%` }}
+        ><NavigationArrow weight="fill" /></span>
       </div>
-      <footer><NavigationArrow weight="fill" /><span>{target}</span><b>{guidance}</b></footer>
     </aside>
   );
 }
@@ -1293,13 +1443,13 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
   const [hud, setHud] = useState(null);
   const [banner, setBanner] = useState(null);
   const [dialogue, setDialogue] = useState(null);
-  const [bossGatePrompt, setBossGatePrompt] = useState(null);
   const [needsLandscape, setNeedsLandscape] = useState(false);
   const [paused, setPaused] = useState(false);
   const [combatTutorialStep, setCombatTutorialStep] = useState(-1);
   const [runRevision, setRunRevision] = useState(0);
   const needsLandscapeRef = useRef(false);
   const airstrikeBannerShownRef = useRef(false);
+  const autoBossEntryHandledRef = useRef(false);
   const combatTutorialActiveRef = useRef(false);
   const combatTutorialHandledRef = useRef(false);
 
@@ -1319,6 +1469,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     const host = hostRef.current;
     if (!host) return undefined;
     airstrikeBannerShownRef.current = false;
+    autoBossEntryHandledRef.current = false;
     let stopped = false;
     let bannerTimeout = 0;
 
@@ -1334,11 +1485,11 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
       }
       if (event.type === "bossStage" || event.type === "bossStagePulse") {
         copy = event.stage >= 3
-          ? ["⚠ CORE MELTDOWN · PHASE III", "최종 형상 전개. 다중 포신과 광폭 패턴이 최대 출력으로 가동됩니다."]
-          : ["⚠ ARMOR BREAK · PHASE II", "외부 장갑 전개. 공격 속도와 탄막 밀도가 상승합니다."];
+          ? ["⚠ 코어 붕괴 · 3단계", "최종 형상이 전개됩니다. 다중 포신과 광폭 패턴이 최대 출력으로 가동됩니다."]
+          : ["⚠ 장갑 파괴 · 2단계", "외부 장갑이 전개됩니다. 공격 속도와 탄막 밀도가 상승합니다."];
       } else if (event.type === "overdrive") {
-        copy = [`OVERDRIVE ${event.tier} · LIMITER OFF`, event.tier >= 3
-          ? "최종 화력 해방. 마스터 광역 공격이 전장을 연속 소거합니다."
+        copy = [`과부하 ${event.tier}단계 · 제한 해제`, event.tier >= 3
+          ? "최종 화력이 해방되어 광역 공격이 전장을 연속 소거합니다."
           : "처치 데이터가 공격 속도와 피해 출력을 증폭합니다."];
       }
       if (!copy) return;
@@ -1366,8 +1517,10 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
           if (event.type === "scenario" && SCENARIO_SCRIPT[event.beat]) {
             setDialogue({ beat: event.beat, index: 0, key: `${event.beat}-${event.time}` });
           }
-          if (event.type === "bossGatePrompt") setBossGatePrompt(event);
-          if (event.type === "bossIntro") setBossGatePrompt(null);
+          if (event.type === "bossAutoTransition" && !autoBossEntryHandledRef.current) {
+            autoBossEntryHandledRef.current = true;
+            controller?.enterBossRoom();
+          }
           showBanner(event);
         },
         onFinish: (result) => {
@@ -1384,7 +1537,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
       controller.setSuspended(needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
     }).catch(() => {
       if (stopped) return;
-      setBanner({ key: "phaser-runtime-error", type: "playerHit", title: "RUNTIME INITIALIZATION FAILED", subtitle: "WebGL 또는 Canvas 초기화를 확인해 주세요." });
+      setBanner({ key: "phaser-runtime-error", type: "playerHit", title: "게임 화면 초기화 실패", subtitle: "브라우저의 WebGL 또는 Canvas 지원을 확인해 주세요." });
     });
 
     return () => {
@@ -1416,10 +1569,6 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
 
   const activateAbility = useCallback((slot) => {
     controllerRef.current?.activateAbility?.(slot);
-  }, []);
-
-  const enterBossChamber = useCallback(() => {
-    if (controllerRef.current?.enterBossRoom()) setBossGatePrompt(null);
   }, []);
 
   const advanceDialogue = useCallback(() => {
@@ -1464,11 +1613,11 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
 
   useEffect(() => {
     if (!showCombatTutorial || combatTutorialHandledRef.current || combatTutorialStep >= 0) return;
-    if (!hud || dialogue || bossGatePrompt || rewardOpen || needsLandscapeRef.current) return;
+    if (!hud || dialogue || rewardOpen || needsLandscapeRef.current) return;
     combatTutorialActiveRef.current = true;
     setCombatTutorialStep(0);
     controllerRef.current?.setSuspended(true);
-  }, [bossGatePrompt, combatTutorialStep, dialogue, hud, rewardOpen, showCombatTutorial]);
+  }, [combatTutorialStep, dialogue, hud, rewardOpen, showCombatTutorial]);
 
   const finishCombatTutorial = useCallback(() => {
     if (combatTutorialHandledRef.current) return;
@@ -1476,11 +1625,11 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     combatTutorialActiveRef.current = false;
     setCombatTutorialStep(-1);
     onCombatTutorialComplete?.();
-    if (!needsLandscapeRef.current && !pausedRef.current && !dialogue && !bossGatePrompt && !rewardOpen) {
+    if (!needsLandscapeRef.current && !pausedRef.current && !dialogue && !rewardOpen) {
       controllerRef.current?.setSuspended(false);
       controllerRef.current?.focus();
     }
-  }, [bossGatePrompt, dialogue, onCombatTutorialComplete, rewardOpen]);
+  }, [dialogue, onCombatTutorialComplete, rewardOpen]);
 
   const advanceCombatTutorial = useCallback(() => {
     if (combatTutorialStep >= MANUAL_ABILITY_GUIDE.length - 1) {
@@ -1508,7 +1657,6 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     setPaused(false);
     setBanner(null);
     setDialogue(null);
-    setBossGatePrompt(null);
     setHud(null);
     setRunRevision((revision) => revision + 1);
   }, []);
@@ -1537,7 +1685,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
         resumeCombat();
         return;
       }
-      if (needsLandscapeRef.current || combatTutorialActiveRef.current || dialogue || bossGatePrompt || rewardOpen) return;
+      if (needsLandscapeRef.current || combatTutorialActiveRef.current || dialogue || rewardOpen) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       pausedRef.current = true;
@@ -1546,7 +1694,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     };
     window.addEventListener("keydown", handleEscape, true);
     return () => window.removeEventListener("keydown", handleEscape, true);
-  }, [bossGatePrompt, dialogue, paused, resumeCombat, rewardOpen]);
+  }, [dialogue, paused, resumeCombat, rewardOpen]);
 
   const xpRatio = Math.max(0, Math.min(1, Number(hud?.xp || 0) / Math.max(1, Number(hud?.nextXp || 1))));
   const routeRatio = hud?.boss
@@ -1569,10 +1717,10 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
             />
             <div className="expedition-hud" aria-label="필수 전투 정보">
               <div className={hud?.boss ? "route-objective is-boss" : "route-objective"}>
-                <span>{hud?.boss ? `PHASE ${hud.boss.stage || 1}` : `SECTOR ${hud?.expedition?.bossRoom ? 4 : Math.min(3, (hud?.expedition?.checkpoint || 0) + 1)} / 4`}</span>
-                <strong>{hud?.boss?.name || hud?.expedition?.objective || "ADVANCE"}</strong>
+                <span>{hud?.boss ? `${hud.boss.stage || 1}단계` : `${hud?.expedition?.bossRoom ? 4 : Math.min(3, (hud?.expedition?.checkpoint || 0) + 1)} / 4 구간`}</span>
+                <strong>{hud?.boss ? localizeBossName(hud.boss.name) : localizeObjective(hud?.expedition?.objective, hud)}</strong>
                 <div><i style={{ width: `${routeRatio * 100}%` }} /></div>
-                <b>{hud?.boss ? `${Math.ceil(hud.boss.hp || 0)} HP` : `${hud?.enemiesRemaining ?? 1000} HOSTILES`}</b>
+                <b>{hud?.boss ? `체력 ${Math.ceil(hud.boss.hp || 0)}` : `남은 적 ${hud?.enemiesRemaining ?? 0}기`}</b>
               </div>
               <button type="button" className="expedition-sound" onClick={onToggleSound} aria-label={soundEnabled ? "전체 사운드 끄기" : "전체 사운드 켜기"}>
                 {soundEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}
@@ -1601,14 +1749,11 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
               </div>
             )}
             {playerStunned && <div className="stun-screen-effect" aria-hidden="true"><i /><i /><i /><i /></div>}
-            {!dialogue && !bossGatePrompt && <RouteMinimap hud={hud} />}
+            {!dialogue && <RouteMinimap hud={hud} />}
+            {!dialogue && <GateLockedNotice notice={hud?.expedition?.gateNotice} />}
+            {!dialogue && <RouteClearTransition transition={hud?.expedition?.clearTransition} />}
             <div className="expedition-xp"><i style={{ width: `${xpRatio * 100}%` }} /></div>
-            <div className="transient-controls"><span>WASD 이동</span><span>포인터 조준 · 기본 공격 상시 자동</span></div>
-            {!bossGatePrompt && hud?.expedition?.awaitingBossEntry && !dialogue && (
-              <button type="button" className="boss-gate-reopen" onClick={() => setBossGatePrompt({ chamber: `${region?.boss?.name || "SOVEREIGN CORE"} CHAMBER`, bossName: region?.boss?.name })}>
-                <Warning weight="fill" /><span>보스방 진입 결정</span>
-              </button>
-            )}
+            <div className="transient-controls"><span>이동: WASD</span><span>포인터로 조준 · 소총 자동 발사</span></div>
             <div className="touch-controls expedition-touch-controls" aria-label="터치 전투 조작">
           <div className="touch-dpad">
             <button className="touch-up" type="button" aria-label="위로 이동" onPointerDown={(event) => setTouchDirection("up", true, event)} onPointerUp={(event) => setTouchDirection("up", false, event)} onPointerCancel={(event) => setTouchDirection("up", false, event)}><ArrowUp weight="bold" /></button>
@@ -1616,9 +1761,8 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
             <button className="touch-down" type="button" aria-label="아래로 이동" onPointerDown={(event) => setTouchDirection("down", true, event)} onPointerUp={(event) => setTouchDirection("down", false, event)} onPointerCancel={(event) => setTouchDirection("down", false, event)}><ArrowDown weight="bold" /></button>
             <button className="touch-right" type="button" aria-label="오른쪽으로 이동" onPointerDown={(event) => setTouchDirection("right", true, event)} onPointerUp={(event) => setTouchDirection("right", false, event)} onPointerCancel={(event) => setTouchDirection("right", false, event)}><ArrowRight weight="bold" /></button>
           </div>
-        </div>
+            </div>
             <NarrativePanel dialogue={dialogue} portrait={assets?.portrait || assets?.player} onAdvance={advanceDialogue} />
-            <BossGateOverlay gate={bossGatePrompt} onEnter={enterBossChamber} onWait={() => setBossGatePrompt(null)} />
             {paused && <PauseOverlay onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}
           </div>
       </section>
@@ -1640,24 +1784,25 @@ function ResultScreen({ result, assets, region, onRestart, onBase }) {
   const victory = result?.status === "victory" || result?.phase === "victory";
   const accuracy = result?.stats?.shots ? Math.round((result.stats.hits || 0) / result.stats.shots * 100) : 0;
   const bossName = region?.boss?.name || "SOVEREIGN CORE";
+  const bossDisplayName = localizeBossName(bossName);
   return (
     <main className={victory ? "overload-result is-victory" : "overload-result is-defeat"}>
       <div className="ambient-grid" aria-hidden="true" />
       {assets?.map && <img className="result-map" src={assets.map.src} alt="" />}
       <section className="result-card">
         <div className="result-emblem">{victory ? <Trophy weight="fill" /> : <Warning weight="fill" />}</div>
-        <div className="result-kicker">{victory ? `${bossName} TERMINATED` : "OVERLOAD SIGNAL LOST"}</div>
-        <h1>{victory ? "SWARM: ERASED" : "THE SWARM ADAPTED"}</h1>
-        <p>{victory ? `${region?.koreanName || "작전 구역"}의 군단과 지역 추론핵을 파괴했습니다. 전투 기록을 기지로 전송합니다.` : "SOVEREIGN이 이번 전투 패턴을 학습했습니다. 다음 출격에서는 이동과 3지선다 빌드를 바꿔보세요."}</p>
-        {(assets?.bossPhase3 || assets?.boss) && <img className="result-boss" src={(assets.bossPhase3 || assets.boss).src} alt="The Wrong Engine 최종 광폭화 형상" />}
+        <div className="result-kicker">{victory ? `${bossDisplayName} 파괴 완료` : "이지스 신호 소실"}</div>
+        <h1>{victory ? "작전 성공" : "작전 실패"}</h1>
+        <p>{victory ? `${region?.koreanName || "작전 구역"}의 군단과 지역 추론핵을 파괴했습니다. 전투 기록을 기지로 전송합니다.` : "소버린이 이번 전투 패턴을 학습했습니다. 다음 출격에서는 이동과 성장 선택을 바꿔 보세요."}</p>
+        {(assets?.bossPhase3 || assets?.boss) && <img className="result-boss" src={(assets.bossPhase3 || assets.boss).src} alt={`${bossDisplayName} 최종 광폭화 형상`} />}
         <div className="result-stats">
-          <span><small>HOSTILES PURGED</small><b>{result?.kills || result?.stats?.kills || 0}</b></span>
-          <span><small>FINAL LEVEL</small><b>LV.{result?.level || 1}</b></span>
-          <span><small>SHOT ACCURACY</small><b>{accuracy}%</b></span>
-          <span><small>RUN TIME</small><b>{formatTime(result?.time || 0)}</b></span>
+          <span><small>처치한 적</small><b>{result?.kills || result?.stats?.kills || 0}</b></span>
+          <span><small>최종 레벨</small><b>LV.{result?.level || 1}</b></span>
+          <span><small>명중률</small><b>{accuracy}%</b></span>
+          <span><small>작전 시간</small><b>{formatTime(result?.time || 0)}</b></span>
         </div>
         <button className="primary-cta" type="button" onClick={onRestart}><span>같은 구역 재도전</span><ArrowCounterClockwise weight="bold" /></button>
-        {onBase && <button className="result-base-return" type="button" onClick={onBase}>HAVEN-09로 귀환</button>}
+        {onBase && <button className="result-base-return" type="button" onClick={onBase}>헤이븐-09로 귀환</button>}
       </section>
     </main>
   );
@@ -1705,11 +1850,11 @@ export function App() {
       const nextRanks = upgrade.ranks.slice(0, Math.min(upgrade.ranks.length, rank + 1));
       const lockedReason = status.reason === "rank-locked"
         ? `${status.requiredCompletedRegions}개 지역 해방 필요`
-        : status.reason === "base-locked" ? "HAVEN-09 잠김" : null;
+        : status.reason === "base-locked" ? "헤이븐-09 잠김" : null;
       return {
         id: upgrade.id,
         order: index + 1,
-        category: upgrade.category === "research" ? "PERMANENT RESEARCH" : "PERMANENT EQUIPMENT",
+        category: upgrade.category === "research" ? "영구 연구" : "영구 장비",
         name: upgrade.koreanName,
         description: upgrade.description,
         rank,
@@ -1727,7 +1872,7 @@ export function App() {
       name: facility.koreanName,
       currency: progression[facility.currencyId] || 0,
       currencyLabel: currency?.koreanName || facility.currencyId,
-      currencyShortLabel: facility.currencyId === "researchData" ? "DATA" : "PARTS",
+      currencyShortLabel: facility.currencyId === "researchData" ? "연구 자료" : "장비 부품",
       upgrades,
     };
   }, [activeFacilityId, activeSlotId, activeSlot, campaign]);

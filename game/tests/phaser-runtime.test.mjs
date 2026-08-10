@@ -7,6 +7,7 @@ const readBytes = (path) => readFile(new URL(`../${path}`, import.meta.url));
 
 test("the title screen is a full-bleed user key art composition with only essential actions", async () => {
   const app = await read("src/App.jsx");
+  const engine = await read("src/swarm/engine.js");
   const manifest = await read("src/game/assets/manifest.ts");
   const styles = await read("src/styles.css");
   const intro = app.slice(app.indexOf("function IntroScreen"), app.indexOf("function ProgressHud"));
@@ -14,7 +15,9 @@ test("the title screen is a full-bleed user key art composition with only essent
   assert.match(intro, /className="intro-key-art"/);
   assert.match(intro, /className="intro-minimal-content"/);
   assert.match(intro, /게임 시작/);
-  assert.match(intro, /초지능 AI의 1,000기 군단/);
+  assert.match(intro, /세계를 지배한 초지능 AI의 기계 군단/);
+  assert.match(engine, /const FIRST_REGION_ENEMY_BUDGET = 300/);
+  assert.doesNotMatch(intro, /1,000기/);
   assert.doesNotMatch(intro, /overload-loop|threat-counter|overload-visual|intro-header|intro-footer/);
   assert.match(styles, /\.intro-key-art\s*\{[^}]*object-fit: cover/s);
   assert.match(styles, /\.intro-minimal-content\s*\{/);
@@ -30,8 +33,11 @@ test("the active App mounts the Phaser runtime while React owns the DOM HUD", as
   assert.match(activeRuntime, /className="expedition-hud"/);
   assert.match(activeRuntime, /<RouteMinimap hud=\{hud\}/);
   assert.match(activeRuntime, /<NarrativePanel/);
-  assert.match(activeRuntime, /<BossGateOverlay/);
-  assert.match(activeRuntime, /enterBossRoom/);
+  assert.match(activeRuntime, /<GateLockedNotice notice=\{hud\?\.expedition\?\.gateNotice\}/);
+  assert.match(activeRuntime, /<RouteClearTransition transition=\{hud\?\.expedition\?\.clearTransition\}/);
+  assert.match(activeRuntime, /event\.type === "bossAutoTransition" && !autoBossEntryHandledRef\.current/);
+  assert.match(activeRuntime, /controller\?\.enterBossRoom\(\)/);
+  assert.doesNotMatch(activeRuntime, /<BossGateOverlay/);
   assert.match(activeRuntime, /className="landscape-guard"/);
   assert.match(activeRuntime, /setSuspended/);
   assert.match(activeRuntime, /<LevelUpOverlay/);
@@ -401,24 +407,33 @@ test("Phaser DEV scene shortcuts require an explicit debug opt-in", async () => 
   assert.doesNotMatch(createGame, /import\.meta\.env\.DEV \? new URLSearchParams/);
 });
 
-test("the compact route minimap guides AEGIS through traces without restoring the old telemetry rail", async () => {
+test("the compact 2D tactical minimap plots AEGIS and live enemies without restoring the old telemetry rail", async () => {
   const app = await read("src/App.jsx");
   const styles = await read("src/styles.css");
   const activeRuntime = app.slice(app.indexOf("function PhaserArenaScreen"), app.indexOf("function ResultScreen"));
   assert.match(app, /function RouteMinimap/);
-  assert.match(app, /ROUTE NAV/);
-  assert.match(app, /KEEP EAST/);
+  assert.match(app, /expedition\.minimap \|\| hud\?\.minimap/);
+  assert.match(app, /minimap\.player/);
+  assert.match(app, /minimap\.enemies/);
+  assert.match(app, /route-minimap-enemy/);
+  assert.match(app, /전술 지도/);
+  assert.doesNotMatch(app, /ROUTE NAV|KEEP EAST/);
   assert.match(app, /expedition\.traces/);
   assert.match(styles, /\.route-minimap\s*\{/);
   assert.match(styles, /\.route-minimap-player\s*\{/);
+  assert.match(styles, /\.route-minimap-enemy\s*\{/);
   assert.doesNotMatch(activeRuntime, /overload-command-rail/);
 });
 
 test("level-up cards load authored reward illustrations for every active option", async () => {
   const app = await read("src/App.jsx");
   const manifest = await read("src/game/assets/manifest.ts");
+  const overlay = app.slice(app.indexOf("function LevelUpOverlay"), app.indexOf("function ArenaScreen"));
   assert.match(app, /const REWARD_ART_KEYS/);
   assert.match(app, /assets\?\.\[REWARD_ART_KEYS\[id\]\]/);
+  assert.match(overlay, /modalRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(overlay, /className=\{`reward-card is-\$\{meta\.color\}`\}/);
+  assert.doesNotMatch(overlay, /autoFocus/);
   for (const id of ["scatter", "rail", "rocket", "orbit", "damage", "fireRate", "multishot", "shield", "dash", "regen", "chain", "nova", "airstrike", "omegaLaser", "drone", "sentry", "suppressor"]) {
     assert.match(manifest, new RegExp(`rewards/${id}\\.webp`));
   }
@@ -495,13 +510,24 @@ test("route-clear warning phases render together without exposing the boss map o
   assert.match(camera, /nextSector = lastRouteIndex/);
 });
 
-test("the route and boss room are separated by an explicit player-confirmed transition", async () => {
+test("route clear advances through warning, panic, and one automatic boss-room transition", async () => {
   const app = await read("src/App.jsx");
   const scene = await read("src/phaser/scenes/OverloadScene.ts");
   const bridge = await read("src/phaser/adapters/sceneBridge.ts");
   const engine = await read("src/swarm/engine.js");
-  assert.match(app, /className="boss-gate-overlay"/);
-  assert.match(app, /보스방 진입/);
+  const activeRuntime = app.slice(app.indexOf("function PhaserArenaScreen"), app.indexOf("function ResultScreen"));
+  assert.match(activeRuntime, /const autoBossEntryHandledRef = useRef\(false\)/);
+  assert.match(activeRuntime, /autoBossEntryHandledRef\.current = false/);
+  assert.match(activeRuntime, /event\.type === "bossAutoTransition" && !autoBossEntryHandledRef\.current/);
+  assert.match(activeRuntime, /autoBossEntryHandledRef\.current = true;\s*controller\?\.enterBossRoom\(\)/);
+  assert.doesNotMatch(activeRuntime, /boss-gate-overlay|보스방 진입/);
+  assert.match(engine, /phase: "warning"/);
+  assert.match(engine, /phase: "panic"/);
+  assert.match(engine, /phase: "swap"/);
+  assert.match(engine, /emit\(state, "routeClearWarning"/);
+  assert.match(engine, /emit\(state, "routeClearPanic"/);
+  assert.match(engine, /emit\(state, "bossAutoTransition"/);
+  assert.doesNotMatch(engine, /emit\(state, "bossGatePrompt"/);
   assert.match(scene, /fadeOut\(240/);
   assert.match(scene, /fadeIn\(520/);
   assert.match(scene, /getBossGameAssetsForRegion\(this\.state\.regionId, this\.assetProfile\)/);
@@ -510,8 +536,6 @@ test("the route and boss room are separated by an explicit player-confirmed tran
   assert.match(bridge, /enterBossRoom\(\)/);
   assert.doesNotMatch(bridge, /queueAutoFireToggle\(\)/);
   assert.match(bridge, /queueActiveAbility\(ability: ActiveAbility\)/);
-  assert.match(scene, /KeyCodes\.E/);
-  assert.match(engine, /emit\(state, "bossGatePrompt"/);
   assert.match(engine, /export function enterBossRoom/);
   assert.match(engine, /state\.player\.x = 820/);
   assert.match(engine, /state\.boss\.x = 1390/);

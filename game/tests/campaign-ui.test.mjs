@@ -70,7 +70,7 @@ test("first-sortie briefing separates automatic build skills from four new manua
   assert.match(screens, /레벨업 기술/);
   assert.match(screens, /직접 눌러 사용 · 자동 기술과 완전히 별개/);
   assert.match(screens, /여러 바퀴 회전하며 사방을 연속 타격/);
-  assert.match(screens, /ACTUAL GAMEPLAY/);
+  assert.match(screens, /실제 전투 화면/);
   assert.match(screens, /ability-example-callout/);
   for (const assetKey of ["tutorialNullSnare", "tutorialAegisWard", "tutorialStratosRun", "tutorialHelixTempest"]) {
     assert.match(screens, new RegExp(`exampleAssetKey: "${assetKey}"`));
