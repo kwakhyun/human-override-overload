@@ -5506,3 +5506,185 @@ kbd,
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+
+/* Base onboarding, readable facilities and confirm-before-sortie UX ------- */
+.dialogue-escape-hint {
+  display: inline-flex;
+  margin-left: 10px;
+  align-items: center;
+  gap: 5px;
+  color: #78959a;
+  font-size: 11px;
+}
+
+.dialogue-escape-hint kbd,
+.facility-close kbd,
+.campaign-back kbd,
+.region-sortie-close kbd {
+  padding: 2px 5px;
+  border: 1px solid rgba(160, 226, 237, 0.24);
+  color: #bde4ea;
+  background: rgba(2, 8, 11, 0.72);
+  font-size: 9px;
+}
+
+.base-facility-panel > header small { font-size: 12px; }
+.base-facility-panel > header p { color: #b6cbd0; font-size: 14px; line-height: 1.65; }
+.facility-close { min-height: 42px; padding: 9px 13px; font-size: 12px; }
+.facility-resource small { font-size: 11px; }
+.facility-resource span { color: #b6a17d; font-size: 11px; }
+.facility-upgrade > header small { font-size: 10px; }
+.facility-upgrade > header h3 { font-size: 20px; }
+.facility-upgrade > header b { max-width: 132px; color: #9deef9; font-size: 11px; line-height: 1.35; text-align: right; }
+.facility-upgrade > p { min-height: 62px; color: #b7c8cc; font-size: 13px; line-height: 1.65; }
+.facility-upgrade dl { gap: 8px; }
+.facility-upgrade dl > div { min-height: 40px; align-items: center; }
+.facility-upgrade dt { color: #8aa9af; font-size: 11px; }
+.facility-upgrade dd { color: #e0eef0; font-size: 12px; line-height: 1.35; }
+.facility-upgrade > button { min-height: 46px; font-size: 12px; font-weight: 700; }
+
+.region-focus-background {
+  position: absolute;
+  z-index: -2;
+  inset: -4%;
+  width: 108%;
+  height: 108%;
+  object-fit: cover;
+  opacity: 0.42;
+  filter: brightness(0.58) saturate(1.12) contrast(1.08);
+  transform: scale(1.035);
+  animation: region-focus-enter 260ms ease both;
+  transition: opacity 260ms ease, filter 260ms ease, transform 420ms ease;
+}
+
+.region-focus-background.is-selected {
+  opacity: 0.82;
+  filter: brightness(0.5) saturate(1.16) contrast(1.12);
+  transform: scale(1.105);
+}
+
+.region-select-screen .region-map-shade {
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(1, 5, 8, 0.88), rgba(1, 5, 8, 0.22) 58%, rgba(1, 5, 8, 0.8)),
+    linear-gradient(180deg, rgba(1, 5, 8, 0.74), transparent 34%, rgba(1, 5, 8, 0.92));
+}
+
+.region-card {
+  min-height: 206px;
+  border-width: 1px;
+  transition: transform 200ms ease, border-color 160ms ease, opacity 180ms ease, filter 180ms ease;
+}
+
+.region-card:hover:not(:disabled),
+.region-card:focus-visible:not(:disabled),
+.region-card[aria-pressed="true"] {
+  z-index: 2;
+  border-color: #8cf1ff;
+  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.58), 0 0 32px rgba(77, 226, 249, 0.14);
+  transform: translateY(-9px) scale(1.025);
+}
+
+.region-select-screen.has-selection .region-card-grid {
+  opacity: 0.24;
+  filter: blur(1.5px) saturate(0.65);
+  transform: translateY(10px) scale(0.985);
+  pointer-events: none;
+}
+
+.region-card-grid { transition: opacity 180ms ease, filter 180ms ease, transform 220ms ease; }
+
+.region-sortie-dialog {
+  position: absolute;
+  z-index: 10;
+  top: max(24px, env(safe-area-inset-top));
+  right: max(28px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  display: flex;
+  width: min(520px, 42vw);
+  padding: clamp(22px, 2.5vw, 34px);
+  overflow: auto;
+  flex-direction: column;
+  border: 1px solid rgba(120, 232, 249, 0.52);
+  color: #edfafd;
+  background:
+    linear-gradient(145deg, rgba(4, 18, 25, 0.985), rgba(2, 8, 13, 0.98)),
+    #02080d;
+  box-shadow: -28px 0 90px rgba(0, 0, 0, 0.68), inset 0 0 80px rgba(79, 220, 242, 0.035);
+  backdrop-filter: blur(18px);
+  animation: region-sortie-open 220ms ease both;
+}
+
+.region-sortie-close {
+  display: inline-flex;
+  width: max-content;
+  min-height: 38px;
+  padding: 7px 10px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(126, 221, 237, 0.24);
+  color: #b8d8dd;
+  background: rgba(2, 9, 12, 0.72);
+  font-size: 12px;
+}
+
+.region-sortie-kicker { display: flex; margin-top: auto; align-items: center; gap: 9px; }
+.region-sortie-kicker span { color: #72eafd; font-size: 11px; font-weight: 700; }
+.region-sortie-kicker i { padding: 4px 7px; color: #ffe0a9; background: rgba(122, 76, 17, 0.45); font-size: 10px; font-style: normal; }
+.region-sortie-dialog h2 { margin: 10px 0 0; font-size: clamp(34px, 4vw, 58px); line-height: 0.98; letter-spacing: -0.035em; }
+.region-sortie-dialog > p { margin: 12px 0 0; color: #b8cbd0; font-size: 15px; line-height: 1.65; word-break: keep-all; }
+.region-sortie-intel { display: grid; margin: 22px 0 0; gap: 7px; }
+.region-sortie-intel > div { display: grid; min-height: 44px; padding: 9px 12px; grid-template-columns: 105px minmax(0, 1fr); align-items: center; gap: 12px; border-left: 2px solid rgba(106, 231, 250, 0.54); background: rgba(89, 211, 231, 0.055); }
+.region-sortie-intel dt { color: #71939a; font-size: 11px; }
+.region-sortie-intel dd { margin: 0; color: #e1eff2; font-size: 12px; line-height: 1.45; text-align: right; }
+.region-sortie-rewards { display: flex; margin-top: 16px; padding: 11px 12px; flex-wrap: wrap; align-items: center; gap: 7px 12px; border: 1px solid rgba(255, 194, 100, 0.22); background: rgba(87, 52, 11, 0.2); }
+.region-sortie-rewards small { width: 100%; color: #bd9459; font-size: 10px; }
+.region-sortie-rewards span { color: #ffd18b; font-size: 12px; font-weight: 700; }
+.region-sortie-launch { display: grid; width: 100%; min-height: 70px; margin-top: 18px; padding: 12px 16px; grid-template-columns: 30px minmax(0, 1fr) 22px; align-items: center; gap: 12px; border: 1px solid rgba(118, 235, 253, 0.72); color: #effdff; text-align: left; background: linear-gradient(135deg, rgba(28, 132, 149, 0.86), rgba(7, 56, 68, 0.94)); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35), 0 0 24px rgba(87, 230, 252, 0.12); }
+.region-sortie-launch > svg { width: 26px; height: 26px; color: #9af4ff; }
+.region-sortie-launch span { display: flex; flex-direction: column; }
+.region-sortie-launch small { color: #86c6cf; font-size: 10px; }
+.region-sortie-launch strong { margin-top: 3px; font-size: 16px; }
+.region-sortie-launch:hover,
+.region-sortie-launch:focus-visible { border-color: #d2fbff; background: linear-gradient(135deg, rgba(41, 165, 183, 0.95), rgba(9, 73, 87, 0.98)); transform: translateY(-2px); }
+
+@keyframes region-focus-enter {
+  from { opacity: 0; transform: scale(1); }
+}
+
+@keyframes region-sortie-open {
+  from { opacity: 0; transform: translateX(28px); }
+}
+
+@media (max-width: 900px), (max-height: 600px) {
+  .base-facility-panel > header small { font-size: 9px; }
+  .base-facility-panel > header p { display: block; max-height: 30px; overflow: hidden; font-size: 10px; line-height: 1.4; }
+  .facility-close { min-height: 32px; padding: 5px 8px; font-size: 9px; }
+  .facility-upgrade > header h3 { font-size: 14px; }
+  .facility-upgrade > header b { grid-column: 2; max-width: none; font-size: 8px; text-align: left; }
+  .facility-upgrade > p { min-height: 39px; font-size: 9px; }
+  .facility-upgrade dt,
+  .facility-upgrade dd { font-size: 8px; }
+  .facility-upgrade > button { min-height: 32px; font-size: 8px; }
+  .region-sortie-dialog { top: 7px; right: 7px; bottom: 7px; width: min(480px, 56vw); padding: 13px 15px; }
+  .region-sortie-close { min-height: 28px; padding: 4px 7px; font-size: 9px; }
+  .region-sortie-kicker { margin-top: 8px; }
+  .region-sortie-dialog h2 { margin-top: 5px; font-size: 27px; }
+  .region-sortie-dialog > p { margin-top: 6px; font-size: 10px; line-height: 1.45; }
+  .region-sortie-intel { margin-top: 8px; gap: 4px; }
+  .region-sortie-intel > div { min-height: 28px; padding: 4px 7px; grid-template-columns: 76px 1fr; }
+  .region-sortie-intel dt,
+  .region-sortie-intel dd { font-size: 8px; }
+  .region-sortie-rewards { margin-top: 7px; padding: 5px 7px; }
+  .region-sortie-rewards small,
+  .region-sortie-rewards span { font-size: 8px; }
+  .region-sortie-launch { min-height: 48px; margin-top: 8px; padding: 7px 10px; grid-template-columns: 22px 1fr 16px; }
+  .region-sortie-launch > svg { width: 19px; height: 19px; }
+  .region-sortie-launch small { font-size: 7px; }
+  .region-sortie-launch strong { font-size: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .region-focus-background,
+  .region-sortie-dialog { animation: none; transition: none; }
+}

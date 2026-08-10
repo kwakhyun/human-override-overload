@@ -43,7 +43,8 @@ test("an empty campaign is versioned and always contains exactly three slots", (
   assert.equal(slot.id, "slot-1");
   assert.equal(slot.currentChapterId, "chapter-01");
   assert.deepEqual(slot.unlockedRegionIds, ["wrong-engine-core"]);
-  assert.equal(slot.homeBaseUnlocked, false);
+  assert.equal(slot.homeBaseUnlocked, true);
+  assert.equal(slot.lastCheckpoint, "home-base");
   assert.equal(slot.abilityGuideSeen, false);
   assert.equal(slot.combatOverlaySeen, false);
   assert.equal(campaign.slots[0], null, "slot creation must not mutate the previous campaign");

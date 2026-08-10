@@ -14,6 +14,23 @@ test("App connects the three save slots to base, airship selection, regional Pha
   assert.match(app, /saveCampaign\(completed\)/);
   assert.match(app, /createOverloadGame\(host,[\s\S]*\}, \{ regionId, combatBonuses \}\)/);
   assert.match(app, /status === "victory"[\s\S]*setScreen\("base"\)/);
+  assert.match(app, /setActiveNpc\(isFreshSlot \? BASE_NPCS\.rhea : null\)/);
+  assert.match(app, /setGuideReturnScreen\("base"\)[\s\S]*setScreen\("base"\)/);
+});
+
+test("region selection previews and confirms a sortie instead of launching on card click", async () => {
+  const [app, screens, sounds] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
+    readFile(new URL("src/audio/sfx.js", root), "utf8"),
+  ]);
+  assert.match(screens, /setSelectedRegionId\(region\.id\)/);
+  assert.match(screens, /className="region-sortie-dialog"/);
+  assert.match(screens, /출격 준비 완료 · 작전 시작/);
+  assert.match(screens, /onClick=\{\(\) => onSelect\(selectedRegion\.id\)\}/);
+  assert.match(screens, /event\.key !== "Escape"/);
+  assert.match(app, /document\.addEventListener\("pointerdown", handleButtonPointer, true\)/);
+  for (const cue of ["uiHover", "uiConfirm", "uiClose"]) assert.match(sounds, new RegExp(`case "${cue}"`));
 });
 
 test("active campaign UI uses authored HAVEN portraits, including standalone RHEA, and contains no discarded fire toggle", async () => {
@@ -45,7 +62,9 @@ test("first-sortie briefing separates automatic build skills from four new manua
     readFile(new URL("src/game/save/campaignSave.js", root), "utf8"),
   ]);
   assert.match(app, /screen === "guide"/);
-  assert.match(app, /!nextSlot\?\.abilityGuideSeen && !debugGuideBypass/);
+  assert.match(app, /const isFreshSlot = !existing/);
+  assert.match(app, /setActiveNpc\(isFreshSlot \? BASE_NPCS\.rhea : null\)/);
+  assert.doesNotMatch(app, /!nextSlot\?\.abilityGuideSeen && !debugGuideBypass/);
   assert.match(app, /new URLSearchParams\(window\.location\.search\)\.get\("debug"\) === "1"/);
   assert.match(app, /completeAbilityGuide\(campaign, activeSlotId\)/);
   assert.match(app, /completeCombatOverlay\(campaign, activeSlotId\)/);

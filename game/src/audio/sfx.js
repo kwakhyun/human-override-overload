@@ -17,6 +17,9 @@ const EVENT_COOLDOWNS_MS = {
   arc: 76,
   detectionTick: 76,
   click: 36,
+  uiHover: 42,
+  uiConfirm: 90,
+  uiClose: 70,
   dash: 80,
   playerHit: 90,
   explosion: 110,
@@ -69,6 +72,9 @@ const EVENT_VOICE_COSTS = {
   upgrade: 4,
   victory: 4,
   click: 1,
+  uiHover: 1,
+  uiConfirm: 2,
+  uiClose: 1,
   collect: 1,
 };
 
@@ -435,6 +441,16 @@ export function createSfxEngine() {
         [261, 329, 392, 523].forEach((frequency, index) => {
           tone({ frequency, endFrequency: frequency * 1.01, duration: 0.34, delay: index * 0.1, volume: 0.042, wet: 0.52 });
         });
+        break;
+      case "uiHover":
+        tone({ frequency: 760, endFrequency: 880, duration: 0.045, type: "triangle", volume: 0.009, filterFrequency: 2400 });
+        break;
+      case "uiConfirm":
+        tone({ frequency: 330, endFrequency: 660, duration: 0.12, type: "triangle", volume: 0.028, wet: 0.24 });
+        tone({ frequency: 660, endFrequency: 990, duration: 0.13, delay: 0.08, type: "sine", volume: 0.022, wet: 0.3 });
+        break;
+      case "uiClose":
+        tone({ frequency: 560, endFrequency: 280, duration: 0.1, type: "triangle", volume: 0.02, filterFrequency: 1500, wet: 0.12 });
         break;
       case "click":
       default:

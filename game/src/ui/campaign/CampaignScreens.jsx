@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AirplaneTilt,
   ArrowLeft,
@@ -285,9 +285,10 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
               {npc.interactionLabel || "상호작용"}{npc.interaction === "open-region-select" ? <AirplaneTilt weight="fill" /> : <Crosshair weight="bold" />}
             </button>
           )}
-          <button type="button" onClick={final ? onClose : onAdvance}>
+          <button type="button" data-ui-sound={final ? "uiClose" : "click"} onClick={final ? onClose : onAdvance}>
             {final ? "대화 종료" : "다음"}<ChatText weight="bold" />
           </button>
+          <small className="dialogue-escape-hint"><kbd>ESC</kbd> 닫기</small>
         </footer>
       </div>
     </section>
@@ -306,11 +307,11 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
           <h2 id="base-facility-name">{facility.name}</h2>
           <p>{facility.description}</p>
         </div>
-        <button type="button" className="facility-close" onClick={onClose} aria-label={`${facility.name} 닫기`}><ArrowLeft weight="bold" /> 기지로</button>
+        <button type="button" className="facility-close" data-ui-sound="uiClose" onClick={onClose} aria-label={`${facility.name} 닫기`}><ArrowLeft weight="bold" /> 기지로 <kbd>ESC</kbd></button>
       </header>
 
       <div className="facility-resource">
-        <small>{facility.currencyLabel}</small>
+        <small>사용 가능한 {facility.currencyLabel}</small>
         <strong>{facility.currency}</strong>
         <span>{facility.currencyHint}</span>
       </div>
@@ -324,7 +325,7 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
               <header>
                 <span>{String(upgrade.order || 1).padStart(2, "0")}</span>
                 <div><small>{upgrade.category}</small><h3>{upgrade.name}</h3></div>
-                <b>랭크 {upgrade.rank} / {upgrade.maxRank}</b>
+                <b>{maxed ? "개조 완료" : `현재 ${upgrade.rank}단계 / 최대 ${upgrade.maxRank}단계`}</b>
               </header>
               <div className="upgrade-ranks" aria-label={`${upgrade.maxRank}랭크 중 ${upgrade.rank}랭크`}>
                 {Array.from({ length: upgrade.maxRank }, (_, index) => <i className={index < upgrade.rank ? "is-active" : ""} key={index} />)}
@@ -334,8 +335,8 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
                 <div><dt>현재 효과</dt><dd>{upgrade.currentEffect || "미적용"}</dd></div>
                 <div><dt>{maxed ? "완료" : "다음 랭크"}</dt><dd>{maxed ? "최대 출력 도달" : upgrade.nextEffect}</dd></div>
               </dl>
-              <button type="button" disabled={disabled} onClick={() => onPurchase(upgrade.id)}>
-                {maxed ? <><CheckCircle weight="fill" /> 최대 랭크</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><FacilityIcon weight="bold" /> {upgrade.nextCost} {facility.currencyShortLabel}</>}
+              <button type="button" data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => onPurchase(upgrade.id)}>
+                {maxed ? <><CheckCircle weight="fill" /> 개조 완료</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><FacilityIcon weight="bold" /> {upgrade.nextCost} {facility.currencyShortLabel}로 강화</>}
               </button>
             </article>
           );
@@ -486,15 +487,52 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
   const background = assetSource(assets?.regionMap);
   const unlocked = new Set(campaign?.unlockedRegionIds || ["wrong-engine-core"]);
   const completed = new Set(campaign?.completedRegionIds || []);
+  const firstUnlockedId = (regions || []).find((region) => unlocked.has(region.id))?.id || null;
+  const [selectedRegionId, setSelectedRegionId] = useState(null);
+  const [hoveredRegionId, setHoveredRegionId] = useState(null);
+  const previewRegionId = selectedRegionId || hoveredRegionId || firstUnlockedId;
+  const previewRegion = useMemo(
+    () => (regions || []).find((region) => region.id === previewRegionId) || null,
+    [previewRegionId, regions],
+  );
+  const selectedRegion = useMemo(
+    () => (regions || []).find((region) => region.id === selectedRegionId) || null,
+    [selectedRegionId, regions],
+  );
+
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      if (selectedRegionId) {
+        setSelectedRegionId(null);
+        return;
+      }
+      onBack?.();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [onBack, selectedRegionId]);
+
+  const previewSource = previewRegion?.assets?.dom?.thumbnail?.path;
   return (
-    <main className="campaign-shell region-select-screen">
+    <main className={`campaign-shell region-select-screen${selectedRegion ? " has-selection" : ""}`}>
       {background && <img className="campaign-background" src={background} alt="비행선 전술 지도에 표시된 세 개의 작전 구역" />}
+      {previewSource && (
+        <img
+          className={`region-focus-background${selectedRegion ? " is-selected" : ""}`}
+          src={previewSource}
+          alt=""
+          aria-hidden="true"
+          key={previewRegion?.id}
+        />
+      )}
       <div className="region-map-shade" aria-hidden="true" />
       <header className="region-select-heading">
-        <button type="button" className="campaign-back" onClick={onBack}><ArrowLeft weight="bold" /> 기지</button>
+        <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={onBack}><ArrowLeft weight="bold" /> 기지 <kbd>ESC</kbd></button>
         <small>스카이라인 · 비행 관제</small>
         <h1>출격 구역 선택</h1>
-        <p>각 지역의 군단을 돌파하고 소버린의 지역 추론핵을 파괴하세요.</p>
+        <p>구역을 선택해 위험 요소를 확인한 뒤, 작전 상세 창에서 출격을 승인하세요.</p>
       </header>
       <section className="region-card-grid" aria-label="출격 가능한 지역">
         {(regions || []).map((region, index) => {
@@ -505,7 +543,12 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
               type="button"
               className={`region-card region-${index + 1}${isCompleted ? " is-completed" : ""}`}
               disabled={!isUnlocked}
-              onClick={() => onSelect(region.id)}
+              aria-pressed={selectedRegionId === region.id}
+              onMouseEnter={() => isUnlocked && setHoveredRegionId(region.id)}
+              onMouseLeave={() => setHoveredRegionId(null)}
+              onFocus={() => isUnlocked && setHoveredRegionId(region.id)}
+              onBlur={() => setHoveredRegionId(null)}
+              onClick={() => setSelectedRegionId(region.id)}
               key={region.id}
             >
               <span>작전 {String(index + 1).padStart(2, "0")}</span>
@@ -519,11 +562,35 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
                 </span>
               )}
               <small>보스 · {BOSS_DISPLAY[region.bossName] || region.bossName}</small>
-              <b>{!isUnlocked ? <><Lock weight="fill" /> 잠김</> : isCompleted ? <><CheckCircle weight="fill" /> 재출격</> : <><MapTrifold weight="fill" /> 출격</>}</b>
+              <b>{!isUnlocked ? <><Lock weight="fill" /> 잠김</> : isCompleted ? <><CheckCircle weight="fill" /> 상세 확인 · 재출격</> : <><MapTrifold weight="fill" /> 작전 상세 확인</>}</b>
             </button>
           );
         })}
       </section>
+      {selectedRegion && (
+        <section className="region-sortie-dialog" role="dialog" aria-modal="true" aria-labelledby="region-sortie-title">
+          <button type="button" className="region-sortie-close" data-ui-sound="uiClose" onClick={() => setSelectedRegionId(null)} aria-label="작전 상세 닫기">
+            <ArrowLeft weight="bold" /> 구역 목록 <kbd>ESC</kbd>
+          </button>
+          <div className="region-sortie-kicker"><span>{selectedRegion.chapterLabel}</span><i>{completed.has(selectedRegion.id) ? "해방 기록 있음" : "첫 공략"}</i></div>
+          <h2 id="region-sortie-title">{selectedRegion.koreanName || selectedRegion.name}</h2>
+          <p>{localizeWorldText(selectedRegion.description)}</p>
+          <dl className="region-sortie-intel">
+            <div><dt>주요 적 조합</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.composition)}</dd></div>
+            <div><dt>보스 패턴</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.bossSignatures)}</dd></div>
+            <div><dt>최종 목표</dt><dd>{BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName} 파괴</dd></div>
+            <div><dt>예상 교전</dt><dd>기계 군단 {selectedRegion.enemyBudget}기</dd></div>
+          </dl>
+          <div className="region-sortie-rewards">
+            <small>첫 승리 회수 자원</small>
+            <span>연구 자료 +{selectedRegion.victoryRewards?.firstClear?.researchData || 0}</span>
+            <span>장비 부품 +{selectedRegion.victoryRewards?.firstClear?.equipmentParts || 0}</span>
+          </div>
+          <button type="button" className="region-sortie-launch" data-ui-sound="uiConfirm" onClick={() => onSelect(selectedRegion.id)}>
+            <AirplaneTilt weight="fill" /><span><small>나이트자 항로 승인</small><strong>출격 준비 완료 · 작전 시작</strong></span><ArrowRight weight="bold" />
+          </button>
+        </section>
+      )}
     </main>
   );
 }

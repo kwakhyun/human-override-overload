@@ -126,7 +126,10 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
     ? migrateLegacyProgression(slot, completedRegionIds)
     : sanitizeBaseProgression(slot.progression);
   const fallbackDate = new Date(0).toISOString();
-  const homeBaseUnlocked = completedRegionIds.includes(DEFAULT_REGION_ID);
+  // HAVEN-09 is the campaign's opening hub. Chapter 1 completion still owns
+  // the regional unlock milestone, but a fresh slot must be able to brief,
+  // research and board the airship before its first sortie.
+  const homeBaseUnlocked = true;
   return {
     id: slotIdForIndex(index),
     createdAt: typeof slot.createdAt === "string" ? slot.createdAt : fallbackDate,
@@ -144,7 +147,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
     progression,
     lastRegionRewards: sanitizeLastRegionRewards(slot.lastRegionRewards),
     lastRegionId: KNOWN_REGION_IDS.has(slot.lastRegionId) ? slot.lastRegionId : null,
-    lastCheckpoint: completedRegionIds.includes(DEFAULT_REGION_ID) ? "home-base" : "chapter-01",
+    lastCheckpoint: "home-base",
   };
 }
 

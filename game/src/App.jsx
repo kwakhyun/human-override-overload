@@ -1943,6 +1943,43 @@ export function App() {
     if (bgmRef.current) bgmRef.current.muted = !soundEnabled;
   }, [soundEnabled]);
 
+  useEffect(() => {
+    const handleButtonPointer = (event) => {
+      const button = event.target instanceof Element ? event.target.closest("button") : null;
+      if (!button || button.disabled) return;
+      sfx.start();
+      sfx.play(button.dataset.uiSound || "click");
+    };
+    const handleButtonHover = (event) => {
+      const button = event.target instanceof Element ? event.target.closest("button") : null;
+      const previous = event.relatedTarget instanceof Element ? event.relatedTarget.closest("button") : null;
+      if (!button || button === previous || button.disabled) return;
+      sfx.play("uiHover");
+    };
+    document.addEventListener("pointerdown", handleButtonPointer, true);
+    document.addEventListener("pointerover", handleButtonHover, true);
+    return () => {
+      document.removeEventListener("pointerdown", handleButtonPointer, true);
+      document.removeEventListener("pointerover", handleButtonHover, true);
+    };
+  }, [sfx]);
+
+  useEffect(() => {
+    const handleBaseEscape = (event) => {
+      if (event.key !== "Escape" || screen !== "base") return;
+      if (activeFacilityId) {
+        event.preventDefault();
+        setActiveFacilityId(null);
+      } else if (activeNpc) {
+        event.preventDefault();
+        setActiveNpc(null);
+        setNpcLineIndex(0);
+      }
+    };
+    window.addEventListener("keydown", handleBaseEscape);
+    return () => window.removeEventListener("keydown", handleBaseEscape);
+  }, [activeFacilityId, activeNpc, screen]);
+
   const startAudio = useCallback((restart = false) => {
     sfx.start();
     const bgm = bgmRef.current;
@@ -1988,21 +2025,15 @@ export function App() {
     saveCampaign(nextCampaign);
     setActiveSlotId(slotId);
     setActiveRegionId(nextSlot?.lastRegionId || DEFAULT_REGION_ID);
-    setActiveNpc(null);
+    const isFreshSlot = !existing;
+    setActiveNpc(isFreshSlot ? BASE_NPCS.rhea : null);
+    setNpcLineIndex(0);
     setActiveFacilityId(null);
     setResult(null);
-    if (!nextSlot?.abilityGuideSeen && !debugGuideBypass) {
-      setGuideReturnScreen(nextSlot?.homeBaseUnlocked ? "base" : "game");
-      setScreen("guide");
-      return;
-    }
-    if (nextSlot?.homeBaseUnlocked) {
-      setScreen("base");
-      return;
-    }
-    startAudio(true);
-    setScreen("game");
-  }, [campaign, debugGuideBypass, startAudio]);
+    setGuideReturnScreen("base");
+    startAudio(false);
+    setScreen("base");
+  }, [campaign, startAudio]);
 
   const finish = useCallback((nextResult) => {
     const bgm = bgmRef.current;
