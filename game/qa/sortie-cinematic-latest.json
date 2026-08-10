@@ -1,0 +1,86 @@
+{
+  "desktop": {
+    "wrong-engine-core": {
+      "attachedAt": 1323.2000002861023,
+      "metadataAt": 1361.8000001907349,
+      "playingAt": 1394.8000001907349,
+      "endedAt": 7502.5,
+      "canvasAt": 7665.800000190735,
+      "duration": 6.041667,
+      "width": 1264,
+      "height": 720,
+      "source": "http://127.0.0.1:4174/assets/overload/campaign/sortie/wrong-engine-sortie.mp4",
+      "clickToCanvasMs": 6591.099999904633,
+      "playbackMs": 6107.699999809265,
+      "canvasBeforeEnded": 0
+    },
+    "glass-dune": {
+      "attachedAt": 1415.0999999046326,
+      "metadataAt": 1437.8000001907349,
+      "playingAt": 1461.5,
+      "endedAt": 7580.099999904633,
+      "canvasAt": 7642.800000190735,
+      "duration": 6.041667,
+      "width": 1264,
+      "height": 720,
+      "source": "http://127.0.0.1:4174/assets/overload/campaign/sortie/glass-dune-sortie.mp4",
+      "clickToCanvasMs": 6561,
+      "playbackMs": 6118.599999904633,
+      "canvasBeforeEnded": 0
+    },
+    "abyssal-archive": {
+      "attachedAt": 1334,
+      "metadataAt": 1365.4000000953674,
+      "playingAt": 1396.4000000953674,
+      "endedAt": 7497.599999904633,
+      "canvasAt": 7544.5,
+      "duration": 6.041667,
+      "width": 1264,
+      "height": 720,
+      "source": "http://127.0.0.1:4174/assets/overload/campaign/sortie/abyssal-archive-sortie.mp4",
+      "clickToCanvasMs": 6467.299999713898,
+      "playbackMs": 6101.199999809265,
+      "canvasBeforeEnded": 0
+    }
+  },
+  "mobile": {
+    "viewport": {
+      "width": 812,
+      "height": 375
+    },
+    "video": {
+      "x": 0,
+      "y": 0,
+      "width": 812,
+      "height": 375
+    },
+    "heading": {
+      "x": 24,
+      "y": 18,
+      "width": 299.234375,
+      "height": 76.421875
+    },
+    "status": {
+      "x": 24,
+      "y": 341,
+      "width": 764,
+      "height": 16
+    }
+  },
+  "pageErrors": [],
+  "failedResponses": [],
+  "errors": [],
+  "firstSortie": {
+    "beforeBriefingComplete": {
+      "guide": 1,
+      "video": 0,
+      "canvas": 0
+    },
+    "afterBriefingComplete": {
+      "guide": 0,
+      "video": 1,
+      "canvas": 0,
+      "source": "http://127.0.0.1:4174/assets/overload/campaign/sortie/wrong-engine-sortie.mp4"
+    }
+  }
+}

@@ -983,6 +983,27 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 원본입니다. 현재 게임에서는 로드하지 않으며 제작 기록을 위해 보관하고 production build에는
 포함하지 않습니다.
 
+## User-provided regional sortie cinematics
+
+- 출처: 프로젝트 사용자가 직접 제공한 MP4 영상 3편. ImageGen, 외부 게임 영상, 추가 생성 프롬프트,
+  재인코딩 또는 프레임 편집을 사용하지 않았습니다.
+- 공통 메타데이터: 1264×720, 24fps, 브라우저 보고 재생 시간 6.041667초.
+- 원본 → 런타임 경로:
+  - `C:/Users/82105/Downloads/1구역 비행선 출격 연출.mp4` →
+    `public/assets/overload/campaign/sortie/wrong-engine-sortie.mp4`
+  - `C:/Users/82105/Downloads/2구역 비행선 출격 연출.mp4` →
+    `public/assets/overload/campaign/sortie/glass-dune-sortie.mp4`
+  - `C:/Users/82105/Downloads/3구역 비행선 출격 연출.mp4` →
+    `public/assets/overload/campaign/sortie/abyssal-archive-sortie.mp4`
+- SHA-256:
+  - WRONG ENGINE: `86A4720037F2ABD510665D2761E03350891382DA25E9429EBEDF4FDF10AB4952`
+  - GLASS DUNE: `CBB610F27D332938B910341CB3BD4055580203D1F125F6C6E6017B437BCC610F`
+  - ABYSSAL ARCHIVE: `3C20BFB5DB6E941A03CA0CED7CF54F9B35514F424CEC6468B3A0BE1E2D7D3716`
+- 세 런타임 파일은 원본과 byte-identical한 이름 변경 사본입니다. 지역 선택 전에는 내려받지 않고,
+  선택한 한 편만 `preload="metadata"`로 마운트합니다. 기지 BGM은 재생 중 일시 정지하며 영상의
+  `ended` 이벤트 직후 선택 지역 Phaser 전투와 메인 BGM을 시작합니다. 전체 사운드 토글이 꺼져
+  있으면 영상도 음소거됩니다.
+
 ## Main background music
 
 - 파일: `public/assets/audio/overload-main-theme.mp3`

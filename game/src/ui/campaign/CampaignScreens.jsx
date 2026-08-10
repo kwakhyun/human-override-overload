@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AirplaneTilt,
   ArrowLeft,
@@ -592,6 +592,77 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
             <AirplaneTilt weight="fill" /><span><small>나이트자 항로 승인</small><strong>출격 준비 완료 · 작전 시작</strong></span><ArrowRight weight="bold" />
           </button>
         </section>
+      )}
+    </main>
+  );
+}
+
+export function SortieCinematicScreen({ region, videoSource, soundEnabled = true, onComplete }) {
+  const videoRef = useRef(null);
+  const completedRef = useRef(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [playing, setPlaying] = useState(false);
+
+  const complete = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    onComplete?.();
+  }, [onComplete]);
+
+  const startPlayback = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.play().then(() => setAutoplayBlocked(false)).catch(() => setAutoplayBlocked(true));
+  }, []);
+
+  useEffect(() => {
+    completedRef.current = false;
+    setAutoplayBlocked(false);
+    setPlaying(false);
+    const frame = window.requestAnimationFrame(startPlayback);
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [startPlayback, videoSource]);
+
+  const handlePlaying = () => {
+    setPlaying(true);
+    setAutoplayBlocked(false);
+  };
+
+  const koreanName = region?.koreanName || region?.name || "작전 구역";
+  const englishName = region?.name || "SORTIE";
+  return (
+    <main className={`sortie-cinematic sortie-${region?.id || "unknown"}${playing ? " is-playing" : ""}`} aria-label={`${koreanName} 출격 영상`}>
+      <video
+        ref={videoRef}
+        className="sortie-cinematic-video"
+        src={assetSource(videoSource)}
+        autoPlay
+        playsInline
+        preload="metadata"
+        muted={!soundEnabled}
+        controls={false}
+        disablePictureInPicture
+        controlsList="nodownload noplaybackrate nofullscreen"
+        onPlaying={handlePlaying}
+        onEnded={complete}
+        onError={complete}
+      />
+      <div className="sortie-cinematic-grade" aria-hidden="true" />
+      <header className="sortie-cinematic-heading">
+        <small>NIGHTJAR // 출격 항로 연결</small>
+        <h1><span>{koreanName}</span><em>{englishName}</em></h1>
+      </header>
+      <footer className="sortie-flight-status" aria-live="polite">
+        <span><AirplaneTilt weight="fill" /> 나이트자 이륙</span>
+        <div className="sortie-flight-progress" aria-hidden="true"><i /></div>
+        <b>{playing ? "전장 동기화 중" : "출격 영상 준비 중"}</b>
+      </footer>
+      {autoplayBlocked && (
+        <button type="button" className="sortie-play-fallback command-ui-button" data-ui-sound="uiConfirm" onClick={startPlayback}>
+          <Play weight="fill" /> 출격 영상 재생
+        </button>
       )}
     </main>
   );

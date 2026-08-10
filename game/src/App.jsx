@@ -55,6 +55,7 @@ import {
   MANUAL_ABILITY_GUIDE,
   RegionSelectScreen,
   SaveSlotScreen,
+  SortieCinematicScreen,
 } from "./ui/campaign/CampaignScreens.jsx";
 import {
   chooseLevelReward,
@@ -1879,7 +1880,7 @@ export function App() {
   const [activeNpc, setActiveNpc] = useState(null);
   const [npcLineIndex, setNpcLineIndex] = useState(0);
   const [activeFacilityId, setActiveFacilityId] = useState(null);
-  const [guideReturnScreen, setGuideReturnScreen] = useState("game");
+  const [guideReturnScreen, setGuideReturnScreen] = useState("sortie");
   const bgmRef = useRef(null);
   const sfx = useMemo(() => createSfxEngine(), []);
   const regions = useMemo(() => getCampaignRegions(), []);
@@ -1945,6 +1946,11 @@ export function App() {
     tutorialAegisWard: assets?.tutorialAegisWard,
     tutorialStratosRun: assets?.tutorialStratosRun,
     tutorialHelixTempest: assets?.tutorialHelixTempest,
+    sortieVideos: Object.freeze({
+      "wrong-engine-core": assets?.sortieWrongEngine,
+      "glass-dune": assets?.sortieGlassDune,
+      "abyssal-archive": assets?.sortieAbyssalArchive,
+    }),
   }), [assets]);
   const debugGuideBypass = import.meta.env.DEV
     && typeof window !== "undefined"
@@ -2016,6 +2022,18 @@ export function App() {
     setScreen("save");
   }, [sfx, startAudio]);
 
+  const beginSortieCinematic = useCallback((regionId) => {
+    setActiveRegionId(regionId);
+    const bgm = bgmRef.current;
+    if (bgm) bgm.pause();
+    setScreen("sortie");
+  }, []);
+
+  const enterCombat = useCallback(() => {
+    startAudio(true);
+    setScreen("game");
+  }, [startAudio]);
+
   const launchCombat = useCallback((regionId) => {
     const slot = activeSlotId ? getCampaignSlot(campaign, activeSlotId) : null;
     if (!slot || !canLaunchRegion(slot, regionId)) return;
@@ -2024,13 +2042,12 @@ export function App() {
     setActiveRegionId(regionId);
     setResult(null);
     if (!slot.abilityGuideSeen && !debugGuideBypass) {
-      setGuideReturnScreen("game");
+      setGuideReturnScreen("sortie");
       setScreen("guide");
       return;
     }
-    startAudio(true);
-    setScreen("game");
-  }, [activeSlotId, campaign, debugGuideBypass, startAudio]);
+    beginSortieCinematic(regionId);
+  }, [activeSlotId, beginSortieCinematic, campaign, debugGuideBypass]);
 
   const selectSaveSlot = useCallback((index) => {
     const slotId = `slot-${index + 1}`;
@@ -2119,9 +2136,12 @@ export function App() {
     setActiveNpc(null);
     setNpcLineIndex(0);
     setActiveFacilityId(null);
-    if (guideReturnScreen === "game") startAudio(true);
+    if (guideReturnScreen === "sortie") {
+      beginSortieCinematic(activeRegionId);
+      return;
+    }
     setScreen(guideReturnScreen);
-  }, [activeSlotId, campaign, guideReturnScreen, startAudio]);
+  }, [activeRegionId, activeSlotId, beginSortieCinematic, campaign, guideReturnScreen]);
 
   const finishCombatOverlay = useCallback(() => {
     if (!activeSlotId) return;
@@ -2180,6 +2200,15 @@ export function App() {
     );
   } else if (screen === "regions" && campaignView) {
     content = <RegionSelectScreen regions={regions} campaign={campaignView} assets={campaignAssets} onSelect={launchCombat} onBack={() => setScreen("base")} />;
+  } else if (screen === "sortie") {
+    content = (
+      <SortieCinematicScreen
+        region={activeRegion}
+        videoSource={campaignAssets.sortieVideos[activeRegionId]}
+        soundEnabled={soundEnabled}
+        onComplete={enterCombat}
+      />
+    );
   } else if (screen === "game") {
     content = (
       <PhaserArenaScreen
