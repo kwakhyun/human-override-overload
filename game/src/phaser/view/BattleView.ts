@@ -363,6 +363,7 @@ export class BattleView {
     this.prepareAtlas(ASSET_KEYS.sovereignGateMotion, 6, 1);
     ensureAtlasFrames(scene, ASSET_KEYS.healingKitMotion, 4, 1);
     this.preparePixelAtlas(ASSET_KEYS.manualAbilityPixel, 6, 4);
+    this.preparePixelAtlas(ASSET_KEYS.enemyDeathPixel, 6, 1);
     const hasSquadTraces = scene.textures.exists(ASSET_KEYS.squadTraces);
     if (hasSquadTraces) ensureAtlasFrames(scene, ASSET_KEYS.squadTraces, 3, 1);
     this.mainCamera = scene.cameras.main;
@@ -1257,17 +1258,17 @@ export class BattleView {
     const spriteCap = quality.id === "performance" ? 6 : quality.id === "cinematic" ? 16 : 10;
     let visible = 0;
 
-    const snares = Array.isArray(state?.gravitySnares) ? state.gravitySnares : [];
-    const snareCap = quality.id === "performance" ? 1 : quality.id === "cinematic" ? 3 : 2;
-    for (let index = Math.max(0, snares.length - snareCap); index < snares.length && visible < spriteCap; index += 1) {
-      const snare = snares[index];
-      const geometry = snare?.geometry ?? snare;
-      const x = finite(geometry?.x, finite(snare?.x));
-      const y = finite(geometry?.y, finite(snare?.y));
-      const radius = Math.max(24, finite(geometry?.radius, finite(snare?.radius, 300)));
+    const pulses = Array.isArray(state?.empPulses) ? state.empPulses : [];
+    const pulseCap = quality.id === "performance" ? 1 : quality.id === "cinematic" ? 3 : 2;
+    for (let index = Math.max(0, pulses.length - pulseCap); index < pulses.length && visible < spriteCap; index += 1) {
+      const pulse = pulses[index];
+      const geometry = pulse?.geometry ?? pulse;
+      const x = finite(geometry?.x, finite(pulse?.x));
+      const y = finite(geometry?.y, finite(pulse?.y));
+      const radius = Math.max(24, finite(geometry?.radius, finite(pulse?.radius, 300)));
       if (!this.isCircleVisible(x, y, radius, 48)) continue;
-      const remaining = clamp01(finite(snare?.life) / Math.max(0.001, finite(snare?.maxLife, 3)));
-      const frame = resolveManualAbilityAtlasFrame("gravitySnare", snare);
+      const remaining = clamp01(finite(pulse?.life) / Math.max(0.001, finite(pulse?.maxLife, 0.92)));
+      const frame = resolveManualAbilityAtlasFrame("empPulse", pulse);
       const image = this.getManualAbilitySprite(visible++);
       setAtlasFrame(image, frame.column, frame.row);
       image
@@ -1275,20 +1276,22 @@ export class BattleView {
         .setOrigin(0.5)
         .setVisible(true)
         .setPosition(x, y)
-        .setRotation(Math.round((time * 0.82 + finite(snare?.id) * 0.17) * 16) / 16)
-        .setDisplaySize(snapPixelSize(radius * 2.08), snapPixelSize(radius * 2.08))
+        .setRotation(0)
+        // The dotted circumference carries the exact 300px collision radius;
+        // the authored core stays compact enough to keep enemies readable.
+        .setDisplaySize(snapPixelSize(radius * 1.42), snapPixelSize(radius * 1.42))
         .setAlpha(0.9 * clamp01(remaining / 0.12))
         .clearTint();
-      drawPixelDottedCircle(graphics, x, y, radius, COLORS.violet, 0.4 + remaining * 0.24, 24, 4);
+      drawPixelDottedCircle(graphics, x, y, radius, COLORS.cyan, 0.42 + remaining * 0.24, 28, 4);
       drawPixelDottedCircle(
         graphics,
         x,
         y,
-        radius * (0.74 + Math.sin(time * 4.6) * 0.025),
-        COLORS.cyan,
-        0.22 + remaining * 0.12,
-        34,
-        3,
+        radius * (0.72 + Math.sin(time * 9.2) * 0.018),
+        COLORS.white,
+        0.2 + remaining * 0.1,
+        20,
+        2,
       );
     }
 
@@ -1950,15 +1953,25 @@ export class BattleView {
           this.worldFront.add(image);
           this.impactSprites.push(image);
         }
-        const explosion = fx.kind === "enemyBurst" || fx.kind === "bossBurst" || fx.kind === "phaseBreak";
-        setAtlasFrame(image, explosion ? 3 : 1, explosion ? 2 : 1);
+        const enemyExplosion = fx.kind === "enemyBurst";
+        const explosion = enemyExplosion || fx.kind === "bossBurst" || fx.kind === "phaseBreak";
+        if (enemyExplosion) {
+          image.setTexture(ASSET_KEYS.enemyDeathPixel);
+          setAtlasFrame(image, Math.min(5, Math.floor(clamp01(progress) * 6)), 0);
+        } else {
+          image.setTexture(ASSET_KEYS.combatFx);
+          setAtlasFrame(image, explosion ? 3 : 1, explosion ? 2 : 1);
+        }
         image
           .setVisible(true)
           .setPosition(fx.x, fx.y)
-          .setRotation(progress * 0.9 + fx.seed * 0.001)
-          .setDisplaySize(Math.max(28, radius * (explosion ? 2.4 : 1.8)), Math.max(28, radius * (explosion ? 2.4 : 1.8)))
-          .setAlpha(alpha * (explosion ? 0.78 : 0.88))
-          .setTint(fx.color);
+          .setRotation(enemyExplosion ? 0 : progress * 0.9 + fx.seed * 0.001)
+          .setDisplaySize(
+            enemyExplosion ? Math.max(46, 104 * scale) : Math.max(28, radius * (explosion ? 2.4 : 1.8)),
+            enemyExplosion ? Math.max(46, 104 * scale) : Math.max(28, radius * (explosion ? 2.4 : 1.8)),
+          )
+          .setAlpha(enemyExplosion ? Math.min(1, alpha * 1.42) : alpha * (explosion ? 0.78 : 0.88))
+          .setTint(enemyExplosion ? 0xffffff : fx.color);
         spriteCount += 1;
       }
 

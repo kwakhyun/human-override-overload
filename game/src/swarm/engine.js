@@ -128,13 +128,13 @@ export const REGION_ENEMY_PROFILES = Object.freeze({
 const ENEMY_TYPE_ORDER = Object.freeze(["hunter", "suppressor", "brute"]);
 
 export const MANUAL_ACTIVE_ABILITIES = Object.freeze({
-  gravitySnare: Object.freeze({ id: "gravitySnare", key: "Q", name: "NULL SNARE", baseCooldown: 18 }),
+  empPulse: Object.freeze({ id: "empPulse", key: "Q", name: "EMP PULSE", baseCooldown: 18 }),
   aegisWard: Object.freeze({ id: "aegisWard", key: "E", name: "AEGIS WARD", baseCooldown: 28 }),
   stratosRun: Object.freeze({ id: "stratosRun", key: "F", name: "STRATOS RUN", baseCooldown: 34 }),
   helixTempest: Object.freeze({ id: "helixTempest", key: "R", name: "HELIX TEMPEST", baseCooldown: 72 }),
 });
-const MANUAL_ABILITY_KEYS = Object.freeze(["gravitySnare", "aegisWard", "stratosRun", "helixTempest"]);
-const MANUAL_INPUT_FIELDS = Object.freeze(["gravitySnarePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]);
+const MANUAL_ABILITY_KEYS = Object.freeze(["empPulse", "aegisWard", "stratosRun", "helixTempest"]);
+const MANUAL_INPUT_FIELDS = Object.freeze(["empPulsePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]);
 
 const ENEMY_DATA = Object.freeze({
   hunter: Object.freeze({ role: "suicideDrone", hp: 38, speed: 118, radius: 22, damage: 78, xp: 4, color: "#ff526d" }),
@@ -623,7 +623,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     spawnPortals: [],
     orbitals: [],
     airstrikes: [],
-    gravitySnares: [],
+    empPulses: [],
     aegisWards: [],
     stratosRuns: [],
     helixTempests: [],
@@ -667,7 +667,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       omegaLaserCooldownMax: 0,
     },
     manualAbilities: {
-      gravitySnare: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.gravitySnare.baseCooldown },
+      empPulse: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.empPulse.baseCooldown },
       aegisWard: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.aegisWard.baseCooldown },
       stratosRun: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.stratosRun.baseCooldown },
       helixTempest: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.helixTempest.baseCooldown },
@@ -686,7 +686,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       peakEnemies: 0,
       skillsMastered: 0,
       ultimateCasts: 0,
-      activeAbilityCasts: { gravitySnare: 0, aegisWard: 0, stratosRun: 0, helixTempest: 0 },
+      activeAbilityCasts: { empPulse: 0, aegisWard: 0, stratosRun: 0, helixTempest: 0 },
       overdriveTier: 0,
       batchedOverflowLevels: 0,
     },
@@ -724,7 +724,7 @@ export function createSwarmInput() {
     left: false,
     right: false,
     dashPressed: false,
-    gravitySnarePressed: false,
+    empPulsePressed: false,
     aegisWardPressed: false,
     stratosRunPressed: false,
     helixTempestPressed: false,
@@ -734,7 +734,7 @@ export function createSwarmInput() {
 export function clearPressedInput(input) {
   if (!input || typeof input !== "object") return false;
   input.dashPressed = false;
-  input.gravitySnarePressed = false;
+  input.empPulsePressed = false;
   input.aegisWardPressed = false;
   input.stratosRunPressed = false;
   input.helixTempestPressed = false;
@@ -2077,31 +2077,56 @@ function commitManualAbility(state, ability, payload = {}) {
   return true;
 }
 
-function triggerGravitySnare(state) {
-  const ability = "gravitySnare";
+function triggerEmpPulse(state) {
+  const ability = "empPulse";
   const radius = 300;
-  const duration = 3;
+  const visualDuration = 0.92;
+  const disableDuration = 3.6;
   const arena = activeArena(state);
   const x = clamp(state.aim.x, arena.left + 24, arena.right - 24);
   const y = clamp(state.aim.y, arena.top + 24, arena.bottom - 24);
   const geometry = { kind: "circle", x, y, radius, collisionRadius: radius };
-  state.gravitySnares.push({
+  state.empPulses.push({
     id: ++state.nextEntityId,
-    type: "gravitySnare",
+    type: "empPulse",
     x,
     y,
     radius,
-    pullSpeed: 310,
-    projectileCurve: 520,
-    projectileDamageFloor: 0.42,
-    life: duration,
-    maxLife: duration,
+    life: visualDuration,
+    maxLife: visualDuration,
     geometry,
   });
-  const directDamage = 8 * state.player.damageMultiplier;
-  damageArea(state, x, y, radius, directDamage, "gravitySnare");
-  emit(state, "gravitySnareDeployed", { x, y, radius, duration, directDamage, geometry: { ...geometry } });
-  return commitManualAbility(state, ability, { x, y, radius, duration });
+  let affected = 0;
+  let eliteAffected = 0;
+  for (const enemy of state.enemies) {
+    if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
+    const distance = Math.hypot(enemy.x - x, enemy.y - y);
+    if (distance > radius + enemy.radius) continue;
+    const duration = enemy.elite ? disableDuration * 0.5 : disableDuration;
+    enemy.disabledTimer = Math.max(finite(enemy.disabledTimer), duration);
+    enemy.attackCooldown = Math.max(finite(enemy.attackCooldown), duration);
+    enemy.shootCooldown = Math.max(finite(enemy.shootCooldown), duration);
+    enemy.aimTimer = 0;
+    enemy.burstShots = 0;
+    enemy.vx = 0;
+    enemy.vy = 0;
+    enemy.hitFlash = Math.max(finite(enemy.hitFlash), 0.14);
+    enemy.animationState = "hit";
+    enemy.attackState = "disabled";
+    affected += 1;
+    if (enemy.elite) eliteAffected += 1;
+  }
+  emit(state, "empPulseActivated", {
+    x,
+    y,
+    radius,
+    visualDuration,
+    disableDuration,
+    affected,
+    eliteAffected,
+    geometry: { ...geometry },
+  });
+  return commitManualAbility(state, ability, { x, y, radius, disableDuration, affected });
 }
 
 function triggerAegisWard(state) {
@@ -2248,43 +2273,9 @@ function triggerHelixTempest(state) {
   return commitManualAbility(state, ability, { duration, lanceCount: tempest.lances.length, radius: tempest.radius });
 }
 
-function updateGravitySnares(state, dt) {
-  const arena = activeArena(state);
-  for (const snare of state.gravitySnares) {
-    snare.life -= dt;
-    if (snare.life <= 0) continue;
-    for (const enemy of state.enemies) {
-      if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
-      const dx = snare.x - enemy.x;
-      const dy = snare.y - enemy.y;
-      const distance = Math.max(0.001, Math.hypot(dx, dy));
-      if (distance > snare.radius + enemy.radius) continue;
-      const falloff = clamp(1 - distance / snare.radius, 0.18, 1);
-      const pull = snare.pullSpeed * falloff * (enemy.elite ? 0.48 : 1) * dt;
-      enemy.x = clamp(enemy.x + (dx / distance) * pull, arena.left + enemy.radius, arena.right - enemy.radius);
-      enemy.y = clamp(enemy.y + (dy / distance) * pull, arena.top + enemy.radius, arena.bottom - enemy.radius);
-      enemy.slow = Math.max(enemy.slow, 0.22);
-    }
-    for (const projectile of state.enemyProjectiles) {
-      if (projectile.dead) continue;
-      const dx = snare.x - projectile.x;
-      const dy = snare.y - projectile.y;
-      const distance = Math.max(0.001, Math.hypot(dx, dy));
-      if (distance > snare.radius + projectile.radius) continue;
-      if (!Number.isFinite(projectile.gravitySnareBaseDamage)) projectile.gravitySnareBaseDamage = projectile.damage;
-      const falloff = clamp(1 - distance / snare.radius, 0.12, 1);
-      projectile.vx += (dx / distance) * snare.projectileCurve * falloff * dt;
-      projectile.vy += (dy / distance) * snare.projectileCurve * falloff * dt;
-      projectile.speed = Math.hypot(projectile.vx, projectile.vy);
-      projectile.angle = Math.atan2(projectile.vy, projectile.vx);
-      projectile.damage = Math.max(
-        projectile.gravitySnareBaseDamage * snare.projectileDamageFloor,
-        projectile.damage * Math.pow(0.58, dt),
-      );
-      projectile.gravitySnareWeakened = true;
-    }
-  }
-  compact(state.gravitySnares, keepPositiveLife);
+function updateEmpPulses(state, dt) {
+  for (const pulse of state.empPulses) pulse.life -= dt;
+  compact(state.empPulses, keepPositiveLife);
 }
 
 function updateAegisWards(state, dt) {
@@ -2400,7 +2391,7 @@ function updateHelixTempests(state, dt) {
 }
 
 function updateManualAbilityEntities(state, dt) {
-  updateGravitySnares(state, dt);
+  updateEmpPulses(state, dt);
   updateAegisWards(state, dt);
   updateStratosRuns(state, dt);
   updateHelixTempests(state, dt);
@@ -2430,7 +2421,7 @@ function updateManualAbilities(state, input, dt) {
       rejectManualAbility(state, ability, "cooldown");
       continue;
     }
-    if (ability === "gravitySnare") triggerGravitySnare(state);
+    if (ability === "empPulse") triggerEmpPulse(state);
     else if (ability === "aegisWard") triggerAegisWard(state);
     else if (ability === "stratosRun") triggerStratosRun(state);
     else triggerHelixTempest(state);
@@ -3979,7 +3970,7 @@ export function getSwarmHud(state) {
       nova: { rank: state.build.skills.nova, cooldown: Math.max(0, state.support.novaCooldown), maxCooldown: novaMax, cooldownMax: novaMax, maxRank: 3 },
       airstrike: { rank: state.build.skills.airstrike, cooldown: Math.max(0, state.support.airstrikeCooldown), maxCooldown: airstrikeMax, cooldownMax: airstrikeMax, maxRank: 3 },
       omegaLaser: { rank: state.build.skills.omegaLaser, cooldown: Math.max(0, state.support.omegaLaserCooldown), maxCooldown: omegaLaserMax, cooldownMax: omegaLaserMax, maxRank: 3 },
-      gravitySnare: manualHud("gravitySnare"),
+      empPulse: manualHud("empPulse"),
       aegisWard: manualHud("aegisWard"),
       stratosRun: manualHud("stratosRun"),
       helixTempest: manualHud("helixTempest"),

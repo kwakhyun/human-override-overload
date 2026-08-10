@@ -587,10 +587,10 @@ try {
     buttonCount: await mobilePage.locator(".combat-ability-chip").count(),
   };
 
-  const mobileSnare = mobilePage.locator('[data-combat-ability="gravitySnare"]');
-  await mobileSnare.tap();
+  const mobileEmp = mobilePage.locator('[data-combat-ability="empPulse"]');
+  await mobileEmp.tap();
   await mobilePage.waitForTimeout(180);
-  report.mobile.gravitySnareAfterTap = await mobileSnare.getAttribute("aria-label");
+  report.mobile.empPulseAfterTap = await mobileEmp.getAttribute("aria-label");
 
   await mobilePage.keyboard.press("Escape");
   await mobilePage.getByRole("heading", { name: "일시 정지" }).waitFor();

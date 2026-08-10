@@ -1,7 +1,7 @@
 export const MANUAL_ABILITY_ATLAS_LAYOUT = Object.freeze({ columns: 6, rows: 4 });
 
 export const MANUAL_ABILITY_ROWS = Object.freeze({
-  gravitySnare: 0,
+  empPulse: 0,
   aegisWard: 1,
   stratosRun: 2,
   helixTempest: 3,
@@ -54,7 +54,7 @@ export function resolveManualAbilityAtlasFrame(
   state: ManualAbilityFrameState,
 ): ManualAbilityAtlasFrame {
   const row = MANUAL_ABILITY_ROWS[ability];
-  if (ability === "gravitySnare" || ability === "aegisWard") {
+  if (ability === "empPulse" || ability === "aegisWard") {
     return Object.freeze({ column: resolveFieldFrame(state), row });
   }
   if (ability === "stratosRun") {

@@ -1,5 +1,5 @@
 export type Direction = "up" | "down" | "left" | "right";
-export type ActiveAbility = "gravitySnare" | "aegisWard" | "stratosRun" | "helixTempest";
+export type ActiveAbility = "empPulse" | "aegisWard" | "stratosRun" | "helixTempest";
 
 export type SceneCallbacks = Readonly<{
   onHud: (hud: unknown) => void;

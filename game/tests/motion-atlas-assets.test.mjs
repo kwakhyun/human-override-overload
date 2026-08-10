@@ -52,9 +52,10 @@ test("all role, ally, and regional boss motion atlases ship at the authored high
   assert.equal(decodedRgba8Bytes, 40_796_160);
 });
 
-test("player skills ship as two crisp 64px-cell atlases while SOVEREIGN gates keep their authored row", async () => {
+test("player skills and enemy deaths ship as crisp 64px-cell atlases while SOVEREIGN gates keep their authored row", async () => {
   const specs = [
     ["manualAbilityPixel", "public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png", 384, 256, 6, 4],
+    ["enemyDeathPixel", "public/assets/overload/vfx/pixel/enemy-death-pixel-atlas.png", 384, 64, 6, 1],
     ["automaticSkillPixel", "public/assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png", 384, 256, 6, 4],
     ["sovereignGateMotion", "public/assets/overload/vfx/gates/sovereign-gate-motion-atlas.png", 1152, 192, 6, 1],
   ];
@@ -74,9 +75,9 @@ test("player skills ship as two crisp 64px-cell atlases while SOVEREIGN gates ke
     assert.equal(definition.path.replace("./", "public/"), path);
   }
 
-  assert.equal(decodedRgba8Bytes, 1_671_168, "pixel skills plus the preserved gate row decoded RGBA8 budget");
+  assert.equal(decodedRgba8Bytes, 1_769_472, "pixel skills, enemy deaths, and the preserved gate row decoded RGBA8 budget");
   const priorSkillVfxBytes = 1152 * 768 * 4 * 2 + 1024 * 768 * 4;
-  assert.equal(priorSkillVfxBytes - decodedRgba8Bytes, 8_552_448, "decoded RGBA8 reduction from active skill VFX");
+  assert.equal(priorSkillVfxBytes - decodedRgba8Bytes, 8_454_144, "decoded RGBA8 reduction after adding the enemy death strip");
   const commonPaths = manifest.COMMON_GAME_ASSETS.map((asset) => asset.path).join("\n");
   assert.doesNotMatch(commonPaths, /vfx\/(?:manual\/manual-ability-motion-atlas|skill-motion-atlas|omega-laser-motion-atlas)\.png/);
   assert.equal(manifest.ASSET_KEYS.manualAbilityMotion, undefined);

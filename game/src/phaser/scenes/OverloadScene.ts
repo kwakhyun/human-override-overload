@@ -219,7 +219,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private virtualDirections: Record<Direction, boolean> = { up: false, down: false, left: false, right: false };
   private queuedDash = false;
   private queuedActiveAbilities: Record<ActiveAbility, boolean> = {
-    gravitySnare: false,
+    empPulse: false,
     aegisWard: false,
     stratosRun: false,
     helixTempest: false,
@@ -584,7 +584,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
       this.queuedDash = true;
     });
     keyboard.on("keydown-Q", (event: KeyboardEvent) => {
-      if (!event.repeat) this.queueActiveAbility("gravitySnare");
+      if (!event.repeat) this.queueActiveAbility("empPulse");
     });
     keyboard.on("keydown-E", (event: KeyboardEvent) => {
       if (!event.repeat) this.queueActiveAbility("aegisWard");
@@ -607,7 +607,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.gameInput.left = this.virtualDirections.left || Boolean(this.keys.A?.isDown || cursor?.left?.isDown);
     this.gameInput.right = this.virtualDirections.right || Boolean(this.keys.D?.isDown || cursor?.right?.isDown);
     if (this.queuedDash || Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) this.gameInput.dashPressed = true;
-    if (this.queuedActiveAbilities.gravitySnare || Phaser.Input.Keyboard.JustDown(this.keys.Q)) this.gameInput.gravitySnarePressed = true;
+    if (this.queuedActiveAbilities.empPulse || Phaser.Input.Keyboard.JustDown(this.keys.Q)) this.gameInput.empPulsePressed = true;
     if (this.queuedActiveAbilities.aegisWard || Phaser.Input.Keyboard.JustDown(this.keys.E)) this.gameInput.aegisWardPressed = true;
     if (this.queuedActiveAbilities.stratosRun || Phaser.Input.Keyboard.JustDown(this.keys.F)) this.gameInput.stratosRunPressed = true;
     if (this.queuedActiveAbilities.helixTempest || Phaser.Input.Keyboard.JustDown(this.keys.R)) this.gameInput.helixTempestPressed = true;
@@ -631,7 +631,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   private clearQueuedActiveAbilities() {
-    this.queuedActiveAbilities.gravitySnare = false;
+    this.queuedActiveAbilities.empPulse = false;
     this.queuedActiveAbilities.aegisWard = false;
     this.queuedActiveAbilities.stratosRun = false;
     this.queuedActiveAbilities.helixTempest = false;

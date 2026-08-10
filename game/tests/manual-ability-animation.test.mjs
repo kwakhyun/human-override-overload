@@ -6,14 +6,14 @@ const animation = await import(new URL("../src/phaser/view/animation/manualAbili
 test("manual Q/E/F/R visuals own one deterministic six-by-four atlas row each", () => {
   assert.deepEqual(animation.MANUAL_ABILITY_ATLAS_LAYOUT, { columns: 6, rows: 4 });
   assert.deepEqual(animation.MANUAL_ABILITY_ROWS, {
-    gravitySnare: 0,
+    empPulse: 0,
     aegisWard: 1,
     stratosRun: 2,
     helixTempest: 3,
   });
 
   const samples = [
-    animation.resolveManualAbilityAtlasFrame("gravitySnare", { life: 3, maxLife: 3 }),
+    animation.resolveManualAbilityAtlasFrame("empPulse", { life: 0.92, maxLife: 0.92 }),
     animation.resolveManualAbilityAtlasFrame("aegisWard", { life: 2.5, maxLife: 5 }),
     animation.resolveManualAbilityAtlasFrame("stratosRun", { phase: "warning", warningProgress: 0.8 }),
     animation.resolveManualAbilityAtlasFrame("helixTempest", { life: 2, maxLife: 3.2, angle: Math.PI }),
@@ -25,8 +25,8 @@ test("manual Q/E/F/R visuals own one deterministic six-by-four atlas row each", 
 test("field effects and stratos sweeps advance from engine lifetime and phase state", () => {
   assert.equal(animation.manualAbilityLifetimeProgress({ life: 3, maxLife: 3 }), 0);
   assert.equal(animation.manualAbilityLifetimeProgress({ life: 1.5, maxLife: 3 }), 0.5);
-  assert.equal(animation.resolveManualAbilityAtlasFrame("gravitySnare", { life: 3, maxLife: 3 }).column, 0);
-  assert.equal(animation.resolveManualAbilityAtlasFrame("gravitySnare", { life: 0.2, maxLife: 3 }).column, 5);
+  assert.equal(animation.resolveManualAbilityAtlasFrame("empPulse", { life: 0.92, maxLife: 0.92 }).column, 0);
+  assert.equal(animation.resolveManualAbilityAtlasFrame("empPulse", { life: 0.04, maxLife: 0.92 }).column, 5);
   assert.equal(animation.resolveManualAbilityAtlasFrame("aegisWard", { life: 0, maxLife: 5 }).column, 5);
   assert.equal(animation.resolveManualAbilityAtlasFrame("stratosRun", { phase: "warning", warningProgress: 0.2 }).column, 0);
   assert.equal(animation.resolveManualAbilityAtlasFrame("stratosRun", { phase: "warning", warningProgress: 0.8 }).column, 1);

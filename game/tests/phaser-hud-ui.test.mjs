@@ -12,7 +12,7 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
 
   for (const slot of [
     ['id: "dash", key: "SPACE"', "dash"],
-    ['id: "gravitySnare", key: "Q"', "gravitySnare"],
+    ['id: "empPulse", key: "Q"', "empPulse"],
     ['id: "aegisWard", key: "E"', "aegisWard"],
     ['id: "stratosRun", key: "F"', "stratosRun"],
     ['id: "helixTempest", key: "R"', "helixTempest"],
@@ -156,7 +156,7 @@ test("airstrike banner dedupe and independent manual ability SFX stay separate",
   const soundsStart = app.indexOf("const EVENT_SOUNDS");
   const soundsEnd = app.indexOf("const WEAPON_EVENT_SOUNDS", soundsStart);
   const sounds = app.slice(soundsStart, soundsEnd);
-  assert.match(sounds, /gravitySnareDeployed: "emp"/);
+  assert.match(sounds, /empPulseActivated: "emp"/);
   assert.match(sounds, /aegisWardActivated: "collect"/);
   assert.match(sounds, /stratosRunSweep: "rail"/);
   assert.match(sounds, /helixTempestStarted: "bossBreak"/);

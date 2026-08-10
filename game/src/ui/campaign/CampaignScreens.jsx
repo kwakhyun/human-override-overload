@@ -137,22 +137,22 @@ const NPC_ICON = Object.freeze({ hana: Broadcast, ilya: Wrench, lark: User, rhea
 export const MANUAL_ABILITY_GUIDE = Object.freeze([
   Object.freeze({
     key: "Q",
-    id: "gravitySnare",
-    name: "NULL SNARE",
-    koreanName: "중력 포획장",
+    id: "empPulse",
+    name: "EMP PULSE",
+    koreanName: "전자기 정지 펄스",
     category: "TACTICAL UTILITY",
     cooldown: 18,
-    icon: "snare",
-    summary: "적 무리 한가운데를 가리키고 Q. 3초간 한 점으로 끌어모읍니다.",
-    details: ["자폭 드론과 저격수를 한곳에 묶습니다.", "날아오는 적 탄환도 휘어져 약해집니다."],
-    timing: "적이 뭉쳤을 때 포인터를 무리 중앙에 두세요.",
-    quote: "Q는 붙잡는 키. 적들이 예쁘게 모이면 우리 총알도 덜 헤매지.",
-    exampleAssetKey: "tutorialNullSnare",
-    exampleAlt: "실제 전투에서 NULL SNARE 중력장으로 적과 탄환을 끌어당기는 장면",
-    overlayPrompt: "포인터를 적 무리 중앙에 놓고 Q 또는 강조된 버튼을 누르세요.",
+    icon: "emp",
+    summary: "적 무리 한가운데를 가리키고 Q. 범위 안 기계의 이동과 공격을 멈춥니다.",
+    details: ["일반 적은 3.6초, 정예 적은 1.8초 동안 정지합니다.", "탄환을 끌어당기지 않으므로 위험한 사격은 계속 피해야 합니다."],
+    timing: "저격수와 자폭 드론이 동시에 접근할 때 포인터를 무리 중앙에 두세요.",
+    quote: "Q는 전원 잠깐 빌리는 키야. 멈춘 동안 신나게 두들겨 줘.",
+    exampleAssetKey: "tutorialEmpPulse",
+    exampleAlt: "실제 전투에서 EMP 펄스로 기계 적의 이동과 사격을 정지시키는 장면",
+    overlayPrompt: "포인터를 기계 적 무리 중앙에 놓고 Q 또는 강조된 버튼을 누르세요.",
     callouts: Object.freeze([
       Object.freeze({ label: "포인터 목표", x: 38, y: 37 }),
-      Object.freeze({ label: "중력장 범위", x: 24, y: 48 }),
+      Object.freeze({ label: "EMP 정지 범위", x: 24, y: 48 }),
       Object.freeze({ label: "실제 Q 슬롯", x: 31, y: 92 }),
     ]),
   }),
@@ -223,7 +223,7 @@ export const MANUAL_ABILITY_GUIDE = Object.freeze([
 ]);
 
 const ABILITY_ICON = Object.freeze({
-  snare: Crosshair,
+  emp: Broadcast,
   ward: ShieldChevron,
   stratos: AirplaneTilt,
   tempest: Sparkle,

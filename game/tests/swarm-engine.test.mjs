@@ -252,7 +252,7 @@ test("Q/E/F/R expose four independent manual ability contracts and clear as inpu
   const state = createSwarmState({ random: () => 0.5 });
   const input = createSwarmInput();
   const hud = getSwarmHud(state);
-  const bindings = { gravitySnare: "Q", aegisWard: "E", stratosRun: "F", helixTempest: "R" };
+  const bindings = { empPulse: "Q", aegisWard: "E", stratosRun: "F", helixTempest: "R" };
   for (const [ability, key] of Object.entries(bindings)) {
     assert.equal(hud.abilities[ability].id, ability);
     assert.equal(hud.abilities[ability].key, key);
@@ -271,20 +271,20 @@ test("Q/E/F/R expose four independent manual ability contracts and clear as inpu
 
   Object.assign(input, {
     dashPressed: true,
-    gravitySnarePressed: true,
+    empPulsePressed: true,
     aegisWardPressed: true,
     stratosRunPressed: true,
     helixTempestPressed: true,
   });
   clearPressedInput(input);
-  for (const field of ["dashPressed", "gravitySnarePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]) {
+  for (const field of ["dashPressed", "empPulsePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]) {
     assert.equal(input[field], false);
   }
   for (const legacy of ["emp", "nanite", "skyfall"]) assert.equal(legacy in state.manualAbilities, false);
   assert.equal("omegaLaser" in state.manualAbilities, false);
 });
 
-test("NULL SNARE owns pointer geometry, pull/slow, and projectile deflection without clearing shots", () => {
+test("EMP PULSE stops mechanical enemies in pointer geometry without pulling units or projectiles", () => {
   const state = createSwarmState({ random: () => 0.5 });
   const target = state.enemies.find((enemy) => !enemy.elite);
   state.enemies = [target];
@@ -315,32 +315,34 @@ test("NULL SNARE owns pointer geometry, pull/slow, and projectile deflection wit
   setSwarmAim(state, state.player.x + 280, state.player.y);
   delayPlayerWeapons(state);
   const input = createSwarmInput();
-  input.gravitySnarePressed = true;
+  input.empPulsePressed = true;
   const previousX = target.x;
   stepSwarm(state, input, 1 / 60);
-  assert.ok(target.x > previousX);
-  assert.equal(target.hp, 9991, "NULL SNARE deals only a token direct hit");
-  assert.ok(target.slow > 0);
+  assert.equal(target.x, previousX, "EMP halts the target instead of pulling it");
+  assert.equal(target.hp, 9999, "EMP is a utility shutdown and deals no direct damage");
+  assert.equal(target.slow, 0);
+  assert.ok(target.disabledTimer > 3.5);
+  assert.equal(target.attackState, "disabled");
   assert.equal(state.enemyProjectiles.length, 1);
-  assert.ok(state.enemyProjectiles[0].vy < 0);
-  assert.ok(state.enemyProjectiles[0].damage < 100);
-  assert.equal(state.enemyProjectiles[0].gravitySnareWeakened, true);
-  assert.equal(state.gravitySnares.length, 1);
-  assert.deepEqual(state.gravitySnares[0].geometry, {
+  assert.equal(state.enemyProjectiles[0].vy, 0, "EMP does not bend projectiles");
+  assert.equal(state.enemyProjectiles[0].damage, 100, "EMP does not weaken projectiles");
+  assert.equal("gravitySnareWeakened" in state.enemyProjectiles[0], false);
+  assert.equal(state.empPulses.length, 1);
+  assert.deepEqual(state.empPulses[0].geometry, {
     kind: "circle",
     x: state.player.x + 280,
     y: state.player.y,
     radius: 300,
     collisionRadius: 300,
   });
-  assert.ok(state.manualAbilities.gravitySnare.cooldown > 17.9);
-  assert.equal(state.stats.activeAbilityCasts.gravitySnare, 1);
+  assert.ok(state.manualAbilities.empPulse.cooldown > 17.9);
+  assert.equal(state.stats.activeAbilityCasts.empPulse, 1);
   const events = drainSwarmEvents(state);
-  assert.ok(events.some((event) => event.type === "gravitySnareDeployed" && event.duration === 3));
-  assert.ok(events.some((event) => event.type === "manualAbilityActivated" && event.ability === "gravitySnare" && event.key === "Q"));
+  assert.ok(events.some((event) => event.type === "empPulseActivated" && event.disableDuration === 3.6 && event.affected === 1));
+  assert.ok(events.some((event) => event.type === "manualAbilityActivated" && event.ability === "empPulse" && event.key === "Q"));
 
   stepSwarm(state, input, 1 / 60);
-  assert.equal(state.stats.activeAbilityCasts.gravitySnare, 1, "a held engine edge cannot bypass the cooldown");
+  assert.equal(state.stats.activeAbilityCasts.empPulse, 1, "a held engine edge cannot bypass the cooldown");
   assert.ok(drainSwarmEvents(state).some((event) => event.type === "manualAbilityRejected" && event.reason === "cooldown"));
   clearPressedInput(input);
 });
@@ -659,12 +661,12 @@ test("skill cooldown HUD exposes the exact reset duration used by combat", () =>
   assert.ok(ability.cooldown <= ability.maxCooldown);
   const manual = getSwarmHud(state).abilities;
   assert.deepEqual(
-    Object.fromEntries(["gravitySnare", "aegisWard", "stratosRun", "helixTempest"].map((id) => [id, manual[id].key])),
-    { gravitySnare: "Q", aegisWard: "E", stratosRun: "F", helixTempest: "R" },
+    Object.fromEntries(["empPulse", "aegisWard", "stratosRun", "helixTempest"].map((id) => [id, manual[id].key])),
+    { empPulse: "Q", aegisWard: "E", stratosRun: "F", helixTempest: "R" },
   );
   assert.deepEqual(
-    Object.fromEntries(["gravitySnare", "aegisWard", "stratosRun", "helixTempest"].map((id) => [id, manual[id].maxCooldown])),
-    { gravitySnare: 18, aegisWard: 28, stratosRun: 34, helixTempest: 72 },
+    Object.fromEntries(["empPulse", "aegisWard", "stratosRun", "helixTempest"].map((id) => [id, manual[id].maxCooldown])),
+    { empPulse: 18, aegisWard: 28, stratosRun: 34, helixTempest: 72 },
   );
   assert.equal("squadRecall" in manual, false);
 });
@@ -715,12 +717,12 @@ test("level-up airstrike and omega laser remain automatic and separate from manu
   assert.equal(state.beams[0].type, "omegaLaser");
   assert.equal(state.stats.ultimateCasts, 2);
   assert.deepEqual(state.stats.activeAbilityCasts, {
-    gravitySnare: 0,
+    empPulse: 0,
     aegisWard: 0,
     stratosRun: 0,
     helixTempest: 0,
   });
-  assert.equal(state.gravitySnares.length, 0);
+  assert.equal(state.empPulses.length, 0);
   assert.equal(state.stratosRuns.length, 0);
   assert.equal(state.helixTempests.length, 0);
   assert.ok(state.support.airstrikeCooldown > 0);

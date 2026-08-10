@@ -642,6 +642,41 @@ OMEGA의 광선 길이, Q/E의 원형 범위와 실제 피해·보호 타이밍�
 소유합니다. 정사각 셀을 긴 공격 범위로 늘이지 않고 점선 geometry와 반복 beam-core 모듈을
 같은 판정 좌표 위에 배치합니다.
 
+### EMP 펄스와 적 기계 폭발 도트 모션
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen, 프로젝트 `normalize-pixel-vfx-atlas.py`,
+  `compose-atlas-rows.py`, 설치된 `remove_chroma_key.py`
+- 적용 목적: 기존 수동 Q의 중력 흡인 표현을 폐기하고 전자기 정지 펄스로 교체하며,
+  모든 일반 적 사망에 6프레임 기계 폭발을 적용합니다.
+- 런타임 경로:
+  - `public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png`의 0행(EMP 6프레임)
+  - `public/assets/overload/vfx/pixel/enemy-death-pixel-atlas.png`(6×1, 64×64 셀)
+- ImageGen 원본:
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-0ea1ca97-5d3f-4686-a3bd-c1cd7234c384.png`
+- 프로젝트 원본과 정규화 중간본:
+  - `reference/source-assets/overload/vfx/pixel-emp-explosion-v1/emp-explosion-chroma.png`
+  - `reference/source-assets/overload/vfx/pixel-emp-explosion-v1/emp-explosion-alpha.png`
+  - `reference/source-assets/overload/vfx/pixel-emp-explosion-v1/emp-explosion-normalized.png`
+- QA 프리뷰와 실제 게임 캡처:
+  - `qa/emp-explosion-pixel-preview.png`
+  - `qa/latest-emp-pulse-desktop-1440x810.png`
+- 후처리: border auto-key, soft-matte, despill로 `#ff00ff`을 제거하고 6×2·64px 셀·32색
+  NEAREST 아틀라스로 정규화했습니다. 0행은 기존 수동 기술 시트의 Q행에 합성하고 1행은
+  독립 적 사망 시트로 분리했습니다. 외부 게임 이미지나 외부 VFX는 사용하지 않았습니다.
+- 정확한 ImageGen 프롬프트:
+
+  > Use case: stylized-concept.
+  > Asset type: production low-resolution pixel-art VFX sprite atlas for the top-down Phaser browser game TRAIN ME WRONG: OVERLOAD.
+  > Input Image 1 is the approved simple 16-bit pixel VFX style reference. Input Image 2 is a mechanical enemy identity reference only. Do not trace, blur, downsample, or pixel-filter either reference. Redesign each effect from scratch as authored pixel art.
+  > Create ONE exact 6-column by 2-row sprite atlas, exactly 12 isolated square animation cells, read left-to-right.
+  > Row 1 — EMP PULSE, six animation beats: frame 1 compact cyan-white electronic charge seed; frame 2 a hard-edged circuit ring ignites; frame 3 a circular electromagnetic shock ring expands with sparse short electric arcs; frame 4 maximum-radius cyan/white pulse with a few violet pixel sparks; frame 5 fragmented ring and disabled-circuit sparks; frame 6 clean fading pixels. This is an electromagnetic shutdown pulse, not gravity: no spiral, vortex, inward pull, black hole, suction lines, orbiting debris, or implosion.
+  > Row 2 — MECHANICAL ENEMY DESTRUCTION, six animation beats: frame 1 small red-orange core rupture; frame 2 compact angular ignition; frame 3 bright contained amber/white pixel blast; frame 4 maximum burst with small dark-metal shards and cyan circuit sparks; frame 5 fragments spreading and dimming; frame 6 sparse ember and cyan pixels fading. No smoke cloud and no gore.
+  > Style/medium: authentic hand-authored 16-bit arcade pixel VFX, crisp square pixel clusters, hard stair-step edges, no antialiasing, restrained 5–7 color palette, dark navy outlines, cyan/white/violet for EMP and amber/red/white/cyan for mechanical explosion, readable on a dark sci-fi battlefield, intentionally simple and lightweight, production sprite asset not concept art.
+  > Composition/framing: exact uniform 6x2 grid filling a 3:1 landscape canvas; equal square slots; one centered self-contained effect per slot; consistent center anchor and progression within each row; generous empty separation and safety padding; no object crosses cell boundaries.
+  > Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background covering every empty pixel. No transparency simulation, shadows, gradients, texture, glow fog, environment, floor, grid lines, borders, labels, text, numbers, logos, watermark, poster layout, extra rows, extra columns, duplicate sheets, or partially cropped cells. Do not use #ff00ff inside any effect.
+  > Constraints: exact 6 columns, exact 2 rows, exact 12 cells; square cell aspect; clear animation at 64x64; EMP remains circular and outward-expanding; explosion remains compact and centered.
+
 ### RHEA 관제실 NPC 대화 일러스트
 
 - 생성일: 2026-08-10
@@ -691,11 +726,11 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 - 출처: 이 프로젝트의 로컬 Phaser 런타임을 1440×810에서 직접 캡처한 QA 이미지이며
   외부 게임 이미지나 별도 생성 이미지를 사용하지 않습니다.
 - 런타임 경로:
-  - `public/assets/overload/ui/tutorial/null-snare-gameplay.jpg`
+  - `public/assets/overload/ui/tutorial/emp-pulse-gameplay.jpg`
   - `public/assets/overload/ui/tutorial/aegis-ward-gameplay.jpg`
   - `public/assets/overload/ui/tutorial/stratos-run-gameplay.jpg`
   - `public/assets/overload/ui/tutorial/helix-tempest-gameplay.jpg`
-- 원본 경로: 각각 `qa/latest-null-snare-desktop-1440x810.png`,
+- 원본 경로: 각각 `qa/latest-emp-pulse-desktop-1440x810.png`,
   `qa/latest-aegis-ward-desktop-1440x810.png`, `qa/latest-stratos-run-desktop-1440x810.png`,
   `qa/latest-helix-tempest-desktop-1440x810.png`
 - 후처리: 각 원본의 `x=180, y=0, width=1080, height=810` 영역을 잘라

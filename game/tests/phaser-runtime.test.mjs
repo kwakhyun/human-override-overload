@@ -340,10 +340,10 @@ test("manual Q/E/F/R effects use their dedicated rows and engine-owned geometry"
   assert.match(view, /manualAbilitySprites: Phaser\.GameObjects\.Image\[\]/);
   assert.match(view, /manualAbilityGraphics: Phaser\.GameObjects\.Graphics/);
   assert.match(view, /this\.syncManualAbilityFx\(state, time, quality\)/);
-  assert.match(manual, /state\?\.gravitySnares/);
-  assert.match(manual, /resolveManualAbilityAtlasFrame\("gravitySnare", snare\)/);
+  assert.match(manual, /state\?\.empPulses/);
+  assert.match(manual, /resolveManualAbilityAtlasFrame\("empPulse", pulse\)/);
   assert.match(manual, /geometry\?\.radius/);
-  assert.match(manual, /setRotation\(Math\.round\(\(time \* 0\.82/);
+  assert.match(manual, /setRotation\(0\)/);
   assert.match(manual, /state\?\.aegisWards/);
   assert.match(manual, /resolveManualAbilityAtlasFrame\("aegisWard", ward\)/);
   assert.match(manual, /geometry\?\.x/);
@@ -365,7 +365,7 @@ test("manual Q/E/F/R effects use their dedicated rows and engine-owned geometry"
   assert.match(manual, /resolveManualAbilityAtlasFrame\("helixTempest", tempest\)/);
   assert.match(manual, /ASSET_KEYS\.manualAbilityPixel/);
   assert.match(manual, /for \(let index = visible; index < this\.manualAbilitySprites\.length/);
-  assert.doesNotMatch(manual, /state\.(?:gravitySnares|aegisWards|stratosRuns|helixTempests)\s*=/);
+  assert.doesNotMatch(manual, /state\.(?:empPulses|aegisWards|stratosRuns|helixTempests)\s*=/);
   assert.doesNotMatch(manual, /airstrikes|omegaLaserSprites|omegaLaserMotion/);
 });
 
@@ -376,7 +376,7 @@ test("Phaser keeps basic fire automatic while Q/E/F/R share one repeat-safe acti
   const createGame = await read("src/phaser/createOverloadGame.ts");
   assert.doesNotMatch(scene, /this\.input\.on\("pointerdown"/);
   for (const [key, ability, field] of [
-    ["Q", "gravitySnare", "gravitySnarePressed"],
+    ["Q", "empPulse", "empPulsePressed"],
     ["E", "aegisWard", "aegisWardPressed"],
     ["F", "stratosRun", "stratosRunPressed"],
     ["R", "helixTempest", "helixTempestPressed"],
@@ -390,11 +390,11 @@ test("Phaser keeps basic fire automatic while Q/E/F/R share one repeat-safe acti
   assert.doesNotMatch(scene, /queuedManualFire|queuedAutoFireToggle/);
   assert.doesNotMatch(engine, /manualFire|autoFire/);
   assert.match(engine, /function updateAutoWeapons\(state, dt\)/);
-  assert.match(engine, /gravitySnarePressed: false/);
+  assert.match(engine, /empPulsePressed: false/);
   assert.match(engine, /aegisWardPressed: false/);
   assert.match(engine, /stratosRunPressed: false/);
   assert.match(engine, /helixTempestPressed: false/);
-  assert.match(bridge, /export type ActiveAbility = "gravitySnare" \| "aegisWard" \| "stratosRun" \| "helixTempest"/);
+  assert.match(bridge, /export type ActiveAbility = "empPulse" \| "aegisWard" \| "stratosRun" \| "helixTempest"/);
   assert.match(bridge, /queueActiveAbility\(ability: ActiveAbility\)/);
   assert.match(createGame, /activateAbility: \(ability: ActiveAbility\)/);
   assert.doesNotMatch(scene, /queueActiveAbility\("(?:emp|nanite|skyfall|omegaLaser)"\)/);

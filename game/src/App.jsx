@@ -237,7 +237,7 @@ const EVENT_SOUNDS = Object.freeze({
   sniperLock: "enemyAlert",
   enemySelfDestruct: "explosion",
   healthKitPicked: "collect",
-  gravitySnareDeployed: "emp",
+  empPulseActivated: "emp",
   aegisWardActivated: "collect",
   stratosRunWarning: "bossTelegraph",
   stratosRunSweep: "rail",
@@ -449,7 +449,7 @@ const BUILD_LABELS = Object.freeze({
 
 const ABILITY_COOLDOWN_FALLBACK = Object.freeze({
   dash: 2.35,
-  gravitySnare: 18,
+  empPulse: 18,
   aegisWard: 28,
   stratosRun: 34,
   helixTempest: 72,
@@ -468,7 +468,7 @@ const EXPEDITION_ACTIVE_ABILITIES = Object.freeze([
 
 const COMBAT_DOCK_SLOTS = Object.freeze([
   Object.freeze({ id: "dash", key: "SPACE", label: "위상 대시", icon: Lightning, action: "dash", abilityKeys: Object.freeze([]) }),
-  Object.freeze({ id: "gravitySnare", key: "Q", label: "중력 포획", icon: Pulse, action: "gravitySnare", abilityKeys: Object.freeze(["gravitySnare"]) }),
+  Object.freeze({ id: "empPulse", key: "Q", label: "EMP 펄스", icon: Pulse, action: "empPulse", abilityKeys: Object.freeze(["empPulse"]) }),
   Object.freeze({ id: "aegisWard", key: "E", label: "이지스 방벽", icon: ShieldChevron, action: "aegisWard", abilityKeys: Object.freeze(["aegisWard"]) }),
   Object.freeze({ id: "stratosRun", key: "F", label: "공중 소사", icon: Target, action: "stratosRun", abilityKeys: Object.freeze(["stratosRun"]) }),
   Object.freeze({ id: "helixTempest", key: "R", label: "나선 폭풍", icon: Crosshair, action: "helixTempest", abilityKeys: Object.freeze(["helixTempest"]) }),
@@ -1935,7 +1935,7 @@ export function App() {
     controlOfficer: assets?.rheaControlOfficer,
     regionMap: assets?.airshipRegionMap,
     buttonAtlas: assets?.commandButtonStates,
-    tutorialNullSnare: assets?.tutorialNullSnare,
+    tutorialEmpPulse: assets?.tutorialEmpPulse,
     tutorialAegisWard: assets?.tutorialAegisWard,
     tutorialStratosRun: assets?.tutorialStratosRun,
     tutorialHelixTempest: assets?.tutorialHelixTempest,

@@ -81,7 +81,7 @@ test("first-sortie briefing separates automatic build skills from four new manua
   assert.match(save, /"combat-overlay-complete"/);
 
   for (const [key, id, name, cooldown] of [
-    ["Q", "gravitySnare", "NULL SNARE", 18],
+    ["Q", "empPulse", "EMP PULSE", 18],
     ["E", "aegisWard", "AEGIS WARD", 28],
     ["F", "stratosRun", "STRATOS RUN", 34],
     ["R", "helixTempest", "HELIX TEMPEST", 72],
@@ -93,7 +93,7 @@ test("first-sortie briefing separates automatic build skills from four new manua
   assert.match(screens, /여러 바퀴 회전하며 사방을 연속 타격/);
   assert.match(screens, /실제 전투 화면/);
   assert.match(screens, /ability-example-callout/);
-  for (const assetKey of ["tutorialNullSnare", "tutorialAegisWard", "tutorialStratosRun", "tutorialHelixTempest"]) {
+  for (const assetKey of ["tutorialEmpPulse", "tutorialAegisWard", "tutorialStratosRun", "tutorialHelixTempest"]) {
     assert.match(screens, new RegExp(`exampleAssetKey: "${assetKey}"`));
     assert.match(app, new RegExp(`${assetKey}: assets\\?\\.${assetKey}`));
   }
@@ -101,7 +101,7 @@ test("first-sortie briefing separates automatic build skills from four new manua
 
 test("the ability briefing ships optimized real-game example crops", async () => {
   for (const name of [
-    "null-snare-gameplay.jpg",
+    "emp-pulse-gameplay.jpg",
     "aegis-ward-gameplay.jpg",
     "stratos-run-gameplay.jpg",
     "helix-tempest-gameplay.jpg",
