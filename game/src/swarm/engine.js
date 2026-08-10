@@ -9,6 +9,8 @@ const ARENA = Object.freeze({ left: 34, right: 1246, top: 34, bottom: 686 });
 const EXPEDITION_ARENA = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 54, bottom: 1026 });
 const INITIAL_SWARM = 36;
 const DEFAULT_ENEMY_BUDGET = 1000;
+const FIRST_REGION_ENEMY_BUDGET = 300;
+const MINIMAP_ENEMY_SAMPLE_CAP = 24;
 const MAX_LIVE_ENEMIES = 220;
 const MAX_PROJECTILES = 620;
 const MAX_ENEMY_PROJECTILES = 360;
@@ -26,7 +28,7 @@ const EXPEDITION_ROUTE_LENGTH = 12000;
 const EXPEDITION_BOSS_GATE = 11200;
 const EXPEDITION_GATE_LOCK_DISTANCE = 10680;
 const EXPEDITION_ROUTE_ORIGIN_X = 580;
-const EXPEDITION_CORRIDOR = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 64, bottom: 1016 });
+const EXPEDITION_CORRIDOR = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 150, bottom: 930 });
 const EXPEDITION_SPAWN_GATES = Object.freeze([
   Object.freeze({ id: "east-upper", offsetX: 520, y: 270 }),
   Object.freeze({ id: "east-lower", offsetX: 520, y: 810 }),
@@ -53,13 +55,18 @@ const REWARD_COMBAT_INTERVAL = 5.4;
 const MAX_BATCH_REWARD_RANKS = 3;
 const BOSS_CONTACT_STUN = 0.8;
 const BOSS_CONTACT_COOLDOWN = 1.4;
+const ROUTE_CLEAR_WARNING_DURATION = 1.2;
+const ROUTE_CLEAR_PANIC_DURATION = 1.6;
+const WRONG_ENGINE_GROGGY_DURATION = 2.6;
+const WRONG_ENGINE_GROGGY_MULTIPLIER = 2.5;
 
 export const REGION_COMBAT_CONFIGS = Object.freeze({
   "wrong-engine-core": Object.freeze({
     id: "wrong-engine-core",
     chapterId: "chapter-01",
     bossName: "THE WRONG ENGINE",
-    bossHp: 840000,
+    enemyBudget: FIRST_REGION_ENEMY_BUDGET,
+    bossHp: 560000,
     objective: "ADVANCE TO THE ENGINE",
     chamber: "THE ENGINE CHAMBER",
     deploymentBeat: "deployment",
@@ -71,6 +78,7 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     id: "glass-dune",
     chapterId: "chapter-02",
     bossName: "MIRROR TYRANT",
+    enemyBudget: DEFAULT_ENEMY_BUDGET,
     bossHp: 960000,
     objective: "CROSS THE GLASS DUNE",
     chamber: "BURIED SOLAR OBSERVATORY",
@@ -83,6 +91,7 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     id: "abyssal-archive",
     chapterId: "chapter-02",
     bossName: "DROWNED ORACLE",
+    enemyBudget: DEFAULT_ENEMY_BUDGET,
     bossHp: 1120000,
     objective: "DESCEND INTO THE ARCHIVE",
     chamber: "ABYSSAL MEMORY VAULT",
@@ -519,6 +528,9 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
     activePattern: null,
     contactCooldown: 0,
     weakness: 0,
+    groggy: 0,
+    groggyDuration: 0,
+    groggyMultiplier: 1,
     damageMultiplier: 1,
     transformTimer: 0,
     transformDuration: 1.8,
@@ -566,7 +578,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     aim: { x: GAME_WIDTH * 0.82, y: GAME_HEIGHT * 0.5 },
     aimX: GAME_WIDTH * 0.82,
     aimY: GAME_HEIGHT * 0.5,
-    enemyBudget: DEFAULT_ENEMY_BUDGET,
+    enemyBudget: expedition ? regionConfig.enemyBudget : DEFAULT_ENEMY_BUDGET,
     spawnedEnemies: 0,
     killedEnemies: 0,
     spawnAccumulator: 0,
@@ -589,8 +601,12 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       gateLocked: true,
       gateUnlocked: false,
       gateWarningShown: false,
+      gateLockedPrompted: false,
+      atLockedGate: false,
+      clearTransition: null,
       entryPrompted: false,
       awaitingBossEntry: false,
+      autoBossEntry: false,
       bossEntryConfirmed: false,
       bossRoom: false,
       traces: regionConfig.traces ? EXPEDITION_TRACES.map((trace) => ({ ...trace, triggered: false })) : [],
@@ -877,17 +893,31 @@ function updatePlayer(state, input, dt) {
 function updateExpedition(state) {
   const expedition = state.expedition;
   if (!expedition || state.phase !== "swarm") return;
-  const allHostilesKilled = state.spawnedEnemies >= state.enemyBudget
-    && state.killedEnemies >= state.enemyBudget
-    && !hasLivingEnemy(state.enemies);
+  const allHostilesKilled = allRouteHostilesKilled(state);
   expedition.gateUnlocked = allHostilesKilled;
   expedition.gateLocked = !allHostilesKilled;
   const maximumDistance = allHostilesKilled ? expedition.routeLength : expedition.gateLockDistance;
   expedition.distance = clamp(state.player.x - expedition.originX, 0, maximumDistance);
   expedition.progress = clamp(expedition.distance / expedition.routeLength, 0, 1);
   expedition.reachedGate = allHostilesKilled && expedition.distance >= expedition.routeLength;
-  expedition.objective = expedition.awaitingBossEntry
-    ? `${state.bossChamber} · ENTRY DECISION`
+  expedition.atLockedGate = !allHostilesKilled && expedition.distance >= expedition.gateLockDistance - 4;
+  if (expedition.atLockedGate && !expedition.gateLockedPrompted) {
+    const remainingEnemies = Math.max(0, state.enemyBudget - state.killedEnemies);
+    expedition.gateLockedPrompted = true;
+    emit(state, "bossGateLocked", {
+      regionId: state.regionId,
+      reason: "hostilesRemaining",
+      title: "보스 구역 봉쇄",
+      message: `잔존 적 ${remainingEnemies}기를 먼저 처치하세요.`,
+      remainingEnemies,
+    });
+  }
+  expedition.objective = expedition.clearTransition?.phase === "warning"
+    ? "적 전멸 · 보스 구역 전환 준비"
+    : expedition.clearTransition?.phase === "panic"
+      ? "SOVEREIGN 신호 폭주 감지"
+    : expedition.awaitingBossEntry
+      ? `${state.bossChamber} · 자동 진입`
     : expedition.reachedGate
       ? `${state.bossChamber} READY`
     : allHostilesKilled
@@ -1165,6 +1195,12 @@ function hasLivingEnemy(enemies) {
   return false;
 }
 
+function allRouteHostilesKilled(state) {
+  return state?.spawnedEnemies >= state?.enemyBudget
+    && state?.killedEnemies >= state?.enemyBudget
+    && !hasLivingEnemy(state?.enemies ?? []);
+}
+
 function gainXp(state, amount) {
   const player = state.player;
   player.xp += amount * player.xpGainMultiplier;
@@ -1283,6 +1319,10 @@ function triggerBossStage(state, stage) {
   if (state.expedition) boss.radius = stage === 3 ? 150 : 130;
   boss.enrage = stage === 3 ? 2.15 : 1.5;
   boss.transformTimer = boss.transformDuration;
+  boss.groggy = 0;
+  boss.groggyDuration = 0;
+  boss.groggyMultiplier = 1;
+  boss.damageMultiplier = 1;
   boss.phaseFlash = 1;
   boss.alertPulses = 2;
   boss.alertPulseTimer = 0.42;
@@ -1308,7 +1348,9 @@ function triggerBossStage(state, stage) {
 function damageBoss(state, amount, source = "weapon") {
   const boss = state.boss;
   if (!boss.active || boss.dead || boss.transformTimer > 0 || amount <= 0) return 0;
-  const multiplier = boss.weakness > 0 ? 2 : 1;
+  const multiplier = boss.groggy > 0
+    ? boss.groggyMultiplier
+    : boss.weakness > 0 ? 2 : 1;
   boss.damageMultiplier = multiplier;
   const dealt = Math.min(boss.hp, amount * multiplier * finite(state.player?.overdriveDamage, 1));
   boss.hp -= dealt;
@@ -2746,8 +2788,10 @@ function startBossPhase(state) {
     state.expedition.gateLocked = false;
     state.expedition.gateUnlocked = true;
     state.expedition.awaitingBossEntry = false;
+    state.expedition.autoBossEntry = false;
     state.expedition.bossEntryConfirmed = true;
     state.expedition.bossRoom = true;
+    state.expedition.clearTransition = null;
     state.expedition.objective = `DESTROY ${state.boss.name}`;
     state.camera.zoom = 0.78;
     state.camera.x = state.player.x;
@@ -2760,9 +2804,7 @@ function startBossPhase(state) {
 
 export function enterBossRoom(state) {
   const expedition = state?.expedition;
-  const allHostilesKilled = state?.spawnedEnemies >= state?.enemyBudget
-    && state?.killedEnemies >= state?.enemyBudget
-    && !state?.enemies?.some((enemy) => !enemy.dead);
+  const allHostilesKilled = allRouteHostilesKilled(state);
   if (!expedition
     || state.status !== "running"
     || state.phase !== "swarm"
@@ -2788,6 +2830,75 @@ export function enterBossRoom(state) {
   state.aimY = state.aim.y;
   startBossPhase(state);
   return true;
+}
+
+function beginRouteClearTransition(state) {
+  const expedition = state.expedition;
+  if (!expedition || expedition.clearTransition) return;
+  expedition.gateLocked = false;
+  expedition.gateUnlocked = true;
+  expedition.atLockedGate = false;
+  expedition.objective = "적 전멸 · 보스 구역 전환 준비";
+  expedition.clearTransition = {
+    phase: "warning",
+    timer: ROUTE_CLEAR_WARNING_DURATION,
+    duration: ROUTE_CLEAR_WARNING_DURATION,
+    progress: 0,
+  };
+  emit(state, "swarmCleared", { kills: state.killedEnemies });
+  emit(state, "routeClearWarning", {
+    duration: ROUTE_CLEAR_WARNING_DURATION,
+    title: "적 전멸 확인",
+    message: "SOVEREIGN 방어망이 붕괴합니다.",
+    kills: state.killedEnemies,
+    regionId: state.regionId,
+  });
+  addText(state, "구역 소거 완료", state.player.x, state.player.y - 86, "#72f2ff", 1.45);
+}
+
+function updateRouteClearTransition(state, dt) {
+  const expedition = state.expedition;
+  const transition = expedition?.clearTransition;
+  if (!transition || transition.phase === "swap") return;
+  transition.timer = Math.max(0, transition.timer - dt);
+  transition.progress = clamp(1 - transition.timer / Math.max(0.001, transition.duration), 0, 1);
+  if (transition.timer > 0) return;
+
+  if (transition.phase === "warning") {
+    expedition.clearTransition = {
+      phase: "panic",
+      timer: ROUTE_CLEAR_PANIC_DURATION,
+      duration: ROUTE_CLEAR_PANIC_DURATION,
+      progress: 0,
+    };
+    expedition.objective = "SOVEREIGN 신호 폭주 감지";
+    emit(state, "routeClearPanic", {
+      duration: ROUTE_CLEAR_PANIC_DURATION,
+      beat: "sovereign-panic",
+      title: "경고 · 적 지휘망 폭주",
+      message: "보스 코어가 전장을 강제로 전환합니다.",
+      regionId: state.regionId,
+    });
+    return;
+  }
+
+  if (state.levelupPending || state.levelFlow.queuedLevels > 0) return;
+  expedition.clearTransition = { phase: "swap", timer: 0, duration: 0, progress: 1 };
+  expedition.distance = expedition.routeLength;
+  expedition.progress = 1;
+  expedition.reachedGate = true;
+  expedition.entryPrompted = true;
+  expedition.awaitingBossEntry = true;
+  expedition.autoBossEntry = true;
+  expedition.objective = `${state.bossChamber} · 자동 진입`;
+  emit(state, "bossAutoTransition", {
+    autoEnter: true,
+    regionId: state.regionId,
+    bossName: state.boss.name,
+    chamber: state.bossChamber,
+    title: "보스 구역 강제 연결",
+    message: "전장 좌표를 동기화합니다.",
+  });
 }
 
 function updateSwarmSpawning(state, dt) {
@@ -2832,29 +2943,8 @@ function updateSwarmSpawning(state, dt) {
   state.stats.peakEnemies = Math.max(state.stats.peakEnemies, state.enemies.length);
   if (state.spawnedEnemies >= state.enemyBudget && state.killedEnemies >= state.enemyBudget && state.enemies.length === 0) {
     if (state.expedition) {
-      if (!state.expedition.reachedGate) {
-        state.expedition.gateLocked = false;
-        state.expedition.gateUnlocked = true;
-        state.expedition.objective = `REACH ${state.bossChamber}`;
-        if (!state.expedition.gateWarningShown) {
-          state.expedition.gateWarningShown = true;
-          emit(state, "routeOpen", { distance: state.expedition.distance, bossGate: state.expedition.bossGate });
-        }
-        return;
-      }
-
-      if (!state.expedition.entryPrompted) {
-        if (state.levelFlow.queuedLevels > 0) {
-          state.levelFlow.nextOfferAt = Math.min(state.levelFlow.nextOfferAt, state.time);
-          return;
-        }
-        state.expedition.entryPrompted = true;
-        state.expedition.awaitingBossEntry = true;
-        state.expedition.objective = `${state.bossChamber} · ENTRY DECISION`;
-        emit(state, "swarmCleared", { kills: state.killedEnemies });
-        emit(state, "bossGatePrompt", { kills: state.killedEnemies, chamber: state.bossChamber, bossName: state.boss.name, regionId: state.regionId });
-        addText(state, "SWARM PURGED", WORLD_WIDTH * 0.5, WORLD_HEIGHT * 0.45, "#72f2ff", 1.45);
-      }
+      beginRouteClearTransition(state);
+      updateRouteClearTransition(state, dt);
       return;
     }
     if (state.phaseTransition <= 0) {
@@ -3268,14 +3358,26 @@ function queueNextMultiCharge(state, pattern) {
 
 function exposeBossCore(state, pattern) {
   const boss = state.boss;
-  const duration = 3;
+  const groggy = state.regionId === "wrong-engine-core";
+  const duration = groggy ? WRONG_ENGINE_GROGGY_DURATION : 3;
+  const multiplier = groggy ? WRONG_ENGINE_GROGGY_MULTIPLIER : 2;
   boss.x = pattern.targetX;
   boss.y = pattern.targetY;
   boss.vx = 0;
   boss.vy = 0;
   boss.weakness = duration;
-  boss.damageMultiplier = 2;
+  boss.groggy = groggy ? duration : 0;
+  boss.groggyDuration = groggy ? duration : 0;
+  boss.groggyMultiplier = groggy ? multiplier : 1;
+  boss.damageMultiplier = multiplier;
   boss.patternCooldown = duration;
+  if (groggy) {
+    boss.hitStun = Math.max(boss.hitStun, duration);
+    boss.animationState = "stagger";
+    boss.animationTimer = duration;
+    boss.attackState = "groggy";
+    boss.attackTimer = duration;
+  }
   pattern.reachedBoundary = true;
   pattern.life = 0;
   boss.activePattern = null;
@@ -3283,8 +3385,28 @@ function exposeBossCore(state, pattern) {
   state.shake = Math.max(state.shake, 18);
   state.flash = Math.max(state.flash, 0.32);
   burst(state, boss.x, boss.y, "#ffe06b", 34, 310, 0.85, 7);
-  addText(state, "CORE EXPOSED ×2", boss.x, boss.y - 92, "#ffe371", 1.3);
-  emit(state, "bossWeakness", { duration, multiplier: 2 });
+  state.shockwaves.push({
+    type: groggy ? "bossGroggy" : "bossWeakness",
+    x: boss.x,
+    y: boss.y,
+    maxRadius: groggy ? 310 : 260,
+    life: 0.72,
+    maxLife: 0.72,
+    color: "#ffe06b",
+    width: groggy ? 13 : 9,
+  });
+  addText(state, groggy ? "벽 충돌 · 그로기 ×2.5" : "CORE EXPOSED ×2", boss.x, boss.y - 92, "#ffe371", 1.3);
+  if (groggy) {
+    emit(state, "bossGroggy", {
+      duration,
+      multiplier,
+      reason: "wallImpact",
+      telegraph: "stagger",
+      title: "보스 그로기",
+      message: "벽 충돌로 코어가 노출되었습니다.",
+    });
+  }
+  emit(state, "bossWeakness", { duration, multiplier, reason: groggy ? "wallImpact" : "coreExposure" });
 }
 
 function updateBossPattern(state, dt) {
@@ -3477,6 +3599,7 @@ function updateBoss(state, dt) {
   boss.contactCooldown = Math.max(0, boss.contactCooldown - dt);
   boss.orbitHitCooldown = Math.max(0, boss.orbitHitCooldown - dt);
   boss.weakness = Math.max(0, boss.weakness - dt);
+  boss.groggy = Math.max(0, boss.groggy - dt);
   boss.phaseFlash = Math.max(0, boss.phaseFlash - dt * 0.72);
   if (boss.transformTimer > 0) {
     boss.transformTimer = Math.max(0, boss.transformTimer - dt);
@@ -3490,7 +3613,9 @@ function updateBoss(state, dt) {
       emit(state, "bossStagePulse", { stage: boss.stage, remaining: boss.alertPulses });
     }
   }
-  boss.damageMultiplier = boss.weakness > 0 ? 2 : 1;
+  boss.damageMultiplier = boss.groggy > 0
+    ? boss.groggyMultiplier
+    : boss.weakness > 0 ? 2 : 1;
   const charging = (boss.activePattern?.type === "charge" || boss.activePattern?.type === "multiCharge")
     && boss.activePattern?.phase === "active";
   const warning = boss.activePattern?.phase === "warning";
@@ -3549,6 +3674,7 @@ function updateBoss(state, dt) {
   boss.moveBlend += (Math.min(1, speed / 520) - boss.moveBlend) * (1 - Math.exp(-dt * 8));
   if (boss.dead) boss.animationState = "death";
   else if (boss.transformTimer > 0) boss.animationState = "transform";
+  else if (boss.groggy > 0) boss.animationState = "stagger";
   else if (boss.hitStun > 0 && boss.animationState !== "attack") boss.animationState = "hit";
   else if (boss.animationTimer <= 0) boss.animationState = boss.moveBlend > 0.08 ? "move" : "idle";
   if (boss.attackTimer <= 0 && boss.transformTimer <= 0) boss.attackState = "idle";
@@ -3649,6 +3775,57 @@ export function drainSwarmEvents(state) {
   return events;
 }
 
+function normalizeExpeditionMinimapPoint(state, x, y) {
+  const expedition = state.expedition;
+  return {
+    x: clamp((finite(x) - expedition.originX) / Math.max(1, expedition.routeLength), 0, 1),
+    y: clamp((finite(y, WORLD_HEIGHT * 0.5) - EXPEDITION_CORRIDOR.top)
+      / Math.max(1, EXPEDITION_CORRIDOR.bottom - EXPEDITION_CORRIDOR.top), 0, 1),
+  };
+}
+
+function buildExpeditionMinimap(state) {
+  let liveEnemyCount = 0;
+  for (let index = 0; index < state.enemies.length; index += 1) {
+    const enemy = state.enemies[index];
+    if (!enemy.dead && finite(enemy.spawnDelay) <= 0) liveEnemyCount += 1;
+  }
+
+  const sampleCount = Math.min(MINIMAP_ENEMY_SAMPLE_CAP, liveEnemyCount);
+  const enemies = [];
+  let liveIndex = 0;
+  let sampleIndex = 0;
+  let nextSample = sampleCount > 0 ? 0 : -1;
+  for (let index = 0; index < state.enemies.length && sampleIndex < sampleCount; index += 1) {
+    const enemy = state.enemies[index];
+    if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
+    if (liveIndex === nextSample) {
+      const point = normalizeExpeditionMinimapPoint(state, enemy.x, enemy.y);
+      enemies.push({ id: enemy.id, type: enemy.type, x: point.x, y: point.y, elite: Boolean(enemy.elite) });
+      sampleIndex += 1;
+      nextSample = sampleIndex < sampleCount
+        ? Math.floor(sampleIndex * liveEnemyCount / sampleCount)
+        : -1;
+    }
+    liveIndex += 1;
+  }
+
+  const player = state.phase === "boss"
+    ? { x: 1, y: 0.5 }
+    : normalizeExpeditionMinimapPoint(state, state.player.x, state.player.y);
+  return {
+    player,
+    enemies,
+    liveEnemyCount,
+    sampleCap: MINIMAP_ENEMY_SAMPLE_CAP,
+    bossGate: {
+      x: clamp(state.expedition.bossGate / Math.max(1, state.expedition.routeLength), 0, 1),
+      y: 0.5,
+      locked: state.expedition.gateLocked,
+    },
+  };
+}
+
 export function getSwarmHud(state) {
   const player = state.player;
   const remaining = Math.max(0, state.enemyBudget - state.killedEnemies);
@@ -3697,9 +3874,22 @@ export function getSwarmHud(state) {
       reachedGate: state.expedition.reachedGate,
       gateLocked: state.expedition.gateLocked,
       gateUnlocked: state.expedition.gateUnlocked,
+      atLockedGate: state.expedition.atLockedGate,
+      gateNotice: state.expedition.atLockedGate && state.expedition.gateLocked ? {
+        active: true,
+        reason: "hostilesRemaining",
+        title: "보스 구역 봉쇄",
+        message: `잔존 적 ${remaining}기를 먼저 처치하세요.`,
+        remainingEnemies: remaining,
+      } : null,
+      clearTransition: state.expedition.clearTransition
+        ? { ...state.expedition.clearTransition }
+        : null,
       awaitingBossEntry: state.expedition.awaitingBossEntry,
+      autoBossEntry: state.expedition.autoBossEntry,
       bossEntryConfirmed: state.expedition.bossEntryConfirmed,
       bossRoom: state.expedition.bossRoom,
+      minimap: buildExpeditionMinimap(state),
       traces: state.expedition.traces.map((trace) => ({
         id: trace.id,
         kind: trace.kind,
@@ -3759,6 +3949,9 @@ export function getSwarmHud(state) {
       stage: state.boss.stage,
       pattern: state.boss.activePattern?.type ?? null,
       weakness: state.boss.weakness,
+      groggy: state.boss.groggy,
+      groggyDuration: state.boss.groggyDuration,
+      groggyMultiplier: state.boss.groggyMultiplier,
       damageMultiplier: state.boss.damageMultiplier,
       enrage: state.boss.enrage,
       transforming: state.boss.transformTimer > 0,

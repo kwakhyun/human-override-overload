@@ -128,7 +128,7 @@ test("each campaign region deterministically fields a distinct opening and reinf
   const reinforcements = [];
   for (const regionId of regionIds) {
     const state = createSwarmState({ random: () => 0.5, expedition: true, regionId });
-    assert.equal(state.enemyBudget, 1000);
+    assert.equal(state.enemyBudget, regionId === "wrong-engine-core" ? 300 : 1000);
     assert.equal(state.enemies.length, 36);
     assert.equal(state.enemyProfile, REGION_ENEMY_PROFILES[regionId]);
     openings.push(countEnemyTypes(state.enemies));
@@ -895,7 +895,7 @@ test("ally ranks scale both formation size and autonomous firepower", () => {
   assert.ok(droneShot?.damage >= 110);
 });
 
-test("clearing the fixed enemy budget transitions to The Wrong Engine after two seconds", () => {
+test("the legacy fixed-budget assault still transitions while the first boss uses its reduced hull budget", () => {
   const state = createSwarmState({ random: () => 0.5 });
   state.spawnedEnemies = state.enemyBudget;
   state.killedEnemies = state.enemyBudget;
@@ -913,7 +913,7 @@ test("clearing the fixed enemy budget transitions to The Wrong Engine after two 
   assert.equal(state.phase, "boss");
   assert.equal(state.boss.active, true);
   assert.equal(getSwarmHud(state).boss.name, "THE WRONG ENGINE");
-  assert.ok(state.boss.maxHp >= 800000);
+  assert.equal(state.boss.maxHp, 560000);
   assert.ok(drainSwarmEvents(state).some((event) => event.type === "bossIntro"));
 });
 
@@ -1167,7 +1167,7 @@ test("charge locks a line warning before the boss begins its eased opening rush"
   assert.ok(state.boss.activePattern.chargeSpeed > 1000);
 });
 
-test("dodging charge makes the boss hit the arena boundary and exposes its core", () => {
+test("dodging the first boss charge causes a wall-impact groggy vulnerability window", () => {
   const state = createBossState(4);
   stepSwarm(state, createSwarmInput(), 1 / 60);
   const warning = state.boss.activePattern;
@@ -1179,11 +1179,31 @@ test("dodging charge makes the boss hit the arena boundary and exposes its core"
   assert.equal(state.boss.activePattern, null);
   assert.ok(Math.abs(state.boss.x - targetX) < 0.001);
   assert.ok(Math.abs(state.boss.y - targetY) < 0.001);
-  assert.ok(state.boss.weakness >= 2.8 && state.boss.weakness <= 3);
-  assert.equal(state.boss.damageMultiplier, 2);
+  assert.ok(state.boss.groggy >= 2.3 && state.boss.groggy <= 2.6);
+  assert.equal(state.boss.groggyDuration, 2.6);
+  assert.equal(state.boss.damageMultiplier, 2.5);
+  assert.equal(state.boss.animationState, "stagger");
+  const events = drainSwarmEvents(state);
+  const event = events.find((candidate) => candidate.type === "bossGroggy");
+  assert.deepEqual(
+    { duration: event.duration, multiplier: event.multiplier, reason: event.reason, telegraph: event.telegraph },
+    { duration: 2.6, multiplier: 2.5, reason: "wallImpact", telegraph: "stagger" },
+  );
+  const hud = getSwarmHud(state).boss;
+  assert.equal(hud.damageMultiplier, 2.5);
+  assert.ok(hud.groggy > 0);
+  assert.equal(hud.groggyMultiplier, 2.5);
+});
+
+test("follow-up regional bosses retain the standard wall-exposed core window", () => {
+  const state = createBossState(REGION_BOSS_PATTERNS["glass-dune"].indexOf("charge"), "glass-dune");
+  state.player.invulnerability = 10;
+  stepFor(state, createSwarmInput(), 1.9);
   const event = drainSwarmEvents(state).find((candidate) => candidate.type === "bossWeakness");
+  assert.equal(state.boss.groggy, 0);
+  assert.ok(state.boss.weakness > 2.2);
+  assert.equal(state.boss.damageMultiplier, 2);
   assert.deepEqual({ duration: event.duration, multiplier: event.multiplier }, { duration: 3, multiplier: 2 });
-  assert.equal(getSwarmHud(state).boss.damageMultiplier, 2);
 });
 
 test("charge collision deals heavy damage and denies the weakness window", () => {

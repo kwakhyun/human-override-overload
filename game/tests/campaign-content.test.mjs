@@ -28,8 +28,8 @@ test("campaign content defines the current stage and two coherent follow-up regi
   ]);
   assert.equal(Object.keys(CAMPAIGN_REGIONS).length, 3);
   assert.equal(getRegion("wrong-engine-core").boss.name, "THE WRONG ENGINE");
-  assert.equal(getRegion("wrong-engine-core").boss.maxHp, 840000);
-  assert.equal(getRegion("wrong-engine-core").enemyBudget, 1000);
+  assert.equal(getRegion("wrong-engine-core").boss.maxHp, 560000);
+  assert.equal(getRegion("wrong-engine-core").enemyBudget, 300);
   assert.equal(getRegion("glass-dune").boss.name, "MIRROR TYRANT");
   assert.equal(getRegion("glass-dune").boss.maxHp, 960000);
   assert.equal(getRegion("abyssal-archive").boss.name, "DROWNED ORACLE");
