@@ -4348,6 +4348,38 @@ kbd {
   height: 12px;
 }
 
+.intro-music-toggle {
+  display: inline-flex;
+  min-height: 34px;
+  margin-top: 9px;
+  padding: 7px 11px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(143, 221, 234, 0.3);
+  border-radius: 3px;
+  color: rgba(220, 239, 242, 0.82);
+  background: rgba(3, 10, 14, 0.54);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.intro-music-toggle:hover,
+.intro-music-toggle:focus-visible,
+.intro-music-toggle.is-playing {
+  border-color: rgba(135, 235, 250, 0.62);
+  color: #aef4ff;
+  background: rgba(6, 23, 28, 0.72);
+}
+
+.intro-music-toggle svg {
+  width: 15px;
+  height: 15px;
+}
+
 @media (max-height: 640px) and (orientation: landscape) {
   .intro-minimal-content {
     top: clamp(18px, 5vh, 34px);

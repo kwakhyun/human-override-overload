@@ -24,7 +24,8 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import { createSfxEngine } from "./audio/sfx.js";
-import { BGM_PATH, DOM_PREVIEW_ASSET_PATHS } from "./game/assets/manifest.ts";
+import { resolveMusicTrack } from "./audio/music.js";
+import { DOM_PREVIEW_ASSET_PATHS } from "./game/assets/manifest.ts";
 import {
   BASE_NPCS,
   DEFAULT_REGION_ID,
@@ -582,7 +583,7 @@ function resolveEventSound(event) {
   return direct;
 }
 
-function IntroScreen({ assets, assetError, onStart }) {
+function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic }) {
   const buttonAtlas = assets?.commandButtonStates?.src;
   return (
     <main className="overload-intro intro-cinematic">
@@ -610,6 +611,16 @@ function IntroScreen({ assets, assetError, onStart }) {
           {assets || assetError ? <Play weight="fill" /> : <i className="loading-ring" />}
         </button>
         <small className="intro-start-note">저장 슬롯 선택 후 기지에서 첫 작전을 안내합니다.</small>
+        <button
+          className={`intro-music-toggle${musicPlaying ? " is-playing" : ""}`}
+          type="button"
+          data-ui-sound="uiConfirm"
+          onClick={onToggleMusic}
+          aria-label={musicPlaying ? "타이틀 음악 끄기" : "타이틀 음악 재생"}
+        >
+          {musicPlaying ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}
+          <span>{musicPlaying ? "타이틀 음악 재생 중" : "타이틀 음악 재생"}</span>
+        </button>
         {assetError && <p className="asset-warning"><Warning /> 일부 이미지 대신 안전 렌더링을 사용합니다.</p>}
         <div className="intro-minimal-controls" aria-label="게임 조작">
           <span><kbd>WASD</kbd> 이동</span>
@@ -1881,6 +1892,7 @@ export function App() {
   const [npcLineIndex, setNpcLineIndex] = useState(0);
   const [activeFacilityId, setActiveFacilityId] = useState(null);
   const [guideReturnScreen, setGuideReturnScreen] = useState("sortie");
+  const [bgmPlaying, setBgmPlaying] = useState(false);
   const bgmRef = useRef(null);
   const sfx = useMemo(() => createSfxEngine(), []);
   const regions = useMemo(() => getCampaignRegions(), []);
@@ -1890,6 +1902,7 @@ export function App() {
     [activeSlotId, campaign],
   );
   const activeRegion = useMemo(() => getRegion(activeRegionId) || getRegion(DEFAULT_REGION_ID), [activeRegionId]);
+  const activeBgmPath = useMemo(() => resolveMusicTrack(screen, activeRegionId), [screen, activeRegionId]);
   const slotIndex = activeSlotId ? Math.max(0, Number(activeSlotId.split("-")[1] || 1) - 1) : 0;
   const campaignView = activeSlot ? { ...activeSlot, slotIndex } : null;
   const combatBonuses = useMemo(
@@ -1962,8 +1975,17 @@ export function App() {
   }, [sfx]);
   useEffect(() => sfx.setEnabled(soundEnabled), [sfx, soundEnabled]);
   useEffect(() => {
-    if (bgmRef.current) bgmRef.current.muted = !soundEnabled;
-  }, [soundEnabled]);
+    const bgm = bgmRef.current;
+    if (!bgm) return;
+    bgm.muted = !soundEnabled;
+    if (!soundEnabled || !activeBgmPath) {
+      bgm.pause();
+      setBgmPlaying(false);
+      return;
+    }
+    bgm.volume = screen === "intro" ? 0.34 : 0.38;
+    bgm.play().then(() => setBgmPlaying(true)).catch(() => setBgmPlaying(false));
+  }, [activeBgmPath, screen, soundEnabled]);
 
   useEffect(() => {
     const handleButtonPointer = (event) => {
@@ -2002,25 +2024,27 @@ export function App() {
     return () => window.removeEventListener("keydown", handleBaseEscape);
   }, [activeFacilityId, activeNpc, screen]);
 
-  const startAudio = useCallback((restart = false) => {
+  const startTitleMusic = useCallback(() => {
     sfx.start();
     const bgm = bgmRef.current;
-    if (bgm) {
-      if (restart) bgm.currentTime = 0;
-      bgm.volume = 0.38;
-      bgm.muted = !soundEnabled;
-      bgm.play().catch(() => {
-        // Browsers may still decline playback if the initiating gesture is lost.
-      });
+    if (!bgm || !activeBgmPath) return;
+    if (bgmPlaying) {
+      bgm.pause();
+      setBgmPlaying(false);
+      setSoundEnabled(false);
+      return;
     }
-  }, [sfx, soundEnabled]);
+    setSoundEnabled(true);
+    bgm.muted = false;
+    bgm.volume = 0.34;
+    bgm.play().then(() => setBgmPlaying(true)).catch(() => setBgmPlaying(false));
+  }, [activeBgmPath, bgmPlaying, sfx]);
 
   const openSaveSlots = useCallback(() => {
     sfx.start();
     sfx.play("start");
-    startAudio(false);
     setScreen("save");
-  }, [sfx, startAudio]);
+  }, [sfx]);
 
   const beginSortieCinematic = useCallback((regionId) => {
     setActiveRegionId(regionId);
@@ -2030,9 +2054,8 @@ export function App() {
   }, []);
 
   const enterCombat = useCallback(() => {
-    startAudio(true);
     setScreen("game");
-  }, [startAudio]);
+  }, []);
 
   const launchCombat = useCallback((regionId) => {
     const slot = activeSlotId ? getCampaignSlot(campaign, activeSlotId) : null;
@@ -2064,12 +2087,10 @@ export function App() {
     setActiveFacilityId(null);
     setResult(null);
     setGuideReturnScreen("base");
-    startAudio(false);
     setScreen("base");
-  }, [campaign, startAudio]);
+  }, [campaign]);
 
   const finish = useCallback((nextResult) => {
-    const bgm = bgmRef.current;
     const status = nextResult?.status || nextResult?.phase;
     const regionId = nextResult?.regionId || activeRegionId;
     if (status === "victory" && activeSlotId) {
@@ -2083,13 +2104,8 @@ export function App() {
       setResult({ ...nextResult, regionId });
       setActiveNpc(null);
       setActiveFacilityId(null);
-      if (bgm) bgm.volume = 0.18;
       setScreen("base");
       return;
-    }
-    if (bgm) {
-      bgm.pause();
-      bgm.currentTime = 0;
     }
     setResult({ ...nextResult, regionId });
     setScreen("result");
@@ -2228,13 +2244,30 @@ export function App() {
   } else if (screen === "result") {
     content = <ResultScreen result={result} assets={assets} region={activeRegion} onRestart={() => launchCombat(activeRegionId)} onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null} />;
   } else {
-    content = <IntroScreen assets={assets} assetError={assetError} onStart={openSaveSlots} />;
+    content = (
+      <IntroScreen
+        assets={assets}
+        assetError={assetError}
+        onStart={openSaveSlots}
+        musicPlaying={bgmPlaying}
+        onToggleMusic={startTitleMusic}
+      />
+    );
   }
 
   return (
     <>
       {content}
-      <audio ref={bgmRef} src={BGM_PATH} loop preload="metadata" hidden aria-hidden="true" />
+      <audio
+        ref={bgmRef}
+        src={activeBgmPath || undefined}
+        loop
+        preload="metadata"
+        hidden
+        aria-hidden="true"
+        onPlay={() => setBgmPlaying(true)}
+        onPause={() => setBgmPlaying(false)}
+      />
     </>
   );
 }

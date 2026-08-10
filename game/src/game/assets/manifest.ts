@@ -245,7 +245,13 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
   rewardAiCore: "./assets/overload/ui/rewards/aiCore.webp",
 });
 
-export const BGM_PATH = "./assets/audio/overload-main-theme.mp3";
+export const TITLE_BGM_PATH = "./assets/audio/under-ashen-skies-title.mp3";
+export const BASE_BGM_PATH = null;
+export const REGION_BGM_PATHS = Object.freeze({
+  "wrong-engine-core": "./assets/audio/overload-main-theme.mp3",
+  "glass-dune": null,
+  "abyssal-archive": null,
+});
 
 export function frameCrop(
   sourceWidth: number,
