@@ -49,7 +49,16 @@ test("PERFORMANCE selects lighter paths without changing stable Phaser texture k
   const fullBoss = manifest.getBossGameAssetsForRegion("wrong-engine-core", "full");
   const performanceBoss = manifest.getBossGameAssetsForRegion("wrong-engine-core", "performance");
   assert.deepEqual(performanceBoss.map((asset) => asset.key), fullBoss.map((asset) => asset.key));
-  assert.ok(performanceBoss.every((asset) => asset.path.includes("/performance/")));
+  const bossPixelKeys = new Set([
+    manifest.ASSET_KEYS.bossPatternCommonPixel,
+    manifest.ASSET_KEYS.bossPatternRegionalPixel,
+  ]);
+  assert.ok(performanceBoss.filter((asset) => !bossPixelKeys.has(asset.key)).every((asset) => asset.path.includes("/performance/")));
+  assert.deepEqual(
+    performanceBoss.filter((asset) => bossPixelKeys.has(asset.key)).map((asset) => asset.path),
+    fullBoss.filter((asset) => bossPixelKeys.has(asset.key)).map((asset) => asset.path),
+    "native 64px boss pixel sheets are already the low-memory profile and must not be duplicated",
+  );
   assert.equal(manifest.getAllyMotionAsset("hunter-drone", "performance")?.path.includes("/performance/"), true);
 });
 

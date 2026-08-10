@@ -63,6 +63,7 @@ test("the runtime exposes profiling only behind Vite DEV and tears it down with 
   assert.match(createGame, /query\.get\("region"\)/);
   assert.match(createGame, /if \(debugRegion\) launch = \{ \.\.\.launch, regionId: debugRegion \}/);
   assert.match(createGame, /qaProfiler\?\.destroy\(\)/);
+  assert.match(createGame, /bossPattern: state\?\.boss\?\.activePattern\?\.type \?\? null/);
   assert.match(profiler, /__OVERLOAD_QA__/);
   assert.match(profiler, /waitForSamples/);
   assert.match(profiler, /renderSubmitCpu/);

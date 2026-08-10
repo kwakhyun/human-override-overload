@@ -518,8 +518,32 @@ try {
     variant: "hero",
     sourceToken: "survivor-portrait.png",
   }, "desktop:glass-dune:aegis", errors);
-  recordCheck(bossNarrative.openingNarrative.first?.speaker === "거울 폭군", "desktop:glass-dune:boss-name", errors);
+  recordCheck(bossNarrative.openingNarrative.first?.speaker === "거울 폭군 · MIRROR TYRANT", "desktop:glass-dune:boss-name", errors);
   recordCheck(bossNarrative.speechProbe?.accesses?.length === 0, "desktop:boss:no-Web-Speech-runtime-access", errors);
+  await desktopPage.waitForFunction(
+    () => window.__OVERLOAD_QA__?.getSnapshot().context.bossPattern === "prismLattice",
+    null,
+    { timeout: 15_000 },
+  );
+  const bossPatternTextureKeys = await desktopPage.evaluate(() => (
+    window.__OVERLOAD_QA__?.getSnapshot().textureMemory.sources.flatMap((source) => source.keys) ?? []
+  ));
+  recordCheck(
+    bossPatternTextureKeys.includes("overload-boss-pattern-common-pixel-atlas"),
+    "desktop:boss-pattern:common-texture-loaded",
+    errors,
+  );
+  recordCheck(
+    bossPatternTextureKeys.includes("overload-boss-pattern-regional-pixel-atlas"),
+    "desktop:boss-pattern:regional-texture-loaded",
+    errors,
+  );
+  await desktopPage.screenshot({
+    path: path.join(qaDir, "latest-boss-pattern-prism-lattice-desktop-1440x810.png"),
+    fullPage: true,
+  });
+  report.desktop.bossPattern = await desktopPage.evaluate(() => window.__OVERLOAD_QA__?.getSnapshot().context.bossPattern);
+  report.desktop.bossPatternTextures = bossPatternTextureKeys.filter((key) => key.includes("boss-pattern"));
   report.desktop.bossNarrative = bossNarrative;
 
   await openFirstSortieGuide(desktopPage);

@@ -18,6 +18,7 @@ export type ProfilingContext = Readonly<{
   playerProjectiles?: number;
   enemyProjectiles?: number;
   bossStage?: number;
+  bossPattern?: string | null;
 }>;
 
 export type SampleSummary = Readonly<{

@@ -9,6 +9,9 @@
 
 - 생성일: 2026-08-10
 - 생성 도구: OpenAI 내장 ImageGen
+- 스타일 기준 원본:
+  - `public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png`
+  - `public/assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png`
 - 후처리: ImageGen `remove_chroma_key.py`, Pillow 기반 `scripts/prepare-overload-art.py`
 - 공통 카메라 규칙: 인게임 배우와 장비는 천장 카메라의 엄격한 90° 정사영 탑다운,
   중앙 회전 피벗, 화면 오른쪽 기본 전방. 정면 상반신 대사 포트레이트만 예외입니다.
@@ -903,6 +906,62 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 
 두 자산 모두 프로젝트의 기존 승인 이미지를 편집 또는 스타일 기준으로 사용했으며 외부 게임 이미지는
 포함하지 않습니다. 버튼 텍스트와 아이콘은 접근 가능한 DOM 요소로 별도 렌더링됩니다.
+
+## Boss mechanic pixel VFX atlases (2026-08-10)
+
+- 생성 도구: OpenAI 내장 ImageGen
+- 런타임 경로:
+  - `public/assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png`
+  - `public/assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png`
+- 생성·알파 원본:
+  - `reference/source-assets/overload/vfx/boss-pattern-pixel-v1/common-boss-patterns-imagegen.png`
+  - `reference/source-assets/overload/vfx/boss-pattern-pixel-v1/common-boss-patterns-alpha.png`
+  - `reference/source-assets/overload/vfx/boss-pattern-pixel-v1/regional-boss-patterns-imagegen.png`
+  - `reference/source-assets/overload/vfx/boss-pattern-pixel-v1/regional-boss-patterns-alpha.png`
+- ImageGen 원본 경로:
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-71424306-6085-4a83-bd85-4b2d5442b77a.png`
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-11bb8e5f-f771-497a-8e05-643dc850b802.png`
+- QA 미리보기:
+  - `qa/boss-pattern-common-pixel-preview.png`
+  - `qa/boss-pattern-regional-pixel-preview.png`
+- 후처리: 설치된 `remove_chroma_key.py`의 border auto-key, soft matte와 despill로 마젠타를 제거한 뒤
+  `scripts/normalize-pixel-vfx-atlas.py`로 셀마다 NEAREST 64px, 최대 32색 팔레트, 2px 안전 경계를
+  적용했습니다. 공통 시트는 384×384(6×6), 지역 시트는 384×256(6×4)이며 RGBA8 디코딩 합계는
+  983,040 bytes입니다. 도트 모션은 엔진이 소유한 선·원·캡슐·충돌·피해 판정을 대체하지 않습니다.
+- 최종 프롬프트 — 공통 보스 패턴:
+
+  > Use case: stylized-concept
+  > Asset type: production low-resolution pixel-art boss mechanic VFX spritesheet for the top-down Phaser browser game TRAIN ME WRONG: OVERLOAD.
+  > Input images: Image 1 and Image 2 are approved style, palette-density, pixel-cluster, and animation-progression references only. Do not trace, blur, enlarge, downsample, or edit them. Create every boss effect from scratch as authored pixel art.
+  > Primary request: create ONE exact 6-column by 6-row spritesheet, exactly 36 isolated square cells, read left-to-right. Each row is one complete six-frame mechanic animation.
+  > Row 1 RADIAL VOLLEY: compact hostile red reactor seed, amber warning spokes, locked radial reticle, simultaneous red-white projectile burst, expanded spoke curtain, fading embers.
+  > Row 2 SWEEP LASER: compact red emitter seed, amber angular warning wedge, narrow locked direction line, bright white-red beam ignition, rotating cyan-red sweep core, clean shutdown sparks. Keep every frame square and self-contained; never paint a long beam across cells.
+  > Row 3 TARGET BOMBS: small amber target bracket, tightening red reticle, locked white crosshair, compact orange-red impact bloom, larger square-pixel explosion, sparse fading debris.
+  > Row 4 EXPANDING RINGS: tiny red core, one amber warning ring, two concentric locked rings, bright expanding white-red wave, fragmented outer ring, fading red pixels.
+  > Row 5 CHARGE: compact boss-direction arrow seed, dotted amber charge lane token, locked triple chevrons, bright red-white rush streak contained inside the cell, wall-impact pixel star, stunned/fading shards.
+  > Row 6 MULTI-CHARGE: one warning chevron, two sequential chevrons, three locked chevrons, rapid red-white multi-rush cluster, heavy wall-impact star, fading stagger sparks. Keep the action readable as repeated rushes without drawing a long vehicle or lane.
+  > Style/medium: authentic hand-authored 16-bit arcade pixel VFX, crisp square pixel clusters, hard stair-step edges, no antialiasing, restrained 5-7 color palette per row, dark navy outlines, hostile red/amber/white with restrained cyan highlights, simple and highly readable over dark sci-fi battlefields, production sprites rather than concept art.
+  > Composition/framing: exact uniform 6×6 grid filling a square canvas; equal square slots; one centered self-contained effect per slot; stable center and size within each row; generous empty safety separation; nothing crosses cell boundaries.
+  > Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background covering every empty pixel. No transparency simulation, shadow, gradient, texture, glow fog, environment, floor, grid lines, borders, labels, text, numbers, logos, watermark, poster layout, extra rows, extra columns, duplicate sheets, or cropped cells. Do not use #ff00ff inside an effect.
+  > Constraints: exact 6 columns, exact 6 rows, exact 36 square cells; obvious six-frame progression at 64×64; all effects remain compact square modules because authoritative engine Graphics will draw the real full-length collision geometry.
+
+- 최종 프롬프트 — 지역 고유 보스 패턴:
+
+  > Use case: stylized-concept
+  > Asset type: production low-resolution pixel-art regional boss mechanic VFX spritesheet for the top-down Phaser browser game TRAIN ME WRONG: OVERLOAD.
+  > Input images: Image 1 and Image 2 are approved style, palette-density, pixel-cluster, and animation-progression references only. Do not trace, blur, enlarge, downsample, or edit them. Create every boss effect from scratch as authored pixel art.
+  > Primary request: create ONE exact 6-column by 4-row spritesheet, exactly 24 isolated square cells, read left-to-right. Each row is one complete six-frame mechanic animation.
+  > Row 1 PRISM LATTICE: tiny cyan prism seed, two crossed cyan light segments, amber-cyan warning diamond, locked white-cyan lattice node, bright crystalline intersection burst, sparse glass-like cyan pixels fading. Keep beams as compact square modules because the engine draws full lanes.
+  > Row 2 SOLAR FLARE: tiny amber solar seed, dotted target halo, tightening orange-white reticle, compact solar ignition, larger contained amber-white pixel flare, sparse cooling embers.
+  > Row 3 MEMORY SPIRAL: tiny violet memory node, two cyan-violet curved pixel arms, four-arm rotating warning spiral, locked bright spiral core, contained cyan-violet rotation burst, fragmented memory pixels fading.
+  > Row 4 DEPTH COLLAPSE: tiny deep-cyan abyss core, broad violet outer warning ring, three inward-stepping cyan-violet rings, bright compressed central ring, contained pressure-collapse burst, sparse dark-violet/cyan fragments.
+  > Style/medium: authentic hand-authored 16-bit arcade pixel VFX, crisp square pixel clusters, hard stair-step edges, no antialiasing, restrained 5-7 color palette per row, dark navy outlines. PRISM uses cyan/white with restrained amber; SOLAR uses amber/orange/white; MEMORY and DEPTH use cyan/violet/white. Simple, lightweight, and highly readable over dark sci-fi battlefields; production sprites rather than concept art.
+  > Composition/framing: exact uniform 6×4 grid filling a 3:2 landscape canvas; equal square slots; one centered self-contained effect per slot; stable center and size within each row; generous empty safety separation; nothing crosses cell boundaries.
+  > Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background covering every empty pixel. No transparency simulation, shadow, gradient, texture, glow fog, environment, floor, grid lines, borders, labels, text, numbers, logos, watermark, poster layout, extra rows, extra columns, duplicate sheets, or cropped cells. Do not use #ff00ff inside an effect.
+  > Constraints: exact 6 columns, exact 4 rows, exact 24 square cells; obvious six-frame progression at 64×64; all effects remain compact square modules because authoritative engine Graphics will draw the real collision geometry.
+
+두 시트는 프로젝트의 기존 수동·자동 기술 도트 시트를 스타일 기준으로 사용했으며 외부 게임 이미지는
+포함하지 않습니다. 보스방 선택 이후에만 Phaser 텍스처로 지연 로드됩니다.
 
 ## Original procedural sound
 

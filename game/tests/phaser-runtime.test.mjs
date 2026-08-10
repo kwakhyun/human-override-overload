@@ -270,6 +270,8 @@ test("BootScene registers common assets plus only the selected region with a saf
     "./assets/overload/regions/glass-dune/boss-room.webp",
     "./assets/overload/regions/glass-dune/boss-forms-atlas.png",
     "./assets/overload/regions/glass-dune/motion-v2/mirror-tyrant-motion-atlas.png",
+    "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png",
+    "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png",
   ]);
   assert.ok(!glass.some((path) => path.includes("abyssal-archive")));
   assert.ok(!glass.some((path) => path.includes("sector-01-shattered-approach")));

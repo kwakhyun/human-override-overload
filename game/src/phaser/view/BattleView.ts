@@ -16,6 +16,7 @@ import {
   type ActorClipId,
 } from "./animation/actorAnimation";
 import { resolveManualAbilityAtlasFrame } from "./animation/manualAbilityAnimation";
+import { resolveBossPatternAtlasFrame } from "./animation/bossPatternAnimation";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -298,6 +299,7 @@ export class BattleView {
   private readonly worldBack: Phaser.GameObjects.Container;
   private readonly actors: Phaser.GameObjects.Container;
   private readonly worldFront: Phaser.GameObjects.Container;
+  private readonly bossPatternLayer: Phaser.GameObjects.Container;
   private readonly hudLayer: Phaser.GameObjects.Container;
   private readonly shadowGraphics: Phaser.GameObjects.Graphics;
   private readonly telegraphGraphics: Phaser.GameObjects.Graphics;
@@ -320,6 +322,7 @@ export class BattleView {
   private readonly healingKitSprites: Phaser.GameObjects.Image[] = [];
   private readonly manualAbilitySprites: Phaser.GameObjects.Image[] = [];
   private readonly spawnGateSprites: Phaser.GameObjects.Image[] = [];
+  private readonly bossPatternSprites: Phaser.GameObjects.Image[] = [];
   private readonly impactSprites: Phaser.GameObjects.Image[] = [];
   private readonly traceSprites = new Map<string, Phaser.GameObjects.Image>();
   private readonly enemySprites = new Map<number, SpriteRecord>();
@@ -402,6 +405,7 @@ export class BattleView {
     this.actors = scene.add.container(0, 0);
     this.worldFront = scene.add.container(0, 0);
     this.hudLayer = scene.add.container(0, 0);
+    this.bossPatternLayer = scene.add.container(0, 0);
 
     if (hasSquadTraces) {
       ["rook", "nyx", "moss"].forEach((id, column) => {
@@ -420,7 +424,7 @@ export class BattleView {
     this.impactGraphics = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
     this.foregroundGraphics = scene.add.graphics();
     this.hudGraphics = scene.add.graphics();
-    this.worldBack.add([this.shadowGraphics, this.telegraphGraphics, this.effectGraphics, this.manualAbilityGraphics]);
+    this.worldBack.add([this.shadowGraphics, this.telegraphGraphics, this.bossPatternLayer, this.effectGraphics, this.manualAbilityGraphics]);
     this.worldFront.add([this.projectileGraphics, this.impactGraphics, this.foregroundGraphics]);
     this.hudLayer.add(this.hudGraphics);
 
@@ -492,6 +496,17 @@ export class BattleView {
     if (!this.scene.textures.exists(bossRoom) || !this.scene.textures.exists(bossForms)) return false;
     ensureAtlasFrames(this.scene, bossForms, 3, 1);
     const hasMotion = this.prepareAtlas(bossMotion, 6, 4);
+    const hasCommonPatterns = this.preparePixelAtlas(ASSET_KEYS.bossPatternCommonPixel, 6, 6);
+    const hasRegionalPatterns = this.preparePixelAtlas(ASSET_KEYS.bossPatternRegionalPixel, 6, 4);
+    if (hasCommonPatterns && hasRegionalPatterns && this.bossPatternSprites.length === 0) {
+      for (let index = 0; index < 16; index += 1) {
+        const image = this.scene.add.image(0, 0, ASSET_KEYS.bossPatternCommonPixel)
+          .setVisible(false)
+          .setBlendMode(Phaser.BlendModes.ADD);
+        this.bossPatternSprites.push(image);
+        this.bossPatternLayer.add(image);
+      }
+    }
     const bossTexture = hasMotion ? bossMotion : bossForms;
     this.bossMap.setTexture(bossRoom).setDisplaySize(WORLD_WIDTH, WORLD_HEIGHT);
     this.boss.setTexture(bossTexture);
@@ -546,6 +561,7 @@ export class BattleView {
     this.syncAllies(state, time, quality);
     this.drawShadows(state, quality);
     this.drawTelegraphs(state, time, quality);
+    this.syncBossPatternSprites(state, time, quality);
     // PERFORMANCE keeps authoritative danger geometry and actor movement at
     // the scene cadence, while retaining cosmetic Graphics/sprite state for a
     // bounded 30 Hz update. This halves the busiest VFX rebuild path without
@@ -1021,6 +1037,105 @@ export class BattleView {
     const player = state?.player;
     graphics.fillEllipse(finite(player?.x) + 4, finite(player?.y) + 13, 66, 20);
     if (state?.boss?.active) graphics.fillEllipse(finite(state.boss.x) + 8, finite(state.boss.y) + 34, 238, 72);
+  }
+
+  private placeBossPatternSprite(
+    index: number,
+    texture: string,
+    frame: Readonly<{ column: number; row: number }>,
+    x: number,
+    y: number,
+    size: number,
+    rotation: number,
+    alpha: number,
+  ) {
+    const image = this.bossPatternSprites[index];
+    if (!image) return index;
+    if (image.texture.key !== texture) image.setTexture(texture);
+    setAtlasFrame(image, frame.column, frame.row);
+    image
+      .setPosition(x, y)
+      .setDisplaySize(size, size)
+      .setRotation(rotation)
+      .setAlpha(alpha)
+      .setVisible(true);
+    return index + 1;
+  }
+
+  private syncBossPatternSprites(state: any, time: number, quality: QualityPreset) {
+    let cursor = 0;
+    const pattern = state?.boss?.activePattern;
+    const resolved = resolveBossPatternAtlasFrame(pattern?.type, pattern ?? {});
+    const cap = quality.id === "performance" ? 8 : this.bossPatternSprites.length;
+    if (pattern && resolved && cap > 0) {
+      const type = String(pattern.type ?? "").replace(/[^a-z0-9]/gi, "").toLowerCase();
+      const geometry = pattern.geometry ?? {};
+      const texture = resolved.atlas === "regional"
+        ? ASSET_KEYS.bossPatternRegionalPixel
+        : ASSET_KEYS.bossPatternCommonPixel;
+      const active = String(pattern.phase ?? "warning").toLowerCase() === "active";
+      const alpha = active ? 0.9 : 0.7 + Math.sin(time * 12) * 0.12;
+      const targetPattern = type.includes("bomb") || type.includes("solarflare");
+
+      if (targetPattern && Array.isArray(pattern.targets)) {
+        for (const target of pattern.targets) {
+          if (cursor >= cap) break;
+          if (target?.detonated) continue;
+          const radius = finite(target?.radius, finite(pattern.radius, 72));
+          cursor = this.placeBossPatternSprite(
+            cursor,
+            texture,
+            resolved,
+            finite(target?.x),
+            finite(target?.y),
+            clamp(radius * 1.55, 88, 154),
+            0,
+            alpha,
+          );
+        }
+      } else {
+        let x = finite(geometry.centerX, finite(geometry.originX, finite(pattern.x, finite(state?.boss?.x))));
+        let y = finite(geometry.centerY, finite(geometry.originY, finite(pattern.y, finite(state?.boss?.y))));
+        let size = 132;
+        let rotation = 0;
+        const bossX = finite(state?.boss?.x, x);
+        const bossY = finite(state?.boss?.y, y);
+        const bossRadius = Math.max(72, finite(state?.boss?.radius, 120));
+        const pointerAngle = Math.atan2(finite(state?.player?.y) - bossY, finite(state?.player?.x) - bossX);
+        const patternAngle = finite(geometry.baseAngle, finite(geometry.angle, finite(pattern.angle, pointerAngle)));
+        const patternOffset = Math.max(230, bossRadius * 2.15);
+        const placeOutsideBoss = (angle: number) => {
+          x = bossX + Math.cos(angle) * patternOffset;
+          y = bossY + Math.sin(angle) * patternOffset;
+        };
+        if (type.includes("charge")) {
+          placeOutsideBoss(patternAngle);
+          size = 104;
+          rotation = patternAngle;
+        } else if (type.includes("sweep")) {
+          placeOutsideBoss(patternAngle);
+          size = 116;
+          rotation = patternAngle;
+        } else if (type.includes("prismlattice")) {
+          size = 158;
+        } else if (type.includes("memoryspiral")) {
+          placeOutsideBoss(patternAngle + time * 0.18);
+          size = 166;
+          rotation = patternAngle + time * 0.55;
+        } else if (type.includes("depthcollapse") || type.includes("ring")) {
+          placeOutsideBoss(pointerAngle);
+          size = 172;
+        } else if (type.includes("radial")) {
+          placeOutsideBoss(patternAngle);
+          size = 148;
+          rotation = patternAngle + time * 0.18;
+        }
+        cursor = this.placeBossPatternSprite(cursor, texture, resolved, x, y, size, rotation, alpha);
+      }
+    }
+    for (let index = cursor; index < this.bossPatternSprites.length; index += 1) {
+      this.bossPatternSprites[index].setVisible(false);
+    }
   }
 
   private drawTelegraphs(state: any, time: number, quality: QualityPreset) {

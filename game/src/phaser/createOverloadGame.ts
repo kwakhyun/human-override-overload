@@ -119,6 +119,7 @@ export function createOverloadGame(
         playerProjectiles: state?.projectiles?.length ?? 0,
         enemyProjectiles: state?.enemyProjectiles?.length ?? 0,
         bossStage: state?.boss?.stage,
+        bossPattern: state?.boss?.activePattern?.type ?? null,
       };
     }, () => primeDeterministicArsenal(battleScene as unknown as Parameters<typeof primeDeterministicArsenal>[0]))
     : null;
