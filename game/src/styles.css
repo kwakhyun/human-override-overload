@@ -3887,16 +3887,22 @@ kbd {
 
 .narrative-portrait-frame {
   position: absolute;
-  inset: 0;
+  bottom: 0;
+  left: 50%;
   display: block;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
   background-position: var(--portrait-frame-position, 0%) center;
   background-repeat: no-repeat;
-  background-size: auto 100%;
+  background-size: 300% 100%;
   filter: drop-shadow(18px 6px 18px rgba(0, 0, 0, 0.68));
+  transform: translateX(-50%);
 }
 
 .narrative-portrait.is-hostile .narrative-portrait-frame {
-  background-size: auto 92%;
+  bottom: 4%;
+  height: 92%;
   filter: saturate(1.08) drop-shadow(0 0 20px rgba(255, 74, 52, 0.36));
 }
 
@@ -4110,7 +4116,7 @@ kbd {
   .narrative-portrait { left: 6px; width: 122px; height: 148px; }
   .narrative-portrait img { top: -3%; width: 172%; }
   .narrative-portrait.is-operator img { top: 0; width: auto; height: 112%; }
-  .narrative-portrait.is-hostile .narrative-portrait-frame { background-size: auto 88%; }
+  .narrative-portrait.is-hostile .narrative-portrait-frame { bottom: 6%; height: 88%; }
   .narrative-copy p { margin-top: 5px; font-size: 13px; line-height: 1.42; }
   .narrative-copy strong { font-size: 15px; }
   .narrative-panel > button { padding: 8px; }

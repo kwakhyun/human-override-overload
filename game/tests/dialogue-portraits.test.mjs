@@ -68,8 +68,8 @@ test("the active narrative panel resolves the actual speaker without misleading 
   assert.match(app, /<NarrativePortrait portrait=\{portrait\} \/>/);
   assert.match(app, /<NarrativePanel dialogue=\{dialogue\} assets=\{assets\} region=\{region\} bossStage=\{hud\?\.boss\?\.stage\}/);
 
-  assert.match(styles, /\.narrative-portrait-frame\s*\{[\s\S]*?background-position: var\(--portrait-frame-position, 0%\) center;[\s\S]*?background-size: auto 100%;/);
+  assert.match(styles, /\.narrative-portrait-frame\s*\{[\s\S]*?aspect-ratio: 1;[\s\S]*?background-position: var\(--portrait-frame-position, 0%\) center;[\s\S]*?background-size: 300% 100%;/);
   assert.match(styles, /\.narrative-portrait\.is-operator img\s*\{[\s\S]*?height: 112%;/);
-  assert.match(styles, /\.narrative-portrait\.is-hostile \.narrative-portrait-frame\s*\{[\s\S]*?background-size: auto 92%;/);
+  assert.match(styles, /\.narrative-portrait\.is-hostile \.narrative-portrait-frame\s*\{[\s\S]*?height: 92%;/);
   assert.match(screens, /backgroundPosition: standalone \? "center bottom" : `\$\{\(npc\.portraitIndex \|\| 0\) \* 50\}% center`/);
 });
