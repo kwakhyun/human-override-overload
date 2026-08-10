@@ -20,4 +20,6 @@ test("campaign UI ships the authored NIGHTJAR map and transparent three-state co
   assert.match(styles, /\.command-ui-button[\s\S]*background-size: 300% 100%/);
   assert.match(styles, /background-position: 50% 50%/);
   assert.match(styles, /background-position: 100% 50%/);
+  assert.match(styles, /\.base-npc-portrait[\s\S]*background-size: 300% auto/);
+  assert.match(styles, /\.region-mixed-name/);
 });

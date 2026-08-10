@@ -4684,12 +4684,36 @@ kbd {
   width: min(27vw, 330px);
   height: calc(100% + 42px);
   background-repeat: no-repeat;
-  background-size: auto 100%;
+  overflow: hidden;
+  background-size: 300% auto;
+  background-position-y: center !important;
   filter: drop-shadow(12px 0 18px rgba(0, 0, 0, 0.55));
 }
 
 .base-npc-portrait.is-standalone {
   background-size: contain;
+}
+
+.region-mixed-name {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.region-mixed-name > span { color: inherit; }
+.region-mixed-name > em {
+  color: #72d9e8;
+  font-family: var(--font-brand);
+  font-size: 0.48em;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+}
+
+.region-sortie-dialog h2.region-mixed-name > em {
+  margin-top: 4px;
+  font-size: 0.3em;
+  letter-spacing: 0.16em;
 }
 
 .base-dialogue > div > small { color: #66e8fb; font-family: var(--font-ui); font-size: 9px; letter-spacing: 0.16em; }
@@ -5751,4 +5775,27 @@ kbd,
 @media (prefers-reduced-motion: reduce) {
   .region-focus-background,
   .region-sortie-dialog { animation: none; transition: none; }
+}
+
+/* Keep the authored three-state frame authoritative after later component
+   background shorthands. Each atlas cell must fill the real button box. */
+.command-ui-button {
+  background-color: rgba(5, 22, 29, 0.96);
+  background-image: var(--command-button-atlas);
+  background-repeat: no-repeat;
+  background-position: 0 50%;
+  background-size: 300% 100%;
+}
+
+.command-ui-button:hover:not(:disabled),
+.command-ui-button:focus-visible:not(:disabled) {
+  background-image: var(--command-button-atlas);
+  background-position: 50% 50%;
+  background-size: 300% 100%;
+}
+
+.command-ui-button:active:not(:disabled) {
+  background-image: var(--command-button-atlas);
+  background-position: 100% 50%;
+  background-size: 300% 100%;
 }

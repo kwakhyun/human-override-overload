@@ -875,7 +875,9 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 - 후처리:
   - 지도는 `scripts/prepare-campaign-map.py`로 1920×1080 WebP quality 86으로 정규화했습니다.
   - 버튼은 설치된 `remove_chroma_key.py`의 border auto-key, soft-matte, despill로 투명화한 뒤
-    `scripts/normalize-ui-button-atlas.py`로 3×1, 셀 512×160의 동일 크기 상태 아틀라스로 정규화했습니다.
+    `scripts/normalize-ui-button-atlas.py --fit stretch --padding 8`로 3×1, 셀 512×160의 동일 크기
+    상태 아틀라스로 정규화했습니다. 각 상태의 투명 외곽을 먼저 자른 뒤 셀 안전 경계까지 채워,
+    서로 다른 DOM 버튼 비율에서도 테두리와 모서리가 중앙에 끊겨 보이지 않게 했습니다.
 - 최종 프롬프트 — 비행 관제 지도:
 
   > Use case: precise-object-edit

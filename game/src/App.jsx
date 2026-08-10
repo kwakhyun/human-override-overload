@@ -102,12 +102,18 @@ const FACILITY_COPY = Object.freeze({
 });
 
 const BOSS_NAME_KO = Object.freeze({
-  "THE WRONG ENGINE": "오답 엔진",
-  "WRONG ENGINE CORE": "오답 엔진 핵심부",
-  "MIRROR TYRANT": "거울 폭군",
-  "DROWNED ORACLE": "침몰한 예언자",
-  "SOVEREIGN CORE": "소버린 추론핵",
+  "THE WRONG ENGINE": "오답 엔진 · THE WRONG ENGINE",
+  "WRONG ENGINE CORE": "오답 엔진 핵심부 · WRONG ENGINE CORE",
+  "MIRROR TYRANT": "거울 폭군 · MIRROR TYRANT",
+  "DROWNED ORACLE": "침몰한 예언자 · DROWNED ORACLE",
+  "SOVEREIGN CORE": "소버린 추론핵 · SOVEREIGN CORE",
 });
+
+function mixedRegionName(region) {
+  if (!region) return "작전 구역";
+  const korean = region.koreanName || region.name || "작전 구역";
+  return region.name && region.name !== korean ? `${korean} · ${region.name}` : korean;
+}
 
 const SPEAKER_NAME_KO = Object.freeze({
   AEGIS: "이지스",
@@ -1847,7 +1853,7 @@ function ResultScreen({ result, assets, region, onRestart, onBase }) {
         <div className="result-emblem">{victory ? <Trophy weight="fill" /> : <Warning weight="fill" />}</div>
         <div className="result-kicker">{victory ? `${bossDisplayName} 파괴 완료` : "이지스 신호 소실"}</div>
         <h1>{victory ? "작전 성공" : "작전 실패"}</h1>
-        <p>{victory ? `${region?.koreanName || "작전 구역"}의 군단과 지역 추론핵을 파괴했습니다. 전투 기록을 기지로 전송합니다.` : "소버린이 이번 전투 패턴을 학습했습니다. 다음 출격에서는 이동과 성장 선택을 바꿔 보세요."}</p>
+        <p>{victory ? `${mixedRegionName(region)}의 군단과 지역 추론핵을 파괴했습니다. 전투 기록을 기지로 전송합니다.` : "소버린이 이번 전투 패턴을 학습했습니다. 다음 출격에서는 이동과 성장 선택을 바꿔 보세요."}</p>
         {(assets?.bossPhase3 || assets?.boss) && <img className="result-boss" src={(assets.bossPhase3 || assets.boss).src} alt={`${bossDisplayName} 최종 광폭화 형상`} />}
         <div className="result-stats">
           <span><small>처치한 적</small><b>{result?.kills || result?.stats?.kills || 0}</b></span>

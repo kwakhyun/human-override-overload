@@ -30,9 +30,9 @@ const NPC_DISPLAY = Object.freeze({
 });
 
 const BOSS_DISPLAY = Object.freeze({
-  "THE WRONG ENGINE": "오답 엔진",
-  "MIRROR TYRANT": "거울 폭군",
-  "DROWNED ORACLE": "침몰한 예언자",
+  "THE WRONG ENGINE": "오답 엔진 · THE WRONG ENGINE",
+  "MIRROR TYRANT": "거울 폭군 · MIRROR TYRANT",
+  "DROWNED ORACLE": "침몰한 예언자 · DROWNED ORACLE",
 });
 
 const ABILITY_CATEGORY_KO = Object.freeze({
@@ -554,7 +554,7 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
               key={region.id}
             >
               <span>작전 {String(index + 1).padStart(2, "0")}</span>
-              <strong>{region.koreanName || region.name}</strong>
+              <strong className="region-mixed-name"><span>{region.koreanName || region.name}</span><em>{region.name}</em></strong>
               <p>{localizeWorldText(region.summary)}</p>
               {region.threatProfile && (
                 <span className="region-threat">
@@ -575,7 +575,7 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
             <ArrowLeft weight="bold" /> 구역 목록 <kbd>ESC</kbd>
           </button>
           <div className="region-sortie-kicker"><span>{selectedRegion.chapterLabel}</span><i>{completed.has(selectedRegion.id) ? "해방 기록 있음" : "첫 공략"}</i></div>
-          <h2 id="region-sortie-title">{selectedRegion.koreanName || selectedRegion.name}</h2>
+          <h2 className="region-mixed-name" id="region-sortie-title"><span>{selectedRegion.koreanName || selectedRegion.name}</span><em>{selectedRegion.name}</em></h2>
           <p>{localizeWorldText(selectedRegion.description)}</p>
           <dl className="region-sortie-intel">
             <div><dt>주요 적 조합</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.composition)}</dd></div>

@@ -26,6 +26,10 @@ test("region selection previews and confirms a sortie instead of launching on ca
   ]);
   assert.match(screens, /setSelectedRegionId\(region\.id\)/);
   assert.match(screens, /className="region-sortie-dialog"/);
+  assert.match(screens, /className="region-mixed-name"/);
+  for (const mixedBoss of ["오답 엔진 · THE WRONG ENGINE", "거울 폭군 · MIRROR TYRANT", "침몰한 예언자 · DROWNED ORACLE"]) {
+    assert.match(screens, new RegExp(mixedBoss));
+  }
   assert.match(screens, /출격 준비 완료 · 작전 시작/);
   assert.match(screens, /onClick=\{\(\) => onSelect\(selectedRegion\.id\)\}/);
   assert.match(screens, /event\.key !== "Escape"/);

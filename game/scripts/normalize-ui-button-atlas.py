@@ -17,6 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--frame-height", type=int, default=160)
     parser.add_argument("--padding", type=int, default=6)
     parser.add_argument("--alpha-threshold", type=int, default=10)
+    parser.add_argument("--fit", choices=("contain", "stretch"), default="contain")
     return parser.parse_args()
 
 
@@ -48,7 +49,11 @@ def main() -> None:
     )
     atlas = Image.new("RGBA", (args.frame_width * 3, args.frame_height), (0, 0, 0, 0))
     for index, frame in enumerate(frames):
-        size = (max(1, round(frame.width * scale)), max(1, round(frame.height * scale)))
+        size = (
+            (args.frame_width - args.padding * 2, args.frame_height - args.padding * 2)
+            if args.fit == "stretch"
+            else (max(1, round(frame.width * scale)), max(1, round(frame.height * scale)))
+        )
         resized = frame.resize(size, Image.Resampling.LANCZOS)
         x = index * args.frame_width + (args.frame_width - resized.width) // 2
         y = (args.frame_height - resized.height) // 2
