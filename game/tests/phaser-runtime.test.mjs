@@ -206,7 +206,8 @@ test("authored trace props and campaign region art are registered without restor
   assert.match(manifest, /squad-traces-atlas\.png", kind: "atlas", columns: 3, rows: 1/);
   assert.match(manifest, /havenBase: "\.\/assets\/overload\/campaign\/haven-09-base\.webp"/);
   assert.match(manifest, /havenNpcPortraits: "\.\/assets\/overload\/ui\/npcs\/haven-npc-portraits-atlas\.png"/);
-  assert.match(manifest, /airshipRegionMap: "\.\/assets\/overload\/campaign\/airship-region-map\.webp"/);
+  assert.match(manifest, /airshipRegionMap: "\.\/assets\/overload\/campaign\/airship-region-map-v2\.webp"/);
+  assert.match(manifest, /commandButtonStates: "\.\/assets\/overload\/ui\/buttons\/command-button-states-atlas\.png"/);
   for (const path of [
     "regions/glass-dune/route.webp",
     "regions/glass-dune/boss-room.webp",

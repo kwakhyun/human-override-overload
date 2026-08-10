@@ -72,7 +72,7 @@ test("every region exposes manifest-aligned existing assets with three route des
 test("the base has HANA, ILYA, LARK, and RHEA with authored portraits and interactions", () => {
   assert.equal(HOME_BASE.id, "haven-09");
   assert.equal(HOME_BASE.assets.background.path, "./assets/overload/campaign/haven-09-base.webp");
-  assert.equal(HOME_BASE.assets.airshipConsole.path, "./assets/overload/campaign/airship-region-map.webp");
+  assert.equal(HOME_BASE.assets.airshipConsole.path, "./assets/overload/campaign/airship-region-map-v2.webp");
   assert.deepEqual(getBaseNpcs().map((npc) => npc.name), ["HANA", "ILYA", "LARK", "RHEA"]);
   assert.deepEqual(getBaseNpcs().slice(0, 3).map((npc) => npc.portraitIndex), [0, 1, 2]);
   assert.equal(Object.keys(BASE_NPCS).length, 4);

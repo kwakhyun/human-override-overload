@@ -21,7 +21,7 @@ export const HOME_BASE = deepFreeze({
     },
     airshipConsole: {
       key: "airshipRegionMap",
-      path: "./assets/overload/campaign/airship-region-map.webp",
+      path: "./assets/overload/campaign/airship-region-map-v2.webp",
     },
   },
 });

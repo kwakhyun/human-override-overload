@@ -822,6 +822,50 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 `public/assets/overload/` 탑다운 아틀라스를 엔진 이동·공격·피격·보스 단계 상태에 연결하며,
 외부 게임 애니메이션은 포함하지 않습니다.
 
+## Campaign flight map and command-button states v2
+
+- 생성일: 2026-08-10
+- 생성 도구: OpenAI 내장 ImageGen
+- 런타임 경로:
+  - `public/assets/overload/campaign/airship-region-map-v2.webp`
+  - `public/assets/overload/ui/buttons/command-button-states-atlas.png`
+- 생성 원본:
+  - `reference/source-assets/overload/campaign/region-map-v2/airship-region-map-v2-imagegen.png`
+  - `reference/source-assets/overload/ui/button-states-v1/command-button-states-chroma.png`
+  - `reference/source-assets/overload/ui/button-states-v1/command-button-states-alpha.png`
+- ImageGen 원본 경로:
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-cda2b2fa-cb64-47e8-ba2c-52eeb9a27463.png`
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d99ea63f-c855-4a82-96b7-9155f2982cad.png`
+- 후처리:
+  - 지도는 `scripts/prepare-campaign-map.py`로 1920×1080 WebP quality 86으로 정규화했습니다.
+  - 버튼은 설치된 `remove_chroma_key.py`의 border auto-key, soft-matte, despill로 투명화한 뒤
+    `scripts/normalize-ui-button-atlas.py`로 3×1, 셀 512×160의 동일 크기 상태 아틀라스로 정규화했습니다.
+- 최종 프롬프트 — 비행 관제 지도:
+
+  > Use case: precise-object-edit
+  > Asset type: production campaign region-selection background for the Phaser browser game TRAIN ME WRONG: OVERLOAD.
+  > Input images: Image 1 is the approved three-region tactical map and the edit target.
+  > Primary request: preserve the exact wide cockpit-window composition and the three clearly separated destinations: left rain-soaked cyan ruined megacity, center amber glass desert and solar dome, right deep-blue flooded abyssal city. Increase local environmental detail and depth in all three regions without changing their positions. Replace only the small old-fashioned blimp at the lower center with NIGHTJAR, a cutting-edge futuristic stealth airship: low-profile angular flying-wing silhouette, black gunmetal armor, swept forward fins, compact cyan vector thrusters, subtle white-blue navigation lights, no balloon, no zeppelin body, no exposed propellers. Make the ship visibly larger and more readable than the old blimp while keeping it below the three destination sightlines.
+  > Style/medium: high-detail cinematic dark sci-fi game environment concept art, consistent with the input image.
+  > Composition/framing: exact 16:9 wide tactical-map composition; cockpit frame preserved; three regions remain left/center/right; NIGHTJAR centered in the lower quarter on the route junction.
+  > Lighting/mood: storm-dark command center, cyan/amber/deep-blue regional color coding, restrained luminous route traces.
+  > Constraints: preserve the three-region geography, cockpit frame, horizon, camera and route-junction layout; change the aircraft design and refine environmental detail; no text, labels, UI cards, logos, watermark, extra aircraft, characters, grid lines, borders, or cropped destinations.
+  > Avoid: blimp, zeppelin, dirigible, balloon, retro aircraft, rounded cigar fuselage, toy-like craft.
+
+- 최종 프롬프트 — 전용 버튼 3상태:
+
+  > Use case: stylized-concept
+  > Asset type: production three-state button background atlas for TRAIN ME WRONG: OVERLOAD campaign UI.
+  > Primary request: create one exact 3-column by 1-row spritesheet containing three isolated, identical-size, wide futuristic command-button panels with no text. Column 1 normal state: dark gunmetal glass panel with restrained cyan edge light. Column 2 hover/focus state: same exact silhouette and proportions with brighter cyan-white perimeter, active corner nodes and a subtle energy sweep. Column 3 pressed/confirmed state: same exact silhouette and proportions, slightly compressed inner plate with bright cyan core line and restrained amber confirmation nodes. Every panel must be a complete wide button background suitable for Korean DOM text placed over it.
+  > Style/medium: high-end dark sci-fi game UI asset, crisp hard-surface panels, angular chamfered corners, fine circuit engraving, black gunmetal, smoked glass, cyan-white light, very small amber accents.
+  > Composition/framing: exact 3 equal columns by 1 row; one centered 4:1 wide panel per cell; consistent scale, anchor and padding; panels fill most of each cell but never cross boundaries.
+  > Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background across every empty pixel for local removal.
+  > Constraints: exact three cells, exact one row, no text, letters, numbers, icons, arrows, logos, watermark, scenery, shadows, floor, gradients or texture in the background; no part crosses a cell boundary; do not use #ff00ff in the button panels.
+  > Avoid: rounded mobile pill buttons, fantasy ornament, gold frames, white cards, dashboard widgets, extra rows, extra columns.
+
+두 자산 모두 프로젝트의 기존 승인 이미지를 편집 또는 스타일 기준으로 사용했으며 외부 게임 이미지는
+포함하지 않습니다. 버튼 텍스트와 아이콘은 접근 가능한 DOM 요소로 별도 렌더링됩니다.
+
 ## Original procedural sound
 
 - 외부 효과음 파일을 사용하지 않습니다.

@@ -1721,6 +1721,70 @@ kbd {
   }
 }
 
+/* Authored three-state command panel atlas ------------------------------- */
+.command-ui-button {
+  position: relative;
+  overflow: hidden;
+  border: 0;
+  color: #effdff;
+  background-color: rgba(5, 22, 29, 0.96);
+  background-image: var(--command-button-atlas);
+  background-repeat: no-repeat;
+  background-position: 0 50%;
+  background-size: 300% 100%;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.42);
+  transition: color 120ms ease, filter 120ms ease, transform 120ms ease;
+}
+
+.command-ui-button:hover:not(:disabled),
+.command-ui-button:focus-visible:not(:disabled) {
+  color: #fff;
+  background-position: 50% 50%;
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+}
+
+.command-ui-button:active:not(:disabled) {
+  background-position: 100% 50%;
+  filter: brightness(1.02);
+  transform: translateY(1px) scale(0.995);
+}
+
+.command-ui-button > * { position: relative; z-index: 1; }
+
+.intro-minimal-content {
+  padding: clamp(18px, 2.2vw, 32px);
+  border-left: 2px solid rgba(110, 235, 252, 0.72);
+  background: linear-gradient(90deg, rgba(1, 6, 10, 0.72), rgba(1, 6, 10, 0.14) 90%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.intro-start {
+  justify-content: space-between;
+  padding: 0 24px;
+  color: #effdff;
+  background-color: rgba(5, 22, 29, 0.96);
+  font-size: clamp(14px, 1.1vw, 17px);
+}
+
+.intro-start-note {
+  margin-top: 9px;
+  color: #9db9be !important;
+  font-size: 11px !important;
+  letter-spacing: 0.01em !important;
+}
+
+.facility-upgrade > .command-ui-button {
+  background-color: rgba(5, 22, 29, 0.96);
+  background-image: var(--command-button-atlas);
+}
+
+.region-sortie-launch.command-ui-button {
+  border: 0;
+  background-color: rgba(5, 22, 29, 0.96);
+  background-image: var(--command-button-atlas);
+}
+
 /* TRAIN ME WRONG: OVERLOAD ------------------------------------------------- */
 .overload-intro,
 .overload-result {

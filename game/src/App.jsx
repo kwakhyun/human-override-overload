@@ -576,6 +576,7 @@ function resolveEventSound(event) {
 }
 
 function IntroScreen({ assets, assetError, onStart }) {
+  const buttonAtlas = assets?.commandButtonStates?.src;
   return (
     <main className="overload-intro intro-cinematic">
       {assets?.intro && (
@@ -587,13 +588,21 @@ function IntroScreen({ assets, assetError, onStart }) {
         />
       )}
       <section className="intro-minimal-content" aria-labelledby="game-title">
-        <small>NAN 2026 · 소버린 점령지</small>
+        <small>NAN 2026 · 소버린 점령지 · 기지 캠페인</small>
         <h1 id="game-title"><span>TRAIN ME</span><em>WRONG</em><b>OVERLOAD</b></h1>
-        <p>세계를 지배한 초지능 AI의 기계 군단을 돌파하고 지역 추론핵을 파괴하세요.</p>
-        <button className="primary-cta intro-start" type="button" onClick={onStart} disabled={!assets && !assetError}>
-          <span>{assets || assetError ? "게임 시작" : "전투 에셋 로딩 중"}</span>
+        <p>헤이븐-09에서 대원들과 작전을 준비하고, 세계를 지배한 초지능 AI의 기계 군단과 지역 추론핵을 파괴하세요.</p>
+        <button
+          className="primary-cta intro-start command-ui-button"
+          type="button"
+          data-ui-sound="uiConfirm"
+          style={buttonAtlas ? { "--command-button-atlas": `url(${buttonAtlas})` } : undefined}
+          onClick={onStart}
+          disabled={!assets && !assetError}
+        >
+          <span>{assets || assetError ? "게임 시작 · 헤이븐-09" : "작전 자료 불러오는 중"}</span>
           {assets || assetError ? <Play weight="fill" /> : <i className="loading-ring" />}
         </button>
+        <small className="intro-start-note">저장 슬롯 선택 후 기지에서 첫 작전을 안내합니다.</small>
         {assetError && <p className="asset-warning"><Warning /> 일부 이미지 대신 안전 렌더링을 사용합니다.</p>}
         <div className="intro-minimal-controls" aria-label="게임 조작">
           <span><kbd>WASD</kbd> 이동</span>
@@ -1925,6 +1934,7 @@ export function App() {
     npcPortraits: assets?.havenNpcPortraits,
     controlOfficer: assets?.rheaControlOfficer,
     regionMap: assets?.airshipRegionMap,
+    buttonAtlas: assets?.commandButtonStates,
     tutorialNullSnare: assets?.tutorialNullSnare,
     tutorialAegisWard: assets?.tutorialAegisWard,
     tutorialStratosRun: assets?.tutorialStratosRun,

@@ -335,7 +335,7 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
                 <div><dt>현재 효과</dt><dd>{upgrade.currentEffect || "미적용"}</dd></div>
                 <div><dt>{maxed ? "완료" : "다음 랭크"}</dt><dd>{maxed ? "최대 출력 도달" : upgrade.nextEffect}</dd></div>
               </dl>
-              <button type="button" data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => onPurchase(upgrade.id)}>
+              <button type="button" className="command-ui-button" data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => onPurchase(upgrade.id)}>
                 {maxed ? <><CheckCircle weight="fill" /> 개조 완료</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><FacilityIcon weight="bold" /> {upgrade.nextCost} {facility.currencyShortLabel}로 강화</>}
               </button>
             </article>
@@ -348,9 +348,10 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
 
 export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCloseFacility, onBoard, onTitle }) {
   const background = assetSource(assets?.homeBase);
+  const buttonAtlas = assetSource(assets?.buttonAtlas);
   const completed = campaign?.completedRegionIds?.length || 0;
   return (
-    <main className="campaign-shell home-base-screen">
+    <main className="campaign-shell home-base-screen" style={buttonAtlas ? { "--command-button-atlas": `url(${buttonAtlas})` } : undefined}>
       {background && <img className="campaign-background" src={background} alt="인류 저항군의 이동 기지 헤이븐-09" />}
       <div className="base-vignette" aria-hidden="true" />
       <header className="base-status">
@@ -485,6 +486,7 @@ export function AbilityGuideScreen({ assets, onComplete, onBack }) {
 
 export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack }) {
   const background = assetSource(assets?.regionMap);
+  const buttonAtlas = assetSource(assets?.buttonAtlas);
   const unlocked = new Set(campaign?.unlockedRegionIds || ["wrong-engine-core"]);
   const completed = new Set(campaign?.completedRegionIds || []);
   const firstUnlockedId = (regions || []).find((region) => unlocked.has(region.id))?.id || null;
@@ -516,7 +518,7 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
 
   const previewSource = previewRegion?.assets?.dom?.thumbnail?.path;
   return (
-    <main className={`campaign-shell region-select-screen${selectedRegion ? " has-selection" : ""}`}>
+    <main className={`campaign-shell region-select-screen${selectedRegion ? " has-selection" : ""}`} style={buttonAtlas ? { "--command-button-atlas": `url(${buttonAtlas})` } : undefined}>
       {background && <img className="campaign-background" src={background} alt="비행선 전술 지도에 표시된 세 개의 작전 구역" />}
       {previewSource && (
         <img
@@ -586,7 +588,7 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
             <span>연구 자료 +{selectedRegion.victoryRewards?.firstClear?.researchData || 0}</span>
             <span>장비 부품 +{selectedRegion.victoryRewards?.firstClear?.equipmentParts || 0}</span>
           </div>
-          <button type="button" className="region-sortie-launch" data-ui-sound="uiConfirm" onClick={() => onSelect(selectedRegion.id)}>
+          <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound="uiConfirm" onClick={() => onSelect(selectedRegion.id)}>
             <AirplaneTilt weight="fill" /><span><small>나이트자 항로 승인</small><strong>출격 준비 완료 · 작전 시작</strong></span><ArrowRight weight="bold" />
           </button>
         </section>
