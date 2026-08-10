@@ -370,7 +370,28 @@
 - 자동 회귀 200/200, TypeScript, production build, Sites worker 4/4가 통과했습니다.
   `http://127.0.0.1:4174/` 서버는 HTTP 200으로 계속 실행 중입니다.
 
-## 현재 판단 — Iteration 16 complete
+### Iteration 17 — complete · 지역 BGM, 전진형 압력, 군중 최적화
+
+- 사용자가 제공한 `Last Light in Haven-09.mp3`, `2구역_Refraction War.mp3`,
+  `3구역_Memory Below Pressure.mp3`를 재인코딩 없이 각각 헤이븐-09 로비, 유리 사구, 심해
+  기록고에 분리 적용했습니다. 원본/런타임 SHA-256이 모두 일치합니다. Edge 실제 화면에서 세
+  트랙이 `audio/mpeg` 206으로 로드되고 159.4135/59.8135/59.8135초 길이와 증가하는 재생 시간을
+  확인했으며, 출격 영상 뒤에는 선택 지역 음악만 재생됐습니다.
+- 원정 압력은 초반 36기를 유지하면서 실제 전진율 10/34/60/82%에서 124/180/260/400기 증원
+  큐가 순차 해금되도록 변경했습니다. 전진율이 주 압력 신호이고 레벨·처치·시간은 보조합니다.
+  AEGIS보다 720 월드 단위 이상 뒤처진 적은 제거되지 않고 원거리 대기를 해제한 뒤 가속 추격합니다.
+- 다수 처치 때 6프레임 도트 폭발 위에 중복되던 절차적 원·광선 묘사를 제거했습니다. 화면 안 적,
+  적 투사체, 저격 경고, 보스 위험 기하와 다섯 게이트는 그대로 두고 아군 탄도 비행과 그림자만
+  밀도에 따라 샘플링합니다. 220적/620투사체에서 render-submit CPU P95는 데스크톱 4.1ms,
+  모바일 4.2ms였고, 2코어/2GiB PERFORMANCE는 4.0ms와 18.968MiB RGBA8을 기록했습니다.
+  CPU ×4 스트레스 P95는 26.9ms로 33.3ms 렌더 예산 안이지만 scene drop 17%여서 상한 자료로만
+  보존합니다.
+- 실제 브라우저 캡처에서 데스크톱·모바일 220기 스트레스 전장의 적/투사체/HUD/미니맵이 유지되고,
+  기지와 2·3구역 화면이 viewport 안에 있음을 확인했습니다. favicon 404도 inline 프로젝트 아이콘으로
+  제거해 최종 console/page/HTTP 오류는 `[]`입니다. 자동 회귀 202/202, TypeScript와 production
+  build가 통과했고 4174 서버는 종료하지 않았습니다.
+
+## 현재 판단 — Iteration 17 complete
 
 - Iteration 11까지의 저사양 PERFORMANCE 기준선과 회귀 결과는 유효합니다.
 - 시작 화면은 제공된 원본을 충실히 보존하며 필요한 정보만 표시함.
@@ -392,6 +413,6 @@
   출격 수치에 연결됨.
 - Phaser는 전투 진입 때만 내려오고 선택 지역의 일반 전장과 보스 자산도 두 단계로 지연 로드됨.
 
-final result: pass — 타이틀/지역 BGM 라우팅, Suno 프롬프트, Google Chirp 3 HD Q/E/F/R 정적
-음원과 성공 이벤트 연결, 자동 테스트 200/200, TypeScript, production build, Sites 4/4 및 Edge
-실전 음성 QA(`errors: []`)가 통과했습니다. 로컬 서버는 종료하지 않았습니다.
+final result: pass — 기지·세 지역 BGM 분리, 전진율 기반 증원과 영구 추격, 군중 렌더링 고도화,
+Google Chirp 3 HD Q/E/F/R 정적 음원 연결, 자동 테스트 202/202, TypeScript, production build 및
+Edge BGM·전투 QA(`errors: []`)가 통과했습니다. 로컬 서버는 종료하지 않았습니다.

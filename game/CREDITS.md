@@ -1030,12 +1030,15 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 
 - 헤이븐-09 로비: 원본 `Last Light in Haven-09.mp3` → 런타임
   `public/assets/audio/last-light-in-haven-09.mp3`, 3,778,159 bytes,
+  브라우저 재생 길이 159.4135초,
   SHA-256 `78B56D8BDE8A0E464213508488C237B850855B8194DC3B8054261807A46AF091`.
 - 2구역 유리 사구: 원본 `2구역_Refraction War.mp3` → 런타임
   `public/assets/audio/refraction-war-glass-dune.mp3`, 1,374,864 bytes,
+  브라우저 재생 길이 59.8135초,
   SHA-256 `3C3D87A9B5A2516615B46D0D0B7B2C139860CBAEFC0D20ADA3340C2A4DC0D874`.
 - 3구역 심해 기록고: 원본 `3구역_Memory Below Pressure.mp3` → 런타임
   `public/assets/audio/memory-below-pressure-abyssal-archive.mp3`, 1,417,582 bytes,
+  브라우저 재생 길이 59.8135초,
   SHA-256 `8D483B6CD68D8DB96A117741A205EC55DD4C7DB93B76586D6652C22E1E53BFCE`.
 - 세 런타임 파일은 사용자가 제공한 원본의 byte-identical 이름 변경 사본이며 재인코딩·편집하지
   않았습니다. `SUNO_BGM_PROMPTS.md`에는 제작 브리프와 최종 적용 슬롯을 함께 보존합니다.
