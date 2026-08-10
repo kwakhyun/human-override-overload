@@ -1,0 +1,97 @@
+{
+  "generatedAt": "2026-08-10T12:08:55.667Z",
+  "url": "http://127.0.0.1:4174/?debug=1",
+  "requestedAbilities": [
+    "empPulse",
+    "aegisWard",
+    "stratosRun",
+    "helixTempest"
+  ],
+  "buttonLabelsBefore": {
+    "empPulse": "Q EMP 펄스. 사용 가능",
+    "aegisWard": "E 이지스 방벽. 사용 가능",
+    "stratosRun": "F 공중 소사. 사용 가능",
+    "helixTempest": "R 나선 폭풍. 사용 가능"
+  },
+  "buttonLabelsAfter": {
+    "empPulse": "Q EMP 펄스. 17.9초",
+    "aegisWard": "E 이지스 방벽. 28.0초",
+    "stratosRun": "F 공중 소사. 33.9초",
+    "helixTempest": "R 나선 폭풍. 71.9초"
+  },
+  "playedNames": [
+    "emp-pulse-online.mp3",
+    "aegis-ward-online.mp3",
+    "stratos-run-confirmed.mp3",
+    "helix-tempest-authorized.mp3"
+  ],
+  "resourceEntriesBeforeFetch": [
+    {
+      "name": "emp-pulse-online.mp3",
+      "transferSize": 16812,
+      "decodedBodySize": 16512
+    },
+    {
+      "name": "aegis-ward-online.mp3",
+      "transferSize": 19404,
+      "decodedBodySize": 19104
+    },
+    {
+      "name": "stratos-run-confirmed.mp3",
+      "transferSize": 21036,
+      "decodedBodySize": 20736
+    },
+    {
+      "name": "helix-tempest-authorized.mp3",
+      "transferSize": 19692,
+      "decodedBodySize": 19392
+    },
+    {
+      "name": "emp-pulse-online.mp3",
+      "transferSize": 16812,
+      "decodedBodySize": 16512
+    },
+    {
+      "name": "aegis-ward-online.mp3",
+      "transferSize": 19404,
+      "decodedBodySize": 19104
+    },
+    {
+      "name": "stratos-run-confirmed.mp3",
+      "transferSize": 21036,
+      "decodedBodySize": 20736
+    },
+    {
+      "name": "helix-tempest-authorized.mp3",
+      "transferSize": 19692,
+      "decodedBodySize": 19392
+    }
+  ],
+  "loaded": [
+    {
+      "name": "emp-pulse-online.mp3",
+      "status": 200,
+      "bytes": 16512,
+      "contentType": "audio/mpeg"
+    },
+    {
+      "name": "aegis-ward-online.mp3",
+      "status": 200,
+      "bytes": 19104,
+      "contentType": "audio/mpeg"
+    },
+    {
+      "name": "stratos-run-confirmed.mp3",
+      "status": 200,
+      "bytes": 20736,
+      "contentType": "audio/mpeg"
+    },
+    {
+      "name": "helix-tempest-authorized.mp3",
+      "status": 200,
+      "bytes": 19392,
+      "contentType": "audio/mpeg"
+    }
+  ],
+  "errors": []
+}

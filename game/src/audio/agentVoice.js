@@ -1,0 +1,97 @@
+import { AGENT_VOICE_PATHS } from "../game/assets/manifest.ts";
+
+const ABILITY_PRIORITY = Object.freeze({
+  empPulse: 1,
+  aegisWard: 2,
+  stratosRun: 3,
+  helixTempest: 4,
+});
+
+function stopAudio(audio) {
+  if (!audio) return;
+  try {
+    audio.pause();
+    audio.currentTime = 0;
+  } catch {
+    // A partially initialized media element may reject seeking during teardown.
+  }
+}
+
+export function createAgentVoice({
+  AudioCtor = globalThis.Audio,
+  paths = AGENT_VOICE_PATHS,
+  volume = 0.78,
+} = {}) {
+  const clips = new Map();
+  let enabled = true;
+  let disposed = false;
+  let current = null;
+  let currentPriority = 0;
+
+  const ensureClip = (ability) => {
+    if (disposed || typeof AudioCtor !== "function" || !paths[ability]) return null;
+    if (clips.has(ability)) return clips.get(ability);
+    const audio = new AudioCtor(paths[ability]);
+    audio.preload = "auto";
+    audio.volume = volume;
+    audio.onended = () => {
+      if (current !== audio) return;
+      current = null;
+      currentPriority = 0;
+    };
+    clips.set(ability, audio);
+    return audio;
+  };
+
+  const stop = () => {
+    stopAudio(current);
+    current = null;
+    currentPriority = 0;
+  };
+
+  return {
+    preload() {
+      if (disposed) return;
+      Object.keys(paths).forEach(ensureClip);
+    },
+    setEnabled(nextEnabled) {
+      enabled = Boolean(nextEnabled);
+      if (!enabled) stop();
+    },
+    play(ability) {
+      if (!enabled || disposed) return false;
+      const priority = ABILITY_PRIORITY[ability] || 0;
+      const audio = ensureClip(ability);
+      if (!audio || !priority || (current && priority < currentPriority)) return false;
+      stop();
+      current = audio;
+      currentPriority = priority;
+      try {
+        audio.currentTime = 0;
+        const playback = audio.play();
+        playback?.catch?.(() => {
+          if (current === audio) {
+            current = null;
+            currentPriority = 0;
+          }
+        });
+        return true;
+      } catch {
+        current = null;
+        currentPriority = 0;
+        return false;
+      }
+    },
+    stop,
+    dispose() {
+      if (disposed) return;
+      stop();
+      for (const audio of clips.values()) {
+        audio.onended = null;
+        stopAudio(audio);
+      }
+      clips.clear();
+      disposed = true;
+    },
+  };
+}

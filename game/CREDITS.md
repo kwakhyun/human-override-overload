@@ -1033,16 +1033,26 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 - 최종 Suno 파일을 제공받으면 사용 플랜·생성 일자·선택 프롬프트·원본 파일명·런타임 경로를 이
   문서에 추가합니다.
 
-## Planned Google Cloud AI-agent callouts
+## Google Cloud AI-agent callouts
 
 - 도구: Google Cloud Text-to-Speech REST v1, `en-US-Chirp3-HD-Kore`, MP3 출력.
+- 생성 프로젝트·일자: `uptime402-hack-260803`, 2026-08-10. Cloud Shell의 일시 접근 토큰으로
+  개발 단계에서 합성했으며 인증 토큰·키·계정 설정 파일은 저장소에 포함하지 않습니다.
 - 범위: Q EMP PULSE, E AEGIS WARD, F STRATOS RUN, R HELIX TEMPEST가 실제로 성공했을 때 재생할
   짧은 영어 시스템 안내 4개. 전체 대사 TTS나 주인공 음성 복제에는 사용하지 않습니다.
 - 대사·출력 파일·공식 인증 절차는 `GOOGLE_TTS_SETUP.md`와
   `scripts/generate-google-agent-voice.mjs`에 고정했습니다.
-- 현재 로컬 환경에는 Google Cloud CLI·ADC·프로젝트 ID가 없어 합성 파일은 아직 생성하지 않았으며,
-  브라우저 기본 TTS나 비공식 엔드포인트로 대체하지 않습니다. 실제 생성 후 파일 크기·SHA-256·
-  런타임 경로와 Google Cloud 사용 프로젝트 정보를 이 문서에 추가합니다.
+- 런타임 파일:
+  - `public/assets/audio/agent/emp-pulse-online.mp3` — 16,512 bytes — SHA-256
+    `afb3179c222d5493c3d8d7e8d237616006be56600a5488c2d5be892f25339456`
+  - `public/assets/audio/agent/aegis-ward-online.mp3` — 19,104 bytes — SHA-256
+    `d04eebc2bdeb189c3db8752594c56ee90528407252d19ecb95c7020fa2309d0e`
+  - `public/assets/audio/agent/stratos-run-confirmed.mp3` — 20,736 bytes — SHA-256
+    `5d0af56e69f52cd787432ede2118f1b379bee14de424315e0ec27317d1ff5939`
+  - `public/assets/audio/agent/helix-tempest-authorized.mp3` — 19,392 bytes — SHA-256
+    `86a87a663329df3a5dc0a6441aceed39154f8d969a2aeef8dad9304fd460a1e8`
+- `src/audio/agentVoice.js`는 전투 진입 시에만 네 파일을 준비하고 성공한 스킬 이벤트만 재생합니다.
+  브라우저 기본 TTS·런타임 Google API 호출·음성 복제는 사용하지 않습니다.
 
 ## Open-source dependencies
 

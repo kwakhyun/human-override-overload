@@ -25,6 +25,7 @@ import {
 } from "@phosphor-icons/react";
 import { createSfxEngine } from "./audio/sfx.js";
 import { resolveMusicTrack } from "./audio/music.js";
+import { createAgentVoice } from "./audio/agentVoice.js";
 import { DOM_PREVIEW_ASSET_PATHS } from "./game/assets/manifest.ts";
 import {
   BASE_NPCS,
@@ -1541,6 +1542,22 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
   const autoBossEntryHandledRef = useRef(false);
   const combatTutorialActiveRef = useRef(false);
   const combatTutorialHandledRef = useRef(false);
+  const agentVoiceRef = useRef(null);
+
+  useEffect(() => {
+    const voice = createAgentVoice();
+    agentVoiceRef.current = voice;
+    return () => {
+      if (agentVoiceRef.current === voice) agentVoiceRef.current = null;
+      voice.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    const voice = agentVoiceRef.current;
+    voice?.setEnabled(soundEnabled);
+    if (soundEnabled) voice?.preload();
+  }, [soundEnabled]);
 
   useEffect(() => {
     const query = window.matchMedia("(orientation: portrait) and (max-width: 900px)");
@@ -1601,6 +1618,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
         },
         onEvent: (event) => {
           if (stopped) return;
+          if (event.type === "manualAbilityActivated") agentVoiceRef.current?.play(event.ability);
           const sound = resolveEventSound(event);
           if (sound) sfx.play(sound);
           if (event.type === "scenario" && SCENARIO_SCRIPT[event.beat]) {
