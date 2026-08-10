@@ -518,15 +518,20 @@ export class BattleView {
           .setBlendMode(Phaser.BlendModes.NORMAL);
         const label = this.scene.add.text(0, 0, "", {
           fontFamily: "IBM Plex Mono, Consolas, monospace",
-          fontSize: "30px",
+          fontSize: "42px",
           fontStyle: "bold",
           color: "#ffffff",
           stroke: "#020609",
-          strokeThickness: 8,
+          strokeThickness: 10,
+          backgroundColor: "#19050a",
+          padding: { x: 10, y: 4 },
         }).setOrigin(0.5).setVisible(false);
         this.bossTimedBombSprites.push(image);
         this.bossTimedBombLabels.push(label);
-        this.bossPatternLayer.add([image, label]);
+        // Timed bombs are an interactive boss mechanic, so keep them above
+        // actors and combat particles instead of burying them in the warning
+        // layer behind the boss.
+        this.worldFront.add([image, label]);
       }
     }
     const bossTexture = hasMotion ? bossMotion : bossForms;
@@ -1197,6 +1202,8 @@ export class BattleView {
         const image = this.bossTimedBombSprites[cursor];
         const label = this.bossTimedBombLabels[cursor];
         const defused = Boolean(bomb?.defused);
+        const expected = !defused && finite(bomb?.order) === finite(sequence.expectedOrder, 1);
+        const pulse = Math.round((Math.sin(time * 10 + cursor) * 0.5 + 0.5) * 10);
         let column = defused ? 4 : 0;
         if (!defused && phase === "siren") column = Math.min(3, Math.floor(clamp01(finite(sequence.progress)) * 4));
         if (!defused && phase === "armed") {
@@ -1206,14 +1213,16 @@ export class BattleView {
         setAtlasFrame(image, column, 0);
         image
           .setPosition(finite(bomb?.x), finite(bomb?.y))
-          .setDisplaySize(112, 112)
+          .setDisplaySize(expected ? 188 + pulse : 170, expected ? 188 + pulse : 170)
           .setAlpha(defused ? 0.62 : 1)
           .setVisible(true)
           .clearTint();
         label
           .setPosition(finite(bomb?.x), finite(bomb?.y) - 2)
           .setText(defused ? "✓" : String(bomb?.order ?? cursor + 1))
-          .setColor(defused ? "#8dffd0" : urgency > 0.72 ? "#fff1d0" : "#ffffff")
+          .setColor(defused ? "#cffff0" : expected ? "#031014" : "#ffffff")
+          .setBackgroundColor(defused ? "#0b4538" : expected ? "#eaffff" : "#25060d")
+          .setStroke(defused ? "#05221c" : expected ? "#ffffff" : "#020609", expected ? 4 : 10)
           .setAlpha(defused ? 0.74 : 1)
           .setVisible(true);
         cursor += 1;
@@ -2243,6 +2252,38 @@ export class BattleView {
     const graphics = this.foregroundGraphics;
     graphics.clear();
     this.drawExpeditionMarkers(state, time, graphics);
+    const bombSequence = state?.boss?.bombSequence;
+    if (bombSequence && Array.isArray(bombSequence.bombs)) {
+      for (const bomb of bombSequence.bombs) {
+        if (bomb?.defused || bomb?.exploded) continue;
+        const x = finite(bomb?.x);
+        const y = finite(bomb?.y);
+        const expected = finite(bomb?.order) === finite(bombSequence.expectedOrder, 1);
+        const pulse = Math.sin(time * (expected ? 12 : 7) + finite(bomb?.order)) * 5;
+        const radius = (expected ? 92 : 84) + pulse;
+        graphics.lineStyle(12, COLORS.black, 0.82);
+        graphics.strokeCircle(x, y, radius);
+        graphics.lineStyle(expected ? 5 : 3, expected ? COLORS.white : COLORS.red, expected ? 0.98 : 0.82);
+        graphics.strokeCircle(x, y, radius);
+        for (let index = 0; index < 4; index += 1) {
+          const angle = index * Math.PI * 0.5;
+          graphics.lineStyle(7, COLORS.black, 0.86);
+          graphics.lineBetween(
+            x + Math.cos(angle) * (radius + 4),
+            y + Math.sin(angle) * (radius + 4),
+            x + Math.cos(angle) * (radius + 25),
+            y + Math.sin(angle) * (radius + 25),
+          );
+          graphics.lineStyle(3, expected ? COLORS.cyan : COLORS.red, 0.98);
+          graphics.lineBetween(
+            x + Math.cos(angle) * (radius + 4),
+            y + Math.sin(angle) * (radius + 4),
+            x + Math.cos(angle) * (radius + 25),
+            y + Math.sin(angle) * (radius + 25),
+          );
+        }
+      }
+    }
     for (const orbital of state?.orbitals ?? []) {
       if (!this.isCircleVisible(finite(orbital.x), finite(orbital.y), 20, 40)) continue;
       graphics.lineStyle(2, COLORS.cyan, 0.5);

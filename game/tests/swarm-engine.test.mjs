@@ -1027,7 +1027,7 @@ test("all three regional bosses own disjoint deterministic attack rotations", ()
   }
 });
 
-test("boss parry opens a one-second slow window and Shift reflects the attack", () => {
+test("boss parry opens a 1.5-second slow window and Shift reflects the attack", () => {
   const state = createBossState(BOSS_PATTERNS.indexOf("multiCharge"));
   delayPlayerWeapons(state);
   state.boss.hp = state.boss.maxHp * 0.8;
@@ -1037,7 +1037,7 @@ test("boss parry opens a one-second slow window and Shift reflects the attack", 
     clearPressedInput(input);
   }
   assert.equal(state.boss.activePattern?.phase, "parry");
-  assert.equal(state.boss.parryWindow?.duration, 1);
+  assert.equal(state.boss.parryWindow?.duration, 1.5);
   const timeBeforeSlowFrame = state.time;
   stepSwarm(state, input, 1 / 60);
   assert.ok(state.time - timeBeforeSlowFrame < 1 / 120);
@@ -1064,7 +1064,7 @@ test("missing the boss parry window preserves the hit and low HP offers every el
   }
   assert.ok(state.boss.parryWindow);
   const hpBefore = state.player.hp;
-  stepFor(state, input, 1.08);
+  stepFor(state, input, 1.58);
   assert.equal(state.boss.parryWindow, null);
   assert.ok(state.player.hp < hpBefore);
   assert.equal(state.stats.bossParryFailures, 1);
@@ -1077,14 +1077,19 @@ test("low-health bosses deploy 2, 4, then 8 numbered bombs and enforce click ord
   const input = createSwarmInput();
   const thresholds = [0.54, 0.29, 0.11];
   const counts = [2, 4, 8];
+  const durations = [10, 14, 22];
   for (let tier = 0; tier < counts.length; tier += 1) {
     state.boss.hp = state.boss.maxHp * thresholds[tier];
     state.boss.transformTimer = 0;
     stepSwarm(state, input, 1 / 60);
     assert.equal(state.boss.bombSequence?.phase, "siren");
     assert.equal(state.boss.bombSequence?.bombs.length, counts[tier]);
+    assert.ok(state.boss.bombSequence.bombs.every((bomb) => (
+      bomb.x >= 54 && bomb.x <= WORLD_WIDTH - 54 && bomb.y >= 54 && bomb.y <= WORLD_HEIGHT - 54
+    )));
     stepFor(state, input, 1.2);
     assert.equal(state.boss.bombSequence?.phase, "armed");
+    assert.equal(state.boss.bombSequence?.duration, durations[tier]);
     const bombs = [...state.boss.bombSequence.bombs];
     for (const bomb of bombs) {
       input.bossMechanicClickX = bomb.x;

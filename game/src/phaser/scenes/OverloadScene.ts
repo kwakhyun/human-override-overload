@@ -177,7 +177,7 @@ function applyDebugScene(game: any, debugScene: string | null) {
     game.events.length = 0;
     return;
   }
-  if (!["boss", "weakness", "phase2", "phase3", "victory"].includes(debugScene ?? "")) return;
+  if (!["boss", "weakness", "phase2", "phase3", "parry", "bombs", "victory"].includes(debugScene ?? "")) return;
   game.enemies.length = 0;
   game.spawnedEnemies = game.enemyBudget;
   game.killedEnemies = game.enemyBudget;
@@ -209,7 +209,31 @@ function applyDebugScene(game: any, debugScene: string | null) {
     return;
   }
   confirmBossRoomEntry(game);
-  if (debugScene === "weakness") {
+  if (debugScene === "parry") {
+    game.boss.stage = 3;
+    game.boss.hp = game.boss.maxHp * 0.2;
+    game.boss.transformTimer = 0;
+    game.boss.bombSequenceTier = 3;
+    game.boss.patternCooldown = 30;
+    game.boss.parryWindow = {
+      pattern: "multiCharge",
+      life: 1.5,
+      duration: 1.5,
+      progress: 0,
+      key: "Shift",
+    };
+    game.boss.attackState = "parry:multiCharge";
+    game.boss.attackTimer = 1.5;
+    game.player.invulnerability = 30;
+    game.events.length = 0;
+  } else if (debugScene === "bombs") {
+    game.boss.stage = 2;
+    game.boss.hp = game.boss.maxHp * 0.54;
+    game.boss.transformTimer = 0;
+    game.boss.patternCooldown = 30;
+    game.player.invulnerability = 30;
+    game.events.length = 0;
+  } else if (debugScene === "weakness") {
     game.boss.patternIndex = 4;
     game.player.invulnerability = 15;
   } else if (debugScene === "phase2" || debugScene === "phase3") {

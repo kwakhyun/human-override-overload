@@ -440,11 +440,15 @@ test("boss parry and numbered bombs use repeat-safe Shift and authoritative worl
   assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.bossTimedBombPixel, 6, 2\)/);
   assert.match(view, /syncBossTimedBombSprites\(state, time\)/);
   assert.match(view, /setAtlasFrame\(image, Math\.min\(5, Math\.floor\(progress \* 6\)\), 1\)/);
+  assert.match(view, /setDisplaySize\(expected \? 188 \+ pulse : 170/);
+  assert.match(view, /setText\(defused \? "✓" : String\(bomb\?\.order/);
+  assert.match(view, /setBackgroundColor\(defused \? "#0b4538" : expected \? "#eaffff"/);
   assert.match(animation, /id\.includes\("refractionsweep"\)/);
   assert.match(animation, /id\.includes\("undertow"\)/);
   assert.match(app, /className="boss-parry-prompt"/);
   assert.match(app, /className={`boss-bomb-directive is-\$\{bombSequence\.phase\}`}/);
   assert.match(styles, /\.is-parry-window \.phaser-host canvas[\s\S]*filter: grayscale\(1\)/);
+  assert.match(styles, /\.boss-parry-prompt strong \{[^}]*white-space: nowrap;[^}]*word-break: keep-all;/);
 });
 
 test("Phaser DEV scene shortcuts require an explicit debug opt-in", async () => {

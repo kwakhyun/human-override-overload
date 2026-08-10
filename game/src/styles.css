@@ -3127,7 +3127,8 @@ kbd {
   top: 59%;
   left: 50%;
   display: grid;
-  width: 176px;
+  width: max-content;
+  min-width: 190px;
   min-height: 74px;
   padding: 9px 14px 8px;
   overflow: hidden;
@@ -3141,12 +3142,13 @@ kbd {
   box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.58), 0 0 34px rgba(190, 252, 255, 0.78), inset 0 0 24px rgba(134, 240, 255, 0.12);
   font-family: var(--font-ui);
   text-align: center;
+  white-space: nowrap;
   transform: translate(-50%, -50%);
   cursor: pointer;
   animation: boss-parry-prompt-pulse 220ms steps(2, end) infinite;
 }
 
-.boss-parry-prompt > span { display: flex; align-items: center; gap: 9px; }
+.boss-parry-prompt > span { display: flex; flex-wrap: nowrap; align-items: center; gap: 9px; }
 .boss-parry-prompt kbd {
   padding: 5px 8px;
   border: 1px solid #eaffff;
@@ -3157,7 +3159,7 @@ kbd {
   font-size: 15px;
   font-weight: 900;
 }
-.boss-parry-prompt strong { font-size: 19px; letter-spacing: 0.02em; }
+.boss-parry-prompt strong { font-size: 19px; letter-spacing: 0.02em; white-space: nowrap; word-break: keep-all; }
 .boss-parry-prompt small { color: #a9c8cd; font-size: 11px; letter-spacing: 0; }
 
 .boss-bomb-directive {
@@ -4259,7 +4261,7 @@ kbd {
   .transient-controls { display: none; }
   .expedition-xp { top: 119px; right: 12px; bottom: auto; width: 156px; }
   .expedition-alert { top: 158px; }
-  .boss-parry-prompt { top: 62%; width: 146px; min-height: 58px; padding: 6px 9px; }
+  .boss-parry-prompt { top: 62%; width: max-content; min-width: 168px; min-height: 58px; padding: 6px 9px; }
   .boss-parry-prompt kbd { padding: 3px 6px; font-size: 11px; }
   .boss-parry-prompt strong { font-size: 14px; }
   .boss-parry-prompt small { font-size: 8px; }

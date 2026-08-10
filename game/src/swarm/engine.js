@@ -6,6 +6,7 @@ export const EXPEDITION_WORLD_WIDTH = 13200;
 
 const TAU = Math.PI * 2;
 const ARENA = Object.freeze({ left: 34, right: 1246, top: 34, bottom: 686 });
+const BOSS_ARENA = Object.freeze({ left: 54, right: WORLD_WIDTH - 54, top: 54, bottom: WORLD_HEIGHT - 54 });
 const EXPEDITION_ARENA = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 54, bottom: 1026 });
 const INITIAL_SWARM = 36;
 const DEFAULT_ENEMY_BUDGET = 1000;
@@ -112,7 +113,7 @@ export const REGION_BOSS_PATTERNS = Object.freeze({
   "abyssal-archive": Object.freeze(["memorySpiral", "depthCollapse", "archiveEcho", "undertow"]),
 });
 
-const BOSS_PARRY_WINDOW = 1;
+const BOSS_PARRY_WINDOW = 1.5;
 const BOSS_PARRY_SLOW_SCALE = 0.16;
 const BOSS_PARRY_ELIGIBLE = Object.freeze(new Set([
   "rings",
@@ -126,7 +127,7 @@ const BOSS_PARRY_ELIGIBLE = Object.freeze(new Set([
 const BOSS_BOMB_THRESHOLDS = Object.freeze([0.55, 0.3, 0.12]);
 const BOSS_BOMB_COUNTS = Object.freeze([2, 4, 8]);
 const BOSS_BOMB_SIREN_DURATION = 1.15;
-const BOSS_BOMB_ACTIVE_DURATION = 7.5;
+const BOSS_BOMB_ACTIVE_DURATIONS = Object.freeze([10, 14, 22]);
 
 export const REGION_ENEMY_PROFILES = Object.freeze({
   "wrong-engine-core": Object.freeze({
@@ -208,7 +209,8 @@ function normalize(x, y, fallbackX = 1, fallbackY = 0) {
 }
 
 function activeArena(state) {
-  return state?.expedition ? EXPEDITION_ARENA : ARENA;
+  if (!state?.expedition) return ARENA;
+  return state.phase === "boss" ? BOSS_ARENA : EXPEDITION_ARENA;
 }
 
 function activeWorldSize(state) {
@@ -3843,10 +3845,13 @@ function startBossBombSequence(state, tier) {
   const arena = activeArena(state);
   const count = BOSS_BOMB_COUNTS[tier];
   const padding = 92;
-  const centerX = (arena.left + arena.right) * 0.5;
-  const centerY = (arena.top + arena.bottom) * 0.5;
-  const spreadX = Math.max(160, (arena.right - arena.left) * 0.34);
-  const spreadY = Math.max(130, (arena.bottom - arena.top) * 0.31);
+  const centerX = clamp((state.player.x + boss.x) * 0.5, arena.left + 420, arena.right - 420);
+  const centerY = clamp((state.player.y + boss.y) * 0.5, arena.top + 270, arena.bottom - 270);
+  // Keep the complete numbered set inside the initial expanded boss camera.
+  // The player still has to move between bombs, but never has to guess at an
+  // off-screen order marker while the timer is running.
+  const spreadX = Math.min(400, (arena.right - arena.left) * 0.28);
+  const spreadY = Math.min(250, (arena.bottom - arena.top) * 0.27);
   const regionOffset = state.regionId === "glass-dune" ? 0.48 : state.regionId === "abyssal-archive" ? 0.94 : 0;
   const bombs = Array.from({ length: count }, (_, index) => {
     const angle = regionOffset + tier * 0.37 + index * TAU / count;
@@ -3856,7 +3861,7 @@ function startBossBombSequence(state, tier) {
       order: index + 1,
       x: clamp(centerX + Math.cos(angle) * spreadX * radial, arena.left + padding, arena.right - padding),
       y: clamp(centerY + Math.sin(angle) * spreadY * radial, arena.top + padding, arena.bottom - padding),
-      radius: 52,
+      radius: 66,
       state: "priming",
       defused: false,
       exploded: false,
@@ -3994,8 +3999,10 @@ function updateBossBombSequence(state, input, dt) {
   if (sequence.phase === "siren") {
     if (sequence.timer <= 0) {
       sequence.phase = "armed";
-      sequence.timer = BOSS_BOMB_ACTIVE_DURATION;
-      sequence.duration = BOSS_BOMB_ACTIVE_DURATION;
+      const activeDuration = BOSS_BOMB_ACTIVE_DURATIONS[Math.max(0, sequence.tier - 1)]
+        ?? BOSS_BOMB_ACTIVE_DURATIONS[0];
+      sequence.timer = activeDuration;
+      sequence.duration = activeDuration;
       sequence.progress = 0;
       for (const bomb of sequence.bombs) bomb.state = "armed";
       emit(state, "bossBombSequenceArmed", {
