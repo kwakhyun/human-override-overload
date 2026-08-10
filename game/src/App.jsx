@@ -614,7 +614,7 @@ function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic 
         />
       )}
       <section className="intro-minimal-content" aria-labelledby="game-title">
-        <small>NAN 2026 · 소버린 점령지 · 기지 캠페인</small>
+        <small>소버린 점령지 · 기지 캠페인</small>
         <h1 id="game-title"><span>HUMAN</span><em>OVERRIDE</em><b>OVERLOAD</b></h1>
         <p>헤이븐-09에서 대원들과 작전을 준비하고, 세계를 지배한 초지능 AI의 기계 군단과 지역 추론핵을 파괴하세요.</p>
         <button
