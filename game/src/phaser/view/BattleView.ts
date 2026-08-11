@@ -372,6 +372,8 @@ export class BattleView {
   private bossVisualScale = 1;
   private bossWasHit = false;
   private bossWasDead = false;
+  private lastBossHp = Number.NaN;
+  private lastImpactShakeAt = -1000;
   private lastPhase = 1;
   private bossRevealStartedAt = -1;
   private bossRevealFromZoom = 1.08;
@@ -580,6 +582,31 @@ export class BattleView {
       if (type === "bossStage") this.spawnFx("phaseBreak", this.boss.x, this.boss.y, COLORS.red, 2.25);
     } else if (type === "dash") {
       this.mainCamera.shake(90, 0.0025);
+    } else if (type === "empPulseActivated") {
+      this.shakeImpact(120, 0.0045, 90);
+      this.hudCamera.flash(72, 105, 240, 255, false);
+      this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), COLORS.cyan, 1.55);
+    } else if (type === "aegisWardActivated") {
+      this.hudCamera.flash(80, 105, 255, 190, false);
+      this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), COLORS.green, 1.25);
+    } else if (type === "skillAttack" || type === "masterAttack") {
+      const skill = String(event?.skill ?? "");
+      const color = skill.includes("nova") || skill.includes("orbit") ? COLORS.violet : COLORS.cyan;
+      const scale = type === "masterAttack" ? 1.8 : 1.15;
+      this.shakeImpact(type === "masterAttack" ? 180 : 100, type === "masterAttack" ? 0.006 : 0.0028, 100);
+      if (type === "masterAttack") this.hudCamera.flash(85, 198, 246, 255, false);
+      this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), color, scale);
+    } else if (type === "stratosRunSweep") {
+      this.shakeImpact(95, 0.0032, 80);
+    } else if (type === "helixTempestPulse") {
+      this.shakeImpact(75, 0.0018, 130);
+    } else if (type === "ultimateFire") {
+      this.shakeImpact(260, 0.0085, 130);
+      this.hudCamera.flash(105, 190, 245, 255, false);
+      this.spawnFx("weaponBlast", this.player.x, this.player.y, COLORS.cyan, 2.1);
+    } else if (type === "ultimateImpact" || type === "explosion") {
+      this.shakeImpact(type === "ultimateImpact" ? 150 : 125, type === "ultimateImpact" ? 0.0055 : 0.0042, 75);
+      this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), COLORS.amber, type === "ultimateImpact" ? 1.85 : 1.45);
     } else if (type === "bossPatternFire" || type === "bossRageBurst") {
       this.spawnFx("weaponBlast", this.boss.x, this.boss.y, COLORS.red, type === "bossRageBurst" ? 1.8 : 1.25);
     } else if (type === "bossParryWindow") {
@@ -614,6 +641,13 @@ export class BattleView {
     } else if (type === "bossAutoTransition") {
       this.hudCamera.flash(180, 104, 239, 255, false);
     }
+  }
+
+  private shakeImpact(duration: number, intensity: number, minimumGap = 70) {
+    const now = this.scene.time.now;
+    if (now - this.lastImpactShakeAt < minimumGap) return;
+    this.lastImpactShakeAt = now;
+    this.mainCamera.shake(duration, intensity);
   }
 
   render(state: any, quality: QualityPreset) {
@@ -776,12 +810,14 @@ export class BattleView {
       );
 
     const muzzleVisible = finite(entity?.attackTimer) > 0.055 && !entity?.dead && finite(entity?.stunTimer) <= 0;
+    const muzzlePulse = 0.5 + Math.sin(this.scene.time.now * 0.085) * 0.5;
     this.muzzleFlash
       .setVisible(muzzleVisible)
       .setPosition(finite(entity?.x) + muzzle.x, finite(entity?.y) + muzzle.y)
       .setRotation(muzzle.angle)
-      .setDisplaySize(38, 22)
-      .setAlpha(clamp(0.55 + finite(entity?.attackTimer) * 2.4, 0.55, 1));
+      .setDisplaySize(42 + muzzlePulse * 8, 24 + muzzlePulse * 5)
+      .setAlpha(clamp(0.7 + finite(entity?.attackTimer) * 2.8, 0.7, 1))
+      .setTint(muzzlePulse > 0.62 ? COLORS.white : COLORS.cyan);
 
     const dash = animation.clipId === "dash";
     const motionAngle = Math.hypot(finite(entity?.vx), finite(entity?.vy)) > 1
@@ -821,6 +857,9 @@ export class BattleView {
     this.bossPhaseArt.setVisible(false);
     if (!visible) return;
     const stage = clamp(Math.floor(finite(entity?.stage, 1)), 1, 3);
+    const bossHp = finite(entity?.hp);
+    const bossDamage = Number.isFinite(this.lastBossHp) ? Math.max(0, this.lastBossHp - bossHp) : 0;
+    this.lastBossHp = bossHp;
     const selectedClip = selectActorClip(ACTOR_ANIMATION_PROFILES.boss, entity);
     if (selectedClip.id !== this.bossClipId) {
       this.bossClipId = selectedClip.id;
@@ -839,7 +878,10 @@ export class BattleView {
     setAtlasFrame(this.boss, bossFrame.column, bossFrame.row);
     setAtlasFrame(this.bossPhaseArt, bossFrame.column, bossFrame.row);
     const isHit = finite(entity?.hitFlash) > 0.04;
-    if (isHit && !this.bossWasHit) this.spawnFx("bossHit", finite(entity?.x), finite(entity?.y), COLORS.red, 1.45);
+    if (isHit && !this.bossWasHit) {
+      this.spawnFx("bossHit", finite(entity?.x), finite(entity?.y), COLORS.red, clamp(1.35 + bossDamage / 260, 1.35, 2.35));
+      if (bossDamage >= 120) this.shakeImpact(90, 0.0022, 80);
+    }
     if (entity?.dead && !this.bossWasDead) this.spawnFx("bossBurst", finite(entity?.x), finite(entity?.y), COLORS.amber, 3.1);
     if (stage !== this.lastPhase) this.spawnFx("phaseBreak", finite(entity?.x), finite(entity?.y), COLORS.red, 2.35);
     this.bossWasHit = isHit;
@@ -922,6 +964,7 @@ export class BattleView {
       const isDead = Boolean(entity?.dead);
       const role = record?.roleIndex ?? enemyRoleIndex(entity);
       const hp = finite(entity?.hp);
+      const hitDamage = record ? Math.max(0, record.lastHp - hp) : 0;
       if (record) {
         if (hp < record.lastHp - 0.01 || (isHit && !record.wasHit)) {
           record.healthBarUntil = this.scene.time.now + ENEMY_HEALTH_BAR_HOLD_MS;
@@ -971,7 +1014,14 @@ export class BattleView {
       const usesDedicatedMotion = this.preparedAtlases.has(motionTexture);
       const texture = usesDedicatedMotion ? motionTexture : enemyFallbackTexture(entity);
       if (image.texture.key !== texture) image.setTexture(texture);
-      if (isHit && !record.wasHit) this.spawnFx("armorHit", x, y, entity?.elite ? COLORS.amber : COLORS.red, entity?.elite ? 1.3 : 0.85);
+      if (isHit && !record.wasHit) {
+        const impactScale = clamp((entity?.elite ? 1.18 : 0.78) + hitDamage / 92, 0.78, entity?.elite ? 1.9 : 1.5);
+        this.spawnFx("armorHit", x, y, entity?.elite ? COLORS.amber : COLORS.red, impactScale);
+        if (hitDamage >= (entity?.elite ? 38 : 52)) {
+          this.spawnFx("weaponBlast", x, y, entity?.elite ? COLORS.amber : COLORS.cyan, impactScale * 0.72);
+          this.shakeImpact(70, 0.0018, 85);
+        }
+      }
       if (isDead && !record.wasDead) this.spawnFx("enemyBurst", x, y, entity?.elite ? COLORS.amber : COLORS.red, entity?.elite ? 1.55 : 0.9);
       record.wasHit = isHit;
       record.wasDead = isDead;
@@ -2326,6 +2376,21 @@ export class BattleView {
         .setDisplaySize(art.width, art.height)
         .setAlpha(0.96)
         .setTint(colorNumber(projectile?.color, 0xffffff));
+      if (!projectileKind.includes("orbit") && launchAge > 0.012) {
+        const trailLength = projectileKind.includes("rail") || projectileKind.includes("overdrive")
+          ? 86
+          : projectileKind.includes("rocket") || projectileKind.includes("sentry")
+            ? 52
+            : 34;
+        const trailColor = colorNumber(projectile?.color, COLORS.cyan);
+        graphics.lineStyle(projectileKind.includes("rail") ? 4 : 2.25, trailColor, projectileKind.includes("rail") ? 0.68 : 0.48);
+        graphics.lineBetween(
+          displayX - Math.cos(angle) * trailLength,
+          displayY - Math.sin(angle) * trailLength,
+          displayX - Math.cos(angle) * art.width * 0.18,
+          displayY - Math.sin(angle) * art.width * 0.18,
+        );
+      }
       visibleProjectiles += 1;
     }
     for (let index = visibleProjectiles; index < this.projectileSprites.length; index += 1) this.projectileSprites[index].setVisible(false);
@@ -2371,7 +2436,8 @@ export class BattleView {
       : kind === "phaseBreak" ? 0.95
         : kind === "enemyBurst" ? 0.52
           : kind === "weaponBlast" ? 0.38
-            : 0.28;
+            : kind === "armorHit" || kind === "bossHit" ? 0.34
+              : 0.28;
     this.viewFx.push({
       kind,
       x: finite(x),
@@ -2403,7 +2469,7 @@ export class BattleView {
       const scale = fx.scale;
       const hit = fx.kind === "armorHit" || fx.kind === "playerHit" || fx.kind === "bossHit";
       const bossScale = fx.kind === "bossBurst" || fx.kind === "phaseBreak" ? 2.4 : 1;
-      const radius = (hit ? 5 + progress * 24 : 12 + progress * 48) * scale * bossScale;
+      const radius = (hit ? 6 + progress * 30 : 12 + progress * 48) * scale * bossScale;
       if (!this.isCircleVisible(fx.x, fx.y, radius * 2.1, 40)) continue;
       const enemyExplosion = fx.kind === "enemyBurst";
 
@@ -2441,8 +2507,8 @@ export class BattleView {
       // animation and multiplied Graphics tessellation during mass kills.
       if (enemyExplosion) continue;
 
-      graphics.fillStyle(COLORS.white, alpha * (hit ? 0.85 : 0.62));
-      graphics.fillCircle(fx.x, fx.y, Math.max(2, (hit ? 7 : 13) * scale * (1 - progress)));
+      graphics.fillStyle(COLORS.white, alpha * (hit ? 0.96 : 0.62));
+      graphics.fillCircle(fx.x, fx.y, Math.max(2, (hit ? 9 : 13) * scale * (1 - progress)));
       graphics.fillStyle(fx.color, alpha * 0.34);
       graphics.fillCircle(fx.x, fx.y, Math.max(4, radius * (hit ? 0.55 : 0.72)));
       graphics.lineStyle(Math.max(1.5, 3.2 * scale * (1 - progress * 0.4)), fx.color, alpha);
@@ -2450,7 +2516,7 @@ export class BattleView {
       graphics.lineStyle(Math.max(1, 1.3 * scale), COLORS.white, alpha * 0.8);
       graphics.strokeCircle(fx.x, fx.y, radius * 0.62);
 
-      const baseRays = hit ? 6 : fx.kind === "bossBurst" || fx.kind === "phaseBreak" ? 24 : 12;
+      const baseRays = hit ? 8 : fx.kind === "bossBurst" || fx.kind === "phaseBreak" ? 24 : 12;
       const rays = quality.id === "performance" ? Math.ceil(baseRays * 0.4) : baseRays;
       for (let ray = 0; ray < rays; ray += 1) {
         const noise = Math.sin((fx.seed + ray * 31) * 12.9898) * 43758.5453;
