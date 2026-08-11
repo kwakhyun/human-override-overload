@@ -1096,6 +1096,32 @@ Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background cover
 Constraints: exact 6 columns, exact 2 rows, exact 12 square cells; native pixel-art appearance; obvious animation progression at 64x64; no letters and no numerals.
 ```
 
+## AEGIS official character icon
+
+- 런타임 최적화본: `public/assets/overload/hero/aegis-official-icon.webp` — 512×512 RGB WebP,
+  Pillow LANCZOS 축소, quality 92.
+- ImageGen 보존 원본: `reference/source-assets/overload/hero/aegis-official-icon-imagegen-source.png` —
+  1254×1254 RGB PNG.
+- 정체성 기준 이미지: `public/assets/overload/hero/survivor-portrait.png`.
+- 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 캐릭터 이미지는 사용하지
+  않았습니다.
+- 원본 생성 경로:
+  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a345bd90-8519-4f2b-9ce1-2b14243845cf.png`.
+- 정확한 ImageGen 프롬프트:
+
+```text
+Use case: identity-preserve.
+Asset type: official square protagonist character icon for the browser game HUMAN OVERRIDE: OVERLOAD.
+Input image: Image 1 is the approved official AEGIS character portrait and the identity reference. Preserve her exact adult character identity: long silver-white hair, side braid and black floral hair ornament, cool gray-blue eyes, pale natural complexion, composed determined expression, black futuristic tactical exosuit, white armored coat lapels, metallic shoulder hardware, and restrained cyan technology accents.
+Primary request: create one premium, tightly framed official face icon of AEGIS. Show the crown, full face, neck, and upper shoulders only. Her head and hair should fill about 75 percent of the square while the entire chin remains visible. Use the same slight three-quarter viewer-facing angle as the reference, with direct readable eye contact and a calm, resolute expression. Do not place a weapon in front of her face.
+Scene/backdrop: deep near-black futuristic command-interface background with a subtle circular cyan reactor halo, faint cyan particles, and restrained industrial texture; keep the backdrop quiet and uncluttered.
+Style/medium: polished high-detail sci-fi anime game key art matching the approved source, crisp facial features and individual silver hair strands, professional official game avatar finish.
+Composition/framing: exact 1:1 square, centered face, clean circular-icon-safe composition, strong silhouette, readable at 64px and 128px, no important detail near the outer 8 percent safe margin.
+Lighting/mood: cool cyan rim light, soft neutral key light on the face, controlled contrast, calm heroic mood.
+Color palette: silver-white, black, graphite, cool cyan, subtle natural skin tones.
+Constraints: single character only; preserve face shape, hairstyle, hair ornament, costume identity, proportions, eye color, and source art direction; no text, title, logo, watermark, border, UI labels, extra characters, extra limbs, helmet, headset, weapon across face, cropped chin, distorted eyes, exaggerated makeup, open mouth, pin-up pose, bright background, or busy scenery.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License
