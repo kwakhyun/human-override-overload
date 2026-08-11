@@ -597,7 +597,7 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
   );
 }
 
-export function SortieCinematicScreen({ region, videoSource, soundEnabled = true, onComplete }) {
+export function SortieCinematicScreen({ region, videoSource, posterSource, soundEnabled = true, combatLoadProgress = 0, combatReady = false, videoComplete = false, onComplete }) {
   const videoRef = useRef(null);
   const completedRef = useRef(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
@@ -632,15 +632,20 @@ export function SortieCinematicScreen({ region, videoSource, soundEnabled = true
 
   const koreanName = region?.koreanName || region?.name || "작전 구역";
   const englishName = region?.name || "SORTIE";
+  const loadPercent = Math.round(Math.max(0, Math.min(1, Number(combatLoadProgress) || 0)) * 100);
+  const loadStatus = combatReady
+    ? (videoComplete ? "전장 진입 중" : "전장 준비 완료")
+    : `백그라운드 전장 로딩 ${loadPercent}%`;
   return (
     <main className={`sortie-cinematic sortie-${region?.id || "unknown"}${playing ? " is-playing" : ""}`} aria-label={`${koreanName} 출격 영상`}>
       <video
         ref={videoRef}
         className="sortie-cinematic-video"
         src={assetSource(videoSource)}
+        poster={assetSource(posterSource)}
         autoPlay
         playsInline
-        preload="metadata"
+        preload="auto"
         muted={!soundEnabled}
         controls={false}
         disablePictureInPicture
@@ -656,8 +661,8 @@ export function SortieCinematicScreen({ region, videoSource, soundEnabled = true
       </header>
       <footer className="sortie-flight-status" aria-live="polite">
         <span><AirplaneTilt weight="fill" /> 나이트자 이륙</span>
-        <div className="sortie-flight-progress" aria-hidden="true"><i /></div>
-        <b>{playing ? "전장 동기화 중" : "출격 영상 준비 중"}</b>
+        <div className="sortie-flight-progress" aria-hidden="true"><i style={{ width: `${loadPercent}%` }} /></div>
+        <b className={combatReady ? "is-ready" : ""}>{playing ? loadStatus : "출격 영상 준비 중"}</b>
       </footer>
       {autoplayBlocked && (
         <button type="button" className="sortie-play-fallback command-ui-button" data-ui-sound="uiConfirm" onClick={startPlayback}>

@@ -5,6 +5,7 @@ export type SceneCallbacks = Readonly<{
   onHud: (hud: unknown) => void;
   onEvent: (event: Record<string, unknown>) => void;
   onFinish: (result: unknown) => void;
+  onLoadProgress?: (progress: number) => void;
   onReady?: () => void;
 }>;
 
@@ -24,6 +25,7 @@ export class SceneBridge {
   readonly callbacks: SceneCallbacks;
   readonly debugScene: string | null;
   private controls: BattleSceneControls | null = null;
+  private suspended = false;
 
   constructor(callbacks: SceneCallbacks, debugScene: string | null) {
     this.callbacks = callbacks;
@@ -32,6 +34,7 @@ export class SceneBridge {
 
   attach(controls: BattleSceneControls) {
     this.controls = controls;
+    controls.setSuspended(this.suspended);
     this.callbacks.onReady?.();
   }
 
@@ -68,6 +71,7 @@ export class SceneBridge {
   }
 
   setSuspended(suspended: boolean) {
+    this.suspended = suspended;
     this.controls?.setSuspended(suspended);
   }
 

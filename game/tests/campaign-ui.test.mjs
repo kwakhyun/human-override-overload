@@ -12,7 +12,7 @@ test("App connects the three save slots to base, airship selection, regional Pha
   assert.match(app, /createCampaignSlot\(campaign, slotId\)/);
   assert.match(app, /completeRegion\(campaign, activeSlotId, regionId/);
   assert.match(app, /saveCampaign\(completed\)/);
-  assert.match(app, /createOverloadGame\(host,[\s\S]*\}, \{ regionId, combatBonuses \}\)/);
+  assert.match(app, /createOverloadGame\(host,[\s\S]*\}, \{ regionId, combatBonuses, startSuspended: preparingRef\.current \}\)/);
   assert.match(app, /status === "victory"[\s\S]*setScreen\("base"\)/);
   assert.match(app, /setActiveNpc\(isFreshSlot \? BASE_NPCS\.rhea : null\)/);
   assert.match(app, /setGuideReturnScreen\("base"\)[\s\S]*setScreen\("base"\)/);

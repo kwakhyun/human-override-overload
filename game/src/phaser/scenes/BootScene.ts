@@ -12,14 +12,17 @@ export class BootScene extends Phaser.Scene {
   private readonly assetProfile: AssetProfile;
   private progressFill?: Phaser.GameObjects.Rectangle;
   private progressLabel?: Phaser.GameObjects.Text;
+  private readonly onLoadProgress?: (progress: number) => void;
 
-  constructor(regionId?: string, assetProfile: AssetProfile = "full") {
+  constructor(regionId?: string, assetProfile: AssetProfile = "full", onLoadProgress?: (progress: number) => void) {
     super({ key: "OverloadBoot" });
     this.regionId = resolveRegionId(regionId);
     this.assetProfile = resolveAssetProfile(assetProfile);
+    this.onLoadProgress = onLoadProgress;
   }
 
   preload() {
+    this.onLoadProgress?.(0);
     this.cameras.main.setBackgroundColor("#020608");
     this.add.rectangle(640, 360, 1280, 720, 0x020608, 1);
     this.add.rectangle(640, 360, 470, 118, 0x061116, 0.96).setStrokeStyle(1, 0x63efff, 0.32);
@@ -41,11 +44,13 @@ export class BootScene extends Phaser.Scene {
     this.load.on("progress", (value: number) => {
       this.progressFill?.setSize(360 * value, 6);
       this.progressLabel?.setText(`LOADING AUTHORED ASSETS · ${Math.round(value * 100)}%`);
+      this.onLoadProgress?.(value);
     });
     for (const asset of getGameAssetsForRegion(this.regionId, this.assetProfile)) this.load.image(asset.key, asset.path);
   }
 
   create() {
+    this.onLoadProgress?.(1);
     this.cameras.main.fadeOut(180, 2, 6, 8);
     this.time.delayedCall(190, () => this.scene.start("OverloadBattle"));
   }

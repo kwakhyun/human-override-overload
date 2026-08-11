@@ -56,21 +56,33 @@ test("all three region sortie videos are valid six-second MP4 assets", async () 
   }
 });
 
-test("sortie confirmation gates Phaser behind the selected cinematic", async () => {
-  const [app, screens, styles] = await Promise.all([
+test("sortie cinematic warms the selected suspended Phaser runtime in the background", async () => {
+  const [app, screens, styles, createGame, bootScene, bridge] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/phaser/createOverloadGame.ts", root), "utf8"),
+    readFile(new URL("src/phaser/scenes/BootScene.ts", root), "utf8"),
+    readFile(new URL("src/phaser/adapters/sceneBridge.ts", root), "utf8"),
   ]);
   for (const id of ["wrong-engine-core", "glass-dune", "abyssal-archive"]) {
     assert.match(app, new RegExp(`"${id}": assets\\?\\.sortie`));
   }
   assert.match(app, /setGuideReturnScreen\("sortie"\)/);
   assert.match(app, /beginSortieCinematic\(regionId\)/);
-  assert.match(app, /screen === "sortie"[\s\S]*?<SortieCinematicScreen/);
+  assert.match(app, /screen === "sortie" \|\| screen === "game"/);
+  assert.match(app, /className=\{`combat-runtime-shell/);
+  assert.match(app, /<PhaserArenaScreen[\s\S]*?preparing=\{screen === "sortie"\}/);
+  assert.match(app, /<SortieCinematicScreen[\s\S]*?combatLoadProgress=\{combatLoadProgress\}/);
   assert.match(app, /onComplete=\{enterCombat\}/);
-  assert.match(screens, /<video[\s\S]*?autoPlay[\s\S]*?playsInline[\s\S]*?preload="metadata"/);
+  assert.match(screens, /<video[\s\S]*?poster=\{assetSource\(posterSource\)\}[\s\S]*?autoPlay[\s\S]*?playsInline[\s\S]*?preload="auto"/);
+  assert.match(screens, /백그라운드 전장 로딩/);
   assert.match(screens, /onEnded=\{complete\}/);
   assert.doesNotMatch(screens, /setTimeout\(complete/);
-  assert.match(styles, /animation: sortie-flight-progress 6s linear forwards/);
+  assert.match(styles, /\.combat-runtime-shell\.is-preparing > \.expedition-game/);
+  assert.match(styles, /\.combat-runtime-shell > \.sortie-cinematic/);
+  assert.match(createGame, /startSuspended\?: boolean/);
+  assert.match(createGame, /if \(launch\.startSuspended\) bridge\.setSuspended\(true\)/);
+  assert.match(bootScene, /onLoadProgress\?\.\(value\)/);
+  assert.match(bridge, /controls\.setSuspended\(this\.suspended\)/);
 });

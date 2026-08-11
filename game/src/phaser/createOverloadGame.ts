@@ -24,6 +24,7 @@ export type OverloadGameController = Readonly<{
 export type OverloadLaunchOptions = Readonly<{
   regionId?: string;
   combatBonuses?: Readonly<Record<string, number>>;
+  startSuspended?: boolean;
 }>;
 
 export function createOverloadGame(
@@ -36,11 +37,12 @@ export function createOverloadGame(
   const debugRegion = import.meta.env.DEV && query.get("debug") === "1" ? query.get("region") : null;
   if (debugRegion) launch = { ...launch, regionId: debugRegion };
   const bridge = new SceneBridge(callbacks, debugScene);
+  if (launch.startSuspended) bridge.setSuspended(true);
   const regionId = resolveRegionId(launch.regionId);
   const initialQuality = detectInitialQuality(window);
   const preset = QUALITY_PRESETS[initialQuality] ?? QUALITY_PRESETS.balanced;
   const assetProfile = initialQuality === "performance" ? "performance" : "full";
-  const bootScene = new BootScene(regionId, assetProfile);
+  const bootScene = new BootScene(regionId, assetProfile, callbacks.onLoadProgress);
   const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, assetProfile);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
