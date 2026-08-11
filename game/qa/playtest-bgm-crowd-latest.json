@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-08-10T12:37:51.860Z",
+  "generatedAt": "2026-08-11T05:43:20.091Z",
   "errors": [],
   "baseAudio": {
     "src": "http://127.0.0.1:4174/assets/audio/last-light-in-haven-09.mp3",
     "paused": false,
-    "currentTime": 1.170953,
+    "currentTime": 1.155329,
     "duration": 159.4135,
     "readyState": 4
   },
@@ -12,7 +12,7 @@
     "audio": {
       "src": "http://127.0.0.1:4174/assets/audio/refraction-war-glass-dune.mp3",
       "paused": false,
-      "currentTime": 1.4263,
+      "currentTime": 1.408507,
       "duration": 59.8135,
       "readyState": 4
     },
@@ -34,7 +34,7 @@
     "audio": {
       "src": "http://127.0.0.1:4174/assets/audio/memory-below-pressure-abyssal-archive.mp3",
       "paused": false,
-      "currentTime": 1.382385,
+      "currentTime": 1.394663,
       "duration": 59.8135,
       "readyState": 4
     },
@@ -79,17 +79,22 @@
       "contentType": "audio/mpeg"
     },
     {
-      "url": "http://127.0.0.1:4174/assets/audio/agent/emp-pulse-online.mp3",
-      "status": 206,
-      "contentType": "audio/mpeg"
-    },
-    {
       "url": "http://127.0.0.1:4174/assets/audio/refraction-war-glass-dune.mp3",
       "status": 206,
       "contentType": "audio/mpeg"
     },
     {
+      "url": "http://127.0.0.1:4174/assets/audio/agent/emp-pulse-online.mp3",
+      "status": 206,
+      "contentType": "audio/mpeg"
+    },
+    {
       "url": "http://127.0.0.1:4174/assets/audio/agent/aegis-ward-online.mp3",
+      "status": 206,
+      "contentType": "audio/mpeg"
+    },
+    {
+      "url": "http://127.0.0.1:4174/assets/audio/agent/emp-pulse-online.mp3",
       "status": 206,
       "contentType": "audio/mpeg"
     },
@@ -100,11 +105,6 @@
     },
     {
       "url": "http://127.0.0.1:4174/assets/audio/agent/helix-tempest-authorized.mp3",
-      "status": 206,
-      "contentType": "audio/mpeg"
-    },
-    {
-      "url": "http://127.0.0.1:4174/assets/audio/agent/emp-pulse-online.mp3",
       "status": 206,
       "contentType": "audio/mpeg"
     },
@@ -139,12 +139,12 @@
       "contentType": "audio/mpeg"
     },
     {
-      "url": "http://127.0.0.1:4174/assets/audio/memory-below-pressure-abyssal-archive.mp3",
+      "url": "http://127.0.0.1:4174/assets/audio/agent/aegis-ward-online.mp3",
       "status": 206,
       "contentType": "audio/mpeg"
     },
     {
-      "url": "http://127.0.0.1:4174/assets/audio/agent/aegis-ward-online.mp3",
+      "url": "http://127.0.0.1:4174/assets/audio/memory-below-pressure-abyssal-archive.mp3",
       "status": 206,
       "contentType": "audio/mpeg"
     },

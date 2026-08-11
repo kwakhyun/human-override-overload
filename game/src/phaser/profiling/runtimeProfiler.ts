@@ -21,6 +21,7 @@ export type ProfilingContext = Readonly<{
   sniperTelegraphs?: number;
   bossStage?: number;
   bossPattern?: string | null;
+  renderFps?: number;
 }>;
 
 export type SampleSummary = Readonly<{
@@ -172,6 +173,11 @@ export function summarizeSamples(samples: readonly number[], budgetMs = DEFAULT_
     budgetMs: rounded(budgetMs),
     overBudgetRatio: rounded(overBudget / clean.length),
   });
+}
+
+export function resolveProfilingTargetFrameMs(renderFps: unknown, fallbackMs = DEFAULT_TARGET_FRAME_MS) {
+  const fps = finite(renderFps);
+  return fps > 0 ? 1000 / fps : fallbackMs;
 }
 
 function textureCategory(key: string): TextureCategory {
@@ -429,21 +435,24 @@ export class PhaserRuntimeProfiler {
   }
 
   snapshot(): RuntimeProfileSnapshot {
-    const raf = summarizeSamples(this.rafSamples, this.targetFrameMs * 1.5);
-    const scene = summarizeSamples(this.sceneSamples, this.targetFrameMs * 1.5);
-    const phaserDelta = summarizeSamples(this.phaserDeltaSamples, this.targetFrameMs * 1.5);
+    const context = Object.freeze({ ...this.contextProvider() });
+    const targetFrameMs = resolveProfilingTargetFrameMs(context.renderFps, this.targetFrameMs);
+    const presentationBudgetMs = targetFrameMs * 1.5;
+    const raf = summarizeSamples(this.rafSamples, presentationBudgetMs);
+    const scene = summarizeSamples(this.sceneSamples, presentationBudgetMs);
+    const phaserDelta = summarizeSamples(this.phaserDeltaSamples, presentationBudgetMs);
     return Object.freeze({
       version: 1,
       generatedAt: new Date().toISOString(),
-      context: Object.freeze({ ...this.contextProvider() }),
+      context,
       renderer: readRenderer(this.game),
       frames: Object.freeze({
-        targetFrameMs: rounded(this.targetFrameMs),
+        targetFrameMs: rounded(targetFrameMs),
         raf: Object.freeze({ ...raf, droppedFrameRatio: raf.overBudgetRatio }),
         scene: Object.freeze({ ...scene, droppedFrameRatio: scene.overBudgetRatio }),
         phaserDelta: Object.freeze({ ...phaserDelta, droppedFrameRatio: phaserDelta.overBudgetRatio }),
-        sceneUpdateCpu: summarizeSamples(this.sceneUpdateCpuSamples, this.targetFrameMs),
-        renderSubmitCpu: summarizeSamples(this.renderCpuSamples, this.targetFrameMs),
+        sceneUpdateCpu: summarizeSamples(this.sceneUpdateCpuSamples, targetFrameMs),
+        renderSubmitCpu: summarizeSamples(this.renderCpuSamples, targetFrameMs),
       }),
       textureMemory: snapshotTextureMemory(this.game.textures as unknown as TextureManagerLike),
       limitations: Object.freeze([

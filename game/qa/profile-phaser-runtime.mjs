@@ -56,6 +56,28 @@ async function startFreshRun(page, scene, region) {
   await page.locator(".save-slot-card").first().click();
   await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
   if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
+  if (region !== "wrong-engine-core") {
+    await page.evaluate(() => {
+      const key = "train-me-wrong.overload.campaign.v2";
+      const campaign = JSON.parse(localStorage.getItem(key) || '{"version":2,"slots":[null,null,null]}');
+      const slot = campaign.slots?.[0];
+      if (!slot) throw new Error("Profiler campaign slot was not created.");
+      slot.completedRegionIds = Array.from(new Set([...(slot.completedRegionIds || []), "wrong-engine-core"]));
+      slot.homeBaseUnlocked = true;
+      slot.baseUnlocked = true;
+      slot.storyFlags = Array.from(new Set([
+        ...(slot.storyFlags || []),
+        "home-base-unlocked",
+        "chapter-01-cleared",
+      ]));
+      localStorage.setItem(key, JSON.stringify(campaign));
+    });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: "게임 시작" }).click();
+    await page.locator(".save-slot-card").first().click();
+    await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
+    if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
+  }
   await page.locator(".airship-hotspot").click();
   const regionIndex = region === "glass-dune" ? 1 : region === "abyssal-archive" ? 2 : 0;
   await page.locator(".region-card").nth(regionIndex).click();

@@ -95,7 +95,7 @@ export function createOverloadGame(
       const runtime = battleScene as unknown as {
         state?: any;
         governor?: {
-          preset?: { id?: string };
+          preset?: { id?: string; renderFps?: number };
           snapshot?: {
             autoQualityCeiling?: string;
             deviceQuality?: string;
@@ -112,6 +112,7 @@ export function createOverloadGame(
         regionId: state?.regionId ?? regionId,
         phase: state?.phase,
         quality: runtime.governor?.preset?.id,
+        renderFps: runtime.governor?.preset?.renderFps,
         assetProfile: runtime.assetProfile ?? assetProfile,
         autoQualityCeiling: qualitySnapshot?.autoQualityCeiling,
         deviceQuality: qualitySnapshot?.deviceQuality,

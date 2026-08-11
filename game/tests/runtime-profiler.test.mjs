@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
+  resolveProfilingTargetFrameMs,
   snapshotTextureMemory,
   summarizeSamples,
 } from "../src/phaser/profiling/runtimeProfiler.ts";
@@ -23,6 +24,13 @@ test("frame summaries expose stable nearest-rank p50/p95/p99 and budget pressure
     budgetMs: 50,
     overBudgetRatio: 0.5,
   });
+});
+
+test("adaptive presentation budgets follow the active render cadence", () => {
+  assert.equal(Math.round(resolveProfilingTargetFrameMs(60) * 1000) / 1000, 16.667);
+  assert.equal(Math.round(resolveProfilingTargetFrameMs(45) * 1000) / 1000, 22.222);
+  assert.equal(Math.round(resolveProfilingTargetFrameMs(30) * 1000) / 1000, 33.333);
+  assert.equal(resolveProfilingTargetFrameMs(undefined, 20), 20);
 });
 
 test("texture snapshots dedupe shared sources and retain route, boss, common, and internal keys", () => {
@@ -65,6 +73,7 @@ test("the runtime exposes profiling only behind Vite DEV and tears it down with 
   assert.match(createGame, /if \(debugRegion\) launch = \{ \.\.\.launch, regionId: debugRegion \}/);
   assert.match(createGame, /qaProfiler\?\.destroy\(\)/);
   assert.match(createGame, /bossPattern: state\?\.boss\?\.activePattern\?\.type \?\? null/);
+  assert.match(createGame, /renderFps: runtime\.governor\?\.preset\?\.renderFps/);
   assert.match(profiler, /__OVERLOAD_QA__/);
   assert.match(profiler, /waitForSamples/);
   assert.match(profiler, /renderSubmitCpu/);

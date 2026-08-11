@@ -7,7 +7,7 @@
   "playing": {
     "source": "./assets/audio/under-ashen-skies-title.mp3",
     "paused": false,
-    "currentTime": 0.426784,
+    "currentTime": 0.375528,
     "duration": 59.8135,
     "volume": 0.34,
     "muted": false
@@ -15,7 +15,7 @@
   "afterLeave": {
     "source": null,
     "paused": true,
-    "currentTime": 0.443034
+    "currentTime": 0.389154
   },
   "errors": []
 }

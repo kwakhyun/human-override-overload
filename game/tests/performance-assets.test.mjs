@@ -52,6 +52,7 @@ test("PERFORMANCE selects lighter paths without changing stable Phaser texture k
   const bossPixelKeys = new Set([
     manifest.ASSET_KEYS.bossPatternCommonPixel,
     manifest.ASSET_KEYS.bossPatternRegionalPixel,
+    manifest.ASSET_KEYS.bossTimedBombPixel,
   ]);
   assert.ok(performanceBoss.filter((asset) => !bossPixelKeys.has(asset.key)).every((asset) => asset.path.includes("/performance/")));
   assert.deepEqual(
