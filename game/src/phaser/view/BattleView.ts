@@ -23,6 +23,13 @@ const HEIGHT = 720;
 const TAU = Math.PI * 2;
 const PIXEL_VFX_CELL = 64;
 const STRATOS_OFFSETS = Object.freeze([-112, 0, 112]);
+const ENEMY_HEALTH_BAR_HOLD_MS = 2000;
+const MAX_ENEMY_HEALTH_BAR_CANDIDATES = 30;
+const ENEMY_HEALTH_BAR_CAPS = Object.freeze({
+  cinematic: 30,
+  balanced: 24,
+  performance: 18,
+});
 
 const COLORS = Object.freeze({
   cyan: 0x68efff,
@@ -56,6 +63,17 @@ type SpriteRecord = {
   frameColumn: number;
   frameRow: number;
   roleIndex: number;
+  lastHp: number;
+  healthBarUntil: number;
+};
+
+type EnemyHealthBarCandidate = {
+  entity: any | null;
+  record: SpriteRecord | null;
+  priority: number;
+  distanceSq: number;
+  roleIndex: number;
+  persistent: boolean;
 };
 
 type ViewFxKind = "armorHit" | "enemyBurst" | "playerHit" | "bossHit" | "bossBurst" | "phaseBreak" | "weaponBlast";
@@ -307,6 +325,7 @@ export class BattleView {
   private readonly manualAbilityGraphics: Phaser.GameObjects.Graphics;
   private readonly projectileGraphics: Phaser.GameObjects.Graphics;
   private readonly foregroundGraphics: Phaser.GameObjects.Graphics;
+  private readonly enemyHealthGraphics: Phaser.GameObjects.Graphics;
   private readonly impactGraphics: Phaser.GameObjects.Graphics;
   private readonly hudGraphics: Phaser.GameObjects.Graphics;
   private readonly player: Phaser.GameObjects.Image;
@@ -338,6 +357,10 @@ export class BattleView {
   private readonly stratosGroupScratch: StratosGroupScratch[] = Array.from(
     { length: 3 },
     () => ({ id: 0, lanes: [null, null, null] }),
+  );
+  private readonly enemyHealthBarScratch: EnemyHealthBarCandidate[] = Array.from(
+    { length: MAX_ENEMY_HEALTH_BAR_CANDIDATES },
+    () => ({ entity: null, record: null, priority: 0, distanceSq: 0, roleIndex: 0, persistent: false }),
   );
   private currentQualityId = "balanced";
   private lastCosmeticTick = -1;
@@ -426,9 +449,10 @@ export class BattleView {
     this.projectileGraphics = scene.add.graphics();
     this.impactGraphics = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
     this.foregroundGraphics = scene.add.graphics();
+    this.enemyHealthGraphics = scene.add.graphics();
     this.hudGraphics = scene.add.graphics();
     this.worldBack.add([this.shadowGraphics, this.telegraphGraphics, this.bossPatternLayer, this.effectGraphics, this.manualAbilityGraphics]);
-    this.worldFront.add([this.projectileGraphics, this.impactGraphics, this.foregroundGraphics]);
+    this.worldFront.add([this.projectileGraphics, this.impactGraphics, this.enemyHealthGraphics, this.foregroundGraphics]);
     this.hudLayer.add(this.hudGraphics);
 
     this.muzzleFlash = scene.add.image(0, 0, ASSET_KEYS.combatFx)
@@ -601,6 +625,7 @@ export class BattleView {
     this.syncPlayer(state, time, quality);
     this.syncBoss(state, time);
     this.syncEnemies(state, time, quality);
+    this.drawEnemyHealthBars(state, quality);
     this.syncAllies(state, time, quality);
     this.drawShadows(state, quality);
     this.drawTelegraphs(state, time, quality);
@@ -896,6 +921,13 @@ export class BattleView {
       const isHit = finite(entity?.hitFlash) > 0.04;
       const isDead = Boolean(entity?.dead);
       const role = record?.roleIndex ?? enemyRoleIndex(entity);
+      const hp = finite(entity?.hp);
+      if (record) {
+        if (hp < record.lastHp - 0.01 || (isHit && !record.wasHit)) {
+          record.healthBarUntil = this.scene.time.now + ENEMY_HEALTH_BAR_HOLD_MS;
+        }
+        record.lastHp = hp;
+      }
       if (!inView) {
         if (record) {
           record.image.setVisible(false);
@@ -925,6 +957,8 @@ export class BattleView {
           frameColumn: 0,
           frameRow: 0,
           roleIndex: role,
+          lastHp: hp,
+          healthBarUntil: isHit ? this.scene.time.now + ENEMY_HEALTH_BAR_HOLD_MS : 0,
         };
         this.enemySprites.set(id, record);
       }
@@ -980,6 +1014,148 @@ export class BattleView {
     this.visibleEnemyCount = visibleEnemyCount;
   }
 
+  private drawEnemyHealthBars(state: any, quality: QualityPreset) {
+    const graphics = this.enemyHealthGraphics;
+    graphics.clear();
+    const enemies = Array.isArray(state?.enemies) ? state.enemies : [];
+    if (enemies.length === 0 || state?.phase === "boss") return;
+
+    const qualityId = String(quality.id ?? "balanced");
+    const cap = qualityId === "performance"
+      ? ENEMY_HEALTH_BAR_CAPS.performance
+      : qualityId === "cinematic"
+        ? ENEMY_HEALTH_BAR_CAPS.cinematic
+        : ENEMY_HEALTH_BAR_CAPS.balanced;
+    const now = this.scene.time.now;
+    const playerX = finite(state?.player?.x);
+    const playerY = finite(state?.player?.y);
+    const playerRadius = Math.max(1, finite(state?.player?.radius, 20));
+    const aimAngle = actorAngle(state?.player);
+    const aimCos = Math.cos(aimAngle);
+    const aimSin = Math.sin(aimAngle);
+    let candidateCount = 0;
+
+    for (let index = 0; index < enemies.length; index += 1) {
+      const entity = enemies[index];
+      if (entity?.dead || finite(entity?.spawnDelay) > 0) continue;
+      const id = finite(entity?.id, index + 1);
+      const record = this.enemySprites.get(id);
+      if (!record?.image.visible || record.image.alpha < 0.55) continue;
+      const hpRatio = ratio(entity);
+      if (hpRatio <= 0) continue;
+
+      const dx = finite(entity?.x) - playerX;
+      const dy = finite(entity?.y) - playerY;
+      const distanceSq = dx * dx + dy * dy;
+      const roleIndex = record.roleIndex;
+      const recentlyDamaged = now <= record.healthBarUntil;
+      const elite = Boolean(entity?.elite);
+      const nearPlayer = distanceSq <= 330 * 330;
+      const sniperEngaged = roleIndex === 2 && (finite(entity?.aimTimer) > 0 || finite(entity?.attackTimer) > 0.01);
+      const rifleEngaged = roleIndex === 1 && (finite(entity?.burstShots) > 0 || finite(entity?.attackTimer) > 0.01);
+      const suicideDanger = roleIndex === 0 && distanceSq <= 460 * 460;
+      const aimDepth = dx * aimCos + dy * aimSin;
+      const aimLateral = Math.abs(dx * aimSin - dy * aimCos);
+      const aimTargeted = aimDepth > 0
+        && aimDepth <= 760
+        && aimLateral <= Math.max(34, finite(entity?.radius, 22) + 18);
+      if (!recentlyDamaged && !elite && !nearPlayer && !sniperEngaged && !rifleEngaged && !suicideDanger && !aimTargeted) continue;
+
+      const persistent = elite || nearPlayer || sniperEngaged || rifleEngaged || suicideDanger || aimTargeted;
+      const proximityBonus = Math.max(0, 360 * 360 - distanceSq) / (360 * 360) * 100;
+      const priority = (recentlyDamaged ? 1000 : 0)
+        + (elite ? 900 : 0)
+        + (sniperEngaged ? 850 : 0)
+        + (suicideDanger ? 800 : 0)
+        + (aimTargeted ? 750 : 0)
+        + (rifleEngaged ? 650 : 0)
+        + (nearPlayer ? 600 : 0)
+        + proximityBonus;
+
+      let slot = candidateCount;
+      if (candidateCount < cap) {
+        candidateCount += 1;
+      } else {
+        slot = 0;
+        let lowestPriority = this.enemyHealthBarScratch[0].priority;
+        for (let candidateIndex = 1; candidateIndex < cap; candidateIndex += 1) {
+          const candidatePriority = this.enemyHealthBarScratch[candidateIndex].priority;
+          if (candidatePriority >= lowestPriority) continue;
+          lowestPriority = candidatePriority;
+          slot = candidateIndex;
+        }
+        if (priority <= lowestPriority) continue;
+      }
+
+      const candidate = this.enemyHealthBarScratch[slot];
+      candidate.entity = entity;
+      candidate.record = record;
+      candidate.priority = priority;
+      candidate.distanceSq = distanceSq;
+      candidate.roleIndex = roleIndex;
+      candidate.persistent = persistent;
+    }
+
+    const zoom = Math.max(0.68, finite(this.mainCamera.zoom, 1));
+    for (let index = 0; index < candidateCount; index += 1) {
+      const candidate = this.enemyHealthBarScratch[index];
+      const entity = candidate.entity;
+      const record = candidate.record;
+      if (!entity || !record) continue;
+      const image = record.image;
+      const hpRatio = ratio(entity);
+      const holdAlpha = clamp01((record.healthBarUntil - now) / 350);
+      const alpha = Math.min(image.alpha, candidate.persistent ? 0.96 : holdAlpha * 0.96);
+      if (alpha <= 0.02) continue;
+
+      const screenWidth = (candidate.roleIndex === 2 ? 72 : candidate.roleIndex === 1 ? 64 : 54)
+        + (entity?.elite ? 8 : 0);
+      const width = screenWidth / zoom;
+      const height = (entity?.elite ? 7 : 6) / zoom;
+      const border = 1.25 / zoom;
+      const left = image.x - width * 0.5;
+      const top = image.y - image.displayHeight * 0.56 - 10 / zoom;
+      const healthColor = entity?.elite
+        ? COLORS.amber
+        : candidate.roleIndex === 2
+          ? COLORS.violet
+          : candidate.roleIndex === 0
+            ? COLORS.red
+            : COLORS.cyan;
+      const outlineColor = finite(entity?.hitFlash) > 0.04 ? COLORS.white : entity?.elite ? COLORS.amber : 0x9fb5bd;
+
+      graphics.fillStyle(COLORS.black, alpha * 0.9);
+      graphics.fillRect(left - border, top - border, width + border * 2, height + border * 2);
+      graphics.fillStyle(0x17252a, alpha * 0.92);
+      graphics.fillRect(left, top, width, height);
+      graphics.fillStyle(healthColor, alpha);
+      graphics.fillRect(left, top, Math.max(0, width * hpRatio), height);
+      graphics.lineStyle(border, outlineColor, alpha * 0.9);
+      graphics.strokeRect(left - border * 0.5, top - border * 0.5, width + border, height + border);
+
+      const statusTop = top + height + 2.5 / zoom;
+      if (finite(entity?.disabledTimer) > 0) {
+        graphics.fillStyle(COLORS.black, alpha * 0.82);
+        graphics.fillRect(left, statusTop, 12 / zoom, 3 / zoom);
+        graphics.fillStyle(COLORS.cyan, alpha);
+        graphics.fillRect(left + 1 / zoom, statusTop + 1 / zoom, 10 / zoom, 1 / zoom);
+      }
+      if (candidate.roleIndex === 0) {
+        const distance = Math.sqrt(candidate.distanceSq);
+        const contactDistance = Math.max(1, finite(entity?.radius, 22) + playerRadius + 4);
+        const danger = clamp01(1 - (distance - contactDistance) / Math.max(1, 460 - contactDistance));
+        if (danger > 0.02) {
+          const dangerWidth = width * danger;
+          const dangerTop = statusTop + (finite(entity?.disabledTimer) > 0 ? 4 / zoom : 0);
+          graphics.fillStyle(COLORS.redDark, alpha * 0.9);
+          graphics.fillRect(left, dangerTop, width, 3 / zoom);
+          graphics.fillStyle(COLORS.red, alpha);
+          graphics.fillRect(left, dangerTop, dangerWidth, 3 / zoom);
+        }
+      }
+    }
+  }
+
   private syncAllies(state: any, time: number, quality: QualityPreset) {
     for (const record of this.allySprites.values()) record.seen = false;
     const animationHz = quality.id === "performance" ? 10 : quality.id === "cinematic" ? 24 : 16;
@@ -1013,6 +1189,8 @@ export class BattleView {
             frameColumn: 0,
             frameRow: 0,
             roleIndex: -1,
+            lastHp: finite(entity?.hp),
+            healthBarUntil: 0,
           };
           this.allySprites.set(id, record);
         } else if (record.image.texture.key !== texture) record.image.setTexture(texture);
