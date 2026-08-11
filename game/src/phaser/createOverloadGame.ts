@@ -43,7 +43,7 @@ export function createOverloadGame(
   const initialQuality = detectInitialQuality(window);
   const preset = QUALITY_PRESETS[initialQuality] ?? QUALITY_PRESETS.balanced;
   const assetProfile = initialQuality === "performance" ? "performance" : "full";
-  const bootScene = new BootScene(regionId, assetProfile, callbacks.onLoadProgress);
+  const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, callbacks.onLoadProgress);
   const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, assetProfile);
   const game = new Phaser.Game({
     type: Phaser.AUTO,

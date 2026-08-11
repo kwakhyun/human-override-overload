@@ -1994,7 +1994,10 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
             {!dialogue && <GateLockedNotice notice={hud?.expedition?.gateNotice} />}
             {!dialogue && <RouteClearTransition transition={hud?.expedition?.clearTransition} />}
             <div className="expedition-xp"><i style={{ width: `${xpRatio * 100}%` }} /></div>
-            <div className="transient-controls"><span>이동: WASD</span><span>포인터로 조준 · 소총 자동 발사</span></div>
+            <div className="transient-controls">
+              <span>이동: WASD</span>
+              <span>{mainWeaponId === "beam-sword" ? "포인터 방향 · 빔 소드 자동 베기" : "포인터로 조준 · 소총 자동 발사"}</span>
+            </div>
             <div className="touch-controls expedition-touch-controls" aria-label="터치 전투 조작">
           <div className="touch-dpad">
             <button className="touch-up" type="button" aria-label="위로 이동" onPointerDown={(event) => setTouchDirection("up", true, event)} onPointerUp={(event) => setTouchDirection("up", false, event)} onPointerCancel={(event) => setTouchDirection("up", false, event)}><ArrowUp weight="bold" /></button>

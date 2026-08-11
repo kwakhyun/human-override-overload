@@ -1122,6 +1122,73 @@ Color palette: silver-white, black, graphite, cool cyan, subtle natural skin ton
 Constraints: single character only; preserve face shape, hairstyle, hair ornament, costume identity, proportions, eye color, and source art direction; no text, title, logo, watermark, border, UI labels, extra characters, extra limbs, helmet, headset, weapon across face, cropped chin, distorted eyes, exaggerated makeup, open mouth, pin-up pose, bright background, or busy scenery.
 ```
 
+## AEGIS beam-sword motion and skill effects
+
+- 런타임 캐릭터 아틀라스: `public/assets/overload/hero/survivor-sword-directional-aim-atlas.png`
+  — 1536×576 RGBA, 정확히 8×3, 192×192 셀.
+- PERFORMANCE 파생본:
+  `public/assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png`
+  — 1152×432 RGBA, 정확히 8×3, 144×144 셀.
+- 런타임 검기 아틀라스: `public/assets/overload/vfx/pixel/sword-skill-pixel-atlas.png`
+  — 384×256 RGBA, 정확히 6×4, 64×64 셀, NEAREST 필터.
+- 정체성 기준: 프로젝트 원본
+  `public/assets/overload/hero/survivor-directional-aim-atlas.png` 및 기존 프로젝트 전용 도트 VFX.
+- 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지
+  않았습니다.
+- 선택 ImageGen 원본:
+  - 첫 빔 소드 포즈 시트:
+    `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-219fb4eb-c483-4457-baed-f730687d4b2b.png`
+  - 균일 크로마 교정 시트:
+    `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-af37a5df-8b6b-4450-88b1-916aa6ae17e4.png`
+  - 검기 도트 시트:
+    `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-c6588731-a9da-463e-91bb-353b4a72d219.png`
+- 로컬 보존 원본:
+  - `reference/source-assets/overload/hero/survivor-sword-directional-aim-chroma.png`
+  - `reference/source-assets/overload/hero/survivor-sword-directional-aim-alpha.png`
+  - `reference/source-assets/overload/vfx/pixel/sword-skill-pixel-atlas-chroma.png`
+  - `reference/source-assets/overload/vfx/pixel/sword-skill-pixel-atlas-alpha.png`
+- QA 미리보기:
+  - `qa/survivor-sword-directional-aim-preview.png`
+  - `qa/sword-skill-pixel-atlas-preview.png`
+- 후처리:
+  `remove_chroma_key.py`로 균일 `#ff00ff` 키를 제거하고, 캐릭터는
+  `normalize-overflow-grid-atlas.py --columns 8 --rows 3 --frame-size 192`, 검기는
+  `normalize-pixel-vfx-atlas.py --columns 6 --rows 4 --cell-size 64`로 셀 중심과 안전 여백을
+  고정했습니다. PERFORMANCE 캐릭터 아틀라스는
+  `scripts/build-performance-assets.py`가 셀별 Pillow LANCZOS로 결정론적으로 생성합니다.
+- 캐릭터 포즈 1차 정확한 ImageGen 프롬프트:
+
+```text
+Use case: precise-object-edit.
+Asset type: production top-down 2D browser-game hero motion atlas.
+Image 1 is the approved active AEGIS 8-column by 3-row directional atlas. Preserve exactly the same 8×3 layout, transparent canvas proportions, strict 90-degree true-nadir overhead camera, silver-white hair, black tactical exosuit, white split coat tails, cyan accent palette, character scale, center anchor, head always screen-up, feet always screen-down, and generous cell separation.
+Primary request: replace only the rifle and rifle-holding arm pose with a sleek one-handed futuristic beam sword: dark gunmetal hilt and bright cyan-white energy blade. No gun remains. Create coherent melee animation progression left-to-right in every row: c1 ready, c2 early slash, c3 mid slash, c4 follow-through, c5 reverse slash, c6 bright heavy sweep, c7 recovery, c8 ready loop. Row 1 aims/slashes toward upper-right, row 2 toward screen-right, row 3 toward lower-right. The whole body remains upright and never rotates; only shoulders, arms, coat tails and sword direction articulate naturally. Keep every sword and effect fully inside its cell.
+Style: match the existing polished high-detail sci-fi game sprite exactly. Restrained short cyan blade trail may appear only in c3-c6; no giant effects, no scenery, no labels, no grid lines, no added character, no perspective tilt, no visible front-facing face or chest, no watermark. Transparent background; retain exact 8 columns and 3 rows.
+```
+
+- 캐릭터 크로마 교정 정확한 ImageGen 프롬프트:
+
+```text
+Use case: precise-object-edit.
+Image 1 is the selected AEGIS beam-sword 8×3 motion sheet. Preserve the same character identity, all 24 poses, their exact left-to-right animation order, strict overhead camera, upright body orientation, sword direction per row, scale, and cyan beam-sword design.
+Make one production correction: replace the entire checkerboard/white background with one perfectly uniform flat solid #ff00ff chroma-key color. Exactly 8 equal columns by 3 equal rows, one isolated centered character per cell, generous gutters, no character or sword crossing a cell boundary. Keep the sheet landscape and all rows aligned. Do not draw any checker pattern, transparency simulation, grid line, label, number, text, scenery, shadow, glow fog, or watermark. Do not use #ff00ff in the character. Crisp separated edges suitable for local chroma removal.
+```
+
+- 검기 도트 시트 정확한 ImageGen 프롬프트:
+
+```text
+Use case: stylized-concept.
+Asset type: production low-resolution pixel-art melee VFX sprite atlas for the top-down Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+Image 1 is a style and palette reference only. Create a new exact 6-column by 4-row atlas, 24 isolated square animation cells, read left-to-right.
+Row 1 BASIC BEAM-SWORD SWEEP: compact cyan-white crescent arc grows from ignition to a clean 120-degree slash and dissolves into sparse pixels.
+Row 2 CRESCENT WAVE: a sharp horizontal cyan energy blade projectile forms, travels, intensifies, fragments, and fades; each cell remains a compact square module, never one long stretched beam.
+Row 3 TITAN EDGE: a cyan-white oversized sword silhouette materializes vertically, expands with a circular shock ring, performs one broad radial sweep, then contracts and disappears.
+Row 4 FLASH REND: forward-pointing cyan blade wedge with two parallel afterimage streaks, rapid dash-slash burst, cross-shaped impact, and fading afterimage.
+Style: authentic hand-authored 16-bit arcade pixel VFX, crisp square clusters, hard stair-step edges, no antialiasing, restrained cyan/white/blue palette with dark navy outline, highly readable on a dark sci-fi battlefield, simple and lightweight.
+Composition: exact 6×4 grid on a 3:2 landscape canvas, one centered effect per equal square cell, consistent anchor and size within each row, generous gutters, nothing crossing cell boundaries.
+Backdrop: perfectly flat solid #ff00ff chroma-key background. No gradient, checker pattern, transparency simulation, grid lines, labels, text, numbers, scenery, shadows, watermark, extra rows or columns. Do not use #ff00ff in any effect.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License

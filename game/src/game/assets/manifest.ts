@@ -16,6 +16,7 @@ export const ASSET_KEYS = Object.freeze({
   bossRoom: "overload-boss-chamber",
   playerMotion: "survivor-motion-atlas",
   playerDirectionalAim: "survivor-directional-aim-atlas",
+  playerSwordDirectionalAim: "survivor-sword-directional-aim-atlas",
   enemyMotion: "overload-enemy-motion-atlas",
   enemyHunter: "overload-enemy-hunter-static",
   enemyRifleman: "overload-enemy-rifleman-static",
@@ -32,6 +33,7 @@ export const ASSET_KEYS = Object.freeze({
   bossPatternRegionalPixel: "overload-boss-pattern-regional-pixel-atlas",
   bossTimedBombPixel: "overload-boss-timed-bomb-pixel-atlas",
   automaticSkillPixel: "overload-automatic-skill-pixel-atlas",
+  swordSkillPixel: "overload-sword-skill-pixel-atlas",
   sovereignGateMotion: "overload-sovereign-gate-motion-atlas",
   healingKitMotion: "overload-healing-kit-motion-atlas",
   squadTraces: "overload-squad-traces-atlas",
@@ -60,6 +62,7 @@ export const DEFAULT_REGION_ID = "wrong-engine-core" as const;
 export const REGION_IDS = Object.freeze([DEFAULT_REGION_ID, "glass-dune", "abyssal-archive"] as const);
 export type RegionId = (typeof REGION_IDS)[number];
 export type AssetProfile = "full" | "performance";
+export type MainWeaponId = "pulse-rifle" | "beam-sword";
 
 export function resolveAssetProfile(profile?: string): AssetProfile {
   return profile === "performance" ? "performance" : "full";
@@ -81,7 +84,6 @@ export function resolveRegionId(regionId?: string): RegionId {
 
 export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
   { key: ASSET_KEYS.playerMotion, path: "./assets/overload/hero/survivor-motion-atlas-v2.png", performancePath: "./assets/overload/hero/performance/survivor-motion-atlas-v2.png", kind: "motion", columns: 8, rows: 9 },
-  { key: ASSET_KEYS.playerDirectionalAim, path: "./assets/overload/hero/survivor-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-directional-aim-atlas.png", kind: "motion", columns: 8, rows: 3 },
   { key: ASSET_KEYS.enemyHunter, path: "./assets/overload/enemies/hunter.png", kind: "image" },
   { key: ASSET_KEYS.enemyRifleman, path: "./assets/overload/enemies/suppressor.png", kind: "image" },
   { key: ASSET_KEYS.enemySniper, path: "./assets/overload/enemies/brute.png", kind: "image" },
@@ -103,6 +105,20 @@ export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
   { key: ASSET_KEYS.sentry, path: "./assets/overload/allies/pulse-sentry.png", kind: "image" },
   { key: ASSET_KEYS.emp, path: "./assets/overload/allies/emp-pylon.png", kind: "image" },
 ]);
+
+export const WEAPON_GAME_ASSETS: Readonly<Record<MainWeaponId, readonly AssetDefinition[]>> = Object.freeze({
+  "pulse-rifle": Object.freeze([
+    { key: ASSET_KEYS.playerDirectionalAim, path: "./assets/overload/hero/survivor-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 3 },
+  ]),
+  "beam-sword": Object.freeze([
+    { key: ASSET_KEYS.playerSwordDirectionalAim, path: "./assets/overload/hero/survivor-sword-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 3 },
+    { key: ASSET_KEYS.swordSkillPixel, path: "./assets/overload/vfx/pixel/sword-skill-pixel-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+  ]),
+});
+
+export function resolveMainWeaponId(value?: string): MainWeaponId {
+  return value === "beam-sword" ? "beam-sword" : "pulse-rifle";
+}
 
 export const ALLY_MOTION_ASSETS: Readonly<Record<string, AssetDefinition>> = Object.freeze({
   drone: Object.freeze({
@@ -189,9 +205,10 @@ export const REGION_GAME_ASSETS: Readonly<Record<RegionId, readonly AssetDefinit
   REGION_IDS.map((regionId) => [regionId, freezeAssets([...REGION_ROUTE_ASSETS[regionId], ...REGION_BOSS_ASSETS[regionId]])]),
 ) as Record<RegionId, readonly AssetDefinition[]>);
 
-export function getGameAssetsForRegion(regionId?: string, profile: AssetProfile = "full"): readonly AssetDefinition[] {
+export function getGameAssetsForRegion(regionId?: string, profile: AssetProfile = "full", mainWeaponId: MainWeaponId = "pulse-rifle"): readonly AssetDefinition[] {
   const resolved = resolveRegionId(regionId);
-  return selectAssetProfiles([...COMMON_GAME_ASSETS, ...REGION_ROUTE_ASSETS[resolved]], profile);
+  const weapon = resolveMainWeaponId(mainWeaponId);
+  return selectAssetProfiles([...COMMON_GAME_ASSETS, ...WEAPON_GAME_ASSETS[weapon], ...REGION_ROUTE_ASSETS[resolved]], profile);
 }
 
 export function getBossGameAssetsForRegion(regionId?: string, profile: AssetProfile = "full"): readonly AssetDefinition[] {

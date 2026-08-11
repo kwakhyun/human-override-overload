@@ -241,9 +241,9 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /type OverloadLaunchOptions/);
   assert.match(createGame, /launch: OverloadLaunchOptions = \{\}/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
-  assert.match(createGame, /new BootScene\(regionId, assetProfile, callbacks\.onLoadProgress\)/);
-  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, assetProfile\)/);
-  assert.match(scene, /createSwarmState\(\{ duration: 360, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses \}\)/);
+  assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
+  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, assetProfile\)/);
+  assert.match(scene, /createSwarmState\(\{ duration: 360, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId \}\)/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);
   for (const key of [
@@ -292,7 +292,7 @@ test("BootScene registers common assets plus only the selected region with a saf
   assert.ok(!fallback.some((path) => path.includes("wrong-engine-forms-atlas")));
   assert.ok(!fallback.some((path) => path.includes("glass-dune")));
   assert.equal(manifest.resolveRegionId("not-a-region"), "wrong-engine-core");
-  assert.match(boot, /getGameAssetsForRegion\(this\.regionId, this\.assetProfile\)/);
+  assert.match(boot, /getGameAssetsForRegion\(this\.regionId, this\.assetProfile, this\.mainWeaponId\)/);
   assert.doesNotMatch(boot, /GAME_ASSETS/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
 });
@@ -513,7 +513,7 @@ test("expanded expedition framing makes every hostile larger than AEGIS and stab
   assert.match(engine, /export const EXPEDITION_WORLD_WIDTH = 13200/);
   assert.match(view, /const size = state\?\.phase === "boss" \? 64 : 74/);
   assert.match(view, /const baseSize = role === 2 \? 138 : role === 1 \? 108 : 92/);
-  assert.match(view, /const recoil = animation\.clipId === "attack" \?/);
+  assert.match(view, /const recoil = rifleEquipped && animation\.clipId === "attack" \?/);
   assert.match(view, /setAtlasFrame\(ghost, Math\.max\(0, animation\.clipFrameIndex - index - 1\), HERO_MOTION_ROWS\.dash\)/);
   assert.match(view, /resolveHeroDirectionalAimFrame\(animation, entity\)/);
   assert.match(view, /resolveHeroMuzzleAnchor\(entity, size\)/);

@@ -298,6 +298,7 @@ function allyMotionTexture(ally: any) {
 
 function projectileArt(projectile: any) {
   const type = String(projectile?.kind ?? "pulse").toLowerCase();
+  if (type.includes("crescent")) return { column: 0, row: 1, width: 76, height: 76 };
   if (type.includes("rail") || type.includes("omega")) return { column: 2, row: 0, width: 132, height: 40 };
   if (type.includes("rocket") || type.includes("missile")) return { column: 3, row: 0, width: 76, height: 36 };
   if (type.includes("scatter") || type.includes("fork")) return { column: 1, row: 0, width: 70, height: 40 };
@@ -340,6 +341,7 @@ export class BattleView {
   private readonly omegaLaserSprites: Phaser.GameObjects.Image[] = [];
   private readonly healingKitSprites: Phaser.GameObjects.Image[] = [];
   private readonly manualAbilitySprites: Phaser.GameObjects.Image[] = [];
+  private readonly swordEffectSprites: Phaser.GameObjects.Image[] = [];
   private readonly spawnGateSprites: Phaser.GameObjects.Image[] = [];
   private readonly bossPatternSprites: Phaser.GameObjects.Image[] = [];
   private readonly bossTimedBombSprites: Phaser.GameObjects.Image[] = [];
@@ -384,7 +386,8 @@ export class BattleView {
     const regionAssets = getRegionVisualAssets(regionId);
     this.regionAssets = regionAssets;
     this.prepareAtlas(ASSET_KEYS.playerMotion, 8, 9);
-    this.prepareAtlas(ASSET_KEYS.playerDirectionalAim, 8, 3);
+    if (scene.textures.exists(ASSET_KEYS.playerDirectionalAim)) this.prepareAtlas(ASSET_KEYS.playerDirectionalAim, 8, 3);
+    if (scene.textures.exists(ASSET_KEYS.playerSwordDirectionalAim)) this.prepareAtlas(ASSET_KEYS.playerSwordDirectionalAim, 8, 3);
     this.prepareAtlas(ASSET_KEYS.enemyHunterMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemyRiflemanMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemySniperMotion, 6, 4);
@@ -394,6 +397,7 @@ export class BattleView {
     this.prepareAtlas(ASSET_KEYS.sovereignGateMotion, 6, 1);
     ensureAtlasFrames(scene, ASSET_KEYS.healingKitMotion, 4, 1);
     this.preparePixelAtlas(ASSET_KEYS.manualAbilityPixel, 6, 4);
+    if (scene.textures.exists(ASSET_KEYS.swordSkillPixel)) this.preparePixelAtlas(ASSET_KEYS.swordSkillPixel, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.enemyDeathPixel, 6, 1);
     const hasSquadTraces = scene.textures.exists(ASSET_KEYS.squadTraces);
     if (hasSquadTraces) ensureAtlasFrames(scene, ASSET_KEYS.squadTraces, 3, 1);
@@ -777,13 +781,17 @@ export class BattleView {
     const clipElapsed = resolveHeroClipElapsedSeconds(selectedClip.id, entity, time - this.playerClipStartedAt);
     const animation = sampleActorAnimation("hero", entity, clipElapsed);
     const directionalFrame = resolveHeroDirectionalAimFrame(animation, entity);
-    const usesDirectionalAtlas = Boolean(directionalFrame && this.preparedAtlases.has(ASSET_KEYS.playerDirectionalAim));
-    const playerTexture = usesDirectionalAtlas ? ASSET_KEYS.playerDirectionalAim : ASSET_KEYS.playerMotion;
+    const directionalTexture = entity?.mainWeaponId === "beam-sword"
+      ? ASSET_KEYS.playerSwordDirectionalAim
+      : ASSET_KEYS.playerDirectionalAim;
+    const usesDirectionalAtlas = Boolean(directionalFrame && this.preparedAtlases.has(directionalTexture));
+    const playerTexture = usesDirectionalAtlas ? directionalTexture : ASSET_KEYS.playerMotion;
     if (this.player.texture.key !== playerTexture) this.player.setTexture(playerTexture);
     const playerFrame = directionalFrame ?? animation.fallbackAtlasFrame;
     setAtlasFrame(this.player, playerFrame.column, playerFrame.row);
     const size = state?.phase === "boss" ? 64 : 74;
-    const recoil = animation.clipId === "attack" ? clamp(finite(entity?.recoil) * 0.55, 0, 2) : 0;
+    const rifleEquipped = entity?.mainWeaponId !== "beam-sword";
+    const recoil = rifleEquipped && animation.clipId === "attack" ? clamp(finite(entity?.recoil) * 0.55, 0, 2) : 0;
     const angle = actorAngle(entity);
     const presentation = resolveHeroAimPresentation(entity);
     const muzzle = resolveHeroMuzzleAnchor(entity, size);
@@ -809,7 +817,7 @@ export class BattleView {
             : 0xffffff,
       );
 
-    const muzzleVisible = finite(entity?.attackTimer) > 0.055 && !entity?.dead && finite(entity?.stunTimer) <= 0;
+    const muzzleVisible = rifleEquipped && finite(entity?.attackTimer) > 0.055 && !entity?.dead && finite(entity?.stunTimer) <= 0;
     const muzzlePulse = 0.5 + Math.sin(this.scene.time.now * 0.085) * 0.5;
     this.muzzleFlash
       .setVisible(muzzleVisible)
@@ -1750,6 +1758,7 @@ export class BattleView {
       }
     }
     this.syncManualAbilityFx(state, time, quality);
+    this.syncSwordEffectFx(state, quality);
     this.syncSkillFx(state, time, quality);
     this.syncUltimateFx(state, quality);
     this.syncOmegaLaserFx(state, time, quality);
@@ -2037,6 +2046,42 @@ export class BattleView {
       this.manualAbilitySprites.push(image);
     }
     return image;
+  }
+
+  private syncSwordEffectFx(state: any, quality: QualityPreset) {
+    const effects = Array.isArray(state?.swordEffects) ? state.swordEffects : [];
+    const cap = quality.id === "performance" ? 6 : quality.id === "cinematic" ? 16 : 10;
+    let visible = 0;
+    for (let index = Math.max(0, effects.length - cap); index < effects.length && visible < cap; index += 1) {
+      const effect = effects[index];
+      const x = finite(effect?.x);
+      const y = finite(effect?.y);
+      const radius = Math.max(48, finite(effect?.radius, 150));
+      if (!this.isCircleVisible(x, y, radius, 48)) continue;
+      let image = this.swordEffectSprites[visible];
+      if (!image) {
+        image = this.scene.add.image(0, 0, ASSET_KEYS.swordSkillPixel).setBlendMode(Phaser.BlendModes.ADD);
+        this.worldFront.add(image);
+        this.swordEffectSprites.push(image);
+      }
+      const type = String(effect?.type ?? "swordSlash");
+      const row = type === "crescentWave" ? 1 : type === "titanEdge" ? 2 : type === "flashRend" ? 3 : 0;
+      const progress = 1 - clamp01(finite(effect?.life) / Math.max(0.001, finite(effect?.maxLife, 0.3)));
+      const frame = Math.min(5, Math.floor(progress * 6));
+      const size = type === "titanEdge"
+        ? Math.min(620, radius * 2.05)
+        : type === "flashRend" ? Math.min(420, radius * 1.35) : Math.min(460, radius * 1.75);
+      setAtlasFrame(image, frame, row);
+      image
+        .setVisible(true)
+        .setPosition(x, y)
+        .setRotation(finite(effect?.angle))
+        .setDisplaySize(size, size)
+        .setAlpha(0.96 * clamp01(finite(effect?.life) / Math.max(0.08, finite(effect?.maxLife, 0.3) * 0.24)))
+        .clearTint();
+      visible += 1;
+    }
+    for (let index = visible; index < this.swordEffectSprites.length; index += 1) this.swordEffectSprites[index].setVisible(false);
   }
 
   private syncHealingKitFx(state: any, time: number, quality: QualityPreset) {
@@ -2356,6 +2401,7 @@ export class BattleView {
       const art = projectileArt(projectile);
       const angle = Number.isFinite(projectile?.angle) ? projectile.angle : Math.atan2(finite(projectile?.vy), finite(projectile?.vx));
       const projectileKind = String(projectile?.kind ?? "pulse").toLowerCase();
+      const swordWave = projectileKind.includes("crescent");
       const launchesFromRifle = !projectileKind.includes("overdrive") && !projectileKind.includes("orbit");
       const launchAge = finite(projectile?.age, 1);
       let displayX = x;
@@ -2368,7 +2414,14 @@ export class BattleView {
         displayX = originX + (x - originX) * launchBlend;
         displayY = originY + (y - originY) * launchBlend;
       }
-      setAtlasFrame(image, art.column, art.row);
+      const projectileTexture = swordWave ? ASSET_KEYS.swordSkillPixel : ASSET_KEYS.combatFx;
+      if (image.texture.key !== projectileTexture) image.setTexture(projectileTexture);
+      if (swordWave) {
+        const swordFrame = Math.min(5, Math.floor(clamp01(finite(projectile?.age) / 0.48) * 6));
+        setAtlasFrame(image, swordFrame, 1);
+      } else {
+        setAtlasFrame(image, art.column, art.row);
+      }
       image
         .setVisible(true)
         .setPosition(displayX, displayY)
