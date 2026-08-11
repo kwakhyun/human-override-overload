@@ -522,7 +522,7 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
       {background && <img className="campaign-background" src={background} alt="비행선 전술 지도에 표시된 세 개의 작전 구역" />}
       {previewSource && (
         <img
-          className={`region-focus-background${selectedRegion ? " is-selected" : ""}`}
+          className={`region-focus-background region-focus-${previewRegion?.id}${selectedRegion ? " is-selected" : ""}`}
           src={previewSource}
           alt=""
           aria-hidden="true"

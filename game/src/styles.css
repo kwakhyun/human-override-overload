@@ -5372,8 +5372,8 @@ kbd {
 .facility-research .facility-upgrade { border-color: rgba(155, 132, 255, 0.25); }
 .facility-research .upgrade-ranks i.is-active { background: #a896ff; box-shadow: 0 0 12px rgba(168, 150, 255, 0.52); }
 
-.region-select-screen .campaign-background { filter: brightness(0.78) saturate(1.07); }
-.region-map-shade { background: linear-gradient(180deg, rgba(1, 5, 8, 0.72), transparent 35%, rgba(1, 5, 8, 0.86) 100%); }
+.region-select-screen .campaign-background { filter: brightness(1.02) saturate(1.12) contrast(1.04); }
+.region-map-shade { background: linear-gradient(180deg, rgba(1, 5, 8, 0.48), transparent 34%, rgba(1, 5, 8, 0.7) 100%); }
 .region-select-heading { padding-top: 22px; text-shadow: 0 2px 18px #000; }
 .region-select-heading .campaign-back { margin-bottom: 12px; }
 .region-select-heading h1 { font-size: clamp(30px, 3.5vw, 54px); }
@@ -5863,24 +5863,43 @@ kbd,
   width: 108%;
   height: 108%;
   object-fit: cover;
-  opacity: 0.42;
-  filter: brightness(0.58) saturate(1.12) contrast(1.08);
-  transform: scale(1.035);
+  opacity: 0.88;
+  filter: brightness(0.94) saturate(1.2) contrast(1.06);
+  transform: scale(1.025);
   animation: region-focus-enter 260ms ease both;
   transition: opacity 260ms ease, filter 260ms ease, transform 420ms ease;
 }
 
 .region-focus-background.is-selected {
-  opacity: 0.82;
-  filter: brightness(0.5) saturate(1.16) contrast(1.12);
-  transform: scale(1.105);
+  opacity: 0.97;
+  filter: brightness(0.84) saturate(1.24) contrast(1.08);
+  transform: scale(1.085);
+}
+
+.region-focus-background.region-focus-wrong-engine-core {
+  opacity: 1;
+  filter: brightness(1.42) saturate(1.24) contrast(1.02);
+}
+
+.region-focus-background.region-focus-wrong-engine-core.is-selected {
+  filter: brightness(1.2) saturate(1.28) contrast(1.04);
+}
+
+.region-focus-background.region-focus-glass-dune {
+  opacity: 0.94;
+  filter: brightness(1.06) saturate(1.16) contrast(1.04);
+}
+
+.region-focus-background.region-focus-abyssal-archive {
+  opacity: 0.96;
+  filter: brightness(1.16) saturate(1.22) contrast(1.03);
 }
 
 .region-select-screen .region-map-shade {
   z-index: -1;
   background:
-    linear-gradient(90deg, rgba(1, 5, 8, 0.88), rgba(1, 5, 8, 0.22) 58%, rgba(1, 5, 8, 0.8)),
-    linear-gradient(180deg, rgba(1, 5, 8, 0.74), transparent 34%, rgba(1, 5, 8, 0.92));
+    linear-gradient(90deg, rgba(1, 5, 8, 0.52), rgba(1, 5, 8, 0.03) 43%, rgba(1, 5, 8, 0.2) 74%, rgba(1, 5, 8, 0.46)),
+    linear-gradient(180deg, rgba(1, 5, 8, 0.36), transparent 28%, transparent 58%, rgba(1, 5, 8, 0.7));
 }
 
 .region-card {
