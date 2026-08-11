@@ -57,6 +57,40 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
+.initial-asset-loading {
+  display: grid;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 28px;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  color: #dffbff;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(61, 220, 244, 0.13), transparent 30%),
+    linear-gradient(145deg, #020608, #071116 58%, #020507);
+}
+
+.initial-loader-emblem {
+  display: grid;
+  width: 62px;
+  height: 62px;
+  margin-bottom: 8px;
+  place-items: center;
+  border: 1px solid rgba(98, 235, 255, 0.55);
+  color: #65edff;
+  background: rgba(5, 22, 28, 0.84);
+  box-shadow: 0 0 34px rgba(72, 225, 249, 0.13);
+}
+
+.initial-loader-emblem svg { width: 29px; height: 29px; }
+.initial-asset-loading > small { color: #73cbd8; font: 600 10px/1.2 var(--font-mono); letter-spacing: 0.12em; }
+.initial-asset-loading > strong { font-size: clamp(18px, 3vw, 28px); letter-spacing: -0.02em; }
+.initial-asset-loading > b { color: #8db1b8; font: 600 11px/1 var(--font-mono); }
+.initial-loader-track { width: min(360px, 72vw); height: 4px; overflow: hidden; background: #122329; }
+.initial-loader-track i { display: block; height: 100%; background: linear-gradient(90deg, #43cfe8, #dffcff); box-shadow: 0 0 12px #54e4fa; transition: width 140ms ease-out; }
+
 .intro-shell,
 .result-shell {
   position: relative;
@@ -5992,6 +6026,28 @@ kbd,
 }
 
 /* Region-specific NIGHTJAR sortie cinematic ----------------------------- */
+.combat-runtime-shell {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: #020608;
+}
+
+.combat-runtime-shell.is-preparing > .expedition-game {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.combat-runtime-shell > .sortie-cinematic {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+}
+
 .sortie-cinematic {
   position: relative;
   width: 100%;
@@ -6086,8 +6142,8 @@ kbd,
 .sortie-flight-status svg { color: #7cecff; }
 .sortie-flight-status b { color: #9bb9bf; font-size: 12px; }
 .sortie-flight-progress { height: 3px; overflow: hidden; background: rgba(181, 225, 233, 0.2); }
-.sortie-flight-progress i { display: block; width: 0; height: 100%; background: linear-gradient(90deg, #5bdcf4, #efffff); box-shadow: 0 0 12px #5bdcf4; }
-.sortie-cinematic.is-playing .sortie-flight-progress i { animation: sortie-flight-progress 6s linear forwards; }
+.sortie-flight-progress i { display: block; width: 0; height: 100%; background: linear-gradient(90deg, #5bdcf4, #efffff); box-shadow: 0 0 12px #5bdcf4; transition: width 160ms ease-out; }
+.sortie-flight-status b.is-ready { color: #bafbe1; }
 
 .sortie-play-fallback.command-ui-button {
   position: absolute;
@@ -6105,8 +6161,6 @@ kbd,
   font-weight: 800;
 }
 
-@keyframes sortie-flight-progress { to { width: 100%; } }
-
 @media (max-height: 560px) and (orientation: landscape) {
   .sortie-cinematic-heading { top: 18px; left: 24px; gap: 4px; }
   .sortie-cinematic-heading h1 span { font-size: clamp(28px, 7vw, 46px); }
@@ -6117,5 +6171,5 @@ kbd,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sortie-cinematic.is-playing .sortie-flight-progress i { animation-timing-function: steps(6, end); }
+  .sortie-flight-progress i { transition-timing-function: steps(6, end); }
 }

@@ -30,7 +30,7 @@ test("the active App mounts the Phaser runtime while React owns the DOM HUD", as
   const activeRuntime = app.slice(app.indexOf("function PhaserArenaScreen"), app.indexOf("function ResultScreen"));
   assert.match(app, /createOverloadGame/);
   assert.match(app, /void import\("\.\/phaser\/createOverloadGame\.ts"\)/);
-  assert.match(app, /content = \(\s*<PhaserArenaScreen/);
+  assert.match(app, /content = \(\s*<div className=\{`combat-runtime-shell[\s\S]*?<PhaserArenaScreen/);
   assert.match(activeRuntime, /className="game-canvas phaser-host"/);
   assert.match(activeRuntime, /className="expedition-hud"/);
   assert.match(activeRuntime, /<RouteMinimap hud=\{hud\}/);
@@ -241,7 +241,7 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /type OverloadLaunchOptions/);
   assert.match(createGame, /launch: OverloadLaunchOptions = \{\}/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
-  assert.match(createGame, /new BootScene\(regionId, assetProfile\)/);
+  assert.match(createGame, /new BootScene\(regionId, assetProfile, callbacks\.onLoadProgress\)/);
   assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, assetProfile\)/);
   assert.match(scene, /createSwarmState\(\{ duration: 360, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses \}\)/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId\)/);

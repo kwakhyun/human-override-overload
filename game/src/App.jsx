@@ -28,6 +28,7 @@ import { createSfxEngine } from "./audio/sfx.js";
 import { resolveMusicTrack } from "./audio/music.js";
 import { createAgentVoice } from "./audio/agentVoice.js";
 import { DOM_PREVIEW_ASSET_PATHS } from "./game/assets/manifest.ts";
+import { preloadDomImages, scheduleDomImagePreload } from "./game/assets/domPreloader.js";
 import {
   BASE_NPCS,
   DEFAULT_REGION_ID,
@@ -76,12 +77,32 @@ import { renderSwarm } from "./swarm/renderer.js";
 import { advanceRenderClock, createPerformanceGovernor } from "./swarm/performance.js";
 
 const ASSET_PATHS = DOM_PREVIEW_ASSET_PATHS;
-// DOM screens consume only image URLs. Keeping lightweight refs here lets the
-// browser fetch/decode an asset only when its <img> is actually mounted instead
-// of eagerly duplicating Phaser's combat texture residency at application boot.
+// DOM screens consume URL refs while a small, screen-scoped warmup layer makes
+// the next visible surface decode-ready. Phaser textures remain owned by its
+// loader and are never mirrored through this DOM-only cache.
 const DOM_ASSET_REFS = Object.freeze(Object.fromEntries(
   Object.entries(ASSET_PATHS).map(([key, source]) => [key, Object.freeze({ src: source })]),
 ));
+
+const INITIAL_DOM_ASSET_KEYS = Object.freeze(["intro", "commandButtonStates"]);
+const BASE_DOM_ASSET_KEYS = Object.freeze(["havenBase", "havenNpcPortraits", "rheaControlOfficer", "commandButtonStates"]);
+const GUIDE_DOM_ASSET_KEYS = Object.freeze([
+  "rheaControlOfficer",
+  "tutorialEmpPulse",
+  "tutorialAegisWard",
+  "tutorialStratosRun",
+  "tutorialHelixTempest",
+  "commandButtonStates",
+]);
+const COMBAT_DOM_ASSET_KEYS = Object.freeze([
+  "portrait",
+  "rheaControlOfficer",
+  ...Object.keys(ASSET_PATHS).filter((key) => key.startsWith("reward")),
+]);
+
+function domAssetSources(keys) {
+  return keys.map((key) => DOM_ASSET_REFS[key]?.src).filter(Boolean);
+}
 
 const BASE_BONUS_LABELS = Object.freeze({
   damageMultiplier: ["공격 피해", "percent"],
@@ -563,7 +584,25 @@ const REWARD_ART_KEYS = Object.freeze({
 });
 
 function useGameAssets() {
-  return { assets: DOM_ASSET_REFS, error: false };
+  const [state, setState] = useState({ ready: false, error: false, progress: 0 });
+
+  useEffect(() => {
+    let active = true;
+    void preloadDomImages(domAssetSources(INITIAL_DOM_ASSET_KEYS), (progress) => {
+      if (active) setState((current) => ({ ...current, progress }));
+    }).then(({ failed }) => {
+      if (active) setState({ ready: true, error: failed > 0, progress: 1 });
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return {
+    assets: state.ready ? DOM_ASSET_REFS : null,
+    error: state.error,
+    progress: state.progress,
+  };
 }
 
 function formatTime(seconds) {
@@ -601,6 +640,19 @@ function resolveEventSound(event) {
   return direct;
 }
 
+function InitialAssetLoadingScreen({ progress = 0, label = "초기 작전 자료 준비 중" }) {
+  const percent = Math.round(Math.max(0, Math.min(1, Number(progress) || 0)) * 100);
+  return (
+    <main className="initial-asset-loading" role="status" aria-live="polite">
+      <div className="initial-loader-emblem"><Pulse weight="fill" /></div>
+      <small>HUMAN OVERRIDE // ASSET WARMUP</small>
+      <strong>{label}</strong>
+      <div className="initial-loader-track"><i style={{ width: `${percent}%` }} /></div>
+      <b>{percent}%</b>
+    </main>
+  );
+}
+
 function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic }) {
   const buttonAtlas = assets?.commandButtonStates?.src;
   return (
@@ -610,6 +662,8 @@ function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic 
           className="intro-key-art"
           src={assets.intro.src}
           alt="폐허 도시에서 거대 기계 군단과 맞서는 생존자"
+          fetchPriority="high"
+          decoding="async"
           draggable="false"
         />
       )}
@@ -1542,7 +1596,7 @@ function RouteMinimap({ hud }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const controllerRef = useRef(null);
   const finishReportedRef = useRef(false);
@@ -1560,6 +1614,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
   const combatTutorialActiveRef = useRef(false);
   const combatTutorialHandledRef = useRef(false);
   const agentVoiceRef = useRef(null);
+  const preparingRef = useRef(preparing);
 
   useEffect(() => {
     const voice = createAgentVoice();
@@ -1581,12 +1636,20 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     const syncOrientation = () => {
       needsLandscapeRef.current = query.matches;
       setNeedsLandscape(query.matches);
-      controllerRef.current?.setSuspended(query.matches || pausedRef.current || combatTutorialActiveRef.current);
+      controllerRef.current?.setSuspended(preparingRef.current || query.matches || pausedRef.current || combatTutorialActiveRef.current);
     };
     syncOrientation();
     query.addEventListener?.("change", syncOrientation);
     return () => query.removeEventListener?.("change", syncOrientation);
   }, []);
+
+  useEffect(() => {
+    preparingRef.current = preparing;
+    controllerRef.current?.setSuspended(preparing || needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
+    if (!preparing && !needsLandscapeRef.current && !pausedRef.current && !combatTutorialActiveRef.current) {
+      controllerRef.current?.focus();
+    }
+  }, [preparing]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -1595,6 +1658,16 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     autoBossEntryHandledRef.current = false;
     let stopped = false;
     let bannerTimeout = 0;
+    let runtimeReadyReported = false;
+    const combatDomReady = preloadDomImages(domAssetSources(COMBAT_DOM_ASSET_KEYS));
+
+    const reportRuntimeReady = () => {
+      if (runtimeReadyReported) return;
+      runtimeReadyReported = true;
+      void combatDomReady.then(() => {
+        if (!stopped) onRuntimeReady?.();
+      });
+    };
 
     const showBanner = (event) => {
       let copy = event.type === "bossPatternTelegraph"
@@ -1652,16 +1725,21 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
           finishReportedRef.current = true;
           onFinish(result);
         },
-        onReady: () => {
-          controllerRef.current?.setSuspended(needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
-          if (!needsLandscapeRef.current && !pausedRef.current && !combatTutorialActiveRef.current) controllerRef.current?.focus();
+        onLoadProgress: (progress) => {
+          if (!stopped) onRuntimeProgress?.(progress);
         },
-      }, { regionId, combatBonuses });
+        onReady: () => {
+          controllerRef.current?.setSuspended(preparingRef.current || needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
+          if (!preparingRef.current && !needsLandscapeRef.current && !pausedRef.current && !combatTutorialActiveRef.current) controllerRef.current?.focus();
+          reportRuntimeReady();
+        },
+      }, { regionId, combatBonuses, startSuspended: preparingRef.current });
       controllerRef.current = controller;
-      controller.setSuspended(needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
+      controller.setSuspended(preparingRef.current || needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
     }).catch(() => {
       if (stopped) return;
       setBanner({ key: "phaser-runtime-error", type: "playerHit", title: "게임 화면 초기화 실패", subtitle: "브라우저의 WebGL 또는 Canvas 지원을 확인해 주세요." });
+      reportRuntimeReady();
     });
 
     return () => {
@@ -1670,7 +1748,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [combatBonuses, onFinish, regionId, runRevision, sfx]);
+  }, [combatBonuses, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx]);
 
   const selectReward = useCallback((id) => {
     controllerRef.current?.chooseReward(id);
@@ -1707,7 +1785,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
   }, [dialogue]);
 
   useEffect(() => {
-    if (!dialogue) return undefined;
+    if (!dialogue || preparing) return undefined;
     const handleDialogueKey = (event) => {
       if (event.code !== "Enter" && event.code !== "Space") return;
       event.preventDefault();
@@ -1715,7 +1793,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     };
     window.addEventListener("keydown", handleDialogueKey);
     return () => window.removeEventListener("keydown", handleDialogueKey);
-  }, [advanceDialogue, dialogue]);
+  }, [advanceDialogue, dialogue, preparing]);
 
   const rewardOpen = Boolean(hud?.rewards?.options?.length);
 
@@ -1778,6 +1856,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
   }, [onBase]);
 
   useEffect(() => {
+    if (preparing) return undefined;
     const handleEscape = (event) => {
       if (paused && event.key !== "Escape") {
         if (PAUSED_GAMEPLAY_KEYS.has(event.code)) {
@@ -1802,7 +1881,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
     };
     window.addEventListener("keydown", handleEscape, true);
     return () => window.removeEventListener("keydown", handleEscape, true);
-  }, [dialogue, paused, resumeCombat, rewardOpen]);
+  }, [dialogue, paused, preparing, resumeCombat, rewardOpen]);
 
   const xpRatio = Math.max(0, Math.min(1, Number(hud?.xp || 0) / Math.max(1, Number(hud?.nextXp || 1))));
   const routeRatio = hud?.boss
@@ -1819,7 +1898,11 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
   const bombSequence = hud?.boss?.bombSequence;
 
   return (
-    <main className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}`}>
+    <main
+      className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}`}
+      aria-hidden={preparing ? "true" : undefined}
+      inert={preparing}
+    >
       <section className="expedition-stage">
           <div className="expedition-canvas-frame">
             <div
@@ -1948,7 +2031,7 @@ function ResultScreen({ result, assets, region, onRestart, onBase }) {
 }
 
 export function App() {
-  const { assets, error: assetError } = useGameAssets();
+  const { assets, error: assetError, progress: assetProgress } = useGameAssets();
   const [screen, setScreen] = useState("intro");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [result, setResult] = useState(null);
@@ -1960,9 +2043,19 @@ export function App() {
   const [activeFacilityId, setActiveFacilityId] = useState(null);
   const [guideReturnScreen, setGuideReturnScreen] = useState("sortie");
   const [bgmPlaying, setBgmPlaying] = useState(false);
+  const [transitionLabel, setTransitionLabel] = useState("다음 화면 준비 중");
+  const [transitionProgress, setTransitionProgress] = useState(0);
+  const [sortieVideoComplete, setSortieVideoComplete] = useState(false);
+  const [combatRuntimeReady, setCombatRuntimeReady] = useState(false);
+  const [combatLoadProgress, setCombatLoadProgress] = useState(0);
   const bgmRef = useRef(null);
+  const transitionTokenRef = useRef(0);
   const sfx = useMemo(() => createSfxEngine(), []);
   const regions = useMemo(() => getCampaignRegions(), []);
+  const regionPreviewSources = useMemo(
+    () => regions.map((region) => region?.assets?.dom?.thumbnail?.path).filter(Boolean),
+    [regions],
+  );
   const npcs = useMemo(() => Object.values(BASE_NPCS), []);
   const activeSlot = useMemo(
     () => (activeSlotId ? getCampaignSlot(campaign, activeSlotId) : null),
@@ -2036,6 +2129,19 @@ export function App() {
     && typeof window !== "undefined"
     && new URLSearchParams(window.location.search).get("debug") === "1";
 
+  useEffect(() => {
+    if (!assets) return undefined;
+    return scheduleDomImagePreload([
+      ...domAssetSources(BASE_DOM_ASSET_KEYS),
+      DOM_ASSET_REFS.airshipRegionMap?.src,
+      ...regionPreviewSources,
+    ]);
+  }, [assets, regionPreviewSources]);
+
+  useEffect(() => {
+    if (screen === "sortie" && sortieVideoComplete && combatRuntimeReady) setScreen("game");
+  }, [combatRuntimeReady, screen, sortieVideoComplete]);
+
   useEffect(() => () => {
     bgmRef.current?.pause();
     sfx.dispose();
@@ -2107,6 +2213,19 @@ export function App() {
     bgm.play().then(() => setBgmPlaying(true)).catch(() => setBgmPlaying(false));
   }, [activeBgmPath, bgmPlaying, sfx]);
 
+  const prepareSurface = useCallback((label, sources, onReady) => {
+    const token = transitionTokenRef.current + 1;
+    transitionTokenRef.current = token;
+    setTransitionLabel(label);
+    setTransitionProgress(0);
+    setScreen("loading");
+    void preloadDomImages(sources, (progress) => {
+      if (transitionTokenRef.current === token) setTransitionProgress(progress);
+    }).then(() => {
+      if (transitionTokenRef.current === token) onReady();
+    });
+  }, []);
+
   const openSaveSlots = useCallback(() => {
     sfx.start();
     sfx.play("start");
@@ -2115,13 +2234,22 @@ export function App() {
 
   const beginSortieCinematic = useCallback((regionId) => {
     setActiveRegionId(regionId);
+    setSortieVideoComplete(false);
+    setCombatRuntimeReady(false);
+    setCombatLoadProgress(0);
     const bgm = bgmRef.current;
     if (bgm) bgm.pause();
-    setScreen("sortie");
-  }, []);
+    const region = getRegion(regionId) || getRegion(DEFAULT_REGION_ID);
+    prepareSurface("출격 영상과 작전 표식 준비 중", [region?.assets?.dom?.thumbnail?.path], () => setScreen("sortie"));
+  }, [prepareSurface]);
 
   const enterCombat = useCallback(() => {
-    setScreen("game");
+    setSortieVideoComplete(true);
+  }, []);
+
+  const handleCombatRuntimeReady = useCallback(() => setCombatRuntimeReady(true), []);
+  const handleCombatRuntimeProgress = useCallback((progress) => {
+    setCombatLoadProgress(Math.max(0, Math.min(1, Number(progress) || 0)));
   }, []);
 
   const launchCombat = useCallback((regionId) => {
@@ -2133,11 +2261,11 @@ export function App() {
     setResult(null);
     if (!slot.abilityGuideSeen && !debugGuideBypass) {
       setGuideReturnScreen("sortie");
-      setScreen("guide");
+      prepareSurface("전술 가이드 준비 중", domAssetSources(GUIDE_DOM_ASSET_KEYS), () => setScreen("guide"));
       return;
     }
     beginSortieCinematic(regionId);
-  }, [activeSlotId, beginSortieCinematic, campaign, debugGuideBypass]);
+  }, [activeSlotId, beginSortieCinematic, campaign, debugGuideBypass, prepareSurface]);
 
   const selectSaveSlot = useCallback((index) => {
     const slotId = `slot-${index + 1}`;
@@ -2154,8 +2282,8 @@ export function App() {
     setActiveFacilityId(null);
     setResult(null);
     setGuideReturnScreen("base");
-    setScreen("base");
-  }, [campaign]);
+    prepareSurface("헤이븐-09 기지 불러오는 중", domAssetSources(BASE_DOM_ASSET_KEYS), () => setScreen("base"));
+  }, [campaign, prepareSurface]);
 
   const finish = useCallback((nextResult) => {
     const status = nextResult?.status || nextResult?.phase;
@@ -2198,16 +2326,26 @@ export function App() {
 
   const closeFacility = useCallback(() => setActiveFacilityId(null), []);
 
+  const openRegionSelect = useCallback(() => {
+    closeNpc();
+    closeFacility();
+    prepareSurface(
+      "비행선 전술 지도 준비 중",
+      [DOM_ASSET_REFS.airshipRegionMap?.src, DOM_ASSET_REFS.commandButtonStates?.src, ...regionPreviewSources],
+      () => setScreen("regions"),
+    );
+  }, [closeFacility, closeNpc, prepareSurface, regionPreviewSources]);
+
   const handleNpcInteraction = useCallback((interaction) => {
     closeNpc();
     closeFacility();
     if (interaction === "open-ability-guide") {
       setGuideReturnScreen("base");
-      setScreen("guide");
+      prepareSurface("전술 가이드 준비 중", domAssetSources(GUIDE_DOM_ASSET_KEYS), () => setScreen("guide"));
       return;
     }
-    if (interaction === "open-region-select") setScreen("regions");
-  }, [closeFacility, closeNpc]);
+    if (interaction === "open-region-select") openRegionSelect();
+  }, [closeFacility, closeNpc, openRegionSelect, prepareSurface]);
 
   const finishAbilityGuide = useCallback(() => {
     let nextCampaign = campaign;
@@ -2251,7 +2389,11 @@ export function App() {
   }, [soundEnabled]);
 
   let content;
-  if (screen === "save") {
+  if (!assets) {
+    content = <InitialAssetLoadingScreen progress={assetProgress} />;
+  } else if (screen === "loading") {
+    content = <InitialAssetLoadingScreen progress={transitionProgress} label={transitionLabel} />;
+  } else if (screen === "save") {
     content = <SaveSlotScreen slots={campaign.slots} onSelect={selectSaveSlot} onBack={() => setScreen("intro")} />;
   } else if (screen === "guide") {
     content = (
@@ -2277,36 +2419,44 @@ export function App() {
         onNpcInteraction={handleNpcInteraction}
         onPurchaseUpgrade={purchaseBaseUpgrade}
         onCloseFacility={closeFacility}
-        onBoard={() => { closeNpc(); closeFacility(); setScreen("regions"); }}
+        onBoard={openRegionSelect}
         onTitle={() => { closeNpc(); closeFacility(); setScreen("save"); }}
       />
     );
   } else if (screen === "regions" && campaignView) {
     content = <RegionSelectScreen regions={regions} campaign={campaignView} assets={campaignAssets} onSelect={launchCombat} onBack={() => setScreen("base")} />;
-  } else if (screen === "sortie") {
+  } else if (screen === "sortie" || screen === "game") {
     content = (
-      <SortieCinematicScreen
-        region={activeRegion}
-        videoSource={campaignAssets.sortieVideos[activeRegionId]}
-        soundEnabled={soundEnabled}
-        onComplete={enterCombat}
-      />
-    );
-  } else if (screen === "game") {
-    content = (
-      <PhaserArenaScreen
-        assets={assets}
-        regionId={activeRegionId}
-        region={activeRegion}
-        combatBonuses={combatBonuses}
-        soundEnabled={soundEnabled}
-        sfx={sfx}
-        onToggleSound={toggleSound}
-        onFinish={finish}
-        onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null}
-        showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass)}
-        onCombatTutorialComplete={finishCombatOverlay}
-      />
+      <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>
+        <PhaserArenaScreen
+          assets={assets}
+          regionId={activeRegionId}
+          region={activeRegion}
+          combatBonuses={combatBonuses}
+          soundEnabled={soundEnabled}
+          sfx={sfx}
+          onToggleSound={toggleSound}
+          onFinish={finish}
+          onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null}
+          showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass)}
+          onCombatTutorialComplete={finishCombatOverlay}
+          preparing={screen === "sortie"}
+          onRuntimeProgress={handleCombatRuntimeProgress}
+          onRuntimeReady={handleCombatRuntimeReady}
+        />
+        {screen === "sortie" && (
+          <SortieCinematicScreen
+            region={activeRegion}
+            videoSource={campaignAssets.sortieVideos[activeRegionId]}
+            posterSource={activeRegion?.assets?.dom?.thumbnail?.path}
+            soundEnabled={soundEnabled}
+            combatLoadProgress={combatLoadProgress}
+            combatReady={combatRuntimeReady}
+            videoComplete={sortieVideoComplete}
+            onComplete={enterCombat}
+          />
+        )}
+      </div>
     );
   } else if (screen === "result") {
     content = <ResultScreen result={result} assets={assets} region={activeRegion} onRestart={() => launchCombat(activeRegionId)} onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null} />;
