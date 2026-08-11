@@ -19,6 +19,7 @@ import {
   SpeakerHigh,
   SpeakerSlash,
   Sparkle,
+  Sword,
   Target,
   Timer,
   Trophy,
@@ -235,6 +236,7 @@ function formatBaseBonusEntries(entries = []) {
 const EVENT_SOUNDS = Object.freeze({
   swarmStart: "enemyAlert",
   shot: "shoot",
+  swordAttack: "rail",
   enemyKilled: "kill",
   levelUp: "analysis",
   rewardChosen: "upgrade",
@@ -532,12 +534,18 @@ const REWARD_NAMES_KO = Object.freeze({
   rail: "관통 레일탄",
   rocket: "유도 폭발탄",
   orbit: "궤도 칼날",
+  crescentWave: "초승달 검기",
+  titanEdge: "거대 검신",
+  flashRend: "섬광 돌진참",
+  bladeStorm: "환검 폭풍",
   damage: "화력 증폭",
   fireRate: "가속 격발",
   multishot: "다중 탄두",
   shield: "재생 방벽",
   dash: "위상 대시",
   regen: "나나이트 수복",
+  edgeReach: "검신 공명",
+  edgeGuard: "수호 검집",
   chain: "연쇄 전격",
   nova: "영점 충격파",
   airstrike: "공중 폭격",
@@ -554,12 +562,18 @@ const REWARD_COPY = Object.freeze({
   rail: "한 줄의 적을 끝까지 관통하는 고출력 레일 탄을 발사합니다.",
   rocket: "밀집 지점에 광역 폭발을 일으키는 유도 로켓을 추가합니다.",
   orbit: "플레이어 주위를 회전하며 접근한 적을 절단합니다.",
+  crescentWave: "조준 방향으로 화려한 검기를 날려 한 줄의 적을 관통합니다.",
+  titanEdge: "검신이 일정 시간 거대해지며 주변 전장을 한 번에 휩씁니다.",
+  flashRend: "조준 방향으로 빠르게 돌진해 긴 경로의 적을 베어냅니다.",
+  bladeStorm: "주변을 여러 차례 회전 베기해 포위한 적을 밀어냅니다.",
   damage: "모든 무기와 동료가 주는 피해가 25% 증가합니다.",
   fireRate: "전체 무기의 공격 주기가 19% 빨라집니다.",
   multishot: "기본 펄스 사격에 추가 투사체 한 발을 결합합니다.",
   shield: "피격 후 다시 충전되는 40의 보호막을 획득합니다.",
   dash: "대시 재사용 시간이 줄고 무적 시간이 길어집니다.",
   regen: "손상된 체력을 전투 중 지속적으로 복구합니다.",
+  edgeReach: "모든 검술의 사거리와 충격 피해가 증가합니다.",
+  edgeGuard: "검 공격이 적중할 때마다 소형 전투 방벽을 재충전합니다.",
   chain: "밀집한 적 사이를 연쇄 번개가 도약합니다. 3랭크에서 전장 폭풍으로 진화합니다.",
   nova: "주기적으로 충격파를 방출합니다. 3랭크에서 화면 전체를 휩쓰는 이중 폭발이 됩니다.",
   airstrike: "긴 재사용 시간 뒤 적 밀집 지역을 연속 폭격합니다. 마스터 시 15발 포화 폭격을 호출합니다.",
@@ -999,6 +1013,7 @@ function RewardArtwork({ option, assets }) {
   const id = String(option?.id || "");
   const source = assets?.[REWARD_ART_KEYS[id]];
   if (source) return <img src={source.src} alt="" />;
+  if (["crescentWave", "titanEdge", "flashRend", "bladeStorm", "edgeReach", "edgeGuard"].includes(id)) return <Sword weight="fill" />;
   if (option?.category === "weapon") return <Target weight="fill" />;
   if (id.includes("shield") || id.includes("regen")) return <ShieldChevron weight="fill" />;
   return <Lightning weight="fill" />;

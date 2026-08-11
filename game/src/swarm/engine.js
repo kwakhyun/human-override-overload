@@ -22,7 +22,7 @@ const GRID_SIZE = 96;
 const LEGACY_WORLD_SIZE = Object.freeze({ width: GAME_WIDTH, height: GAME_HEIGHT });
 const BOSS_WORLD_SIZE = Object.freeze({ width: WORLD_WIDTH, height: WORLD_HEIGHT });
 const EXPEDITION_WORLD_SIZE = Object.freeze({ width: EXPEDITION_WORLD_WIDTH, height: WORLD_HEIGHT });
-const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket"]);
+const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sword", "wave", "titan", "flash", "storm"]);
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
 const EXPEDITION_FLOOR_ELLIPSE = Object.freeze({ x: 960, y: 540, rx: 840, ry: 460 });
 const EXPEDITION_ROUTE_LENGTH = 12000;
@@ -172,12 +172,18 @@ export const REWARD_DEFINITIONS = Object.freeze({
   rail: Object.freeze({ id: "rail", category: "weapon", name: "RAIL LANCE", description: "Pierces an entire lane with a heavy slug." }),
   rocket: Object.freeze({ id: "rocket", category: "weapon", name: "ROCKET POD", description: "Launches a missile with a wide blast radius." }),
   orbit: Object.freeze({ id: "orbit", category: "weapon", name: "ORBIT BLADES", description: "Spinning blades shred enemies around you." }),
+  crescentWave: Object.freeze({ id: "crescentWave", category: "weapon", name: "CRESCENT WAVE", description: "Launches a bright cutting wave through the aimed lane." }),
+  titanEdge: Object.freeze({ id: "titanEdge", category: "weapon", name: "TITAN EDGE", description: "Temporarily expands the blade into a battlefield-wide sweeping edge." }),
+  flashRend: Object.freeze({ id: "flashRend", category: "weapon", name: "FLASH REND", description: "Dashes forward and carves a long piercing cut through the formation." }),
+  bladeStorm: Object.freeze({ id: "bladeStorm", category: "weapon", name: "BLADE STORM", description: "Releases repeated circular sword sweeps around AEGIS." }),
   damage: Object.freeze({ id: "damage", category: "skill", name: "OVERCHARGE", description: "+25% damage for every weapon and ally." }),
   fireRate: Object.freeze({ id: "fireRate", category: "skill", name: "CLOCK SURGE", description: "+19% attack speed for every weapon." }),
   multishot: Object.freeze({ id: "multishot", category: "skill", name: "FORKED BARREL", description: "Adds one projectile to pulse volleys." }),
   shield: Object.freeze({ id: "shield", category: "skill", name: "AEGIS LAYER", description: "Gain and refill 40 regenerating shield." }),
   dash: Object.freeze({ id: "dash", category: "skill", name: "PHASE DRIVE", description: "Shorter dash cooldown and longer invulnerability." }),
   regen: Object.freeze({ id: "regen", category: "skill", name: "NANO REPAIR", description: "Continuously repairs lost hull integrity." }),
+  edgeReach: Object.freeze({ id: "edgeReach", category: "skill", name: "EDGE RESONANCE", description: "Extends every sword arc and strengthens its impact." }),
+  edgeGuard: Object.freeze({ id: "edgeGuard", category: "skill", name: "PARRY SHEATH", description: "Successful sword hits recharge a compact combat shield." }),
   chain: Object.freeze({ id: "chain", category: "skill", name: "ARC CASCADE", description: "Periodically chains lightning through packed targets. Rank 3 unlocks a full storm." }),
   nova: Object.freeze({ id: "nova", category: "skill", name: "ZERO-POINT NOVA", description: "Detonates a radial shockwave. Rank 3 repeats it across the visible combat zone." }),
   airstrike: Object.freeze({ id: "airstrike", category: "skill", name: "SKYFALL SUPPORT", description: "Calls a long-cooldown airstrike on dense enemy formations." }),
@@ -187,16 +193,23 @@ export const REWARD_DEFINITIONS = Object.freeze({
   suppressor: Object.freeze({ id: "suppressor", category: "ally", name: "SUPPRESSOR WISP", description: "Control escort: repeated EMP blooms slow and erase packed formations." }),
 });
 
-const REWARD_POOLS = Object.freeze({
+const RIFLE_REWARD_POOLS = Object.freeze({
   weapon: Object.freeze(["scatter", "rail", "rocket", "orbit"]),
   skill: Object.freeze(["airstrike", "omegaLaser", "chain", "nova", "damage", "fireRate", "multishot", "shield", "dash", "regen"]),
   ally: Object.freeze(["drone", "sentry", "suppressor"]),
 });
 
+const SWORD_REWARD_POOLS = Object.freeze({
+  weapon: Object.freeze(["crescentWave", "titanEdge", "flashRend", "bladeStorm"]),
+  skill: Object.freeze(["edgeReach", "edgeGuard", "damage", "fireRate", "shield", "dash", "regen"]),
+  ally: RIFLE_REWARD_POOLS.ally,
+});
+
 const MAX_REWARD_RANK = Object.freeze({
   scatter: 5, rail: 5, rocket: 5, orbit: 5,
+  crescentWave: 5, titanEdge: 5, flashRend: 5, bladeStorm: 5,
   chain: 3, nova: 3, airstrike: 3, omegaLaser: 3,
-  damage: 5, fireRate: 5, multishot: 4, shield: 4, dash: 4, regen: 4,
+  damage: 5, fireRate: 5, multishot: 4, shield: 4, dash: 4, regen: 4, edgeReach: 4, edgeGuard: 4,
   drone: 4, sentry: 4, suppressor: 4,
 });
 
@@ -554,7 +567,8 @@ function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle") {
     moveBlend: 0,
     dashBlend: 0,
     dead: false,
-    fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0 },
+    fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0, sword: 0, wave: 0, titan: 0, flash: 0, storm: 0 },
+    swordCombo: 0,
     orbitAngle: 0,
     orbitMasterTimer: 0,
     overdriveDamage: 1,
@@ -690,6 +704,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     stratosRuns: [],
     helixTempests: [],
     bossBombBursts: [],
+    swordEffects: [],
     allies: [],
     deployables: [],
     pickups: [],
@@ -714,8 +729,8 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       combatInterval: REWARD_COMBAT_INTERVAL,
     },
     build: {
-      weapons: { pulse: 1, scatter: 0, rail: 0, rocket: 0, orbit: 0 },
-      skills: { damage: 0, fireRate: 0, multishot: 0, shield: 0, dash: 0, regen: 0, chain: 0, nova: 0, airstrike: 0, omegaLaser: 0 },
+      weapons: { pulse: 1, scatter: 0, rail: 0, rocket: 0, orbit: 0, crescentWave: 0, titanEdge: 0, flashRend: 0, bladeStorm: 0 },
+      skills: { damage: 0, fireRate: 0, multishot: 0, shield: 0, dash: 0, regen: 0, edgeReach: 0, edgeGuard: 0, chain: 0, nova: 0, airstrike: 0, omegaLaser: 0 },
       allies: { drone: 0, sentry: 0, suppressor: 0 },
     },
     lastChosenByCategory: { weapon: null, skill: null, ally: null },
@@ -1037,7 +1052,7 @@ function fireBulletFan(state, kind, count, spread, speed, damage, radius, life, 
       vy: Math.sin(angle) * speed,
       angle,
       radius,
-      damage: damage * player.damageMultiplier,
+      damage: damage * player.damageMultiplier * player.weaponDamageMultiplier,
       color: extra.color || "#62eaff",
       life,
       pierce: extra.pierce ?? 0,
@@ -1069,7 +1084,7 @@ function fireRadialVolley(state, kind, count, speed, damage, radius, life, extra
       vy: Math.sin(angle) * speed,
       angle,
       radius,
-      damage: damage * player.damageMultiplier,
+      damage: damage * player.damageMultiplier * player.weaponDamageMultiplier,
       color: extra.color || "#62eaff",
       life,
       pierce: extra.pierce ?? 0,
@@ -1104,12 +1119,123 @@ function updateOverdrive(state, dt) {
   player.overdriveVolleyTimer = Math.max(0, player.overdriveVolleyTimer - dt);
 }
 
+function signedAngleDelta(angle, reference) {
+  return Math.atan2(Math.sin(angle - reference), Math.cos(angle - reference));
+}
+
+function pushSwordEffect(state, type, radius, arc, life, extra = {}) {
+  if (state.swordEffects.length >= 28) state.swordEffects.shift();
+  state.swordEffects.push({
+    id: ++state.nextEntityId,
+    type,
+    x: state.player.x,
+    y: state.player.y,
+    angle: state.player.angle,
+    radius,
+    arc,
+    life,
+    maxLife: life,
+    combo: state.player.swordCombo,
+    ...extra,
+  });
+}
+
+function performSwordArc(state, type, radius, arc, baseDamage, extra = {}) {
+  const player = state.player;
+  const halfArc = arc >= TAU - 0.01 ? Math.PI : arc * 0.5;
+  const damage = baseDamage * player.damageMultiplier * player.weaponDamageMultiplier;
+  let hits = 0;
+  if (state.phase === "boss") {
+    const boss = state.boss;
+    const dx = boss.x - player.x;
+    const dy = boss.y - player.y;
+    const distance = Math.hypot(dx, dy);
+    if (boss.active && !boss.dead && distance <= radius + boss.radius
+      && Math.abs(signedAngleDelta(Math.atan2(dy, dx), player.angle)) <= halfArc) {
+      if (damageBoss(state, damage, type) > 0) hits += 1;
+    }
+  } else {
+    for (const enemy of state.enemies) {
+      if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
+      const dx = enemy.x - player.x;
+      const dy = enemy.y - player.y;
+      const distance = Math.hypot(dx, dy);
+      if (distance > radius + enemy.radius) continue;
+      if (Math.abs(signedAngleDelta(Math.atan2(dy, dx), player.angle)) > halfArc) continue;
+      if (damageEnemy(state, enemy, damage, type) > 0) hits += 1;
+    }
+  }
+  const guardRank = state.build.skills.edgeGuard;
+  if (hits > 0 && guardRank > 0) {
+    const guardMax = 16 + guardRank * 12;
+    player.shieldMax = Math.max(player.shieldMax, guardMax);
+    player.shield = Math.min(player.shieldMax, player.shield + 3 + guardRank * 3);
+  }
+  pushSwordEffect(state, type, radius, arc, extra.life ?? 0.28, { hits, ...extra });
+  player.swordCombo = (player.swordCombo + 1) % 2;
+  player.recoil = Math.max(player.recoil, extra.heavy ? 1.1 : 0.52);
+  player.attackState = type;
+  player.attackTimer = Math.max(player.attackTimer, extra.life ?? 0.28);
+  player.animationState = "attack";
+  player.animationTimer = Math.max(player.animationTimer, extra.life ?? 0.28);
+  state.shake = Math.max(state.shake, extra.heavy ? 9 : hits > 0 ? 4 : 2);
+  emit(state, "swordAttack", { type, hits, radius, arc, x: player.x, y: player.y, angle: player.angle });
+  return hits;
+}
+
+function updateSwordWeapons(state, dt, attackSpeed) {
+  const player = state.player;
+  const timers = player.fireTimers;
+  const reachRank = state.build.skills.edgeReach;
+  const basicRadius = 154 + reachRank * 18;
+  if (timers.sword <= 0) {
+    performSwordArc(state, "swordSlash", basicRadius, Math.PI * 0.72, 54 + reachRank * 8);
+    timers.sword += Math.max(0.24, 0.48 * attackSpeed);
+  }
+
+  const waveRank = state.build.weapons.crescentWave;
+  if (waveRank > 0 && timers.wave <= 0) {
+    fireBulletFan(state, "crescentWave", waveRank >= 5 ? 3 : 1, waveRank >= 5 ? 0.28 : 0, 780, 68 + waveRank * 25, 14, 1.25, { color: "#a9fbff", pierce: 2 + waveRank * 2 });
+    pushSwordEffect(state, "crescentWave", 92, Math.PI * 0.45, 0.34, { projectile: true });
+    timers.wave += Math.max(1.05, (2.65 - waveRank * 0.16) * attackSpeed);
+  }
+
+  const titanRank = state.build.weapons.titanEdge;
+  if (titanRank > 0 && timers.titan <= 0) {
+    performSwordArc(state, "titanEdge", 245 + titanRank * 34 + reachRank * 14, TAU, 88 + titanRank * 42, { life: 0.82, heavy: true, giant: true });
+    timers.titan += Math.max(3.4, 7.2 - titanRank * 0.62);
+  }
+
+  const flashRank = state.build.weapons.flashRend;
+  if (flashRank > 0 && timers.flash <= 0) {
+    const arena = activeArena(state);
+    const distance = 82 + flashRank * 12;
+    player.x = clamp(player.x + Math.cos(player.angle) * distance, arena.left + player.radius, arena.right - player.radius);
+    player.y = clamp(player.y + Math.sin(player.angle) * distance, arena.top + player.radius, arena.bottom - player.radius);
+    clampPlayerToFloor(player, state.expedition);
+    player.invulnerability = Math.max(player.invulnerability, 0.18);
+    performSwordArc(state, "flashRend", 260 + flashRank * 24, Math.PI * 0.38, 110 + flashRank * 44, { life: 0.42, heavy: true, dashDistance: distance });
+    timers.flash += Math.max(2.6, 6.2 - flashRank * 0.48);
+  }
+
+  const stormRank = state.build.weapons.bladeStorm;
+  if (stormRank > 0 && timers.storm <= 0) {
+    performSwordArc(state, "bladeStorm", 190 + stormRank * 28 + reachRank * 12, TAU, 62 + stormRank * 30, { life: 0.58, heavy: stormRank >= 4, rotations: 1 + stormRank });
+    timers.storm += Math.max(1.8, 4.7 - stormRank * 0.42);
+  }
+}
+
 function updateAutoWeapons(state, dt) {
   const player = state.player;
   const timers = player.fireTimers;
   const attackSpeed = Math.max(0.16, player.fireRateMultiplier * player.overdriveHaste);
   for (let index = 0; index < FIRE_TIMER_KEYS.length; index += 1) timers[FIRE_TIMER_KEYS[index]] -= dt;
   if (player.stunTimer > 0) return;
+
+  if (player.mainWeaponId === "beam-sword") {
+    updateSwordWeapons(state, dt, attackSpeed);
+    return;
+  }
 
   if (timers.pulse <= 0) {
     const count = clamp(player.multishot + Math.max(0, player.overdriveTier - 1), 1, 7);
@@ -2823,15 +2949,16 @@ function updateAllies(state, dt) {
 function buildRewardOffer(state, batchLevels = 1) {
   const offer = [];
   const categories = ["weapon", "skill", "ally"];
+  const rewardPools = state.player.mainWeaponId === "beam-sword" ? SWORD_REWARD_POOLS : RIFLE_REWARD_POOLS;
   for (let categoryIndex = 0; categoryIndex < categories.length; categoryIndex += 1) {
     const category = categories[categoryIndex];
     const bucket = category === "weapon" ? state.build.weapons : category === "skill" ? state.build.skills : state.build.allies;
-    let pool = REWARD_POOLS[category].filter((candidate) => (bucket[candidate] || 0) < (MAX_REWARD_RANK[candidate] || 5));
-    if (category === "skill" && state.rewardCycle === 0) {
+    let pool = rewardPools[category].filter((candidate) => (bucket[candidate] || 0) < (MAX_REWARD_RANK[candidate] || 5));
+    if (state.player.mainWeaponId === "pulse-rifle" && category === "skill" && state.rewardCycle === 0) {
       const openingCombatSkills = pool.filter((candidate) => ["airstrike", "omegaLaser", "chain", "nova"].includes(candidate));
       if (openingCombatSkills.length) pool = openingCombatSkills;
     }
-    if (!pool.length) pool = REWARD_POOLS[category];
+    if (!pool.length) pool = rewardPools[category];
     const previous = state.lastChosenByCategory[category];
     const repeatPrevious = previous && pool.includes(previous) && state.random() < 0.62;
     const offset = Math.floor(clamp(state.random(), 0, 0.999999) * pool.length);
@@ -2898,6 +3025,10 @@ function applyReward(state, id, requestedRanks = 1) {
       }
       if (id === "dash") state.player.dashMax = Math.max(0.82, 2.35 - level * 0.28);
       if (id === "regen") state.player.regen += 1.8;
+      if (id === "edgeGuard") {
+        state.player.shieldMax = Math.max(state.player.shieldMax, 16 + level * 12);
+        state.player.shield = Math.max(state.player.shield, state.player.shieldMax);
+      }
     }
   } else {
     state.build.allies[id] = finalRank;
@@ -4282,6 +4413,8 @@ function updateEffects(state, dt) {
   compact(state.shockwaves, keepPositiveLife);
   for (const burstFx of state.bossBombBursts) burstFx.life -= dt;
   compact(state.bossBombBursts, keepPositiveLife);
+  for (const swordEffect of state.swordEffects) swordEffect.life -= dt;
+  compact(state.swordEffects, keepPositiveLife);
   for (const portal of state.spawnPortals) portal.life -= dt;
   compact(state.spawnPortals, keepPositiveLife);
   for (const telegraph of state.telegraphs) {
@@ -4496,6 +4629,7 @@ export function getSwarmHud(state) {
     xp: player.xp,
     nextXp: player.nextXp,
     player: {
+      mainWeaponId: player.mainWeaponId,
       hp: player.hp,
       maxHp: player.maxHp,
       shield: player.shield,
