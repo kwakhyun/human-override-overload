@@ -4,7 +4,7 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 
-test("App connects the three save slots to base, airship selection, regional Phaser launch, and victory persistence", async () => {
+test("App connects save slots to the base, hierarchical airship selection, return cinematic, and victory persistence", async () => {
   const app = await readFile(new URL("src/App.jsx", root), "utf8");
   assert.match(app, /<SaveSlotScreen slots=\{campaign\.slots\}/);
   assert.match(app, /<HomeBaseScreen/);
@@ -13,7 +13,11 @@ test("App connects the three save slots to base, airship selection, regional Pha
   assert.match(app, /completeRegion\(campaign, activeSlotId, regionId/);
   assert.match(app, /saveCampaign\(completed\)/);
   assert.match(app, /createOverloadGame\(host,[\s\S]*\}, \{ regionId, combatBonuses, mainWeaponId, startSuspended: preparingRef\.current \}\)/);
-  assert.match(app, /status === "victory"[\s\S]*setScreen\("base"\)/);
+  assert.match(app, /status === "victory"[\s\S]*setScreen\("return"\)/);
+  assert.match(app, /getRegionClusters\(\)/);
+  assert.match(app, /completeOuterSectorBriefing\(campaign, activeSlotId\)/);
+  assert.match(app, /larkAlert=\{larkAlert\}/);
+  assert.match(app, /<ReturnCinematicScreen/);
   assert.match(app, /setActiveNpc\(isFreshSlot \? BASE_NPCS\.rhea : null\)/);
   assert.match(app, /setGuideReturnScreen\("base"\)[\s\S]*setScreen\("base"\)/);
 });
@@ -25,6 +29,10 @@ test("region selection previews and confirms a sortie instead of launching on ca
     readFile(new URL("src/audio/sfx.js", root), "utf8"),
   ]);
   assert.match(screens, /setSelectedRegionId\(region\.id\)/);
+  assert.match(screens, /className="region-cluster-grid"/);
+  assert.match(screens, /setSelectedClusterId\(cluster\.id\)/);
+  assert.match(screens, /cluster\.rangeLabel/);
+  assert.match(screens, /cluster\.comingSoon/);
   assert.match(screens, /className="region-sortie-dialog"/);
   assert.match(screens, /className="region-mixed-name"/);
   for (const mixedBoss of ["오답 엔진 · THE WRONG ENGINE", "거울 폭군 · MIRROR TYRANT", "침몰한 예언자 · DROWNED ORACLE"]) {
@@ -36,6 +44,16 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /event\.key !== "Escape"/);
   assert.match(app, /document\.addEventListener\("pointerdown", handleButtonPointer, true\)/);
   for (const cue of ["uiHover", "uiConfirm", "uiClose"]) assert.match(sounds, new RegExp(`case "${cue}"`));
+});
+
+test("HAVEN highlights LARK's new-route briefing and ships a skippable return-to-base cinematic", async () => {
+  const screens = await readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8");
+  assert.match(screens, /has-mission-alert/);
+  assert.match(screens, /npc-mission-alert/);
+  assert.match(screens, /라크가 신규 권역 신호를 해독했습니다/);
+  assert.match(screens, /export function ReturnCinematicScreen/);
+  assert.match(screens, /return-cinematic/);
+  assert.match(screens, /event\.key === "Escape"/);
 });
 
 test("active campaign UI uses authored HAVEN portraits, including standalone RHEA, and contains no discarded fire toggle", async () => {

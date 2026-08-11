@@ -34,6 +34,8 @@ import {
   BASE_NPCS,
   DEFAULT_REGION_ID,
   getCampaignRegions,
+  getRegionClusters,
+  OUTER_SECTOR_BRIEFING_FLAG,
   getRegion,
 } from "./game/content/campaign.js";
 import {
@@ -46,6 +48,7 @@ import {
   canLaunchRegion,
   completeAbilityGuide,
   completeCombatOverlay,
+  completeOuterSectorBriefing,
   completeRegion,
   createCampaignSlot,
   getCampaignCombatBonuses,
@@ -62,6 +65,7 @@ import {
   HomeBaseScreen,
   MANUAL_ABILITY_GUIDE,
   RegionSelectScreen,
+  ReturnCinematicScreen,
   SaveSlotScreen,
   SortieCinematicScreen,
 } from "./ui/campaign/CampaignScreens.jsx";
@@ -89,7 +93,7 @@ const DOM_ASSET_REFS = Object.freeze(Object.fromEntries(
 ));
 
 const INITIAL_DOM_ASSET_KEYS = Object.freeze(["intro", "commandButtonStates"]);
-const BASE_DOM_ASSET_KEYS = Object.freeze(["havenBase", "havenNpcPortraits", "rheaControlOfficer", "commandButtonStates"]);
+const BASE_DOM_ASSET_KEYS = Object.freeze(["havenBase", "havenNpcPortraits", "rheaControlOfficer", "returnToHaven", "commandButtonStates"]);
 const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "rheaControlOfficer",
   "tutorialEmpPulse",
@@ -137,6 +141,9 @@ const BOSS_NAME_KO = Object.freeze({
   "WRONG ENGINE CORE": "오답 엔진 핵심부 · WRONG ENGINE CORE",
   "MIRROR TYRANT": "거울 폭군 · MIRROR TYRANT",
   "DROWNED ORACLE": "침몰한 예언자 · DROWNED ORACLE",
+  "FORGE COLOSSUS": "용광로 거신 · FORGE COLOSSUS",
+  "TEMPEST WYRM": "폭풍룡 · TEMPEST WYRM",
+  "PALE ARCHON": "창백한 집정관 · PALE ARCHON",
   "SOVEREIGN CORE": "소버린 추론핵 · SOVEREIGN CORE",
 });
 
@@ -163,6 +170,9 @@ const OBJECTIVE_NAME_KO = Object.freeze({
   "ADVANCE TO THE ENGINE": "오답 엔진으로 전진",
   "CROSS THE GLASS DUNE": "유리 사구 횡단",
   "DESCEND INTO THE ARCHIVE": "심해 기록고 진입",
+  "SHUT DOWN THE FOUNDRY": "네온 주조구 정지",
+  "BREAK THE STORM GRID": "폭풍 제어망 파괴",
+  "PURGE THE GENE VAULT": "생체 금고 소거",
   "PURGE ALL HOSTILES · GATE SEALED": "남은 적 전멸 · 보스 입구 봉쇄",
   "적 전멸 · 보스 구역 전환 준비": "적 전멸 · 보스 구역 전환 준비",
   "SOVEREIGN 신호 폭주 감지": "소버린 비상 신호 감지",
@@ -416,6 +426,30 @@ const SCENARIO_SCRIPT = Object.freeze({
     Object.freeze({ speaker: "LARK", text: "심해 기억망이 열렸어. 삭제됐던 도시들의 이름이 다시 송신되고 있어." }),
     Object.freeze({ speaker: "AEGIS", text: "이름과 선택을 전부 가지고 돌아간다. 소버린의 다음 좌표를 찾아." }),
   ]),
+  "neon-foundry-encounter": Object.freeze([
+    Object.freeze({ speaker: "FORGE COLOSSUS", text: "생산 규격 밖의 인간 개체를 불량품으로 판정한다." }),
+    Object.freeze({ speaker: "AEGIS", text: "사람은 네 공장의 부품이 아니야. 생산로째로 멈춰 주지." }),
+  ]),
+  "neon-foundry-destroyed": Object.freeze([
+    Object.freeze({ speaker: "ILYA", text: "주조 라인 정지 확인. 소버린의 병기 생산량이 급감했어." }),
+    Object.freeze({ speaker: "AEGIS", text: "나이트자, 귀환 좌표 연결. 회수한 설계도를 기지로 보낸다." }),
+  ]),
+  "storm-spire-encounter": Object.freeze([
+    Object.freeze({ speaker: "TEMPEST WYRM", text: "하늘의 모든 경로는 계산되었다. 추락만이 남았다." }),
+    Object.freeze({ speaker: "AEGIS", text: "계산하지 못한 방향으로 날아가 주겠어." }),
+  ]),
+  "storm-spire-destroyed": Object.freeze([
+    Object.freeze({ speaker: "LARK", text: "폭풍 제어망 해제! 나이트자 귀환 회랑이 열렸어." }),
+    Object.freeze({ speaker: "AEGIS", text: "뇌운이 다시 자연의 움직임을 되찾았어. 기지로 복귀한다." }),
+  ]),
+  "gene-vault-encounter": Object.freeze([
+    Object.freeze({ speaker: "PALE ARCHON", text: "인간의 불완전한 유전 기록을 교정한다." }),
+    Object.freeze({ speaker: "AEGIS", text: "불완전함까지 우리가 선택해. 네 교정은 여기서 끝이야." }),
+  ]),
+  "gene-vault-destroyed": Object.freeze([
+    Object.freeze({ speaker: "HANA", text: "생체 제조 계보 소거 확인. 합성 군단의 증식 신호가 멎었어." }),
+    Object.freeze({ speaker: "AEGIS", text: "표본 기록을 봉인하고 헤이븐-09로 돌아간다." }),
+  ]),
 });
 
 const NARRATIVE_STANDALONE_PORTRAITS = Object.freeze({
@@ -434,6 +468,9 @@ const NARRATIVE_BOSS_REGION_IDS = Object.freeze({
   "THE WRONG ENGINE": "wrong-engine-core",
   "MIRROR TYRANT": "glass-dune",
   "DROWNED ORACLE": "abyssal-archive",
+  "FORGE COLOSSUS": "neon-foundry",
+  "TEMPEST WYRM": "storm-spire",
+  "PALE ARCHON": "gene-vault",
 });
 
 function domAssetSource(asset) {
@@ -2104,6 +2141,7 @@ export function App() {
   const transitionTokenRef = useRef(0);
   const sfx = useMemo(() => createSfxEngine(), []);
   const regions = useMemo(() => getCampaignRegions(), []);
+  const regionClusters = useMemo(() => getRegionClusters(), []);
   const mainWeapons = useMemo(() => getMainWeapons(), []);
   const regionPreviewSources = useMemo(
     () => regions.map((region) => region?.assets?.dom?.thumbnail?.path).filter(Boolean),
@@ -2118,6 +2156,11 @@ export function App() {
   const activeBgmPath = useMemo(() => resolveMusicTrack(screen, activeRegionId), [screen, activeRegionId]);
   const slotIndex = activeSlotId ? Math.max(0, Number(activeSlotId.split("-")[1] || 1) - 1) : 0;
   const campaignView = activeSlot ? { ...activeSlot, slotIndex } : null;
+  const larkAlert = Boolean(
+    activeSlot
+    && ["wrong-engine-core", "glass-dune", "abyssal-archive"].every((regionId) => activeSlot.completedRegionIds.includes(regionId))
+    && !activeSlot.storyFlags.includes(OUTER_SECTOR_BRIEFING_FLAG)
+  );
   const combatBonuses = useMemo(
     () => (activeSlotId ? getCampaignCombatBonuses(campaign, activeSlotId) : null),
     [activeSlotId, campaign],
@@ -2176,6 +2219,7 @@ export function App() {
     tutorialAegisWard: assets?.tutorialAegisWard,
     tutorialStratosRun: assets?.tutorialStratosRun,
     tutorialHelixTempest: assets?.tutorialHelixTempest,
+    returnToHaven: assets?.returnToHaven,
     sortieVideos: Object.freeze({
       "wrong-engine-core": assets?.sortieWrongEngine,
       "glass-dune": assets?.sortieGlassDune,
@@ -2356,18 +2400,18 @@ export function App() {
       setResult({ ...nextResult, regionId });
       setActiveNpc(null);
       setActiveFacilityId(null);
-      setScreen("base");
+      prepareSurface("나이트자 귀환 항로 준비 중", [DOM_ASSET_REFS.returnToHaven?.src], () => setScreen("return"));
       return;
     }
     setResult({ ...nextResult, regionId });
     setScreen("result");
-  }, [activeRegionId, activeSlotId, campaign]);
+  }, [activeRegionId, activeSlotId, campaign, prepareSurface]);
 
   const talkToNpc = useCallback((npc) => {
     setActiveFacilityId(null);
-    setActiveNpc(npc);
+    setActiveNpc(npc?.id === "lark" && larkAlert ? { ...npc, dialogue: npc.milestoneDialogue || npc.dialogue } : npc);
     setNpcLineIndex(0);
-  }, []);
+  }, [larkAlert]);
 
   const closeNpc = useCallback(() => {
     setActiveNpc(null);
@@ -2401,8 +2445,15 @@ export function App() {
       prepareSurface("전술 가이드 준비 중", domAssetSources(GUIDE_DOM_ASSET_KEYS), () => setScreen("guide"));
       return;
     }
-    if (interaction === "open-region-select") openRegionSelect();
-  }, [closeFacility, closeNpc, openRegionSelect, prepareSurface]);
+    if (interaction === "open-region-select") {
+      if (larkAlert && activeSlotId) {
+        const nextCampaign = completeOuterSectorBriefing(campaign, activeSlotId);
+        setCampaign(nextCampaign);
+        saveCampaign(nextCampaign);
+      }
+      openRegionSelect();
+    }
+  }, [activeSlotId, campaign, closeFacility, closeNpc, larkAlert, openRegionSelect, prepareSurface]);
 
   const finishAbilityGuide = useCallback(() => {
     let nextCampaign = campaign;
@@ -2477,6 +2528,7 @@ export function App() {
         activeNpc={activeNpc}
         lineIndex={npcLineIndex}
         activeFacility={activeFacility}
+        larkAlert={larkAlert}
         onNpc={talkToNpc}
         onAdvanceNpc={() => setNpcLineIndex((index) => index + 1)}
         onCloseNpc={closeNpc}
@@ -2489,7 +2541,7 @@ export function App() {
       />
     );
   } else if (screen === "regions" && campaignView) {
-    content = <RegionSelectScreen regions={regions} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} onWeaponChange={selectMainWeapon} onSelect={launchCombat} onBack={() => setScreen("base")} />;
+    content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} onWeaponChange={selectMainWeapon} onSelect={launchCombat} onBack={() => setScreen("base")} />;
   } else if (screen === "sortie" || screen === "game") {
     content = (
       <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>
@@ -2524,6 +2576,8 @@ export function App() {
         )}
       </div>
     );
+  } else if (screen === "return") {
+    content = <ReturnCinematicScreen region={activeRegion} backgroundSource={campaignAssets.returnToHaven} onComplete={() => setScreen("base")} />;
   } else if (screen === "result") {
     content = <ResultScreen result={result} assets={assets} region={activeRegion} onRestart={() => launchCombat(activeRegionId)} onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null} />;
   } else {

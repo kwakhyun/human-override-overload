@@ -516,7 +516,7 @@ test("expanded expedition framing makes every hostile larger than AEGIS and stab
   assert.match(engine, /const EXPEDITION_ROUTE_LENGTH = 12000/);
   assert.match(engine, /export const EXPEDITION_WORLD_WIDTH = 13200/);
   assert.match(view, /const size = state\?\.phase === "boss" \? 64 : 74/);
-  assert.match(view, /const baseSize = role === 2 \? 138 : role === 1 \? 108 : 92/);
+  assert.match(view, /const baseSize = entity\?\.isMidBoss \? 248 : role === 2 \? 138 : role === 1 \? 108 : 92/);
   assert.match(view, /const recoil = rifleEquipped && animation\.clipId === "attack" \?/);
   assert.match(view, /setAtlasFrame\(ghost, Math\.max\(0, directionalFrame\.column - index - 1\), presentation\.row\)/);
   assert.match(view, /resolveHeroDirectionalAimFrame\(animation, entity\)/);

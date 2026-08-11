@@ -1267,6 +1267,108 @@ Cell safety: exactly one centered character per cell; same scale in all 64 cells
 Scene/backdrop: perfectly flat uniform solid #ff00ff. No grid, text, labels, shadow, scenery, watermark or extra objects. Exact square 8×8 sheet mandatory.
 ```
 
+## 외곽 생산권역 04—06 및 귀환 시네마틱 (2026-08-12)
+
+- 도구: Codex Desktop 내장 OpenAI ImageGen과 로컬 Python/Pillow 후처리. 외부 게임 이미지나
+  제3자 에셋은 사용하지 않았습니다.
+- 품질/카메라 기준: 프로젝트 원본 `public/assets/overload/regions/glass-dune/route.webp`,
+  `public/assets/overload/enemies/hunter.png`, `public/assets/overload/boss/wrong-engine-forms-atlas.png`,
+  `public/assets/overload/campaign/haven-09-base.webp`.
+- 선택 ImageGen 원본:
+  - 네온 주조구 전장: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-69ddb20a-50b9-4b95-8ad4-f6e45941cf92.png`
+  - 폭풍 첨탑 전장: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-438d2557-f85b-43fa-a1ec-aa656b489ffd.png`
+  - 생체 금고 전장: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5a333d5d-8fde-4396-9503-57f33b1c2931.png`
+  - 네온 주조구 유닛: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-052e17ea-78ff-4e92-a4ca-fd15fb1190eb.png`
+  - 폭풍 첨탑 유닛: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3564c293-3e82-45d5-96b7-31e550df4442.png`
+  - 생체 금고 유닛: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-68ed5aed-53b0-498f-9b39-f073de7af9d3.png`
+  - 귀환 시네마틱: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-dcdf0832-f90e-4f2f-885c-26b0ddbd5dc8.png`
+- 프로젝트 보존 원본: `reference/source-assets/overload/outer-regions/{neon-foundry,storm-spire,gene-vault}/`
+  아래 `route-imagegen.png`, `units-chroma.png`, `units-alpha.png`와
+  `reference/source-assets/overload/campaign/return-to-haven-imagegen.png`.
+- 활성 런타임: 각 `public/assets/overload/regions/<region>/route.webp`, 4×1
+  `enemy-forms-atlas.png`, 3×1 `boss-forms-atlas.png` 및 동일 계약의 `performance/` 파생본,
+  공통 `public/assets/overload/campaign/return-to-haven.webp`.
+- 후처리: `scripts/prepare-outer-region-assets.py`가 전장을 1920×1080 WebP로 최적화하고,
+  크로마 유닛 시트의 연결 성분을 역할 3개·중간 보스 1개·보스 단계 3개로 분리해 256px/512px
+  셀로 정규화합니다. `scripts/build-performance-assets.py`가 셀별 LANCZOS 파생본을 만듭니다.
+  생체 금고 보스 알파는 `scripts/sanitize-motion-atlas.py`로 셀 경계 잔여물만 제거했습니다.
+
+### 네온 주조구 전장 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down browser-game battlefield background for HUMAN OVERRIDE: OVERLOAD.
+Image 1 is a quality/style reference only: preserve its strict 90-degree overhead gameplay readability, central traversable corridor, richly detailed dark sci-fi materials, and authored environment density. Do not copy its glass-desert geometry.
+
+Create a brand-new 16:9 top-down battlefield for REGION 04, "NEON FOUNDRY / 네온 주조구": a colossal automated AI factory at night, gunmetal assembly decks, molten cyan foundry channels behind safety barriers, orange furnace mouths, articulated robotic cranes, square freight lifts, hazard stripes, and distant production lines. The player route must be a broad continuous horizontal corridor through the middle from left to right, visually and physically readable with no fake openings or impassable-looking floor. Leave the central combat lane free of large objects. At the far right, integrate a massive sealed blast gate that can lead to a boss chamber. Make it distinctly different from ruins, desert, and underwater maps.
+
+No characters, enemies, bosses, UI, text, logos, numbers, fog covering the lane, perspective camera, three-quarter view, circular arena, or watermark. Strict orthographic nadir camera. Seam-friendly left and right edges, high-detail premium game environment, dark navy/gunmetal palette with restrained cyan and molten amber light, strong but readable contrast.
+```
+
+### 폭풍 첨탑 전장 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down browser-game battlefield background for HUMAN OVERRIDE: OVERLOAD.
+Image 1 is a quality/style reference only: preserve strict 90-degree overhead gameplay readability, a broad continuous horizontal combat route, authored high-detail environment density, and clear walkable boundaries. Do not copy the glass-desert content.
+
+Create a brand-new 16:9 top-down battlefield for REGION 05, "STORM SPIRE / 폭풍 첨탑": an exposed airborne AI weather-control citadel above thunderclouds, dark titanium flight deck, segmented hexagonal plating, cyan lightning capacitors, violet storm conduits, enormous turbine housings beyond the guard rails, cloud voids and forks of lightning visible outside the safe path. The player route must be a broad continuous horizontal corridor through the middle from left to right, with solid railings making every dangerous drop visually unwalkable. Leave the central lane clear. At far right integrate a sealed angular hangar gate.
+
+No characters, enemies, bosses, UI, text, logos, numbers, perspective camera, circular arena, or watermark. Strict orthographic nadir camera. Seam-friendly left/right edges, premium dark sci-fi game environment, navy/titanium palette with cyan and restrained violet electricity, readable contrast.
+```
+
+### 생체 금고 전장 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down browser-game battlefield background for HUMAN OVERRIDE: OVERLOAD.
+Image 1 is a quality/style reference only: preserve strict 90-degree overhead gameplay readability, a broad continuous horizontal combat route, authored high-detail environment density, and clear walkable boundaries. Do not copy the glass-desert content.
+
+Create a brand-new 16:9 top-down battlefield for REGION 06, "GENE VAULT / 생체 금고": a forbidden subterranean AI biofabrication archive, black ceramic laboratory deck invaded by biomechanical ivory ribs, sealed turquoise specimen tanks, emerald diagnostic veins, articulated surgical frames, synthetic roots and translucent containment membranes beyond protective barriers. The player route must be a broad continuous horizontal corridor through the middle from left to right. The lane itself is hard, clean, traversable black composite floor; all organic pits and machinery stay outside solid containment curbs. Leave the central combat lane clear. At far right integrate a tall asymmetric iris gate.
+
+No characters, enemies, bosses, UI, text, logos, numbers, perspective camera, circular arena, gore, blood, or watermark. Strict orthographic nadir camera. Seam-friendly left/right edges, premium dark sci-fi game environment, black/ivory/teal palette with restrained emerald light, readable contrast.
+```
+
+### 공통 7셀 유닛 시트 프롬프트 전문
+
+아래 공통 프롬프트 끝에 각 지역 정체성 문단 하나를 그대로 결합해 세 번 실행했습니다.
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down browser-game unit identity atlas for HUMAN OVERRIDE: OVERLOAD.
+Input images are quality, rendering, and strict-overhead references only. Do not copy their circular silhouettes or exact parts.
+Create ONE exact horizontal sprite atlas with exactly 7 equal square cells in one row. Strict 90-degree orthographic nadir view in every cell. One isolated centered unit per cell, uniform scale within role class, generous padding, no parts crossing cells.
+Cell contract: c1 small fast self-destruct drone; c2 medium humanoid or walker rifle unit with a readable gun; c3 long-range sniper unit with a distinct long weapon; c4 significantly larger elite MIDBOSS; c5 final boss phase 1; c6 the same final boss phase 2 with expanded armor/weapons; c7 the same final boss phase 3 at maximum threat.
+The final boss must be decisively non-circular and non-radial, with a recognizable directional body plan. Midboss and final boss must not look like scaled copies of normal enemies.
+Perfectly flat solid #ff00ff chroma-key background across every empty pixel. No grid lines, labels, numbers, text, scenery, floor, shadows, particles, motion blur, watermark, or UI. Do not use magenta in any unit. Crisp separated alpha-ready edges.
+```
+
+지역별 결합 문단:
+
+```text
+REGION 04 NEON FOUNDRY identity: angular industrial construction army, black gunmetal and hazard amber with restrained cyan. Drone is a triangular welding mine. Rifle unit is a two-legged factory enforcer. Sniper is a tall railgun walker. Midboss is a broad four-legged PRESS WARDEN with hydraulic hammer arms. Final boss is FORGE COLOSSUS, a massive upright bipedal furnace-mech with shoulders, legs, arms, and a vertical molten core; phases add asymmetric foundry tools and shoulder cannons, never a circle or starburst. Premium detailed sci-fi game sprite rendering.
+```
+
+```text
+REGION 05 STORM SPIRE identity: sleek airborne weather-control army, dark titanium with electric cyan and violet. Drone is a delta-wing interceptor. Rifle unit is a hovering winged gun platform. Sniper is a long needle-wing rail glider. Midboss is a large manta-shaped THUNDER MANTA with asymmetric lightning vanes. Final boss is TEMPEST WYRM, a long articulated mechanical sky-serpent with a clear head, segmented spine and tail; phases extend fins, jaws and storm coils, never a circle or starburst. Premium detailed sci-fi game sprite rendering.
+```
+
+```text
+REGION 06 GENE VAULT identity: elegant biomechanical synthetic army, black ceramic, ivory bone-like armor and teal/emerald energy, no gore. Drone is a four-wing seed predator. Rifle unit is a slim digitigrade synthetic soldier. Sniper is a long-limbed archer organism with a bio-rail weapon. Midboss is a large crab-like CHIMERA CUSTODIAN with unequal claws and six legs. Final boss is PALE ARCHON, a towering quadrupedal biomechanical beast with a distinct head, spine, four legs and long tail; phases grow asymmetric blade limbs and luminous containment organs, never a circle or starburst. Premium detailed sci-fi game sprite rendering.
+```
+
+### 헤이븐-09 귀환 시네마틱 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 16:9 cinematic background for HUMAN OVERRIDE: OVERLOAD campaign return sequence.
+Image 1 is the approved HAVEN-09 home base and NIGHTJAR airship identity reference. Preserve its dark premium sci-fi material language, blue and warm amber lighting, and the same sleek advanced angular airship.
+
+Create a wide cinematic exterior arrival shot: the NIGHTJAR airship returns from battle through a vast armored aperture into HAVEN-09's underground hangar, viewed from a high dramatic but readable angle. The ship approaches from the distant right toward a bright cyan landing corridor at center-left. Huge hangar ribs, docking arms, guidance beacons, mist trails and restrained engine glow establish motion. The base feels inhabited, protected and technologically advanced. Keep the center and lower third clear enough for a Korean mission-complete overlay.
+
+No characters, portraits, enemies, bosses, text, logos, UI, watermark, retro blimp, contemporary aircraft, excessive explosion, or destroyed base. Premium cinematic game key art, dark navy/gunmetal palette, cyan engine light and warm amber dock lights, high contrast, no motion blur obscuring the airship.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License

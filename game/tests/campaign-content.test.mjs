@@ -8,10 +8,14 @@ import {
   CAMPAIGN_REGIONS,
   DEFAULT_REGION_ID,
   HOME_BASE,
+  OUTER_SECTOR_BRIEFING_FLAG,
+  REGION_CLUSTERS,
   getBaseNpc,
   getBaseNpcs,
   getCampaignDomAssets,
   getCampaignRegions,
+  getRegionCluster,
+  getRegionClusters,
   getCompletedChapterIds,
   getCurrentChapterId,
   getRegion,
@@ -19,14 +23,17 @@ import {
   isRegionUnlocked,
 } from "../src/game/content/campaign.js";
 
-test("campaign content defines the current stage and two coherent follow-up regions", () => {
+test("campaign content defines six sectors across the inner network and outer frontier", () => {
   assert.equal(DEFAULT_REGION_ID, "wrong-engine-core");
   assert.deepEqual(getCampaignRegions().map((region) => region.id), [
     "wrong-engine-core",
     "glass-dune",
     "abyssal-archive",
+    "neon-foundry",
+    "storm-spire",
+    "gene-vault",
   ]);
-  assert.equal(Object.keys(CAMPAIGN_REGIONS).length, 3);
+  assert.equal(Object.keys(CAMPAIGN_REGIONS).length, 6);
   assert.equal(getRegion("wrong-engine-core").boss.name, "THE WRONG ENGINE");
   assert.equal(getRegion("wrong-engine-core").boss.maxHp, 560000);
   assert.equal(getRegion("wrong-engine-core").enemyBudget, 300);
@@ -39,7 +46,33 @@ test("campaign content defines the current stage and two coherent follow-up regi
   assert.ok(getRegion("abyssal-archive").boss.patterns.includes("memorySpiral"));
   assert.ok(getRegion("abyssal-archive").boss.patterns.includes("depthCollapse"));
   assert.notEqual(getRegion("glass-dune").threatProfile.composition, getRegion("abyssal-archive").threatProfile.composition);
+  assert.equal(getRegion("neon-foundry").midBoss.name, "PRESS WARDEN");
+  assert.equal(getRegion("storm-spire").boss.name, "TEMPEST WYRM");
+  assert.equal(getRegion("gene-vault").boss.name, "PALE ARCHON");
+  for (const id of ["neon-foundry", "storm-spire", "gene-vault"]) {
+    const region = getRegion(id);
+    assert.equal(region.clusterId, "outer-frontier");
+    assert.equal(region.briefingFlag, OUTER_SECTOR_BRIEFING_FLAG);
+    assert.equal(region.assets.battle.enemyForms.columns, 4);
+    assert.equal(region.assets.battle.bossForms.columns, 3);
+    assert.ok(region.midBoss.maxHp >= 52_000);
+  }
   assert.equal(getRegion("missing-region"), null);
+});
+
+test("region clusters expose a two-step 1—3, 4—6, and future 7—9 hierarchy", () => {
+  assert.deepEqual(getRegionClusters().map((cluster) => cluster.id), [
+    "inner-network",
+    "outer-frontier",
+    "terminal-orbit",
+  ]);
+  assert.deepEqual(getRegionCluster("inner-network").regionIds, ["wrong-engine-core", "glass-dune", "abyssal-archive"]);
+  assert.deepEqual(getRegionCluster("outer-frontier").regionIds, ["neon-foundry", "storm-spire", "gene-vault"]);
+  assert.equal(getRegionCluster("outer-frontier").briefingFlag, OUTER_SECTOR_BRIEFING_FLAG);
+  assert.equal(getRegionCluster("terminal-orbit").comingSoon, true);
+  assert.deepEqual(getRegionCluster("terminal-orbit").regionIds, []);
+  assert.equal(getRegionCluster("missing-cluster"), null);
+  assert.equal(Object.isFrozen(REGION_CLUSTERS), true);
 });
 
 test("every region exposes manifest-aligned existing assets with three route descriptors", async () => {
@@ -53,6 +86,7 @@ test("every region exposes manifest-aligned existing assets with three route des
       region.assets.dom.bossPortrait,
       ...region.assets.battle.sectors,
       region.assets.battle.bossRoom,
+      ...(region.assets.battle.enemyForms ? [region.assets.battle.enemyForms] : []),
       region.assets.battle.bossForms,
     ]) {
       assert.ok(asset.key.length > 0);
@@ -88,6 +122,7 @@ test("the base has HANA, ILYA, LARK, and RHEA with authored portraits and intera
   assert.equal(BASE_NPCS.rhea.interactionLabel, "사용 스킬 브리핑");
   assert.ok(BASE_NPCS.rhea.dialogue.length > 0);
   assert.equal(getBaseNpc("LARK").interaction, "open-region-select");
+  assert.ok(getBaseNpc("LARK").milestoneDialogue.some((line) => line.includes("외곽 권역")));
   assert.equal(getBaseNpc("missing"), null);
 });
 
@@ -105,7 +140,16 @@ test("region and chapter progression derives only from completed regions", () =>
     "chapter-01",
     "chapter-02",
   ]);
-  assert.equal(CAMPAIGN_CHAPTERS.length, 2);
+  assert.deepEqual(getUnlockedRegionIds(["wrong-engine-core", "glass-dune", "abyssal-archive"]), [
+    "wrong-engine-core",
+    "glass-dune",
+    "abyssal-archive",
+    "neon-foundry",
+    "storm-spire",
+    "gene-vault",
+  ]);
+  assert.equal(getCurrentChapterId(["wrong-engine-core", "glass-dune", "abyssal-archive"]), "chapter-03");
+  assert.equal(CAMPAIGN_CHAPTERS.length, 3);
 });
 
 test("campaign content is immutable and exports one flat DOM preload map of existing files", async () => {
@@ -114,11 +158,12 @@ test("campaign content is immutable and exports one flat DOM preload map of exis
   assert.equal(Object.isFrozen(BASE_NPCS), true);
   const assets = getCampaignDomAssets();
   assert.equal(Object.isFrozen(assets), true);
-  assert.equal(Object.keys(assets).length, 10);
+  assert.equal(Object.keys(assets).length, 16);
   assert.equal(assets.havenBase, "./assets/overload/campaign/haven-09-base.webp");
   assert.equal(assets.havenNpcPortraits, BASE_NPCS.hana.portraitPath);
   assert.equal(assets.rheaControlOfficer, BASE_NPCS.rhea.portraitPath);
   assert.equal(assets["overload-abyssal-archive-route"], CAMPAIGN_REGIONS["abyssal-archive"].assets.dom.thumbnail.path);
+  assert.equal(assets["overload-neon-foundry-route"], CAMPAIGN_REGIONS["neon-foundry"].assets.dom.thumbnail.path);
   assert.ok(Object.values(assets).every((path) => !path.includes("/ui/regions/") && !path.includes("/base/npc/")));
   await Promise.all(Object.values(assets).map((path) => access(new URL(`../public/${path.replace(/^\.\//, "")}`, import.meta.url))));
 });

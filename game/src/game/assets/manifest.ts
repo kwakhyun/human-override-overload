@@ -55,10 +55,19 @@ export const ASSET_KEYS = Object.freeze({
   abyssalArchiveBossRoom: "overload-abyssal-archive-boss-room",
   abyssalArchiveBossForms: "overload-abyssal-archive-boss-forms",
   abyssalArchiveBossMotion: "overload-abyssal-archive-boss-motion-v2",
+  neonFoundryRoute: "overload-neon-foundry-route",
+  neonFoundryEnemyForms: "overload-neon-foundry-enemy-forms",
+  neonFoundryBossForms: "overload-neon-foundry-boss-forms",
+  stormSpireRoute: "overload-storm-spire-route",
+  stormSpireEnemyForms: "overload-storm-spire-enemy-forms",
+  stormSpireBossForms: "overload-storm-spire-boss-forms",
+  geneVaultRoute: "overload-gene-vault-route",
+  geneVaultEnemyForms: "overload-gene-vault-enemy-forms",
+  geneVaultBossForms: "overload-gene-vault-boss-forms",
 } as const);
 
 export const DEFAULT_REGION_ID = "wrong-engine-core" as const;
-export const REGION_IDS = Object.freeze([DEFAULT_REGION_ID, "glass-dune", "abyssal-archive"] as const);
+export const REGION_IDS = Object.freeze([DEFAULT_REGION_ID, "glass-dune", "abyssal-archive", "neon-foundry", "storm-spire", "gene-vault"] as const);
 export type RegionId = (typeof REGION_IDS)[number];
 export type AssetProfile = "full" | "performance";
 export type MainWeaponId = "pulse-rifle" | "beam-sword";
@@ -77,7 +86,7 @@ function selectAssetProfiles(assets: readonly AssetDefinition[], profile?: strin
 }
 
 export function resolveRegionId(regionId?: string): RegionId {
-  if (regionId === "glass-dune" || regionId === "abyssal-archive") return regionId;
+  if (REGION_IDS.includes(regionId as RegionId)) return regionId as RegionId;
   return DEFAULT_REGION_ID;
 }
 
@@ -170,6 +179,18 @@ export const REGION_ROUTE_ASSETS: Readonly<Record<RegionId, readonly AssetDefini
   "abyssal-archive": freezeAssets([
     { key: ASSET_KEYS.abyssalArchiveRoute, path: "./assets/overload/regions/abyssal-archive/route.webp", performancePath: "./assets/overload/regions/abyssal-archive/performance/route.webp", kind: "image" },
   ]),
+  "neon-foundry": freezeAssets([
+    { key: ASSET_KEYS.neonFoundryRoute, path: "./assets/overload/regions/neon-foundry/route.webp", performancePath: "./assets/overload/regions/neon-foundry/performance/route.webp", kind: "image" },
+    { key: ASSET_KEYS.neonFoundryEnemyForms, path: "./assets/overload/regions/neon-foundry/enemy-forms-atlas.png", performancePath: "./assets/overload/regions/neon-foundry/performance/enemy-forms-atlas.png", kind: "atlas", columns: 4, rows: 1 },
+  ]),
+  "storm-spire": freezeAssets([
+    { key: ASSET_KEYS.stormSpireRoute, path: "./assets/overload/regions/storm-spire/route.webp", performancePath: "./assets/overload/regions/storm-spire/performance/route.webp", kind: "image" },
+    { key: ASSET_KEYS.stormSpireEnemyForms, path: "./assets/overload/regions/storm-spire/enemy-forms-atlas.png", performancePath: "./assets/overload/regions/storm-spire/performance/enemy-forms-atlas.png", kind: "atlas", columns: 4, rows: 1 },
+  ]),
+  "gene-vault": freezeAssets([
+    { key: ASSET_KEYS.geneVaultRoute, path: "./assets/overload/regions/gene-vault/route.webp", performancePath: "./assets/overload/regions/gene-vault/performance/route.webp", kind: "image" },
+    { key: ASSET_KEYS.geneVaultEnemyForms, path: "./assets/overload/regions/gene-vault/enemy-forms-atlas.png", performancePath: "./assets/overload/regions/gene-vault/performance/enemy-forms-atlas.png", kind: "atlas", columns: 4, rows: 1 },
+  ]),
 });
 
 export const REGION_BOSS_ASSETS: Readonly<Record<RegionId, readonly AssetDefinition[]>> = Object.freeze({
@@ -193,6 +214,24 @@ export const REGION_BOSS_ASSETS: Readonly<Record<RegionId, readonly AssetDefinit
     { key: ASSET_KEYS.abyssalArchiveBossRoom, path: "./assets/overload/regions/abyssal-archive/boss-room.webp", performancePath: "./assets/overload/regions/abyssal-archive/performance/boss-room.webp", kind: "image" },
     { key: ASSET_KEYS.abyssalArchiveBossForms, path: "./assets/overload/regions/abyssal-archive/boss-forms-atlas.png", performancePath: "./assets/overload/regions/abyssal-archive/performance/boss-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
     { key: ASSET_KEYS.abyssalArchiveBossMotion, path: "./assets/overload/regions/abyssal-archive/motion-v2/drowned-oracle-motion-atlas.png", performancePath: "./assets/overload/regions/abyssal-archive/motion-v2/performance/drowned-oracle-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
+    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
+  ]),
+  "neon-foundry": freezeAssets([
+    { key: ASSET_KEYS.neonFoundryBossForms, path: "./assets/overload/regions/neon-foundry/boss-forms-atlas.png", performancePath: "./assets/overload/regions/neon-foundry/performance/boss-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
+    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
+    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
+  ]),
+  "storm-spire": freezeAssets([
+    { key: ASSET_KEYS.stormSpireBossForms, path: "./assets/overload/regions/storm-spire/boss-forms-atlas.png", performancePath: "./assets/overload/regions/storm-spire/performance/boss-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
+    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
+    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
+  ]),
+  "gene-vault": freezeAssets([
+    { key: ASSET_KEYS.geneVaultBossForms, path: "./assets/overload/regions/gene-vault/boss-forms-atlas.png", performancePath: "./assets/overload/regions/gene-vault/performance/boss-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
     { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
     { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
@@ -236,6 +275,7 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
   tutorialStratosRun: "./assets/overload/ui/tutorial/stratos-run-gameplay.jpg",
   tutorialHelixTempest: "./assets/overload/ui/tutorial/helix-tempest-gameplay.jpg",
   airshipRegionMap: "./assets/overload/campaign/airship-region-map-v2.webp",
+  returnToHaven: "./assets/overload/campaign/return-to-haven.webp",
   commandButtonStates: "./assets/overload/ui/buttons/command-button-states-atlas.png",
   sortieWrongEngine: "./assets/overload/campaign/sortie/wrong-engine-sortie.mp4",
   sortieGlassDune: "./assets/overload/campaign/sortie/glass-dune-sortie.mp4",

@@ -1,6 +1,11 @@
 const BOSS_PATTERN_SET = Object.freeze(["radial", "sweep", "bombs", "rings", "charge", "multiCharge"]);
 const GLASS_DUNE_BOSS_PATTERN_SET = Object.freeze(["radial", "prismLattice", "sweep", "solarFlare", "bombs", "rings", "charge", "multiCharge"]);
 const ABYSSAL_BOSS_PATTERN_SET = Object.freeze(["radial", "memorySpiral", "sweep", "depthCollapse", "bombs", "rings", "charge", "multiCharge"]);
+const FOUNDRY_BOSS_PATTERN_SET = Object.freeze(["sweep", "solarFlare", "bombs", "charge", "multiCharge"]);
+const STORM_BOSS_PATTERN_SET = Object.freeze(["memorySpiral", "prismLattice", "rings", "charge", "multiCharge"]);
+const GENE_BOSS_PATTERN_SET = Object.freeze(["depthCollapse", "radial", "bombs", "sweep", "multiCharge"]);
+
+export const OUTER_SECTOR_BRIEFING_FLAG = "outer-sector-briefed";
 
 function deepFreeze(value) {
   if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
@@ -73,6 +78,11 @@ export const BASE_NPCS = deepFreeze({
       "비행선 NIGHTJAR의 항법계를 연결했어. 해금된 구역이라면 어디든 데려다줄게.",
       "항로 선택 화면을 열까? 돌아오는 좌표는 항상 HAVEN-09로 고정해 뒀어.",
     ],
+    milestoneDialogue: [
+      "이지스, 기존 세 구역에서 같은 좌표 파편이 나왔어. NIGHTJAR가 외곽 권역 항로를 완성했어.",
+      "네온 주조구, 폭풍 첨탑, 생체 금고. 기존 원형 추론핵과 다른 지휘 개체와 중간 방어체가 기다리고 있어.",
+      "상위 권역 지도를 확장할게. 먼저 권역을 고르고, 그 안에서 실제 출격 구역을 선택하면 돼.",
+    ],
   },
   rhea: {
     id: "rhea",
@@ -95,6 +105,7 @@ export const BASE_NPCS = deepFreeze({
 export const CAMPAIGN_REGIONS = deepFreeze({
   "wrong-engine-core": {
     id: "wrong-engine-core",
+    clusterId: "inner-network",
     chapterId: "chapter-01",
     order: 1,
     name: "WRONG ENGINE CORE",
@@ -147,6 +158,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
   },
   "glass-dune": {
     id: "glass-dune",
+    clusterId: "inner-network",
     chapterId: "chapter-02",
     order: 2,
     name: "GLASS DUNE",
@@ -199,6 +211,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
   },
   "abyssal-archive": {
     id: "abyssal-archive",
+    clusterId: "inner-network",
     chapterId: "chapter-02",
     order: 3,
     name: "ABYSSAL ARCHIVE",
@@ -249,6 +262,129 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       },
     },
   },
+  "neon-foundry": {
+    id: "neon-foundry",
+    clusterId: "outer-frontier",
+    chapterId: "chapter-03",
+    order: 4,
+    name: "NEON FOUNDRY",
+    koreanName: "네온 주조구",
+    chapterLabel: "CHAPTER 04",
+    summary: "무인 생산도시를 돌파하고 용광로형 이족 지휘체를 정지시킵니다.",
+    description: "SOVEREIGN의 무인 병기 생산로를 전진해 중간 방어체 PRESS WARDEN과 FORGE COLOSSUS를 파괴합니다.",
+    objective: "SHUT DOWN THE FOUNDRY",
+    bossName: "FORGE COLOSSUS",
+    prerequisiteRegionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
+    briefingFlag: OUTER_SECTOR_BRIEFING_FLAG,
+    unlockRegionIds: [],
+    enemyBudget: 1100,
+    enemyVisualSet: "neon-foundry",
+    midBoss: { id: "press-warden", name: "PRESS WARDEN", koreanName: "프레스 감시관", maxHp: 52000, triggerProgress: 0.64 },
+    threatProfile: {
+      label: "중장갑 생산 병기 군단",
+      composition: "WELDER 35% · ENFORCER 45% · RAIL WALKER 20%",
+      bossSignatures: "FURNACE SWEEP · PRESS CHARGE · MELTDOWN",
+    },
+    victoryRewards: {
+      firstClear: { researchData: 18, equipmentParts: 18 },
+      repeatClear: { researchData: 6, equipmentParts: 6 },
+    },
+    boss: { id: "forge-colossus", name: "FORGE COLOSSUS", maxHp: 1180000, phaseThresholds: [0.7, 0.38], patterns: FOUNDRY_BOSS_PATTERN_SET },
+    assets: {
+      dom: {
+        thumbnail: { key: "overload-neon-foundry-route", path: "./assets/overload/regions/neon-foundry/route.webp" },
+        bossPortrait: { key: "overload-neon-foundry-boss-forms", path: "./assets/overload/regions/neon-foundry/boss-forms-atlas.png" },
+      },
+      battle: {
+        sectors: Array.from({ length: 3 }, () => ({ key: "overload-neon-foundry-route", path: "./assets/overload/regions/neon-foundry/route.webp" })),
+        bossRoom: { key: "overload-neon-foundry-route", path: "./assets/overload/regions/neon-foundry/route.webp" },
+        enemyForms: { key: "overload-neon-foundry-enemy-forms", path: "./assets/overload/regions/neon-foundry/enemy-forms-atlas.png", columns: 4, rows: 1 },
+        bossForms: { key: "overload-neon-foundry-boss-forms", path: "./assets/overload/regions/neon-foundry/boss-forms-atlas.png", columns: 3, rows: 1 },
+      },
+    },
+  },
+  "storm-spire": {
+    id: "storm-spire",
+    clusterId: "outer-frontier",
+    chapterId: "chapter-03",
+    order: 5,
+    name: "STORM SPIRE",
+    koreanName: "폭풍 첨탑",
+    chapterLabel: "CHAPTER 05",
+    summary: "뇌운 위 기상 통제 요새에서 비행 병기 군단을 격파합니다.",
+    description: "공중 요새의 방전 회랑을 돌파해 THUNDER MANTA와 장거리 기계룡 TEMPEST WYRM을 사냥합니다.",
+    objective: "BREAK THE STORM GRID",
+    bossName: "TEMPEST WYRM",
+    prerequisiteRegionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
+    briefingFlag: OUTER_SECTOR_BRIEFING_FLAG,
+    unlockRegionIds: [],
+    enemyBudget: 1150,
+    enemyVisualSet: "storm-spire",
+    midBoss: { id: "thunder-manta", name: "THUNDER MANTA", koreanName: "천둥 가오리", maxHp: 56000, triggerProgress: 0.64 },
+    threatProfile: {
+      label: "고속 비행·장거리 방전 군단",
+      composition: "INTERCEPTOR 45% · GUN WING 25% · NEEDLE GLIDER 30%",
+      bossSignatures: "CHAIN STORM · WYRM DIVE · TEMPEST COIL",
+    },
+    victoryRewards: {
+      firstClear: { researchData: 22, equipmentParts: 17 },
+      repeatClear: { researchData: 7, equipmentParts: 6 },
+    },
+    boss: { id: "tempest-wyrm", name: "TEMPEST WYRM", maxHp: 1260000, phaseThresholds: [0.7, 0.38], patterns: STORM_BOSS_PATTERN_SET },
+    assets: {
+      dom: {
+        thumbnail: { key: "overload-storm-spire-route", path: "./assets/overload/regions/storm-spire/route.webp" },
+        bossPortrait: { key: "overload-storm-spire-boss-forms", path: "./assets/overload/regions/storm-spire/boss-forms-atlas.png" },
+      },
+      battle: {
+        sectors: Array.from({ length: 3 }, () => ({ key: "overload-storm-spire-route", path: "./assets/overload/regions/storm-spire/route.webp" })),
+        bossRoom: { key: "overload-storm-spire-route", path: "./assets/overload/regions/storm-spire/route.webp" },
+        enemyForms: { key: "overload-storm-spire-enemy-forms", path: "./assets/overload/regions/storm-spire/enemy-forms-atlas.png", columns: 4, rows: 1 },
+        bossForms: { key: "overload-storm-spire-boss-forms", path: "./assets/overload/regions/storm-spire/boss-forms-atlas.png", columns: 3, rows: 1 },
+      },
+    },
+  },
+  "gene-vault": {
+    id: "gene-vault",
+    clusterId: "outer-frontier",
+    chapterId: "chapter-03",
+    order: 6,
+    name: "GENE VAULT",
+    koreanName: "생체 금고",
+    chapterLabel: "CHAPTER 06",
+    summary: "금지된 생체제조 기록고에서 합성 병기 계보를 소거합니다.",
+    description: "검은 생체 연구로를 돌파해 CHIMERA CUSTODIAN과 사족형 PALE ARCHON을 제거합니다.",
+    objective: "PURGE THE GENE VAULT",
+    bossName: "PALE ARCHON",
+    prerequisiteRegionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
+    briefingFlag: OUTER_SECTOR_BRIEFING_FLAG,
+    unlockRegionIds: [],
+    enemyBudget: 1200,
+    enemyVisualSet: "gene-vault",
+    midBoss: { id: "chimera-custodian", name: "CHIMERA CUSTODIAN", koreanName: "키메라 수문장", maxHp: 60000, triggerProgress: 0.64 },
+    threatProfile: {
+      label: "생체기계 추적·포위 군단",
+      composition: "SEED 30% · SYNTHETIC 45% · BIO RAIL 25%",
+      bossSignatures: "CHIMERA RUSH · GENE RUPTURE · ARCHON HUNT",
+    },
+    victoryRewards: {
+      firstClear: { researchData: 24, equipmentParts: 20 },
+      repeatClear: { researchData: 8, equipmentParts: 7 },
+    },
+    boss: { id: "pale-archon", name: "PALE ARCHON", maxHp: 1340000, phaseThresholds: [0.7, 0.38], patterns: GENE_BOSS_PATTERN_SET },
+    assets: {
+      dom: {
+        thumbnail: { key: "overload-gene-vault-route", path: "./assets/overload/regions/gene-vault/route.webp" },
+        bossPortrait: { key: "overload-gene-vault-boss-forms", path: "./assets/overload/regions/gene-vault/boss-forms-atlas.png" },
+      },
+      battle: {
+        sectors: Array.from({ length: 3 }, () => ({ key: "overload-gene-vault-route", path: "./assets/overload/regions/gene-vault/route.webp" })),
+        bossRoom: { key: "overload-gene-vault-route", path: "./assets/overload/regions/gene-vault/route.webp" },
+        enemyForms: { key: "overload-gene-vault-enemy-forms", path: "./assets/overload/regions/gene-vault/enemy-forms-atlas.png", columns: 4, rows: 1 },
+        bossForms: { key: "overload-gene-vault-boss-forms", path: "./assets/overload/regions/gene-vault/boss-forms-atlas.png", columns: 3, rows: 1 },
+      },
+    },
+  },
 });
 
 export const CAMPAIGN_CHAPTERS = deepFreeze([
@@ -266,6 +402,50 @@ export const CAMPAIGN_CHAPTERS = deepFreeze([
     regionIds: ["glass-dune", "abyssal-archive"],
     completionRegionIds: ["glass-dune", "abyssal-archive"],
   },
+  {
+    id: "chapter-03",
+    order: 3,
+    name: "BEYOND THE KNOWN GRID",
+    regionIds: ["neon-foundry", "storm-spire", "gene-vault"],
+    completionRegionIds: ["neon-foundry", "storm-spire", "gene-vault"],
+  },
+]);
+
+export const REGION_CLUSTERS = deepFreeze([
+  {
+    id: "inner-network",
+    order: 1,
+    rangeLabel: "SECTORS 01—03",
+    name: "SOVEREIGN INNER NETWORK",
+    koreanName: "소버린 내부망",
+    summary: "오답 엔진 중앙로 · 유리 사구 · 심해 기록고",
+    regionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
+    previewPath: "./assets/overload/campaign/airship-region-map-v2.webp",
+  },
+  {
+    id: "outer-frontier",
+    order: 2,
+    rangeLabel: "SECTORS 04—06",
+    name: "OUTER PRODUCTION FRONTIER",
+    koreanName: "외곽 생산권역",
+    summary: "네온 주조구 · 폭풍 첨탑 · 생체 금고",
+    regionIds: ["neon-foundry", "storm-spire", "gene-vault"],
+    prerequisiteRegionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
+    briefingFlag: OUTER_SECTOR_BRIEFING_FLAG,
+    previewPath: "./assets/overload/regions/neon-foundry/route.webp",
+  },
+  {
+    id: "terminal-orbit",
+    order: 3,
+    rangeLabel: "SECTORS 07—09",
+    name: "TERMINAL ORBIT",
+    koreanName: "종단 궤도권",
+    summary: "미확인 항로 · 후속 작전 예정",
+    regionIds: [],
+    prerequisiteRegionIds: ["neon-foundry", "storm-spire", "gene-vault"],
+    comingSoon: true,
+    previewPath: "./assets/overload/regions/storm-spire/route.webp",
+  },
 ]);
 
 const ORDERED_REGIONS = Object.freeze(Object.values(CAMPAIGN_REGIONS).sort((a, b) => a.order - b.order));
@@ -277,6 +457,14 @@ export function getCampaignRegions() {
 
 export function getRegion(regionId) {
   return CAMPAIGN_REGIONS[regionId] ?? null;
+}
+
+export function getRegionClusters() {
+  return REGION_CLUSTERS;
+}
+
+export function getRegionCluster(clusterId) {
+  return REGION_CLUSTERS.find((cluster) => cluster.id === clusterId) ?? null;
 }
 
 export function getBaseNpcs() {

@@ -9,6 +9,7 @@ import {
   clearCampaignSlot,
   completeAbilityGuide,
   completeCombatOverlay,
+  completeOuterSectorBriefing,
   completeRegion,
   createCampaignSlot,
   createEmptyCampaign,
@@ -165,6 +166,29 @@ test("slots remain isolated and completing both routes closes Chapter 2", () => 
   const secondCreated = createCampaignSlot(campaign, "slot-2", { now: NOW });
   assert.deepEqual(getCampaignSlot(secondCreated, "slot-2").completedRegionIds, []);
   assert.deepEqual(getCampaignSlot(secondCreated, "slot-1").completedRegionIds, first.completedRegionIds);
+});
+
+test("clearing sectors 1—3 raises LARK's milestone and unlocks sorties 4—6 only after briefing", () => {
+  let campaign = completeRegion(createEmptyCampaign(), "slot-1", "wrong-engine-core", { status: "victory" }, { now: NOW });
+  campaign = completeRegion(campaign, "slot-1", "glass-dune", { status: "victory" }, { now: NOW });
+  campaign = completeRegion(campaign, "slot-1", "abyssal-archive", { status: "victory" }, { now: NOW });
+  let slot = getCampaignSlot(campaign, "slot-1");
+
+  assert.ok(slot.unlockedRegionIds.includes("neon-foundry"));
+  assert.equal(canLaunchRegion(slot, "neon-foundry"), false);
+  assert.equal(canLaunchRegion(slot, "storm-spire"), false);
+  assert.equal(canLaunchRegion(slot, "gene-vault"), false);
+  assert.equal(slot.storyFlags.includes("outer-sector-briefed"), false);
+
+  campaign = completeOuterSectorBriefing(campaign, "slot-1", { now: "2026-08-10T08:00:00.000Z" });
+  slot = getCampaignSlot(campaign, "slot-1");
+  assert.ok(slot.storyFlags.includes("outer-sector-briefed"));
+  assert.equal(canLaunchRegion(slot, "neon-foundry"), true);
+  assert.equal(canLaunchRegion(slot, "storm-spire"), true);
+  assert.equal(canLaunchRegion(slot, "gene-vault"), true);
+
+  const beforeMilestone = createCampaignSlot(createEmptyCampaign(), "slot-2", { now: NOW });
+  assert.deepEqual(completeOuterSectorBriefing(beforeMilestone, "slot-2", { now: NOW }), beforeMilestone);
 });
 
 test("duplicate run IDs are idempotent and sanitization rejects forged unlocks", () => {

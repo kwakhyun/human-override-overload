@@ -99,7 +99,8 @@ type RegionVisualAssets = Readonly<{
   routeSourceHeight: number;
   bossRoom: string;
   bossForms: string;
-  bossMotion: string;
+  bossMotion?: string;
+  enemyForms?: string;
 }>;
 
 const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Object.freeze({
@@ -126,6 +127,30 @@ const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Objec
     bossRoom: ASSET_KEYS.abyssalArchiveBossRoom,
     bossForms: ASSET_KEYS.abyssalArchiveBossForms,
     bossMotion: ASSET_KEYS.abyssalArchiveBossMotion,
+  }),
+  "neon-foundry": Object.freeze({
+    route: Object.freeze([ASSET_KEYS.neonFoundryRoute]),
+    routeSourceWidth: 1920,
+    routeSourceHeight: 1080,
+    bossRoom: ASSET_KEYS.neonFoundryRoute,
+    bossForms: ASSET_KEYS.neonFoundryBossForms,
+    enemyForms: ASSET_KEYS.neonFoundryEnemyForms,
+  }),
+  "storm-spire": Object.freeze({
+    route: Object.freeze([ASSET_KEYS.stormSpireRoute]),
+    routeSourceWidth: 1920,
+    routeSourceHeight: 1080,
+    bossRoom: ASSET_KEYS.stormSpireRoute,
+    bossForms: ASSET_KEYS.stormSpireBossForms,
+    enemyForms: ASSET_KEYS.stormSpireEnemyForms,
+  }),
+  "gene-vault": Object.freeze({
+    route: Object.freeze([ASSET_KEYS.geneVaultRoute]),
+    routeSourceWidth: 1920,
+    routeSourceHeight: 1080,
+    bossRoom: ASSET_KEYS.geneVaultRoute,
+    bossForms: ASSET_KEYS.geneVaultBossForms,
+    enemyForms: ASSET_KEYS.geneVaultEnemyForms,
   }),
 });
 
@@ -261,6 +286,15 @@ function enemyMotionTexture(enemy: any) {
   return role === 2 ? ASSET_KEYS.enemySniperMotion : role === 1 ? ASSET_KEYS.enemyRiflemanMotion : ASSET_KEYS.enemyHunterMotion;
 }
 
+function regionalEnemyTexture(enemy: any) {
+  switch (String(enemy?.visualSet ?? "")) {
+    case "neon-foundry": return ASSET_KEYS.neonFoundryEnemyForms;
+    case "storm-spire": return ASSET_KEYS.stormSpireEnemyForms;
+    case "gene-vault": return ASSET_KEYS.geneVaultEnemyForms;
+    default: return null;
+  }
+}
+
 function enemyFallbackTexture(enemy: any) {
   const role = enemyRoleIndex(enemy);
   return role === 2 ? ASSET_KEYS.enemySniper : role === 1 ? ASSET_KEYS.enemyRifleman : ASSET_KEYS.enemyHunter;
@@ -392,6 +426,7 @@ export class BattleView {
     this.prepareAtlas(ASSET_KEYS.enemyHunterMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemyRiflemanMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemySniperMotion, 6, 4);
+    if (regionAssets.enemyForms) this.prepareAtlas(regionAssets.enemyForms, 4, 1);
     if (scene.textures.exists(regionAssets.bossForms)) ensureAtlasFrames(scene, regionAssets.bossForms, 3, 1);
     ensureAtlasFrames(scene, ASSET_KEYS.combatFx, 4, 3);
     this.preparePixelAtlas(ASSET_KEYS.automaticSkillPixel, 6, 4);
@@ -529,7 +564,7 @@ export class BattleView {
     const { bossRoom, bossForms, bossMotion } = this.regionAssets;
     if (!this.scene.textures.exists(bossRoom) || !this.scene.textures.exists(bossForms)) return false;
     ensureAtlasFrames(this.scene, bossForms, 3, 1);
-    const hasMotion = this.prepareAtlas(bossMotion, 6, 4);
+    const hasMotion = bossMotion ? this.prepareAtlas(bossMotion, 6, 4) : false;
     const hasCommonPatterns = this.preparePixelAtlas(ASSET_KEYS.bossPatternCommonPixel, 6, 6);
     const hasRegionalPatterns = this.preparePixelAtlas(ASSET_KEYS.bossPatternRegionalPixel, 6, 4);
     const hasTimedBombs = this.preparePixelAtlas(ASSET_KEYS.bossTimedBombPixel, 6, 2);
@@ -565,7 +600,7 @@ export class BattleView {
         this.worldFront.add([image, label]);
       }
     }
-    const bossTexture = hasMotion ? bossMotion : bossForms;
+    const bossTexture = hasMotion && bossMotion ? bossMotion : bossForms;
     this.bossMap.setTexture(bossRoom).setDisplaySize(WORLD_WIDTH, WORLD_HEIGHT);
     this.boss.setTexture(bossTexture);
     this.bossPhaseArt.setTexture(bossTexture);
@@ -990,8 +1025,11 @@ export class BattleView {
       const profile = getActorAnimationProfile("enemy", entity);
       const selectedClip = selectActorClip(profile, entity);
       if (!record) {
+        const regionalTexture = regionalEnemyTexture(entity);
         const motionTexture = enemyMotionTexture(entity);
-        const texture = this.scene.textures.exists(motionTexture) ? motionTexture : enemyFallbackTexture(entity);
+        const texture = regionalTexture && this.preparedAtlases.has(regionalTexture)
+          ? regionalTexture
+          : this.scene.textures.exists(motionTexture) ? motionTexture : enemyFallbackTexture(entity);
         const image = this.enemyPool.pop() ?? this.scene.add.image(0, 0, texture);
         if (!image.parentContainer) this.actors.add(image);
         image.setTexture(texture);
@@ -1018,8 +1056,10 @@ export class BattleView {
       const clipElapsed = updateClipClock(record, selectedClip.id, time);
       const phaseOffset = selectedClip.loop ? Math.abs(Math.trunc(id * 3.17)) % selectedClip.frameCount : 0;
       const motionTexture = enemyMotionTexture(entity);
-      const usesDedicatedMotion = this.preparedAtlases.has(motionTexture);
-      const texture = usesDedicatedMotion ? motionTexture : enemyFallbackTexture(entity);
+      const regionalTexture = regionalEnemyTexture(entity);
+      const usesRegionalForms = Boolean(regionalTexture && this.preparedAtlases.has(regionalTexture));
+      const usesDedicatedMotion = !usesRegionalForms && this.preparedAtlases.has(motionTexture);
+      const texture = usesRegionalForms && regionalTexture ? regionalTexture : usesDedicatedMotion ? motionTexture : enemyFallbackTexture(entity);
       if (image.texture.key !== texture) image.setTexture(texture);
       if (isHit && !record.wasHit) {
         const impactScale = clamp((entity?.elite ? 1.18 : 0.78) + hitDamage / 92, 0.78, entity?.elite ? 1.9 : 1.5);
@@ -1032,7 +1072,9 @@ export class BattleView {
       if (isDead && !record.wasDead) this.spawnFx("enemyBurst", x, y, entity?.elite ? COLORS.amber : COLORS.red, entity?.elite ? 1.55 : 0.9);
       record.wasHit = isHit;
       record.wasDead = isDead;
-      if (usesDedicatedMotion) {
+      if (usesRegionalForms) {
+        setAtlasFrame(image, entity?.isMidBoss ? 3 : role, 0);
+      } else if (usesDedicatedMotion) {
         const animationTick = Math.floor(clipElapsed * animationHz);
         if (record.animationTick !== animationTick) {
           const animation = sampleActorAnimation("enemy", entity, clipElapsed, phaseOffset);
@@ -1043,7 +1085,7 @@ export class BattleView {
         }
         setAtlasFrame(image, record.frameColumn, record.frameRow);
       }
-      const baseSize = role === 2 ? 138 : role === 1 ? 108 : 92;
+      const baseSize = entity?.isMidBoss ? 248 : role === 2 ? 138 : role === 1 ? 108 : 92;
       const materialize = finite(entity?.spawnDuration) > 0
         ? clamp01(1 - finite(entity?.spawnDelay) / Math.max(0.01, finite(entity?.spawnDuration)))
         : 1;
@@ -1185,10 +1227,10 @@ export class BattleView {
       const alpha = Math.min(image.alpha, candidate.persistent ? 0.96 : holdAlpha * 0.96);
       if (alpha <= 0.02) continue;
 
-      const screenWidth = (candidate.roleIndex === 2 ? 72 : candidate.roleIndex === 1 ? 64 : 54)
+      const screenWidth = entity?.isMidBoss ? 190 : (candidate.roleIndex === 2 ? 72 : candidate.roleIndex === 1 ? 64 : 54)
         + (entity?.elite ? 8 : 0);
       const width = screenWidth / zoom;
-      const height = (entity?.elite ? 7 : 6) / zoom;
+      const height = (entity?.isMidBoss ? 11 : entity?.elite ? 7 : 6) / zoom;
       const border = 1.25 / zoom;
       const left = image.x - width * 0.5;
       const top = image.y - image.displayHeight * 0.56 - 10 / zoom;

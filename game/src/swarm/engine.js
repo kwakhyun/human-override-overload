@@ -109,6 +109,27 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     victoryBeat: "abyssal-archive-destroyed",
     traces: false,
   }),
+  "neon-foundry": Object.freeze({
+    id: "neon-foundry", chapterId: "chapter-03", bossName: "FORGE COLOSSUS", enemyBudget: 1100, bossHp: 1180000,
+    objective: "SHUT DOWN THE FOUNDRY", chamber: "FORGE COLOSSUS ASSEMBLY PIT",
+    deploymentBeat: "deployment", encounterBeat: "neon-foundry-encounter", victoryBeat: "neon-foundry-destroyed",
+    traces: false, enemyVisualSet: "neon-foundry",
+    midBoss: Object.freeze({ id: "press-warden", name: "PRESS WARDEN", koreanName: "프레스 감시관", maxHp: 52000 }),
+  }),
+  "storm-spire": Object.freeze({
+    id: "storm-spire", chapterId: "chapter-03", bossName: "TEMPEST WYRM", enemyBudget: 1150, bossHp: 1260000,
+    objective: "BREAK THE STORM GRID", chamber: "TEMPEST EYE",
+    deploymentBeat: "deployment", encounterBeat: "storm-spire-encounter", victoryBeat: "storm-spire-destroyed",
+    traces: false, enemyVisualSet: "storm-spire",
+    midBoss: Object.freeze({ id: "thunder-manta", name: "THUNDER MANTA", koreanName: "천둥 가오리", maxHp: 56000 }),
+  }),
+  "gene-vault": Object.freeze({
+    id: "gene-vault", chapterId: "chapter-03", bossName: "PALE ARCHON", enemyBudget: 1200, bossHp: 1340000,
+    objective: "PURGE THE GENE VAULT", chamber: "ARCHON INCUBATION VAULT",
+    deploymentBeat: "deployment", encounterBeat: "gene-vault-encounter", victoryBeat: "gene-vault-destroyed",
+    traces: false, enemyVisualSet: "gene-vault",
+    midBoss: Object.freeze({ id: "chimera-custodian", name: "CHIMERA CUSTODIAN", koreanName: "키메라 수문장", maxHp: 60000 }),
+  }),
 });
 
 export const BOSS_PATTERNS = Object.freeze(["radial", "sweep", "bombs", "rings", "charge", "multiCharge"]);
@@ -117,6 +138,9 @@ export const REGION_BOSS_PATTERNS = Object.freeze({
   "wrong-engine-core": BOSS_PATTERNS,
   "glass-dune": Object.freeze(["prismLattice", "solarFlare", "refractionSweep", "mirrorShards"]),
   "abyssal-archive": Object.freeze(["memorySpiral", "depthCollapse", "archiveEcho", "undertow"]),
+  "neon-foundry": Object.freeze(["solarFlare", "sweep", "bombs", "multiCharge"]),
+  "storm-spire": Object.freeze(["memorySpiral", "prismLattice", "rings", "multiCharge"]),
+  "gene-vault": Object.freeze(["depthCollapse", "radial", "bombs", "undertow"]),
 });
 
 const BOSS_PARRY_WINDOW = 1.5;
@@ -147,6 +171,18 @@ export const REGION_ENEMY_PROFILES = Object.freeze({
   "abyssal-archive": Object.freeze({
     opening: Object.freeze({ weights: Object.freeze({ hunter: 8, suppressor: 1, brute: 1 }), offset: 2 }),
     reinforcement: Object.freeze({ weights: Object.freeze({ hunter: 7, suppressor: 2, brute: 1 }), offset: 4 }),
+  }),
+  "neon-foundry": Object.freeze({
+    opening: Object.freeze({ weights: Object.freeze({ hunter: 3, suppressor: 5, brute: 2 }), offset: 1 }),
+    reinforcement: Object.freeze({ weights: Object.freeze({ hunter: 2, suppressor: 5, brute: 3 }), offset: 5 }),
+  }),
+  "storm-spire": Object.freeze({
+    opening: Object.freeze({ weights: Object.freeze({ hunter: 5, suppressor: 2, brute: 3 }), offset: 2 }),
+    reinforcement: Object.freeze({ weights: Object.freeze({ hunter: 4, suppressor: 2, brute: 4 }), offset: 6 }),
+  }),
+  "gene-vault": Object.freeze({
+    opening: Object.freeze({ weights: Object.freeze({ hunter: 3, suppressor: 5, brute: 2 }), offset: 3 }),
+    reinforcement: Object.freeze({ weights: Object.freeze({ hunter: 3, suppressor: 4, brute: 3 }), offset: 7 }),
   }),
 });
 
@@ -413,6 +449,7 @@ function spawnEnemy(state) {
   state.enemies.push({
     id: ++state.nextEntityId,
     type,
+    visualSet: state.enemyVisualSet,
     combatRole: base.role,
     x: point.x,
     y: point.y,
@@ -464,6 +501,40 @@ function spawnEnemy(state) {
     spawnDuration: state.expedition ? 0.58 : 0,
   });
   state.spawnedEnemies += 1;
+  return true;
+}
+
+function spawnRouteMidBoss(state) {
+  const definition = state.expedition?.midBoss?.definition;
+  if (!definition || state.expedition.midBoss.spawned) return false;
+  const x = clamp(state.player.x + 520, state.expedition.originX + 800, state.expedition.originX + state.expedition.gateLockDistance - 160);
+  const y = WORLD_HEIGHT * 0.5;
+  const hp = Math.max(1, finite(definition.maxHp, 52000));
+  const enemy = {
+    id: ++state.nextEntityId,
+    type: "midboss",
+    combatRole: "rifleman",
+    visualSet: state.enemyVisualSet,
+    isMidBoss: true,
+    name: definition.name,
+    koreanName: definition.koreanName,
+    x, y, vx: 0, vy: 0, angle: Math.PI, radius: 74,
+    hp, maxHp: hp, speed: 76, damage: 24, xp: 180, color: "#ffb347", elite: true,
+    dead: false, hitFlash: 0, attackCooldown: 0.2, shootCooldown: 0.45,
+    burstShots: 0, burstTimer: 0, aimTimer: 0, aimDuration: 0,
+    lockedAimX: 0, lockedAimY: 0, lockedStartX: 0, lockedStartY: 0,
+    slow: 0, disabledTimer: 0, selfDestructArmed: false, selfDestructTimer: 0,
+    selfDestructDuration: 0, selfDestructTriggerRadius: 0, selfDestructBlastRadius: 0,
+    orbitHitCooldown: 0, animationState: "spawn", animationTimer: 0.6,
+    attackState: "idle", attackTimer: 0, recoil: 0, hitStun: 0,
+    deathTimer: 0, moveBlend: 0, spawnGateId: "midboss-lock", spawnDelay: 0.7, spawnDuration: 0.7,
+  };
+  state.enemies.push(enemy);
+  state.expedition.midBoss.spawned = true;
+  state.expedition.midBoss.enemyId = enemy.id;
+  state.expedition.objective = `${definition.koreanName} 격파`;
+  emit(state, "midBossEncounter", { id: definition.id, name: definition.name, koreanName: definition.koreanName, x, y, maxHp: hp });
+  addText(state, `중간보스 · ${definition.koreanName}`, state.player.x, state.player.y - 92, "#ffc75d", 1.4);
   return true;
 }
 
@@ -641,6 +712,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     random: safeRandom,
     regionId: regionConfig.id,
     enemyProfile: REGION_ENEMY_PROFILES[regionConfig.id] ?? REGION_ENEMY_PROFILES["wrong-engine-core"],
+    enemyVisualSet: regionConfig.enemyVisualSet ?? "inner-network",
     chapterId: regionConfig.chapterId,
     regionObjective: regionConfig.objective,
     bossChamber: regionConfig.chamber,
@@ -685,6 +757,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       autoBossEntry: false,
       bossEntryConfirmed: false,
       bossRoom: false,
+      midBoss: regionConfig.midBoss ? { definition: { ...regionConfig.midBoss }, spawned: false, defeated: false, enemyId: null } : null,
       traces: regionConfig.traces ? EXPEDITION_TRACES.map((trace) => ({ ...trace, triggered: false })) : [],
     } : null,
     nextEntityId: 0,
@@ -991,12 +1064,13 @@ function updateExpedition(state) {
   expedition.atLockedGate = !allHostilesKilled && expedition.distance >= expedition.gateLockDistance - 4;
   if (expedition.atLockedGate && !expedition.gateLockedPrompted) {
     const remainingEnemies = Math.max(0, state.enemyBudget - state.killedEnemies);
+    const midBossPending = expedition.midBoss?.spawned && !expedition.midBoss?.defeated;
     expedition.gateLockedPrompted = true;
     emit(state, "bossGateLocked", {
       regionId: state.regionId,
       reason: "hostilesRemaining",
       title: "보스 구역 봉쇄",
-      message: `잔존 적 ${remainingEnemies}기를 먼저 처치하세요.`,
+      message: midBossPending ? `${expedition.midBoss.definition.koreanName}을 먼저 격파하세요.` : `잔존 적 ${remainingEnemies}기를 먼저 처치하세요.`,
       remainingEnemies,
     });
   }
@@ -1006,6 +1080,8 @@ function updateExpedition(state) {
       ? "SOVEREIGN 신호 폭주 감지"
     : expedition.awaitingBossEntry
       ? `${state.bossChamber} · 자동 진입`
+    : expedition.midBoss?.spawned && !expedition.midBoss?.defeated
+      ? `중간보스 · ${expedition.midBoss.definition.koreanName} 격파`
     : expedition.reachedGate
       ? `${state.bossChamber} READY`
     : allHostilesKilled
@@ -1397,6 +1473,7 @@ function hasLivingEnemy(enemies) {
 function allRouteHostilesKilled(state) {
   return state?.spawnedEnemies >= state?.enemyBudget
     && state?.killedEnemies >= state?.enemyBudget
+    && (!state?.expedition?.midBoss || state.expedition.midBoss.defeated)
     && !hasLivingEnemy(state?.enemies ?? []);
 }
 
@@ -1486,7 +1563,19 @@ function killEnemy(state, enemy, source = "weapon") {
   enemy.animationState = "death";
   enemy.animationTimer = enemy.deathTimer;
   enemy.attackState = "idle";
-  state.killedEnemies += 1;
+  if (enemy.isMidBoss && state.expedition?.midBoss) {
+    state.expedition.midBoss.defeated = true;
+    state.expedition.objective = `${state.bossChamber} 전환 준비`;
+    emit(state, "midBossDefeated", {
+      id: state.expedition.midBoss.definition.id,
+      name: state.expedition.midBoss.definition.name,
+      koreanName: state.expedition.midBoss.definition.koreanName,
+      next: "bossRoom",
+    });
+    addText(state, "중간보스 격파 · 보스방 연결", enemy.x, enemy.y - 74, "#72f2ff", 1.25);
+  } else {
+    state.killedEnemies += 1;
+  }
   state.stats.kills += 1;
   if (state.stats.kills % 25 === 0) {
     state.player.hp = Math.min(state.player.maxHp, state.player.hp + 6 * state.player.healingMultiplier);
@@ -1498,7 +1587,7 @@ function killEnemy(state, enemy, source = "weapon") {
   if (source !== "selfDestruct") spawnXpPickup(state, enemy);
   burst(state, enemy.x, enemy.y, enemy.elite ? "#ffe06b" : enemy.color, enemy.elite ? 16 : 6, enemy.elite ? 250 : 150, 0.55, enemy.elite ? 7 : 4);
   if (enemy.elite) addText(state, "ELITE DOWN", enemy.x, enemy.y - 28, "#ffe371", 0.9);
-  if (state.killedEnemies % 4 === 0 || enemy.elite) emit(state, "enemyKilled", { type: enemy.type, elite: enemy.elite, source });
+  if (!enemy.isMidBoss && (state.killedEnemies % 4 === 0 || enemy.elite)) emit(state, "enemyKilled", { type: enemy.type, elite: enemy.elite, source });
 }
 
 function cancelSniperAim(state, enemy) {
@@ -3278,6 +3367,11 @@ function updateSwarmSpawning(state, dt) {
   state.stats.peakEnemies = Math.max(state.stats.peakEnemies, state.enemies.length);
   if (state.spawnedEnemies >= state.enemyBudget && state.killedEnemies >= state.enemyBudget && state.enemies.length === 0) {
     if (state.expedition) {
+      if (state.expedition.midBoss && !state.expedition.midBoss.spawned) {
+        spawnRouteMidBoss(state);
+        return;
+      }
+      if (state.expedition.midBoss && !state.expedition.midBoss.defeated) return;
       beginRouteClearTransition(state);
       updateRouteClearTransition(state, dt);
       return;
@@ -4589,9 +4683,11 @@ export function getSwarmHud(state) {
       atLockedGate: state.expedition.atLockedGate,
       gateNotice: state.expedition.atLockedGate && state.expedition.gateLocked ? {
         active: true,
-        reason: "hostilesRemaining",
+        reason: state.expedition.midBoss?.spawned && !state.expedition.midBoss?.defeated ? "midBoss" : "hostilesRemaining",
         title: "보스 구역 봉쇄",
-        message: `잔존 적 ${remaining}기를 먼저 처치하세요.`,
+        message: state.expedition.midBoss?.spawned && !state.expedition.midBoss?.defeated
+          ? `${state.expedition.midBoss.definition.koreanName}을 먼저 격파하세요.`
+          : `잔존 적 ${remaining}기를 먼저 처치하세요.`,
         remainingEnemies: remaining,
       } : null,
       clearTransition: state.expedition.clearTransition
@@ -4608,6 +4704,14 @@ export function getSwarmHud(state) {
         distance: trace.distance,
         triggered: trace.triggered,
       })),
+      midBoss: state.expedition.midBoss ? {
+        id: state.expedition.midBoss.definition.id,
+        name: state.expedition.midBoss.definition.name,
+        koreanName: state.expedition.midBoss.definition.koreanName,
+        spawned: state.expedition.midBoss.spawned,
+        defeated: state.expedition.midBoss.defeated,
+        enemyId: state.expedition.midBoss.enemyId,
+      } : null,
     } : null,
     enemiesRemaining: remaining,
     remainingEnemies: remaining,

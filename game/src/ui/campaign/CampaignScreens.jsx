@@ -34,6 +34,9 @@ const BOSS_DISPLAY = Object.freeze({
   "THE WRONG ENGINE": "오답 엔진 · THE WRONG ENGINE",
   "MIRROR TYRANT": "거울 폭군 · MIRROR TYRANT",
   "DROWNED ORACLE": "침몰한 예언자 · DROWNED ORACLE",
+  "FORGE COLOSSUS": "용광로 거신 · FORGE COLOSSUS",
+  "TEMPEST WYRM": "폭풍룡 · TEMPEST WYRM",
+  "PALE ARCHON": "창백한 집정관 · PALE ARCHON",
 });
 
 const ABILITY_CATEGORY_KO = Object.freeze({
@@ -51,6 +54,9 @@ const WORLD_TERM_KO = Object.freeze({
   "AEGIS": "이지스",
   "HAVEN-09": "헤이븐-09",
   "NIGHTJAR": "나이트자",
+  "NEON FOUNDRY": "네온 주조구",
+  "STORM SPIRE": "폭풍 첨탑",
+  "GENE VAULT": "생체 금고",
 });
 
 function localizeWorldText(value = "") {
@@ -99,7 +105,7 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
       <section className="save-slot-grid" aria-label="캠페인 저장 슬롯">
         {normalized.map((slot, index) => {
           const completed = slot?.completedRegionIds?.length || 0;
-          const progress = Math.round(completed / 3 * 100);
+          const progress = Math.round(completed / 6 * 100);
           return (
             <button
               type="button"
@@ -112,7 +118,7 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
                 <>
                   <FloppyDisk weight="fill" />
                   <strong>{slot.homeBaseUnlocked ? "헤이븐-09 복귀 기록" : "첫 출격 준비"}</strong>
-                  <p>{completed} / 3 지역 해방 · {progress}%</p>
+                  <p>{completed} / 6 지역 해방 · {progress}%</p>
                   <i><i style={{ width: `${progress}%` }} /></i>
                   <small>{formatUpdatedAt(slot.updatedAt)}</small>
                   <b>기록 계속하기 <Play weight="fill" /></b>
@@ -347,7 +353,7 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
   );
 }
 
-export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCloseFacility, onBoard, onTitle }) {
+export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCloseFacility, onBoard, onTitle }) {
   const background = assetSource(assets?.homeBase);
   const buttonAtlas = assetSource(assets?.buttonAtlas);
   const completed = campaign?.completedRegionIds?.length || 0;
@@ -358,7 +364,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
       <header className="base-status">
         <div><small>주 기지</small><strong>헤이븐-09</strong></div>
         <span><FloppyDisk weight="fill" /> 슬롯 {(campaign?.slotIndex ?? 0) + 1} · 자동 저장</span>
-        <b>연구 자료 {campaign?.progression?.researchData || 0} · 장비 부품 {campaign?.progression?.equipmentParts || 0} · 해방 {completed} / 3</b>
+        <b>연구 자료 {campaign?.progression?.researchData || 0} · 장비 부품 {campaign?.progression?.equipmentParts || 0} · 해방 {completed} / 6</b>
       </header>
 
       {(npcs || []).map((npc) => {
@@ -367,11 +373,12 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
         return (
           <button
             type="button"
-            className={`base-hotspot npc-${npc.id}`}
+            className={`base-hotspot npc-${npc.id}${npc.id === "lark" && larkAlert ? " has-mission-alert" : ""}`}
             onClick={() => onNpc(npc)}
             aria-label={`${display.name}와 대화`}
             key={npc.id}
           >
+            {npc.id === "lark" && larkAlert && <span className="npc-mission-alert" aria-label="신규 권역 브리핑"><Sparkle weight="fill" /><b>!</b></span>}
             <NpcWorldFigure npc={npc} assets={assets} />
             <Icon weight="fill" /><span className="base-hotspot-copy"><small>{display.role}</small><b>{display.name}</b></span>
           </button>
@@ -384,8 +391,8 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
 
       <aside className="base-objective">
         <small>현재 작전</small>
-        <strong>{completed >= 3 ? "소버린 궤도 연결망 발견" : "지역 추론핵을 추적하세요"}</strong>
-        <p>{completed >= 3 ? "세 지역 신호가 하나의 궤도 통제망을 가리킵니다." : "비행선에서 다음 전투 구역을 선택할 수 있습니다."}</p>
+        <strong>{larkAlert ? "라크가 신규 권역 신호를 해독했습니다" : completed >= 3 ? "외곽 권역 작전 진행 중" : "지역 추론핵을 추적하세요"}</strong>
+        <p>{larkAlert ? "격납고의 느낌표가 표시된 라크와 대화하세요." : completed >= 3 ? "상위 권역을 선택한 뒤 개별 구역에 출격할 수 있습니다." : "비행선에서 다음 전투 구역을 선택할 수 있습니다."}</p>
         {campaign?.lastRegionRewards && (
           <div className="base-reward-receipt">
             <span>회수 자원</span>
@@ -485,14 +492,25 @@ export function AbilityGuideScreen({ assets, onComplete, onBack }) {
   );
 }
 
-export function RegionSelectScreen({ regions, campaign, assets, weapons = [], equippedWeaponId = "pulse-rifle", onWeaponChange, onSelect, onBack }) {
+export function RegionSelectScreen({ regions, clusters = [], campaign, assets, weapons = [], equippedWeaponId = "pulse-rifle", onWeaponChange, onSelect, onBack }) {
   const background = assetSource(assets?.regionMap);
   const buttonAtlas = assetSource(assets?.buttonAtlas);
   const unlocked = new Set(campaign?.unlockedRegionIds || ["wrong-engine-core"]);
   const completed = new Set(campaign?.completedRegionIds || []);
-  const firstUnlockedId = (regions || []).find((region) => unlocked.has(region.id))?.id || null;
+  const storyFlags = new Set(campaign?.storyFlags || []);
+  const [selectedClusterId, setSelectedClusterId] = useState(null);
+  const [hoveredClusterId, setHoveredClusterId] = useState(null);
   const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [hoveredRegionId, setHoveredRegionId] = useState(null);
+  const selectedCluster = useMemo(
+    () => (clusters || []).find((cluster) => cluster.id === selectedClusterId) || null,
+    [clusters, selectedClusterId],
+  );
+  const clusterRegions = useMemo(
+    () => selectedCluster ? (regions || []).filter((region) => selectedCluster.regionIds.includes(region.id)) : [],
+    [regions, selectedCluster],
+  );
+  const firstUnlockedId = clusterRegions.find((region) => unlocked.has(region.id))?.id || null;
   const previewRegionId = selectedRegionId || hoveredRegionId || firstUnlockedId;
   const previewRegion = useMemo(
     () => (regions || []).find((region) => region.id === previewRegionId) || null,
@@ -511,16 +529,28 @@ export function RegionSelectScreen({ regions, campaign, assets, weapons = [], eq
         setSelectedRegionId(null);
         return;
       }
+      if (selectedClusterId) {
+        setSelectedClusterId(null);
+        setHoveredRegionId(null);
+        return;
+      }
       onBack?.();
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [onBack, selectedRegionId]);
+  }, [onBack, selectedClusterId, selectedRegionId]);
 
-  const previewSource = previewRegion?.assets?.dom?.thumbnail?.path;
+  const hoveredCluster = (clusters || []).find((cluster) => cluster.id === hoveredClusterId) || null;
+  const clusterPreview = selectedCluster || hoveredCluster || clusters?.[0] || null;
+  const previewSource = previewRegion?.assets?.dom?.thumbnail?.path || clusterPreview?.previewPath;
+  const canEnterCluster = (cluster) => {
+    if (!cluster || cluster.comingSoon) return false;
+    if (!(cluster.prerequisiteRegionIds || []).every((regionId) => completed.has(regionId))) return false;
+    return !cluster.briefingFlag || storyFlags.has(cluster.briefingFlag);
+  };
   return (
-    <main className={`campaign-shell region-select-screen${selectedRegion ? " has-selection" : ""}`} style={buttonAtlas ? { "--command-button-atlas": `url(${buttonAtlas})` } : undefined}>
-      {background && <img className="campaign-background" src={background} alt="비행선 전술 지도에 표시된 세 개의 작전 구역" />}
+    <main className={`campaign-shell region-select-screen${selectedRegion ? " has-selection" : ""}${selectedCluster ? " has-cluster" : " is-cluster-map"}`} style={buttonAtlas ? { "--command-button-atlas": `url(${buttonAtlas})` } : undefined}>
+      {background && <img className="campaign-background" src={background} alt="나이트자 비행선의 권역 전술 지도" />}
       {previewSource && (
         <img
           className={`region-focus-background region-focus-${previewRegion?.id}${selectedRegion ? " is-selected" : ""}`}
@@ -532,19 +562,53 @@ export function RegionSelectScreen({ regions, campaign, assets, weapons = [], eq
       )}
       <div className="region-map-shade" aria-hidden="true" />
       <header className="region-select-heading">
-        <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={onBack}><ArrowLeft weight="bold" /> 기지 <kbd>ESC</kbd></button>
-        <small>스카이라인 · 비행 관제</small>
-        <h1>출격 구역 선택</h1>
-        <p>구역을 선택해 위험 요소를 확인한 뒤, 작전 상세 창에서 출격을 승인하세요.</p>
+        <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={selectedCluster ? () => setSelectedClusterId(null) : onBack}><ArrowLeft weight="bold" /> {selectedCluster ? "권역 지도" : "기지"} <kbd>ESC</kbd></button>
+        <small>나이트자 · 광역 항법 관제</small>
+        <h1>{selectedCluster ? `${selectedCluster.koreanName} · 구역 선택` : "작전 권역 선택"}</h1>
+        <p>{selectedCluster ? "권역 안의 개별 구역을 선택해 상세 정보를 확인하세요." : "먼저 3개 구역이 묶인 상위 권역을 선택하세요."}</p>
       </header>
-      <section className="region-card-grid" aria-label="출격 가능한 지역">
-        {(regions || []).map((region, index) => {
+      {!selectedCluster ? (
+        <section className="region-cluster-grid" aria-label="작전 권역">
+          {(clusters || []).map((cluster) => {
+            const available = canEnterCluster(cluster);
+            const clearedCount = cluster.regionIds.filter((regionId) => completed.has(regionId)).length;
+            const milestoneReady = !cluster.comingSoon
+              && (cluster.prerequisiteRegionIds || []).every((regionId) => completed.has(regionId))
+              && cluster.briefingFlag
+              && !storyFlags.has(cluster.briefingFlag);
+            return (
+              <button
+                type="button"
+                className={`region-cluster-card cluster-${cluster.id}${available ? " is-available" : " is-locked"}${milestoneReady ? " needs-briefing" : ""}`}
+                disabled={!available}
+                onMouseEnter={() => setHoveredClusterId(cluster.id)}
+                onMouseLeave={() => setHoveredClusterId(null)}
+                onFocus={() => setHoveredClusterId(cluster.id)}
+                onBlur={() => setHoveredClusterId(null)}
+                onClick={() => { setSelectedClusterId(cluster.id); setSelectedRegionId(null); }}
+                key={cluster.id}
+              >
+                <img src={cluster.previewPath} alt="" aria-hidden="true" />
+                <span>{cluster.rangeLabel}</span>
+                <strong>{cluster.koreanName}<em>{cluster.name}</em></strong>
+                <p>{cluster.summary}</p>
+                <footer>
+                  <b>{cluster.comingSoon ? "항로 분석 중" : milestoneReady ? "라크의 신규 항로 브리핑 필요" : available ? `${clearedCount} / ${cluster.regionIds.length} 해방` : "선행 구역 미완료"}</b>
+                  {available ? <ArrowRight weight="bold" /> : <Lock weight="fill" />}
+                </footer>
+              </button>
+            );
+          })}
+        </section>
+      ) : (
+      <section className="region-card-grid" aria-label={`${selectedCluster.koreanName} 출격 구역`}>
+        {clusterRegions.map((region) => {
           const isUnlocked = unlocked.has(region.id);
           const isCompleted = completed.has(region.id);
           return (
             <button
               type="button"
-              className={`region-card region-${index + 1}${isCompleted ? " is-completed" : ""}`}
+              className={`region-card region-${region.order}${isCompleted ? " is-completed" : ""}`}
               disabled={!isUnlocked}
               aria-pressed={selectedRegionId === region.id}
               onMouseEnter={() => isUnlocked && setHoveredRegionId(region.id)}
@@ -554,7 +618,7 @@ export function RegionSelectScreen({ regions, campaign, assets, weapons = [], eq
               onClick={() => setSelectedRegionId(region.id)}
               key={region.id}
             >
-              <span>작전 {String(index + 1).padStart(2, "0")}</span>
+              <span>작전 {String(region.order).padStart(2, "0")}</span>
               <strong className="region-mixed-name"><span>{region.koreanName || region.name}</span><em>{region.name}</em></strong>
               <p>{localizeWorldText(region.summary)}</p>
               {region.threatProfile && (
@@ -570,6 +634,7 @@ export function RegionSelectScreen({ regions, campaign, assets, weapons = [], eq
           );
         })}
       </section>
+      )}
       {selectedRegion && (
         <section className="region-sortie-dialog" role="dialog" aria-modal="true" aria-labelledby="region-sortie-title">
           <button type="button" className="region-sortie-close" data-ui-sound="uiClose" onClick={() => setSelectedRegionId(null)} aria-label="작전 상세 닫기">
@@ -581,6 +646,7 @@ export function RegionSelectScreen({ regions, campaign, assets, weapons = [], eq
           <dl className="region-sortie-intel">
             <div><dt>주요 적 조합</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.composition)}</dd></div>
             <div><dt>보스 패턴</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.bossSignatures)}</dd></div>
+            {selectedRegion.midBoss && <div><dt>중간 방어체</dt><dd>{selectedRegion.midBoss.koreanName} · {selectedRegion.midBoss.name}</dd></div>}
             <div><dt>최종 목표</dt><dd>{BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName} 파괴</dd></div>
             <div><dt>예상 교전</dt><dd>기계 군단 {selectedRegion.enemyBudget}기</dd></div>
           </dl>
@@ -656,6 +722,13 @@ export function SortieCinematicScreen({ region, videoSource, posterSource, sound
     };
   }, [startPlayback, videoSource]);
 
+  useEffect(() => {
+    if (assetSource(videoSource)) return undefined;
+    setPlaying(true);
+    const timer = window.setTimeout(complete, 2400);
+    return () => window.clearTimeout(timer);
+  }, [complete, videoSource]);
+
   const handlePlaying = () => {
     setPlaying(true);
     setAutoplayBlocked(false);
@@ -669,7 +742,7 @@ export function SortieCinematicScreen({ region, videoSource, posterSource, sound
     : `백그라운드 전장 로딩 ${loadPercent}%`;
   return (
     <main className={`sortie-cinematic sortie-${region?.id || "unknown"}${playing ? " is-playing" : ""}`} aria-label={`${koreanName} 출격 영상`}>
-      <video
+      {assetSource(videoSource) ? <video
         ref={videoRef}
         className="sortie-cinematic-video"
         src={assetSource(videoSource)}
@@ -684,7 +757,7 @@ export function SortieCinematicScreen({ region, videoSource, posterSource, sound
         onPlaying={handlePlaying}
         onEnded={complete}
         onError={complete}
-      />
+      /> : <img className="sortie-cinematic-video" src={assetSource(posterSource)} alt={`${koreanName} 출격 항로`} />}
       <div className="sortie-cinematic-grade" aria-hidden="true" />
       <header className="sortie-cinematic-heading">
         <small>NIGHTJAR // 출격 항로 연결</small>
@@ -700,6 +773,42 @@ export function SortieCinematicScreen({ region, videoSource, posterSource, sound
           <Play weight="fill" /> 출격 영상 재생
         </button>
       )}
+    </main>
+  );
+}
+
+export function ReturnCinematicScreen({ region, backgroundSource, onComplete }) {
+  const completedRef = useRef(false);
+  const finish = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    onComplete?.();
+  }, [onComplete]);
+
+  useEffect(() => {
+    completedRef.current = false;
+    const timer = window.setTimeout(finish, 5200);
+    const handleKey = (event) => {
+      if (event.key === "Escape" || event.key === "Enter" || event.key === " ") finish();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [finish, region?.id]);
+
+  return (
+    <main className="return-cinematic" aria-label={`${region?.koreanName || "작전 구역"}에서 헤이븐-09로 귀환`}>
+      <img className="return-cinematic-background" src={assetSource(backgroundSource)} alt="나이트자 비행선이 헤이븐-09 격납고로 귀환하는 모습" />
+      <div className="return-cinematic-speed" aria-hidden="true" />
+      <section className="return-cinematic-copy">
+        <small>MISSION COMPLETE // NIGHTJAR RTB</small>
+        <h1>작전 완료</h1>
+        <strong>{region?.koreanName || region?.name}에서 귀환 중</strong>
+        <span><AirplaneTilt weight="fill" /> 헤이븐-09 도킹 항로 확보</span>
+      </section>
+      <button type="button" className="return-cinematic-skip" onClick={finish}>귀환 연출 건너뛰기 <kbd>ESC</kbd></button>
     </main>
   );
 }

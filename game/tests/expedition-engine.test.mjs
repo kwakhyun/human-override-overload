@@ -212,6 +212,46 @@ test("clearing all 300 enemies runs warning and panic beats before automatic bos
   assert.ok(events.some((event) => event.type === "scenario" && event.beat === "engine-encounter"));
 });
 
+test("outer-frontier routes deploy distinct armies and require a large midboss before extraction", () => {
+  const expectations = [
+    ["neon-foundry", "PRESS WARDEN", "neon-foundry", 1100],
+    ["storm-spire", "THUNDER MANTA", "storm-spire", 1150],
+    ["gene-vault", "CHIMERA CUSTODIAN", "gene-vault", 1200],
+  ];
+
+  for (const [regionId, midBossName, visualSet, budget] of expectations) {
+    const state = createSwarmState({ random: seededRandom(71), duration: 360, expedition: true, regionId });
+    const input = createSwarmInput();
+    assert.equal(state.enemyBudget, budget);
+    assert.ok(state.enemies.every((enemy) => enemy.visualSet === visualSet));
+    assert.equal(state.expedition.midBoss.definition.name, midBossName);
+
+    state.enemies.length = 0;
+    state.spawnedEnemies = state.enemyBudget;
+    state.killedEnemies = state.enemyBudget;
+    state.stats.kills = state.enemyBudget;
+    state.levelFlow.firstDeadline = 999;
+    state.levelFlow.nextOfferAt = 999;
+    drainSwarmEvents(state);
+    stepSwarm(state, input, 1 / 60);
+
+    assert.equal(state.expedition.midBoss.spawned, true);
+    assert.equal(state.expedition.midBoss.defeated, false);
+    assert.equal(state.expedition.clearTransition, null);
+    const midBoss = state.enemies.find((enemy) => enemy.isMidBoss);
+    assert.ok(midBoss);
+    assert.equal(midBoss.visualSet, visualSet);
+    assert.ok(midBoss.radius >= 70);
+    assert.ok(drainSwarmEvents(state).some((event) => event.type === "midBossEncounter" && event.name === midBossName));
+
+    state.enemies.length = 0;
+    state.expedition.midBoss.defeated = true;
+    stepSwarm(state, input, 1 / 60);
+    assert.equal(state.expedition.clearTransition.phase, "warning");
+    assert.ok(drainSwarmEvents(state).some((event) => event.type === "routeClearWarning"));
+  }
+});
+
 test("the route minimap exposes capped deterministic normalized player and live-enemy samples", () => {
   const create = () => {
     const state = createSwarmState({ random: seededRandom(47), duration: 360, expedition: true });

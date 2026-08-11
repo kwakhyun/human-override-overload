@@ -1,6 +1,7 @@
 import {
   CAMPAIGN_CHAPTERS,
   DEFAULT_REGION_ID,
+  OUTER_SECTOR_BRIEFING_FLAG,
   getCampaignRegions,
   getCompletedChapterIds,
   getCurrentChapterId,
@@ -286,9 +287,28 @@ export function getCampaignMainWeapon(campaign, slotId) {
 }
 
 export function canLaunchRegion(slot, regionId) {
-  if (!getRegion(regionId) || !slot) return false;
+  const region = getRegion(regionId);
+  if (!region || !slot) return false;
   const sanitized = sanitizeSlot(slot, Math.max(0, normalizeSlotIndex(slot.id)));
-  return Boolean(sanitized?.unlockedRegionIds.includes(regionId));
+  if (!sanitized?.unlockedRegionIds.includes(regionId)) return false;
+  return !region.briefingFlag || sanitized.storyFlags.includes(region.briefingFlag);
+}
+
+export function completeOuterSectorBriefing(campaign, slotId, options = {}) {
+  const index = normalizeSlotIndex(slotId);
+  if (index < 0) return sanitizeCampaign(campaign);
+  const nextCampaign = createCampaignSlot(campaign, slotId, options);
+  const slot = nextCampaign.slots[index];
+  const milestoneIds = ["wrong-engine-core", "glass-dune", "abyssal-archive"];
+  if (!milestoneIds.every((regionId) => slot.completedRegionIds.includes(regionId))) return nextCampaign;
+  if (slot.storyFlags.includes(OUTER_SECTOR_BRIEFING_FLAG)) return nextCampaign;
+  const slots = nextCampaign.slots.slice();
+  slots[index] = sanitizeSlot({
+    ...slot,
+    updatedAt: resolveNow(options.now),
+    storyFlags: [...slot.storyFlags, OUTER_SECTOR_BRIEFING_FLAG],
+  }, index);
+  return { version: CAMPAIGN_SAVE_VERSION, slots };
 }
 
 function nextRegionRecord(previous, result, now) {
