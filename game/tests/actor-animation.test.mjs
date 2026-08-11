@@ -24,8 +24,8 @@ test("actor clip catalog covers the hero, three enemy silhouettes, allies, and b
     }
   }
 
-  assert.equal(animation.ACTOR_ANIMATION_PROFILES.hero.fallbackSource, "hero-v2-8x9");
-  assert.deepEqual(animation.ACTOR_ANIMATION_PROFILES.hero.fallbackLayout, { columns: 8, rows: 9 });
+  assert.equal(animation.ACTOR_ANIMATION_PROFILES.hero.fallbackSource, "hero-eight-direction-8x8");
+  assert.deepEqual(animation.ACTOR_ANIMATION_PROFILES.hero.fallbackLayout, { columns: 8, rows: 8 });
   for (const id of ["enemy-hunter", "enemy-suppressor", "enemy-brute"]) {
     assert.equal(animation.ACTOR_ANIMATION_PROFILES[id].fallbackSource, "legacy-5x3");
     assert.deepEqual(animation.ACTOR_ANIMATION_PROFILES[id].fallbackLayout, { columns: 5, rows: 3 });
@@ -86,62 +86,44 @@ test("frame sampling is deterministic for looping and one-shot clips", () => {
   assert.equal(animation.calculateClipFrame(death, -4), 0);
 });
 
-test("hero v2 fallback keeps aim-relative movement rows", () => {
-  assert.equal(animation.resolveHeroMovementRow({ angle: 0, vx: 100, vy: 0 }), animation.HERO_MOTION_ROWS.forward);
-  assert.equal(animation.resolveHeroMovementRow({ angle: 0, vx: -100, vy: 0 }), animation.HERO_MOTION_ROWS.backward);
-  assert.equal(animation.resolveHeroMovementRow({ angle: 0, vx: 0, vy: -100 }), animation.HERO_MOTION_ROWS.strafeUp);
-  assert.equal(animation.resolveHeroMovementRow({ angle: 0, vx: 0, vy: 100 }), animation.HERO_MOTION_ROWS.strafeDown);
-  assert.equal(animation.resolveHeroMovementRow({ angle: Math.PI / 2, vx: 0, vy: 100 }), animation.HERO_MOTION_ROWS.forward);
+test("hero presentation selects eight authored compass rows without mirroring", () => {
+  assert.deepEqual(animation.HERO_DIRECTIONAL_AIM_LAYOUT, { columns: 8, rows: 8 });
+  const cases = [
+    [Math.PI / 2, "south", 0],
+    [Math.PI / 4, "southeast", 1],
+    [0, "east", 2],
+    [-Math.PI / 4, "northeast", 3],
+    [-Math.PI / 2, "north", 4],
+    [-Math.PI * 3 / 4, "northwest", 5],
+    [Math.PI, "west", 6],
+    [Math.PI * 3 / 4, "southwest", 7],
+  ];
+  for (const [angle, direction, row] of cases) {
+    assert.deepEqual(animation.resolveHeroAimPresentation({ angle }), { direction, row, angle });
+    const move = animation.sampleActorAnimation("hero", { angle, vx: 80 }, 0.25);
+    assert.equal(animation.resolveHeroDirectionalAimFrame(move, { angle }).row, row);
+    assert.ok(animation.resolveHeroDirectionalAimFrame(move, { angle }).column < 4);
+  }
 
-  const movingFire = animation.sampleActorAnimation("hero", { angle: 0, vx: 0, vy: -100, attackTimer: 0.1 }, 0.25);
-  assert.equal(movingFire.clipId, "move");
-  assert.equal(movingFire.fallbackAtlasFrame.row, animation.HERO_MOTION_ROWS.strafeUp);
+  const fire = animation.sampleActorAnimation("hero", { angle: Math.PI / 2, attackTimer: 0.1 }, 0.2);
+  assert.ok(animation.resolveHeroDirectionalAimFrame(fire, { angle: Math.PI / 2 }).column >= 4);
+  for (const state of [{ dashTimer: 0.1 }, { hitStun: 0.1 }, { dead: true }]) {
+    const sample = animation.sampleActorAnimation("hero", { angle: -Math.PI / 2, ...state }, 0.04);
+    assert.equal(animation.resolveHeroDirectionalAimFrame(sample, { angle: -Math.PI / 2, ...state }).row, 4);
+  }
 });
 
-test("upright hero presentation selects upper, level, and lower aim rows with left-side mirroring", () => {
-  assert.deepEqual(animation.HERO_DIRECTIONAL_AIM_LAYOUT, { columns: 8, rows: 3 });
-  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: -Math.PI / 2 }), {
-    band: "upper", row: animation.HERO_DIRECTIONAL_AIM_ROWS.upper, flipX: false,
-  });
-  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: 0 }), {
-    band: "level", row: animation.HERO_DIRECTIONAL_AIM_ROWS.level, flipX: false,
-  });
-  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: Math.PI / 2 }), {
-    band: "lower", row: animation.HERO_DIRECTIONAL_AIM_ROWS.lower, flipX: false,
-  });
-  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: -Math.PI * 0.75 }), {
-    band: "upper", row: animation.HERO_DIRECTIONAL_AIM_ROWS.upper, flipX: true,
-  });
-  assert.deepEqual(animation.resolveHeroAimPresentation({ angle: Math.PI * 0.75 }), {
-    band: "lower", row: animation.HERO_DIRECTIONAL_AIM_ROWS.lower, flipX: true,
-  });
-
-  const upperMove = animation.sampleActorAnimation("hero", { angle: -Math.PI / 2, vx: 80 }, 0.25);
-  const lowerFire = animation.sampleActorAnimation("hero", { angle: Math.PI / 2, attackTimer: 0.1 }, 0.2);
-  assert.equal(animation.resolveHeroDirectionalAimFrame(upperMove, { angle: -Math.PI / 2 }).row, 0);
-  assert.ok(animation.resolveHeroDirectionalAimFrame(upperMove, { angle: -Math.PI / 2 }).column < 4);
-  assert.equal(animation.resolveHeroDirectionalAimFrame(lowerFire, { angle: Math.PI / 2 }).row, 2);
-  assert.ok(animation.resolveHeroDirectionalAimFrame(lowerFire, { angle: Math.PI / 2 }).column >= 4);
-  const dash = animation.sampleActorAnimation("hero", { angle: 0, dashTimer: 0.1 }, 0.04);
-  assert.equal(animation.resolveHeroDirectionalAimFrame(dash, { angle: 0 }), null);
-});
-
-test("directional rifle muzzle anchors follow every row and horizontal flip", () => {
-  const upperRight = animation.resolveHeroMuzzleAnchor({ angle: -Math.PI / 2 }, 100);
-  const levelRight = animation.resolveHeroMuzzleAnchor({ angle: 0 }, 100);
-  const lowerRight = animation.resolveHeroMuzzleAnchor({ angle: Math.PI / 2 }, 100);
-  const upperLeft = animation.resolveHeroMuzzleAnchor({ angle: -Math.PI * 0.75 }, 100);
-  const levelLeft = animation.resolveHeroMuzzleAnchor({ angle: Math.PI }, 100);
-  const lowerLeft = animation.resolveHeroMuzzleAnchor({ angle: Math.PI * 0.75 }, 100);
-
-  assert.ok(upperRight.x > 0 && upperRight.y < 0 && upperRight.angle < 0);
-  assert.ok(levelRight.x > upperRight.x && Math.abs(levelRight.y) < 4 && levelRight.angle === 0);
-  assert.ok(lowerRight.x > 0 && lowerRight.y > 0 && lowerRight.angle > 0);
-  assert.ok(upperLeft.x < 0 && upperLeft.y < 0 && upperLeft.angle > Math.PI);
-  assert.ok(levelLeft.x < 0 && Math.abs(levelLeft.y) < 4 && levelLeft.angle === Math.PI);
-  assert.ok(lowerLeft.x < 0 && lowerLeft.y > 0 && lowerLeft.angle > Math.PI / 2);
-  assert.equal(Math.abs(upperLeft.x), Math.abs(upperRight.x));
-  assert.equal(Math.abs(lowerLeft.x), Math.abs(lowerRight.x));
+test("directional rifle muzzle anchors follow all eight authored compass views", () => {
+  const cases = [
+    [0, 1, 0], [Math.PI / 4, 1, 1], [Math.PI / 2, 0, 1], [Math.PI * 3 / 4, -1, 1],
+    [Math.PI, -1, 0], [-Math.PI * 3 / 4, -1, -1], [-Math.PI / 2, 0, -1], [-Math.PI / 4, 1, -1],
+  ];
+  for (const [angle, xSign, ySign] of cases) {
+    const anchor = animation.resolveHeroMuzzleAnchor({ angle }, 100);
+    assert.equal(Math.sign(Math.round(anchor.x)), xSign);
+    assert.equal(Math.sign(Math.round(anchor.y)), ySign);
+    assert.equal(anchor.angle, animation.resolveHeroAimPresentation({ angle }).angle);
+  }
 });
 
 test("hero dash and death frames follow their engine countdowns", () => {
@@ -190,17 +172,17 @@ test("short enemy and ally fire windows reach their authored final attack frames
   assert.equal(animation.calculateClipFrame(allyAttack, 0.14), 4);
 });
 
-test("hero v2 frames and legacy enemy/boss fallbacks remain independently addressable", () => {
+test("hero eight-direction frames and legacy enemy/boss fallbacks remain independently addressable", () => {
   const hero = animation.ACTOR_ANIMATION_PROFILES.hero;
   const earlyMove = animation.resolveFallbackAtlasFrame(hero, hero.clips.move, 0, { angle: 0, vx: 1, vy: 0 });
   const lateMove = animation.resolveFallbackAtlasFrame(hero, hero.clips.move, hero.clips.move.frameCount - 1, { angle: 0, vx: 1, vy: 0 });
-  assert.deepEqual(earlyMove, { column: 0, row: 0 });
-  assert.deepEqual(lateMove, { column: 7, row: 0 });
+  assert.deepEqual(earlyMove, { column: 0, row: animation.HERO_DIRECTIONAL_AIM_ROWS.east });
+  assert.deepEqual(lateMove, { column: 3, row: animation.HERO_DIRECTIONAL_AIM_ROWS.east });
 
   const attackStart = animation.sampleActorAnimation("hero", { attackTimer: 0.1 }, 0);
   const attackEnd = animation.sampleActorAnimation("hero", { attackTimer: 0.1 }, 7 / 24);
-  assert.deepEqual(attackStart.fallbackAtlasFrame, { column: 0, row: 5 });
-  assert.deepEqual(attackEnd.fallbackAtlasFrame, { column: 7, row: 5 });
+  assert.deepEqual(attackStart.fallbackAtlasFrame, { column: 4, row: animation.HERO_DIRECTIONAL_AIM_ROWS.east });
+  assert.deepEqual(attackEnd.fallbackAtlasFrame, { column: 7, row: animation.HERO_DIRECTIONAL_AIM_ROWS.east });
 
   for (const stage of [1, 2, 3]) {
     const boss = animation.sampleActorAnimation("boss", { stage }, 0);

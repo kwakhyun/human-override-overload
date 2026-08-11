@@ -10,8 +10,8 @@ function pngDimensions(bytes) {
 }
 
 const PERFORMANCE_PNG_SPECS = Object.freeze([
-  ["hero/performance/survivor-motion-atlas-v2.png", 768, 864],
-  ["hero/performance/survivor-sword-directional-aim-atlas.png", 1152, 432],
+  ["hero/performance/survivor-directional-aim-atlas.png", 768, 768],
+  ["hero/performance/survivor-sword-directional-aim-atlas.png", 768, 768],
   ["enemies/motion-v2/performance/suicide-drone-motion-atlas.png", 720, 480],
   ["enemies/motion-v2/performance/rifleman-motion-atlas.png", 720, 480],
   ["enemies/motion-v2/performance/sniper-motion-atlas.png", 720, 480],

@@ -58,17 +58,18 @@ test("dialogue crops the hero to a bust and mobile play is guarded for landscape
   assert.match(scene, /externallySuspended/);
 });
 
-test("the active silver AEGIS motion sheet uses the authored 8 by 9 runtime geometry", async () => {
+test("the active silver AEGIS sheets use authored 8-direction runtime geometry", async () => {
   const manifest = await read("src/game/assets/manifest.ts");
   const view = await read("src/phaser/view/BattleView.ts");
-  const atlas = await readBytes("public/assets/overload/hero/survivor-motion-atlas-v2.png");
-  assert.equal(atlas.subarray(1, 4).toString("ascii"), "PNG");
-  assert.equal(atlas.readUInt32BE(16), 1536);
-  assert.equal(atlas.readUInt32BE(20), 1728);
-  assert.equal(atlas.readUInt32BE(16) / 8, 192);
-  assert.equal(atlas.readUInt32BE(20) / 9, 192);
-  assert.match(manifest, /survivor-motion-atlas-v2\.png", kind: "motion", columns: 8, rows: 9/);
-  assert.match(view, /this\.prepareAtlas\(ASSET_KEYS\.playerMotion, 8, 9\)/);
+  for (const path of ["survivor-directional-aim-atlas.png", "survivor-sword-directional-aim-atlas.png"]) {
+    const atlas = await readBytes(`public/assets/overload/hero/${path}`);
+    assert.equal(atlas.subarray(1, 4).toString("ascii"), "PNG");
+    assert.deepEqual([atlas.readUInt32BE(16), atlas.readUInt32BE(20)], [1024, 1024]);
+  }
+  assert.match(manifest, /survivor-directional-aim-atlas\.png[\s\S]*?columns: 8, rows: 8/);
+  assert.match(manifest, /survivor-sword-directional-aim-atlas\.png[\s\S]*?columns: 8, rows: 8/);
+  assert.doesNotMatch(manifest, /survivor-motion-atlas-v2|playerMotion/);
+  assert.match(view, /this\.prepareAtlas\(this\.playerDirectionalTexture, 8, 8\)/);
   assert.match(view, /sampleActorAnimation\("hero", entity, clipElapsed\)/);
 });
 
@@ -271,7 +272,7 @@ test("BootScene registers common assets plus only the selected region with a saf
   const createGame = await read("src/phaser/createOverloadGame.ts");
   const paths = (regionId) => manifest.getGameAssetsForRegion(regionId).map((asset) => asset.path);
   const glass = paths("glass-dune");
-  assert.ok(glass.includes("./assets/overload/hero/survivor-motion-atlas-v2.png"));
+  assert.ok(glass.includes("./assets/overload/hero/survivor-directional-aim-atlas.png"));
   assert.ok(glass.includes("./assets/overload/regions/glass-dune/route.webp"));
   assert.ok(!glass.includes("./assets/overload/regions/glass-dune/boss-room.webp"));
   assert.ok(!glass.includes("./assets/overload/regions/glass-dune/boss-forms-atlas.png"));
@@ -490,14 +491,17 @@ test("level-up cards load authored reward illustrations for every active option"
   }
 });
 
-test("AEGIS stays upright while other strict-overhead actors retain world-heading rotation", async () => {
+test("AEGIS selects eight authored views while other strict-overhead actors retain world-heading rotation", async () => {
   const view = await read("src/phaser/view/BattleView.ts");
   const pipeline = await read("scripts/prepare-overload-art.py");
   assert.match(view, /Phaser\.Math\.Angle\.RotateTo\(record\.image\.rotation, angle/);
   assert.match(view, /\.setRotation\(actorAngle\(entity\)\)[\s\S]*?\.setFlipX\(false\)/);
   const player = view.slice(view.indexOf("private syncPlayer"), view.indexOf("private syncBoss"));
   assert.match(player, /resolveHeroAimPresentation\(entity\)/);
-  assert.match(player, /\.setRotation\(0\)[\s\S]*?\.setFlipX\(presentation\.flipX\)/);
+  assert.match(player, /\.setRotation\(0\)[\s\S]*?\.setFlipX\(false\)/);
+  assert.match(player, /resolveHeroDirectionalAimFrame\(animation, entity\)/);
+  assert.match(view, /prepareAtlas\(this\.playerDirectionalTexture, 8, 8\)/);
+  assert.doesNotMatch(view, /ASSET_KEYS\.playerMotion|HERO_MOTION_ROWS/);
   assert.doesNotMatch(player, /Angle\.RotateTo\(this\.player\.rotation/);
   assert.match(pipeline, /parser\.add_argument\("--player", required=True\)/);
   assert.match(pipeline, /anchor: str = "center"/);
@@ -514,7 +518,7 @@ test("expanded expedition framing makes every hostile larger than AEGIS and stab
   assert.match(view, /const size = state\?\.phase === "boss" \? 64 : 74/);
   assert.match(view, /const baseSize = role === 2 \? 138 : role === 1 \? 108 : 92/);
   assert.match(view, /const recoil = rifleEquipped && animation\.clipId === "attack" \?/);
-  assert.match(view, /setAtlasFrame\(ghost, Math\.max\(0, animation\.clipFrameIndex - index - 1\), HERO_MOTION_ROWS\.dash\)/);
+  assert.match(view, /setAtlasFrame\(ghost, Math\.max\(0, directionalFrame\.column - index - 1\), presentation\.row\)/);
   assert.match(view, /resolveHeroDirectionalAimFrame\(animation, entity\)/);
   assert.match(view, /resolveHeroMuzzleAnchor\(entity, size\)/);
   assert.match(view, /const bossSize = stage === 3 \? 640 : stage === 2 \? 560 : 480/);

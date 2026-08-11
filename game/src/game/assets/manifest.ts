@@ -14,7 +14,6 @@ export const ASSET_KEYS = Object.freeze({
   sector2: "overload-sector-02",
   sector3: "overload-sector-03",
   bossRoom: "overload-boss-chamber",
-  playerMotion: "survivor-motion-atlas",
   playerDirectionalAim: "survivor-directional-aim-atlas",
   playerSwordDirectionalAim: "survivor-sword-directional-aim-atlas",
   enemyMotion: "overload-enemy-motion-atlas",
@@ -83,7 +82,6 @@ export function resolveRegionId(regionId?: string): RegionId {
 }
 
 export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
-  { key: ASSET_KEYS.playerMotion, path: "./assets/overload/hero/survivor-motion-atlas-v2.png", performancePath: "./assets/overload/hero/performance/survivor-motion-atlas-v2.png", kind: "motion", columns: 8, rows: 9 },
   { key: ASSET_KEYS.enemyHunter, path: "./assets/overload/enemies/hunter.png", kind: "image" },
   { key: ASSET_KEYS.enemyRifleman, path: "./assets/overload/enemies/suppressor.png", kind: "image" },
   { key: ASSET_KEYS.enemySniper, path: "./assets/overload/enemies/brute.png", kind: "image" },
@@ -108,10 +106,10 @@ export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
 
 export const WEAPON_GAME_ASSETS: Readonly<Record<MainWeaponId, readonly AssetDefinition[]>> = Object.freeze({
   "pulse-rifle": Object.freeze([
-    { key: ASSET_KEYS.playerDirectionalAim, path: "./assets/overload/hero/survivor-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 3 },
+    { key: ASSET_KEYS.playerDirectionalAim, path: "./assets/overload/hero/survivor-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
   ]),
   "beam-sword": Object.freeze([
-    { key: ASSET_KEYS.playerSwordDirectionalAim, path: "./assets/overload/hero/survivor-sword-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 3 },
+    { key: ASSET_KEYS.playerSwordDirectionalAim, path: "./assets/overload/hero/survivor-sword-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
     { key: ASSET_KEYS.swordSkillPixel, path: "./assets/overload/vfx/pixel/sword-skill-pixel-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
   ]),
 });
@@ -226,7 +224,6 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
   boss: "./assets/overload/boss/wrong-engine-phase1.png",
   bossPhase2: "./assets/overload/boss/wrong-engine-phase2.png",
   bossPhase3: "./assets/overload/boss/wrong-engine-phase3.png",
-  playerMotion: "./assets/overload/hero/survivor-motion-atlas-v2.png",
   enemyMotion: "./assets/overload/enemies/enemy-motion-atlas.png",
   bossMotion: "./assets/overload/boss/wrong-engine-forms-atlas.png",
   sentry: "./assets/overload/allies/pulse-sentry.png",

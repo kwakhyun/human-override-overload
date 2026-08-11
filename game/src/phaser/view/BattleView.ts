@@ -3,7 +3,6 @@ import { ASSET_KEYS } from "../../game/assets/manifest";
 import { EXPEDITION_WORLD_WIDTH, WORLD_HEIGHT, WORLD_WIDTH } from "../../swarm/engine.js";
 import {
   ACTOR_ANIMATION_PROFILES,
-  HERO_MOTION_ROWS,
   getActorAnimationProfile,
   resolveBossClipElapsedSeconds,
   resolveDedicatedAtlasFrame,
@@ -330,6 +329,7 @@ export class BattleView {
   private readonly impactGraphics: Phaser.GameObjects.Graphics;
   private readonly hudGraphics: Phaser.GameObjects.Graphics;
   private readonly player: Phaser.GameObjects.Image;
+  private readonly playerDirectionalTexture: string;
   private readonly boss: Phaser.GameObjects.Image;
   private readonly bossPhaseArt: Phaser.GameObjects.Image;
   private readonly playerGhosts: Phaser.GameObjects.Image[];
@@ -385,9 +385,10 @@ export class BattleView {
     this.scene = scene;
     const regionAssets = getRegionVisualAssets(regionId);
     this.regionAssets = regionAssets;
-    this.prepareAtlas(ASSET_KEYS.playerMotion, 8, 9);
-    if (scene.textures.exists(ASSET_KEYS.playerDirectionalAim)) this.prepareAtlas(ASSET_KEYS.playerDirectionalAim, 8, 3);
-    if (scene.textures.exists(ASSET_KEYS.playerSwordDirectionalAim)) this.prepareAtlas(ASSET_KEYS.playerSwordDirectionalAim, 8, 3);
+    this.playerDirectionalTexture = scene.textures.exists(ASSET_KEYS.playerSwordDirectionalAim)
+      ? ASSET_KEYS.playerSwordDirectionalAim
+      : ASSET_KEYS.playerDirectionalAim;
+    this.prepareAtlas(this.playerDirectionalTexture, 8, 8);
     this.prepareAtlas(ASSET_KEYS.enemyHunterMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemyRiflemanMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemySniperMotion, 6, 4);
@@ -468,12 +469,12 @@ export class BattleView {
     this.worldFront.add(this.muzzleFlash);
 
     this.playerGhosts = Array.from({ length: 3 }, () => {
-      const ghost = scene.add.image(0, 0, ASSET_KEYS.playerMotion).setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
+      const ghost = scene.add.image(0, 0, this.playerDirectionalTexture).setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
       this.actors.add(ghost);
       return ghost;
     });
-    this.player = scene.add.image(WIDTH / 2, HEIGHT / 2, ASSET_KEYS.playerMotion);
-    const bossFormsTexture = scene.textures.exists(regionAssets.bossForms) ? regionAssets.bossForms : ASSET_KEYS.playerMotion;
+    this.player = scene.add.image(WIDTH / 2, HEIGHT / 2, this.playerDirectionalTexture);
+    const bossFormsTexture = scene.textures.exists(regionAssets.bossForms) ? regionAssets.bossForms : this.playerDirectionalTexture;
     this.boss = scene.add.image(0, 0, bossFormsTexture).setVisible(false);
     this.bossPhaseArt = scene.add.image(0, 0, bossFormsTexture).setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
     this.actors.add([this.player, this.boss, this.bossPhaseArt]);
@@ -784,11 +785,9 @@ export class BattleView {
     const directionalTexture = entity?.mainWeaponId === "beam-sword"
       ? ASSET_KEYS.playerSwordDirectionalAim
       : ASSET_KEYS.playerDirectionalAim;
-    const usesDirectionalAtlas = Boolean(directionalFrame && this.preparedAtlases.has(directionalTexture));
-    const playerTexture = usesDirectionalAtlas ? directionalTexture : ASSET_KEYS.playerMotion;
+    const playerTexture = this.preparedAtlases.has(directionalTexture) ? directionalTexture : this.playerDirectionalTexture;
     if (this.player.texture.key !== playerTexture) this.player.setTexture(playerTexture);
-    const playerFrame = directionalFrame ?? animation.fallbackAtlasFrame;
-    setAtlasFrame(this.player, playerFrame.column, playerFrame.row);
+    setAtlasFrame(this.player, directionalFrame.column, directionalFrame.row);
     const size = state?.phase === "boss" ? 64 : 74;
     const rifleEquipped = entity?.mainWeaponId !== "beam-sword";
     const recoil = rifleEquipped && animation.clipId === "attack" ? clamp(finite(entity?.recoil) * 0.55, 0, 2) : 0;
@@ -805,7 +804,7 @@ export class BattleView {
         finite(entity?.y) - Math.sin(muzzle.angle) * recoil + panicY,
       )
       .setRotation(0)
-      .setFlipX(presentation.flipX)
+      .setFlipX(false)
       .setDisplaySize(size, size)
       .setAlpha(entity?.dead ? clamp01(finite(entity?.deathTimer) / 0.9) : 1)
       .setVisible(true)
@@ -838,14 +837,14 @@ export class BattleView {
         ghost.setVisible(false);
         continue;
       }
-      if (ghost.texture.key !== ASSET_KEYS.playerMotion) ghost.setTexture(ASSET_KEYS.playerMotion);
-      setAtlasFrame(ghost, Math.max(0, animation.clipFrameIndex - index - 1), HERO_MOTION_ROWS.dash);
+      if (ghost.texture.key !== playerTexture) ghost.setTexture(playerTexture);
+      setAtlasFrame(ghost, Math.max(0, directionalFrame.column - index - 1), presentation.row);
       const distance = 22 + index * 20;
       ghost
         .setVisible(true)
         .setPosition(entity.x - Math.cos(motionAngle) * distance, entity.y - Math.sin(motionAngle) * distance)
         .setRotation(0)
-        .setFlipX(presentation.flipX)
+        .setFlipX(false)
         .setDisplaySize(size * (0.94 - index * 0.08), size * (0.94 - index * 0.08))
         .setAlpha(0.2 - index * 0.045)
         .setTint(COLORS.cyan);

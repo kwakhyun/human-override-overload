@@ -23,8 +23,8 @@ test("beam sword loadout selects only its authored directional and pixel atlases
   assert.equal(swordKeys.has(manifest.ASSET_KEYS.swordSkillPixel), true);
 
   const specs = [
-    ["../public/assets/overload/hero/survivor-sword-directional-aim-atlas.png", 1536, 576],
-    ["../public/assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png", 1152, 432],
+    ["../public/assets/overload/hero/survivor-sword-directional-aim-atlas.png", 1024, 1024],
+    ["../public/assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png", 768, 768],
     ["../public/assets/overload/vfx/pixel/sword-skill-pixel-atlas.png", 384, 256],
   ];
   for (const [path, width, height] of specs) {
@@ -32,6 +32,7 @@ test("beam sword loadout selects only its authored directional and pixel atlases
     assert.deepEqual(pngDimensions(bytes), [width, height], path);
     assert.equal(bytes[25], 6, `${path} must retain RGBA transparency`);
   }
+  assert.equal(sword.find((asset) => asset.key === manifest.ASSET_KEYS.playerSwordDirectionalAim).rows, 8);
 });
 
 test("BattleView uses weapon-specific hero poses and pooled quality-capped sword effects", async () => {

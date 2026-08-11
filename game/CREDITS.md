@@ -1189,6 +1189,84 @@ Composition: exact 6×4 grid on a 3:2 landscape canvas, one centered effect per 
 Backdrop: perfectly flat solid #ff00ff chroma-key background. No gradient, checker pattern, transparency simulation, grid lines, labels, text, numbers, scenery, shadows, watermark, extra rows or columns. Do not use #ff00ff in any effect.
 ```
 
+## AEGIS 8방향 소총·빔 소드 런타임 아틀라스 (2026-08-12)
+
+- 도구: OpenAI Codex 내장 `image_gen` 전체 시트 생성/정밀 편집, 로컬 Python/Pillow 후처리.
+- 정식 행 계약: SOUTH, SOUTHEAST, EAST, NORTHEAST, NORTH, NORTHWEST, WEST, SOUTHWEST.
+  SOUTH·하단 대각은 얼굴/전면, NORTH·상단 대각은 뒤통수/후면, EAST/WEST는 측면을 직접 묘사합니다.
+  런타임 회전과 좌우 반전은 사용하지 않습니다. 열 0–3은 준비/이동, 열 4–7은 공격입니다.
+- ImageGen 원본:
+  - 소총 1차: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-ae076dd5-c375-4a00-a036-b8c2fd3a2973.png`
+  - 소총 방향 교정 최종: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-658f9ee4-0b68-46a4-9839-a4ac5417bb33.png`
+  - 빔 소드 1차(과대 검기 때문에 런타임 미사용): `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d4f92e2d-02dc-4c65-9f22-bd43e63b6e01.png`
+  - 빔 소드 교정 최종: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3295df39-59c2-4341-8145-bfdbd62a1b8b.png`
+- 프로젝트 보존 원본/알파:
+  - `reference/source-assets/overload/hero/aegis-eight-direction-rifle-{chroma,alpha}.png`
+  - `reference/source-assets/overload/hero/aegis-eight-direction-sword-{chroma,alpha}.png`
+- 활성 런타임:
+  - `public/assets/overload/hero/survivor-directional-aim-atlas.png` — 1024×1024, 8×8, 128px 셀.
+  - `public/assets/overload/hero/survivor-sword-directional-aim-atlas.png` — 1024×1024, 8×8, 128px 셀.
+  - `public/assets/overload/hero/performance/survivor-directional-aim-atlas.png` — 768×768, 96px 셀.
+  - `public/assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png` — 768×768, 96px 셀.
+- QA 프리뷰: `qa/survivor-eight-direction-{rifle,sword}-preview.png`.
+- 후처리: ImageGen 도구의 `remove_chroma_key.py --auto-key border --soft-matte
+  --transparent-threshold 12 --opaque-threshold 220 --despill --force`,
+  `scripts/normalize-overflow-grid-atlas.py --columns 8 --rows 8 --frame-size 128 --padding 8`,
+  `scripts/finalize-eight-direction-hero-atlas.py`, `scripts/build-performance-assets.py`.
+  최종화 스크립트는 EAST/SOUTHEAST에서 WEST/SOUTHWEST 대응 행을 셀 단위로 고정해 무기 방향과
+  프레임 경계를 결정론적으로 보장합니다. 기존 단방향 `survivor-motion-atlas-v2.png`는 활성 런타임에서 삭제했습니다.
+
+### 소총 1차 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down Phaser character direction-and-action spritesheet for HUMAN OVERRIDE: OVERLOAD.
+Input images: Image 1 is the approved current in-game silver-haired AEGIS rifle sprite and defines costume, proportions, cyan rifle, black tactical exosuit, white split coat tails, scale and rendering. Image 2 is identity support for AEGIS's exact silver hair, face, black star hair ornament, pale skin and blue-gray eyes.
+Primary request: create ONE exact square spritesheet arranged as exactly 8 equal columns by 8 equal rows, exactly 64 isolated cells. The character rotates through eight authored compass directions; do not reuse one right-facing body and do not mirror an incorrect pose.
+Direction contract by row, read top to bottom: row 1 faces screen-down/SOUTH and shows her foreshortened face and front hair beneath the crown; row 2 faces down-right/SOUTHEAST and shows a diagonal front three-quarter side view; row 3 faces screen-right/EAST and shows a true side profile; row 4 faces up-right/NORTHEAST and shows a diagonal rear three-quarter view; row 5 faces screen-up/NORTH and clearly shows the back of her silver head, back armor and coat; row 6 faces up-left/NORTHWEST and shows the opposite diagonal rear view; row 7 faces screen-left/WEST and shows the opposite true side profile; row 8 faces down-left/SOUTHWEST and shows the opposite diagonal front three-quarter view.
+Animation contract within every row, read left to right: columns 1-4 are a restrained four-beat locomotion/ready cycle in that exact compass direction; columns 5-8 are shouldered rifle attack beats: ready, small cyan muzzle ignition, restrained recoil, recovery. Rifle buttstock stays seated in her right shoulder, right trigger hand and left support hand remain coherent, and rifle muzzle points in the same compass direction as the body in every cell.
+Camera and anatomy: high top-down tactical camera with consistent foreshortening, enough controlled tilt to satisfy directional readability. SOUTH exposes the face, NORTH exposes only the back of the head, EAST/WEST expose side profile, southeast/southwest expose diagonal face-side views, northeast/northwest expose diagonal rear views. Same character height, center pivot and feet anchor in all cells. Hair, coat tails, arms, boots and rifle must be fully contained inside each cell with generous gutters. No whole-body rotation trick baked from one pose; each direction must be an anatomically authored view.
+Style/medium: polished realistic-anime sci-fi game sprite, crisp small-scale silhouette, same premium rendering and palette as Image 1, not pixel art, no motion blur.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background across every empty pixel. No gradients, texture, floor, cast shadow, reflections, scenery, grid lines, borders, labels, text, numbers, UI, watermark, extra characters, detached weapons, duplicated fragments, cropped limbs or cell overflow. Do not use #ff00ff in the character. Exact 8×8 layout and square canvas are mandatory.
+```
+
+### 소총 방향 교정 프롬프트 전문
+
+```text
+Use case: precise-object-edit.
+Asset type: corrected production 8×8 AEGIS rifle direction sheet.
+Image 1 is the exact edit target. Preserve its exact square 8 columns × 8 rows, same AEGIS identity, silver hair, face/back/side directional anatomy, costume, scale, center pivot, flat #ff00ff background, gutters and animation timing.
+Primary request: correct only the rifle, shoulders and coherent trigger/support hands so the rifle muzzle points in the exact compass direction assigned to each row in every one of that row's eight cells. Row 1 SOUTH: muzzle points straight toward screen-bottom. Row 2 SOUTHEAST: muzzle points diagonally bottom-right. Row 3 EAST: muzzle points straight screen-right. Row 4 NORTHEAST: muzzle points diagonally top-right. Row 5 NORTH: muzzle points straight screen-top while the back of her head remains visible. Row 6 NORTHWEST: muzzle points diagonally top-left. Row 7 WEST: muzzle points straight screen-left. Row 8 SOUTHWEST: muzzle points diagonally bottom-left. Never leave a right-pointing rifle in a north, south, or left row.
+Columns 1-4 remain restrained locomotion/ready beats. Columns 5-8 remain rifle ready, small cyan muzzle ignition at the exact weapon tip, restrained recoil, recovery. Buttstock remains seated in her right shoulder and both hands connect naturally in every direction. Keep the muzzle and all body parts inside each cell with generous uniform gutters.
+Do not change face visibility: SOUTH and lower diagonals show face; EAST/WEST show side; upper diagonals show rear; NORTH shows back of head. No whole-sheet rotation trick, no detached gun, no bent rifle, no oversized flash, no projectiles, no grid, text, labels, shadow, scene, watermark, cell overflow or extra characters. Perfectly flat uniform #ff00ff background. Exact 8×8 square sheet mandatory.
+```
+
+### 빔 소드 1차 프롬프트 전문
+
+```text
+Use case: precise-object-edit.
+Asset type: production 2D top-down Phaser character direction-and-action spritesheet for HUMAN OVERRIDE: OVERLOAD.
+Input images: Image 1 is the exact 8-column × 8-row AEGIS directional production sheet to preserve for layout, identity, body direction, face/back/side visibility, scale, center pivot and costume. Image 2 is the approved cyan beam-sword design and sword grip/action reference. Image 3 supports AEGIS identity only.
+Primary request: create the BEAM-SWORD counterpart to Image 1. Keep the exact square 8×8 grid and the exact eight row directions. Replace only the rifle pose and rifle attack actions with a coherent futuristic cyan beam sword held in the dominant hand. Preserve AEGIS identity, silver hair, black star ornament, black tactical exosuit, white split coat tails, anatomy, directional view, scale and center position.
+Direction contract by row, top to bottom: SOUTH/front face visible; SOUTHEAST/diagonal front; EAST/side profile; NORTHEAST/diagonal rear; NORTH/back of head and back armor; NORTHWEST/diagonal rear; WEST/side profile; SOUTHWEST/diagonal front. Each weapon and body must point or sweep into that same compass direction.
+Animation contract in every row: columns 1-4 are restrained locomotion/guard beats with a compact cyan beam sword; columns 5-8 are one readable sword attack cycle: anticipation, bright sweeping slash, follow-through, guarded recovery. The sword is normal length in ready frames and may extend moderately with cyan energy only in the slash/follow-through frames. No rifle, firearm, muzzle flash, projectile or detached second sword.
+Camera and anatomy: same high top-down tactical camera and directional foreshortening as Image 1. SOUTH shows her foreshortened face; NORTH shows only the back of her head; EAST/WEST show side profile; lower diagonals show face-side views; upper diagonals show rear views. Stable feet anchor and body size in every cell. Every blade, hair strand, coat tail and limb stays fully inside its own cell with generous gutters.
+Style/medium: polished realistic-anime sci-fi game sprite matching Image 1, crisp at small tactical scale, controlled cyan blade glow, no pixel art, no smear that destroys anatomy.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background. No gradients, floor, shadow, reflections, scenery, grid lines, borders, labels, text, numbers, UI, watermark, extra characters, cropped limbs, duplicate fragments or cell overflow. Do not use #ff00ff in the character. Exact 8×8 layout and square canvas are mandatory.
+```
+
+### 빔 소드 검기 제거·스케일 교정 프롬프트 전문
+
+```text
+Use case: precise-object-edit.
+Asset type: corrected production 8×8 AEGIS beam-sword direction sheet.
+Input images: Image 1 is the exact edit target. Image 2 is the approved 8×8 rifle sheet and defines the required character scale, cell occupancy, center position, gutters and directional anatomy.
+Primary request: preserve Image 1's exact 8 columns × 8 rows, same silver-haired AEGIS, same eight row directions and same locomotion/attack timing. Make only this production correction: remove every oversized detached cyan crescent, long trailing arc, slash ribbon, duplicated body fragment and any blade content crossing a cell boundary. Scale each complete AEGIS body to match Image 2's body size and cell occupancy. Keep one compact normal-length cyan beam sword visibly connected to her hand in every cell. In attack columns 5-8, show anticipation, one restrained sword swing pose, short follow-through and guard recovery through body/arm/blade articulation only; no detached effect arc because a separate VFX atlas supplies the slash.
+Direction rows remain SOUTH/front face, SOUTHEAST/front diagonal, EAST/side, NORTHEAST/rear diagonal, NORTH/back of head, NORTHWEST/rear diagonal, WEST/side, SOUTHWEST/front diagonal. Do not change or reorder directions.
+Cell safety: exactly one centered character per cell; same scale in all 64 cells; full body and blade contained with at least a clear uniform magenta gutter on all four sides. No neighboring-cell contamination, no cropped sword, no tiny actor, no rifle or firearm.
+Scene/backdrop: perfectly flat uniform solid #ff00ff. No grid, text, labels, shadow, scenery, watermark or extra objects. Exact square 8×8 sheet mandatory.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License
