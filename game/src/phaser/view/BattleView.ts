@@ -990,9 +990,27 @@ export class BattleView {
       const materialize = finite(entity?.spawnDuration) > 0
         ? clamp01(1 - finite(entity?.spawnDelay) / Math.max(0.01, finite(entity?.spawnDuration)))
         : 1;
-      const size = baseSize * (entity?.elite ? 1.16 : 1) * (0.72 + materialize * 0.28);
+      const selfDestructArmed = role === 0 && Boolean(entity?.selfDestructArmed);
+      const selfDestructProgress = selfDestructArmed
+        ? clamp01(1 - finite(entity?.selfDestructTimer) / Math.max(0.01, finite(entity?.selfDestructDuration, 0.95)))
+        : 0;
+      const selfDestructFlash = selfDestructArmed
+        && Math.sin(time * (18 + selfDestructProgress * 44) + id * 0.37) > -0.08;
+      const armedScale = selfDestructArmed
+        ? 1 + selfDestructProgress * 0.08 + Math.max(0, Math.sin(time * 26 + id)) * 0.035
+        : 1;
+      const size = baseSize * (entity?.elite ? 1.16 : 1) * (0.72 + materialize * 0.28) * armedScale;
       const alpha = (entity?.dead ? clamp01(finite(entity?.deathTimer) / (entity?.elite ? 0.46 : 0.32)) : 1)
         * clamp01((materialize - 0.08) / 0.72);
+      const tint = selfDestructFlash
+        ? COLORS.white
+        : selfDestructArmed
+          ? COLORS.red
+          : entity?.elite
+            ? COLORS.amber
+            : finite(entity?.hitFlash) > 0.04
+              ? COLORS.white
+              : 0xffffff;
       image
         .setVisible(true)
         .setPosition(x, y)
@@ -1000,7 +1018,7 @@ export class BattleView {
         .setFlipX(false)
         .setDisplaySize(size, size)
         .setAlpha(alpha)
-        .setTint(entity?.elite ? COLORS.amber : finite(entity?.hitFlash) > 0.04 ? COLORS.white : 0xffffff);
+        .setTint(tint);
     }
     for (const [id, record] of this.enemySprites) {
       if (record.live) {
@@ -1053,7 +1071,8 @@ export class BattleView {
       const nearPlayer = distanceSq <= 330 * 330;
       const sniperEngaged = roleIndex === 2 && (finite(entity?.aimTimer) > 0 || finite(entity?.attackTimer) > 0.01);
       const rifleEngaged = roleIndex === 1 && (finite(entity?.burstShots) > 0 || finite(entity?.attackTimer) > 0.01);
-      const suicideDanger = roleIndex === 0 && distanceSq <= 460 * 460;
+      const selfDestructArmed = roleIndex === 0 && Boolean(entity?.selfDestructArmed);
+      const suicideDanger = roleIndex === 0 && (selfDestructArmed || distanceSq <= 460 * 460);
       const aimDepth = dx * aimCos + dy * aimSin;
       const aimLateral = Math.abs(dx * aimSin - dy * aimCos);
       const aimTargeted = aimDepth > 0
@@ -1064,6 +1083,7 @@ export class BattleView {
       const persistent = elite || nearPlayer || sniperEngaged || rifleEngaged || suicideDanger || aimTargeted;
       const proximityBonus = Math.max(0, 360 * 360 - distanceSq) / (360 * 360) * 100;
       const priority = (recentlyDamaged ? 1000 : 0)
+        + (selfDestructArmed ? 1200 : 0)
         + (elite ? 900 : 0)
         + (sniperEngaged ? 850 : 0)
         + (suicideDanger ? 800 : 0)
@@ -1143,7 +1163,9 @@ export class BattleView {
       if (candidate.roleIndex === 0) {
         const distance = Math.sqrt(candidate.distanceSq);
         const contactDistance = Math.max(1, finite(entity?.radius, 22) + playerRadius + 4);
-        const danger = clamp01(1 - (distance - contactDistance) / Math.max(1, 460 - contactDistance));
+        const danger = entity?.selfDestructArmed
+          ? clamp01(1 - finite(entity?.selfDestructTimer) / Math.max(0.01, finite(entity?.selfDestructDuration, 0.95)))
+          : clamp01(1 - (distance - contactDistance) / Math.max(1, 460 - contactDistance));
         if (danger > 0.02) {
           const dangerWidth = width * danger;
           const dangerTop = statusTop + (finite(entity?.disabledTimer) > 0 ? 4 / zoom : 0);
@@ -1432,6 +1454,36 @@ export class BattleView {
     const graphics = this.telegraphGraphics;
     graphics.clear();
     const reducedDecoration = quality.id === "performance";
+    for (const enemy of state?.enemies ?? []) {
+      if (enemy?.dead || !enemy?.selfDestructArmed || finite(enemy?.spawnDelay) > 0) continue;
+      const x = finite(enemy?.x);
+      const y = finite(enemy?.y);
+      const radius = Math.max(48, finite(enemy?.selfDestructBlastRadius, 210));
+      if (!this.isCircleVisible(x, y, radius, 24)) continue;
+      const remaining = clamp01(
+        finite(enemy?.selfDestructTimer) / Math.max(0.01, finite(enemy?.selfDestructDuration, 0.95)),
+      );
+      const progress = 1 - remaining;
+      const pulse = 0.5 + Math.sin(time * (20 + progress * 34) + finite(enemy?.id)) * 0.5;
+      graphics.fillStyle(COLORS.red, 0.025 + progress * 0.045);
+      graphics.fillCircle(x, y, radius);
+      graphics.lineStyle(3.5, pulse > 0.46 ? COLORS.white : COLORS.red, 0.72 + pulse * 0.24);
+      graphics.strokeCircle(x, y, radius);
+      graphics.lineStyle(2, COLORS.red, 0.78);
+      graphics.strokeCircle(x, y, Math.max(14, radius * remaining));
+      const bracketReach = radius + 12;
+      const bracketInset = radius - 14;
+      for (let bracket = 0; bracket < 4; bracket += 1) {
+        const angle = bracket * Math.PI * 0.5;
+        graphics.lineStyle(4, pulse > 0.62 ? COLORS.white : COLORS.red, 0.84);
+        graphics.lineBetween(
+          x + Math.cos(angle) * bracketInset,
+          y + Math.sin(angle) * bracketInset,
+          x + Math.cos(angle) * bracketReach,
+          y + Math.sin(angle) * bracketReach,
+        );
+      }
+    }
     // Friendly ultimates own their complete warning/impact presentation in the
     // authored motion atlas. Keeping them out of this primitive pass prevents
     // the old amber circle fallback from sitting on top of the real animation.

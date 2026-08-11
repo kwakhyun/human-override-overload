@@ -430,9 +430,15 @@ test("SOVEREIGN fields suicide drones, burst riflemen, and warned long-range sni
   drone.y = droneState.player.y;
   const hpBeforeDrone = droneState.player.hp;
   stepSwarm(droneState, createSwarmInput(), 1 / 60);
+  assert.equal(drone.selfDestructArmed, true);
+  assert.equal(drone.dead, false);
+  assert.equal(droneState.player.hp, hpBeforeDrone);
+  stepFor(droneState, createSwarmInput(), 1.05);
   assert.equal(drone.dead, true);
   assert.ok(droneState.player.hp <= hpBeforeDrone - 70);
-  assert.ok(drainSwarmEvents(droneState).some((event) => event.type === "enemySelfDestruct"));
+  const droneEvents = drainSwarmEvents(droneState);
+  assert.ok(droneEvents.some((event) => event.type === "enemySelfDestructArmed"));
+  assert.ok(droneEvents.some((event) => event.type === "enemySelfDestruct" && event.hitPlayer === true));
 
   const rifleState = createSwarmState({ random: () => 0.5 });
   const rifleman = rifleState.enemies.find((enemy) => enemy.combatRole === "rifleman" && !enemy.elite);
@@ -462,6 +468,38 @@ test("SOVEREIGN fields suicide drones, burst riflemen, and warned long-range sni
   stepFor(sniperState, createSwarmInput(), 0.92);
   assert.ok(sniperState.enemyProjectiles.some((projectile) => projectile.kind === "sniper"));
   assert.ok(drainSwarmEvents(sniperState).some((event) => event.type === "enemyShot" && event.kind === "sniper"));
+});
+
+test("an armed suicide drone commits in place and explodes harmlessly after AEGIS escapes", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  const drone = state.enemies.find((enemy) => enemy.combatRole === "suicideDrone" && !enemy.elite);
+  state.enemies = [drone];
+  state.spawnedEnemies = state.enemyBudget;
+  delayPlayerWeapons(state);
+  state.player.invulnerability = 0;
+  drone.x = state.player.x + 120;
+  drone.y = state.player.y;
+  const hpBefore = state.player.hp;
+
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(drone.selfDestructArmed, true);
+  assert.equal(drone.dead, false);
+  const armedX = drone.x;
+  const armedY = drone.y;
+  const armedEvent = drainSwarmEvents(state).find((event) => event.type === "enemySelfDestructArmed");
+  assert.equal(armedEvent?.blastRadius, drone.selfDestructBlastRadius);
+
+  state.player.x = armedX + drone.selfDestructBlastRadius + state.player.radius + 80;
+  state.player.y = armedY;
+  stepFor(state, createSwarmInput(), drone.selfDestructDuration + 0.12);
+
+  assert.equal(drone.dead, true);
+  assert.equal(drone.x, armedX);
+  assert.equal(drone.y, armedY);
+  assert.equal(state.player.hp, hpBefore);
+  const explosion = drainSwarmEvents(state).find((event) => event.type === "enemySelfDestruct");
+  assert.equal(explosion?.caughtInBlast, false);
+  assert.equal(explosion?.hitPlayer, false);
 });
 
 test("sniper lanes stay readable under pressure and cancelled locks disappear", () => {
@@ -1476,7 +1514,7 @@ test("boss death wins and player death loses", () => {
   enemy.y = defeat.player.y;
   enemy.damage = 999;
   enemy.attackCooldown = 0;
-  stepSwarm(defeat, createSwarmInput(), 1 / 60);
+  stepFor(defeat, createSwarmInput(), 1.05);
   assert.equal(defeat.phase, "defeat");
   assert.equal(defeat.player.deathDuration, 0.9);
   assert.ok(defeat.player.deathTimer > 0);
@@ -1633,14 +1671,14 @@ test("seeded simulations remain deterministic and finite under the live entity c
   const fingerprint = run(12345);
   assert.deepEqual(fingerprint, run(12345));
   assert.deepEqual(fingerprint, {
-    values: [10.000000000000076, 1089.1666666666688, 360, 134.8416416416417, 1731.5531531531535],
-    kills: 35,
+    values: [10.000000000000076, 1089.1666666666688, 360, 91.04864864864864, 1856.684684684685],
+    kills: 34,
     spawned: 51,
     phase: "swarm",
-    nextEntityId: 342,
+    nextEntityId: 345,
     shots: 139,
-    hits: 71,
-    projectiles: 66,
+    hits: 75,
+    projectiles: 63,
     enemyProjectiles: 6,
     rewards: 1,
   });

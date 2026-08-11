@@ -274,6 +274,7 @@ const EVENT_SOUNDS = Object.freeze({
   spawnGate: "spawnGate",
   enemyShot: "enemyShot",
   sniperLock: "enemyAlert",
+  enemySelfDestructArmed: "enemyAlert",
   enemySelfDestruct: "explosion",
   healthKitPicked: "collect",
   empPulseActivated: "emp",

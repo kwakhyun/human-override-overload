@@ -62,6 +62,12 @@ const ROUTE_CLEAR_WARNING_DURATION = 1.2;
 const ROUTE_CLEAR_PANIC_DURATION = 1.6;
 const WRONG_ENGINE_GROGGY_DURATION = 2.6;
 const WRONG_ENGINE_GROGGY_MULTIPLIER = 2.5;
+const SUICIDE_ARM_DURATION = 0.95;
+const SUICIDE_ELITE_ARM_DURATION = 0.82;
+const SUICIDE_TRIGGER_RADIUS = 168;
+const SUICIDE_ELITE_TRIGGER_RADIUS = 196;
+const SUICIDE_BLAST_RADIUS = 210;
+const SUICIDE_ELITE_BLAST_RADIUS = 246;
 
 export const REGION_COMBAT_CONFIGS = Object.freeze({
   "wrong-engine-core": Object.freeze({
@@ -422,6 +428,11 @@ function spawnEnemy(state) {
     lockedStartY: 0,
     slow: 0,
     disabledTimer: 0,
+    selfDestructArmed: false,
+    selfDestructTimer: 0,
+    selfDestructDuration: elite ? SUICIDE_ELITE_ARM_DURATION : SUICIDE_ARM_DURATION,
+    selfDestructTriggerRadius: elite ? SUICIDE_ELITE_TRIGGER_RADIUS : SUICIDE_TRIGGER_RADIUS,
+    selfDestructBlastRadius: elite ? SUICIDE_ELITE_BLAST_RADIUS : SUICIDE_BLAST_RADIUS,
     orbitHitCooldown: 0,
     animationState: "spawn",
     animationTimer: 0.24,
@@ -1332,6 +1343,8 @@ function spawnXpPickup(state, enemy) {
 function killEnemy(state, enemy, source = "weapon") {
   if (enemy.dead) return;
   cancelSniperAim(state, enemy);
+  enemy.selfDestructArmed = false;
+  enemy.selfDestructTimer = 0;
   enemy.dead = true;
   enemy.hp = 0;
   enemy.deathTimer = enemy.elite ? 0.46 : 0.32;
@@ -1375,6 +1388,45 @@ function damageEnemy(state, enemy, amount, source = "weapon") {
   state.stats.damageDealt += dealt;
   if (enemy.hp <= 0) killEnemy(state, enemy, source);
   return dealt;
+}
+
+function detonateSuicideDrone(state, enemy, player) {
+  const blastRadius = Math.max(1, finite(
+    enemy.selfDestructBlastRadius,
+    enemy.elite ? SUICIDE_ELITE_BLAST_RADIUS : SUICIDE_BLAST_RADIUS,
+  ));
+  const dx = player.x - enemy.x;
+  const dy = player.y - enemy.y;
+  const collisionRadius = blastRadius + player.radius;
+  const caughtInBlast = dx * dx + dy * dy <= collisionRadius * collisionRadius;
+  const damage = enemy.damage;
+  const hitPlayer = caughtInBlast
+    ? damagePlayer(state, damage, "suicideDrone", { critical: true, invulnerability: 0.62, hitStun: 0.28 })
+    : false;
+  state.shockwaves.push({
+    type: "enemySelfDestruct",
+    enemy: true,
+    x: enemy.x,
+    y: enemy.y,
+    maxRadius: blastRadius,
+    radius: blastRadius,
+    life: 0.52,
+    maxLife: 0.52,
+    color: "#ff405f",
+    width: 12,
+  });
+  burst(state, enemy.x, enemy.y, "#ff5d42", enemy.elite ? 34 : 24, enemy.elite ? 420 : 340, 0.72, enemy.elite ? 9 : 7);
+  state.shake = Math.max(state.shake, enemy.elite ? 20 : 15);
+  emit(state, "enemySelfDestruct", {
+    damage,
+    elite: enemy.elite,
+    x: enemy.x,
+    y: enemy.y,
+    blastRadius,
+    caughtInBlast,
+    hitPlayer,
+  });
+  killEnemy(state, enemy, "selfDestruct");
 }
 
 function triggerBossStage(state, stage) {
@@ -1736,6 +1788,20 @@ function updateEnemies(state, dt) {
       enemy.attackTimer = Math.max(enemy.attackTimer, enemy.disabledTimer);
       continue;
     }
+    if (role === "suicideDrone" && enemy.selfDestructArmed) {
+      enemy.vx = 0;
+      enemy.vy = 0;
+      enemy.angle = Math.atan2(dy, dx);
+      enemy.moveBlend += (0 - enemy.moveBlend) * moveBlendRate;
+      enemy.selfDestructTimer = Math.max(0, finite(enemy.selfDestructTimer) - dt);
+      enemy.attackState = "selfDestruct";
+      enemy.attackTimer = Math.max(enemy.attackTimer, enemy.selfDestructTimer);
+      enemy.animationState = "attack";
+      enemy.animationTimer = Math.max(enemy.animationTimer, enemy.selfDestructTimer);
+      enemy.recoil = 1;
+      if (enemy.selfDestructTimer <= 0) detonateSuicideDrone(state, enemy, player);
+      continue;
+    }
     let movement = 1;
     if (!deepPursuit && role === "rifleman" && distance < 520) movement = distance < 285 ? -0.5 : 0;
     if (!deepPursuit && role === "sniper") movement = wasAiming ? 0 : distance < 520 ? -0.62 : distance < 820 ? 0 : 1;
@@ -1822,15 +1888,38 @@ function updateEnemies(state, dt) {
     const contactDx = player.x - enemy.x;
     const contactDy = player.y - enemy.y;
     const contactDistanceSq = contactDx * contactDx + contactDy * contactDy;
-    const suicideRadius = enemy.radius + player.radius + 4;
-    if (role === "suicideDrone" && contactDistanceSq <= suicideRadius * suicideRadius) {
-      const damage = enemy.damage;
-      damagePlayer(state, damage, "suicideDrone", { critical: true, invulnerability: 0.62, hitStun: 0.28 });
-      state.shockwaves.push({ type: "enemySelfDestruct", enemy: true, x: enemy.x, y: enemy.y, maxRadius: 118, life: 0.48, maxLife: 0.48, color: "#ff405f", width: 12 });
-      burst(state, enemy.x, enemy.y, "#ff5d42", enemy.elite ? 34 : 24, enemy.elite ? 420 : 340, 0.72, enemy.elite ? 9 : 7);
-      state.shake = Math.max(state.shake, enemy.elite ? 20 : 15);
-      emit(state, "enemySelfDestruct", { damage, elite: enemy.elite, x: enemy.x, y: enemy.y });
-      killEnemy(state, enemy, "selfDestruct");
+    const suicideTriggerRadius = Math.max(1, finite(
+      enemy.selfDestructTriggerRadius,
+      enemy.elite ? SUICIDE_ELITE_TRIGGER_RADIUS : SUICIDE_TRIGGER_RADIUS,
+    ));
+    if (role === "suicideDrone" && contactDistanceSq <= suicideTriggerRadius * suicideTriggerRadius) {
+      const duration = Math.max(0.1, finite(
+        enemy.selfDestructDuration,
+        enemy.elite ? SUICIDE_ELITE_ARM_DURATION : SUICIDE_ARM_DURATION,
+      ));
+      const blastRadius = Math.max(1, finite(
+        enemy.selfDestructBlastRadius,
+        enemy.elite ? SUICIDE_ELITE_BLAST_RADIUS : SUICIDE_BLAST_RADIUS,
+      ));
+      enemy.selfDestructArmed = true;
+      enemy.selfDestructTimer = duration;
+      enemy.selfDestructDuration = duration;
+      enemy.vx = 0;
+      enemy.vy = 0;
+      enemy.moveBlend = 0;
+      enemy.attackState = "selfDestruct";
+      enemy.attackTimer = duration;
+      enemy.animationState = "attack";
+      enemy.animationTimer = duration;
+      enemy.recoil = 1;
+      emit(state, "enemySelfDestructArmed", {
+        enemyId: enemy.id,
+        elite: enemy.elite,
+        x: enemy.x,
+        y: enemy.y,
+        duration,
+        blastRadius,
+      });
       continue;
     }
     const contactRadius = enemy.radius + player.radius + 2;
