@@ -183,7 +183,7 @@ export const REWARD_DEFINITIONS = Object.freeze({
   airstrike: Object.freeze({ id: "airstrike", category: "skill", name: "SKYFALL SUPPORT", description: "Calls a long-cooldown airstrike on dense enemy formations." }),
   omegaLaser: Object.freeze({ id: "omegaLaser", category: "skill", name: "OMEGA LASER", description: "Charges a colossal support beam through the aimed lane." }),
   drone: Object.freeze({ id: "drone", category: "ally", name: "HUNTER DRONE", description: "Mobile pursuit wing: long-range high-velocity fire gains armor pierce." }),
-  sentry: Object.freeze({ id: "sentry", category: "ally", name: "PULSE SENTRY", description: "Stationary lane battery: paired rapid fire grows into piercing crossfire." }),
+  sentry: Object.freeze({ id: "sentry", category: "ally", name: "LANCE ESCORT", description: "Mobile piercing escort: paired shots follow AEGIS and grow into high-speed crossfire." }),
   suppressor: Object.freeze({ id: "suppressor", category: "ally", name: "SUPPRESSOR WISP", description: "Control escort: repeated EMP blooms slow and erase packed formations." }),
 });
 
@@ -2651,19 +2651,36 @@ function updateSupportSkills(state, dt) {
 
 function syncAllies(state) {
   const droneRank = state.build.allies.drone;
+  const sentryRank = state.build.allies.sentry;
   const suppressorRank = state.build.allies.suppressor;
   const wantedDrones = droneRank > 0 ? Math.min(5, droneRank + 1) : 0;
+  const wantedSentries = sentryRank > 0 ? Math.min(4, sentryRank + 1) : 0;
   const wantedSuppressors = suppressorRank > 0 ? Math.min(4, suppressorRank + 1) : 0;
   let drones = 0;
+  let sentries = 0;
   let suppressors = 0;
   for (const ally of state.allies) {
     if (ally.type === "drone") drones += 1;
+    else if (ally.type === "sentry") {
+      ally.level = sentryRank;
+      ally.mobileEscort = true;
+      sentries += 1;
+    }
     else if (ally.type === "suppressor") suppressors += 1;
   }
   for (let index = drones; index < wantedDrones; index += 1) {
     state.allies.push({
       id: ++state.nextEntityId, type: "drone", x: state.player.x, y: state.player.y,
       angle: 0, orbit: state.random() * TAU, fireCooldown: index * 0.05, pulseCooldown: 0,
+      animationState: "spawn", animationTimer: 0.28, attackState: "idle", attackTimer: 0,
+      recoil: 0, moveBlend: 0,
+    });
+  }
+  for (let index = sentries; index < wantedSentries; index += 1) {
+    state.allies.push({
+      id: ++state.nextEntityId, type: "sentry", x: state.player.x, y: state.player.y,
+      angle: 0, orbit: state.random() * TAU, fireCooldown: index * 0.05, pulseCooldown: 0,
+      level: sentryRank, mobileEscort: true,
       animationState: "spawn", animationTimer: 0.28, attackState: "idle", attackTimer: 0,
       recoil: 0, moveBlend: 0,
     });
@@ -2686,15 +2703,21 @@ function updateAllies(state, dt) {
     ally.attackTimer = Math.max(0, ally.attackTimer - dt);
     ally.animationTimer = Math.max(0, ally.animationTimer - dt);
     ally.recoil = Math.max(0, ally.recoil - dt * 7);
-    ally.orbit += dt * (ally.type === "drone" ? 0.75 : -0.55);
-    const radius = ally.type === "drone" ? 78 : 105;
+    const orbitSpeed = ally.type === "drone" ? 0.75 : ally.type === "sentry" ? -0.42 : -0.55;
+    ally.orbit += dt * orbitSpeed;
+    const radius = ally.type === "drone" ? 78 : ally.type === "sentry" ? 128 : 105;
     const targetX = state.player.x + Math.cos(ally.orbit + (index / total) * TAU) * radius;
     const targetY = state.player.y + Math.sin(ally.orbit + (index / total) * TAU) * radius;
-    ally.x += (targetX - ally.x) * Math.min(1, dt * 7);
-    ally.y += (targetY - ally.y) * Math.min(1, dt * 7);
+    const followRate = ally.type === "sentry" ? 8.5 : 7;
+    const previousX = ally.x;
+    const previousY = ally.y;
+    ally.x += (targetX - ally.x) * Math.min(1, dt * followRate);
+    ally.y += (targetY - ally.y) * Math.min(1, dt * followRate);
+    ally.moveBlend = clamp(Math.hypot(ally.x - previousX, ally.y - previousY) / Math.max(1, dt * 260), 0, 1);
     ally.fireCooldown -= dt;
     ally.pulseCooldown -= dt;
-    const target = closestEnemy(state, ally.x, ally.y, ally.type === "drone" ? 700 : 360);
+    const targetRange = ally.type === "drone" ? 700 : ally.type === "sentry" ? 820 : 360;
+    const target = closestEnemy(state, ally.x, ally.y, targetRange);
     if (target) {
       ally.angle = Math.atan2(target.y - ally.y, target.x - ally.x);
       if (ally.type === "drone" && ally.fireCooldown <= 0) {
@@ -2720,6 +2743,38 @@ function updateAllies(state, dt) {
         ally.attackTimer = 0.16;
         ally.animationState = "attack";
         ally.animationTimer = 0.16;
+        ally.recoil = 1;
+      }
+      if (ally.type === "sentry" && ally.fireCooldown <= 0) {
+        const sentryRank = state.build.allies.sentry;
+        const damage = (38 + sentryRank * 18) * state.player.damageMultiplier;
+        const pierce = sentryRank >= 4 ? 3 : sentryRank >= 2 ? 1 : 0;
+        const spread = sentryRank >= 3 ? 0.045 : 0.032;
+        for (const side of [-1, 1]) {
+          const shotAngle = ally.angle + spread * side;
+          const originX = ally.x - Math.sin(ally.angle) * side * 7;
+          const originY = ally.y + Math.cos(ally.angle) * side * 7;
+          pushPlayerProjectile(state, {
+            kind: "sentry",
+            x: originX,
+            y: originY,
+            vx: Math.cos(shotAngle) * 980,
+            vy: Math.sin(shotAngle) * 980,
+            angle: shotAngle,
+            radius: 4,
+            damage,
+            color: "#ffe86d",
+            life: 1.25,
+            pierce,
+            splash: 0,
+            hitIds: pierce > 0 ? [] : null,
+          });
+        }
+        ally.fireCooldown = Math.max(0.2, 0.42 - sentryRank * 0.05);
+        ally.attackState = "shoot";
+        ally.attackTimer = 0.18;
+        ally.animationState = "attack";
+        ally.animationTimer = 0.18;
         ally.recoil = 1;
       }
       if (ally.type === "suppressor" && ally.pulseCooldown <= 0) {
@@ -2754,40 +2809,6 @@ function updateAllies(state, dt) {
     if (ally.attackTimer <= 0) ally.attackState = "idle";
   }
 
-  for (const sentry of state.deployables) {
-    sentry.attackTimer = Math.max(0, sentry.attackTimer - dt);
-    sentry.animationTimer = Math.max(0, sentry.animationTimer - dt);
-    sentry.recoil = Math.max(0, sentry.recoil - dt * 8);
-    sentry.fireCooldown -= dt;
-    const target = closestEnemy(state, sentry.x, sentry.y, 700);
-    if (!target) continue;
-    sentry.angle = Math.atan2(target.y - sentry.y, target.x - sentry.x);
-    if (sentry.fireCooldown <= 0) {
-      pushPlayerProjectile(state, {
-        kind: "sentry",
-        x: sentry.x,
-        y: sentry.y,
-        vx: Math.cos(sentry.angle) * 760,
-        vy: Math.sin(sentry.angle) * 760,
-        angle: sentry.angle,
-        radius: 4,
-        damage: (52 + sentry.level * 22) * state.player.damageMultiplier,
-        color: "#ffe86d",
-        life: 1.3,
-        pierce: sentry.level >= 3 ? 2 : sentry.level >= 2 ? 1 : 0,
-        splash: 0,
-        hitIds: sentry.level >= 2 ? [] : null,
-      });
-      sentry.fireCooldown = Math.max(0.15, 0.34 - sentry.level * 0.04);
-      sentry.attackState = "shoot";
-      sentry.attackTimer = 0.16;
-      sentry.animationState = "attack";
-      sentry.animationTimer = 0.16;
-      sentry.recoil = 1;
-    }
-    if (sentry.animationTimer <= 0) sentry.animationState = "idle";
-    if (sentry.attackTimer <= 0) sentry.attackState = "idle";
-  }
 }
 
 function buildRewardOffer(state, batchLevels = 1) {
@@ -2871,28 +2892,6 @@ function applyReward(state, id, requestedRanks = 1) {
     }
   } else {
     state.build.allies[id] = finalRank;
-    if (id === "sentry") {
-      const wanted = Math.min(5, finalRank + 1);
-      const sentries = state.deployables.filter((deployable) => deployable.type === "sentry");
-      for (const sentry of sentries) sentry.level = finalRank;
-      for (let index = sentries.length; index < wanted; index += 1) {
-        const angle = state.player.angle + (index / Math.max(1, wanted)) * TAU;
-        state.deployables.push({
-          id: ++state.nextEntityId,
-          type: "sentry",
-          x: state.player.x + Math.cos(angle) * 42,
-          y: state.player.y + Math.sin(angle) * 42,
-          angle: state.player.angle,
-          fireCooldown: index * 0.04,
-          level: finalRank,
-          animationState: "spawn",
-          animationTimer: 0.3,
-          attackState: "idle",
-          attackTimer: 0,
-          recoil: 0,
-        });
-      }
-    }
     syncAllies(state);
     triggerAllyRewardImpact(state, id, finalRank, ranksApplied);
   }

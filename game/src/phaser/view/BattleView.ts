@@ -1234,7 +1234,7 @@ export class BattleView {
         const humanoid = ["gunner", "arcanist", "warden", "vanguard"].some((token) => type.includes(token));
         const size = type.includes("sentry") ? 58 : type.includes("emp") ? 58 : humanoid ? 64 : 48;
         const angle = actorAngle(entity);
-        const stationary = type.includes("sentry") || type.includes("emp");
+        const stationary = (type.includes("sentry") && !entity?.mobileEscort) || type.includes("emp");
         const moveBlend = clamp01(finite(entity?.moveBlend));
         const spawnLinear = selectedClip.id === "spawn" ? clamp01(clipElapsed / 0.28) : 1;
         const spawnEase = 1 - Math.pow(1 - spawnLinear, 3);

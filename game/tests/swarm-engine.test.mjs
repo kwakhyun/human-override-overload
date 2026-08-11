@@ -957,7 +957,7 @@ test("late dataset progress unlocks tier-three overdrive and rapid master volley
   assert.ok(drainSwarmEvents(state).some((event) => event.type === "overdrive" && event.tier === 3));
 });
 
-test("ally rewards create autonomous drone, sentry, and suppressor entities", () => {
+test("ally rewards create autonomous mobile drone, lance escort, and suppressor entities", () => {
   for (const id of ["drone", "sentry", "suppressor"]) {
     const state = createSwarmState({ random: () => 0.5 });
     const target = state.enemies.find((enemy) => !enemy.elite);
@@ -969,13 +969,33 @@ test("ally rewards create autonomous drone, sentry, and suppressor entities", ()
     const hp = target.hp;
     forceOffer(state, id, "ally");
     assert.equal(chooseLevelReward(state, id), true);
-    if (id === "sentry") assert.ok(state.deployables.filter((entity) => entity.type === id).length >= 2);
-    else assert.ok(state.allies.filter((entity) => entity.type === id).length >= 2);
+    assert.ok(state.allies.filter((entity) => entity.type === id).length >= 2);
+    if (id === "sentry") {
+      assert.equal(state.deployables.filter((entity) => entity.type === id).length, 0);
+      assert.ok(state.allies.filter((entity) => entity.type === id).every((entity) => entity.mobileEscort));
+      state.projectiles.length = 0;
+      stepSwarm(state, createSwarmInput(), 1 / 60);
+      assert.ok(state.projectiles.filter((projectile) => projectile.kind === "sentry").length >= 2);
+    }
     assert.ok(target.hp < hp, `${id} should deal an immediate deployment burst`);
     const event = drainSwarmEvents(state).find((candidate) => candidate.type === "allyDeployed");
     assert.equal(event.id, id);
     assert.ok(event.damage >= 200);
   }
+});
+
+test("the lance escort follows AEGIS instead of leaving an installation behind", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  forceOffer(state, "sentry", "ally");
+  assert.equal(chooseLevelReward(state, "sentry"), true);
+  delayPlayerWeapons(state);
+  const escorts = state.allies.filter((ally) => ally.type === "sentry");
+  const startAverageX = escorts.reduce((sum, escort) => sum + escort.x, 0) / escorts.length;
+  state.player.x += 360;
+  stepFor(state, createSwarmInput(), 0.8);
+  const endAverageX = escorts.reduce((sum, escort) => sum + escort.x, 0) / escorts.length;
+  assert.ok(endAverageX > startAverageX + 180);
+  assert.equal(state.deployables.length, 0);
 });
 
 test("ally ranks scale both formation size and autonomous firepower", () => {

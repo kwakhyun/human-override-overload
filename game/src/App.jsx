@@ -538,7 +538,7 @@ const REWARD_NAMES_KO = Object.freeze({
   airstrike: "공중 폭격",
   omegaLaser: "오메가 레이저",
   drone: "추적 드론",
-  sentry: "관통 포탑",
+  sentry: "관통 호위기",
   suppressor: "억제 지원기",
 });
 
@@ -560,7 +560,7 @@ const REWARD_COPY = Object.freeze({
   airstrike: "긴 재사용 시간 뒤 적 밀집 지역을 연속 폭격합니다. 마스터 시 15발 포화 폭격을 호출합니다.",
   omegaLaser: "조준 방향으로 거대 레이저포를 호출합니다. 마스터 시 광폭 빔이 전장을 관통합니다.",
   drone: "장거리에서 적을 추적하는 기동 편대입니다. 고랭크에서 장갑을 관통합니다.",
-  sentry: "현재 위치를 지키는 관통 연사 포대입니다. 좁은 진입로를 지속 봉쇄합니다.",
+  sentry: "이지스를 따라 이동하며 좌우 한 쌍의 관통탄을 발사합니다. 고랭크에서 고속 관통 편대로 진화합니다.",
   suppressor: "반복 EMP로 밀집한 적을 감속·소거하는 광역 제어 동료입니다.",
 });
 
