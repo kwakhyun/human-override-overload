@@ -298,12 +298,12 @@ function allyMotionTexture(ally: any) {
 
 function projectileArt(projectile: any) {
   const type = String(projectile?.kind ?? "pulse").toLowerCase();
-  if (type.includes("rail") || type.includes("omega")) return { column: 2, row: 0, width: 118, height: 34 };
-  if (type.includes("rocket") || type.includes("missile")) return { column: 3, row: 0, width: 68, height: 30 };
-  if (type.includes("scatter") || type.includes("fork")) return { column: 1, row: 0, width: 58, height: 34 };
+  if (type.includes("rail") || type.includes("omega")) return { column: 2, row: 0, width: 132, height: 40 };
+  if (type.includes("rocket") || type.includes("missile")) return { column: 3, row: 0, width: 76, height: 36 };
+  if (type.includes("scatter") || type.includes("fork")) return { column: 1, row: 0, width: 70, height: 40 };
   if (type.includes("orbit")) return { column: 2, row: 2, width: 54, height: 54 };
-  if (type.includes("heavy") || type.includes("sentry")) return { column: 0, row: 0, width: 72, height: 25 };
-  return { column: 0, row: 0, width: type.includes("overdrive") ? 76 : 56, height: type.includes("overdrive") ? 26 : 20 };
+  if (type.includes("heavy") || type.includes("sentry")) return { column: 0, row: 0, width: 82, height: 30 };
+  return { column: 0, row: 0, width: type.includes("overdrive") ? 88 : 72, height: type.includes("overdrive") ? 32 : 28 };
 }
 
 export class BattleView {
@@ -2383,7 +2383,7 @@ export class BattleView {
             ? 52
             : 34;
         const trailColor = colorNumber(projectile?.color, COLORS.cyan);
-        graphics.lineStyle(projectileKind.includes("rail") ? 4 : 2.25, trailColor, projectileKind.includes("rail") ? 0.68 : 0.48);
+        graphics.lineStyle(projectileKind.includes("rail") ? 5.5 : 3.5, trailColor, projectileKind.includes("rail") ? 0.72 : 0.56);
         graphics.lineBetween(
           displayX - Math.cos(angle) * trailLength,
           displayY - Math.sin(angle) * trailLength,
@@ -2419,12 +2419,15 @@ export class BattleView {
         .setVisible(true)
         .setPosition(x, y)
         .setRotation(angle)
-        .setDisplaySize(sniper ? 142 : 54, sniper ? 28 : 18)
+        .setDisplaySize(sniper ? 154 : 68, sniper ? 34 : 24)
         .setAlpha(sniper ? 1 : 0.94)
         .setTint(colorNumber(projectile?.color, COLORS.red));
       if (sniper) {
-        graphics.lineStyle(4, COLORS.red, 0.2);
+        graphics.lineStyle(5, COLORS.red, 0.26);
         graphics.lineBetween(x - Math.cos(angle) * 112, y - Math.sin(angle) * 112, x, y);
+      } else {
+        graphics.lineStyle(3.5, COLORS.red, 0.34);
+        graphics.lineBetween(x - Math.cos(angle) * 46, y - Math.sin(angle) * 46, x, y);
       }
       visibleEnemyProjectiles += 1;
     }
