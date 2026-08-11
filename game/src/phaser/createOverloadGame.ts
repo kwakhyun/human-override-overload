@@ -24,6 +24,7 @@ export type OverloadGameController = Readonly<{
 export type OverloadLaunchOptions = Readonly<{
   regionId?: string;
   combatBonuses?: Readonly<Record<string, number>>;
+  mainWeaponId?: "pulse-rifle" | "beam-sword";
   startSuspended?: boolean;
 }>;
 
@@ -43,7 +44,7 @@ export function createOverloadGame(
   const preset = QUALITY_PRESETS[initialQuality] ?? QUALITY_PRESETS.balanced;
   const assetProfile = initialQuality === "performance" ? "performance" : "full";
   const bootScene = new BootScene(regionId, assetProfile, callbacks.onLoadProgress);
-  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, assetProfile);
+  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, assetProfile);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,

@@ -12,6 +12,8 @@ export const DEFAULT_COMBAT_BONUSES = Object.freeze({
   xpGainMultiplier: 1,
   moveSpeedMultiplier: 1,
   fireRateMultiplier: 1,
+  rifleDamageMultiplier: 1,
+  swordDamageMultiplier: 1,
   maxHpFlat: 0,
   healingMultiplier: 1,
 });

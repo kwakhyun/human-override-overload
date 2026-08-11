@@ -12,7 +12,7 @@ test("App connects the three save slots to base, airship selection, regional Pha
   assert.match(app, /createCampaignSlot\(campaign, slotId\)/);
   assert.match(app, /completeRegion\(campaign, activeSlotId, regionId/);
   assert.match(app, /saveCampaign\(completed\)/);
-  assert.match(app, /createOverloadGame\(host,[\s\S]*\}, \{ regionId, combatBonuses, startSuspended: preparingRef\.current \}\)/);
+  assert.match(app, /createOverloadGame\(host,[\s\S]*\}, \{ regionId, combatBonuses, mainWeaponId, startSuspended: preparingRef\.current \}\)/);
   assert.match(app, /status === "victory"[\s\S]*setScreen\("base"\)/);
   assert.match(app, /setActiveNpc\(isFreshSlot \? BASE_NPCS\.rhea : null\)/);
   assert.match(app, /setGuideReturnScreen\("base"\)[\s\S]*setScreen\("base"\)/);
@@ -30,7 +30,8 @@ test("region selection previews and confirms a sortie instead of launching on ca
   for (const mixedBoss of ["오답 엔진 · THE WRONG ENGINE", "거울 폭군 · MIRROR TYRANT", "침몰한 예언자 · DROWNED ORACLE"]) {
     assert.match(screens, new RegExp(mixedBoss));
   }
-  assert.match(screens, /출격 준비 완료 · 작전 시작/);
+  assert.match(screens, /장비 확정 · 작전 시작/);
+  assert.match(screens, /className="sortie-weapon-loadout"/);
   assert.match(screens, /onClick=\{\(\) => onSelect\(selectedRegion\.id\)\}/);
   assert.match(screens, /event\.key !== "Escape"/);
   assert.match(app, /document\.addEventListener\("pointerdown", handleButtonPointer, true\)/);

@@ -486,16 +486,25 @@ function sanitizeCombatBonuses(value) {
     xpGainMultiplier: clamp(finite(source.xpGainMultiplier, 1), 1, 1.5),
     moveSpeedMultiplier: clamp(finite(source.moveSpeedMultiplier, 1), 1, 1.35),
     fireRateMultiplier: clamp(finite(source.fireRateMultiplier, 1), 1, 1.4),
+    rifleDamageMultiplier: clamp(finite(source.rifleDamageMultiplier, 1), 1, 1.6),
+    swordDamageMultiplier: clamp(finite(source.swordDamageMultiplier, 1), 1, 1.7),
     maxHpFlat: clamp(finite(source.maxHpFlat, 0), 0, 240),
     healingMultiplier: clamp(finite(source.healingMultiplier, 1), 1, 1.6),
   });
 }
 
-function createPlayer(combatBonuses) {
+function sanitizeMainWeaponId(value) {
+  return value === "beam-sword" ? "beam-sword" : "pulse-rifle";
+}
+
+function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle") {
   const bonuses = sanitizeCombatBonuses(combatBonuses);
+  const weaponId = sanitizeMainWeaponId(mainWeaponId);
   const maxHp = 360 + bonuses.maxHpFlat;
   return {
     name: "THE TRAINER",
+    mainWeaponId: weaponId,
+    weaponDamageMultiplier: weaponId === "beam-sword" ? bonuses.swordDamageMultiplier : bonuses.rifleDamageMultiplier,
     x: GAME_WIDTH * 0.5,
     y: GAME_HEIGHT * 0.5,
     vx: 0,
@@ -604,7 +613,7 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
   };
 }
 
-export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {} } = {}) {
+export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle" } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
   const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
   const state = {
@@ -626,7 +635,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       encounter: regionConfig.encounterBeat,
       victory: regionConfig.victoryBeat,
     },
-    player: createPlayer(combatBonuses),
+    player: createPlayer(combatBonuses, mainWeaponId),
     boss: createBoss(regionConfig),
     aim: { x: GAME_WIDTH * 0.82, y: GAME_HEIGHT * 0.5 },
     aimX: GAME_WIDTH * 0.82,

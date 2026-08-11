@@ -253,6 +253,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private readonly bridge: SceneBridge;
   private readonly regionId?: string;
   private readonly combatBonuses?: Readonly<Record<string, number>>;
+  private readonly mainWeaponId?: "pulse-rifle" | "beam-sword";
   private readonly assetProfile: AssetProfile;
   private state: any;
   private gameInput: any;
@@ -288,17 +289,19 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     bridge: SceneBridge,
     regionId?: string,
     combatBonuses?: Readonly<Record<string, number>>,
+    mainWeaponId?: "pulse-rifle" | "beam-sword",
     assetProfile: AssetProfile = "full",
   ) {
     super({ key: "OverloadBattle" });
     this.bridge = bridge;
     this.regionId = regionId;
     this.combatBonuses = combatBonuses;
+    this.mainWeaponId = mainWeaponId;
     this.assetProfile = resolveAssetProfile(assetProfile);
   }
 
   create() {
-    this.state = createSwarmState({ duration: 360, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses });
+    this.state = createSwarmState({ duration: 360, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId });
     applyDebugScene(this.state, this.bridge.debugScene);
     this.gameInput = createSwarmInput();
     this.governor = createPerformanceGovernor({ environment: window });

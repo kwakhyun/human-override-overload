@@ -14,6 +14,7 @@ import {
   Play,
   ShieldChevron,
   Sparkle,
+  Sword,
   User,
   Wrench,
 } from "@phosphor-icons/react";
@@ -484,7 +485,7 @@ export function AbilityGuideScreen({ assets, onComplete, onBack }) {
   );
 }
 
-export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack }) {
+export function RegionSelectScreen({ regions, campaign, assets, weapons = [], equippedWeaponId = "pulse-rifle", onWeaponChange, onSelect, onBack }) {
   const background = assetSource(assets?.regionMap);
   const buttonAtlas = assetSource(assets?.buttonAtlas);
   const unlocked = new Set(campaign?.unlockedRegionIds || ["wrong-engine-core"]);
@@ -588,8 +589,38 @@ export function RegionSelectScreen({ regions, campaign, assets, onSelect, onBack
             <span>연구 자료 +{selectedRegion.victoryRewards?.firstClear?.researchData || 0}</span>
             <span>장비 부품 +{selectedRegion.victoryRewards?.firstClear?.equipmentParts || 0}</span>
           </div>
+          <section className="sortie-weapon-loadout" aria-labelledby="sortie-weapon-title">
+            <header>
+              <div><small>메인 장비</small><h3 id="sortie-weapon-title">이번 출격 무기 선택</h3></div>
+              <span>무기에 따라 레벨업 증강 트리가 변경됩니다.</span>
+            </header>
+            <div className="sortie-weapon-options">
+              {weapons.map((weapon) => {
+                const equipped = weapon.id === equippedWeaponId;
+                const rankKey = weapon.id === "beam-sword" ? "ilya-sword-resonator" : "ilya-rifle-emitter";
+                const upgradeRank = campaign?.progression?.equipmentRanks?.[rankKey] || 0;
+                const WeaponIcon = weapon.id === "beam-sword" ? Sword : Crosshair;
+                return (
+                  <button
+                    type="button"
+                    className={`sortie-weapon-card${equipped ? " is-equipped" : ""}`}
+                    aria-pressed={equipped}
+                    data-ui-sound={equipped ? "click" : "uiConfirm"}
+                    onClick={() => onWeaponChange?.(weapon.id)}
+                    key={weapon.id}
+                  >
+                    <span><WeaponIcon weight="fill" /></span>
+                    <div><small>{weapon.role}</small><strong>{weapon.koreanName}</strong><em>{weapon.name}</em></div>
+                    <p>{weapon.description}</p>
+                    <footer><b>{weapon.treeLabel}</b><i>기지 개조 {upgradeRank}단계</i></footer>
+                    {equipped && <mark><CheckCircle weight="fill" /> 장착 중</mark>}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
           <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound="uiConfirm" onClick={() => onSelect(selectedRegion.id)}>
-            <AirplaneTilt weight="fill" /><span><small>나이트자 항로 승인</small><strong>출격 준비 완료 · 작전 시작</strong></span><ArrowRight weight="bold" />
+            <AirplaneTilt weight="fill" /><span><small>나이트자 항로 승인 · {weapons.find((weapon) => weapon.id === equippedWeaponId)?.koreanName || "펄스 소총"}</small><strong>장비 확정 · 작전 시작</strong></span><ArrowRight weight="bold" />
           </button>
         </section>
       )}

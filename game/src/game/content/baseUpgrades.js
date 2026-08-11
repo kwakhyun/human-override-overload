@@ -65,6 +65,34 @@ const HANA_RESEARCH_LINES = {
 };
 
 const ILYA_EQUIPMENT_LINES = {
+  "ilya-rifle-emitter": {
+    id: "ilya-rifle-emitter",
+    ownerId: "ilya",
+    category: "equipment",
+    currencyId: "equipmentParts",
+    name: "PULSE EMITTER",
+    koreanName: "펄스 소총 방출기",
+    description: "펄스 소총과 사격 계열 증강의 피해 출력을 영구적으로 높입니다.",
+    ranks: [
+      { rank: 1, cost: 2, requiresCompletedRegions: 0, bonuses: { rifleDamageMultiplier: 0.08 } },
+      { rank: 2, cost: 6, requiresCompletedRegions: 1, bonuses: { rifleDamageMultiplier: 0.1 } },
+      { rank: 3, cost: 11, requiresCompletedRegions: 2, bonuses: { rifleDamageMultiplier: 0.12 } },
+    ],
+  },
+  "ilya-sword-resonator": {
+    id: "ilya-sword-resonator",
+    ownerId: "ilya",
+    category: "equipment",
+    currencyId: "equipmentParts",
+    name: "EDGE RESONATOR",
+    koreanName: "빔 소드 공명기",
+    description: "빔 소드 기본 베기와 모든 검술 증강의 피해 출력을 영구적으로 높입니다.",
+    ranks: [
+      { rank: 1, cost: 2, requiresCompletedRegions: 0, bonuses: { swordDamageMultiplier: 0.1 } },
+      { rank: 2, cost: 6, requiresCompletedRegions: 1, bonuses: { swordDamageMultiplier: 0.12 } },
+      { rank: 3, cost: 11, requiresCompletedRegions: 2, bonuses: { swordDamageMultiplier: 0.14 } },
+    ],
+  },
   "ilya-accelerator-coil": {
     id: "ilya-accelerator-coil",
     ownerId: "ilya",

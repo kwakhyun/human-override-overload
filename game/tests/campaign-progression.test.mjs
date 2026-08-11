@@ -57,10 +57,10 @@ const FULL_CONTEXT = {
   completedRegionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
 };
 
-test("HANA and ILYA each own three distinct ranked upgrade lines and a base facility", () => {
+test("HANA research and ILYA weapon/equipment lines each expose three ranks", () => {
   assert.equal(getBaseUpgrades("hana").length, 3);
-  assert.equal(getBaseUpgrades("ilya").length, 3);
-  assert.equal(Object.keys(BASE_UPGRADE_LINES).length, 6);
+  assert.equal(getBaseUpgrades("ilya").length, 5);
+  assert.equal(Object.keys(BASE_UPGRADE_LINES).length, 8);
   assert.deepEqual(getBaseFacilities().map((facility) => facility.id), ["research", "equipment"]);
   assert.equal(getBaseFacility("research").npcId, "hana");
   assert.equal(getBaseFacility("equipment").npcId, "ilya");
@@ -72,7 +72,8 @@ test("HANA and ILYA each own three distinct ranked upgrade lines and a base faci
   for (const upgrade of Object.values(BASE_UPGRADE_LINES)) {
     assert.equal(upgrade.ranks.length, 3);
     assert.deepEqual(upgrade.ranks.map((rank) => rank.rank), [1, 2, 3]);
-    assert.deepEqual(upgrade.ranks.map((rank) => rank.requiresCompletedRegions), [1, 2, 3]);
+    const weaponLine = upgrade.id === "ilya-rifle-emitter" || upgrade.id === "ilya-sword-resonator";
+    assert.deepEqual(upgrade.ranks.map((rank) => rank.requiresCompletedRegions), weaponLine ? [0, 1, 2] : [1, 2, 3]);
     assert.ok(upgrade.ranks[0].cost < upgrade.ranks[2].cost);
     assert.equal(getBaseUpgrade(upgrade.id), upgrade);
   }
@@ -83,7 +84,7 @@ test("base progression has explicit currencies and sanitized research/equipment 
   const empty = createEmptyBaseProgression();
   assert.deepEqual(getProgressionResources(empty), { researchData: 0, equipmentParts: 0 });
   assert.equal(Object.keys(empty.researchRanks).length, 3);
-  assert.equal(Object.keys(empty.equipmentRanks).length, 3);
+  assert.equal(Object.keys(empty.equipmentRanks).length, 5);
 
   const sanitized = sanitizeBaseProgression({
     researchData: -4,
@@ -233,6 +234,8 @@ test("calculated combat bonuses are a flat createSwarmState-ready object", () =>
     xpGainMultiplier: 1.16,
     moveSpeedMultiplier: 1.04,
     fireRateMultiplier: 1.18,
+    rifleDamageMultiplier: 1,
+    swordDamageMultiplier: 1,
     maxHpFlat: 80,
     healingMultiplier: 1.35,
   });

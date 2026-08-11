@@ -15,6 +15,7 @@ import {
   purchaseProgressionUpgrade,
   sanitizeBaseProgression,
 } from "../progression/baseProgression.js";
+import { DEFAULT_MAIN_WEAPON_ID, sanitizeMainWeaponId } from "../content/weapons.js";
 
 export const CAMPAIGN_SAVE_VERSION = 2;
 export const CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v2";
@@ -142,6 +143,9 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
     baseUnlocked: homeBaseUnlocked,
     abilityGuideSeen: Boolean(slot.abilityGuideSeen),
     combatOverlaySeen: Boolean(slot.combatOverlaySeen),
+    loadout: {
+      mainWeaponId: sanitizeMainWeaponId(slot.loadout?.mainWeaponId ?? slot.mainWeaponId),
+    },
     storyFlags: deriveStoryFlags(completedRegionIds, slot.storyFlags),
     regionRecords: sanitizeRegionRecords(slot.regionRecords),
     progression,
@@ -258,6 +262,27 @@ export function completeCombatOverlay(campaign, slotId, options = {}) {
   const slots = sanitized.slots.slice();
   slots[index] = nextSlot;
   return { version: CAMPAIGN_SAVE_VERSION, slots };
+}
+
+export function setCampaignMainWeapon(campaign, slotId, mainWeaponId, options = {}) {
+  const sanitized = sanitizeCampaign(campaign);
+  const index = normalizeSlotIndex(slotId);
+  const slot = index >= 0 ? sanitized.slots[index] : null;
+  if (!slot) return sanitized;
+  const nextWeaponId = sanitizeMainWeaponId(mainWeaponId);
+  if ((slot.loadout?.mainWeaponId || DEFAULT_MAIN_WEAPON_ID) === nextWeaponId) return sanitized;
+  const nextSlot = sanitizeSlot({
+    ...slot,
+    updatedAt: resolveNow(options.now),
+    loadout: { ...slot.loadout, mainWeaponId: nextWeaponId },
+  }, index);
+  const slots = sanitized.slots.slice();
+  slots[index] = nextSlot;
+  return { version: CAMPAIGN_SAVE_VERSION, slots };
+}
+
+export function getCampaignMainWeapon(campaign, slotId) {
+  return getCampaignSlot(campaign, slotId)?.loadout?.mainWeaponId || DEFAULT_MAIN_WEAPON_ID;
 }
 
 export function canLaunchRegion(slot, regionId) {

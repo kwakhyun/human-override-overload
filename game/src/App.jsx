@@ -40,6 +40,7 @@ import {
   getBaseFacility,
   getBaseUpgrades,
 } from "./game/content/baseUpgrades.js";
+import { getMainWeapons } from "./game/content/weapons.js";
 import {
   canLaunchRegion,
   completeAbilityGuide,
@@ -47,11 +48,13 @@ import {
   completeRegion,
   createCampaignSlot,
   getCampaignCombatBonuses,
+  getCampaignMainWeapon,
   getCampaignSlot,
   getCampaignUpgradeStatus,
   loadCampaign,
   purchaseCampaignUpgrade,
   saveCampaign,
+  setCampaignMainWeapon,
 } from "./game/save/campaignSave.js";
 import {
   AbilityGuideScreen,
@@ -109,6 +112,8 @@ const BASE_BONUS_LABELS = Object.freeze({
   xpGainMultiplier: ["경험치 획득", "percent"],
   moveSpeedMultiplier: ["이동 속도", "percent"],
   fireRateMultiplier: ["발사 속도", "percent"],
+  rifleDamageMultiplier: ["소총 피해", "percent"],
+  swordDamageMultiplier: ["검술 피해", "percent"],
   maxHpFlat: ["최대 내구도", "flat"],
   healingMultiplier: ["회복 효율", "percent"],
 });
@@ -121,7 +126,7 @@ const FACILITY_COPY = Object.freeze({
   },
   equipment: {
     kicker: "일리야 · 이지스 장비 정비소",
-    description: "전장에서 회수한 부품으로 이지스의 소총, 장갑, 나나이트 장비를 영구 개조합니다.",
+    description: "전장에서 회수한 부품으로 펄스 소총과 빔 소드, 장갑, 나나이트 장비를 영구 개조합니다.",
     currencyHint: "지역 군단·보스 잔해에서 회수",
   },
 });
@@ -1597,7 +1602,7 @@ function RouteMinimap({ hud }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const controllerRef = useRef(null);
   const finishReportedRef = useRef(false);
@@ -1734,7 +1739,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
           if (!preparingRef.current && !needsLandscapeRef.current && !pausedRef.current && !combatTutorialActiveRef.current) controllerRef.current?.focus();
           reportRuntimeReady();
         },
-      }, { regionId, combatBonuses, startSuspended: preparingRef.current });
+      }, { regionId, combatBonuses, mainWeaponId, startSuspended: preparingRef.current });
       controllerRef.current = controller;
       controller.setSuspended(preparingRef.current || needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
     }).catch(() => {
@@ -1749,7 +1754,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, soundEnabl
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [combatBonuses, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx]);
+  }, [combatBonuses, mainWeaponId, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx]);
 
   const selectReward = useCallback((id) => {
     controllerRef.current?.chooseReward(id);
@@ -2053,6 +2058,7 @@ export function App() {
   const transitionTokenRef = useRef(0);
   const sfx = useMemo(() => createSfxEngine(), []);
   const regions = useMemo(() => getCampaignRegions(), []);
+  const mainWeapons = useMemo(() => getMainWeapons(), []);
   const regionPreviewSources = useMemo(
     () => regions.map((region) => region?.assets?.dom?.thumbnail?.path).filter(Boolean),
     [regions],
@@ -2068,6 +2074,10 @@ export function App() {
   const campaignView = activeSlot ? { ...activeSlot, slotIndex } : null;
   const combatBonuses = useMemo(
     () => (activeSlotId ? getCampaignCombatBonuses(campaign, activeSlotId) : null),
+    [activeSlotId, campaign],
+  );
+  const activeMainWeaponId = useMemo(
+    () => (activeSlotId ? getCampaignMainWeapon(campaign, activeSlotId) : "pulse-rifle"),
     [activeSlotId, campaign],
   );
   const activeFacility = useMemo(() => {
@@ -2384,6 +2394,14 @@ export function App() {
     sfx.play("upgrade");
   }, [activeSlotId, campaign, sfx]);
 
+  const selectMainWeapon = useCallback((mainWeaponId) => {
+    if (!activeSlotId) return;
+    const nextCampaign = setCampaignMainWeapon(campaign, activeSlotId, mainWeaponId);
+    setCampaign(nextCampaign);
+    saveCampaign(nextCampaign);
+    sfx.play("click");
+  }, [activeSlotId, campaign, sfx]);
+
   const toggleSound = useCallback(() => {
     const nextEnabled = !soundEnabled;
     setSoundEnabled(nextEnabled);
@@ -2425,7 +2443,7 @@ export function App() {
       />
     );
   } else if (screen === "regions" && campaignView) {
-    content = <RegionSelectScreen regions={regions} campaign={campaignView} assets={campaignAssets} onSelect={launchCombat} onBack={() => setScreen("base")} />;
+    content = <RegionSelectScreen regions={regions} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} onWeaponChange={selectMainWeapon} onSelect={launchCombat} onBack={() => setScreen("base")} />;
   } else if (screen === "sortie" || screen === "game") {
     content = (
       <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>
@@ -2434,6 +2452,7 @@ export function App() {
           regionId={activeRegionId}
           region={activeRegion}
           combatBonuses={combatBonuses}
+          mainWeaponId={activeMainWeaponId}
           soundEnabled={soundEnabled}
           sfx={sfx}
           onToggleSound={toggleSound}

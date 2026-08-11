@@ -6192,3 +6192,61 @@ kbd,
 @media (prefers-reduced-motion: reduce) {
   .sortie-flight-progress i { transition-timing-function: steps(6, end); }
 }
+
+.sortie-weapon-loadout {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(92, 222, 242, 0.2);
+  background: rgba(3, 11, 16, 0.92);
+}
+
+.sortie-weapon-loadout > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.sortie-weapon-loadout > header small,
+.sortie-weapon-loadout > header span { color: #84dce9; }
+.sortie-weapon-loadout > header h3 { margin: 2px 0 0; font-size: 18px; }
+.sortie-weapon-loadout > header span { font-size: 12px; }
+.sortie-weapon-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+.sortie-weapon-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 4px 12px;
+  min-height: 138px;
+  padding: 13px;
+  overflow: hidden;
+  color: #d8edf1;
+  text-align: left;
+  border: 1px solid rgba(124, 167, 176, 0.28);
+  background: linear-gradient(135deg, rgba(15, 29, 36, 0.97), rgba(5, 10, 14, 0.97));
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.sortie-weapon-card:hover,
+.sortie-weapon-card:focus-visible { border-color: rgba(93, 229, 249, 0.72); transform: translateY(-2px); }
+.sortie-weapon-card.is-equipped { border-color: #5de5f9; box-shadow: inset 3px 0 #5de5f9, 0 0 22px rgba(54, 211, 237, 0.14); }
+.sortie-weapon-card > span { grid-row: 1 / span 2; display: grid; place-items: center; width: 46px; height: 46px; color: #7df2ff; border: 1px solid rgba(93, 229, 249, 0.32); background: rgba(26, 175, 200, 0.09); }
+.sortie-weapon-card > span svg { width: 27px; height: 27px; }
+.sortie-weapon-card div { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 2px 8px; }
+.sortie-weapon-card div small { grid-column: 1 / -1; color: #83cbd5; font-size: 11px; }
+.sortie-weapon-card div strong { font-size: 17px; }
+.sortie-weapon-card div em { color: #80979d; font-size: 11px; font-style: normal; }
+.sortie-weapon-card p { grid-column: 1 / -1; margin: 5px 0; color: #a9bcc1; font-size: 12px; line-height: 1.45; }
+.sortie-weapon-card footer { grid-column: 1 / -1; display: flex; justify-content: space-between; color: #70d9e8; font-size: 11px; }
+.sortie-weapon-card footer i { color: #d7b66c; font-style: normal; }
+.sortie-weapon-card mark { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; align-items: center; padding: 4px 7px; color: #031116; font-size: 10px; background: #63e7f7; }
+
+@media (max-width: 760px), (max-height: 560px) {
+  .sortie-weapon-loadout { padding: 9px; }
+  .sortie-weapon-loadout > header span { display: none; }
+  .sortie-weapon-card { min-height: 108px; padding: 9px; grid-template-columns: 38px minmax(0, 1fr); }
+  .sortie-weapon-card > span { width: 36px; height: 36px; }
+  .sortie-weapon-card p { display: none; }
+}
