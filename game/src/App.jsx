@@ -1086,6 +1086,34 @@ function LevelUpOverlay({ offer, level, assets, rewardState, onChoose }) {
   );
 }
 
+function TouchDirectionButton({ direction, className, label, onDirection, children }) {
+  const activePointerRef = useRef(null);
+  const begin = (event) => {
+    if (activePointerRef.current !== null) return;
+    activePointerRef.current = event.pointerId;
+    onDirection(direction, true, event);
+  };
+  const end = (event) => {
+    if (activePointerRef.current !== event.pointerId) return;
+    activePointerRef.current = null;
+    onDirection(direction, false, event);
+  };
+  return (
+    <button
+      className={className}
+      type="button"
+      aria-label={label}
+      onPointerDown={begin}
+      onPointerUp={end}
+      onPointerCancel={end}
+      onLostPointerCapture={end}
+      onContextMenu={(event) => event.preventDefault()}
+    >
+      {children}
+    </button>
+  );
+}
+
 function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
@@ -1470,10 +1498,10 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
 
         <div className="touch-controls" aria-label="터치 전투 조작">
           <div className="touch-dpad">
-            <button className="touch-up" type="button" aria-label="위로 이동" onPointerDown={(event) => setTouchDirection("up", true, event)} onPointerUp={(event) => setTouchDirection("up", false, event)} onPointerCancel={(event) => setTouchDirection("up", false, event)}><ArrowUp weight="bold" /></button>
-            <button className="touch-left" type="button" aria-label="왼쪽으로 이동" onPointerDown={(event) => setTouchDirection("left", true, event)} onPointerUp={(event) => setTouchDirection("left", false, event)} onPointerCancel={(event) => setTouchDirection("left", false, event)}><ArrowLeft weight="bold" /></button>
-            <button className="touch-down" type="button" aria-label="아래로 이동" onPointerDown={(event) => setTouchDirection("down", true, event)} onPointerUp={(event) => setTouchDirection("down", false, event)} onPointerCancel={(event) => setTouchDirection("down", false, event)}><ArrowDown weight="bold" /></button>
-            <button className="touch-right" type="button" aria-label="오른쪽으로 이동" onPointerDown={(event) => setTouchDirection("right", true, event)} onPointerUp={(event) => setTouchDirection("right", false, event)} onPointerCancel={(event) => setTouchDirection("right", false, event)}><ArrowRight weight="bold" /></button>
+            <TouchDirectionButton direction="up" className="touch-up" label="위로 이동" onDirection={setTouchDirection}><ArrowUp weight="bold" /></TouchDirectionButton>
+            <TouchDirectionButton direction="left" className="touch-left" label="왼쪽으로 이동" onDirection={setTouchDirection}><ArrowLeft weight="bold" /></TouchDirectionButton>
+            <TouchDirectionButton direction="down" className="touch-down" label="아래로 이동" onDirection={setTouchDirection}><ArrowDown weight="bold" /></TouchDirectionButton>
+            <TouchDirectionButton direction="right" className="touch-right" label="오른쪽으로 이동" onDirection={setTouchDirection}><ArrowRight weight="bold" /></TouchDirectionButton>
           </div>
           <span>전장을 터치해 조준 · 사격은 자동</span>
           <div className="touch-action-stack">
@@ -1999,12 +2027,12 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
               <span>{mainWeaponId === "beam-sword" ? "포인터 방향 · 빔 소드 자동 베기" : "포인터로 조준 · 소총 자동 발사"}</span>
             </div>
             <div className="touch-controls expedition-touch-controls" aria-label="터치 전투 조작">
-          <div className="touch-dpad">
-            <button className="touch-up" type="button" aria-label="위로 이동" onPointerDown={(event) => setTouchDirection("up", true, event)} onPointerUp={(event) => setTouchDirection("up", false, event)} onPointerCancel={(event) => setTouchDirection("up", false, event)}><ArrowUp weight="bold" /></button>
-            <button className="touch-left" type="button" aria-label="왼쪽으로 이동" onPointerDown={(event) => setTouchDirection("left", true, event)} onPointerUp={(event) => setTouchDirection("left", false, event)} onPointerCancel={(event) => setTouchDirection("left", false, event)}><ArrowLeft weight="bold" /></button>
-            <button className="touch-down" type="button" aria-label="아래로 이동" onPointerDown={(event) => setTouchDirection("down", true, event)} onPointerUp={(event) => setTouchDirection("down", false, event)} onPointerCancel={(event) => setTouchDirection("down", false, event)}><ArrowDown weight="bold" /></button>
-            <button className="touch-right" type="button" aria-label="오른쪽으로 이동" onPointerDown={(event) => setTouchDirection("right", true, event)} onPointerUp={(event) => setTouchDirection("right", false, event)} onPointerCancel={(event) => setTouchDirection("right", false, event)}><ArrowRight weight="bold" /></button>
-          </div>
+              <div className="touch-dpad">
+                <TouchDirectionButton direction="up" className="touch-up" label="위로 이동" onDirection={setTouchDirection}><ArrowUp weight="bold" /></TouchDirectionButton>
+                <TouchDirectionButton direction="left" className="touch-left" label="왼쪽으로 이동" onDirection={setTouchDirection}><ArrowLeft weight="bold" /></TouchDirectionButton>
+                <TouchDirectionButton direction="down" className="touch-down" label="아래로 이동" onDirection={setTouchDirection}><ArrowDown weight="bold" /></TouchDirectionButton>
+                <TouchDirectionButton direction="right" className="touch-right" label="오른쪽으로 이동" onDirection={setTouchDirection}><ArrowRight weight="bold" /></TouchDirectionButton>
+              </div>
             </div>
             <NarrativePanel dialogue={dialogue} assets={assets} region={region} bossStage={hud?.boss?.stage} onAdvance={advanceDialogue} />
             {paused && <PauseOverlay onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}

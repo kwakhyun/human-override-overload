@@ -4324,15 +4324,50 @@ kbd {
   .route-minimap-player svg { width: 13px; height: 13px; }
   .route-minimap-enemy { width: 3px; height: 3px; }
   .expedition-touch-controls {
+    display: flex;
     right: auto;
-    bottom: 12px;
-    left: 12px;
-    width: 126px;
-    min-height: 116px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: max(10px, env(safe-area-inset-left));
+    width: 150px;
+    min-height: 150px;
     padding: 0;
     border: 0;
+    align-items: center;
+    justify-content: center;
     background: transparent;
   }
+  .expedition-touch-controls .touch-dpad {
+    display: grid;
+    width: 150px;
+    height: 150px;
+    grid-template-columns: repeat(3, 46px);
+    grid-template-rows: repeat(3, 46px);
+    gap: 6px;
+    pointer-events: none;
+  }
+  .expedition-touch-controls .touch-up { grid-column: 2; grid-row: 1; }
+  .expedition-touch-controls .touch-left { grid-column: 1; grid-row: 2; }
+  .expedition-touch-controls .touch-right { grid-column: 3; grid-row: 2; }
+  .expedition-touch-controls .touch-down { grid-column: 2; grid-row: 3; }
+  .expedition-touch-controls .touch-dpad button {
+    width: 46px;
+    height: 46px;
+    border: 1px solid rgba(113, 236, 255, 0.54);
+    border-radius: 11px;
+    color: #d7fbff;
+    background: rgba(5, 26, 33, 0.84);
+    box-shadow: inset 0 0 16px rgba(67, 219, 243, 0.1), 0 3px 15px rgba(0, 0, 0, 0.4);
+    pointer-events: auto;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .expedition-touch-controls .touch-dpad button:active {
+    border-color: #9cf5ff;
+    color: #fff;
+    background: rgba(37, 151, 171, 0.72);
+    transform: scale(0.94);
+  }
+  .expedition-touch-controls .touch-dpad svg { width: 21px; height: 21px; }
   .transient-controls { display: none; }
   .expedition-xp { top: 119px; right: 12px; bottom: auto; width: 156px; }
   .expedition-alert { top: 158px; }
@@ -4376,8 +4411,20 @@ kbd {
   .narrative-portrait.is-hostile .narrative-portrait-frame { bottom: 6%; height: 88%; }
   .narrative-copy p { margin-top: 5px; font-size: 13px; line-height: 1.42; }
   .narrative-copy strong { font-size: 15px; }
-  .narrative-panel > button { padding: 8px; }
-  .narrative-panel > button span { display: none; }
+  .narrative-panel > button {
+    min-width: 92px;
+    min-height: 58px;
+    padding: 10px 12px;
+    border: 1px solid rgba(103, 234, 250, 0.42);
+    justify-content: center;
+    color: #effeff;
+    background: rgba(16, 83, 94, 0.32);
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .narrative-panel > button span { display: inline; }
+  .narrative-panel > button svg { width: 18px; height: 18px; flex: 0 0 auto; }
   .boss-gate-card { width: min(520px, 92vw); padding: 18px 24px; }
   .boss-gate-card > svg { margin-top: 9px; }
   .boss-gate-card p { margin-top: 7px; font-size: 12px; line-height: 1.45; }
@@ -6249,4 +6296,80 @@ kbd,
   .sortie-weapon-card { min-height: 108px; padding: 9px; grid-template-columns: 38px minmax(0, 1fr); }
   .sortie-weapon-card > span { width: 36px; height: 36px; }
   .sortie-weapon-card p { display: none; }
+}
+
+/* Phone landscape keeps every blocking surface inside the real visual
+   viewport, including browser and device safe-area reductions. */
+@media (max-height: 600px) and (orientation: landscape) {
+  .reward-backdrop {
+    padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    overflow: hidden;
+    align-items: center;
+  }
+  .reward-modal {
+    width: min(1080px, calc(100vw - 16px));
+    max-height: calc(100dvh - 12px);
+    margin: 0;
+    padding: 9px 14px 10px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .reward-kicker { font-size: 9px; }
+  .reward-modal > h2 { margin-top: 4px; font-size: clamp(24px, 6vh, 31px); }
+  .reward-modal > p { margin: 5px 0 8px; font-size: 10px; }
+  .reward-queue-status { margin: 0 auto 7px; padding: 4px 8px; font-size: 9px; }
+  .reward-options { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+  .reward-card {
+    height: clamp(190px, calc(100dvh - 154px), 270px);
+    min-height: 0;
+    padding: 9px 11px 8px;
+  }
+  .reward-art { height: clamp(76px, 19vh, 104px); margin: -9px -11px 8px; }
+  .reward-card > small { font-size: 9px; }
+  .reward-card > strong { margin-top: 3px; font-size: clamp(15px, 3.8vh, 19px); }
+  .reward-card > p {
+    display: -webkit-box;
+    margin: 5px 0 7px;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .reward-card > div:last-child { padding-top: 6px; font-size: 9px; }
+  .reward-note { display: none; }
+
+  .overload-result {
+    height: 100dvh;
+    min-height: 0;
+    padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    overflow-y: auto;
+  }
+  .overload-result .result-card {
+    width: min(980px, calc(100vw - 16px));
+    max-height: calc(100dvh - 12px);
+    padding: 12px 22px 14px;
+    overflow-y: auto;
+  }
+  .overload-result .result-emblem { width: 38px; height: 38px; margin-bottom: 6px; }
+  .overload-result .result-emblem svg { width: 20px; height: 20px; }
+  .overload-result .result-kicker { font-size: 8px; }
+  .overload-result .result-card h1 { margin: 5px 0; font-size: clamp(34px, 10vh, 52px); line-height: 1; }
+  .overload-result .result-card > p { font-size: 11px; line-height: 1.35; }
+  .overload-result .result-boss { width: 210px; }
+  .overload-result .result-stats { margin: 10px 0; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .overload-result .result-stats > span { padding: 7px 6px; border-bottom: 0; }
+  .overload-result .result-stats small { font-size: 7px; }
+  .overload-result .result-stats b { margin-top: 2px; font-size: 18px; }
+  .overload-result .result-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .overload-result .result-actions .primary-cta,
+  .overload-result .result-base-return { height: 46px; min-height: 46px; padding-inline: 14px; font-size: 12px; }
+
+  .narrative-panel {
+    min-height: 132px;
+    padding: 12px 12px 12px 120px;
+    gap: 10px;
+  }
+  .narrative-portrait { width: 114px; height: 138px; }
+  .narrative-copy p { font-size: 12px; line-height: 1.35; }
 }

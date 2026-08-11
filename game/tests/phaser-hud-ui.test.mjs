@@ -61,7 +61,10 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   const mobileEnd = styles.indexOf("@media (prefers-reduced-motion: reduce)", mobileStart);
   const mobile = styles.slice(mobileStart, mobileEnd);
   assert.match(mobile, /\.expedition-combat-dock \{[\s\S]*top: 52px;[\s\S]*bottom: auto;[\s\S]*left: 12px;[\s\S]*width: min\(440px, calc\(100% - 190px\)\)/);
-  assert.match(mobile, /\.expedition-touch-controls \{[\s\S]*right: auto;[\s\S]*bottom: 12px;[\s\S]*width: 126px;[\s\S]*background: transparent;/);
+  assert.match(mobile, /\.expedition-touch-controls \{[\s\S]*display: flex;[\s\S]*right: auto;[\s\S]*bottom: max\(10px, env\(safe-area-inset-bottom\)\);[\s\S]*width: 150px;[\s\S]*background: transparent;/);
+  assert.match(mobile, /\.expedition-touch-controls \.touch-dpad \{[\s\S]*display: grid;[\s\S]*grid-template-columns: repeat\(3, 46px\);[\s\S]*grid-template-rows: repeat\(3, 46px\)/);
+  assert.match(mobile, /\.expedition-touch-controls \.touch-dpad button \{[\s\S]*width: 46px;[\s\S]*height: 46px;[\s\S]*touch-action: none/);
+  assert.match(app, /function TouchDirectionButton[\s\S]*onPointerCancel=\{end\}[\s\S]*onLostPointerCapture=\{end\}/);
   assert.match(mobile, /\.route-minimap \{[\s\S]*top: 51px;[\s\S]*right: 12px;[\s\S]*width: 156px/);
 });
 
@@ -131,13 +134,13 @@ test("Escape pause is guarded from modal states and supports resume, local resta
   assert.match(app, /const pausedRef = useRef\(false\)/);
   assert.match(app, /const \[paused, setPaused\] = useState\(false\)/);
   assert.match(app, /const \[runRevision, setRunRevision\] = useState\(0\)/);
-  assert.match(app, /controllerRef\.current\?\.setSuspended\(query\.matches \|\| pausedRef\.current \|\| combatTutorialActiveRef\.current\)/);
+  assert.match(app, /controllerRef\.current\?\.setSuspended\(preparingRef\.current \|\| query\.matches \|\| pausedRef\.current \|\| combatTutorialActiveRef\.current\)/);
   assert.match(app, /if \(event\.key !== "Escape" \|\| event\.repeat\) return/);
   assert.match(app, /if \(needsLandscapeRef\.current \|\| combatTutorialActiveRef\.current \|\| dialogue \|\| rewardOpen\) return/);
   assert.match(app, /pausedRef\.current = true;\s*setPaused\(true\);\s*controllerRef\.current\?\.setSuspended\(true\)/);
   assert.match(app, /if \(needsLandscapeRef\.current \|\| combatTutorialActiveRef\.current\) return;[\s\S]*controllerRef\.current\?\.setSuspended\(false\)/);
   assert.match(app, /setRunRevision\(\(revision\) => revision \+ 1\)/);
-  assert.match(app, /\[combatBonuses, onFinish, regionId, runRevision, sfx\]/);
+  assert.match(app, /\[combatBonuses, mainWeaponId, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx\]/);
   assert.match(app, /<PauseOverlay onResume=\{resumeCombat\} onRestart=\{restartCombat\} onBase=\{onBase \? returnToBase : null\} \/>/);
   assert.match(app, /onBase=\{activeSlot\?\.homeBaseUnlocked \? \(\) => setScreen\("base"\) : null\}/);
 });
@@ -181,4 +184,23 @@ test("result actions keep retry and base return as two readable responsive butto
   assert.match(styles, /\.result-actions \{[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(styles, /\.result-actions \.primary-cta,[\s\S]*\.result-base-return \{[\s\S]*width: 100%;[\s\S]*min-width: 0;/);
   assert.match(styles, /@media \(max-width: 1120px\)[\s\S]*\.result-actions \{ grid-template-columns: 1fr; \}/);
+});
+
+test("phone landscape keeps rewards, defeat actions, dialogue advance, and movement controls inside the viewport", async () => {
+  const [app, styles] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
+  ]);
+  const landscapeStart = styles.lastIndexOf("@media (max-height: 600px) and (orientation: landscape)");
+  assert.ok(landscapeStart > 0);
+  const landscape = styles.slice(landscapeStart);
+  assert.match(landscape, /\.reward-modal \{[\s\S]*max-height: calc\(100dvh - 12px\);[\s\S]*overflow-y: auto/);
+  assert.match(landscape, /\.reward-options \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(landscape, /\.reward-card \{[\s\S]*height: clamp\(190px, calc\(100dvh - 154px\), 270px\);[\s\S]*min-height: 0/);
+  assert.match(landscape, /\.overload-result \{[\s\S]*height: 100dvh;[\s\S]*overflow-y: auto/);
+  assert.match(landscape, /\.overload-result \.result-actions \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(landscape, /\.narrative-panel \{[\s\S]*min-height: 132px/);
+  assert.match(styles, /\.narrative-panel > button \{[\s\S]*min-width: 92px;[\s\S]*min-height: 58px/);
+  assert.match(styles, /\.narrative-panel > button span \{ display: inline; \}/);
+  assert.equal((app.match(/<TouchDirectionButton direction=/g) || []).length, 8);
 });
