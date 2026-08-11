@@ -6,6 +6,10 @@
 
 - [상세 런타임 문서](game/README.md)
 - [에셋·도구·라이선스 기록](game/CREDITS.md)
+- [게임 소개·플레이 가이드](game/docs/project/game-guide-ko.md)
+- [AI 활용 기술 문서](game/docs/project/ai-usage-report-ko.md)
+- [게임 소개 PDF](game/output/pdf/HUMAN_OVERRIDE_OVERLOAD_Game_Guide_KO.pdf)
+- [AI 활용 기술 PDF](game/output/pdf/HUMAN_OVERRIDE_OVERLOAD_AI_Technical_Report_KO.pdf)
 
 ## 게임 흐름
 
