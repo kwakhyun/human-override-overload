@@ -334,10 +334,13 @@ test("player skills use low-resolution pixel atlases while healing kits and gate
   assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.automaticSkillPixel, 6, 4\)/);
   assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.manualAbilityPixel, 6, 4\)/);
   assert.match(view, /prepareAtlas\(ASSET_KEYS\.aegisWardHd, 6, 1\)/);
+  assert.match(view, /prepareAtlas\(ASSET_KEYS\.empPulseHd, 6, 1\)/);
   assert.match(view, /setFilter\(Phaser\.Textures\.FilterMode\.NEAREST\)/);
   assert.match(view, /syncOmegaLaserFx/);
-  assert.match(view, /setAtlasFrame\(segment, 2 \+ \(\(Math\.floor\(time \* 12\) \+ index\) % 2\), 3\)/);
-  assert.match(view, /setDisplaySize\(pixelSize, pixelSize\)/);
+  assert.match(view, /omegaLaserGraphics: Phaser\.GameObjects\.Graphics/);
+  assert.match(view, /graphics\.lineStyle\(beamWidth \* 1\.7, COLORS\.violet/);
+  assert.match(view, /graphics\.lineStyle\(Math\.max\(3, beamWidth \* 0\.17\), COLORS\.white/);
+  assert.match(view, /const pulseCount = quality\.id === "performance" \? 3/);
   assert.match(view, /getOmegaLaserSprite/);
   assert.match(view, /syncHealingKitFx/);
   assert.match(view, /const items = state\?\.telegraphs \?\? \[\]/);
@@ -347,7 +350,7 @@ test("player skills use low-resolution pixel atlases while healing kits and gate
   assert.match(view, /setAtlasFrame\(image, Math\.min\(5, Math\.floor\(progress \* 6\)\), 0\)/);
   assert.doesNotMatch(view, /setAtlasFrame\(image, Math\.min\(5, Math\.floor\(progress \* 6\)\), 3\)/);
   assert.doesNotMatch(view, /ASSET_KEYS\.(?:skillMotion|manualAbilityMotion|omegaLaserMotion)/);
-  assert.doesNotMatch(view, /setDisplaySize\(segmentLength/);
+  assert.doesNotMatch(view, /const segmentCount|const tileStep|setAtlasFrame\(segment/);
   assert.doesNotMatch(manifest, /vfx\/(?:manual\/manual-ability-motion-atlas|skill-motion-atlas|omega-laser-motion-atlas)\.png/);
 });
 
@@ -362,8 +365,10 @@ test("manual Q/E/F/R effects use their dedicated rows and engine-owned geometry"
   assert.match(view, /manualAbilityGraphics: Phaser\.GameObjects\.Graphics/);
   assert.match(view, /this\.syncManualAbilityFx\(state, time, quality\)/);
   assert.match(manual, /state\?\.empPulses/);
-  assert.match(manual, /resolveManualAbilityAtlasFrame\("empPulse", pulse\)/);
+  assert.match(manual, /image\.setTexture\(ASSET_KEYS\.empPulseHd\)/);
+  assert.match(manual, /setAtlasFrame\(image, frame, 0\)/);
   assert.match(manual, /geometry\?\.radius/);
+  assert.match(manual, /setDisplaySize\(radius \* 2\.2, radius \* 2\.2\)/);
   assert.match(manual, /setRotation\(0\)/);
   assert.match(manual, /state\?\.aegisWards/);
   assert.match(manual, /image\.setTexture\(ASSET_KEYS\.aegisWardHd\)/);

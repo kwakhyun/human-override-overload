@@ -357,6 +357,7 @@ export class BattleView {
   private readonly telegraphGraphics: Phaser.GameObjects.Graphics;
   private readonly effectGraphics: Phaser.GameObjects.Graphics;
   private readonly manualAbilityGraphics: Phaser.GameObjects.Graphics;
+  private readonly omegaLaserGraphics: Phaser.GameObjects.Graphics;
   private readonly projectileGraphics: Phaser.GameObjects.Graphics;
   private readonly foregroundGraphics: Phaser.GameObjects.Graphics;
   private readonly enemyHealthGraphics: Phaser.GameObjects.Graphics;
@@ -434,6 +435,7 @@ export class BattleView {
     ensureAtlasFrames(scene, ASSET_KEYS.healingKitMotion, 4, 1);
     this.preparePixelAtlas(ASSET_KEYS.manualAbilityPixel, 6, 4);
     this.prepareAtlas(ASSET_KEYS.aegisWardHd, 6, 1);
+    this.prepareAtlas(ASSET_KEYS.empPulseHd, 6, 1);
     if (scene.textures.exists(ASSET_KEYS.swordSkillPixel)) this.preparePixelAtlas(ASSET_KEYS.swordSkillPixel, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.enemyDeathPixel, 6, 1);
     const hasSquadTraces = scene.textures.exists(ASSET_KEYS.squadTraces);
@@ -489,13 +491,14 @@ export class BattleView {
     this.telegraphGraphics = scene.add.graphics();
     this.effectGraphics = scene.add.graphics();
     this.manualAbilityGraphics = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
+    this.omegaLaserGraphics = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
     this.projectileGraphics = scene.add.graphics();
     this.impactGraphics = scene.add.graphics().setBlendMode(Phaser.BlendModes.ADD);
     this.foregroundGraphics = scene.add.graphics();
     this.enemyHealthGraphics = scene.add.graphics();
     this.hudGraphics = scene.add.graphics();
     this.worldBack.add([this.shadowGraphics, this.telegraphGraphics, this.bossPatternLayer, this.effectGraphics, this.manualAbilityGraphics]);
-    this.worldFront.add([this.projectileGraphics, this.impactGraphics, this.enemyHealthGraphics, this.foregroundGraphics]);
+    this.worldFront.add([this.projectileGraphics, this.impactGraphics, this.enemyHealthGraphics, this.omegaLaserGraphics, this.foregroundGraphics]);
     this.hudLayer.add(this.hudGraphics);
 
     this.muzzleFlash = scene.add.image(0, 0, ASSET_KEYS.combatFx)
@@ -1824,31 +1827,28 @@ export class BattleView {
       const radius = Math.max(24, finite(geometry?.radius, finite(pulse?.radius, 300)));
       if (!this.isCircleVisible(x, y, radius, 48)) continue;
       const remaining = clamp01(finite(pulse?.life) / Math.max(0.001, finite(pulse?.maxLife, 0.92)));
-      const frame = resolveManualAbilityAtlasFrame("empPulse", pulse);
+      const progress = clamp01(1 - remaining);
+      const frame = Math.min(5, Math.floor(progress * 6));
       const image = this.getManualAbilitySprite(visible++);
-      setAtlasFrame(image, frame.column, frame.row);
+      image.setTexture(ASSET_KEYS.empPulseHd);
+      setAtlasFrame(image, frame, 0);
       image
         .setBlendMode(Phaser.BlendModes.ADD)
         .setOrigin(0.5)
         .setVisible(true)
         .setPosition(x, y)
         .setRotation(0)
-        // The dotted circumference carries the exact 300px collision radius;
-        // the authored core stays compact enough to keep enemies readable.
-        .setDisplaySize(snapPixelSize(radius * 1.42), snapPixelSize(radius * 1.42))
-        .setAlpha(0.9 * clamp01(remaining / 0.12))
+        // The authored wave fills a square cell without crossing it. A 2.2x
+        // diameter keeps its bright outer ring aligned with the engine radius.
+        .setDisplaySize(radius * 2.2, radius * 2.2)
+        .setAlpha(0.94 * clamp01(remaining / 0.12))
         .clearTint();
-      drawPixelDottedCircle(graphics, x, y, radius, COLORS.cyan, 0.42 + remaining * 0.24, 28, 4);
-      drawPixelDottedCircle(
-        graphics,
-        x,
-        y,
-        radius * (0.72 + Math.sin(time * 9.2) * 0.018),
-        COLORS.white,
-        0.2 + remaining * 0.1,
-        20,
-        2,
-      );
+      graphics.lineStyle(3, COLORS.cyan, 0.34 + remaining * 0.24);
+      graphics.strokeCircle(x, y, radius);
+      if (quality.id !== "performance") {
+        graphics.lineStyle(1, COLORS.white, 0.18 + remaining * 0.12);
+        graphics.strokeCircle(x, y, radius * (0.72 + Math.sin(time * 9.2) * 0.018));
+      }
     }
 
     const wards = Array.isArray(state?.aegisWards) ? state.aegisWards : [];
@@ -2279,7 +2279,9 @@ export class BattleView {
 
   private syncOmegaLaserFx(state: any, time: number, quality: QualityPreset) {
     const beams = state?.beams ?? [];
-    const spriteCap = quality.id === "performance" ? 12 : quality.id === "cinematic" ? 28 : 20;
+    const graphics = this.omegaLaserGraphics;
+    graphics.clear();
+    const spriteCap = quality.id === "performance" ? 6 : quality.id === "cinematic" ? 16 : 10;
     let visible = 0;
     for (const beam of beams) {
       if (!String(beam?.type ?? "").toLowerCase().includes("omega")) continue;
@@ -2291,27 +2293,62 @@ export class BattleView {
       const angle = Number.isFinite(beam?.angle) ? finite(beam.angle) : Math.atan2(y2 - y1, x2 - x1);
       const directionX = Math.cos(angle);
       const directionY = Math.sin(angle);
+      const normalX = -directionY;
+      const normalY = directionX;
       const beamLength = Math.max(1, Math.hypot(x2 - x1, y2 - y1));
       const charging = beam?.phase === "charge";
       const chargeProgress = clamp01(1 - finite(beam?.charge) / Math.max(0.001, finite(beam?.chargeMax, 0.68)));
       const activeDuration = Math.max(0.2, finite(beam?.maxLife, 1.55) - finite(beam?.chargeMax, 0.68));
       const activeProgress = clamp01(1 - finite(beam?.life) / activeDuration);
       const beamAlpha = charging ? 0.06 + chargeProgress * 0.2 : clamp(finite(beam?.alpha, 1), 0.34, 1);
+      const beamWidth = clamp(finite(beam?.width, 82), 28, 140);
       const pixelSize = quality.id === "performance"
         ? PIXEL_VFX_CELL * 2
         : snapPixelSize(finite(beam?.width, 82) * 2.1, PIXEL_VFX_CELL * 2, PIXEL_VFX_CELL * 3);
 
-      drawPixelDottedLine(
-        this.manualAbilityGraphics,
-        x1 + directionX * PIXEL_VFX_CELL,
-        y1 + directionY * PIXEL_VFX_CELL,
-        x2 - directionX * PIXEL_VFX_CELL,
-        y2 - directionY * PIXEL_VFX_CELL,
-        charging ? COLORS.cyan : COLORS.white,
-        charging ? 0.2 + chargeProgress * 0.36 : 0.34,
-        charging ? 30 : 52,
-        charging ? 4 : 5,
-      );
+      if (charging) {
+        const chargeWidth = 1.5 + chargeProgress * 3.5;
+        graphics.lineStyle(chargeWidth * 3.4, COLORS.cyan, 0.04 + chargeProgress * 0.08);
+        graphics.lineBetween(x1, y1, x2, y2);
+        graphics.lineStyle(chargeWidth, COLORS.white, 0.28 + chargeProgress * 0.5);
+        graphics.lineBetween(x1, y1, x2, y2);
+        graphics.fillStyle(COLORS.cyan, 0.18 + chargeProgress * 0.24);
+        graphics.fillCircle(x1, y1, 14 + chargeProgress * 20);
+      } else {
+        // A single Graphics path follows the authoritative beam endpoints.
+        // Layered rails, halo, and core stay continuous at any world length,
+        // avoiding the visible seams from repeating square atlas modules.
+        graphics.lineStyle(beamWidth * 1.7, COLORS.violet, 0.09 * beamAlpha);
+        graphics.lineBetween(x1, y1, x2, y2);
+        graphics.lineStyle(beamWidth * 1.16, COLORS.cyan, 0.18 * beamAlpha);
+        graphics.lineBetween(x1, y1, x2, y2);
+        const railOffset = beamWidth * 0.3;
+        graphics.lineStyle(Math.max(2, beamWidth * 0.075), COLORS.violet, 0.58 * beamAlpha);
+        graphics.lineBetween(x1 + normalX * railOffset, y1 + normalY * railOffset, x2 + normalX * railOffset, y2 + normalY * railOffset);
+        graphics.lineBetween(x1 - normalX * railOffset, y1 - normalY * railOffset, x2 - normalX * railOffset, y2 - normalY * railOffset);
+        graphics.lineStyle(Math.max(8, beamWidth * 0.5), COLORS.cyan, 0.76 * beamAlpha);
+        graphics.lineBetween(x1, y1, x2, y2);
+        graphics.lineStyle(Math.max(3, beamWidth * 0.17), COLORS.white, 0.98 * beamAlpha);
+        graphics.lineBetween(x1, y1, x2, y2);
+
+        const pulseCount = quality.id === "performance" ? 3 : quality.id === "cinematic" ? 8 : 5;
+        const pulseLength = clamp(beamLength * 0.035, 22, 70);
+        graphics.lineStyle(Math.max(2, beamWidth * 0.1), COLORS.white, 0.72 * beamAlpha);
+        for (let index = 0; index < pulseCount; index += 1) {
+          const head = ((time * 2.9 + index / pulseCount) % 1) * beamLength;
+          const tail = Math.max(0, head - pulseLength);
+          graphics.lineBetween(
+            x1 + directionX * tail,
+            y1 + directionY * tail,
+            x1 + directionX * head,
+            y1 + directionY * head,
+          );
+        }
+        graphics.fillStyle(COLORS.white, 0.72 * beamAlpha);
+        graphics.fillCircle(x2, y2, beamWidth * 0.3);
+        graphics.fillStyle(COLORS.cyan, 0.24 * beamAlpha);
+        graphics.fillCircle(x2, y2, beamWidth * 0.72);
+      }
 
       if (visible < spriteCap) {
         const emitter = this.getOmegaLaserSprite(visible++);
@@ -2325,29 +2362,6 @@ export class BattleView {
           .setDisplaySize(pixelSize, pixelSize)
           .setAlpha(charging ? 0.78 + chargeProgress * 0.2 : beamAlpha)
           .clearTint();
-      }
-
-      if (!charging) {
-        const segmentStart = PIXEL_VFX_CELL * 0.9;
-        const segmentEnd = Math.max(segmentStart, beamLength - PIXEL_VFX_CELL * 0.8);
-        const tileStep = Math.max(48, Math.round(pixelSize * 0.64));
-        const segmentCount = Math.max(1, Math.ceil((segmentEnd - segmentStart) / tileStep));
-        for (let index = 0; index <= segmentCount && visible < spriteCap; index += 1) {
-          const midpoint = Math.min(segmentEnd, segmentStart + index * tileStep);
-          const segment = this.getOmegaLaserSprite(visible++);
-          setAtlasFrame(segment, 2 + ((Math.floor(time * 12) + index) % 2), 3);
-          segment
-            .setBlendMode(Phaser.BlendModes.ADD)
-            .setOrigin(0.5)
-            .setVisible(true)
-            .setPosition(Math.round(x1 + directionX * midpoint), Math.round(y1 + directionY * midpoint))
-            .setRotation(angle)
-            // One square 64px beam module is repeated along engine geometry;
-            // no cannon, impact, or atlas cell is stretched into the full beam.
-            .setDisplaySize(pixelSize, pixelSize)
-            .setAlpha(beamAlpha)
-            .clearTint();
-        }
       }
 
       if (visible < spriteCap) {

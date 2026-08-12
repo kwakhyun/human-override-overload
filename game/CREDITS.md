@@ -643,8 +643,8 @@ Constraints: exact 6 columns, exact 4 rows, exact 24 cells; square cell aspect; 
 
 도트 시트는 시각 표현만 담당합니다. STRATOS의 3개 캡슐 lane, HELIX의 4개 회전 lance,
 OMEGA의 광선 길이, Q/E의 원형 범위와 실제 피해·보호 타이밍은 계속 결정론적 엔진 geometry가
-소유합니다. 정사각 셀을 긴 공격 범위로 늘이지 않고 점선 geometry와 반복 beam-core 모듈을
-같은 판정 좌표 위에 배치합니다.
+소유합니다. 이후 OMEGA의 반복 beam-core 모듈은 셀 이음새 문제로 폐기하고 같은 판정 좌표 위에
+연속 다중 레이어 Graphics 광선을 그리도록 교체했습니다.
 
 ### EMP 펄스와 적 기계 폭발 도트 모션
 
@@ -654,7 +654,8 @@ OMEGA의 광선 길이, Q/E의 원형 범위와 실제 피해·보호 타이밍�
 - 적용 목적: 기존 수동 Q의 중력 흡인 표현을 폐기하고 전자기 정지 펄스로 교체하며,
   모든 일반 적 사망에 6프레임 기계 폭발을 적용합니다.
 - 런타임 경로:
-  - `public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png`의 0행(EMP 6프레임)
+  - `public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png`의 0행(보존만 하는 구형 EMP 6프레임,
+    현재 렌더 미사용)
   - `public/assets/overload/vfx/pixel/enemy-death-pixel-atlas.png`(6×1, 64×64 셀)
 - ImageGen 원본:
   - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-0ea1ca97-5d3f-4686-a3bd-c1cd7234c384.png`
@@ -1090,6 +1091,42 @@ Style/medium: high-detail polished sci-fi game VFX, crisp translucent holographi
 Composition/framing: exact six equal square cells across one landscape canvas; one centered circular shield effect per cell; identical center and scale; generous padding; every effect fully inside its own cell; no crossing cell boundaries.
 Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background across every empty pixel for local removal.
 Constraints: exact 6 columns and 1 row, exactly 6 frames, strict overhead/nadir view, circular player-following shield, no character, no environment, no floor, no shadow, no text, no labels, no grid lines, no borders, no watermark, no motion blur, no extra objects. Do not use #ff00ff anywhere in the shield. The background must have no gradient, texture, light variation, reflection, or shadow.
+```
+
+## EMP PULSE high-detail electromagnetic atlas
+
+- 런타임: `public/assets/overload/vfx/manual/emp-pulse-hd-atlas.png`
+- 규격: 1152×192 RGBA, 6×1, 192px 정사각 셀. 축전 시드 → 회로 점화 → 파동 확장 →
+  최대 교란장 → 신호 분해 → 소멸 순서이며 Phaser의 엔진 소유 EMP 중심·반경을 따라옵니다.
+- 도구: OpenAI built-in ImageGen → `remove_chroma_key.py` border auto-key, soft matte,
+  threshold 12/220, despill → `scripts/normalize-motion-atlas.py` 6×1/192px 공유 스케일 정규화.
+- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3c60a78e-91f5-42ee-b9c1-acc4da122f54.png`
+- 보존 원본: `reference/source-assets/overload/vfx/manual/emp-pulse-hd-chroma.png`
+- 알파 원본: `reference/source-assets/overload/vfx/manual/emp-pulse-hd-alpha.png`
+- QA 미리보기: `qa/emp-pulse-hd-preview.png`
+- 기존 `manual-ability-pixel-atlas.png`의 EMP 행은 새 런타임에서 사용하지 않습니다. OMEGA는 신규
+  외부 미술 없이 기존 포구·종단 셀과 엔진 geometry 기반 연속 Graphics 광선으로 재구성했습니다.
+- 정확한 ImageGen 프롬프트:
+
+```text
+Use case: stylized-concept.
+Asset type: production high-detail 2D VFX animation atlas for the top-down Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+
+Create ONE exact horizontal sprite strip arranged as exactly 6 equal square cells in a single row (6 columns × 1 row). This is the dedicated EMP PULSE ability used by a futuristic AI-linked combat operative. Strict orthographic 90-degree overhead/nadir presentation in every frame, centered on one stable ground target point. The effect must read instantly as an electromagnetic shutdown pulse, not a gravity vortex, shield dome, fire explosion, laser beam, or magic spell.
+
+Exact left-to-right animation:
+1) compact cyan-white capacitor seed with a thin violet circuit ring beginning to energize;
+2) four restrained electrical arcs snap outward and a second concentric circuit ring appears;
+3) a wide circular EMP wave rapidly expands with segmented cyan-white rings and sparse hexagonal interference fragments;
+4) peak electromagnetic disruption field: large clean concentric wavefront, broken circuit glyph fragments, short radial electric arcs, bright but transparent center so actors remain readable;
+5) overloaded shutdown beat: outer ring fractures into controlled cyan/violet signal blocks while the center discharges;
+6) clean dissipation: faint fragmented ring and a few fading electric motes, no persistent disk.
+
+Style and quality: premium high-detail sci-fi game VFX matching a polished hard-light defensive ability; crisp smooth vector-like energy contours, layered cyan/white/electric-violet light, restrained bloom, clean mechanical circuit motifs, readable on a dark industrial battlefield, strong temporal continuity, stable center and scale, no camera motion. Each frame must be self-contained, fully inside its cell with generous uniform safety padding. No part may cross a cell boundary.
+
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background covering all empty pixels. No scenery, floor, character, weapon, enemies, shadows, smoke, fire, debris, text, letters, numbers, icons, labels, grid lines, cell borders, watermark, poster layout, duplicate strips, extra rows, or extra columns. Do not use #ff00ff inside the effect. Crisp separated edges with no magenta rim.
+
+Constraints: exact 6 columns, exact 1 row, exact 6 isolated square cells, seamless animation progression, no cropped effect, no cross-cell overflow, no full opaque disk.
 ```
 
 ## Numbered boss timed-bomb pixel atlas

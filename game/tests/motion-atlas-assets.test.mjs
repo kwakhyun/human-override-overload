@@ -98,6 +98,19 @@ test("AEGIS WARD ships as a dedicated high-detail smooth hard-light atlas", asyn
   assert.equal(definition.path.replace("./", "public/"), path);
 });
 
+test("EMP PULSE ships as a dedicated high-detail smooth electromagnetic atlas", async () => {
+  const path = "public/assets/overload/vfx/manual/emp-pulse-hd-atlas.png";
+  const bytes = await readFile(new URL(`../${path}`, import.meta.url));
+  assert.deepEqual(pngDimensions(bytes), [1152, 192]);
+  assert.equal(bytes[25], 6, `${path} must retain RGBA transparency`);
+  const definition = manifest.COMMON_GAME_ASSETS.find((asset) => asset.key === manifest.ASSET_KEYS.empPulseHd);
+  assert.ok(definition, "the high-detail EMP atlas must be in the common battle bundle");
+  assert.equal(definition.kind, "atlas");
+  assert.equal(definition.columns, 6);
+  assert.equal(definition.rows, 1);
+  assert.equal(definition.path.replace("./", "public/"), path);
+});
+
 test("motion atlas residency stays staged instead of loading every ally and regional boss up front", () => {
   const commonKeys = new Set(manifest.COMMON_GAME_ASSETS.map((asset) => asset.key));
   for (const key of [
