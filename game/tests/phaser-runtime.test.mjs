@@ -333,6 +333,7 @@ test("player skills use low-resolution pixel atlases while healing kits and gate
   assert.match(manifest, /healing-kit-motion-atlas\.png", kind: "atlas", columns: 4, rows: 1/);
   assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.automaticSkillPixel, 6, 4\)/);
   assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.manualAbilityPixel, 6, 4\)/);
+  assert.match(view, /prepareAtlas\(ASSET_KEYS\.aegisWardHd, 6, 1\)/);
   assert.match(view, /setFilter\(Phaser\.Textures\.FilterMode\.NEAREST\)/);
   assert.match(view, /syncOmegaLaserFx/);
   assert.match(view, /setAtlasFrame\(segment, 2 \+ \(\(Math\.floor\(time \* 12\) \+ index\) % 2\), 3\)/);
@@ -365,7 +366,8 @@ test("manual Q/E/F/R effects use their dedicated rows and engine-owned geometry"
   assert.match(manual, /geometry\?\.radius/);
   assert.match(manual, /setRotation\(0\)/);
   assert.match(manual, /state\?\.aegisWards/);
-  assert.match(manual, /resolveManualAbilityAtlasFrame\("aegisWard", ward\)/);
+  assert.match(manual, /image\.setTexture\(ASSET_KEYS\.aegisWardHd\)/);
+  assert.match(manual, /setAtlasFrame\(image, wardColumn, 0\)/);
   assert.match(manual, /geometry\?\.x/);
   assert.match(manual, /state\?\.stratosRuns/);
   assert.match(manual, /const offset = STRATOS_OFFSETS\[laneIndex\]/);
@@ -387,6 +389,8 @@ test("manual Q/E/F/R effects use their dedicated rows and engine-owned geometry"
   assert.match(manual, /for \(let index = visible; index < this\.manualAbilitySprites\.length/);
   assert.doesNotMatch(manual, /state\.(?:empPulses|aegisWards|stratosRuns|helixTempests)\s*=/);
   assert.doesNotMatch(manual, /airstrikes|omegaLaserSprites|omegaLaserMotion/);
+  assert.match(view, /type === "stratosRunImpact"[\s\S]*spawnFx\("stratosBlast"/);
+  assert.match(view, /stratosBlast \? 22 \+ progress \* 82/);
 });
 
 test("Phaser keeps basic fire automatic while Q/E/F/R share one repeat-safe active-ability edge", async () => {

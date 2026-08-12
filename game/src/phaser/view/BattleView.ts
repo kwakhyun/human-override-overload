@@ -75,7 +75,7 @@ type EnemyHealthBarCandidate = {
   persistent: boolean;
 };
 
-type ViewFxKind = "armorHit" | "enemyBurst" | "playerHit" | "bossHit" | "bossBurst" | "phaseBreak" | "weaponBlast";
+type ViewFxKind = "armorHit" | "enemyBurst" | "playerHit" | "bossHit" | "bossBurst" | "phaseBreak" | "weaponBlast" | "stratosBlast";
 
 type ViewFx = {
   kind: ViewFxKind;
@@ -433,6 +433,7 @@ export class BattleView {
     this.prepareAtlas(ASSET_KEYS.sovereignGateMotion, 6, 1);
     ensureAtlasFrames(scene, ASSET_KEYS.healingKitMotion, 4, 1);
     this.preparePixelAtlas(ASSET_KEYS.manualAbilityPixel, 6, 4);
+    this.prepareAtlas(ASSET_KEYS.aegisWardHd, 6, 1);
     if (scene.textures.exists(ASSET_KEYS.swordSkillPixel)) this.preparePixelAtlas(ASSET_KEYS.swordSkillPixel, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.enemyDeathPixel, 6, 1);
     const hasSquadTraces = scene.textures.exists(ASSET_KEYS.squadTraces);
@@ -627,6 +628,8 @@ export class BattleView {
       this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), COLORS.cyan, 1.55);
     } else if (type === "aegisWardActivated") {
       this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), COLORS.green, 1.25);
+    } else if (type === "stratosRunImpact") {
+      this.spawnFx("stratosBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), COLORS.amber, 1.12);
     } else if (type === "skillAttack" || type === "masterAttack") {
       const skill = String(event?.skill ?? "");
       const color = skill.includes("nova") || skill.includes("orbit") ? COLORS.violet : COLORS.cyan;
@@ -1856,17 +1859,21 @@ export class BattleView {
       const y = finite(geometry?.y, finite(ward?.y, finite(state?.player?.y)));
       const radius = Math.max(20, finite(geometry?.radius, finite(ward?.radius, 132)));
       const remaining = clamp01(finite(ward?.life) / Math.max(0.001, finite(ward?.maxLife, 5)));
-      const frame = resolveManualAbilityAtlasFrame("aegisWard", ward);
+      const progress = clamp01(1 - remaining);
+      const wardColumn = progress < 0.12
+        ? Math.min(2, Math.floor(progress / 0.04))
+        : remaining < 0.18 ? 5 : Math.floor(time * 4.5) % 2 === 0 ? 2 : 3;
       const image = this.getManualAbilitySprite(visible++);
-      setAtlasFrame(image, frame.column, frame.row);
+      image.setTexture(ASSET_KEYS.aegisWardHd);
+      setAtlasFrame(image, wardColumn, 0);
       image
-        .setBlendMode(Phaser.BlendModes.NORMAL)
+        .setBlendMode(Phaser.BlendModes.ADD)
         .setOrigin(0.5)
         .setVisible(true)
         .setPosition(x, y)
         .setRotation(0)
-        .setDisplaySize(snapPixelSize(radius * 2.18), snapPixelSize(radius * 2.18))
-        .setAlpha(0.94 * clamp01(remaining / 0.1))
+        .setDisplaySize(radius * 2.5, radius * 2.5)
+        .setAlpha(0.9 * clamp01(remaining / 0.08))
         .clearTint();
       drawPixelDottedCircle(graphics, x, y, radius, COLORS.cyan, 0.44 + remaining * 0.28, 18, 5);
     }
@@ -2082,6 +2089,7 @@ export class BattleView {
       this.worldBack.add(image);
       this.manualAbilitySprites.push(image);
     }
+    if (image.texture.key !== ASSET_KEYS.manualAbilityPixel) image.setTexture(ASSET_KEYS.manualAbilityPixel);
     return image;
   }
 
@@ -2528,6 +2536,7 @@ export class BattleView {
     const duration = kind === "bossBurst" ? 1.25
       : kind === "phaseBreak" ? 0.95
         : kind === "enemyBurst" ? 0.52
+          : kind === "stratosBlast" ? 0.62
           : kind === "weaponBlast" ? 0.38
             : kind === "armorHit" || kind === "bossHit" ? 0.34
               : 0.28;
@@ -2562,7 +2571,8 @@ export class BattleView {
       const scale = fx.scale;
       const hit = fx.kind === "armorHit" || fx.kind === "playerHit" || fx.kind === "bossHit";
       const bossScale = fx.kind === "bossBurst" || fx.kind === "phaseBreak" ? 2.4 : 1;
-      const radius = (hit ? 6 + progress * 30 : 12 + progress * 48) * scale * bossScale;
+      const stratosBlast = fx.kind === "stratosBlast";
+      const radius = (hit ? 6 + progress * 30 : stratosBlast ? 22 + progress * 82 : 12 + progress * 48) * scale * bossScale;
       if (!this.isCircleVisible(fx.x, fx.y, radius * 2.1, 40)) continue;
       const enemyExplosion = fx.kind === "enemyBurst";
 
@@ -2574,7 +2584,7 @@ export class BattleView {
           this.worldFront.add(image);
           this.impactSprites.push(image);
         }
-        const explosion = enemyExplosion || fx.kind === "bossBurst" || fx.kind === "phaseBreak";
+        const explosion = enemyExplosion || stratosBlast || fx.kind === "bossBurst" || fx.kind === "phaseBreak";
         if (enemyExplosion) {
           image.setTexture(ASSET_KEYS.enemyDeathPixel);
           setAtlasFrame(image, Math.min(5, Math.floor(clamp01(progress) * 6)), 0);
@@ -2585,13 +2595,13 @@ export class BattleView {
         image
           .setVisible(true)
           .setPosition(fx.x, fx.y)
-          .setRotation(enemyExplosion ? 0 : progress * 0.9 + fx.seed * 0.001)
+          .setRotation(enemyExplosion || stratosBlast ? 0 : progress * 0.9 + fx.seed * 0.001)
           .setDisplaySize(
             enemyExplosion ? Math.max(46, 104 * scale) : Math.max(28, radius * (explosion ? 2.4 : 1.8)),
             enemyExplosion ? Math.max(46, 104 * scale) : Math.max(28, radius * (explosion ? 2.4 : 1.8)),
           )
-          .setAlpha(enemyExplosion ? Math.min(1, alpha * 1.42) : alpha * (explosion ? 0.78 : 0.88))
-          .setTint(enemyExplosion ? 0xffffff : fx.color);
+          .setAlpha(enemyExplosion ? Math.min(1, alpha * 1.42) : stratosBlast ? Math.min(1, alpha * 1.2) : alpha * (explosion ? 0.78 : 0.88))
+          .setTint(enemyExplosion || stratosBlast ? 0xffffff : fx.color);
         spriteCount += 1;
       }
 
@@ -2609,7 +2619,7 @@ export class BattleView {
       graphics.lineStyle(Math.max(1, 1.3 * scale), COLORS.white, alpha * 0.8);
       graphics.strokeCircle(fx.x, fx.y, radius * 0.62);
 
-      const baseRays = hit ? 8 : fx.kind === "bossBurst" || fx.kind === "phaseBreak" ? 24 : 12;
+      const baseRays = hit ? 8 : fx.kind === "bossBurst" || fx.kind === "phaseBreak" ? 24 : stratosBlast ? 18 : 12;
       const rays = quality.id === "performance" ? Math.ceil(baseRays * 0.4) : baseRays;
       for (let ray = 0; ray < rays; ray += 1) {
         const noise = Math.sin((fx.seed + ray * 31) * 12.9898) * 43758.5453;

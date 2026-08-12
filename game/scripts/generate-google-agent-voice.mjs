@@ -13,18 +13,18 @@ export const GOOGLE_TTS_SPEAKING_RATE = 1.3;
 export const AGENT_VOICE_LINES = Object.freeze({
   empPulse: Object.freeze({
     key: "Q",
-    file: "emp-pulse-online.mp3",
-    text: "전자기 펄스 전개.",
+    file: "emp-pulse-start.mp3",
+    text: "EMP 전개.",
   }),
   aegisWard: Object.freeze({
     key: "E",
-    file: "aegis-ward-online.mp3",
-    text: "이지스 방벽 전개.",
+    file: "aegis-ward-start.mp3",
+    text: "방벽 전개.",
   }),
   stratosRun: Object.freeze({
     key: "F",
-    file: "stratos-run-start.mp3",
-    text: "항공 지원 개시.",
+    file: "stratos-run-v2.mp3",
+    text: "지원 폭격 개시.",
   }),
   helixTempest: Object.freeze({
     key: "R",

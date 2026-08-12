@@ -22,9 +22,9 @@ test("Google Chirp 3 HD pipeline defines one concise Korean callout per manual a
   assert.deepEqual(
     Object.values(pipeline.AGENT_VOICE_LINES).map((line) => line.text),
     [
-      "전자기 펄스 전개.",
-      "이지스 방벽 전개.",
-      "항공 지원 개시.",
+      "EMP 전개.",
+      "방벽 전개.",
+      "지원 폭격 개시.",
       "섬멸 모드 개시.",
     ],
   );

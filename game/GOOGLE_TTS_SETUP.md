@@ -7,9 +7,9 @@ Google Cloud Text-to-Speech의 `ko-KR-Chirp3-HD-Kore`로 네 개의 한국어 MP
 
 ## 확정 대사
 
-- Q / EMP PULSE: `전자기 펄스 전개.`
-- E / AEGIS WARD: `이지스 방벽 전개.`
-- F / STRATOS RUN: `항공 지원 개시.`
+- Q / EMP PULSE: `EMP 전개.`
+- E / AEGIS WARD: `방벽 전개.`
+- F / STRATOS RUN: `지원 폭격 개시.`
 - R / HELIX TEMPEST: `섬멸 모드 개시.`
 
 ## 현재 적용 상태
@@ -22,12 +22,12 @@ Google Cloud Text-to-Speech의 `ko-KR-Chirp3-HD-Kore`로 네 개의 한국어 MP
 - 런타임: `src/audio/agentVoice.js`가 성공한 `manualAbilityActivated`만 재생
 - 인증: Cloud Shell의 일시 접근 토큰으로 개발 단계에서만 합성했으며 저장소·브라우저 번들에는 없음
 
-| 키 | 파일 | 길이 | 크기 | SHA-256 |
-| --- | --- | ---: | ---: | --- |
-| Q | `emp-pulse-online.mp3` | 1.560초 | 6,240 bytes | `eee7883d296c2559756ecd60106bae7b667b8c2dd953395790dccb3f9d27c9f9` |
-| E | `aegis-ward-online.mp3` | 1.680초 | 6,720 bytes | `d48cd4c7a1a3442140225f5c6a1bcc10e3ceef1058e0a0f29bc3f89816d6aecb` |
-| F | `stratos-run-start.mp3` | 1.416초 | 5,664 bytes | `aec3826e0c7f37d52d0ab33e37c2a6278994e20bded5b3f4c466bac45b4d77a8` |
-| R | `helix-tempest-start.mp3` | 0.912초 | 3,648 bytes | `3e6ea9f10e7fba611790802ace128fccefd54f8e09823d9f4c0a1f07db7ab654` |
+| 키 | 파일 | 크기 | SHA-256 |
+| --- | --- | ---: | --- |
+| Q | `emp-pulse-start.mp3` | 4,800 bytes | `f17caa8477a6e53672b328f265e958b933859778913a9420bf4d44151256fddc` |
+| E | `aegis-ward-start.mp3` | 3,072 bytes | `9eeda8a260be74f9c451cc0df506c16766f1e16c4a2d0b14db9c0c4151bb49b8` |
+| F | `stratos-run-v2.mp3` | 5,184 bytes | `f4918e52845e2bcf8587cacbdf5ff04b10fcb77a609aa673d731fe5b379affe1` |
+| R | `helix-tempest-start.mp3` | 3,648 bytes | `3e6ea9f10e7fba611790802ace128fccefd54f8e09823d9f4c0a1f07db7ab654` |
 
 ## 공식 재생성 절차
 

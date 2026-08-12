@@ -34,9 +34,9 @@ class FakeAudio {
 
 test("Google Chirp ability callouts use stable manifest paths and shipped MP3 files", async () => {
   const expected = [
-    ["empPulse", "emp-pulse-online.mp3", 6240],
-    ["aegisWard", "aegis-ward-online.mp3", 6720],
-    ["stratosRun", "stratos-run-start.mp3", 5664],
+    ["empPulse", "emp-pulse-start.mp3", 4800],
+    ["aegisWard", "aegis-ward-start.mp3", 3072],
+    ["stratosRun", "stratos-run-v2.mp3", 5184],
     ["helixTempest", "helix-tempest-start.mp3", 3648],
   ];
   for (const [ability, filename, bytes] of expected) {
@@ -73,6 +73,8 @@ test("agent voice preloads only in combat, follows the sound toggle, and protect
   assert.equal(voice.play("aegisWard"), false);
   voice.setEnabled(true);
   assert.equal(voice.play("aegisWard"), true);
+  assert.equal(voice.play("stratosRun"), true);
+  assert.equal(voice.play("empPulse"), true, "ordinary tactical callouts interrupt each other immediately");
   voice.dispose();
   assert.ok(FakeAudio.instances.every((audio) => audio.onended === null));
 });

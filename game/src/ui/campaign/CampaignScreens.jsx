@@ -641,57 +641,66 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
       )}
       {selectedRegion && (
         <section className="region-sortie-dialog" role="dialog" aria-modal="true" aria-labelledby="region-sortie-title">
-          <button type="button" className="region-sortie-close" data-ui-sound="uiClose" onClick={() => setSelectedRegionId(null)} aria-label="작전 상세 닫기">
-            <ArrowLeft weight="bold" /> 구역 목록 <kbd>ESC</kbd>
-          </button>
-          <div className="region-sortie-kicker"><span>{selectedRegion.chapterLabel}</span><i>{completed.has(selectedRegion.id) ? "해방 기록 있음" : "첫 공략"}</i></div>
-          <h2 className="region-mixed-name" id="region-sortie-title"><span>{selectedRegion.koreanName || selectedRegion.name}</span><em>{selectedRegion.name}</em></h2>
-          <p>{localizeWorldText(selectedRegion.description)}</p>
-          <dl className="region-sortie-intel">
-            <div><dt>주요 적 조합</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.composition)}</dd></div>
-            <div><dt>보스 패턴</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.bossSignatures)}</dd></div>
-            {selectedRegion.midBoss && <div><dt>중간 방어체</dt><dd>{selectedRegion.midBoss.koreanName} · {selectedRegion.midBoss.name}</dd></div>}
-            <div><dt>최종 목표</dt><dd>{BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName} 파괴</dd></div>
-            <div><dt>예상 교전</dt><dd>기계 군단 {selectedRegion.enemyBudget}기</dd></div>
-          </dl>
-          <div className="region-sortie-rewards">
-            <small>첫 승리 회수 자원</small>
-            <span>연구 자료 +{selectedRegion.victoryRewards?.firstClear?.researchData || 0}</span>
-            <span>장비 부품 +{selectedRegion.victoryRewards?.firstClear?.equipmentParts || 0}</span>
+          <header className="region-sortie-command-header">
+            <button type="button" className="region-sortie-close" data-ui-sound="uiClose" onClick={() => setSelectedRegionId(null)} aria-label="작전 상세 닫기">
+              <ArrowLeft weight="bold" /> 구역 목록 <kbd>ESC</kbd>
+            </button>
+            <div className="region-sortie-kicker"><span>{selectedRegion.chapterLabel}</span><i>{completed.has(selectedRegion.id) ? "해방 기록 있음" : "첫 공략"}</i></div>
+          </header>
+          <div className="region-sortie-layout">
+            <section className="region-sortie-briefing">
+              <h2 className="region-mixed-name" id="region-sortie-title"><span>{selectedRegion.koreanName || selectedRegion.name}</span><em>{selectedRegion.name}</em></h2>
+              <p>{localizeWorldText(selectedRegion.description)}</p>
+              <dl className="region-sortie-intel">
+                <div><dt>주요 적 조합</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.composition)}</dd></div>
+                <div><dt>보스 패턴</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.bossSignatures)}</dd></div>
+                {selectedRegion.midBoss && <div><dt>중간 방어체</dt><dd>{selectedRegion.midBoss.koreanName} · {selectedRegion.midBoss.name}</dd></div>}
+                <div><dt>최종 목표</dt><dd>{BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName} 파괴</dd></div>
+                <div><dt>예상 교전</dt><dd>기계 군단 {selectedRegion.enemyBudget}기</dd></div>
+              </dl>
+              <div className="region-sortie-rewards">
+                <small>첫 승리 회수 자원</small>
+                <span>연구 자료 +{selectedRegion.victoryRewards?.firstClear?.researchData || 0}</span>
+                <span>장비 부품 +{selectedRegion.victoryRewards?.firstClear?.equipmentParts || 0}</span>
+              </div>
+            </section>
+            <section className="sortie-weapon-loadout" aria-labelledby="sortie-weapon-title">
+              <header>
+                <div><small>메인 장비</small><h3 id="sortie-weapon-title">이번 출격 무기 선택</h3></div>
+                <span>무기에 따라 레벨업 증강 트리가 변경됩니다.</span>
+              </header>
+              <div className="sortie-weapon-options">
+                {weapons.map((weapon) => {
+                  const equipped = weapon.id === equippedWeaponId;
+                  const rankKey = weapon.id === "beam-sword" ? "ilya-sword-resonator" : "ilya-rifle-emitter";
+                  const upgradeRank = campaign?.progression?.equipmentRanks?.[rankKey] || 0;
+                  const WeaponIcon = weapon.id === "beam-sword" ? Sword : Crosshair;
+                  return (
+                    <button
+                      type="button"
+                      className={`sortie-weapon-card${equipped ? " is-equipped" : ""}`}
+                      aria-pressed={equipped}
+                      data-ui-sound={equipped ? "click" : "uiConfirm"}
+                      onClick={() => onWeaponChange?.(weapon.id)}
+                      key={weapon.id}
+                    >
+                      <span><WeaponIcon weight="fill" /></span>
+                      <div><small>{weapon.role}</small><strong>{weapon.koreanName}</strong><em>{weapon.name}</em></div>
+                      <p>{weapon.description}</p>
+                      <footer><b>{weapon.treeLabel}</b><i>기지 개조 {upgradeRank}단계</i></footer>
+                      {equipped && <mark><CheckCircle weight="fill" /> 장착 중</mark>}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           </div>
-          <section className="sortie-weapon-loadout" aria-labelledby="sortie-weapon-title">
-            <header>
-              <div><small>메인 장비</small><h3 id="sortie-weapon-title">이번 출격 무기 선택</h3></div>
-              <span>무기에 따라 레벨업 증강 트리가 변경됩니다.</span>
-            </header>
-            <div className="sortie-weapon-options">
-              {weapons.map((weapon) => {
-                const equipped = weapon.id === equippedWeaponId;
-                const rankKey = weapon.id === "beam-sword" ? "ilya-sword-resonator" : "ilya-rifle-emitter";
-                const upgradeRank = campaign?.progression?.equipmentRanks?.[rankKey] || 0;
-                const WeaponIcon = weapon.id === "beam-sword" ? Sword : Crosshair;
-                return (
-                  <button
-                    type="button"
-                    className={`sortie-weapon-card${equipped ? " is-equipped" : ""}`}
-                    aria-pressed={equipped}
-                    data-ui-sound={equipped ? "click" : "uiConfirm"}
-                    onClick={() => onWeaponChange?.(weapon.id)}
-                    key={weapon.id}
-                  >
-                    <span><WeaponIcon weight="fill" /></span>
-                    <div><small>{weapon.role}</small><strong>{weapon.koreanName}</strong><em>{weapon.name}</em></div>
-                    <p>{weapon.description}</p>
-                    <footer><b>{weapon.treeLabel}</b><i>기지 개조 {upgradeRank}단계</i></footer>
-                    {equipped && <mark><CheckCircle weight="fill" /> 장착 중</mark>}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-          <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound="uiConfirm" onClick={() => onSelect(selectedRegion.id)}>
-            <AirplaneTilt weight="fill" /><span><small>나이트자 항로 승인 · {weapons.find((weapon) => weapon.id === equippedWeaponId)?.koreanName || "펄스 소총"}</small><strong>장비 확정 · 작전 시작</strong></span><ArrowRight weight="bold" />
-          </button>
+          <footer className="region-sortie-command-footer">
+            <span><CheckCircle weight="fill" /> 작전 정보와 메인 장비를 확인했습니다.</span>
+            <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound="uiConfirm" onClick={() => onSelect(selectedRegion.id)}>
+              <AirplaneTilt weight="fill" /><span><small>나이트자 항로 승인 · {weapons.find((weapon) => weapon.id === equippedWeaponId)?.koreanName || "펄스 소총"}</small><strong>장비 확정 · 작전 시작</strong></span><ArrowRight weight="bold" />
+            </button>
+          </footer>
         </section>
       )}
     </main>

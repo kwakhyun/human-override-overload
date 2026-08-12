@@ -27,6 +27,7 @@ export const ASSET_KEYS = Object.freeze({
   bossMotion: "overload-wrong-engine-motion-v2",
   combatFx: "overload-combat-fx-atlas",
   manualAbilityPixel: "overload-manual-ability-pixel-atlas",
+  aegisWardHd: "overload-aegis-ward-hd-atlas",
   enemyDeathPixel: "overload-enemy-death-pixel-atlas",
   bossPatternCommonPixel: "overload-boss-pattern-common-pixel-atlas",
   bossPatternRegionalPixel: "overload-boss-pattern-regional-pixel-atlas",
@@ -99,6 +100,7 @@ export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
   { key: ASSET_KEYS.enemySniperMotion, path: "./assets/overload/enemies/motion-v2/sniper-motion-atlas.png", performancePath: "./assets/overload/enemies/motion-v2/performance/sniper-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
   { key: ASSET_KEYS.combatFx, path: "./assets/overload/vfx/combat-fx-atlas.png", performancePath: "./assets/overload/vfx/performance/combat-fx-atlas.png", kind: "atlas", columns: 4, rows: 3 },
   { key: ASSET_KEYS.manualAbilityPixel, path: "./assets/overload/vfx/pixel/manual-ability-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+  { key: ASSET_KEYS.aegisWardHd, path: "./assets/overload/vfx/manual/aegis-ward-hd-atlas.png", kind: "atlas", columns: 6, rows: 1 },
   { key: ASSET_KEYS.enemyDeathPixel, path: "./assets/overload/vfx/pixel/enemy-death-pixel-atlas.png", kind: "atlas", columns: 6, rows: 1 },
   { key: ASSET_KEYS.automaticSkillPixel, path: "./assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
   { key: ASSET_KEYS.sovereignGateMotion, path: "./assets/overload/vfx/gates/sovereign-gate-motion-atlas.png", performancePath: "./assets/overload/vfx/gates/performance/sovereign-gate-motion-atlas.png", kind: "atlas", columns: 6, rows: 1 },
@@ -314,9 +316,9 @@ export const REGION_BGM_PATHS = Object.freeze({
 });
 
 export const AGENT_VOICE_PATHS = Object.freeze({
-  empPulse: "./assets/audio/agent/emp-pulse-online.mp3",
-  aegisWard: "./assets/audio/agent/aegis-ward-online.mp3",
-  stratosRun: "./assets/audio/agent/stratos-run-start.mp3",
+  empPulse: "./assets/audio/agent/emp-pulse-start.mp3",
+  aegisWard: "./assets/audio/agent/aegis-ward-start.mp3",
+  stratosRun: "./assets/audio/agent/stratos-run-v2.mp3",
   helixTempest: "./assets/audio/agent/helix-tempest-start.mp3",
 });
 

@@ -1052,22 +1052,45 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
   합성했습니다. 인증 토큰·키·계정 설정 파일은 저장소에 포함하지 않습니다.
 - 범위: Q EMP PULSE, E AEGIS WARD, F STRATOS RUN, R HELIX TEMPEST가 실제로 성공했을 때 재생할
   짧은 한국어 시스템 안내 4개. 전체 대사 TTS나 주인공 음성 복제에는 사용하지 않습니다.
-- 확정 대사: Q `전자기 펄스 전개.`, E `이지스 방벽 전개.`, F `항공 지원 개시.`,
-  R `섬멸 모드 개시.` F·R은 번역투가 강한 최초 문구를 2026-08-12에 짧은 한국어 전투 관제형으로
-  재합성했습니다. 효과 설명은 전투 중 음성 겹침을 줄이기 위해 넣지 않습니다.
+- 확정 대사: Q `EMP 전개.`, E `방벽 전개.`, F `지원 폭격 개시.`, R `섬멸 모드 개시.`
+  Q·E·F는 발음 늘어짐과 입력 응답 지연을 줄이기 위해 2026-08-12에 더 짧은 한국어 전투
+  관제형으로 재합성했습니다. 효과 설명은 전투 중 음성 겹침을 줄이기 위해 넣지 않습니다.
 - 대사·출력 파일·공식 인증 절차는 `GOOGLE_TTS_SETUP.md`와
   `scripts/generate-google-agent-voice.mjs`에 고정했습니다.
 - 런타임 파일:
-  - `public/assets/audio/agent/emp-pulse-online.mp3` — 1.560초, 6,240 bytes — SHA-256
-    `eee7883d296c2559756ecd60106bae7b667b8c2dd953395790dccb3f9d27c9f9`
-  - `public/assets/audio/agent/aegis-ward-online.mp3` — 1.680초, 6,720 bytes — SHA-256
-    `d48cd4c7a1a3442140225f5c6a1bcc10e3ceef1058e0a0f29bc3f89816d6aecb`
-  - `public/assets/audio/agent/stratos-run-start.mp3` — 1.416초, 5,664 bytes — SHA-256
-    `aec3826e0c7f37d52d0ab33e37c2a6278994e20bded5b3f4c466bac45b4d77a8`
+  - `public/assets/audio/agent/emp-pulse-start.mp3` — 4,800 bytes — SHA-256
+    `f17caa8477a6e53672b328f265e958b933859778913a9420bf4d44151256fddc`
+  - `public/assets/audio/agent/aegis-ward-start.mp3` — 3,072 bytes — SHA-256
+    `9eeda8a260be74f9c451cc0df506c16766f1e16c4a2d0b14db9c0c4151bb49b8`
+  - `public/assets/audio/agent/stratos-run-v2.mp3` — 5,184 bytes — SHA-256
+    `f4918e52845e2bcf8587cacbdf5ff04b10fcb77a609aa673d731fe5b379affe1`
   - `public/assets/audio/agent/helix-tempest-start.mp3` — 0.912초, 3,648 bytes — SHA-256
     `3e6ea9f10e7fba611790802ace128fccefd54f8e09823d9f4c0a1f07db7ab654`
 - `src/audio/agentVoice.js`는 전투 진입 시 네 파일에 명시적 `load()`를 요청하고 성공한 스킬 이벤트만 재생합니다.
   브라우저 기본 TTS·런타임 Google API 호출·음성 복제는 사용하지 않습니다.
+
+## AEGIS WARD high-detail hard-light atlas
+
+- 런타임: `public/assets/overload/vfx/manual/aegis-ward-hd-atlas.png`
+- 규격: 1152×192 RGBA, 6×1, 192px 정사각 셀. 전개 시드 → 판넬 전개 → 완성 → 안정 펄스 →
+  충격 흡수 → 소멸 순서이며 Phaser의 엔진 소유 132-unit 원형 판정을 따라옵니다.
+- 도구: OpenAI built-in ImageGen → `remove_chroma_key.py` border auto-key, soft matte,
+  threshold 12/220, despill → `scripts/normalize-motion-atlas.py` 6×1/192px 공유 스케일 정규화.
+- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-f0df133a-4be0-4d04-839f-a5b0a8b4be7d.png`
+- 보존 원본: `reference/source-assets/overload/vfx/manual/aegis-ward-hd-chroma.png`
+- 알파 원본: `reference/source-assets/overload/vfx/manual/aegis-ward-hd-alpha.png`
+- QA 미리보기: `qa/aegis-ward-hd-preview.png`
+- 정확한 ImageGen 프롬프트:
+
+```text
+Use case: stylized-concept
+Asset type: production 2D browser-game VFX sprite atlas for HUMAN OVERRIDE: OVERLOAD
+Primary request: Create one exact 6-column by 1-row animation spritesheet for AEGIS WARD, a premium futuristic defensive hard-light shield viewed from a strict orthographic 90-degree overhead camera. Read left to right: 1 compact cyan energy seed and four emitter nodes, 2 hexagonal shield plates unfolding, 3 complete circular layered barrier with bright white-cyan rim, 4 stable barrier with restrained circuit pulse, 5 barrier absorbing an impact with amber-white facets on one side, 6 shield dissolving into clean cyan fragments.
+Style/medium: high-detail polished sci-fi game VFX, crisp translucent holographic glass, concentric cyan circuitry, white energy edges, restrained violet accents, readable at small top-down scale, materially richer and smoother than pixel art.
+Composition/framing: exact six equal square cells across one landscape canvas; one centered circular shield effect per cell; identical center and scale; generous padding; every effect fully inside its own cell; no crossing cell boundaries.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background across every empty pixel for local removal.
+Constraints: exact 6 columns and 1 row, exactly 6 frames, strict overhead/nadir view, circular player-following shield, no character, no environment, no floor, no shadow, no text, no labels, no grid lines, no borders, no watermark, no motion blur, no extra objects. Do not use #ff00ff anywhere in the shield. The background must have no gradient, texture, light variation, reflection, or shadow.
+```
 
 ## Numbered boss timed-bomb pixel atlas
 

@@ -297,6 +297,7 @@ const EVENT_SOUNDS = Object.freeze({
   aegisWardActivated: "collect",
   stratosRunWarning: "bossTelegraph",
   stratosRunSweep: "rail",
+  stratosRunImpact: "explosion",
   helixTempestStarted: "bossBreak",
   helixTempestPulse: "arc",
   helixTempestEnded: "merge",
@@ -560,9 +561,9 @@ const EXPEDITION_ACTIVE_ABILITIES = Object.freeze([
 const COMBAT_DOCK_SLOTS = Object.freeze([
   Object.freeze({ id: "dash", key: "SPACE", label: "위상 대시", icon: Lightning, action: "dash", abilityKeys: Object.freeze([]) }),
   Object.freeze({ id: "empPulse", key: "Q", label: "EMP 펄스", icon: Pulse, action: "empPulse", abilityKeys: Object.freeze(["empPulse"]) }),
-  Object.freeze({ id: "aegisWard", key: "E", label: "이지스 방벽", icon: ShieldChevron, action: "aegisWard", abilityKeys: Object.freeze(["aegisWard"]) }),
-  Object.freeze({ id: "stratosRun", key: "F", label: "공중 소사", icon: Target, action: "stratosRun", abilityKeys: Object.freeze(["stratosRun"]) }),
-  Object.freeze({ id: "helixTempest", key: "R", label: "나선 폭풍", icon: Crosshair, action: "helixTempest", abilityKeys: Object.freeze(["helixTempest"]) }),
+  Object.freeze({ id: "aegisWard", key: "E", label: "방벽 전개", icon: ShieldChevron, action: "aegisWard", abilityKeys: Object.freeze(["aegisWard"]) }),
+  Object.freeze({ id: "stratosRun", key: "F", label: "항공 지원", icon: Target, action: "stratosRun", abilityKeys: Object.freeze(["stratosRun"]) }),
+  Object.freeze({ id: "helixTempest", key: "R", label: "섬멸 모드", icon: Crosshair, action: "helixTempest", abilityKeys: Object.freeze(["helixTempest"]) }),
 ]);
 
 const REWARD_NAMES_KO = Object.freeze({
@@ -1997,6 +1998,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
     : 0;
   const bossSiren = Boolean(hud?.boss?.siren?.active);
   const bombSequence = hud?.boss?.bombSequence;
+  const bombArmorActive = Boolean(hud?.boss?.bombArmor?.active);
 
   return (
     <main
@@ -2066,6 +2068,13 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
                   <strong>{bombSequence.phase === "siren" ? `${bombSequence.count}개 설치 중` : `다음 번호 ${bombSequence.expectedOrder}`}</strong>
                 </span>
                 <b>{Math.max(0, Number(bombSequence.timer || 0)).toFixed(1)}초</b>
+              </div>
+            )}
+            {bombArmorActive && (
+              <div className="boss-bomb-armor" role="status" aria-live="polite">
+                <ShieldChevron weight="fill" />
+                <span><small>해제 실패 · 방어 회로 활성</small><strong>보스가 받는 피해 {Math.round((hud.boss.bombArmor.damageMultiplier || 0.16) * 100)}%</strong></span>
+                <b>{Math.max(0, Number(hud.boss.bombArmor.timer || 0)).toFixed(1)}초</b>
               </div>
             )}
             {(parryActive || bossSiren) && <div className="boss-crisis-screen" aria-hidden="true"><i /><i /></div>}

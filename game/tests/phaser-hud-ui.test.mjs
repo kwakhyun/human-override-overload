@@ -22,6 +22,9 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   const slotStart = app.indexOf("const COMBAT_DOCK_SLOTS");
   const slotEnd = app.indexOf("const REWARD_NAMES_KO", slotStart);
   const slotContract = app.slice(slotStart, slotEnd);
+  assert.match(slotContract, /label: "방벽 전개"/);
+  assert.match(slotContract, /label: "항공 지원"/);
+  assert.match(slotContract, /label: "섬멸 모드"/);
   assert.doesNotMatch(slotContract, /squadRecall|chain|nova|airstrike/);
   assert.doesNotMatch(app, /4-FRONT RECALL|touchRecall|\.recall\(\)/);
 
@@ -164,6 +167,7 @@ test("airstrike banner dedupe and independent manual ability SFX stay separate",
   assert.match(sounds, /empPulseActivated: "emp"/);
   assert.match(sounds, /aegisWardActivated: "collect"/);
   assert.match(sounds, /stratosRunSweep: "rail"/);
+  assert.match(sounds, /stratosRunImpact: "explosion"/);
   assert.match(sounds, /helixTempestStarted: "bossBreak"/);
   assert.match(sounds, /manualAbilityRejected: "alert"/);
   assert.doesNotMatch(sounds, /^\s*manualAbilityActivated:/m);

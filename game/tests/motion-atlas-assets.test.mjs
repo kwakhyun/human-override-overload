@@ -85,6 +85,19 @@ test("player skills and enemy deaths ship as crisp 64px-cell atlases while SOVER
   assert.equal(manifest.ASSET_KEYS.omegaLaserMotion, undefined);
 });
 
+test("AEGIS WARD ships as a dedicated high-detail smooth hard-light atlas", async () => {
+  const path = "public/assets/overload/vfx/manual/aegis-ward-hd-atlas.png";
+  const bytes = await readFile(new URL(`../${path}`, import.meta.url));
+  assert.deepEqual(pngDimensions(bytes), [1152, 192]);
+  assert.equal(bytes[25], 6, `${path} must retain RGBA transparency`);
+  const definition = manifest.COMMON_GAME_ASSETS.find((asset) => asset.key === manifest.ASSET_KEYS.aegisWardHd);
+  assert.ok(definition, "the high-detail ward atlas must be in the common battle bundle");
+  assert.equal(definition.kind, "atlas");
+  assert.equal(definition.columns, 6);
+  assert.equal(definition.rows, 1);
+  assert.equal(definition.path.replace("./", "public/"), path);
+});
+
 test("motion atlas residency stays staged instead of loading every ally and regional boss up front", () => {
   const commonKeys = new Set(manifest.COMMON_GAME_ASSETS.map((asset) => asset.key));
   for (const key of [

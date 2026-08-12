@@ -155,9 +155,11 @@ const BOSS_PARRY_ELIGIBLE = Object.freeze(new Set([
   "undertow",
 ]));
 const BOSS_BOMB_THRESHOLDS = Object.freeze([0.55, 0.3, 0.12]);
-const BOSS_BOMB_COUNTS = Object.freeze([2, 4, 8]);
+const BOSS_BOMB_COUNTS = Object.freeze([2, 3, 4]);
 const BOSS_BOMB_SIREN_DURATION = 1.15;
-const BOSS_BOMB_ACTIVE_DURATIONS = Object.freeze([10, 14, 22]);
+const BOSS_BOMB_ACTIVE_DURATIONS = Object.freeze([12, 16, 20]);
+const BOSS_BOMB_ARMOR_DURATION = 9;
+const BOSS_BOMB_ARMOR_DAMAGE_MULTIPLIER = 0.16;
 
 export const REGION_ENEMY_PROFILES = Object.freeze({
   "wrong-engine-core": Object.freeze({
@@ -672,6 +674,9 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
     parryEligibleCount: 0,
     bombSequence: null,
     bombSequenceTier: 0,
+    bombArmorTimer: 0,
+    bombArmorDuration: 0,
+    bombArmorDamageMultiplier: BOSS_BOMB_ARMOR_DAMAGE_MULTIPLIER,
     siren: null,
     contactCooldown: 0,
     weakness: 0,
@@ -1694,9 +1699,11 @@ function triggerBossStage(state, stage) {
 function damageBoss(state, amount, source = "weapon") {
   const boss = state.boss;
   if (!boss.active || boss.dead || boss.transformTimer > 0 || amount <= 0) return 0;
-  const multiplier = boss.groggy > 0
+  const vulnerabilityMultiplier = boss.groggy > 0
     ? boss.groggyMultiplier
     : boss.weakness > 0 ? 2 : 1;
+  const multiplier = vulnerabilityMultiplier
+    * (boss.bombArmorTimer > 0 ? boss.bombArmorDamageMultiplier : 1);
   boss.damageMultiplier = multiplier;
   const dealt = Math.min(boss.hp, amount * multiplier * finite(state.player?.overdriveDamage, 1));
   boss.hp -= dealt;
@@ -2462,7 +2469,7 @@ function hasManualCombatTarget(state) {
 function manualAbilityAvailable(state, ability) {
   const entry = state.manualAbilities[ability];
   if (!entry || state.player.dead || state.player.stunTimer > 0 || entry.cooldown > 0) return false;
-  return ability === "stratosRun" || ability === "helixTempest" ? hasManualCombatTarget(state) : true;
+  return ability === "helixTempest" ? hasManualCombatTarget(state) : true;
 }
 
 function rejectManualAbility(state, ability, reason) {
@@ -2608,6 +2615,7 @@ function createStratosLane(state, centerX, centerY, direction, offset, index) {
     damage: 190 * state.player.damageMultiplier,
     hitIds: [],
     bossHit: false,
+    impactTimer: 0,
     geometry: {
       kind: "capsule",
       startX,
@@ -2624,7 +2632,6 @@ function createStratosLane(state, centerX, centerY, direction, offset, index) {
 
 function triggerStratosRun(state) {
   const ability = "stratosRun";
-  if (!hasManualCombatTarget(state)) return rejectManualAbility(state, ability, "no-target");
   const direction = normalize(state.aim.x - state.player.x, state.aim.y - state.player.y);
   const centerX = state.aim.x;
   const centerY = state.aim.y;
@@ -2736,6 +2743,16 @@ function updateStratosRuns(state, dt) {
     const previous = lane.progress;
     lane.progress = clamp(lane.progress + dt / lane.sweepDuration, 0, 1);
     lane.geometry.sweepProgress = lane.progress;
+    lane.impactTimer -= dt;
+    while (lane.impactTimer <= 0 && lane.progress < 1) {
+      lane.impactTimer += 0.105;
+      emit(state, "stratosRunImpact", {
+        x: lane.geometry.startX + (lane.geometry.endX - lane.geometry.startX) * lane.progress,
+        y: lane.geometry.startY + (lane.geometry.endY - lane.geometry.startY) * lane.progress,
+        laneIndex: lane.laneIndex,
+        progress: lane.progress,
+      });
+    }
     const intersectsSweep = (x, y, radius) => {
       if (pointLineDistance(x, y, lane.geometry.startX, lane.geometry.startY, lane.geometry.endX, lane.geometry.endY)
         > lane.geometry.collisionHalfWidth + radius) return false;
@@ -4278,12 +4295,20 @@ function explodeBossBombSequence(state, reason) {
     invulnerability: 1,
   });
   state.stats.bossBombFailures += 1;
+  boss.bombArmorTimer = BOSS_BOMB_ARMOR_DURATION;
+  boss.bombArmorDuration = BOSS_BOMB_ARMOR_DURATION;
   boss.bombSequence = null;
   boss.siren = null;
   boss.patternCooldown = 1.35;
   state.flash = Math.max(state.flash, 0.88);
   state.shake = Math.max(state.shake, 30);
-  emit(state, "bossBombSequenceFailed", { reason, count: sequence.count, damage });
+  emit(state, "bossBombSequenceFailed", {
+    reason,
+    count: sequence.count,
+    damage,
+    armorDuration: BOSS_BOMB_ARMOR_DURATION,
+    bossDamageMultiplier: BOSS_BOMB_ARMOR_DAMAGE_MULTIPLIER,
+  });
   return true;
 }
 
@@ -4292,6 +4317,8 @@ function completeBossBombSequence(state, sequence) {
   const duration = 2.4;
   boss.bombSequence = null;
   boss.siren = null;
+  boss.bombArmorTimer = 0;
+  boss.bombArmorDuration = 0;
   boss.weakness = Math.max(boss.weakness, duration);
   boss.damageMultiplier = 2;
   boss.patternCooldown = duration + 0.4;
@@ -4408,6 +4435,7 @@ function updateBoss(state, dt, input) {
   boss.orbitHitCooldown = Math.max(0, boss.orbitHitCooldown - dt);
   boss.weakness = Math.max(0, boss.weakness - dt);
   boss.groggy = Math.max(0, boss.groggy - dt);
+  boss.bombArmorTimer = Math.max(0, boss.bombArmorTimer - dt);
   boss.phaseFlash = Math.max(0, boss.phaseFlash - dt * 0.72);
   if (boss.transformTimer > 0) {
     boss.transformTimer = Math.max(0, boss.transformTimer - dt);
@@ -4421,9 +4449,9 @@ function updateBoss(state, dt, input) {
       emit(state, "bossStagePulse", { stage: boss.stage, remaining: boss.alertPulses });
     }
   }
-  boss.damageMultiplier = boss.groggy > 0
+  boss.damageMultiplier = (boss.groggy > 0
     ? boss.groggyMultiplier
-    : boss.weakness > 0 ? 2 : 1;
+    : boss.weakness > 0 ? 2 : 1) * (boss.bombArmorTimer > 0 ? boss.bombArmorDamageMultiplier : 1);
   const bombMechanicActive = updateBossBombSequence(state, input, dt);
   if (bombMechanicActive) {
     boss.vx = 0;
@@ -4457,26 +4485,33 @@ function updateBoss(state, dt, input) {
     && boss.contactCooldown <= 0) {
     const direction = normalize(state.player.x - boss.x, state.player.y - boss.y, Math.cos(boss.angle), Math.sin(boss.angle));
     const swordEquipped = state.player.mainWeaponId === "beam-sword";
-    const contactDamage = swordEquipped
-      ? Math.max(42, state.player.maxHp * 0.16)
-      : Math.max(150, state.player.maxHp * 0.44);
-    const contactStun = swordEquipped ? 0.22 : BOSS_CONTACT_STUN;
-    const contactInvulnerability = swordEquipped ? 1.12 : 0.92;
-    if (damagePlayer(state, contactDamage, "bossContact", {
-      critical: true,
-      stun: contactStun,
-      invulnerability: contactInvulnerability,
-      hitStun: contactStun,
-    })) {
-      const separation = boss.radius + state.player.radius + 10;
+    const separation = boss.radius + state.player.radius + 10;
+    if (swordEquipped) {
       state.player.x = boss.x + direction.x * separation;
       state.player.y = boss.y + direction.y * separation;
-      state.player.vx = direction.x * (swordEquipped ? 92 : 150);
-      state.player.vy = direction.y * (swordEquipped ? 92 : 150);
+      state.player.vx = direction.x * 74;
+      state.player.vy = direction.y * 74;
       clampPlayerToFloor(state.player, state.expedition);
       boss.contactCooldown = BOSS_CONTACT_COOLDOWN;
-      state.shake = Math.max(state.shake, 22);
-      emit(state, "bossContactHit", { damage: contactDamage, stun: contactStun, cooldown: BOSS_CONTACT_COOLDOWN, meleeGuard: swordEquipped });
+      emit(state, "bossContactGuarded", { damage: 0, cooldown: BOSS_CONTACT_COOLDOWN, meleeGuard: true });
+    } else {
+      const contactDamage = Math.max(150, state.player.maxHp * 0.44);
+      const contactStun = BOSS_CONTACT_STUN;
+      if (damagePlayer(state, contactDamage, "bossContact", {
+        critical: true,
+        stun: contactStun,
+        invulnerability: 0.92,
+        hitStun: contactStun,
+      })) {
+        state.player.x = boss.x + direction.x * separation;
+        state.player.y = boss.y + direction.y * separation;
+        state.player.vx = direction.x * 150;
+        state.player.vy = direction.y * 150;
+        clampPlayerToFloor(state.player, state.expedition);
+        boss.contactCooldown = BOSS_CONTACT_COOLDOWN;
+        state.shake = Math.max(state.shake, 22);
+        emit(state, "bossContactHit", { damage: contactDamage, stun: contactStun, cooldown: BOSS_CONTACT_COOLDOWN, meleeGuard: false });
+      }
     }
   }
   if (boss.transformTimer <= 0) {
@@ -4794,6 +4829,12 @@ export function getSwarmHud(state) {
       groggyDuration: state.boss.groggyDuration,
       groggyMultiplier: state.boss.groggyMultiplier,
       damageMultiplier: state.boss.damageMultiplier,
+      bombArmor: {
+        active: state.boss.bombArmorTimer > 0,
+        timer: state.boss.bombArmorTimer,
+        duration: state.boss.bombArmorDuration,
+        damageMultiplier: state.boss.bombArmorDamageMultiplier,
+      },
       enrage: state.boss.enrage,
       transforming: state.boss.transformTimer > 0,
       transformTimer: state.boss.transformTimer,

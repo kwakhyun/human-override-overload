@@ -884,6 +884,24 @@ test("STRATOS RUN creates three warned parallel sweep lanes without reusing airs
   assert.equal(events.some((event) => event.type === "ultimateWarning"), false);
 });
 
+test("STRATOS RUN can scorch its aimed route even when no hostile is currently alive", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  state.enemies.length = 0;
+  state.spawnedEnemies = state.enemyBudget;
+  setSwarmAim(state, state.player.x + 480, state.player.y + 80);
+  drainSwarmEvents(state);
+  const input = createSwarmInput();
+  input.stratosRunPressed = true;
+  stepSwarm(state, input, 1 / 60);
+  clearPressedInput(input);
+  assert.equal(state.stratosRuns.length, 3);
+  assert.ok(state.manualAbilities.stratosRun.cooldown > 33.9);
+  stepFor(state, input, 1.4);
+  const events = drainSwarmEvents(state);
+  assert.ok(events.some((event) => event.type === "manualAbilityActivated" && event.ability === "stratosRun"));
+  assert.ok(events.filter((event) => event.type === "stratosRunImpact").length >= 12);
+});
+
 test("HELIX TEMPEST owns four rotating engine lances and repeated collision without omega beam reuse", () => {
   const state = createSwarmState({ random: () => 0.5 });
   const target = state.enemies.find((enemy) => !enemy.elite);
@@ -1145,13 +1163,13 @@ test("missing the boss parry window preserves the hit and low HP offers every el
   assert.ok(drainSwarmEvents(state).some((event) => event.type === "bossParryFailed"));
 });
 
-test("low-health bosses deploy 2, 4, then 8 numbered bombs and enforce click order", () => {
+test("low-health bosses deploy 2, 3, then 4 numbered bombs and enforce click order", () => {
   const state = createBossState(0, "glass-dune");
   delayPlayerWeapons(state);
   const input = createSwarmInput();
   const thresholds = [0.54, 0.29, 0.11];
-  const counts = [2, 4, 8];
-  const durations = [10, 14, 22];
+  const counts = [2, 3, 4];
+  const durations = [12, 16, 20];
   for (let tier = 0; tier < counts.length; tier += 1) {
     state.boss.hp = state.boss.maxHp * thresholds[tier];
     state.boss.transformTimer = 0;
@@ -1173,7 +1191,7 @@ test("low-health bosses deploy 2, 4, then 8 numbered bombs and enforce click ord
     }
     assert.equal(state.boss.bombSequence, null);
   }
-  assert.equal(state.stats.bossBombsDefused, 14);
+  assert.equal(state.stats.bossBombsDefused, 9);
   assert.equal(state.stats.bossBombFailures, 0);
 
   const failure = createBossState(0, "abyssal-archive");
@@ -1190,6 +1208,35 @@ test("low-health bosses deploy 2, 4, then 8 numbered bombs and enforce click ord
   assert.equal(failure.boss.bombSequence, null);
   assert.ok(failure.player.hp < hpBefore);
   assert.equal(failure.stats.bossBombFailures, 1);
+  assert.ok(failure.boss.bombArmorTimer > 8.9);
+  const bombArmorHud = getSwarmHud(failure).boss.bombArmor;
+  assert.equal(bombArmorHud.active, true);
+  assert.equal(bombArmorHud.damageMultiplier, 0.16);
+  const bossHpBeforeArmor = failure.boss.hp;
+  failure.boss.transformTimer = 0;
+  failure.boss.activePattern = null;
+  failure.boss.patternCooldown = 999;
+  failure.boss.x = failure.player.x + 220;
+  failure.boss.y = failure.player.y;
+  failure.projectiles.push({
+    id: 98765,
+    kind: "pulse",
+    x: failure.boss.x,
+    y: failure.boss.y,
+    vx: 0,
+    vy: 0,
+    angle: 0,
+    radius: 12,
+    damage: 100,
+    life: 1,
+    age: 0.1,
+    dead: false,
+    color: "#ffffff",
+  });
+  stepSwarm(failure, createSwarmInput(), 1 / 60);
+  const armoredDelta = bossHpBeforeArmor - failure.boss.hp;
+  const unarmoredDelta = 100 * failure.player.overdriveDamage;
+  assert.ok(Math.abs(armoredDelta / unarmoredDelta - 0.16) < 0.0001, `failed bomb armor should retain 16% damage, received ${armoredDelta / unarmoredDelta}`);
   assert.ok(drainSwarmEvents(failure).some((event) => event.type === "bossBombSequenceFailed" && event.reason === "wrongOrder"));
 });
 
@@ -1316,7 +1363,7 @@ test("direct boss body contact is critical, stuns controls, and has a retrigger 
   assert.equal(state.player.hp, afterFirstHit);
 });
 
-test("beam sword proximity guard makes ordinary boss body contact survivable without weakening charge patterns", () => {
+test("beam sword ignores ordinary boss body contact damage without weakening authored charge patterns", () => {
   const state = createBossState(0, "wrong-engine-core", "beam-sword");
   state.boss.activePattern = null;
   state.boss.patternCooldown = 999;
@@ -1325,13 +1372,12 @@ test("beam sword proximity guard makes ordinary boss body contact survivable wit
   const hp = state.player.hp;
   drainSwarmEvents(state);
   stepSwarm(state, createSwarmInput(), 1 / 60);
-  const contact = drainSwarmEvents(state).find((event) => event.type === "bossContactHit");
+  const contact = drainSwarmEvents(state).find((event) => event.type === "bossContactGuarded");
   assert.ok(contact);
   assert.equal(contact.meleeGuard, true);
-  assert.ok(contact.damage <= state.player.maxHp * 0.17);
-  assert.ok(state.player.hp > hp * 0.8);
-  assert.ok(state.player.stunTimer > 0.19 && state.player.stunTimer < 0.24);
-  assert.ok(state.player.invulnerability > 1.08);
+  assert.equal(contact.damage, 0);
+  assert.equal(state.player.hp, hp);
+  assert.equal(state.player.stunTimer, 0);
 });
 
 test("analog movement preserves joystick magnitude and caps diagonal input", () => {

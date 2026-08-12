@@ -66,7 +66,10 @@ export function createAgentVoice({
       if (!enabled || disposed) return false;
       const priority = ABILITY_PRIORITY[ability] || 0;
       const audio = ensureClip(ability);
-      if (!audio || !priority || (current && priority < currentPriority)) return false;
+      // Only the ultimate owns an interruption lock. Q/E/F are short tactical
+      // acknowledgements and a fresh key press must answer immediately rather
+      // than waiting behind another ordinary callout.
+      if (!audio || !priority || (current && currentPriority === 4 && priority < 4)) return false;
       stop();
       current = audio;
       currentPriority = priority;
