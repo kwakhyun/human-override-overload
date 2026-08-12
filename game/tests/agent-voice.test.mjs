@@ -36,8 +36,8 @@ test("Google Chirp ability callouts use stable manifest paths and shipped MP3 fi
   const expected = [
     ["empPulse", "emp-pulse-online.mp3", 6240],
     ["aegisWard", "aegis-ward-online.mp3", 6720],
-    ["stratosRun", "stratos-run-confirmed.mp3", 4320],
-    ["helixTempest", "helix-tempest-authorized.mp3", 3936],
+    ["stratosRun", "stratos-run-start.mp3", 5664],
+    ["helixTempest", "helix-tempest-start.mp3", 3648],
   ];
   for (const [ability, filename, bytes] of expected) {
     assert.match(manifestSource, new RegExp(`${ability}: "\\./assets/audio/agent/${filename.replaceAll(".", "\\.")}"`));

@@ -1052,8 +1052,9 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
   합성했습니다. 인증 토큰·키·계정 설정 파일은 저장소에 포함하지 않습니다.
 - 범위: Q EMP PULSE, E AEGIS WARD, F STRATOS RUN, R HELIX TEMPEST가 실제로 성공했을 때 재생할
   짧은 한국어 시스템 안내 4개. 전체 대사 TTS나 주인공 음성 복제에는 사용하지 않습니다.
-- 확정 대사: Q `전자기 펄스 전개.`, E `이지스 방벽 전개.`, F `공중 소사 좌표 확인.`,
-  R `나선 폭풍 승인.` 효과 설명은 전투 중 음성 겹침을 줄이기 위해 넣지 않습니다.
+- 확정 대사: Q `전자기 펄스 전개.`, E `이지스 방벽 전개.`, F `항공 지원 개시.`,
+  R `섬멸 모드 개시.` F·R은 번역투가 강한 최초 문구를 2026-08-12에 짧은 한국어 전투 관제형으로
+  재합성했습니다. 효과 설명은 전투 중 음성 겹침을 줄이기 위해 넣지 않습니다.
 - 대사·출력 파일·공식 인증 절차는 `GOOGLE_TTS_SETUP.md`와
   `scripts/generate-google-agent-voice.mjs`에 고정했습니다.
 - 런타임 파일:
@@ -1061,10 +1062,10 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
     `eee7883d296c2559756ecd60106bae7b667b8c2dd953395790dccb3f9d27c9f9`
   - `public/assets/audio/agent/aegis-ward-online.mp3` — 1.680초, 6,720 bytes — SHA-256
     `d48cd4c7a1a3442140225f5c6a1bcc10e3ceef1058e0a0f29bc3f89816d6aecb`
-  - `public/assets/audio/agent/stratos-run-confirmed.mp3` — 1.080초, 4,320 bytes — SHA-256
-    `d1315b5449bbfeb2f385f74d05221c7a4ad7cbdf1c6cd887a19547516eabb513`
-  - `public/assets/audio/agent/helix-tempest-authorized.mp3` — 0.984초, 3,936 bytes — SHA-256
-    `7dedba20d726cf6eae9db617b4bd7f83828d053e2590b306da39086097364d45`
+  - `public/assets/audio/agent/stratos-run-start.mp3` — 1.416초, 5,664 bytes — SHA-256
+    `aec3826e0c7f37d52d0ab33e37c2a6278994e20bded5b3f4c466bac45b4d77a8`
+  - `public/assets/audio/agent/helix-tempest-start.mp3` — 0.912초, 3,648 bytes — SHA-256
+    `3e6ea9f10e7fba611790802ace128fccefd54f8e09823d9f4c0a1f07db7ab654`
 - `src/audio/agentVoice.js`는 전투 진입 시 네 파일에 명시적 `load()`를 요청하고 성공한 스킬 이벤트만 재생합니다.
   브라우저 기본 TTS·런타임 Google API 호출·음성 복제는 사용하지 않습니다.
 

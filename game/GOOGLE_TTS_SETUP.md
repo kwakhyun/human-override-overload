@@ -9,8 +9,8 @@ Google Cloud Text-to-Speech의 `ko-KR-Chirp3-HD-Kore`로 네 개의 한국어 MP
 
 - Q / EMP PULSE: `전자기 펄스 전개.`
 - E / AEGIS WARD: `이지스 방벽 전개.`
-- F / STRATOS RUN: `공중 소사 좌표 확인.`
-- R / HELIX TEMPEST: `나선 폭풍 승인.`
+- F / STRATOS RUN: `항공 지원 개시.`
+- R / HELIX TEMPEST: `섬멸 모드 개시.`
 
 ## 현재 적용 상태
 
@@ -26,8 +26,8 @@ Google Cloud Text-to-Speech의 `ko-KR-Chirp3-HD-Kore`로 네 개의 한국어 MP
 | --- | --- | ---: | ---: | --- |
 | Q | `emp-pulse-online.mp3` | 1.560초 | 6,240 bytes | `eee7883d296c2559756ecd60106bae7b667b8c2dd953395790dccb3f9d27c9f9` |
 | E | `aegis-ward-online.mp3` | 1.680초 | 6,720 bytes | `d48cd4c7a1a3442140225f5c6a1bcc10e3ceef1058e0a0f29bc3f89816d6aecb` |
-| F | `stratos-run-confirmed.mp3` | 1.080초 | 4,320 bytes | `d1315b5449bbfeb2f385f74d05221c7a4ad7cbdf1c6cd887a19547516eabb513` |
-| R | `helix-tempest-authorized.mp3` | 0.984초 | 3,936 bytes | `7dedba20d726cf6eae9db617b4bd7f83828d053e2590b306da39086097364d45` |
+| F | `stratos-run-start.mp3` | 1.416초 | 5,664 bytes | `aec3826e0c7f37d52d0ab33e37c2a6278994e20bded5b3f4c466bac45b4d77a8` |
+| R | `helix-tempest-start.mp3` | 0.912초 | 3,648 bytes | `3e6ea9f10e7fba611790802ace128fccefd54f8e09823d9f4c0a1f07db7ab654` |
 
 ## 공식 재생성 절차
 
@@ -36,6 +36,9 @@ Google Cloud Text-to-Speech의 `ko-KR-Chirp3-HD-Kore`로 네 개의 한국어 MP
 3. `gcloud auth application-default login`으로 로컬 ADC를 설정합니다.
 4. PowerShell에서 `$env:GOOGLE_CLOUD_PROJECT="프로젝트_ID"`를 설정합니다.
 5. `npm run generate:agent-voice`를 실행합니다.
+
+특정 음성만 교체할 때는 `node scripts/generate-google-agent-voice.mjs --abilities=stratosRun,helixTempest`처럼
+쉼표로 대상을 지정해 검수 완료된 다른 음원을 보존합니다.
 
 생성 위치는 `public/assets/audio/agent/`입니다. 생성기는 Windows의 `gcloud.cmd`도 직접 처리합니다.
 재생성 후 네 음원의 대사·길이·무음·클리핑과 위

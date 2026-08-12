@@ -316,8 +316,8 @@ export const REGION_BGM_PATHS = Object.freeze({
 export const AGENT_VOICE_PATHS = Object.freeze({
   empPulse: "./assets/audio/agent/emp-pulse-online.mp3",
   aegisWard: "./assets/audio/agent/aegis-ward-online.mp3",
-  stratosRun: "./assets/audio/agent/stratos-run-confirmed.mp3",
-  helixTempest: "./assets/audio/agent/helix-tempest-authorized.mp3",
+  stratosRun: "./assets/audio/agent/stratos-run-start.mp3",
+  helixTempest: "./assets/audio/agent/helix-tempest-start.mp3",
 });
 
 export function frameCrop(

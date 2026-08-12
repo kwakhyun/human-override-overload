@@ -4,7 +4,7 @@ import test from "node:test";
 
 const pipeline = await import(new URL("../scripts/generate-google-agent-voice.mjs", import.meta.url));
 
-test("Google Chirp 3 HD pipeline defines one concise Korean callout per manual ability", () => {
+test("Google Chirp 3 HD pipeline defines one concise Korean callout per manual ability", async () => {
   assert.equal(pipeline.GOOGLE_TTS_LANGUAGE, "ko-KR");
   assert.equal(pipeline.GOOGLE_TTS_VOICE, "ko-KR-Chirp3-HD-Kore");
   assert.equal(pipeline.GOOGLE_TTS_SPEAKING_RATE, 1.3);
@@ -24,8 +24,8 @@ test("Google Chirp 3 HD pipeline defines one concise Korean callout per manual a
     [
       "전자기 펄스 전개.",
       "이지스 방벽 전개.",
-      "공중 소사 좌표 확인.",
-      "나선 폭풍 승인.",
+      "항공 지원 개시.",
+      "섬멸 모드 개시.",
     ],
   );
   for (const line of Object.values(pipeline.AGENT_VOICE_LINES)) {
@@ -34,6 +34,7 @@ test("Google Chirp 3 HD pipeline defines one concise Korean callout per manual a
     assert.match(line.file, /^[a-z0-9-]+\.mp3$/);
     assert.ok(line.text.length <= 16);
   }
+  assert.match(await readFile(new URL("../scripts/generate-google-agent-voice.mjs", import.meta.url), "utf8"), /--abilities=/);
 });
 
 test("voice generation keeps credentials out of the browser runtime and repository", async () => {

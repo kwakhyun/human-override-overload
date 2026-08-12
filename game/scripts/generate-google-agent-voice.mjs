@@ -23,13 +23,13 @@ export const AGENT_VOICE_LINES = Object.freeze({
   }),
   stratosRun: Object.freeze({
     key: "F",
-    file: "stratos-run-confirmed.mp3",
-    text: "공중 소사 좌표 확인.",
+    file: "stratos-run-start.mp3",
+    text: "항공 지원 개시.",
   }),
   helixTempest: Object.freeze({
     key: "R",
-    file: "helix-tempest-authorized.mp3",
-    text: "나선 폭풍 승인.",
+    file: "helix-tempest-start.mp3",
+    text: "섬멸 모드 개시.",
   }),
 });
 
@@ -91,12 +91,14 @@ async function synthesize(line, credentials) {
   return Buffer.from(payload.audioContent, "base64");
 }
 
-export async function generateAgentVoice() {
+export async function generateAgentVoice(abilities = Object.keys(AGENT_VOICE_LINES)) {
   const credentials = resolveCredentials();
   await mkdir(AGENT_VOICE_OUTPUT_DIRECTORY, { recursive: true });
   const pending = [];
   try {
-    for (const [ability, line] of Object.entries(AGENT_VOICE_LINES)) {
+    for (const ability of abilities) {
+      const line = AGENT_VOICE_LINES[ability];
+      if (!line) throw new Error(`Unknown agent voice ability: ${ability}`);
       const outputPath = path.join(AGENT_VOICE_OUTPUT_DIRECTORY, line.file);
       const temporaryPath = `${outputPath}.tmp`;
       const audio = await synthesize(line, credentials);
@@ -129,7 +131,11 @@ if (invokedDirectly) {
   if (process.argv.includes("--dry-run")) {
     printPlan();
   } else {
-    generateAgentVoice()
+    const abilityArgument = process.argv.find((argument) => argument.startsWith("--abilities="));
+    const abilities = abilityArgument
+      ? abilityArgument.slice("--abilities=".length).split(",").map((ability) => ability.trim()).filter(Boolean)
+      : undefined;
+    generateAgentVoice(abilities)
       .then((outputs) => console.log(JSON.stringify(outputs, null, 2)))
       .catch((error) => {
         console.error(error.message);
