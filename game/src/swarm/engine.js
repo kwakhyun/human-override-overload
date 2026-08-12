@@ -64,10 +64,10 @@ const WRONG_ENGINE_GROGGY_DURATION = 2.6;
 const WRONG_ENGINE_GROGGY_MULTIPLIER = 2.5;
 const SUICIDE_ARM_DURATION = 0.95;
 const SUICIDE_ELITE_ARM_DURATION = 0.82;
-const SUICIDE_TRIGGER_RADIUS = 168;
-const SUICIDE_ELITE_TRIGGER_RADIUS = 196;
-const SUICIDE_BLAST_RADIUS = 210;
-const SUICIDE_ELITE_BLAST_RADIUS = 246;
+const SUICIDE_TRIGGER_RADIUS = 112;
+const SUICIDE_ELITE_TRIGGER_RADIUS = 138;
+const SUICIDE_BLAST_RADIUS = 126;
+const SUICIDE_ELITE_BLAST_RADIUS = 156;
 
 export const REGION_COMBAT_CONFIGS = Object.freeze({
   "wrong-engine-core": Object.freeze({
@@ -2418,7 +2418,6 @@ function updateOmegaBeams(state, dt) {
       beam.charge -= dt;
       if (beam.charge <= 0) {
         beam.phase = "active";
-        state.flash = Math.max(state.flash, 0.5);
         state.shake = Math.max(state.shake, 20);
         emit(state, "ultimateFire", { skill: "omegaLaser" });
       }
@@ -3319,19 +3318,32 @@ function updateSwarmSpawning(state, dt) {
   const triggerReached = state.expedition
     ? finite(state.expedition.progress) >= finite(wave?.progressAt, 1)
     : state.time >= finite(wave?.warnAt, Infinity);
-  if (wave && !state.surgeWarning && !state.activeSurge && state.surgeQueued <= 0 && triggerReached) {
+  if (wave
+    && state.spawnedEnemies < state.enemyBudget
+    && !state.surgeWarning
+    && !state.activeSurge
+    && state.surgeQueued <= 0
+    && triggerReached) {
+    const remainingBudget = Math.max(0, state.enemyBudget - state.spawnedEnemies);
+    const isFinalWave = state.surgeIndex === SURGE_WAVES.length - 1;
+    // Regions 4-6 have larger armies than the original 1,000-unit schedule.
+    // The terminal wave owns every remaining budget slot so those routes can
+    // actually reach their midboss and boss-room transition.
+    const deploymentCount = isFinalWave
+      ? remainingBudget
+      : Math.min(wave.count, remainingBudget);
     const startAt = state.expedition ? state.time + finite(wave.warningLead, 1.25) : wave.startAt;
     state.surgeWarning = {
       index: state.surgeIndex,
       label: wave.label,
-      count: wave.count,
+      count: deploymentCount,
       startAt,
       startsIn: Math.max(0, startAt - state.time),
     };
     emit(state, "surgeWarning", {
       wave: state.surgeIndex + 1,
       label: wave.label,
-      count: wave.count,
+      count: deploymentCount,
       startsIn: Math.max(0, startAt - state.time),
       progressAt: state.expedition ? wave.progressAt : null,
     });
@@ -3340,11 +3352,12 @@ function updateSwarmSpawning(state, dt) {
     const startAt = finite(state.surgeWarning.startAt, wave.startAt);
     state.surgeWarning.startsIn = Math.max(0, startAt - state.time);
     if (state.time >= startAt) {
-      state.surgeQueued += wave.count;
-      state.activeSurge = { index: state.surgeIndex, label: wave.label, count: wave.count, remaining: state.surgeQueued, rate: wave.rate };
+      const deploymentCount = Math.max(0, finite(state.surgeWarning.count));
+      state.surgeQueued += deploymentCount;
+      state.activeSurge = { index: state.surgeIndex, label: wave.label, count: deploymentCount, remaining: state.surgeQueued, rate: wave.rate };
       state.surgeWarning = null;
       state.surgeIndex += 1;
-      emit(state, "surgeStart", { wave: state.surgeIndex, label: wave.label, count: wave.count });
+      emit(state, "surgeStart", { wave: state.surgeIndex, label: wave.label, count: deploymentCount });
       state.shake = Math.max(state.shake, 7);
     }
   }

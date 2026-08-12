@@ -571,6 +571,17 @@ test("route-clear warning phases render together without exposing the boss map o
   assert.match(camera, /nextSector = lastRouteIndex/);
 });
 
+test("repeating player skills use local VFX without whole-screen white flashes", async () => {
+  const view = await read("src/phaser/view/BattleView.ts");
+  const engine = await read("src/swarm/engine.js");
+  const impact = view.slice(view.indexOf("impact(event"), view.indexOf("private shakeImpact"));
+  const skillFeedback = impact.slice(impact.indexOf('type === "empPulseActivated"'), impact.indexOf('type === "bossPatternFire"'));
+  const omegaUpdate = engine.slice(engine.indexOf("function updateOmegaBeams"), engine.indexOf("function supportCooldownDuration"));
+  assert.match(skillFeedback, /spawnFx\("weaponBlast"/);
+  assert.doesNotMatch(skillFeedback, /hudCamera\.flash/);
+  assert.doesNotMatch(omegaUpdate, /state\.flash/);
+});
+
 test("route clear advances through warning, panic, and one automatic boss-room transition", async () => {
   const app = await read("src/App.jsx");
   const scene = await read("src/phaser/scenes/OverloadScene.ts");

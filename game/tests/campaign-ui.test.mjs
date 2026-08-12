@@ -104,6 +104,15 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   assert.doesNotMatch(app, /toggleAutoFire|autoFireEnabled|autoFireTogglePressed|클릭 수동 사격/);
 });
 
+test("HAVEN NPC dialogue advances one line per Space press and closes on the final line", async () => {
+  const screens = await readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8");
+  const dialogue = screens.slice(screens.indexOf("export function NpcDialoguePanel"), screens.indexOf("export function BaseFacilityPanel"));
+  assert.match(dialogue, /event\.code !== "Space" \|\| event\.repeat/);
+  assert.match(dialogue, /event\.preventDefault\(\)/);
+  assert.match(dialogue, /if \(final\) onClose\?\.\(\);\s*else onAdvance\?\.\(\);/);
+  assert.match(dialogue, /<kbd>SPACE<\/kbd> \{final \? "대화 종료" : "다음 대사"\}/);
+});
+
 test("first-sortie briefing separates automatic build skills from four new manual abilities and persists completion", async () => {
   const [app, screens, save] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),

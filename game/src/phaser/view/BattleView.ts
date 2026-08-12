@@ -624,17 +624,14 @@ export class BattleView {
       this.mainCamera.shake(90, 0.0025);
     } else if (type === "empPulseActivated") {
       this.shakeImpact(120, 0.0045, 90);
-      this.hudCamera.flash(72, 105, 240, 255, false);
       this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), COLORS.cyan, 1.55);
     } else if (type === "aegisWardActivated") {
-      this.hudCamera.flash(80, 105, 255, 190, false);
       this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), COLORS.green, 1.25);
     } else if (type === "skillAttack" || type === "masterAttack") {
       const skill = String(event?.skill ?? "");
       const color = skill.includes("nova") || skill.includes("orbit") ? COLORS.violet : COLORS.cyan;
       const scale = type === "masterAttack" ? 1.8 : 1.15;
       this.shakeImpact(type === "masterAttack" ? 180 : 100, type === "masterAttack" ? 0.006 : 0.0028, 100);
-      if (type === "masterAttack") this.hudCamera.flash(85, 198, 246, 255, false);
       this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), color, scale);
     } else if (type === "stratosRunSweep") {
       this.shakeImpact(95, 0.0032, 80);
@@ -642,7 +639,6 @@ export class BattleView {
       this.shakeImpact(75, 0.0018, 130);
     } else if (type === "ultimateFire") {
       this.shakeImpact(260, 0.0085, 130);
-      this.hudCamera.flash(105, 190, 245, 255, false);
       this.spawnFx("weaponBlast", this.player.x, this.player.y, COLORS.cyan, 2.1);
     } else if (type === "ultimateImpact" || type === "explosion") {
       this.shakeImpact(type === "ultimateImpact" ? 150 : 125, type === "ultimateImpact" ? 0.0055 : 0.0042, 75);

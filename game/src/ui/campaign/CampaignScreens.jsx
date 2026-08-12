@@ -272,6 +272,18 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
   const lines = npc?.dialogue || [];
   const line = localizeWorldText(lines[Math.min(lineIndex, Math.max(0, lines.length - 1))] || "통신 기록이 없습니다.");
   const final = lineIndex >= lines.length - 1;
+  useEffect(() => {
+    if (!npc) return undefined;
+    const handleDialogueSpace = (event) => {
+      if (event.code !== "Space" || event.repeat) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (final) onClose?.();
+      else onAdvance?.();
+    };
+    window.addEventListener("keydown", handleDialogueSpace);
+    return () => window.removeEventListener("keydown", handleDialogueSpace);
+  }, [final, npc, onAdvance, onClose]);
   if (!npc) return null;
   const display = NPC_DISPLAY[npc.id] || { name: npc.name, role: npc.role };
   return (
@@ -295,7 +307,7 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
           <button type="button" data-ui-sound={final ? "uiClose" : "click"} onClick={final ? onClose : onAdvance}>
             {final ? "대화 종료" : "다음"}<ChatText weight="bold" />
           </button>
-          <small className="dialogue-escape-hint"><kbd>ESC</kbd> 닫기</small>
+          <small className="dialogue-escape-hint"><kbd>SPACE</kbd> {final ? "대화 종료" : "다음 대사"} · <kbd>ESC</kbd> 닫기</small>
         </footer>
       </div>
     </section>

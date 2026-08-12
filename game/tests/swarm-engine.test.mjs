@@ -477,13 +477,15 @@ test("an armed suicide drone commits in place and explodes harmlessly after AEGI
   state.spawnedEnemies = state.enemyBudget;
   delayPlayerWeapons(state);
   state.player.invulnerability = 0;
-  drone.x = state.player.x + 120;
+  drone.x = state.player.x + 100;
   drone.y = state.player.y;
   const hpBefore = state.player.hp;
 
   stepSwarm(state, createSwarmInput(), 1 / 60);
   assert.equal(drone.selfDestructArmed, true);
   assert.equal(drone.dead, false);
+  assert.equal(drone.selfDestructTriggerRadius, 112);
+  assert.equal(drone.selfDestructBlastRadius, 126);
   const armedX = drone.x;
   const armedY = drone.y;
   const armedEvent = drainSwarmEvents(state).find((event) => event.type === "enemySelfDestructArmed");
@@ -500,6 +502,20 @@ test("an armed suicide drone commits in place and explodes harmlessly after AEGI
   const explosion = drainSwarmEvents(state).find((event) => event.type === "enemySelfDestruct");
   assert.equal(explosion?.caughtInBlast, false);
   assert.equal(explosion?.hitPlayer, false);
+});
+
+test("suicide drone blast radii stay compact for normal and elite attackers", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  const normal = state.enemies.find((enemy) => enemy.combatRole === "suicideDrone" && !enemy.elite);
+  const elite = state.enemies.find((enemy) => enemy.combatRole === "suicideDrone" && enemy.elite);
+  assert.ok(normal);
+  assert.ok(elite);
+  assert.equal(normal.selfDestructTriggerRadius, 112);
+  assert.equal(normal.selfDestructBlastRadius, 126);
+  assert.equal(elite.selfDestructTriggerRadius, 138);
+  assert.equal(elite.selfDestructBlastRadius, 156);
+  assert.ok(normal.selfDestructBlastRadius < 210);
+  assert.ok(elite.selfDestructBlastRadius < 246);
 });
 
 test("sniper lanes stay readable under pressure and cancelled locks disappear", () => {
@@ -1726,15 +1742,15 @@ test("seeded simulations remain deterministic and finite under the live entity c
   const fingerprint = run(12345);
   assert.deepEqual(fingerprint, run(12345));
   assert.deepEqual(fingerprint, {
-    values: [10.000000000000076, 1089.1666666666688, 360, 91.04864864864864, 1856.684684684685],
-    kills: 34,
+    values: [10.000000000000076, 1089.1666666666688, 360, 169.15171171171173, 1772.576576576577],
+    kills: 35,
     spawned: 51,
     phase: "swarm",
-    nextEntityId: 345,
+    nextEntityId: 355,
     shots: 139,
-    hits: 75,
-    projectiles: 63,
-    enemyProjectiles: 6,
+    hits: 72,
+    projectiles: 65,
+    enemyProjectiles: 7,
     rewards: 1,
   });
 });

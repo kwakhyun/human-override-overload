@@ -212,7 +212,7 @@ test("clearing all 300 enemies runs warning and panic beats before automatic bos
   assert.ok(events.some((event) => event.type === "scenario" && event.beat === "engine-encounter"));
 });
 
-test("outer-frontier routes deploy distinct armies and require a large midboss before extraction", () => {
+test("outer-frontier routes deploy every budgeted enemy, defeat a midboss, and enter their boss room", () => {
   const expectations = [
     ["neon-foundry", "PRESS WARDEN", "neon-foundry", 1100],
     ["storm-spire", "THUNDER MANTA", "storm-spire", 1150],
@@ -225,6 +225,19 @@ test("outer-frontier routes deploy distinct armies and require a large midboss b
     assert.equal(state.enemyBudget, budget);
     assert.ok(state.enemies.every((enemy) => enemy.visualSet === visualSet));
     assert.equal(state.expedition.midBoss.definition.name, midBossName);
+
+    state.enemies.length = 0;
+    state.spawnedEnemies = 600;
+    state.surgeIndex = 3;
+    state.surgeWarning = null;
+    state.surgeQueued = 0;
+    state.activeSurge = null;
+    state.player.x = state.expedition.originX + state.expedition.routeLength * 0.82;
+    state.levelFlow.firstDeadline = 999;
+    state.levelFlow.nextOfferAt = 999;
+    drainSwarmEvents(state);
+    stepSwarm(state, input, 1 / 60);
+    assert.equal(state.surgeWarning.count, budget - 600, `${regionId} terminal wave must fill the complete enemy budget`);
 
     state.enemies.length = 0;
     state.spawnedEnemies = state.enemyBudget;
@@ -249,6 +262,16 @@ test("outer-frontier routes deploy distinct armies and require a large midboss b
     stepSwarm(state, input, 1 / 60);
     assert.equal(state.expedition.clearTransition.phase, "warning");
     assert.ok(drainSwarmEvents(state).some((event) => event.type === "routeClearWarning"));
+
+    for (let frame = 0; frame < 190 && !state.expedition.awaitingBossEntry; frame += 1) {
+      stepSwarm(state, input, 1 / 60);
+    }
+    assert.equal(state.expedition.clearTransition.phase, "swap");
+    assert.equal(state.expedition.awaitingBossEntry, true);
+    assert.ok(drainSwarmEvents(state).some((event) => event.type === "bossAutoTransition" && event.regionId === regionId));
+    assert.equal(enterBossRoom(state), true);
+    assert.equal(state.phase, "boss");
+    assert.equal(state.regionId, regionId);
   }
 });
 
