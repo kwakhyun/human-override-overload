@@ -78,7 +78,11 @@ test("sortie cinematic warms the selected suspended Phaser runtime in the backgr
   assert.match(screens, /<video[\s\S]*?poster=\{assetSource\(posterSource\)\}[\s\S]*?autoPlay[\s\S]*?playsInline[\s\S]*?preload="auto"/);
   assert.match(screens, /백그라운드 전장 로딩/);
   assert.match(screens, /onEnded=\{complete\}/);
-  assert.doesNotMatch(screens, /setTimeout\(complete/);
+  assert.match(
+    screens,
+    /if \(assetSource\(videoSource\)\) return undefined;[\s\S]*?window\.setTimeout\(complete, 2400\)/,
+    "only the no-video poster fallback may use a timeout; supplied sortie videos must enter combat from onEnded",
+  );
   assert.match(styles, /\.combat-runtime-shell\.is-preparing > \.expedition-game/);
   assert.match(styles, /\.combat-runtime-shell > \.sortie-cinematic/);
   assert.match(createGame, /startSuspended\?: boolean/);

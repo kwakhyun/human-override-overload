@@ -39,6 +39,7 @@ async function startFreshRun(page, scene = "", options = {}) {
   await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
   if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
   await page.locator(".airship-hotspot").click();
+  await page.locator(".region-cluster-card").first().click();
   const regionIndex = options.region === "glass-dune" ? 1 : options.region === "abyssal-archive" ? 2 : 0;
   await page.locator(".region-card").nth(regionIndex).click();
   await page.locator(".region-sortie-launch").click();
@@ -49,7 +50,8 @@ async function startFreshRun(page, scene = "", options = {}) {
     await page.waitForTimeout(100);
   }
   await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
-  await page.waitForTimeout(3_500);
+  await page.locator(".sortie-cinematic").waitFor({ state: "detached", timeout: 15_000 }).catch(() => {});
+  await page.waitForTimeout(700);
   const initialObjective = await page.locator(".route-objective").first().innerText().catch(() => "");
   if (options.beforeDialogueScreenshot) {
     await page.screenshot({ path: path.join(qaDir, options.beforeDialogueScreenshot), fullPage: true });
@@ -98,6 +100,7 @@ async function openFirstSortieGuide(page) {
   await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
   if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
   await page.locator(".airship-hotspot").click();
+  await page.locator(".region-cluster-card").first().click();
   await page.locator(".region-card").first().click();
   await page.locator(".region-sortie-launch").click();
   await page.locator(".ability-guide-screen").waitFor({ state: "visible", timeout: 15_000 });
