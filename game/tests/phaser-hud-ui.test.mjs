@@ -62,9 +62,11 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   const mobile = styles.slice(mobileStart, mobileEnd);
   assert.match(mobile, /\.expedition-combat-dock \{[\s\S]*top: 52px;[\s\S]*bottom: auto;[\s\S]*left: 12px;[\s\S]*width: min\(440px, calc\(100% - 190px\)\)/);
   assert.match(mobile, /\.expedition-touch-controls \{[\s\S]*display: flex;[\s\S]*right: auto;[\s\S]*bottom: max\(10px, env\(safe-area-inset-bottom\)\);[\s\S]*width: 150px;[\s\S]*background: transparent;/);
-  assert.match(mobile, /\.expedition-touch-controls \.touch-dpad \{[\s\S]*display: grid;[\s\S]*grid-template-columns: repeat\(3, 46px\);[\s\S]*grid-template-rows: repeat\(3, 46px\)/);
-  assert.match(mobile, /\.expedition-touch-controls \.touch-dpad button \{[\s\S]*width: 46px;[\s\S]*height: 46px;[\s\S]*touch-action: none/);
-  assert.match(app, /function TouchDirectionButton[\s\S]*onPointerCancel=\{end\}[\s\S]*onLostPointerCapture=\{end\}/);
+  assert.match(styles, /\.touch-joystick \{[\s\S]*width: 150px;[\s\S]*height: 150px;[\s\S]*border-radius: 50%;[\s\S]*touch-action: none/);
+  assert.match(mobile, /\.expedition-touch-controls \.touch-joystick \{ width: 150px; height: 150px; flex-basis: 150px; \}/);
+  assert.match(app, /function TouchJoystick[\s\S]*onPointerMove=\{move\}[\s\S]*onPointerCancel=\{end\}[\s\S]*onLostPointerCapture=\{end\}/);
+  assert.match(app, /controllerRef\.current\?\.setMovement\?\.\(x, y\)/);
+  assert.doesNotMatch(app, /function TouchDirectionButton|<TouchDirectionButton/);
   assert.match(mobile, /\.route-minimap \{[\s\S]*top: 51px;[\s\S]*right: 12px;[\s\S]*width: 156px/);
 });
 
@@ -202,5 +204,5 @@ test("phone landscape keeps rewards, defeat actions, dialogue advance, and movem
   assert.match(landscape, /\.narrative-panel \{[\s\S]*min-height: 132px/);
   assert.match(styles, /\.narrative-panel > button \{[\s\S]*min-width: 92px;[\s\S]*min-height: 58px/);
   assert.match(styles, /\.narrative-panel > button span \{ display: inline; \}/);
-  assert.equal((app.match(/<TouchDirectionButton direction=/g) || []).length, 8);
+  assert.equal((app.match(/<TouchJoystick onMove=/g) || []).length, 2);
 });

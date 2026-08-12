@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowCounterClockwise,
-  ArrowDown,
   ArrowLeft,
   ArrowRight,
-  ArrowUp,
   Brain,
   Crosshair,
   Lightning,
@@ -94,6 +92,7 @@ const DOM_ASSET_REFS = Object.freeze(Object.fromEntries(
 
 const INITIAL_DOM_ASSET_KEYS = Object.freeze(["intro", "commandButtonStates"]);
 const BASE_DOM_ASSET_KEYS = Object.freeze(["havenBase", "havenNpcPortraits", "rheaControlOfficer", "returnToHaven", "commandButtonStates"]);
+const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "commandButtonStates"]);
 const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "rheaControlOfficer",
   "tutorialEmpPulse",
@@ -1123,31 +1122,59 @@ function LevelUpOverlay({ offer, level, assets, rewardState, onChoose }) {
   );
 }
 
-function TouchDirectionButton({ direction, className, label, onDirection, children }) {
+function TouchJoystick({ onMove, label = "이동 조이스틱" }) {
+  const baseRef = useRef(null);
   const activePointerRef = useRef(null);
+  const [stick, setStick] = useState({ x: 0, y: 0, active: false });
+  const update = useCallback((event) => {
+    const base = baseRef.current;
+    if (!base) return;
+    const bounds = base.getBoundingClientRect();
+    const radius = Math.max(1, Math.min(bounds.width, bounds.height) * 0.34);
+    const rawX = event.clientX - (bounds.left + bounds.width * 0.5);
+    const rawY = event.clientY - (bounds.top + bounds.height * 0.5);
+    const distance = Math.hypot(rawX, rawY);
+    const scale = distance > radius ? radius / distance : 1;
+    const x = rawX * scale / radius;
+    const y = rawY * scale / radius;
+    setStick({ x: rawX * scale, y: rawY * scale, active: true });
+    onMove(x, y, event);
+  }, [onMove]);
   const begin = (event) => {
     if (activePointerRef.current !== null) return;
+    event.preventDefault();
     activePointerRef.current = event.pointerId;
-    onDirection(direction, true, event);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    update(event);
+  };
+  const move = (event) => {
+    if (activePointerRef.current !== event.pointerId) return;
+    event.preventDefault();
+    update(event);
   };
   const end = (event) => {
     if (activePointerRef.current !== event.pointerId) return;
     activePointerRef.current = null;
-    onDirection(direction, false, event);
+    setStick({ x: 0, y: 0, active: false });
+    onMove(0, 0, event);
   };
+  useEffect(() => () => onMove(0, 0), [onMove]);
   return (
-    <button
-      className={className}
-      type="button"
+    <div
+      ref={baseRef}
+      className={`touch-joystick${stick.active ? " is-active" : ""}`}
+      role="group"
       aria-label={label}
       onPointerDown={begin}
+      onPointerMove={move}
       onPointerUp={end}
       onPointerCancel={end}
       onLostPointerCapture={end}
       onContextMenu={(event) => event.preventDefault()}
     >
-      {children}
-    </button>
+      <span className="touch-joystick-ring" aria-hidden="true" />
+      <i className="touch-joystick-knob" aria-hidden="true" style={{ transform: `translate3d(${stick.x}px, ${stick.y}px, 0)` }} />
+    </div>
   );
 }
 
@@ -1478,13 +1505,12 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
     setHud(createHudSnapshot(game, governorRef.current.snapshot));
   }, []);
 
-  const setTouchDirection = useCallback((direction, active, event) => {
+  const setTouchMovement = useCallback((x, y, event) => {
     event?.preventDefault();
     const input = inputRef.current;
-    if (!input || !(direction in input)) return;
-    input[direction] = active;
-    if (active) event?.currentTarget?.setPointerCapture?.(event.pointerId);
-    else event?.currentTarget?.releasePointerCapture?.(event.pointerId);
+    if (!input) return;
+    input.moveX = x;
+    input.moveY = y;
   }, []);
 
   const touchDash = useCallback((event) => {
@@ -1534,12 +1560,7 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
         </div>
 
         <div className="touch-controls" aria-label="터치 전투 조작">
-          <div className="touch-dpad">
-            <TouchDirectionButton direction="up" className="touch-up" label="위로 이동" onDirection={setTouchDirection}><ArrowUp weight="bold" /></TouchDirectionButton>
-            <TouchDirectionButton direction="left" className="touch-left" label="왼쪽으로 이동" onDirection={setTouchDirection}><ArrowLeft weight="bold" /></TouchDirectionButton>
-            <TouchDirectionButton direction="down" className="touch-down" label="아래로 이동" onDirection={setTouchDirection}><ArrowDown weight="bold" /></TouchDirectionButton>
-            <TouchDirectionButton direction="right" className="touch-right" label="오른쪽으로 이동" onDirection={setTouchDirection}><ArrowRight weight="bold" /></TouchDirectionButton>
-          </div>
+          <TouchJoystick onMove={setTouchMovement} />
           <span>전장을 터치해 조준 · 사격은 자동</span>
           <div className="touch-action-stack">
             <button className="touch-dash" type="button" aria-label="무적 대시" onPointerDown={touchDash}><Lightning weight="fill" /> DASH</button>
@@ -1840,15 +1861,9 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
     controllerRef.current?.chooseReward(id);
   }, []);
 
-  const setTouchDirection = useCallback((direction, active, event) => {
+  const setTouchMovement = useCallback((x, y, event) => {
     event?.preventDefault();
-    controllerRef.current?.setDirection(direction, active);
-    try {
-      if (active) event?.currentTarget?.setPointerCapture?.(event.pointerId);
-      else if (event?.currentTarget?.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-    } catch {
-      // Pointer capture can be released by the browser during resize or blur.
-    }
+    controllerRef.current?.setMovement?.(x, y);
   }, []);
 
   const activateDash = useCallback(() => {
@@ -2064,12 +2079,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
               <span>{mainWeaponId === "beam-sword" ? "포인터 방향 · 빔 소드 자동 베기" : "포인터로 조준 · 소총 자동 발사"}</span>
             </div>
             <div className="touch-controls expedition-touch-controls" aria-label="터치 전투 조작">
-              <div className="touch-dpad">
-                <TouchDirectionButton direction="up" className="touch-up" label="위로 이동" onDirection={setTouchDirection}><ArrowUp weight="bold" /></TouchDirectionButton>
-                <TouchDirectionButton direction="left" className="touch-left" label="왼쪽으로 이동" onDirection={setTouchDirection}><ArrowLeft weight="bold" /></TouchDirectionButton>
-                <TouchDirectionButton direction="down" className="touch-down" label="아래로 이동" onDirection={setTouchDirection}><ArrowDown weight="bold" /></TouchDirectionButton>
-                <TouchDirectionButton direction="right" className="touch-right" label="오른쪽으로 이동" onDirection={setTouchDirection}><ArrowRight weight="bold" /></TouchDirectionButton>
-              </div>
+              <TouchJoystick onMove={setTouchMovement} />
             </div>
             <NarrativePanel dialogue={dialogue} assets={assets} region={region} bossStage={hud?.boss?.stage} onAdvance={advanceDialogue} />
             {paused && <PauseOverlay onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}
@@ -2234,7 +2244,7 @@ export function App() {
     if (!assets) return undefined;
     return scheduleDomImagePreload([
       ...domAssetSources(BASE_DOM_ASSET_KEYS),
-      DOM_ASSET_REFS.airshipRegionMap?.src,
+      ...domAssetSources(REGION_MAP_DOM_ASSET_KEYS),
       ...regionPreviewSources,
     ]);
   }, [assets, regionPreviewSources]);
@@ -2432,7 +2442,7 @@ export function App() {
     closeFacility();
     prepareSurface(
       "비행선 전술 지도 준비 중",
-      [DOM_ASSET_REFS.airshipRegionMap?.src, DOM_ASSET_REFS.commandButtonStates?.src, ...regionPreviewSources],
+      [...domAssetSources(REGION_MAP_DOM_ASSET_KEYS), ...regionPreviewSources],
       () => setScreen("regions"),
     );
   }, [closeFacility, closeNpc, prepareSurface, regionPreviewSources]);

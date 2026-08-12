@@ -40,8 +40,8 @@ function forceOffer(state, id, category) {
   state.rewardOptions = [{ id, category, name: id, description: "test", level: 0, nextLevel: 1 }];
 }
 
-function createBossState(patternIndex = 0, regionId = "wrong-engine-core") {
-  const state = createSwarmState({ random: () => 0.5, regionId });
+function createBossState(patternIndex = 0, regionId = "wrong-engine-core", mainWeaponId = "pulse-rifle") {
+  const state = createSwarmState({ random: () => 0.5, regionId, mainWeaponId });
   state.phase = "boss";
   state.phaseTime = 0;
   state.enemies.length = 0;
@@ -1298,6 +1298,41 @@ test("direct boss body contact is critical, stuns controls, and has a retrigger 
   const afterFirstHit = state.player.hp;
   stepSwarm(state, createSwarmInput(), 0.2);
   assert.equal(state.player.hp, afterFirstHit);
+});
+
+test("beam sword proximity guard makes ordinary boss body contact survivable without weakening charge patterns", () => {
+  const state = createBossState(0, "wrong-engine-core", "beam-sword");
+  state.boss.activePattern = null;
+  state.boss.patternCooldown = 999;
+  state.boss.x = state.player.x;
+  state.boss.y = state.player.y;
+  const hp = state.player.hp;
+  drainSwarmEvents(state);
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  const contact = drainSwarmEvents(state).find((event) => event.type === "bossContactHit");
+  assert.ok(contact);
+  assert.equal(contact.meleeGuard, true);
+  assert.ok(contact.damage <= state.player.maxHp * 0.17);
+  assert.ok(state.player.hp > hp * 0.8);
+  assert.ok(state.player.stunTimer > 0.19 && state.player.stunTimer < 0.24);
+  assert.ok(state.player.invulnerability > 1.08);
+});
+
+test("analog movement preserves joystick magnitude and caps diagonal input", () => {
+  const half = createSwarmState({ random: () => 0.5 });
+  delayPlayerWeapons(half);
+  const halfInput = createSwarmInput();
+  halfInput.moveX = 0.5;
+  stepSwarm(half, halfInput, 1 / 60);
+  assert.ok(Math.abs(half.player.vx - half.player.speed * 0.5) < 0.001);
+
+  const diagonal = createSwarmState({ random: () => 0.5 });
+  delayPlayerWeapons(diagonal);
+  const diagonalInput = createSwarmInput();
+  diagonalInput.moveX = 1;
+  diagonalInput.moveY = 1;
+  stepSwarm(diagonal, diagonalInput, 1 / 60);
+  assert.ok(Math.abs(Math.hypot(diagonal.player.vx, diagonal.player.vy) - diagonal.player.speed) < 0.001);
 });
 
 test("boss health thresholds lock in distinct transformations and repeat their danger warning", () => {

@@ -1369,6 +1369,48 @@ Create a wide cinematic exterior arrival shot: the NIGHTJAR airship returns from
 No characters, portraits, enemies, bosses, text, logos, UI, watermark, retro blimp, contemporary aircraft, excessive explosion, or destroyed base. Premium cinematic game key art, dark navy/gunmetal palette, cyan engine light and warm amber dock lights, high contrast, no motion blur obscuring the airship.
 ```
 
+## 전략 월드맵 및 외곽 생산권역 지도 (2026-08-12)
+
+- 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
+- 참조: 프로젝트 원본 `public/assets/overload/campaign/airship-region-map-v2.webp`,
+  `public/assets/overload/regions/neon-foundry/route.webp`.
+- ImageGen 원본:
+  - 전략 월드맵: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3c8344da-42d7-4012-9e88-e4b4bc008514.png`
+  - 외곽 생산권역: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-9088a701-2723-434e-bf04-b0aad3b22fab.png`
+- 프로젝트 보존 원본:
+  - `reference/source-assets/overload/campaign/strategic-maps/strategic-world-map-imagegen.png`
+  - `reference/source-assets/overload/campaign/strategic-maps/outer-frontier-region-map-imagegen.png`
+- 런타임:
+  - `public/assets/overload/campaign/strategic-world-map.webp`
+  - `public/assets/overload/campaign/outer-frontier-region-map.webp`
+- 후처리: `scripts/prepare-campaign-map-assets.py`가 선택 원본을 Pillow LANCZOS로 1920×1080에 맞춘 뒤 WebP quality 88로 저장합니다.
+
+### 전략 월드맵 프롬프트 전문
+
+```text
+Use case: stylized-concept.
+Asset type: full-screen production world-map background for the browser game HUMAN OVERRIDE: OVERLOAD.
+Input image: Image 1 is the approved game visual reference. Preserve its dark high-detail cybernetic, top-down holographic command-map art direction, cyan route lighting, amber industrial accents, black gunmetal surfaces, and oppressive AI-occupied world.
+Primary request: create one expansive strategic world map viewed from high altitude, not a cockpit window and not three side-by-side panels. Show a single continuous devastated continent/ocean network with six distinct readable destination zones connected by thin luminous cyan flight routes. The left/lower inner network contains three visual landmarks: a black vertical megacity/core, an amber glass desert crater, and a blue abyssal ocean archive. The right/upper outer production frontier contains three different landmarks: an orange neon foundry complex, a violent electric storm spire, and a pale green biomechanical gene vault. Leave generous dark negative space around each landmark so HTML map hotspot buttons can be placed over them. Include a dim far-orbit region at the top edge as a future locked destination. A small sleek triangular NIGHTJAR aircraft marker may sit near the bottom center.
+Composition/framing: 16:9 landscape, exact straight top-down/orthographic strategic-map perspective, continuous geography, landmarks distributed at roughly x 22% y 60%, x 39% y 45%, x 29% y 27%, x 63% y 62%, x 76% y 42%, x 68% y 22%; center and edges remain usable for responsive UI.
+Style/medium: polished high-end sci-fi game key art, detailed but readable at 1440×810, holographic terrain boundaries and subtle grid, no photoreal cockpit frame.
+Lighting/mood: midnight blue-black world, cyan navigation lines, selective amber/orange and toxic pale-green regional glow.
+Constraints: no cards, no panels, no UI buttons, no labels, no text, no numbers, no logos, no watermark, no character portraits, no giant ship obscuring the map, no split-screen seams. The six zones must read as locations on one wide world map.
+```
+
+### 외곽 생산권역 04—06 프롬프트 전문
+
+```text
+Use case: stylized-concept.
+Asset type: production region-detail selection background for HUMAN OVERRIDE: OVERLOAD sectors 04–06.
+Input images: Image 1 is the approved overall strategic world-map style; Image 2 is the approved NEON FOUNDRY industrial environment style. Preserve the game's black gunmetal, cyan navigation light, dense machine detail, top-down high-altitude command-map language.
+Primary request: create a wide high-altitude tactical panorama dedicated only to the OUTER PRODUCTION FRONTIER. It must contain three separated destination biomes in one continuous region: left is NEON FOUNDRY, a molten orange automated forge city with rectangular reactors and robot assembly lines; center is STORM SPIRE, a towering dark antenna citadel surrounded by violent cyan-violet lightning and turbine rings; right is GENE VAULT, a pale toxic-green biomechanical circular research complex with sealed organic pods. Connect all three with thin cyan flight routes and small landing nodes. Leave wide dark safe zones centered over each biome for three HTML region buttons/cards to remain readable.
+Composition/framing: 16:9 landscape, high-altitude oblique/top-down strategic panorama, three destination areas distributed evenly left/center/right but organically connected, no cockpit, no panel dividers, no seams.
+Style/medium: polished high-end sci-fi game environment key art, intricate machine surfaces, readable silhouettes, matching the existing HUMAN OVERRIDE visual identity.
+Lighting/mood: dark industrial night; orange left, electric cyan-violet center, pale green right; strong local glow but a dark overall value range for UI legibility.
+Constraints: no UI, no cards, no labels, no text, no numbers, no logos, no watermark, no people, no large aircraft, no split screen, no duplicated location. This is a clean background image behind interactive DOM elements.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License

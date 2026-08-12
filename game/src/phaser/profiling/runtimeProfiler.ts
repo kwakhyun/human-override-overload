@@ -15,6 +15,8 @@ export type ProfilingContext = Readonly<{
   deviceQuality?: string;
   deviceReasons?: readonly string[];
   liveEnemies?: number;
+  playerX?: number;
+  playerY?: number;
   playerProjectiles?: number;
   enemyProjectiles?: number;
   sniperLocks?: number;

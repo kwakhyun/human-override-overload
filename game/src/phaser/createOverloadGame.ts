@@ -11,6 +11,7 @@ export type OverloadGameController = Readonly<{
   game: Phaser.Game;
   chooseReward: (id: string) => boolean;
   setDirection: (direction: Direction, active: boolean) => void;
+  setMovement: (x: number, y: number) => void;
   dash: () => void;
   parry: () => void;
   activateAbility: (ability: ActiveAbility) => void;
@@ -121,6 +122,8 @@ export function createOverloadGame(
         deviceQuality: qualitySnapshot?.deviceQuality,
         deviceReasons: qualitySnapshot?.deviceReasons,
         liveEnemies: state?.enemies?.length ?? 0,
+        playerX: state?.player?.x,
+        playerY: state?.player?.y,
         playerProjectiles: state?.projectiles?.length ?? 0,
         enemyProjectiles: state?.enemyProjectiles?.length ?? 0,
         sniperLocks: state?.enemies?.filter((enemy: any) => enemy?.aimTimer > 0).length ?? 0,
@@ -136,6 +139,7 @@ export function createOverloadGame(
     game,
     chooseReward: (id: string) => bridge.chooseReward(id),
     setDirection: (direction: Direction, active: boolean) => bridge.setVirtualDirection(direction, active),
+    setMovement: (x: number, y: number) => bridge.setVirtualMovement(x, y),
     dash: () => bridge.queueDash(),
     parry: () => bridge.queueParry(),
     activateAbility: (ability: ActiveAbility) => bridge.queueActiveAbility(ability),

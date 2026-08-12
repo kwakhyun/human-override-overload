@@ -217,7 +217,9 @@ test("authored trace props and campaign region art are registered without restor
   assert.match(manifest, /squad-traces-atlas\.png", kind: "atlas", columns: 3, rows: 1/);
   assert.match(manifest, /havenBase: "\.\/assets\/overload\/campaign\/haven-09-base\.webp"/);
   assert.match(manifest, /havenNpcPortraits: "\.\/assets\/overload\/ui\/npcs\/haven-npc-portraits-atlas\.png"/);
-  assert.match(manifest, /airshipRegionMap: "\.\/assets\/overload\/campaign\/airship-region-map-v2\.webp"/);
+  assert.match(manifest, /airshipRegionMap: "\.\/assets\/overload\/campaign\/strategic-world-map\.webp"/);
+  assert.match(manifest, /innerNetworkRegionMap: "\.\/assets\/overload\/campaign\/airship-region-map-v2\.webp"/);
+  assert.match(manifest, /outerFrontierRegionMap: "\.\/assets\/overload\/campaign\/outer-frontier-region-map\.webp"/);
   assert.match(manifest, /commandButtonStates: "\.\/assets\/overload\/ui\/buttons\/command-button-states-atlas\.png"/);
   for (const path of [
     "regions/glass-dune/route.webp",
@@ -244,6 +246,10 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
   assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
   assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, assetProfile\)/);
+  assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);
+  assert.match(createGame, /playerX: state\?\.player\?\.x/);
+  assert.match(scene, /setVirtualMovement\(x: number, y: number\)/);
+  assert.match(scene, /this\.gameInput\.moveX = this\.virtualMovement\.x/);
   assert.match(scene, /createSwarmState\(\{ duration: 360, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId \}\)/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);

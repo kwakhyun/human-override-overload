@@ -266,6 +266,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private lastRewardToken = "";
   private finishReported = false;
   private virtualDirections: Record<Direction, boolean> = { up: false, down: false, left: false, right: false };
+  private virtualMovement = { x: 0, y: 0 };
   private queuedDash = false;
   private queuedParry = false;
   private queuedBossMechanicClick?: Readonly<{ x: number; y: number }>;
@@ -408,6 +409,11 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.virtualDirections[direction] = active;
   }
 
+  setVirtualMovement(x: number, y: number) {
+    this.virtualMovement.x = Phaser.Math.Clamp(Number.isFinite(x) ? x : 0, -1, 1);
+    this.virtualMovement.y = Phaser.Math.Clamp(Number.isFinite(y) ? y : 0, -1, 1);
+  }
+
   queueDash() {
     this.queuedDash = true;
   }
@@ -479,6 +485,9 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.queuedBossMechanicClick = undefined;
     this.clearQueuedActiveAbilities();
     this.virtualDirections = { up: false, down: false, left: false, right: false };
+    this.virtualMovement = { x: 0, y: 0 };
+    this.gameInput.moveX = 0;
+    this.gameInput.moveY = 0;
     clearPressedInput(this.gameInput);
     if (suspended) {
       this.governor?.pause?.();
@@ -557,6 +566,9 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.queuedBossMechanicClick = undefined;
     this.clearQueuedActiveAbilities();
     this.virtualDirections = { up: false, down: false, left: false, right: false };
+    this.virtualMovement = { x: 0, y: 0 };
+    this.gameInput.moveX = 0;
+    this.gameInput.moveY = 0;
     clearPressedInput(this.gameInput);
     this.governor?.pause?.();
   }
@@ -682,6 +694,8 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.gameInput.down = this.virtualDirections.down || Boolean(this.keys.S?.isDown || cursor?.down?.isDown);
     this.gameInput.left = this.virtualDirections.left || Boolean(this.keys.A?.isDown || cursor?.left?.isDown);
     this.gameInput.right = this.virtualDirections.right || Boolean(this.keys.D?.isDown || cursor?.right?.isDown);
+    this.gameInput.moveX = this.virtualMovement.x;
+    this.gameInput.moveY = this.virtualMovement.y;
     if (this.queuedDash || Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) this.gameInput.dashPressed = true;
     if (this.queuedActiveAbilities.empPulse || Phaser.Input.Keyboard.JustDown(this.keys.Q)) this.gameInput.empPulsePressed = true;
     if (this.queuedActiveAbilities.aegisWard || Phaser.Input.Keyboard.JustDown(this.keys.E)) this.gameInput.aegisWardPressed = true;

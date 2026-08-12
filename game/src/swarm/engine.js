@@ -878,6 +878,8 @@ export function createSwarmInput() {
     down: false,
     left: false,
     right: false,
+    moveX: 0,
+    moveY: 0,
     dashPressed: false,
     empPulsePressed: false,
     aegisWardPressed: false,
@@ -991,12 +993,16 @@ function updatePlayer(state, input, dt) {
   let moveX = 0;
   let moveY = 0;
   if (!stunned) {
-    const rawX = (input?.right ? 1 : 0) - (input?.left ? 1 : 0);
-    const rawY = (input?.down ? 1 : 0) - (input?.up ? 1 : 0);
+    const analogX = clamp(finite(input?.moveX), -1, 1);
+    const analogY = clamp(finite(input?.moveY), -1, 1);
+    const hasAnalogMovement = Math.abs(analogX) >= 0.01 || Math.abs(analogY) >= 0.01;
+    const rawX = hasAnalogMovement ? analogX : (input?.right ? 1 : 0) - (input?.left ? 1 : 0);
+    const rawY = hasAnalogMovement ? analogY : (input?.down ? 1 : 0) - (input?.up ? 1 : 0);
     const moveLength = Math.hypot(rawX, rawY);
     if (Number.isFinite(moveLength) && moveLength >= 0.00001) {
-      moveX = rawX / moveLength;
-      moveY = rawY / moveLength;
+      const normalization = moveLength > 1 ? moveLength : 1;
+      moveX = rawX / normalization;
+      moveY = rawY / normalization;
     }
   }
   const aimDx = state.aim.x - player.x;
@@ -4437,22 +4443,27 @@ function updateBoss(state, dt, input) {
     && Math.hypot(state.player.x - boss.x, state.player.y - boss.y) <= state.player.radius + boss.radius
     && boss.contactCooldown <= 0) {
     const direction = normalize(state.player.x - boss.x, state.player.y - boss.y, Math.cos(boss.angle), Math.sin(boss.angle));
-    const contactDamage = Math.max(150, state.player.maxHp * 0.44);
+    const swordEquipped = state.player.mainWeaponId === "beam-sword";
+    const contactDamage = swordEquipped
+      ? Math.max(42, state.player.maxHp * 0.16)
+      : Math.max(150, state.player.maxHp * 0.44);
+    const contactStun = swordEquipped ? 0.22 : BOSS_CONTACT_STUN;
+    const contactInvulnerability = swordEquipped ? 1.12 : 0.92;
     if (damagePlayer(state, contactDamage, "bossContact", {
       critical: true,
-      stun: BOSS_CONTACT_STUN,
-      invulnerability: 0.92,
-      hitStun: BOSS_CONTACT_STUN,
+      stun: contactStun,
+      invulnerability: contactInvulnerability,
+      hitStun: contactStun,
     })) {
       const separation = boss.radius + state.player.radius + 10;
       state.player.x = boss.x + direction.x * separation;
       state.player.y = boss.y + direction.y * separation;
-      state.player.vx = direction.x * 150;
-      state.player.vy = direction.y * 150;
+      state.player.vx = direction.x * (swordEquipped ? 92 : 150);
+      state.player.vy = direction.y * (swordEquipped ? 92 : 150);
       clampPlayerToFloor(state.player, state.expedition);
       boss.contactCooldown = BOSS_CONTACT_COOLDOWN;
       state.shake = Math.max(state.shake, 22);
-      emit(state, "bossContactHit", { damage: contactDamage, stun: BOSS_CONTACT_STUN, cooldown: BOSS_CONTACT_COOLDOWN });
+      emit(state, "bossContactHit", { damage: contactDamage, stun: contactStun, cooldown: BOSS_CONTACT_COOLDOWN, meleeGuard: swordEquipped });
     }
   }
   if (boss.transformTimer <= 0) {

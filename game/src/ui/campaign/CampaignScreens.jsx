@@ -499,7 +499,6 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
   const completed = new Set(campaign?.completedRegionIds || []);
   const storyFlags = new Set(campaign?.storyFlags || []);
   const [selectedClusterId, setSelectedClusterId] = useState(null);
-  const [hoveredClusterId, setHoveredClusterId] = useState(null);
   const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [hoveredRegionId, setHoveredRegionId] = useState(null);
   const selectedCluster = useMemo(
@@ -510,8 +509,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
     () => selectedCluster ? (regions || []).filter((region) => selectedCluster.regionIds.includes(region.id)) : [],
     [regions, selectedCluster],
   );
-  const firstUnlockedId = clusterRegions.find((region) => unlocked.has(region.id))?.id || null;
-  const previewRegionId = selectedRegionId || hoveredRegionId || firstUnlockedId;
+  const previewRegionId = selectedRegionId || hoveredRegionId;
   const previewRegion = useMemo(
     () => (regions || []).find((region) => region.id === previewRegionId) || null,
     [previewRegionId, regions],
@@ -540,9 +538,9 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
     return () => window.removeEventListener("keydown", handleEscape);
   }, [onBack, selectedClusterId, selectedRegionId]);
 
-  const hoveredCluster = (clusters || []).find((cluster) => cluster.id === hoveredClusterId) || null;
-  const clusterPreview = selectedCluster || hoveredCluster || clusters?.[0] || null;
-  const previewSource = previewRegion?.assets?.dom?.thumbnail?.path || clusterPreview?.previewPath;
+  const previewSource = selectedCluster
+    ? (previewRegion?.assets?.dom?.thumbnail?.path || selectedCluster.previewPath)
+    : null;
   const canEnterCluster = (cluster) => {
     if (!cluster || cluster.comingSoon) return false;
     if (!(cluster.prerequisiteRegionIds || []).every((regionId) => completed.has(regionId))) return false;
@@ -557,7 +555,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
           src={previewSource}
           alt=""
           aria-hidden="true"
-          key={previewRegion?.id}
+          key={previewRegion?.id || selectedCluster?.id}
         />
       )}
       <div className="region-map-shade" aria-hidden="true" />
@@ -568,7 +566,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
         <p>{selectedCluster ? "권역 안의 개별 구역을 선택해 상세 정보를 확인하세요." : "먼저 3개 구역이 묶인 상위 권역을 선택하세요."}</p>
       </header>
       {!selectedCluster ? (
-        <section className="region-cluster-grid" aria-label="작전 권역">
+        <section className="region-world-map" aria-label="작전 권역 월드맵">
           {(clusters || []).map((cluster) => {
             const available = canEnterCluster(cluster);
             const clearedCount = cluster.regionIds.filter((regionId) => completed.has(regionId)).length;
@@ -579,23 +577,17 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
             return (
               <button
                 type="button"
-                className={`region-cluster-card cluster-${cluster.id}${available ? " is-available" : " is-locked"}${milestoneReady ? " needs-briefing" : ""}`}
+                className={`region-map-hotspot cluster-${cluster.id}${available ? " is-available" : " is-locked"}${milestoneReady ? " needs-briefing" : ""}`}
+                style={{ "--map-x": `${cluster.mapPosition?.x ?? 50}%`, "--map-y": `${cluster.mapPosition?.y ?? 50}%` }}
                 disabled={!available}
-                onMouseEnter={() => setHoveredClusterId(cluster.id)}
-                onMouseLeave={() => setHoveredClusterId(null)}
-                onFocus={() => setHoveredClusterId(cluster.id)}
-                onBlur={() => setHoveredClusterId(null)}
                 onClick={() => { setSelectedClusterId(cluster.id); setSelectedRegionId(null); }}
                 key={cluster.id}
               >
-                <img src={cluster.previewPath} alt="" aria-hidden="true" />
+                <i aria-hidden="true"><i /></i>
                 <span>{cluster.rangeLabel}</span>
                 <strong>{cluster.koreanName}<em>{cluster.name}</em></strong>
-                <p>{cluster.summary}</p>
-                <footer>
-                  <b>{cluster.comingSoon ? "항로 분석 중" : milestoneReady ? "라크의 신규 항로 브리핑 필요" : available ? `${clearedCount} / ${cluster.regionIds.length} 해방` : "선행 구역 미완료"}</b>
-                  {available ? <ArrowRight weight="bold" /> : <Lock weight="fill" />}
-                </footer>
+                <small>{cluster.comingSoon ? "항로 분석 중" : milestoneReady ? "신규 항로 브리핑 필요" : available ? `${clearedCount} / ${cluster.regionIds.length} 해방` : "선행 구역 미완료"}</small>
+                {available ? <ArrowRight weight="bold" /> : <Lock weight="fill" />}
               </button>
             );
           })}

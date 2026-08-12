@@ -787,6 +787,55 @@ kbd {
   display: none;
 }
 
+.touch-joystick {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  flex: 0 0 150px;
+  overflow: visible;
+  border: 1px solid rgba(129, 239, 255, 0.24);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(105, 239, 255, 0.055) 0 17%, transparent 18%),
+    radial-gradient(circle, rgba(5, 23, 30, 0.26), rgba(2, 9, 13, 0.08) 68%, transparent 70%);
+  box-shadow: inset 0 0 28px rgba(105, 239, 255, 0.06), 0 8px 28px rgba(0, 0, 0, 0.18);
+  opacity: 0.66;
+  touch-action: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 120ms ease, border-color 120ms ease;
+}
+
+.touch-joystick.is-active {
+  border-color: rgba(157, 247, 255, 0.64);
+  opacity: 0.94;
+}
+
+.touch-joystick-ring {
+  position: absolute;
+  inset: 22%;
+  border: 1px dashed rgba(143, 237, 250, 0.25);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.touch-joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 54px;
+  height: 54px;
+  margin: -27px 0 0 -27px;
+  border: 1px solid rgba(188, 249, 255, 0.72);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 32%, rgba(228, 253, 255, 0.36), transparent 20%),
+    rgba(50, 176, 195, 0.38);
+  box-shadow: inset 0 0 20px rgba(126, 238, 255, 0.2), 0 0 18px rgba(79, 224, 246, 0.15);
+  pointer-events: none;
+  will-change: transform;
+}
+
 .canvas-frame {
   position: relative;
   width: min(calc(100vw - 24px), calc((100vh - 112px) * 1.7777778));
@@ -4203,7 +4252,8 @@ kbd {
   margin: 0;
   pointer-events: none;
 }
-.expedition-touch-controls button { pointer-events: auto; }
+.expedition-touch-controls button,
+.expedition-touch-controls .touch-joystick { pointer-events: auto; }
 .expedition-touch-controls .touch-auto {
   display: flex;
   width: 92px;
@@ -4336,38 +4386,7 @@ kbd {
     justify-content: center;
     background: transparent;
   }
-  .expedition-touch-controls .touch-dpad {
-    display: grid;
-    width: 150px;
-    height: 150px;
-    grid-template-columns: repeat(3, 46px);
-    grid-template-rows: repeat(3, 46px);
-    gap: 6px;
-    pointer-events: none;
-  }
-  .expedition-touch-controls .touch-up { grid-column: 2; grid-row: 1; }
-  .expedition-touch-controls .touch-left { grid-column: 1; grid-row: 2; }
-  .expedition-touch-controls .touch-right { grid-column: 3; grid-row: 2; }
-  .expedition-touch-controls .touch-down { grid-column: 2; grid-row: 3; }
-  .expedition-touch-controls .touch-dpad button {
-    width: 46px;
-    height: 46px;
-    border: 1px solid rgba(113, 236, 255, 0.54);
-    border-radius: 11px;
-    color: #d7fbff;
-    background: rgba(5, 26, 33, 0.84);
-    box-shadow: inset 0 0 16px rgba(67, 219, 243, 0.1), 0 3px 15px rgba(0, 0, 0, 0.4);
-    pointer-events: auto;
-    touch-action: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .expedition-touch-controls .touch-dpad button:active {
-    border-color: #9cf5ff;
-    color: #fff;
-    background: rgba(37, 151, 171, 0.72);
-    transform: scale(0.94);
-  }
-  .expedition-touch-controls .touch-dpad svg { width: 21px; height: 21px; }
+  .expedition-touch-controls .touch-joystick { width: 150px; height: 150px; flex-basis: 150px; }
   .transient-controls { display: none; }
   .expedition-xp { top: 119px; right: 12px; bottom: auto; width: 156px; }
   .expedition-alert { top: 158px; }
@@ -5905,7 +5924,7 @@ kbd,
 
 .region-focus-background {
   position: absolute;
-  z-index: -2;
+  z-index: 0;
   inset: -4%;
   width: 108%;
   height: 108%;
@@ -5915,6 +5934,7 @@ kbd,
   transform: scale(1.025);
   animation: region-focus-enter 260ms ease both;
   transition: opacity 260ms ease, filter 260ms ease, transform 420ms ease;
+  pointer-events: none;
 }
 
 .region-focus-background.is-selected {
@@ -5943,7 +5963,7 @@ kbd,
 }
 
 .region-select-screen .region-map-shade {
-  z-index: -1;
+  z-index: 1;
   background:
     linear-gradient(90deg, rgba(1, 5, 8, 0.52), rgba(1, 5, 8, 0.03) 43%, rgba(1, 5, 8, 0.2) 74%, rgba(1, 5, 8, 0.46)),
     linear-gradient(180deg, rgba(1, 5, 8, 0.36), transparent 28%, transparent 58%, rgba(1, 5, 8, 0.7));
@@ -6420,124 +6440,154 @@ kbd,
 }
 
 .region-select-screen.is-cluster-map .region-focus-background {
-  opacity: 0.48;
-  filter: saturate(1.15) brightness(0.7);
+  display: none;
 }
 
-.region-cluster-grid {
+.region-select-screen.is-cluster-map .campaign-background {
+  filter: brightness(1.16) saturate(1.2) contrast(1.03);
+}
+
+.region-select-screen.is-cluster-map .region-map-shade {
+  background:
+    linear-gradient(90deg, rgba(1, 5, 8, 0.68), transparent 35%, transparent 78%, rgba(1, 5, 8, 0.2)),
+    linear-gradient(180deg, rgba(1, 5, 8, 0.42), transparent 32%, transparent 76%, rgba(1, 5, 8, 0.42));
+}
+
+.region-world-map {
   position: absolute;
   z-index: 4;
-  inset: 25% 5.5% 8%;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(16px, 2vw, 34px);
+  inset: 0;
+  pointer-events: none;
 }
 
-.region-cluster-card {
-  position: relative;
-  min-width: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-end;
-  padding: 0;
+.region-map-hotspot {
+  position: absolute;
+  top: var(--map-y);
+  left: var(--map-x);
+  display: grid;
+  width: clamp(190px, 17vw, 264px);
+  min-height: 82px;
+  padding: 12px 38px 12px 62px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: center;
+  gap: 3px 8px;
   color: #eefcff;
   text-align: left;
-  border: 1px solid rgba(105, 239, 255, 0.35);
-  background: #071115;
-  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.48);
-  isolation: isolate;
-  transition: transform 180ms ease, border-color 180ms ease, filter 180ms ease;
+  border: 1px solid rgba(105, 239, 255, 0.34);
+  border-left-color: rgba(105, 239, 255, 0.82);
+  background: linear-gradient(90deg, rgba(3, 15, 20, 0.94), rgba(3, 12, 16, 0.72));
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.48), inset 0 0 28px rgba(80, 224, 246, 0.035);
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  transition: transform 180ms ease, border-color 180ms ease, filter 180ms ease, background 180ms ease;
 }
 
-.region-cluster-card > img {
+.region-map-hotspot > i:first-child {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.66;
-  z-index: -2;
-  transition: transform 450ms ease, opacity 220ms ease;
+  top: 50%;
+  left: -23px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(112, 236, 255, 0.78);
+  border-radius: 50%;
+  background: rgba(3, 16, 21, 0.82);
+  box-shadow: 0 0 0 8px rgba(84, 223, 245, 0.08), 0 0 26px rgba(77, 230, 255, 0.38);
+  transform: translateY(-50%);
 }
 
-.region-cluster-card::after {
+.region-map-hotspot > i:first-child::before,
+.region-map-hotspot > i:first-child::after,
+.region-map-hotspot > i:first-child > i {
+  position: absolute;
   content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(180deg, rgba(2, 7, 10, 0.05), rgba(2, 7, 10, 0.72) 45%, #030a0d 100%);
 }
 
-.region-cluster-card > span,
-.region-cluster-card > strong,
-.region-cluster-card > p,
-.region-cluster-card > footer {
-  margin-inline: clamp(18px, 2vw, 30px);
+.region-map-hotspot > i:first-child::before {
+  inset: 8px;
+  border: 1px dashed rgba(171, 247, 255, 0.72);
+  border-radius: 50%;
+  animation: world-hotspot-spin 5s linear infinite;
 }
 
-.region-cluster-card > span {
+.region-map-hotspot > i:first-child::after {
+  inset: 18px;
+  border-radius: 50%;
+  background: #a9f6ff;
+  box-shadow: 0 0 13px #58eaff;
+}
+
+.region-map-hotspot > i:first-child > i {
+  inset: -10px;
+  border: 1px solid rgba(98, 232, 252, 0.2);
+  border-radius: 50%;
+  animation: world-hotspot-pulse 1.8s ease-out infinite;
+}
+
+.region-map-hotspot > span {
+  grid-column: 1;
   color: #69efff;
-  font: 700 12px/1 var(--font-mono);
+  font: 700 9px/1 var(--font-mono);
   letter-spacing: 0.12em;
 }
 
-.region-cluster-card > strong {
-  margin-top: 10px;
-  font: 800 clamp(24px, 2.2vw, 38px)/1.05 var(--font-ui);
-}
-
-.region-cluster-card > strong em {
+.region-map-hotspot > strong {
   display: block;
-  margin-top: 7px;
+  grid-column: 1;
+  font: 800 clamp(16px, 1.35vw, 21px)/1.05 var(--font-ui);
+  white-space: nowrap;
+}
+
+.region-map-hotspot > strong em {
+  margin-left: 7px;
   color: #8fb3bd;
-  font: 650 12px/1 var(--font-brand);
-  letter-spacing: 0.08em;
+  font: 650 8px/1 var(--font-brand);
+  letter-spacing: 0.04em;
 }
 
-.region-cluster-card > p {
-  min-height: 2.6em;
-  margin-top: 14px;
-  color: #bdd0d5;
-  font: 600 14px/1.45 var(--font-ui);
-  word-break: keep-all;
+.region-map-hotspot > small {
+  grid-column: 1;
+  color: #8baab0;
+  font: 650 9px/1.2 var(--font-ui);
 }
 
-.region-cluster-card > footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 58px;
-  margin-top: 18px;
-  border-top: 1px solid rgba(105, 239, 255, 0.22);
+.region-map-hotspot > svg {
+  grid-column: 2;
+  grid-row: 1 / 4;
+  width: 18px;
+  height: 18px;
+  align-self: center;
   color: #69efff;
 }
 
-.region-cluster-card.is-available:hover,
-.region-cluster-card.is-available:focus-visible {
-  transform: translateY(-8px) scale(1.025);
+.region-map-hotspot.is-available:hover,
+.region-map-hotspot.is-available:focus-visible {
   border-color: #69efff;
   outline: 3px solid rgba(105, 239, 255, 0.22);
+  background: linear-gradient(90deg, rgba(7, 39, 48, 0.97), rgba(4, 20, 25, 0.83));
+  transform: translate(-50%, -50%) scale(1.055);
 }
 
-.region-cluster-card.is-available:hover > img,
-.region-cluster-card.is-available:focus-visible > img {
-  transform: scale(1.08);
-  opacity: 0.88;
-}
-
-.region-cluster-card.is-locked {
+.region-map-hotspot.is-locked {
   filter: grayscale(0.88) brightness(0.48);
 }
 
-.region-cluster-card.needs-briefing {
+.region-map-hotspot.needs-briefing {
   filter: grayscale(0.28) brightness(0.74);
   border-color: #ffcc69;
 }
 
-.region-cluster-card.needs-briefing footer {
-  color: #ffcc69;
+.region-map-hotspot.needs-briefing > i:first-child {
+  border-color: #ffd275;
+  box-shadow: 0 0 0 8px rgba(255, 196, 88, 0.08), 0 0 28px rgba(255, 196, 88, 0.5);
+}
+
+@keyframes world-hotspot-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes world-hotspot-pulse {
+  from { opacity: 0.8; transform: scale(0.66); }
+  to { opacity: 0; transform: scale(1.35); }
 }
 
 .return-cinematic {
@@ -6612,14 +6662,17 @@ kbd,
 }
 
 @media (max-width: 900px), (max-height: 560px) {
-  .region-cluster-grid { inset: 23% 3% 5%; gap: 10px; }
-  .region-cluster-card > span,
-  .region-cluster-card > strong,
-  .region-cluster-card > p,
-  .region-cluster-card > footer { margin-inline: 14px; }
-  .region-cluster-card > strong { font-size: clamp(18px, 3.4vw, 27px); }
-  .region-cluster-card > p { min-height: 0; margin-top: 7px; font-size: 11px; }
-  .region-cluster-card > footer { min-height: 40px; margin-top: 8px; font-size: 10px; }
+  .region-select-screen.is-cluster-map .region-select-heading { width: 42%; margin-left: 18px; padding-top: 10px; }
+  .region-select-screen.is-cluster-map .region-select-heading .campaign-back { margin-bottom: 5px; }
+  .region-select-screen.is-cluster-map .region-select-heading > small { font-size: 7px; }
+  .region-select-screen.is-cluster-map .region-select-heading h1 { margin-top: 3px; font-size: 24px; }
+  .region-map-hotspot { width: 180px; min-height: 58px; padding: 7px 28px 7px 45px; }
+  .region-map-hotspot > i:first-child { left: -17px; width: 36px; height: 36px; }
+  .region-map-hotspot > i:first-child::after { inset: 14px; }
+  .region-map-hotspot > span { font-size: 6px; }
+  .region-map-hotspot > strong { font-size: 13px; }
+  .region-map-hotspot > strong em { font-size: 6px; }
+  .region-map-hotspot > small { font-size: 7px; }
   .return-cinematic-copy { left: 34px; bottom: 34px; }
   .return-cinematic-copy h1 { font-size: 46px; }
   .return-cinematic-copy span { margin-top: 14px; }
@@ -6628,6 +6681,8 @@ kbd,
 @media (prefers-reduced-motion: reduce) {
   .npc-mission-alert,
   .npc-mission-alert svg,
+  .region-map-hotspot > i:first-child::before,
+  .region-map-hotspot > i:first-child > i,
   .return-cinematic-background,
   .return-cinematic-speed { animation: none; }
 }

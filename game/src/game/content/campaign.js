@@ -26,7 +26,7 @@ export const HOME_BASE = deepFreeze({
     },
     airshipConsole: {
       key: "airshipRegionMap",
-      path: "./assets/overload/campaign/airship-region-map-v2.webp",
+      path: "./assets/overload/campaign/strategic-world-map.webp",
     },
   },
 });
@@ -421,6 +421,7 @@ export const REGION_CLUSTERS = deepFreeze([
     summary: "오답 엔진 중앙로 · 유리 사구 · 심해 기록고",
     regionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
     previewPath: "./assets/overload/campaign/airship-region-map-v2.webp",
+    mapPosition: { x: 28, y: 64 },
   },
   {
     id: "outer-frontier",
@@ -432,7 +433,8 @@ export const REGION_CLUSTERS = deepFreeze([
     regionIds: ["neon-foundry", "storm-spire", "gene-vault"],
     prerequisiteRegionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
     briefingFlag: OUTER_SECTOR_BRIEFING_FLAG,
-    previewPath: "./assets/overload/regions/neon-foundry/route.webp",
+    previewPath: "./assets/overload/campaign/outer-frontier-region-map.webp",
+    mapPosition: { x: 73, y: 47 },
   },
   {
     id: "terminal-orbit",
@@ -444,7 +446,8 @@ export const REGION_CLUSTERS = deepFreeze([
     regionIds: [],
     prerequisiteRegionIds: ["neon-foundry", "storm-spire", "gene-vault"],
     comingSoon: true,
-    previewPath: "./assets/overload/regions/storm-spire/route.webp",
+    previewPath: "./assets/overload/campaign/strategic-world-map.webp",
+    mapPosition: { x: 82, y: 18 },
   },
 ]);
 

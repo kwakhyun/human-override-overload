@@ -29,7 +29,10 @@ test("region selection previews and confirms a sortie instead of launching on ca
     readFile(new URL("src/audio/sfx.js", root), "utf8"),
   ]);
   assert.match(screens, /setSelectedRegionId\(region\.id\)/);
-  assert.match(screens, /className="region-cluster-grid"/);
+  assert.match(screens, /className="region-world-map"/);
+  assert.match(screens, /className=\{`region-map-hotspot/);
+  assert.match(screens, /"--map-x": `\$\{cluster\.mapPosition\?\.x \?\? 50\}%`/);
+  assert.match(screens, /previewRegion\?\.assets\?\.dom\?\.thumbnail\?\.path \|\| selectedCluster\.previewPath/);
   assert.match(screens, /setSelectedClusterId\(cluster\.id\)/);
   assert.match(screens, /cluster\.rangeLabel/);
   assert.match(screens, /cluster\.comingSoon/);
@@ -44,6 +47,27 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /event\.key !== "Escape"/);
   assert.match(app, /document\.addEventListener\("pointerdown", handleButtonPointer, true\)/);
   for (const cue of ["uiHover", "uiConfirm", "uiClose"]) assert.match(sounds, new RegExp(`case "${cue}"`));
+});
+
+test("strategic and outer-frontier maps are optimized, preloaded, and mapped to cluster hotspots", async () => {
+  const [app, manifest, campaign] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/game/assets/manifest.ts", root), "utf8"),
+    readFile(new URL("src/game/content/campaign.js", root), "utf8"),
+  ]);
+  for (const [key, name] of [
+    ["airshipRegionMap", "strategic-world-map.webp"],
+    ["innerNetworkRegionMap", "airship-region-map-v2.webp"],
+    ["outerFrontierRegionMap", "outer-frontier-region-map.webp"],
+  ]) {
+    assert.match(manifest, new RegExp(`${key}: "\\./assets/overload/campaign/${name}"`));
+    assert.match(app, new RegExp(`REGION_MAP_DOM_ASSET_KEYS[\\s\\S]*"${key}"`));
+    const asset = await stat(new URL(`public/assets/overload/campaign/${name}`, root));
+    assert.ok(asset.size > 100_000, `${name} should retain readable map detail`);
+    assert.ok(asset.size < 1_000_000, `${name} should remain web optimized`);
+  }
+  assert.match(campaign, /id: "inner-network"[\s\S]*mapPosition: \{ x: 28, y: 64 \}/);
+  assert.match(campaign, /id: "outer-frontier"[\s\S]*outer-frontier-region-map\.webp[\s\S]*mapPosition: \{ x: 73, y: 47 \}/);
 });
 
 test("HAVEN highlights LARK's new-route briefing and ships a skippable return-to-base cinematic", async () => {

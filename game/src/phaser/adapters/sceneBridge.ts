@@ -12,6 +12,7 @@ export type SceneCallbacks = Readonly<{
 export interface BattleSceneControls {
   chooseReward(id: string): boolean;
   setVirtualDirection(direction: Direction, active: boolean): void;
+  setVirtualMovement(x: number, y: number): void;
   queueDash(): void;
   queueParry(): void;
   queueActiveAbility(ability: ActiveAbility): void;
@@ -48,6 +49,10 @@ export class SceneBridge {
 
   setVirtualDirection(direction: Direction, active: boolean) {
     this.controls?.setVirtualDirection(direction, active);
+  }
+
+  setVirtualMovement(x: number, y: number) {
+    this.controls?.setVirtualMovement(x, y);
   }
 
   queueDash() {
