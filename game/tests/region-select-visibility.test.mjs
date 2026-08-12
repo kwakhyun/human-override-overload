@@ -6,7 +6,8 @@ const screens = await readFile(new URL("../src/ui/campaign/CampaignScreens.jsx",
 const styles = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
 
 test("region hover and selection keep the authored landscape readable", () => {
-  assert.match(screens, /const previewRegionId = selectedRegionId \|\| hoveredRegionId \|\| firstUnlockedId/);
+  assert.match(screens, /const previewRegionId = selectedRegionId \|\| hoveredRegionId/);
+  assert.match(screens, /previewRegion\?\.assets\?\.dom\?\.thumbnail\?\.path \|\| selectedCluster\.previewPath/);
   assert.match(screens, /className=\{`region-focus-background region-focus-\$\{previewRegion\?\.id\}\$\{selectedRegion \? " is-selected" : ""\}`\}/);
   assert.match(styles, /\.region-focus-background \{[\s\S]*?opacity: 0\.88;[\s\S]*?brightness\(0\.94\)/);
   assert.match(styles, /\.region-focus-background\.is-selected \{[\s\S]*?opacity: 0\.97;[\s\S]*?brightness\(0\.84\)/);
