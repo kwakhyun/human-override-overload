@@ -15,6 +15,7 @@ export interface BattleSceneControls {
   setVirtualMovement(x: number, y: number): void;
   queueDash(): void;
   queueParry(): void;
+  queueTag(): void;
   queueActiveAbility(ability: ActiveAbility): void;
   enterBossRoom(): boolean;
   continueNarrative(): void;
@@ -61,6 +62,10 @@ export class SceneBridge {
 
   queueParry() {
     this.controls?.queueParry();
+  }
+
+  queueTag() {
+    this.controls?.queueTag();
   }
 
   queueActiveAbility(ability: ActiveAbility) {

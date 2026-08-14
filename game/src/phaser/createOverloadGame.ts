@@ -14,6 +14,7 @@ export type OverloadGameController = Readonly<{
   setMovement: (x: number, y: number) => void;
   dash: () => void;
   parry: () => void;
+  tag: () => void;
   activateAbility: (ability: ActiveAbility) => void;
   enterBossRoom: () => boolean;
   continueStory: () => void;
@@ -26,6 +27,7 @@ export type OverloadLaunchOptions = Readonly<{
   regionId?: string;
   combatBonuses?: Readonly<Record<string, number>>;
   mainWeaponId?: "pulse-rifle" | "beam-sword";
+  characterId?: "aegis" | "mika";
   startSuspended?: boolean;
 }>;
 
@@ -45,7 +47,7 @@ export function createOverloadGame(
   const preset = QUALITY_PRESETS[initialQuality] ?? QUALITY_PRESETS.balanced;
   const assetProfile = initialQuality === "performance" ? "performance" : "full";
   const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, callbacks.onLoadProgress);
-  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, assetProfile);
+  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, assetProfile);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
@@ -142,6 +144,7 @@ export function createOverloadGame(
     setMovement: (x: number, y: number) => bridge.setVirtualMovement(x, y),
     dash: () => bridge.queueDash(),
     parry: () => bridge.queueParry(),
+    tag: () => bridge.queueTag(),
     activateAbility: (ability: ActiveAbility) => bridge.queueActiveAbility(ability),
     enterBossRoom: () => bridge.enterBossRoom(),
     continueStory: () => bridge.continueNarrative(),

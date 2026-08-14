@@ -103,7 +103,7 @@ test("the renewed mode has one hero, no regions, and a fixed 1000-unit assault",
   assert.equal(WORLD_HEIGHT, 1080);
   assert.equal(state.mode, "swarm");
   assert.equal(state.phase, "swarm");
-  assert.equal(state.player.name, "THE TRAINER");
+  assert.equal(state.player.name, "AEGIS");
   assert.equal(state.enemyBudget, 1000);
   assert.equal("zones" in state, false);
   assert.equal("heroes" in state, false);
@@ -408,6 +408,41 @@ test("beam sword replaces rifle actives with four offensive flying-sword techniq
     ["spectralSwordArray", "phantomRend", "imperialSwordDomain", "heavenfallExecution"],
   );
   assert.equal(hud.abilities.helixTempest.maxCooldown, 85);
+});
+
+test("MIKA fields ring blades, four exclusive actives, and a cooldown-limited battlefield tag", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika", mainWeaponId: "beam-sword" });
+  const input = createSwarmInput();
+  assert.equal(state.player.characterId, "mika");
+  assert.equal(state.player.name, "MIKA");
+  stepSwarm(state, input, 1 / 60);
+  assert.ok(state.projectiles.some((projectile) => projectile.kind === "mikaHaloBlade"));
+
+  for (const [field, ability] of [
+    ["empPulsePressed", "prismRicochet"],
+    ["aegisWardPressed", "ribbonVortex"],
+    ["stratosRunPressed", "cometDuet"],
+    ["helixTempestPressed", "heartbeatCarnival"],
+  ]) {
+    const abilityState = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika" });
+    const abilityInput = createSwarmInput();
+    abilityInput[field] = true;
+    stepSwarm(abilityState, abilityInput, 1 / 60);
+    const events = drainSwarmEvents(abilityState);
+    assert.ok(events.some((event) => event.type === "manualAbilityActivated" && event.ability === ability));
+  }
+
+  input.tagPressed = true;
+  stepSwarm(state, input, 1 / 60);
+  assert.equal(state.player.characterId, "aegis");
+  assert.ok(state.player.tagCooldown > 9.9);
+  clearPressedInput(input);
+  input.tagPressed = true;
+  stepSwarm(state, input, 1 / 60);
+  assert.equal(state.player.characterId, "aegis", "tag cooldown prevents immediate invulnerability chaining");
+  const hud = getSwarmHud(state);
+  assert.equal(hud.player.reserveCharacterId, "mika");
+  assert.equal(hud.player.tagReady, false);
 });
 
 test("EMP PULSE stops mechanical enemies in pointer geometry without pulling units or projectiles", () => {
@@ -942,6 +977,10 @@ test("level-up airstrike and omega laser remain automatic and separate from manu
     phantomRend: 0,
     imperialSwordDomain: 0,
     heavenfallExecution: 0,
+    prismRicochet: 0,
+    ribbonVortex: 0,
+    cometDuet: 0,
+    heartbeatCarnival: 0,
   });
   assert.equal(state.empPulses.length, 0);
   assert.equal(state.stratosRuns.length, 0);

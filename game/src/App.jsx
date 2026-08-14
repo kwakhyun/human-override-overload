@@ -42,6 +42,7 @@ import {
   getBaseUpgrades,
 } from "./game/content/baseUpgrades.js";
 import { getMainWeapons } from "./game/content/weapons.js";
+import { getPlayableCharacters } from "./game/content/characters.js";
 import {
   canLaunchRegion,
   completeAbilityGuide,
@@ -51,12 +52,14 @@ import {
   createCampaignSlot,
   getCampaignCombatBonuses,
   getCampaignMainWeapon,
+  getCampaignCharacter,
   getCampaignSlot,
   getCampaignUpgradeStatus,
   loadCampaign,
   purchaseCampaignUpgrade,
   saveCampaign,
   setCampaignMainWeapon,
+  setCampaignCharacter,
 } from "./game/save/campaignSave.js";
 import {
   AbilityGuideScreen,
@@ -92,7 +95,7 @@ const DOM_ASSET_REFS = Object.freeze(Object.fromEntries(
 
 const INITIAL_DOM_ASSET_KEYS = Object.freeze(["intro", "commandButtonStates"]);
 const BASE_DOM_ASSET_KEYS = Object.freeze(["havenBase", "havenNpcPortraits", "rheaControlOfficer", "returnToHaven", "commandButtonStates", "characterEnhancement"]);
-const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "commandButtonStates"]);
+const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "commandButtonStates", "player", "mikaPortrait"]);
 const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "rheaControlOfficer",
   "tutorialEmpPulse",
@@ -103,6 +106,7 @@ const GUIDE_DOM_ASSET_KEYS = Object.freeze([
 ]);
 const COMBAT_DOM_ASSET_KEYS = Object.freeze([
   "portrait",
+  "mikaPortrait",
   "rheaControlOfficer",
   ...Object.keys(ASSET_PATHS).filter((key) => key.startsWith("reward")),
 ]);
@@ -596,7 +600,7 @@ const REWARD_NAMES_KO = Object.freeze({
   suppressor: "억제 지원기",
 });
 
-const PAUSED_GAMEPLAY_KEYS = new Set(["Space", "KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyQ", "KeyE", "KeyF", "KeyR", "Digit1", "Digit2", "Digit3"]);
+const PAUSED_GAMEPLAY_KEYS = new Set(["Space", "KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyQ", "KeyE", "KeyF", "KeyR", "KeyT", "Digit1", "Digit2", "Digit3"]);
 
 const REWARD_COPY = Object.freeze({
   scatter: "근거리 부채꼴 탄막으로 밀집한 적을 한 번에 찢습니다.",
@@ -911,7 +915,7 @@ function resolveCombatDockSlot(hud, slot) {
   };
 }
 
-function ExpeditionCombatDock({ hud, onDash, onActivateAbility, tutorialAbilityId = null, onTutorialTarget }) {
+function ExpeditionCombatDock({ hud, onDash, onTag, onActivateAbility, tutorialAbilityId = null, onTutorialTarget }) {
   const player = hud?.player || { hp: 0, maxHp: 1 };
   const hp = Math.max(0, Number(player.hp) || 0);
   const maxHp = Math.max(1, Number(player.maxHp) || 1);
@@ -938,7 +942,7 @@ function ExpeditionCombatDock({ hud, onDash, onActivateAbility, tutorialAbilityI
     <aside className={`expedition-combat-dock${tutorialAbilityId ? " is-tutorial-active" : ""}`} aria-label="생존 및 액티브 능력 상태">
       <div className={`vital-cluster${healthRatio <= 0.3 ? " is-critical" : ""}`}>
         {damageWarning && <i className="vital-damage-flash" key={`damage-${damagePulse}`} aria-hidden="true" />}
-        <span>이지스 내구도 <small>레벨 {hud?.level || 1}</small></span>
+        <span>{player.characterId === "mika" ? "미카" : "이지스"} 내구도 <small>레벨 {hud?.level || 1}</small></span>
         <b>{Math.ceil(hp)} <small>/ {Math.ceil(maxHp)}</small></b>
         <div
           className="vital-bar"
@@ -993,6 +997,16 @@ function ExpeditionCombatDock({ hud, onDash, onActivateAbility, tutorialAbilityI
             </button>
           );
         })}
+        <button
+          type="button"
+          className={`combat-tag-switch${player.tagReady ? " is-ready" : " is-cooling"}${player.characterId === "mika" ? " is-mika" : " is-aegis"}`}
+          onClick={() => onTag?.()}
+          disabled={!player.tagReady}
+          aria-label={`T 캐릭터 교대. 대기 ${Math.ceil(player.tagCooldown || 0)}초`}
+        >
+          <span><kbd>T</kbd><strong>{player.reserveCharacterId === "mika" ? "미카" : "이지스"}</strong></span>
+          <small>{player.tagReady ? "교대 가능" : `${(player.tagCooldown || 0).toFixed(1)}초`}</small>
+        </button>
       </div>
     </aside>
   );
@@ -1699,7 +1713,7 @@ function RouteMinimap({ hud }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, characterId, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const controllerRef = useRef(null);
   const finishReportedRef = useRef(false);
@@ -1836,7 +1850,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
           if (!preparingRef.current && !needsLandscapeRef.current && !pausedRef.current && !combatTutorialActiveRef.current) controllerRef.current?.focus();
           reportRuntimeReady();
         },
-      }, { regionId, combatBonuses, mainWeaponId, startSuspended: preparingRef.current });
+      }, { regionId, combatBonuses, mainWeaponId, characterId, startSuspended: preparingRef.current });
       controllerRef.current = controller;
       controller.setSuspended(preparingRef.current || needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
     }).catch(() => {
@@ -1851,7 +1865,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [combatBonuses, mainWeaponId, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx]);
+  }, [characterId, combatBonuses, mainWeaponId, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx]);
 
   const selectReward = useCallback((id) => {
     controllerRef.current?.chooseReward(id);
@@ -1868,6 +1882,10 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
 
   const activateAbility = useCallback((slot) => {
     controllerRef.current?.activateAbility?.(slot);
+  }, []);
+
+  const activateTag = useCallback(() => {
+    controllerRef.current?.tag?.();
   }, []);
 
   const advanceDialogue = useCallback(() => {
@@ -2025,6 +2043,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
             <ExpeditionCombatDock
               hud={hud}
               onDash={activateDash}
+              onTag={activateTag}
               onActivateAbility={activateAbility}
               tutorialAbilityId={combatTutorialStep >= 0 ? MANUAL_ABILITY_GUIDE[combatTutorialStep]?.id : null}
               onTutorialTarget={advanceCombatTutorial}
@@ -2156,6 +2175,7 @@ export function App() {
   const regions = useMemo(() => getCampaignRegions(), []);
   const regionClusters = useMemo(() => getRegionClusters(), []);
   const mainWeapons = useMemo(() => getMainWeapons(), []);
+  const playableCharacters = useMemo(() => getPlayableCharacters(), []);
   const regionPreviewSources = useMemo(
     () => regions.map((region) => region?.assets?.dom?.thumbnail?.path).filter(Boolean),
     [regions],
@@ -2180,6 +2200,10 @@ export function App() {
   );
   const activeMainWeaponId = useMemo(
     () => (activeSlotId ? getCampaignMainWeapon(campaign, activeSlotId) : "pulse-rifle"),
+    [activeSlotId, campaign],
+  );
+  const activeCharacterId = useMemo(
+    () => (activeSlotId ? getCampaignCharacter(campaign, activeSlotId) : "aegis"),
     [activeSlotId, campaign],
   );
   const activeFacility = useMemo(() => {
@@ -2230,6 +2254,8 @@ export function App() {
     regionMap: assets?.airshipRegionMap,
     buttonAtlas: assets?.commandButtonStates,
     characterEnhancement: assets?.characterEnhancement,
+    playerPortrait: assets?.player,
+    mikaPortrait: assets?.mikaPortrait,
     tutorialEmpPulse: assets?.tutorialEmpPulse,
     tutorialAegisWard: assets?.tutorialAegisWard,
     tutorialStratosRun: assets?.tutorialStratosRun,
@@ -2514,6 +2540,14 @@ export function App() {
     sfx.play("click");
   }, [activeSlotId, campaign, sfx]);
 
+  const selectCharacter = useCallback((characterId) => {
+    if (!activeSlotId) return;
+    const nextCampaign = setCampaignCharacter(campaign, activeSlotId, characterId);
+    setCampaign(nextCampaign);
+    saveCampaign(nextCampaign);
+    sfx.play("click");
+  }, [activeSlotId, campaign, sfx]);
+
   const toggleSound = useCallback(() => {
     const nextEnabled = !soundEnabled;
     setSoundEnabled(nextEnabled);
@@ -2556,7 +2590,7 @@ export function App() {
       />
     );
   } else if (screen === "regions" && campaignView) {
-    content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} onWeaponChange={selectMainWeapon} onSelect={launchCombat} onBack={() => setScreen("base")} />;
+    content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={playableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onWeaponChange={selectMainWeapon} onSelect={launchCombat} onBack={() => setScreen("base")} />;
   } else if (screen === "sortie" || screen === "game") {
     content = (
       <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>
@@ -2566,6 +2600,7 @@ export function App() {
           region={activeRegion}
           combatBonuses={combatBonuses}
           mainWeaponId={activeMainWeaponId}
+          characterId={activeCharacterId}
           soundEnabled={soundEnabled}
           sfx={sfx}
           onToggleSound={toggleSound}

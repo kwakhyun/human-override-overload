@@ -17,6 +17,7 @@ import {
   sanitizeBaseProgression,
 } from "../progression/baseProgression.js";
 import { DEFAULT_MAIN_WEAPON_ID, sanitizeMainWeaponId } from "../content/weapons.js";
+import { DEFAULT_CHARACTER_ID, sanitizeCharacterId } from "../content/characters.js";
 
 export const CAMPAIGN_SAVE_VERSION = 2;
 export const CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v2";
@@ -147,6 +148,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
     combatOverlaySeen: Boolean(slot.combatOverlaySeen),
     loadout: {
       mainWeaponId: sanitizeMainWeaponId(slot.loadout?.mainWeaponId ?? slot.mainWeaponId),
+      characterId: sanitizeCharacterId(slot.loadout?.characterId ?? slot.characterId),
     },
     storyFlags: deriveStoryFlags(completedRegionIds, slot.storyFlags),
     regionRecords: sanitizeRegionRecords(slot.regionRecords),
@@ -285,6 +287,27 @@ export function setCampaignMainWeapon(campaign, slotId, mainWeaponId, options = 
 
 export function getCampaignMainWeapon(campaign, slotId) {
   return getCampaignSlot(campaign, slotId)?.loadout?.mainWeaponId || DEFAULT_MAIN_WEAPON_ID;
+}
+
+export function setCampaignCharacter(campaign, slotId, characterId, options = {}) {
+  const sanitized = sanitizeCampaign(campaign);
+  const index = normalizeSlotIndex(slotId);
+  const slot = index >= 0 ? sanitized.slots[index] : null;
+  if (!slot) return sanitized;
+  const nextCharacterId = sanitizeCharacterId(characterId);
+  if ((slot.loadout?.characterId || DEFAULT_CHARACTER_ID) === nextCharacterId) return sanitized;
+  const nextSlot = sanitizeSlot({
+    ...slot,
+    updatedAt: resolveNow(options.now),
+    loadout: { ...slot.loadout, characterId: nextCharacterId },
+  }, index);
+  const slots = sanitized.slots.slice();
+  slots[index] = nextSlot;
+  return { version: CAMPAIGN_SAVE_VERSION, slots };
+}
+
+export function getCampaignCharacter(campaign, slotId) {
+  return getCampaignSlot(campaign, slotId)?.loadout?.characterId || DEFAULT_CHARACTER_ID;
 }
 
 export function canLaunchRegion(slot, regionId) {

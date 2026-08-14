@@ -3537,9 +3537,30 @@ kbd {
 .combat-dock-abilities {
   display: grid;
   min-width: 0;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 5px;
 }
+
+.combat-tag-switch {
+  display: grid;
+  min-width: 0;
+  min-height: 52px;
+  padding: 5px 7px;
+  align-content: center;
+  gap: 3px;
+  border: 1px solid rgba(111, 231, 246, 0.34);
+  color: #dffbff;
+  background: linear-gradient(135deg, rgba(38, 145, 164, 0.2), rgba(3, 10, 14, 0.86));
+  pointer-events: auto;
+  cursor: pointer;
+}
+.combat-tag-switch.is-mika { border-color: rgba(255, 103, 211, 0.55); background: linear-gradient(135deg, rgba(176, 45, 136, 0.25), rgba(17, 5, 15, 0.9)); }
+.combat-tag-switch:disabled { opacity: 0.48; cursor: not-allowed; }
+.combat-tag-switch > span { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.combat-tag-switch kbd { padding: 3px 5px; border: 1px solid currentColor; color: #ffffff; background: rgba(0, 0, 0, 0.5); font-size: 8px; }
+.combat-tag-switch strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.combat-tag-switch small { color: #71edb0; font-size: 8px; }
+.combat-tag-switch.is-cooling small { color: #8ca2a8; }
 
 .combat-ability-chip {
   position: relative;
@@ -6275,6 +6296,44 @@ kbd,
   background: rgba(3, 11, 16, 0.92);
 }
 
+.sortie-character-loadout {
+  display: grid;
+  min-width: 0;
+  padding: 12px;
+  gap: 9px;
+  border: 1px solid rgba(255, 112, 216, 0.28);
+  background: rgba(2, 9, 13, 0.86);
+}
+.sortie-character-loadout > header { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+.sortie-character-loadout > header small,
+.sortie-character-loadout > header span { color: #e590d3; font-size: 10px; }
+.sortie-character-loadout > header h3 { margin: 2px 0 0; font-size: 18px; }
+.sortie-character-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sortie-character-card {
+  position: relative;
+  display: grid;
+  min-height: 132px;
+  padding: 12px 12px 10px 100px;
+  overflow: hidden;
+  align-content: center;
+  border: 1px solid rgba(116, 220, 236, 0.28);
+  color: #eafcff;
+  text-align: left;
+  background: linear-gradient(100deg, rgba(3, 14, 19, 0.98), rgba(4, 17, 24, 0.76));
+}
+.sortie-character-card.is-magenta { border-color: rgba(255, 102, 206, 0.34); }
+.sortie-character-card.is-selected { border-color: #76efff; box-shadow: inset 0 0 0 2px rgba(98, 232, 250, 0.13); }
+.sortie-character-card.is-magenta.is-selected { border-color: #ff76d3; box-shadow: inset 0 0 0 2px rgba(255, 89, 201, 0.14); }
+.sortie-character-card img { position: absolute; bottom: -38px; left: 0; width: 100px; height: 175px; object-fit: cover; object-position: center 15%; filter: drop-shadow(8px 4px 10px rgba(0, 0, 0, 0.7)); }
+.sortie-character-card span { display: grid; grid-template-columns: 1fr auto; position: relative; z-index: 1; }
+.sortie-character-card span small { grid-column: 1 / -1; color: #70dce9; font-size: 8px; }
+.sortie-character-card.is-magenta span small { color: #ff8ed9; }
+.sortie-character-card strong { font-size: 20px; }
+.sortie-character-card em { color: #758d95; font-size: 9px; font-style: normal; }
+.sortie-character-card p { position: relative; z-index: 1; margin: 5px 0 0; color: #8ba9af; font-size: 9px; line-height: 1.45; }
+.sortie-character-card mark { position: absolute; z-index: 2; top: 8px; right: 8px; display: inline-flex; padding: 3px 6px; align-items: center; gap: 4px; color: #031014; background: #7beeff; font-size: 8px; }
+.sortie-character-card.is-magenta mark { background: #ff89d8; }
+
 .sortie-weapon-loadout > header {
   display: flex;
   align-items: end;
@@ -6358,6 +6417,7 @@ kbd,
   padding: 16px 0;
   flex: 1 1 auto;
   grid-template-columns: minmax(330px, 0.82fr) minmax(520px, 1.18fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: clamp(16px, 2vw, 28px);
 }
 
@@ -6366,6 +6426,7 @@ kbd,
   min-width: 0;
   min-height: 0;
   flex-direction: column;
+  grid-row: 1 / 3;
 }
 
 .region-sortie-briefing h2 { margin: 0; font-size: clamp(34px, 4vw, 58px); line-height: 0.98; letter-spacing: -0.035em; }
@@ -6378,7 +6439,7 @@ kbd,
 .region-sortie-layout .sortie-weapon-loadout {
   align-content: start;
   min-width: 0;
-  height: 100%;
+  height: auto;
   padding: 16px;
 }
 
@@ -6405,6 +6466,13 @@ kbd,
   .region-sortie-dialog { inset: max(6px, env(safe-area-inset-top)) max(7px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left)); width: auto; max-width: none; padding: 9px 12px; }
   .region-sortie-command-header { padding-bottom: 6px; }
   .region-sortie-layout { padding: 7px 0; grid-template-columns: minmax(260px, 0.9fr) minmax(390px, 1.1fr); gap: 9px; }
+  .sortie-character-loadout { padding: 7px; gap: 5px; }
+  .sortie-character-loadout > header h3 { font-size: 13px; }
+  .sortie-character-loadout > header span { display: none; }
+  .sortie-character-card { min-height: 78px; padding: 7px 7px 6px 65px; }
+  .sortie-character-card img { bottom: -28px; width: 66px; height: 112px; }
+  .sortie-character-card strong { font-size: 14px; }
+  .sortie-character-card p { display: none; }
   .region-sortie-briefing h2 { font-size: clamp(24px, 6.2vh, 34px); }
   .region-sortie-briefing > p { display: -webkit-box; margin-top: 5px; overflow: hidden; font-size: 9px; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .region-sortie-briefing .region-sortie-intel { margin-top: 6px; gap: 3px; }

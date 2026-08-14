@@ -246,12 +246,12 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /launch: OverloadLaunchOptions = \{\}/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
   assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
-  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, assetProfile\)/);
+  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, assetProfile\)/);
   assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);
   assert.match(createGame, /playerX: state\?\.player\?\.x/);
   assert.match(scene, /setVirtualMovement\(x: number, y: number\)/);
   assert.match(scene, /this\.gameInput\.moveX = this\.virtualMovement\.x/);
-  assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId \}\)/);
+  assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId, characterId: this\.characterId \}\)/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);
   for (const key of [
@@ -403,7 +403,7 @@ test("manual Q/E/F/R effects use their dedicated rows and engine-owned geometry"
   assert.match(view, /stratosBlast \? 22 \+ progress \* 82/);
 });
 
-test("Phaser keeps basic fire automatic while Q/E/F/R share one repeat-safe active-ability edge", async () => {
+test("Phaser keeps basic fire automatic while Q/E/F/R and character tag use repeat-safe edges", async () => {
   const scene = await read("src/phaser/scenes/OverloadScene.ts");
   const engine = await read("src/swarm/engine.js");
   const bridge = await read("src/phaser/adapters/sceneBridge.ts");
@@ -420,7 +420,11 @@ test("Phaser keeps basic fire automatic while Q/E/F/R share one repeat-safe acti
     assert.match(scene, new RegExp(`queueActiveAbility\\(\"${ability}\"\\)`));
     assert.match(scene, new RegExp(`gameInput\\.${field} = true`));
   }
-  assert.ok((scene.match(/event\.repeat/g) || []).length >= 5, "Space plus all four abilities must ignore OS key repeat");
+  assert.match(scene, /KeyCodes\.T/);
+  assert.match(scene, /keydown-T/);
+  assert.match(scene, /queueTag\(\)/);
+  assert.match(scene, /gameInput\.tagPressed = true/);
+  assert.ok((scene.match(/event\.repeat/g) || []).length >= 6, "Space, tag, and all four abilities must ignore OS key repeat");
   assert.doesNotMatch(scene, /queuedManualFire|queuedAutoFireToggle/);
   assert.doesNotMatch(engine, /manualFire|autoFire/);
   assert.match(engine, /function updateAutoWeapons\(state, dt\)/);
@@ -428,9 +432,12 @@ test("Phaser keeps basic fire automatic while Q/E/F/R share one repeat-safe acti
   assert.match(engine, /aegisWardPressed: false/);
   assert.match(engine, /stratosRunPressed: false/);
   assert.match(engine, /helixTempestPressed: false/);
+  assert.match(engine, /tagPressed: false/);
   assert.match(bridge, /export type ActiveAbility = "empPulse" \| "aegisWard" \| "stratosRun" \| "helixTempest"/);
   assert.match(bridge, /queueActiveAbility\(ability: ActiveAbility\)/);
+  assert.match(bridge, /queueTag\(\)/);
   assert.match(createGame, /activateAbility: \(ability: ActiveAbility\)/);
+  assert.match(createGame, /tag: \(\) => bridge\.queueTag\(\)/);
   assert.doesNotMatch(scene, /queueActiveAbility\("(?:emp|nanite|skyfall|omegaLaser)"\)/);
   assert.doesNotMatch(bridge, /queueRecall|queueAutoFireToggle/);
   assert.doesNotMatch(createGame, /recall:|toggleAutoFire/);

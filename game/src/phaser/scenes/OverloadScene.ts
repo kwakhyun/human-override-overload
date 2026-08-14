@@ -234,6 +234,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private readonly regionId?: string;
   private readonly combatBonuses?: Readonly<Record<string, number>>;
   private readonly mainWeaponId?: "pulse-rifle" | "beam-sword";
+  private readonly characterId?: "aegis" | "mika";
   private readonly assetProfile: AssetProfile;
   private state: any;
   private gameInput: any;
@@ -249,6 +250,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private virtualMovement = { x: 0, y: 0 };
   private queuedDash = false;
   private queuedParry = false;
+  private queuedTag = false;
   private queuedBossMechanicClick?: Readonly<{ x: number; y: number }>;
   private queuedActiveAbilities: Record<ActiveAbility, boolean> = {
     empPulse: false,
@@ -271,6 +273,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     regionId?: string,
     combatBonuses?: Readonly<Record<string, number>>,
     mainWeaponId?: "pulse-rifle" | "beam-sword",
+    characterId?: "aegis" | "mika",
     assetProfile: AssetProfile = "full",
   ) {
     super({ key: "OverloadBattle" });
@@ -278,11 +281,12 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.regionId = regionId;
     this.combatBonuses = combatBonuses;
     this.mainWeaponId = mainWeaponId;
+    this.characterId = characterId;
     this.assetProfile = resolveAssetProfile(assetProfile);
   }
 
   create() {
-    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId });
+    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId, characterId: this.characterId });
     applyDebugScene(this.state, this.bridge.debugScene);
     this.gameInput = createSwarmInput();
     this.governor = createPerformanceGovernor({ environment: window });
@@ -400,6 +404,10 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
 
   queueParry() {
     this.queuedParry = true;
+  }
+
+  queueTag() {
+    this.queuedTag = true;
   }
 
   queueActiveAbility(ability: ActiveAbility) {
@@ -618,6 +626,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
       E: Phaser.Input.Keyboard.KeyCodes.E,
       F: Phaser.Input.Keyboard.KeyCodes.F,
       R: Phaser.Input.Keyboard.KeyCodes.R,
+      T: Phaser.Input.Keyboard.KeyCodes.T,
       SHIFT: Phaser.Input.Keyboard.KeyCodes.SHIFT,
       SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE,
       ONE: Phaser.Input.Keyboard.KeyCodes.ONE,
@@ -638,6 +647,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
       Phaser.Input.Keyboard.KeyCodes.E,
       Phaser.Input.Keyboard.KeyCodes.F,
       Phaser.Input.Keyboard.KeyCodes.R,
+      Phaser.Input.Keyboard.KeyCodes.T,
       Phaser.Input.Keyboard.KeyCodes.SHIFT,
     ]);
     // DOM-driven automation and very fast key taps can complete between two
@@ -659,6 +669,9 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     });
     keyboard.on("keydown-R", (event: KeyboardEvent) => {
       if (!event.repeat) this.queueActiveAbility("helixTempest");
+    });
+    keyboard.on("keydown-T", (event: KeyboardEvent) => {
+      if (!event.repeat) this.queueTag();
     });
     keyboard.on("keydown-SHIFT", (event: KeyboardEvent) => {
       if (!event.repeat) this.queueParry();
@@ -682,12 +695,14 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     if (this.queuedActiveAbilities.stratosRun || Phaser.Input.Keyboard.JustDown(this.keys.F)) this.gameInput.stratosRunPressed = true;
     if (this.queuedActiveAbilities.helixTempest || Phaser.Input.Keyboard.JustDown(this.keys.R)) this.gameInput.helixTempestPressed = true;
     if (this.queuedParry || Phaser.Input.Keyboard.JustDown(this.keys.SHIFT)) this.gameInput.parryPressed = true;
+    if (this.queuedTag || Phaser.Input.Keyboard.JustDown(this.keys.T)) this.gameInput.tagPressed = true;
     if (this.queuedBossMechanicClick) {
       this.gameInput.bossMechanicClickX = this.queuedBossMechanicClick.x;
       this.gameInput.bossMechanicClickY = this.queuedBossMechanicClick.y;
     }
     this.queuedDash = false;
     this.queuedParry = false;
+    this.queuedTag = false;
     this.queuedBossMechanicClick = undefined;
     this.clearQueuedActiveAbilities();
     if (!this.state?.levelupPending) return;

@@ -24,7 +24,7 @@ const GRID_SIZE = 96;
 const LEGACY_WORLD_SIZE = Object.freeze({ width: GAME_WIDTH, height: GAME_HEIGHT });
 const BOSS_WORLD_SIZE = Object.freeze({ width: WORLD_WIDTH, height: WORLD_HEIGHT });
 const EXPEDITION_WORLD_SIZE = Object.freeze({ width: EXPEDITION_WORLD_WIDTH, height: WORLD_HEIGHT });
-const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sword", "wave", "titan", "flash", "storm"]);
+const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sword", "wave", "titan", "flash", "storm", "halo"]);
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
 const EXPEDITION_FLOOR_ELLIPSE = Object.freeze({ x: 960, y: 540, rx: 840, ry: 460 });
 const EXPEDITION_ROUTE_LENGTH = 12000;
@@ -209,6 +209,12 @@ export const SWORD_MANUAL_ACTIVE_ABILITIES = Object.freeze({
   aegisWard: Object.freeze({ id: "phantomRend", key: "E", name: "PHANTOM REND", nameKo: "유령 참격", baseCooldown: 20 }),
   stratosRun: Object.freeze({ id: "imperialSwordDomain", key: "F", name: "IMPERIAL SWORD DOMAIN", nameKo: "천검 영역", baseCooldown: 32 }),
   helixTempest: Object.freeze({ id: "heavenfallExecution", key: "R", name: "HEAVENFALL EXECUTION", nameKo: "천검 낙하", baseCooldown: 85 }),
+});
+export const MIKA_MANUAL_ACTIVE_ABILITIES = Object.freeze({
+  empPulse: Object.freeze({ id: "prismRicochet", key: "Q", name: "PRISM RICOCHET", nameKo: "프리즘 연무", baseCooldown: 12 }),
+  aegisWard: Object.freeze({ id: "ribbonVortex", key: "E", name: "RIBBON VORTEX", nameKo: "리본 와류", baseCooldown: 18 }),
+  stratosRun: Object.freeze({ id: "cometDuet", key: "F", name: "COMET DUET", nameKo: "쌍성 질주", baseCooldown: 27 }),
+  helixTempest: Object.freeze({ id: "heartbeatCarnival", key: "R", name: "HEARTBEAT CARNIVAL", nameKo: "심장박동 카니발", baseCooldown: 74 }),
 });
 const MANUAL_ABILITY_KEYS = Object.freeze(["empPulse", "aegisWard", "stratosRun", "helixTempest"]);
 const MANUAL_INPUT_FIELDS = Object.freeze(["empPulsePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]);
@@ -627,13 +633,23 @@ function sanitizeMainWeaponId(value) {
   return value === "beam-sword" ? "beam-sword" : "pulse-rifle";
 }
 
-function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle") {
+function sanitizeCharacterId(value) {
+  return value === "mika" ? "mika" : "aegis";
+}
+
+function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId = "aegis") {
   const bonuses = sanitizeCombatBonuses(combatBonuses);
   const weaponId = sanitizeMainWeaponId(mainWeaponId);
+  const safeCharacterId = sanitizeCharacterId(characterId);
   const maxHp = 360 + bonuses.maxHpFlat;
   return {
-    name: "THE TRAINER",
+    name: safeCharacterId === "mika" ? "MIKA" : "AEGIS",
+    characterId: safeCharacterId,
+    reserveCharacterId: safeCharacterId === "mika" ? "aegis" : "mika",
+    tagCooldown: 0,
+    tagCooldownMax: 10,
     mainWeaponId: weaponId,
+    aegisWeaponId: weaponId,
     weaponDamageMultiplier: weaponId === "beam-sword" ? bonuses.swordDamageMultiplier : bonuses.rifleDamageMultiplier,
     x: GAME_WIDTH * 0.5,
     y: GAME_HEIGHT * 0.5,
@@ -641,7 +657,7 @@ function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle") {
     vy: 0,
     angle: 0,
     radius: 15,
-    speed: 245 * bonuses.moveSpeedMultiplier,
+    speed: 245 * bonuses.moveSpeedMultiplier * (safeCharacterId === "mika" ? 1.08 : 1),
     hp: maxHp,
     maxHp,
     shield: 0,
@@ -747,7 +763,7 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
   };
 }
 
-export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle" } = {}) {
+export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle", characterId = "aegis" } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
   const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
   const state = {
@@ -771,7 +787,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       encounter: regionConfig.encounterBeat,
       victory: regionConfig.victoryBeat,
     },
-    player: createPlayer(combatBonuses, mainWeaponId),
+    player: createPlayer(combatBonuses, mainWeaponId, characterId),
     boss: createBoss(regionConfig),
     aim: { x: GAME_WIDTH * 0.82, y: GAME_HEIGHT * 0.5 },
     aimX: GAME_WIDTH * 0.82,
@@ -888,6 +904,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       activeAbilityCasts: {
         empPulse: 0, aegisWard: 0, stratosRun: 0, helixTempest: 0,
         spectralSwordArray: 0, phantomRend: 0, imperialSwordDomain: 0, heavenfallExecution: 0,
+        prismRicochet: 0, ribbonVortex: 0, cometDuet: 0, heartbeatCarnival: 0,
       },
       overdriveTier: 0,
       batchedOverflowLevels: 0,
@@ -897,7 +914,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     lastShotEvent: -10,
   };
   if (state.expedition) {
-    state.player.name = "AEGIS";
+    state.player.name = state.player.characterId === "mika" ? "MIKA" : "AEGIS";
     state.player.x = 580;
     state.player.y = WORLD_HEIGHT * 0.5;
     state.boss.x = WORLD_WIDTH * 0.8;
@@ -932,6 +949,7 @@ export function createSwarmInput() {
     aegisWardPressed: false,
     stratosRunPressed: false,
     helixTempestPressed: false,
+    tagPressed: false,
     parryPressed: false,
     bossMechanicClickX: null,
     bossMechanicClickY: null,
@@ -945,6 +963,7 @@ export function clearPressedInput(input) {
   input.aegisWardPressed = false;
   input.stratosRunPressed = false;
   input.helixTempestPressed = false;
+  input.tagPressed = false;
   input.parryPressed = false;
   input.bossMechanicClickX = null;
   input.bossMechanicClickY = null;
@@ -1014,8 +1033,32 @@ function clampPlayerToFloor(player, expedition = null) {
   }
 }
 
+function tagCharacter(state) {
+  const player = state.player;
+  if (player.dead || player.stunTimer > 0 || player.tagCooldown > 0) return false;
+  const nextCharacterId = player.characterId === "mika" ? "aegis" : "mika";
+  player.characterId = nextCharacterId;
+  player.reserveCharacterId = nextCharacterId === "mika" ? "aegis" : "mika";
+  player.name = nextCharacterId === "mika" ? "MIKA" : "AEGIS";
+  player.speed = 245 * player.baseCombatBonuses.moveSpeedMultiplier * (nextCharacterId === "mika" ? 1.08 : 1);
+  player.weaponDamageMultiplier = nextCharacterId === "mika"
+    ? Math.max(player.baseCombatBonuses.rifleDamageMultiplier, player.baseCombatBonuses.swordDamageMultiplier)
+    : player.aegisWeaponId === "beam-sword"
+      ? player.baseCombatBonuses.swordDamageMultiplier
+      : player.baseCombatBonuses.rifleDamageMultiplier;
+  player.tagCooldown = player.tagCooldownMax;
+  player.invulnerability = Math.max(player.invulnerability, 0.52);
+  player.attackTimer = 0;
+  player.recoil = 0;
+  state.shockwaves.push({ type: "characterTag", x: player.x, y: player.y, maxRadius: 130, life: 0.42, maxLife: 0.42, color: nextCharacterId === "mika" ? "#ff79d8" : "#79eeff", width: 8 });
+  emit(state, "characterTagged", { characterId: nextCharacterId, reserveCharacterId: player.reserveCharacterId, cooldown: player.tagCooldownMax, x: player.x, y: player.y });
+  return true;
+}
+
 function updatePlayer(state, input, dt) {
   const player = state.player;
+  player.tagCooldown = Math.max(0, finite(player.tagCooldown) - dt);
+  if (input?.tagPressed) tagCharacter(state);
   player.dashCooldown = Math.max(0, player.dashCooldown - dt);
   player.invulnerability = Math.max(0, player.invulnerability - dt);
   player.hitFlash = Math.max(0, player.hitFlash - dt);
@@ -1330,12 +1373,42 @@ function updateSwordWeapons(state, dt, attackSpeed) {
   }
 }
 
+function updateMikaWeapons(state, attackSpeed) {
+  const player = state.player;
+  const timers = player.fireTimers;
+  if (timers.halo > 0) return;
+  const overdriveBonus = Math.max(0, player.overdriveTier - 1);
+  const count = 2 + overdriveBonus;
+  fireBulletFan(state, "mikaHaloBlade", count, 0.22 + overdriveBonus * 0.07, 930, 48 + player.level * 1.25, 13, 1.55, {
+    color: "#ff8ada",
+    pierce: 3 + player.overdriveTier,
+  });
+  if (player.overdriveTier >= 2 && player.overdriveVolleyTimer <= 0) {
+    fireRadialVolley(state, "mikaHaloCarnival", player.overdriveTier >= 3 ? 16 : 10, 720, player.overdriveTier >= 3 ? 72 : 52, 12, 1.2, {
+      color: "#ff72cf",
+      pierce: 2,
+    });
+    player.overdriveVolleyTimer = player.overdriveTier >= 3 ? 1.05 : 1.75;
+  }
+  player.attackState = "haloBlades";
+  player.attackTimer = Math.max(player.attackTimer, 0.22);
+  player.animationState = "attack";
+  player.animationTimer = Math.max(player.animationTimer, 0.22);
+  timers.halo += Math.max(0.18, 0.36 * attackSpeed);
+  emit(state, "mikaHaloAttack", { count, x: player.x, y: player.y, angle: player.angle });
+}
+
 function updateAutoWeapons(state, dt) {
   const player = state.player;
   const timers = player.fireTimers;
   const attackSpeed = Math.max(0.16, player.fireRateMultiplier * player.overdriveHaste);
   for (let index = 0; index < FIRE_TIMER_KEYS.length; index += 1) timers[FIRE_TIMER_KEYS[index]] -= dt;
   if (player.stunTimer > 0) return;
+
+  if (player.characterId === "mika") {
+    updateMikaWeapons(state, attackSpeed);
+    return;
+  }
 
   if (player.mainWeaponId === "beam-sword") {
     updateSwordWeapons(state, dt, attackSpeed);
@@ -2488,6 +2561,7 @@ function supportCooldownDuration(state, skill) {
 }
 
 function manualAbilityDefinition(state, ability) {
+  if (state.player.characterId === "mika") return MIKA_MANUAL_ACTIVE_ABILITIES[ability];
   return state.player.mainWeaponId === "beam-sword"
     ? SWORD_MANUAL_ACTIVE_ABILITIES[ability]
     : MANUAL_ACTIVE_ABILITIES[ability];
@@ -2652,6 +2726,86 @@ function updateSwordManualAbilities(state, dt) {
     emit(state, "swordManualAbilityImpact", { ability: effect.type, x: effect.x, y: effect.y, radius: effect.radius, hits });
   }
   compact(state.swordManualAbilities, keepPositiveLife);
+}
+
+function triggerPrismRicochet(state) {
+  const player = state.player;
+  const radius = 440;
+  const damage = 235 * player.damageMultiplier * player.weaponDamageMultiplier;
+  let hits = 0;
+  if (state.phase === "boss") {
+    hits = applySwordAbilityArea(state, player.x, player.y, radius, damage * 2.2, "prismRicochet");
+  } else {
+    const targets = state.enemies
+      .filter((enemy) => !enemy.dead && finite(enemy.spawnDelay) <= 0 && Math.hypot(enemy.x - player.x, enemy.y - player.y) <= radius + enemy.radius)
+      .sort((left, right) => Math.hypot(left.x - player.x, left.y - player.y) - Math.hypot(right.x - player.x, right.y - player.y))
+      .slice(0, 12);
+    for (const enemy of targets) if (damageEnemy(state, enemy, damage, "prismRicochet") > 0) hits += 1;
+  }
+  pushSwordManualEffect(state, "prismRicochet", player.x, player.y, radius, 0.9, { atlas: "mika", hits });
+  state.shake = Math.max(state.shake, 8);
+  emit(state, "mikaManualAbility", { ability: "prismRicochet", x: player.x, y: player.y, radius, hits });
+  return commitManualAbility(state, "empPulse", { hits, radius });
+}
+
+function triggerRibbonVortex(state) {
+  const player = state.player;
+  const radius = 330;
+  const damage = 390 * player.damageMultiplier * player.weaponDamageMultiplier;
+  const hits = applySwordAbilityArea(state, player.x, player.y, radius, damage, "ribbonVortex");
+  if (state.phase !== "boss") {
+    for (const enemy of state.enemies) {
+      if (enemy.dead || Math.hypot(enemy.x - player.x, enemy.y - player.y) > radius + enemy.radius) continue;
+      enemy.hitStun = Math.max(enemy.hitStun, 0.48);
+      enemy.slow = Math.max(enemy.slow, 1.1);
+    }
+  }
+  pushSwordManualEffect(state, "ribbonVortex", player.x, player.y, radius, 1.05, { atlas: "mika", hits });
+  state.shake = Math.max(state.shake, 12);
+  emit(state, "mikaManualAbility", { ability: "ribbonVortex", x: player.x, y: player.y, radius, hits });
+  return commitManualAbility(state, "aegisWard", { hits, radius });
+}
+
+function triggerCometDuet(state) {
+  const player = state.player;
+  const direction = normalize(state.aim.x - player.x, state.aim.y - player.y, Math.cos(player.angle), Math.sin(player.angle));
+  const startX = player.x;
+  const startY = player.y;
+  const arena = activeArena(state);
+  player.x = clamp(player.x + direction.x * 360, arena.left + player.radius, arena.right - player.radius);
+  player.y = clamp(player.y + direction.y * 360, arena.top + player.radius, arena.bottom - player.radius);
+  clampPlayerToFloor(player, state.expedition);
+  player.invulnerability = Math.max(player.invulnerability, 0.44);
+  const damage = 620 * player.damageMultiplier * player.weaponDamageMultiplier;
+  let hits = 0;
+  if (state.phase === "boss") {
+    if (state.boss.active && !state.boss.dead && pointLineDistance(state.boss.x, state.boss.y, startX, startY, player.x, player.y) <= 92 + state.boss.radius) {
+      if (damageBoss(state, damage, "cometDuet") > 0) hits += 1;
+    }
+  } else {
+    for (const enemy of state.enemies) {
+      if (enemy.dead || pointLineDistance(enemy.x, enemy.y, startX, startY, player.x, player.y) > 92 + enemy.radius) continue;
+      if (damageEnemy(state, enemy, damage, "cometDuet") > 0) hits += 1;
+    }
+  }
+  pushSwordManualEffect(state, "cometDuet", (startX + player.x) * 0.5, (startY + player.y) * 0.5, 390, 0.82, {
+    atlas: "mika", startX, startY, endX: player.x, endY: player.y, angle: Math.atan2(direction.y, direction.x), hits,
+  });
+  state.shake = Math.max(state.shake, 17);
+  emit(state, "mikaManualAbility", { ability: "cometDuet", startX, startY, endX: player.x, endY: player.y, hits });
+  return commitManualAbility(state, "stratosRun", { hits });
+}
+
+function triggerHeartbeatCarnival(state) {
+  const player = state.player;
+  const radius = 660;
+  const damage = 1550 * player.damageMultiplier * player.weaponDamageMultiplier;
+  const hits = applySwordAbilityArea(state, player.x, player.y, radius, damage, "heartbeatCarnival", true);
+  pushSwordManualEffect(state, "heartbeatCarnival", player.x, player.y, radius, 1.5, { atlas: "mika", hits });
+  state.shake = Math.max(state.shake, 25);
+  state.shockwaves.push({ type: "heartbeatCarnival", x: player.x, y: player.y, maxRadius: radius, life: 0.8, maxLife: 0.8, color: "#ff75d5", width: 18 });
+  emit(state, "mikaManualAbility", { ability: "heartbeatCarnival", x: player.x, y: player.y, radius, hits });
+  return commitManualAbility(state, "helixTempest", { hits, radius });
 }
 
 function triggerEmpPulse(state) {
@@ -3009,7 +3163,12 @@ function updateManualAbilities(state, input, dt) {
       rejectManualAbility(state, ability, "cooldown");
       continue;
     }
-    if (state.player.mainWeaponId === "beam-sword") {
+    if (state.player.characterId === "mika") {
+      if (ability === "empPulse") triggerPrismRicochet(state);
+      else if (ability === "aegisWard") triggerRibbonVortex(state);
+      else if (ability === "stratosRun") triggerCometDuet(state);
+      else triggerHeartbeatCarnival(state);
+    } else if (state.player.mainWeaponId === "beam-sword") {
       if (ability === "empPulse") triggerSpectralSwordArray(state);
       else if (ability === "aegisWard") triggerPhantomRend(state);
       else if (ability === "stratosRun") triggerImperialSwordDomain(state);
@@ -4931,6 +5090,12 @@ export function getSwarmHud(state) {
     xp: player.xp,
     nextXp: player.nextXp,
     player: {
+      characterId: player.characterId,
+      characterName: player.name,
+      reserveCharacterId: player.reserveCharacterId,
+      tagCooldown: player.tagCooldown,
+      tagCooldownMax: player.tagCooldownMax,
+      tagReady: player.tagCooldown <= 0.05,
       mainWeaponId: player.mainWeaponId,
       hp: player.hp,
       maxHp: player.maxHp,

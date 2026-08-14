@@ -1546,6 +1546,65 @@ Lighting/mood: cool cyan facility light with magenta accents, hopeful rebuilding
 Constraints: exactly two characters, no duplicates, no logos, no words, no UI labels, no watermark, no cropped faces or hands, no sexualized pose, no weapons pointed at viewer.
 ```
 
+## 신규 플레이어 미카 및 전용 전투 아틀라스 (2026-08-15)
+
+- 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
+- 스타일 참조: 프로젝트 원본 이지스 초상화·8방향 아틀라스와 수동 스킬 픽셀 아틀라스.
+- 선택 ImageGen 원본:
+  - 초상화: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a98e8787-e559-4585-ba41-f652b38cedbf.png`
+  - 8방향 모션: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-99f02fed-1da9-4b93-b890-0a13bc39c897.png`
+  - 전용 스킬: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-20e97ac9-2295-4176-9a7d-2391eb24865f.png`
+- 프로젝트 보존 원본:
+  - `reference/source-assets/overload/hero/mika-portrait-chroma.png`
+  - `reference/source-assets/overload/hero/mika-directional-aim-atlas-{chroma,alpha,normalized}.png`
+  - `reference/source-assets/overload/vfx/mika-ability-atlas-{chroma,alpha}.png`
+- 활성 런타임:
+  - `public/assets/overload/hero/mika-portrait.png`
+  - `public/assets/overload/hero/mika-directional-aim-atlas.png`
+  - `public/assets/overload/vfx/pixel/mika-ability-atlas.png`
+- 후처리: chroma key 제거 후 초상화는 투명 PNG로, 모션은 8×8·128px 셀로 중심 정규화,
+  스킬은 6×4·64px NEAREST 픽셀 셀로 확정했습니다.
+
+### 미카 초상화 프롬프트 전문
+
+```text
+Use case: character-design.
+Asset type: production transparent character portrait for HUMAN OVERRIDE: OVERLOAD.
+Create MIKA, a cute and charismatic young adult resistance fighter with vivid pink twin-tail hair, a bright mischievous smile, expressive rose eyes, and a completely different silhouette from the mature silver-haired AEGIS. She wears a compact black futuristic combat suit with white armor panels, magenta luminous seams, short asymmetric jacket tails, and two floating circular prism ring-blades mounted behind her forearms. Her personality is playful, fearless, energetic, and slightly eccentric, while remaining a credible elite combatant.
+Style/medium: premium polished sci-fi anime game character illustration matching the approved HUMAN OVERRIDE portraits, detailed materials and clean silhouette.
+Composition/framing: full body, centered, standing three-quarter toward camera, hands and both ring-blades fully visible, generous safe padding.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background.
+Constraints: exactly one adult character, exactly two ring-blades, pink twin tails, no text, logo, watermark, extra people, cropped limbs, sexualized pose, school uniform, gun, sword, background scenery, shadow, or magenta color matching #ff00ff on the character edge.
+```
+
+### 미카 8방향 모션 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production true-overhead 8-direction player motion atlas for HUMAN OVERRIDE: OVERLOAD.
+Input image: Image 1 is MIKA's approved pink twin-tail identity, black-white-magenta combat suit, and paired prism ring-blades. Preserve her exact identity and equipment.
+Create one exact 8-column by 8-row atlas, 64 isolated square frames. Strict orthographic 90-degree nadir camera in every cell. Columns are restrained animation beats. Rows are aim directions in clockwise screen order: down/front, down-right, right, up-right/back diagonal, up/back, up-left/back diagonal, left, down-left. The face is readable in downward rows, side profile in horizontal rows, and the back of the head/twin tails in upward rows. Both circular blades remain attached near the forearms.
+Motion contract by columns: idle A, idle B, step A, step B, attack windup, ring-blade release, recoil, recovery. Keep feet-down/head-up body orientation inside each authored direction rather than rotating one source image.
+Style/medium: polished top-down sci-fi anime game sprite, stable identity, crisp readable silhouette, restrained frame-to-frame movement.
+Composition/framing: exact uniform 8x8 grid, one centered full-body MIKA per cell, identical scale and anchor, generous gutters, nothing crossing cells.
+Scene/backdrop: perfectly flat uniform #ff00ff chroma-key background. No grid lines, labels, text, shadows, floor, scenery, detached projectiles, duplicates, watermark, camera tilt, or cropped body parts.
+```
+
+### 미카 Q/E/F/R 전용 픽셀 VFX 프롬프트 전문
+
+```text
+Use case: stylized-concept.
+Asset type: production 16-bit pixel-art active ability VFX atlas for MIKA in HUMAN OVERRIDE: OVERLOAD.
+Create one exact 6-column by 4-row atlas, exactly 24 isolated square cells, read left to right.
+Row 1 Q PRISM RICOCHET: pink ring seed, two splitting rings, multiple ricochet arcs, converging cuts, bright prism impact, fade.
+Row 2 E RIBBON VORTEX: compact magenta ribbon, twin spiral build, circular cutting vortex, peak rose-cyan cyclone, fragments, fade.
+Row 3 F COMET DUET: paired ring-blade charge, two parallel comet trails, high-speed crossing dash cuts, X impact, long afterimage, fade.
+Row 4 R HEARTBEAT CARNIVAL: heart-like pulse core, expanding ring constellation, dense radial ring-blades, brilliant full circular burst, huge pink-cyan shockwave, fading spark petals.
+Style/medium: authentic hand-authored 16-bit arcade pixel VFX, hard stair-step edges, no antialiasing, restrained hot-pink/cyan/white/violet palette, dark navy outlines, readable at 64x64.
+Composition/framing: exact uniform 6x4 grid, equal square slots, one centered self-contained effect per cell, safe padding, nothing crossing boundaries.
+Scene/backdrop: perfectly flat uniform #ff00ff chroma-key background. No text, numbers, labels, grid lines, environment, gradients, watermark, extra rows or columns. Do not use #ff00ff inside the effects.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License

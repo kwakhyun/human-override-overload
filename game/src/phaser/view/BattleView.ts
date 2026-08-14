@@ -339,6 +339,7 @@ function allyMotionTexture(ally: any) {
 
 function projectileArt(projectile: any) {
   const type = String(projectile?.kind ?? "pulse").toLowerCase();
+  if (type.includes("mikahalo")) return { column: 2, row: 2, width: 72, height: 72 };
   if (type.includes("crescent")) return { column: 0, row: 1, width: 76, height: 76 };
   if (type.includes("rail") || type.includes("omega")) return { column: 2, row: 0, width: 132, height: 40 };
   if (type.includes("rocket") || type.includes("missile")) return { column: 3, row: 0, width: 76, height: 36 };
@@ -433,6 +434,7 @@ export class BattleView {
       ? ASSET_KEYS.playerSwordDirectionalAim
       : ASSET_KEYS.playerDirectionalAim;
     this.prepareAtlas(this.playerDirectionalTexture, 8, 8);
+    this.prepareAtlas(ASSET_KEYS.playerMikaDirectionalAim, 8, 8);
     this.prepareAtlas(ASSET_KEYS.enemyHunterMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemyRiflemanMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemySniperMotion, 6, 4);
@@ -448,6 +450,7 @@ export class BattleView {
     this.prepareAtlas(ASSET_KEYS.empPulseHd, 6, 1);
     if (scene.textures.exists(ASSET_KEYS.swordSkillPixel)) this.preparePixelAtlas(ASSET_KEYS.swordSkillPixel, 6, 4);
     if (scene.textures.exists(ASSET_KEYS.swordManualAbilityPixel)) this.preparePixelAtlas(ASSET_KEYS.swordManualAbilityPixel, 6, 4);
+    this.preparePixelAtlas(ASSET_KEYS.mikaAbilityPixel, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.enemyDeathPixel, 6, 1);
     const hasSquadTraces = scene.textures.exists(ASSET_KEYS.squadTraces);
     if (hasSquadTraces) ensureAtlasFrames(scene, ASSET_KEYS.squadTraces, 3, 1);
@@ -830,14 +833,16 @@ export class BattleView {
     const clipElapsed = resolveHeroClipElapsedSeconds(selectedClip.id, entity, time - this.playerClipStartedAt);
     const animation = sampleActorAnimation("hero", entity, clipElapsed);
     const directionalFrame = resolveHeroDirectionalAimFrame(animation, entity);
-    const directionalTexture = entity?.mainWeaponId === "beam-sword"
+    const directionalTexture = entity?.characterId === "mika"
+      ? ASSET_KEYS.playerMikaDirectionalAim
+      : entity?.mainWeaponId === "beam-sword"
       ? ASSET_KEYS.playerSwordDirectionalAim
       : ASSET_KEYS.playerDirectionalAim;
     const playerTexture = this.preparedAtlases.has(directionalTexture) ? directionalTexture : this.playerDirectionalTexture;
     if (this.player.texture.key !== playerTexture) this.player.setTexture(playerTexture);
     setAtlasFrame(this.player, directionalFrame.column, directionalFrame.row);
     const size = state?.phase === "boss" ? 64 : 74;
-    const rifleEquipped = entity?.mainWeaponId !== "beam-sword";
+    const rifleEquipped = entity?.characterId !== "mika" && entity?.mainWeaponId !== "beam-sword";
     const recoil = rifleEquipped && animation.clipId === "attack" ? clamp(finite(entity?.recoil) * 0.55, 0, 2) : 0;
     const angle = actorAngle(entity);
     const presentation = resolveHeroAimPresentation(entity);
@@ -2146,21 +2151,27 @@ export class BattleView {
       const radius = Math.max(80, finite(effect?.radius, 320));
       if (!this.isCircleVisible(x, y, radius, 96)) continue;
       let image = this.swordManualAbilitySprites[visible];
+      const texture = effect?.atlas === "mika" ? ASSET_KEYS.mikaAbilityPixel : ASSET_KEYS.swordManualAbilityPixel;
       if (!image) {
-        image = this.scene.add.image(0, 0, ASSET_KEYS.swordManualAbilityPixel).setBlendMode(Phaser.BlendModes.ADD);
+        image = this.scene.add.image(0, 0, texture).setBlendMode(Phaser.BlendModes.ADD);
         this.worldFront.add(image);
         this.swordManualAbilitySprites.push(image);
       }
+      if (image.texture.key !== texture) image.setTexture(texture);
       const type = String(effect?.type ?? "spectralSwordArray");
-      const row = type === "phantomRend" ? 1 : type === "imperialSwordDomain" ? 2 : type === "heavenfallExecution" ? 3 : 0;
+      const row = type === "phantomRend" || type === "ribbonVortex"
+        ? 1
+        : type === "imperialSwordDomain" || type === "cometDuet"
+          ? 2
+          : type === "heavenfallExecution" || type === "heartbeatCarnival" ? 3 : 0;
       const progress = 1 - clamp01(finite(effect?.life) / Math.max(0.001, finite(effect?.maxLife, 1)));
       const visualProgress = type === "heavenfallExecution" && !effect?.detonated
         ? 1 - clamp01(finite(effect?.warning) / Math.max(0.001, finite(effect?.warningMax, 0.68)))
         : progress;
       const frame = Math.min(5, Math.floor(visualProgress * 6));
-      const size = type === "heavenfallExecution"
+      const size = type === "heavenfallExecution" || type === "heartbeatCarnival"
         ? Math.min(960, radius * 1.34)
-        : type === "imperialSwordDomain" ? Math.min(780, radius * 1.4) : Math.min(620, radius * 1.62);
+        : type === "imperialSwordDomain" || type === "cometDuet" ? Math.min(780, radius * 1.4) : Math.min(620, radius * 1.62);
       setAtlasFrame(image, frame, row);
       image
         .setVisible(true)

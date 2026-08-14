@@ -16,6 +16,7 @@ export const ASSET_KEYS = Object.freeze({
   bossRoom: "overload-boss-chamber",
   playerDirectionalAim: "survivor-directional-aim-atlas",
   playerSwordDirectionalAim: "survivor-sword-directional-aim-atlas",
+  playerMikaDirectionalAim: "mika-directional-aim-atlas",
   enemyMotion: "overload-enemy-motion-atlas",
   enemyHunter: "overload-enemy-hunter-static",
   enemyRifleman: "overload-enemy-rifleman-static",
@@ -37,6 +38,7 @@ export const ASSET_KEYS = Object.freeze({
   automaticSkillPixel: "overload-automatic-skill-pixel-atlas",
   swordSkillPixel: "overload-sword-skill-pixel-atlas",
   swordManualAbilityPixel: "overload-sword-manual-ability-pixel-atlas",
+  mikaAbilityPixel: "overload-mika-ability-pixel-atlas",
   sovereignGateMotion: "overload-sovereign-gate-motion-atlas",
   healingKitMotion: "overload-healing-kit-motion-atlas",
   squadTraces: "overload-squad-traces-atlas",
@@ -95,6 +97,8 @@ export function resolveRegionId(regionId?: string): RegionId {
 }
 
 export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
+  { key: ASSET_KEYS.playerMikaDirectionalAim, path: "./assets/overload/hero/mika-directional-aim-atlas.png", kind: "motion", columns: 8, rows: 8 },
+  { key: ASSET_KEYS.mikaAbilityPixel, path: "./assets/overload/vfx/pixel/mika-ability-atlas.png", kind: "atlas", columns: 6, rows: 4 },
   { key: ASSET_KEYS.enemyHunter, path: "./assets/overload/enemies/hunter.png", kind: "image" },
   { key: ASSET_KEYS.enemyRifleman, path: "./assets/overload/enemies/suppressor.png", kind: "image" },
   { key: ASSET_KEYS.enemySniper, path: "./assets/overload/enemies/brute.png", kind: "image" },
@@ -265,6 +269,7 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
   map: "./assets/overload/environment/sector-01-shattered-approach.webp",
   player: "./assets/overload/hero/survivor-portrait.png",
   portrait: "./assets/overload/hero/survivor-portrait.png",
+  mikaPortrait: "./assets/overload/hero/mika-portrait.png",
   hunter: "./assets/overload/enemies/hunter.png",
   suppressor: "./assets/overload/enemies/suppressor.png",
   brute: "./assets/overload/enemies/brute.png",

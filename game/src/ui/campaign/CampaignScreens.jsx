@@ -510,7 +510,7 @@ export function AbilityGuideScreen({ assets, onComplete, onBack }) {
   );
 }
 
-export function RegionSelectScreen({ regions, clusters = [], campaign, assets, weapons = [], equippedWeaponId = "pulse-rifle", onWeaponChange, onSelect, onBack }) {
+export function RegionSelectScreen({ regions, clusters = [], campaign, assets, weapons = [], equippedWeaponId = "pulse-rifle", characters = [], selectedCharacterId = "aegis", onCharacterChange, onWeaponChange, onSelect, onBack }) {
   const background = assetSource(assets?.regionMap);
   const buttonAtlas = assetSource(assets?.buttonAtlas);
   const unlocked = new Set(campaign?.unlockedRegionIds || ["wrong-engine-core"]);
@@ -668,6 +668,34 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
                 <small>첫 승리 회수 자원</small>
                 <span>연구 자료 +{selectedRegion.victoryRewards?.firstClear?.researchData || 0}</span>
                 <span>장비 부품 +{selectedRegion.victoryRewards?.firstClear?.equipmentParts || 0}</span>
+                <span>동기화 코어 +{selectedRegion.victoryRewards?.firstClear?.augmentationCores || 0}</span>
+              </div>
+            </section>
+            <section className="sortie-character-loadout" aria-labelledby="sortie-character-title">
+              <header>
+                <div><small>태그 편성</small><h3 id="sortie-character-title">시작 캐릭터 선택</h3></div>
+                <span>전투 중 <kbd>T</kbd>로 두 캐릭터를 교대합니다.</span>
+              </header>
+              <div className="sortie-character-options">
+                {characters.map((character) => {
+                  const selected = character.id === selectedCharacterId;
+                  const portrait = assetSource(assets?.[character.id === "mika" ? "mikaPortrait" : "playerPortrait"]);
+                  return (
+                    <button
+                      type="button"
+                      className={`sortie-character-card is-${character.accent}${selected ? " is-selected" : ""}`}
+                      aria-pressed={selected}
+                      data-ui-sound={selected ? "click" : "uiConfirm"}
+                      onClick={() => onCharacterChange?.(character.id)}
+                      key={character.id}
+                    >
+                      {portrait && <img src={portrait} alt={`${character.koreanName} 출격 초상화`} />}
+                      <span><small>{character.role}</small><strong>{character.koreanName}</strong><em>{character.name}</em></span>
+                      <p>{character.weaponName} · {character.description}</p>
+                      {selected && <mark><CheckCircle weight="fill" /> 선봉 지정</mark>}
+                    </button>
+                  );
+                })}
               </div>
             </section>
             <section className="sortie-weapon-loadout" aria-labelledby="sortie-weapon-title">
@@ -702,9 +730,9 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
             </section>
           </div>
           <footer className="region-sortie-command-footer">
-            <span><CheckCircle weight="fill" /> 작전 정보와 메인 장비를 확인했습니다.</span>
+            <span><CheckCircle weight="fill" /> 태그 편성과 메인 장비를 확인했습니다.</span>
             <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound="uiConfirm" onClick={() => onSelect(selectedRegion.id)}>
-              <AirplaneTilt weight="fill" /><span><small>나이트자 항로 승인 · {weapons.find((weapon) => weapon.id === equippedWeaponId)?.koreanName || "펄스 소총"}</small><strong>장비 확정 · 작전 시작</strong></span><ArrowRight weight="bold" />
+              <AirplaneTilt weight="fill" /><span><small>{characters.find((character) => character.id === selectedCharacterId)?.koreanName || "이지스"} 선봉 · {weapons.find((weapon) => weapon.id === equippedWeaponId)?.koreanName || "펄스 소총"}</small><strong>편성 확정 · 작전 시작</strong></span><ArrowRight weight="bold" />
             </button>
           </footer>
         </section>

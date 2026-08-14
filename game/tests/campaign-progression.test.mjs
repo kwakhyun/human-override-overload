@@ -30,12 +30,14 @@ import {
   createCampaignSlot,
   createEmptyCampaign,
   getCampaignCombatBonuses,
+  getCampaignCharacter,
   getCampaignProgression,
   getCampaignSlot,
   getCampaignUpgradeStatus,
   loadCampaign,
   purchaseCampaignUpgrade,
   saveCampaign,
+  setCampaignCharacter,
   sanitizeCampaign,
 } from "../src/game/save/campaignSave.js";
 
@@ -216,6 +218,16 @@ test("campaign purchase API deducts the correct currency and keeps slots isolate
   const storage = new MemoryStorage();
   assert.equal(saveCampaign(researchPurchase.campaign, storage), true);
   assert.deepEqual(getCampaignProgression(loadCampaign(storage), "slot-1"), firstProgression);
+});
+
+test("campaign loadout persists the selected lead character independently per slot", () => {
+  let campaign = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
+  campaign = createCampaignSlot(campaign, "slot-2", { now: NOW });
+  assert.equal(getCampaignCharacter(campaign, "slot-1"), "aegis");
+  campaign = setCampaignCharacter(campaign, "slot-1", "mika", { now: NOW });
+  assert.equal(getCampaignCharacter(campaign, "slot-1"), "mika");
+  assert.equal(getCampaignCharacter(campaign, "slot-2"), "aegis");
+  assert.equal(getCampaignCharacter(setCampaignCharacter(campaign, "slot-1", "unknown"), "slot-1"), "aegis");
 });
 
 test("calculated combat bonuses are a flat createSwarmState-ready object", () => {
