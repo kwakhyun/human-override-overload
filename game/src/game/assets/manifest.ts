@@ -287,6 +287,7 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
   outerFrontierRegionMap: "./assets/overload/campaign/outer-frontier-region-map.webp",
   returnToHaven: "./assets/overload/campaign/return-to-haven.webp",
   commandButtonStates: "./assets/overload/ui/buttons/command-button-states-atlas.png",
+  characterEnhancement: "./assets/overload/campaign/character-enhancement.webp",
   sortieWrongEngine: "./assets/overload/campaign/sortie/wrong-engine-sortie.mp4",
   sortieGlassDune: "./assets/overload/campaign/sortie/glass-dune-sortie.mp4",
   sortieAbyssalArchive: "./assets/overload/campaign/sortie/abyssal-archive-sortie.mp4",

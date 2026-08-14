@@ -87,6 +87,7 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     encounterBeat: "engine-encounter",
     victoryBeat: "engine-destroyed",
     traces: true,
+    difficultyScalar: 1,
   }),
   "glass-dune": Object.freeze({
     id: "glass-dune",
@@ -100,6 +101,7 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     encounterBeat: "glass-dune-encounter",
     victoryBeat: "glass-dune-destroyed",
     traces: false,
+    difficultyScalar: 1.35,
   }),
   "abyssal-archive": Object.freeze({
     id: "abyssal-archive",
@@ -113,26 +115,27 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     encounterBeat: "abyssal-archive-encounter",
     victoryBeat: "abyssal-archive-destroyed",
     traces: false,
+    difficultyScalar: 1.7,
   }),
   "neon-foundry": Object.freeze({
     id: "neon-foundry", chapterId: "chapter-03", bossName: "FORGE COLOSSUS", enemyBudget: 1100, bossHp: 1180000,
     objective: "SHUT DOWN THE FOUNDRY", chamber: "FORGE COLOSSUS ASSEMBLY PIT",
     deploymentBeat: "deployment", encounterBeat: "neon-foundry-encounter", victoryBeat: "neon-foundry-destroyed",
-    traces: false, enemyVisualSet: "neon-foundry",
+    traces: false, enemyVisualSet: "neon-foundry", difficultyScalar: 2.15,
     midBoss: Object.freeze({ id: "press-warden", name: "PRESS WARDEN", koreanName: "프레스 감시관", maxHp: 52000 }),
   }),
   "storm-spire": Object.freeze({
     id: "storm-spire", chapterId: "chapter-03", bossName: "TEMPEST WYRM", enemyBudget: 1150, bossHp: 1260000,
     objective: "BREAK THE STORM GRID", chamber: "TEMPEST EYE",
     deploymentBeat: "deployment", encounterBeat: "storm-spire-encounter", victoryBeat: "storm-spire-destroyed",
-    traces: false, enemyVisualSet: "storm-spire",
+    traces: false, enemyVisualSet: "storm-spire", difficultyScalar: 2.7,
     midBoss: Object.freeze({ id: "thunder-manta", name: "THUNDER MANTA", koreanName: "천둥 가오리", maxHp: 56000 }),
   }),
   "gene-vault": Object.freeze({
     id: "gene-vault", chapterId: "chapter-03", bossName: "PALE ARCHON", enemyBudget: 1200, bossHp: 1340000,
     objective: "PURGE THE GENE VAULT", chamber: "ARCHON INCUBATION VAULT",
     deploymentBeat: "deployment", encounterBeat: "gene-vault-encounter", victoryBeat: "gene-vault-destroyed",
-    traces: false, enemyVisualSet: "gene-vault",
+    traces: false, enemyVisualSet: "gene-vault", difficultyScalar: 3.35,
     midBoss: Object.freeze({ id: "chimera-custodian", name: "CHIMERA CUSTODIAN", koreanName: "키메라 수문장", maxHp: 60000 }),
   }),
 });
@@ -484,7 +487,8 @@ function spawnEnemy(state) {
   const elite = spawnIndex > 0 && spawnIndex % 29 === 0;
   const datasetProgress = clamp(spawnIndex / Math.max(1, state.enemyBudget - 1), 0, 1);
   const scale = elite ? 1.3 : 1;
-  const hpScale = ENEMY_HEALTH_MULTIPLIER * (elite ? 2.35 : 1) * (1 + datasetProgress * 0.45);
+  const difficultyScalar = Math.max(1, finite(state.difficultyScalar, 1));
+  const hpScale = ENEMY_HEALTH_MULTIPLIER * difficultyScalar * (elite ? 2.35 : 1) * (1 + datasetProgress * 0.45);
   const point = edgeSpawn(state, spawnIndex);
   state.enemies.push({
     id: ++state.nextEntityId,
@@ -499,9 +503,9 @@ function spawnEnemy(state) {
     radius: base.radius * scale,
     hp: base.hp * hpScale,
     maxHp: base.hp * hpScale,
-    speed: base.speed * (elite ? 1.08 : 1) * (1 + datasetProgress * 0.12),
-    damage: base.damage * (elite ? 1.55 : 1) * (1 + datasetProgress * 0.22),
-    xp: Math.round(base.xp * (elite ? 2.5 : 1)),
+    speed: base.speed * (elite ? 1.08 : 1) * (1 + datasetProgress * 0.12) * (1 + (difficultyScalar - 1) * 0.055),
+    damage: base.damage * difficultyScalar * (elite ? 1.55 : 1) * (1 + datasetProgress * 0.22),
+    xp: Math.round(base.xp * Math.sqrt(difficultyScalar) * (elite ? 2.5 : 1)),
     color: base.color,
     elite,
     dead: false,
@@ -549,7 +553,8 @@ function spawnRouteMidBoss(state) {
   if (!definition || state.expedition.midBoss.spawned) return false;
   const x = clamp(state.player.x + 520, state.expedition.originX + 800, state.expedition.originX + state.expedition.routeLength - 160);
   const y = WORLD_HEIGHT * 0.5;
-  const hp = Math.max(1, finite(definition.maxHp, 52000));
+  const difficultyScalar = Math.max(1, finite(state.difficultyScalar, 1));
+  const hp = Math.max(1, finite(definition.maxHp, 52000) * difficultyScalar);
   const enemy = {
     id: ++state.nextEntityId,
     type: "midboss",
@@ -559,7 +564,7 @@ function spawnRouteMidBoss(state) {
     name: definition.name,
     koreanName: definition.koreanName,
     x, y, vx: 0, vy: 0, angle: Math.PI, radius: 74,
-    hp, maxHp: hp, speed: 76, damage: 24, xp: 180, color: "#ffb347", elite: true,
+    hp, maxHp: hp, speed: 76 * (1 + (difficultyScalar - 1) * 0.04), damage: 24 * difficultyScalar, xp: Math.round(180 * Math.sqrt(difficultyScalar)), color: "#ffb347", elite: true,
     dead: false, hitFlash: 0, attackCooldown: 0.2, shootCooldown: 0.45,
     burstShots: 0, burstTimer: 0, aimTimer: 0, aimDuration: 0,
     lockedAimX: 0, lockedAimY: 0, lockedStartX: 0, lockedStartY: 0,
@@ -755,6 +760,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     phaseTime: 0,
     random: safeRandom,
     regionId: regionConfig.id,
+    difficultyScalar: Math.max(1, finite(regionConfig.difficultyScalar, 1)),
     enemyProfile: REGION_ENEMY_PROFILES[regionConfig.id] ?? REGION_ENEMY_PROFILES["wrong-engine-core"],
     enemyVisualSet: regionConfig.enemyVisualSet ?? "inner-network",
     chapterId: regionConfig.chapterId,

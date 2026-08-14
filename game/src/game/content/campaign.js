@@ -124,8 +124,8 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       bossSignatures: "RADIAL · SWEEP · RAPID CHARGE",
     },
     victoryRewards: {
-      firstClear: { researchData: 8, equipmentParts: 8 },
-      repeatClear: { researchData: 2, equipmentParts: 2 },
+      firstClear: { researchData: 8, equipmentParts: 8, augmentationCores: 2 },
+      repeatClear: { researchData: 2, equipmentParts: 2, augmentationCores: 1 },
     },
     boss: {
       id: "the-wrong-engine",
@@ -177,8 +177,8 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       bossSignatures: "PRISM LATTICE · SOLAR FLARE",
     },
     victoryRewards: {
-      firstClear: { researchData: 9, equipmentParts: 14 },
-      repeatClear: { researchData: 3, equipmentParts: 5 },
+      firstClear: { researchData: 9, equipmentParts: 14, augmentationCores: 3 },
+      repeatClear: { researchData: 3, equipmentParts: 5, augmentationCores: 2 },
     },
     boss: {
       id: "mirror-tyrant",
@@ -230,8 +230,8 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       bossSignatures: "MEMORY SPIRAL · DEPTH COLLAPSE",
     },
     victoryRewards: {
-      firstClear: { researchData: 15, equipmentParts: 10 },
-      repeatClear: { researchData: 5, equipmentParts: 3 },
+      firstClear: { researchData: 15, equipmentParts: 10, augmentationCores: 4 },
+      repeatClear: { researchData: 5, equipmentParts: 3, augmentationCores: 2 },
     },
     boss: {
       id: "drowned-oracle",
@@ -286,8 +286,8 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       bossSignatures: "FURNACE SWEEP · PRESS CHARGE · MELTDOWN",
     },
     victoryRewards: {
-      firstClear: { researchData: 18, equipmentParts: 18 },
-      repeatClear: { researchData: 6, equipmentParts: 6 },
+      firstClear: { researchData: 18, equipmentParts: 18, augmentationCores: 5 },
+      repeatClear: { researchData: 6, equipmentParts: 6, augmentationCores: 3 },
     },
     boss: { id: "forge-colossus", name: "FORGE COLOSSUS", maxHp: 1180000, phaseThresholds: [0.7, 0.38], patterns: FOUNDRY_BOSS_PATTERN_SET },
     assets: {
@@ -327,8 +327,8 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       bossSignatures: "CHAIN STORM · WYRM DIVE · TEMPEST COIL",
     },
     victoryRewards: {
-      firstClear: { researchData: 22, equipmentParts: 17 },
-      repeatClear: { researchData: 7, equipmentParts: 6 },
+      firstClear: { researchData: 22, equipmentParts: 17, augmentationCores: 6 },
+      repeatClear: { researchData: 7, equipmentParts: 6, augmentationCores: 4 },
     },
     boss: { id: "tempest-wyrm", name: "TEMPEST WYRM", maxHp: 1260000, phaseThresholds: [0.7, 0.38], patterns: STORM_BOSS_PATTERN_SET },
     assets: {
@@ -368,8 +368,8 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       bossSignatures: "CHIMERA RUSH · GENE RUPTURE · ARCHON HUNT",
     },
     victoryRewards: {
-      firstClear: { researchData: 24, equipmentParts: 20 },
-      repeatClear: { researchData: 8, equipmentParts: 7 },
+      firstClear: { researchData: 24, equipmentParts: 20, augmentationCores: 8 },
+      repeatClear: { researchData: 8, equipmentParts: 7, augmentationCores: 5 },
     },
     boss: { id: "pale-archon", name: "PALE ARCHON", maxHp: 1340000, phaseThresholds: [0.7, 0.38], patterns: GENE_BOSS_PATTERN_SET },
     assets: {

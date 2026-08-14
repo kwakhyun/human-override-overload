@@ -57,13 +57,15 @@ const FULL_CONTEXT = {
   completedRegionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
 };
 
-test("HANA research and ILYA weapon/equipment lines each expose three ranks", () => {
+test("HANA, ILYA, and AEGIS permanent progression lines each expose three ranks", () => {
   assert.equal(getBaseUpgrades("hana").length, 3);
   assert.equal(getBaseUpgrades("ilya").length, 5);
-  assert.equal(Object.keys(BASE_UPGRADE_LINES).length, 8);
-  assert.deepEqual(getBaseFacilities().map((facility) => facility.id), ["research", "equipment"]);
+  assert.equal(getBaseUpgrades("aegis").length, 3);
+  assert.equal(Object.keys(BASE_UPGRADE_LINES).length, 11);
+  assert.deepEqual(getBaseFacilities().map((facility) => facility.id), ["research", "equipment", "augmentation"]);
   assert.equal(getBaseFacility("research").npcId, "hana");
   assert.equal(getBaseFacility("equipment").npcId, "ilya");
+  assert.equal(getBaseFacility("augmentation").npcId, "aegis");
   assert.equal(getBaseFacility("missing"), null);
   assert.equal(BASE_NPCS.hana.facilityId, "research");
   assert.equal(BASE_NPCS.ilya.facilityId, "equipment");
@@ -73,18 +75,20 @@ test("HANA research and ILYA weapon/equipment lines each expose three ranks", ()
     assert.equal(upgrade.ranks.length, 3);
     assert.deepEqual(upgrade.ranks.map((rank) => rank.rank), [1, 2, 3]);
     const weaponLine = upgrade.id === "ilya-rifle-emitter" || upgrade.id === "ilya-sword-resonator";
-    assert.deepEqual(upgrade.ranks.map((rank) => rank.requiresCompletedRegions), weaponLine ? [0, 1, 2] : [1, 2, 3]);
+    const expectedUnlocks = upgrade.category === "augmentation" ? [1, 3, 5] : weaponLine ? [0, 1, 2] : [1, 2, 3];
+    assert.deepEqual(upgrade.ranks.map((rank) => rank.requiresCompletedRegions), expectedUnlocks);
     assert.ok(upgrade.ranks[0].cost < upgrade.ranks[2].cost);
     assert.equal(getBaseUpgrade(upgrade.id), upgrade);
   }
 });
 
-test("base progression has explicit currencies and sanitized research/equipment rank maps", () => {
-  assert.deepEqual(PROGRESSION_CURRENCY_FIELDS, ["researchData", "equipmentParts"]);
+test("base progression has explicit currencies and sanitized rank maps", () => {
+  assert.deepEqual(PROGRESSION_CURRENCY_FIELDS, ["researchData", "equipmentParts", "augmentationCores"]);
   const empty = createEmptyBaseProgression();
-  assert.deepEqual(getProgressionResources(empty), { researchData: 0, equipmentParts: 0 });
+  assert.deepEqual(getProgressionResources(empty), { researchData: 0, equipmentParts: 0, augmentationCores: 0 });
   assert.equal(Object.keys(empty.researchRanks).length, 3);
   assert.equal(Object.keys(empty.equipmentRanks).length, 5);
+  assert.equal(Object.keys(empty.augmentationRanks).length, 3);
 
   const sanitized = sanitizeBaseProgression({
     researchData: -4,
@@ -100,14 +104,14 @@ test("base progression has explicit currencies and sanitized research/equipment 
 });
 
 test("first and repeat regional victories grant distinct research and equipment rewards", () => {
-  assert.deepEqual(getRegionVictoryRewards("wrong-engine-core", true), { researchData: 8, equipmentParts: 8 });
-  assert.deepEqual(getRegionVictoryRewards("wrong-engine-core", false), { researchData: 2, equipmentParts: 2 });
-  assert.deepEqual(getRegionVictoryRewards("glass-dune", true), { researchData: 9, equipmentParts: 14 });
-  assert.deepEqual(getRegionVictoryRewards("abyssal-archive", true), { researchData: 15, equipmentParts: 10 });
+  assert.deepEqual(getRegionVictoryRewards("wrong-engine-core", true), { researchData: 8, equipmentParts: 8, augmentationCores: 2 });
+  assert.deepEqual(getRegionVictoryRewards("wrong-engine-core", false), { researchData: 2, equipmentParts: 2, augmentationCores: 1 });
+  assert.deepEqual(getRegionVictoryRewards("glass-dune", true), { researchData: 9, equipmentParts: 14, augmentationCores: 3 });
+  assert.deepEqual(getRegionVictoryRewards("abyssal-archive", true), { researchData: 15, equipmentParts: 10, augmentationCores: 4 });
 
   const first = grantRegionVictoryRewards(createEmptyBaseProgression(), "glass-dune", { firstClear: true });
   const repeat = grantRegionVictoryRewards(first.progression, "glass-dune", { firstClear: false });
-  assert.deepEqual(getProgressionResources(repeat.progression), { researchData: 12, equipmentParts: 19 });
+  assert.deepEqual(getProgressionResources(repeat.progression), { researchData: 12, equipmentParts: 19, augmentationCores: 5 });
 });
 
 test("v1 slots migrate to v2 without losing progress and receive retroactive first-clear resources", () => {
@@ -129,7 +133,7 @@ test("v1 slots migrate to v2 without losing progress and receive retroactive fir
   assert.equal(migrated.version, CAMPAIGN_SAVE_VERSION);
   assert.deepEqual(slot.completedRegionIds, ["wrong-engine-core", "glass-dune"]);
   assert.ok(slot.storyFlags.includes("legacy-flag"));
-  assert.deepEqual(getProgressionResources(slot.progression), { researchData: 17, equipmentParts: 22 });
+  assert.deepEqual(getProgressionResources(slot.progression), { researchData: 17, equipmentParts: 22, augmentationCores: 5 });
   assert.equal(slot.regionRecords["wrong-engine-core"].bestTime, 180);
 
   const storage = new MemoryStorage();
@@ -145,12 +149,13 @@ test("campaign victories award once per run ID and distinguish first from repeat
     runId: "clear-1",
   }, { now: NOW });
   let slot = getCampaignSlot(campaign, "slot-1");
-  assert.deepEqual(getProgressionResources(slot.progression), { researchData: 8, equipmentParts: 8 });
+  assert.deepEqual(getProgressionResources(slot.progression), { researchData: 8, equipmentParts: 8, augmentationCores: 2 });
   assert.deepEqual(slot.lastRegionRewards, {
     regionId: "wrong-engine-core",
     firstClear: true,
     researchData: 8,
     equipmentParts: 8,
+    augmentationCores: 2,
     grantedAt: NOW,
     runId: "clear-1",
   });
@@ -160,14 +165,14 @@ test("campaign victories award once per run ID and distinguish first from repeat
     runId: "clear-2",
   }, { now: NOW });
   slot = getCampaignSlot(campaign, "slot-1");
-  assert.deepEqual(getProgressionResources(slot.progression), { researchData: 10, equipmentParts: 10 });
+  assert.deepEqual(getProgressionResources(slot.progression), { researchData: 10, equipmentParts: 10, augmentationCores: 3 });
   assert.equal(slot.lastRegionRewards.firstClear, false);
 
   campaign = completeRegion(campaign, "slot-1", "wrong-engine-core", {
     status: "victory",
     runId: "clear-2",
   }, { now: NOW });
-  assert.deepEqual(getProgressionResources(getCampaignSlot(campaign, "slot-1").progression), { researchData: 10, equipmentParts: 10 });
+  assert.deepEqual(getProgressionResources(getCampaignSlot(campaign, "slot-1").progression), { researchData: 10, equipmentParts: 10, augmentationCores: 3 });
 });
 
 test("purchase validation covers base lock, rank lock, cost, unknown IDs, and max rank", () => {

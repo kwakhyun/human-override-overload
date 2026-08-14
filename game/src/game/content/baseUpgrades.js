@@ -17,6 +17,12 @@ export const BASE_CURRENCIES = deepFreeze({
     koreanName: "장비 부품",
     ownerId: "ilya",
   },
+  augmentationCores: {
+    id: "augmentationCores",
+    name: "AUGMENTATION CORES",
+    koreanName: "동기화 코어",
+    ownerId: "aegis",
+  },
 });
 
 const HANA_RESEARCH_LINES = {
@@ -137,11 +143,43 @@ const ILYA_EQUIPMENT_LINES = {
   },
 };
 
+const AEGIS_AUGMENTATION_LINES = {
+  "aegis-assault-sync": {
+    id: "aegis-assault-sync", ownerId: "aegis", category: "augmentation", currencyId: "augmentationCores",
+    name: "ASSAULT SYNCHRONIZATION", koreanName: "공격 동기화", description: "전투 신경과 주무기 코어를 동기화해 모든 피해를 영구적으로 높입니다.",
+    ranks: [
+      { rank: 1, cost: 2, requiresCompletedRegions: 1, bonuses: { damageMultiplier: 0.06 } },
+      { rank: 2, cost: 5, requiresCompletedRegions: 3, bonuses: { damageMultiplier: 0.08 } },
+      { rank: 3, cost: 9, requiresCompletedRegions: 5, bonuses: { damageMultiplier: 0.11 } },
+    ],
+  },
+  "aegis-vital-frame": {
+    id: "aegis-vital-frame", ownerId: "aegis", category: "augmentation", currencyId: "augmentationCores",
+    name: "VITAL FRAME", koreanName: "생존 프레임", description: "신체 보조 프레임과 충격 분산층을 강화해 최대 내구도를 크게 높입니다.",
+    ranks: [
+      { rank: 1, cost: 2, requiresCompletedRegions: 1, bonuses: { maxHpFlat: 55 } },
+      { rank: 2, cost: 5, requiresCompletedRegions: 3, bonuses: { maxHpFlat: 75 } },
+      { rank: 3, cost: 9, requiresCompletedRegions: 5, bonuses: { maxHpFlat: 110 } },
+    ],
+  },
+  "aegis-reflex-drive": {
+    id: "aegis-reflex-drive", ownerId: "aegis", category: "augmentation", currencyId: "augmentationCores",
+    name: "REFLEX DRIVE", koreanName: "반응 가속", description: "시각·운동 보조 회선을 가속해 이동과 기본 공격의 반응 속도를 함께 높입니다.",
+    ranks: [
+      { rank: 1, cost: 2, requiresCompletedRegions: 1, bonuses: { moveSpeedMultiplier: 0.04, fireRateMultiplier: 0.04 } },
+      { rank: 2, cost: 5, requiresCompletedRegions: 3, bonuses: { moveSpeedMultiplier: 0.05, fireRateMultiplier: 0.05 } },
+      { rank: 3, cost: 9, requiresCompletedRegions: 5, bonuses: { moveSpeedMultiplier: 0.06, fireRateMultiplier: 0.07 } },
+    ],
+  },
+};
+
 export const HANA_RESEARCH_UPGRADES = deepFreeze(HANA_RESEARCH_LINES);
 export const ILYA_EQUIPMENT_UPGRADES = deepFreeze(ILYA_EQUIPMENT_LINES);
+export const AEGIS_AUGMENTATION_UPGRADES = deepFreeze(AEGIS_AUGMENTATION_LINES);
 export const BASE_UPGRADE_LINES = deepFreeze({
   ...HANA_RESEARCH_LINES,
   ...ILYA_EQUIPMENT_LINES,
+  ...AEGIS_AUGMENTATION_LINES,
 });
 
 export const BASE_FACILITIES = deepFreeze({
@@ -160,6 +198,14 @@ export const BASE_FACILITIES = deepFreeze({
     koreanName: "ILYA 장비고",
     currencyId: "equipmentParts",
     upgradeIds: Object.keys(ILYA_EQUIPMENT_LINES),
+  },
+  augmentation: {
+    id: "augmentation",
+    npcId: "aegis",
+    name: "AEGIS AUGMENTATION",
+    koreanName: "인물 동기화",
+    currencyId: "augmentationCores",
+    upgradeIds: Object.keys(AEGIS_AUGMENTATION_LINES),
   },
 });
 

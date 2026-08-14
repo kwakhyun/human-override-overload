@@ -174,6 +174,16 @@ test("every region starts melee-only, then restores a distinct late reinforcemen
   assert.notDeepEqual(reinforcements[1], reinforcements[2]);
 });
 
+test("successive regions sharply raise durable enemy pressure while preserving the first-region baseline", () => {
+  const regionIds = ["wrong-engine-core", "glass-dune", "abyssal-archive", "neon-foundry", "storm-spire", "gene-vault"];
+  const states = regionIds.map((regionId) => createSwarmState({ random: () => 0.5, expedition: true, regionId }));
+  assert.deepEqual(states.map((state) => state.difficultyScalar), [1, 1.35, 1.7, 2.15, 2.7, 3.35]);
+  for (let index = 1; index < states.length; index += 1) {
+    assert.ok(states[index].enemies[0].maxHp > states[index - 1].enemies[0].maxHp);
+    assert.ok(states[index].enemies[0].damage > states[index - 1].enemies[0].damage);
+  }
+});
+
 test("late-wave siege walkers are durable giants with a dedicated heavy cannon", () => {
   const state = createSwarmState({ random: () => 0.5, expedition: true, regionId: "wrong-engine-core" });
   assert.ok(state.enemies.every((enemy) => enemy.type !== "siegeWalker"));

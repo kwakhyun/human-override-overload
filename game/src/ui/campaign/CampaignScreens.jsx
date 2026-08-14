@@ -316,9 +316,10 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
 
 export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
   if (!facility) return null;
-  const FacilityIcon = facility.id === "research" ? Brain : Wrench;
+  const FacilityIcon = facility.id === "research" ? Brain : facility.id === "augmentation" ? Sparkle : Wrench;
   return (
-    <section className={`base-facility-panel facility-${facility.id}`} role="dialog" aria-modal="true" aria-labelledby="base-facility-name">
+    <section className={`base-facility-panel facility-${facility.id}${facility.artSource ? " has-key-art" : ""}`} role="dialog" aria-modal="true" aria-labelledby="base-facility-name">
+      {facility.artSource && <img className="facility-key-art" src={assetSource(facility.artSource)} alt="이지스와 미카의 전투 프레임을 강화하는 동기화실" />}
       <header>
         <span><FacilityIcon weight="fill" /></span>
         <div>
@@ -376,7 +377,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
       <header className="base-status">
         <div><small>주 기지</small><strong>헤이븐-09</strong></div>
         <span><FloppyDisk weight="fill" /> 슬롯 {(campaign?.slotIndex ?? 0) + 1} · 자동 저장</span>
-        <b>연구 자료 {campaign?.progression?.researchData || 0} · 장비 부품 {campaign?.progression?.equipmentParts || 0} · 해방 {completed} / 6</b>
+        <b>연구 {campaign?.progression?.researchData || 0} · 부품 {campaign?.progression?.equipmentParts || 0} · 코어 {campaign?.progression?.augmentationCores || 0} · 해방 {completed} / 6</b>
       </header>
 
       {(npcs || []).map((npc) => {
@@ -401,6 +402,10 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
         <AirplaneTilt weight="fill" /><span><small>스텔스 비행선</small><b>구역 선택 및 출격</b></span>
       </button>
 
+      <button type="button" className="base-hotspot augmentation-hotspot" onClick={() => onOpenFacility("augmentation")}>
+        <Sparkle weight="fill" /><span><small>전투 프레임</small><b>인물 영구 강화</b></span>
+      </button>
+
       <aside className="base-objective">
         <small>현재 작전</small>
         <strong>{larkAlert ? "라크가 신규 권역 신호를 해독했습니다" : completed >= 3 ? "외곽 권역 작전 진행 중" : "지역 추론핵을 추적하세요"}</strong>
@@ -410,6 +415,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
             <span>회수 자원</span>
             <b>연구 +{campaign.lastRegionRewards.researchData}</b>
             <b>부품 +{campaign.lastRegionRewards.equipmentParts}</b>
+            <b>코어 +{campaign.lastRegionRewards.augmentationCores || 0}</b>
           </div>
         )}
         <button type="button" onClick={onTitle}>저장 슬롯 화면</button>

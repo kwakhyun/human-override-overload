@@ -91,7 +91,7 @@ const DOM_ASSET_REFS = Object.freeze(Object.fromEntries(
 ));
 
 const INITIAL_DOM_ASSET_KEYS = Object.freeze(["intro", "commandButtonStates"]);
-const BASE_DOM_ASSET_KEYS = Object.freeze(["havenBase", "havenNpcPortraits", "rheaControlOfficer", "returnToHaven", "commandButtonStates"]);
+const BASE_DOM_ASSET_KEYS = Object.freeze(["havenBase", "havenNpcPortraits", "rheaControlOfficer", "returnToHaven", "commandButtonStates", "characterEnhancement"]);
 const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "commandButtonStates"]);
 const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "rheaControlOfficer",
@@ -132,6 +132,11 @@ const FACILITY_COPY = Object.freeze({
     kicker: "일리야 · 이지스 장비 정비소",
     description: "전장에서 회수한 부품으로 펄스 소총과 빔 소드, 장갑, 나나이트 장비를 영구 개조합니다.",
     currencyHint: "지역 군단·보스 잔해에서 회수",
+  },
+  augmentation: {
+    kicker: "이지스 · 인물 동기화실",
+    description: "반복 작전에서 회수한 동기화 코어로 신체 보조 프레임과 전투 신경을 영구 강화합니다.",
+    currencyHint: "지역 반복 클리어와 추론핵 격파로 획득",
   },
 });
 
@@ -2195,7 +2200,7 @@ export function App() {
       return {
         id: upgrade.id,
         order: index + 1,
-        category: upgrade.category === "research" ? "영구 연구" : "영구 장비",
+        category: upgrade.category === "research" ? "영구 연구" : upgrade.category === "augmentation" ? "인물 강화" : "영구 장비",
         name: upgrade.koreanName,
         description: upgrade.description,
         rank,
@@ -2213,16 +2218,18 @@ export function App() {
       name: facility.koreanName,
       currency: progression[facility.currencyId] || 0,
       currencyLabel: currency?.koreanName || facility.currencyId,
-      currencyShortLabel: facility.currencyId === "researchData" ? "연구 자료" : "장비 부품",
+      currencyShortLabel: facility.currencyId === "researchData" ? "연구 자료" : facility.currencyId === "augmentationCores" ? "동기화 코어" : "장비 부품",
+      artSource: facility.id === "augmentation" ? assets?.characterEnhancement : null,
       upgrades,
     };
-  }, [activeFacilityId, activeSlotId, activeSlot, campaign]);
+  }, [activeFacilityId, activeSlotId, activeSlot, campaign, assets]);
   const campaignAssets = useMemo(() => ({
     homeBase: assets?.havenBase,
     npcPortraits: assets?.havenNpcPortraits,
     controlOfficer: assets?.rheaControlOfficer,
     regionMap: assets?.airshipRegionMap,
     buttonAtlas: assets?.commandButtonStates,
+    characterEnhancement: assets?.characterEnhancement,
     tutorialEmpPulse: assets?.tutorialEmpPulse,
     tutorialAegisWard: assets?.tutorialAegisWard,
     tutorialStratosRun: assets?.tutorialStratosRun,

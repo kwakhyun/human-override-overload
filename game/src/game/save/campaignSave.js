@@ -105,6 +105,7 @@ function sanitizeLastRegionRewards(value) {
     firstClear: Boolean(value.firstClear),
     researchData: Math.floor(finiteNonNegative(value.researchData, 0)),
     equipmentParts: Math.floor(finiteNonNegative(value.equipmentParts, 0)),
+    augmentationCores: Math.floor(finiteNonNegative(value.augmentationCores, 0)),
     grantedAt: typeof value.grantedAt === "string" ? value.grantedAt : null,
     runId: typeof value.runId === "string" ? value.runId : null,
   };
@@ -365,6 +366,7 @@ export function completeRegion(campaign, slotId, regionId, result = {}, options 
       firstClear,
       researchData: rewardGrant.rewards.researchData,
       equipmentParts: rewardGrant.rewards.equipmentParts,
+      augmentationCores: rewardGrant.rewards.augmentationCores,
       grantedAt: now,
       runId,
     },

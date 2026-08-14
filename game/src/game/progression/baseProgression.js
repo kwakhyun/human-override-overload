@@ -4,8 +4,8 @@ import {
 } from "../content/baseUpgrades.js";
 import { getRegion } from "../content/campaign.js";
 
-export const PROGRESSION_CURRENCY_FIELDS = Object.freeze(["researchData", "equipmentParts"]);
-export const PROGRESSION_RANK_FIELDS = Object.freeze(["researchRanks", "equipmentRanks"]);
+export const PROGRESSION_CURRENCY_FIELDS = Object.freeze(["researchData", "equipmentParts", "augmentationCores"]);
+export const PROGRESSION_RANK_FIELDS = Object.freeze(["researchRanks", "equipmentRanks", "augmentationRanks"]);
 
 export const DEFAULT_COMBAT_BONUSES = Object.freeze({
   damageMultiplier: 1,
@@ -23,6 +23,9 @@ const RESEARCH_IDS = Object.freeze(Object.values(BASE_UPGRADE_LINES)
   .map((upgrade) => upgrade.id));
 const EQUIPMENT_IDS = Object.freeze(Object.values(BASE_UPGRADE_LINES)
   .filter((upgrade) => upgrade.category === "equipment")
+  .map((upgrade) => upgrade.id));
+const AUGMENTATION_IDS = Object.freeze(Object.values(BASE_UPGRADE_LINES)
+  .filter((upgrade) => upgrade.category === "augmentation")
   .map((upgrade) => upgrade.id));
 
 function finiteInteger(value, fallback = 0) {
@@ -43,7 +46,9 @@ function sanitizeRankMap(value, ids) {
 }
 
 function rankFieldFor(upgrade) {
-  return upgrade?.category === "equipment" ? "equipmentRanks" : "researchRanks";
+  if (upgrade?.category === "equipment") return "equipmentRanks";
+  if (upgrade?.category === "augmentation") return "augmentationRanks";
+  return "researchRanks";
 }
 
 function round(value) {
@@ -54,8 +59,10 @@ export function createEmptyBaseProgression() {
   return {
     researchData: 0,
     equipmentParts: 0,
+    augmentationCores: 0,
     researchRanks: createRankMap(RESEARCH_IDS),
     equipmentRanks: createRankMap(EQUIPMENT_IDS),
+    augmentationRanks: createRankMap(AUGMENTATION_IDS),
   };
 }
 
@@ -64,8 +71,10 @@ export function sanitizeBaseProgression(value) {
   return {
     researchData: finiteInteger(source.researchData, 0),
     equipmentParts: finiteInteger(source.equipmentParts, 0),
+    augmentationCores: finiteInteger(source.augmentationCores, 0),
     researchRanks: sanitizeRankMap(source.researchRanks, RESEARCH_IDS),
     equipmentRanks: sanitizeRankMap(source.equipmentRanks, EQUIPMENT_IDS),
+    augmentationRanks: sanitizeRankMap(source.augmentationRanks, AUGMENTATION_IDS),
   };
 }
 
@@ -74,6 +83,7 @@ export function getProgressionResources(progression) {
   return Object.freeze({
     researchData: safe.researchData,
     equipmentParts: safe.equipmentParts,
+    augmentationCores: safe.augmentationCores,
   });
 }
 
@@ -169,6 +179,7 @@ export function getRegionVictoryRewards(regionId, firstClear = true) {
   return Object.freeze({
     researchData: finiteInteger(reward?.researchData, 0),
     equipmentParts: finiteInteger(reward?.equipmentParts, 0),
+    augmentationCores: finiteInteger(reward?.augmentationCores, 0),
   });
 }
 
@@ -181,6 +192,7 @@ export function grantRegionVictoryRewards(progression, regionId, options = {}) {
       ...safe,
       researchData: safe.researchData + rewards.researchData,
       equipmentParts: safe.equipmentParts + rewards.equipmentParts,
+      augmentationCores: safe.augmentationCores + rewards.augmentationCores,
     },
     rewards,
     firstClear,

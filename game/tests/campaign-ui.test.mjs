@@ -92,6 +92,7 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   assert.match(app, /assets\?\.rheaControlOfficer/);
   assert.match(app, /assets\?\.airshipRegionMap/);
   assert.match(app, /assets\?\.commandButtonStates/);
+  assert.match(app, /assets\?\.characterEnhancement/);
   assert.match(screens, /backgroundSize|background-size|backgroundPosition/);
   assert.match(screens, /NPC_ICON = Object\.freeze\(\{ hana: Broadcast, ilya: Wrench, lark: User, rhea: Crosshair \}\)/);
   assert.match(screens, /portraitMode === "standalone"/);
@@ -99,6 +100,10 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   assert.match(screens, /구역 선택 및 출격/);
   assert.match(screens, /BaseFacilityPanel/);
   assert.match(screens, /facility-upgrade-grid/);
+  assert.match(screens, /augmentation-hotspot/);
+  assert.match(screens, /facility-key-art/);
+  assert.match(screens, /인물 영구 강화/);
+  assert.match(app, /동기화 코어/);
   assert.match(screens, /region-sortie-launch command-ui-button/);
   assert.match(app, /getCampaignCombatBonuses\(campaign, activeSlotId\)/);
   assert.match(app, /purchaseCampaignUpgrade\(campaign, activeSlotId, upgradeId\)/);

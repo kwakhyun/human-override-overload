@@ -1523,6 +1523,29 @@ Composition/framing: exact uniform 6x4 grid, equal square slots, one centered ef
 Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background. No grid lines, labels, text, numbers, environment, floor, shadows, gradients, watermark, extra rows or columns. Do not use #ff00ff in effects.
 ```
 
+## 인물 영구 강화 UI 일러스트 (2026-08-15)
+
+- 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
+- 정체성 참조: 프로젝트 원본 `public/assets/overload/hero/survivor-portrait.png`,
+  `public/assets/overload/hero/mika-portrait.png`.
+- 선택 ImageGen 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-e4fb9a86-7022-43eb-b291-9978b58eb43e.png`.
+- 프로젝트 보존 원본: `reference/source-assets/overload/campaign/character-enhancement-imagegen.png`.
+- 활성 런타임: `public/assets/overload/campaign/character-enhancement.webp`.
+- 후처리: 선택 원본을 3:2 WebP로 최적화했으며 인물과 배경의 구도·내용은 변경하지 않았습니다.
+
+### 인물 영구 강화 UI 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: wide campaign character-enhancement UI illustration for HUMAN OVERRIDE: OVERLOAD.
+Input images: Image 1 is AEGIS's exact silver-haired identity, black-and-white combat suit, and mature expression. Image 2 is MIKA's exact pink twin-tail identity, ring-blades, suit, and playful expression. Preserve both identities.
+Primary request: AEGIS and MIKA stand in separate but connected futuristic HAVEN-09 augmentation pods while cyan and magenta diagnostic holograms scan their armor and weapons. The composition must communicate permanent stat growth, repeat-clear progression, and character specialization. AEGIS is calm and precise; MIKA is cheerful and gives a confident thumbs-up.
+Style/medium: premium polished sci-fi anime game key art, detailed hard-surface medical/engineering bay, clean cinematic finish matching both portraits.
+Composition/framing: 3:2 landscape, AEGIS on left third, MIKA on right third, a clean darker central/lower area reserved for DOM upgrade cards and numbers. Upper bodies fully readable; no text baked into art.
+Lighting/mood: cool cyan facility light with magenta accents, hopeful rebuilding atmosphere, high contrast around faces.
+Constraints: exactly two characters, no duplicates, no logos, no words, no UI labels, no watermark, no cropped faces or hands, no sexualized pose, no weapons pointed at viewer.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License
