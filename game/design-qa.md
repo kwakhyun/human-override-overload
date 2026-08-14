@@ -696,3 +696,27 @@ final result: passed
   전체 테스트와 production build는 사용자의 빠른 반복 지침에 따라 실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 30 — complete · 레아의 HAVEN 타워 디펜스
+
+- Mode boundary: 메인 기지에 레아가 담당하는 독립 `기지 방어 · 디펜스` 진입점을 추가했습니다.
+  React는 3단계 작전 선택, 전술 도크, 결과·보상을 담당하고 `src/defense/engine.js`가 배치,
+  웨이브, 이동, 공격, 코어 피해와 승패를 60 Hz 결정론적으로 판정합니다.
+- Defense systems: 12개 고정 패드에 펄스 센트리, 아크 릴레이, 스카이파이어 포대, 이지스
+  바스티온을 배치하고 3랭크까지 강화합니다. 단일 표적, 연쇄, 장거리 범위 폭발, 감속 광역 펄스로
+  역할을 분리했습니다.
+- Escalation and rewards: 6/8/10웨이브 3단계를 순차 해금합니다. 웨이브 규모와 헌터·소총수·
+  저격수·공성 워커 비중이 함께 상승하며, 승리 시 첫/반복 보상을 구분해 기존 슬롯의 연구 자료,
+  장비 부품, 증강 코어에 직접 반영하고 동일 run id 중복 지급을 막습니다.
+- Art and performance: HAVEN 외곽 3경로 전장과 6×4 방어 체계 모션 아틀라스를 프로젝트 전용으로
+  제작했습니다. FULL 1920×1080/1536×1024와 PERFORMANCE 960×540/768×512를 동일 키로
+  선택 로드해 한 런에서 두 품질 계층을 중복 적재하지 않습니다.
+- Focused verification: 신규 엔진·저장·캠페인 UI·Phaser 경계 테스트 27/27와 TypeScript 검사가
+  통과했습니다. 전체 테스트와 production build는 사용자의 빠른 반복 지침에 따라 실행하지
+  않았습니다.
+- Browser smoke: 1280×720 로컬 Edge에서 메인 기지의 디펜스 진입, 레아 브리핑, 3단계 잠금,
+  12개 패드 전장, 펄스 센트리 배치(270→200), 8기 첫 웨이브 조기 개시와 실시간 처치를 확인했습니다.
+  신규 모드 page error는 0이며, 기존 Cubism 모델의 선택적 physics/pose/user-data 부재 경고만
+  유지됩니다.
+
+final result: passed

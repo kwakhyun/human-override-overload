@@ -4689,6 +4689,192 @@ kbd {
   .intro-minimal-content > p:not(.asset-warning) { max-width: 340px; }
 }
 
+/* RHEA tower-defense mode ---------------------------------------------- */
+.base-defense-action {
+  display: grid;
+  width: 100%;
+  min-height: 62px;
+  padding: 9px 13px;
+  grid-template-columns: 31px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 105, 132, 0.66);
+  color: #fff3f6;
+  text-align: left;
+  background: linear-gradient(135deg, rgba(111, 20, 42, 0.94), rgba(32, 8, 18, 0.96));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36);
+}
+.base-defense-action > svg:first-child { width: 28px; height: 28px; color: #ff718e; }
+.base-defense-action > svg:last-child { width: 18px; height: 18px; color: #ffb1c0; }
+.base-defense-action span { display: flex; min-width: 0; flex-direction: column; }
+.base-defense-action small { color: #bc8290; font-size: 8px; }
+.base-defense-action b { margin-top: 2px; font-size: 16px; }
+.base-defense-action:hover,
+.base-defense-action:focus-visible { border-color: #fff; background: linear-gradient(135deg, #b6294e, #461020); transform: translateX(-4px); }
+
+.defense-stage-select-screen { overflow: hidden; color: #eafcff; background: #020608; }
+.defense-stage-select-screen .campaign-background { object-fit: cover; filter: brightness(0.68) saturate(0.88) contrast(1.06); }
+.defense-select-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(1, 8, 12, 0.94) 0%, rgba(1, 8, 12, 0.48) 54%, rgba(1, 8, 12, 0.82) 100%); }
+.defense-select-heading { position: absolute; z-index: 2; top: 32px; left: 36px; width: min(590px, 48vw); }
+.defense-select-heading .campaign-back { position: static; display: inline-flex; margin-bottom: 22px; }
+.defense-select-heading > small { display: block; color: #63efff; font-size: 11px; letter-spacing: 0.18em; }
+.defense-select-heading h1 { margin: 7px 0 6px; font-size: clamp(38px, 5vw, 72px); line-height: 0.96; }
+.defense-select-heading p { max-width: 560px; margin: 0; color: #a8c4ca; font-size: 15px; line-height: 1.55; }
+.defense-rhea-briefing { position: absolute; z-index: 2; top: 25px; right: 28px; display: grid; width: min(500px, 42vw); min-height: 150px; grid-template-columns: 145px 1fr; align-items: end; border-bottom: 2px solid #63efff; background: linear-gradient(90deg, rgba(3, 18, 23, 0), rgba(3, 18, 23, 0.9)); overflow: hidden; }
+.defense-rhea-briefing img { width: 155px; height: 190px; object-fit: contain; object-position: center top; align-self: end; }
+.defense-rhea-briefing div { padding: 18px 18px 24px 8px; }
+.defense-rhea-briefing small { color: #63efff; font-size: 10px; letter-spacing: 0.12em; }
+.defense-rhea-briefing strong { display: block; margin-top: 8px; font-size: 15px; line-height: 1.55; }
+.defense-stage-grid { position: absolute; z-index: 3; right: 30px; bottom: 26px; left: 30px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+.defense-stage-card { min-height: 300px; padding: 22px; border: 1px solid rgba(99, 239, 255, 0.32); color: #eaffff; text-align: left; background: linear-gradient(145deg, rgba(3, 17, 23, 0.96), rgba(2, 8, 12, 0.88)); backdrop-filter: blur(12px); }
+.defense-stage-card:hover:not(:disabled), .defense-stage-card:focus-visible:not(:disabled) { border-color: #63efff; transform: translateY(-8px); box-shadow: 0 18px 55px rgba(0, 0, 0, 0.44), inset 0 0 28px rgba(99, 239, 255, 0.08); }
+.defense-stage-card > span { color: #63efff; font: 700 10px var(--font-mono); letter-spacing: 0.15em; }
+.defense-stage-card > strong { display: block; margin-top: 13px; font-size: 25px; }
+.defense-stage-card > small { display: block; margin-top: 2px; color: #698b92; font: 600 9px var(--font-mono); letter-spacing: 0.14em; }
+.defense-stage-card > p { min-height: 48px; margin: 15px 0; color: #9db7bc; font-size: 13px; line-height: 1.55; }
+.defense-stage-card dl { display: grid; margin: 0; grid-template-columns: repeat(3, 1fr); border: 1px solid rgba(99, 239, 255, 0.14); }
+.defense-stage-card dl div { padding: 9px; text-align: center; border-right: 1px solid rgba(99, 239, 255, 0.12); }
+.defense-stage-card dt { color: #638189; font-size: 8px; }
+.defense-stage-card dd { margin: 3px 0 0; font-size: 14px; font-weight: 700; }
+.defense-stage-card footer { display: flex; margin-top: 16px; flex-direction: column; gap: 5px; }
+.defense-stage-card footer span { color: #7ff7ff; font-size: 12px; font-weight: 700; }
+.defense-stage-card footer b { color: #d4a967; font-size: 10px; }
+.defense-stage-card.is-cleared { border-color: rgba(122, 255, 179, 0.54); }
+.defense-stage-card.is-locked { filter: grayscale(1); opacity: 0.48; }
+
+.defense-runtime-screen { position: fixed; inset: 0; overflow: hidden; color: #eaffff; background: #020608; }
+.defense-phaser-host { position: absolute; inset: 0; }
+.defense-phaser-host canvas { display: block; width: 100% !important; height: 100% !important; object-fit: contain; }
+.defense-load-chip { position: absolute; z-index: 8; top: 50%; left: 50%; padding: 10px 14px; transform: translate(-50%, -50%); border: 1px solid #63efff; background: rgba(2, 9, 13, 0.92); }
+.defense-combat-hud { position: absolute; z-index: 6; top: 14px; right: 14px; left: 14px; display: grid; grid-template-columns: minmax(190px, 0.7fr) minmax(290px, 1.1fr) minmax(300px, 0.9fr) auto; align-items: center; gap: 8px; pointer-events: none; }
+.defense-combat-hud > * { pointer-events: auto; }
+.defense-rhea-chip { display: grid; min-height: 65px; padding: 4px 12px 4px 4px; grid-template-columns: 60px 1fr; align-items: center; border: 1px solid rgba(99, 239, 255, 0.38); background: rgba(2, 13, 18, 0.9); overflow: hidden; }
+.defense-rhea-chip img { width: 58px; height: 68px; object-fit: cover; object-position: center 14%; }
+.defense-rhea-chip span { display: flex; flex-direction: column; }
+.defense-rhea-chip small, .defense-core-status small, .defense-wave-status small { color: #71939a; font-size: 9px; }
+.defense-rhea-chip b { margin-top: 3px; font-size: 15px; }
+.defense-core-status { min-height: 65px; padding: 10px 14px; border: 1px solid rgba(99, 239, 255, 0.38); background: rgba(2, 13, 18, 0.9); }
+.defense-core-status span { display: flex; align-items: baseline; justify-content: space-between; }
+.defense-core-status b { font-size: 18px; }
+.defense-core-status i { display: block; height: 8px; margin-top: 8px; background: #15262c; }
+.defense-core-status em { display: block; height: 100%; background: linear-gradient(90deg, #63efff, #b7fbff); box-shadow: 0 0 15px #63efff; transition: width 160ms linear; }
+.defense-wave-status { display: grid; min-height: 65px; padding: 8px; grid-template-columns: repeat(3, 1fr); border: 1px solid rgba(99, 239, 255, 0.28); background: rgba(2, 13, 18, 0.9); }
+.defense-wave-status span { display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid rgba(99, 239, 255, 0.14); }
+.defense-wave-status b { margin-top: 2px; font-size: 18px; }
+.defense-exit { min-height: 65px; padding: 0 13px; border: 1px solid rgba(255, 255, 255, 0.22); color: #d5e7ea; background: rgba(2, 13, 18, 0.9); }
+.defense-command-dock { position: absolute; z-index: 6; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); left: 16px; display: grid; min-height: 100px; padding: 10px; grid-template-columns: minmax(180px, 0.48fr) minmax(560px, 1.6fr) minmax(210px, 0.55fr); align-items: stretch; gap: 9px; border: 1px solid rgba(99, 239, 255, 0.4); background: rgba(2, 10, 14, 0.93); backdrop-filter: blur(12px); }
+.defense-command-dock > header { display: flex; padding: 8px 10px; flex-direction: column; justify-content: center; border-right: 1px solid rgba(99, 239, 255, 0.16); }
+.defense-command-dock > header small { color: #64858c; font-size: 8px; }
+.defense-command-dock > header strong { margin-top: 4px; font-size: 14px; }
+.defense-command-dock > header > span { margin-top: 7px; color: #63efff; font-size: 10px; }
+.defense-tower-palette { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.defense-tower-palette button { position: relative; display: grid; min-width: 0; padding: 7px; grid-template-columns: 23px 30px minmax(0, 1fr); align-items: center; gap: 5px; border: 1px solid rgba(99, 239, 255, 0.24); color: #eaffff; text-align: left; background: rgba(7, 28, 35, 0.74); }
+.defense-tower-palette button:hover:not(:disabled), .defense-tower-palette button:focus-visible:not(:disabled) { border-color: #63efff; background: rgba(12, 58, 68, 0.95); transform: translateY(-3px); }
+.defense-tower-palette button kbd { color: #63efff; font-size: 9px; }
+.defense-tower-palette button > svg { width: 27px; height: 27px; color: #8ef6ff; }
+.defense-tower-palette button span { display: flex; min-width: 0; flex-direction: column; }
+.defense-tower-palette button b { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.defense-tower-palette button small { color: #6f9299; font-size: 7px; }
+.defense-tower-palette button em { position: absolute; right: 6px; bottom: 4px; color: #ffc56e; font: 700 9px var(--font-mono); }
+.defense-tower-palette button:disabled { opacity: 0.34; }
+.defense-upgrade-button, .defense-wave-button { display: grid; padding: 8px 12px; grid-template-columns: 34px 1fr 22px; align-items: center; gap: 8px; border: 1px solid rgba(99, 239, 255, 0.35); color: #eaffff; text-align: left; background: rgba(8, 43, 51, 0.9); }
+.defense-upgrade-button span, .defense-wave-button span { display: flex; flex-direction: column; }
+.defense-upgrade-button small, .defense-wave-button small { color: #71939a; font-size: 8px; }
+.defense-upgrade-button b, .defense-wave-button b { margin-top: 3px; font-size: 13px; }
+.defense-wave-button { border-color: rgba(255, 102, 132, 0.65); background: linear-gradient(135deg, rgba(116, 22, 44, 0.95), rgba(39, 8, 18, 0.95)); }
+.defense-wave-button:disabled { filter: grayscale(0.7); opacity: 0.66; }
+
+.defense-result-screen { position: fixed; inset: 0; display: grid; place-items: center; color: #effeff; background: radial-gradient(circle at 50% 30%, rgba(21, 79, 90, 0.46), transparent 45%), #020608; }
+.defense-result-screen > section { width: min(820px, 92vw); padding: 42px; border: 1px solid rgba(99, 239, 255, 0.4); text-align: center; background: rgba(3, 15, 20, 0.94); }
+.defense-result-screen h1 { margin: 8px 0; font-size: clamp(42px, 7vw, 82px); }
+.defense-result-screen p { color: #98b3b9; }
+.defense-result-stats { display: grid; margin: 26px 0 16px; grid-template-columns: repeat(3, 1fr); border: 1px solid rgba(99, 239, 255, 0.16); }
+.defense-result-stats span { padding: 14px; border-right: 1px solid rgba(99, 239, 255, 0.14); }
+.defense-result-stats small { display: block; color: #688991; }
+.defense-result-stats b { display: block; margin-top: 4px; font-size: 24px; }
+.defense-result-rewards { display: flex; padding: 13px; justify-content: center; gap: 18px; border: 1px solid rgba(255, 190, 91, 0.34); color: #ffcb77; background: rgba(59, 37, 10, 0.38); }
+.defense-result-screen footer { display: grid; margin-top: 24px; grid-template-columns: 1fr 1fr; gap: 10px; }
+.defense-result-screen footer button { min-height: 58px; }
+
+@media (max-width: 900px), (max-height: 600px) {
+  .base-defense-action { min-height: 42px; padding: 5px 7px; grid-template-columns: 22px 1fr 14px; gap: 5px; }
+  .base-defense-action > svg:first-child { width: 19px; height: 19px; }
+  .base-defense-action small { font-size: 5px; }
+  .base-defense-action b { font-size: 9px; }
+  .defense-select-heading { top: 8px; left: 10px; width: 43vw; }
+  .defense-select-heading .campaign-back { margin-bottom: 7px; }
+  .defense-select-heading > small { font-size: 7px; }
+  .defense-select-heading h1 { margin: 3px 0; font-size: 30px; }
+  .defense-select-heading p { font-size: 8px; }
+  .defense-rhea-briefing { top: 5px; right: 8px; width: 46vw; min-height: 95px; grid-template-columns: 85px 1fr; }
+  .defense-rhea-briefing img { width: 90px; height: 108px; }
+  .defense-rhea-briefing div { padding: 8px 8px 10px 0; }
+  .defense-rhea-briefing small { font-size: 6px; }
+  .defense-rhea-briefing strong { margin-top: 3px; font-size: 8px; line-height: 1.35; }
+  .defense-stage-grid { right: 8px; bottom: 8px; left: 8px; gap: 7px; }
+  .defense-stage-card { min-height: 190px; padding: 10px; }
+  .defense-stage-card > span { font-size: 6px; }
+  .defense-stage-card > strong { margin-top: 5px; font-size: 15px; }
+  .defense-stage-card > small { font-size: 5px; }
+  .defense-stage-card > p { min-height: 28px; margin: 6px 0; font-size: 7px; line-height: 1.35; }
+  .defense-stage-card dl div { padding: 4px; }
+  .defense-stage-card dt { font-size: 5px; }
+  .defense-stage-card dd { font-size: 9px; }
+  .defense-stage-card footer { margin-top: 6px; gap: 2px; }
+  .defense-stage-card footer span, .defense-stage-card footer b { font-size: 6px; }
+  .defense-combat-hud { top: 5px; right: 5px; left: 5px; grid-template-columns: 130px 1fr 210px 86px; gap: 4px; }
+  .defense-rhea-chip, .defense-core-status, .defense-wave-status, .defense-exit { min-height: 42px; }
+  .defense-rhea-chip { padding: 2px 5px 2px 2px; grid-template-columns: 38px 1fr; }
+  .defense-rhea-chip img { width: 36px; height: 42px; }
+  .defense-rhea-chip small, .defense-core-status small, .defense-wave-status small { font-size: 5px; }
+  .defense-rhea-chip b, .defense-core-status b, .defense-wave-status b { font-size: 9px; }
+  .defense-core-status { padding: 5px 7px; }
+  .defense-core-status i { height: 4px; margin-top: 4px; }
+  .defense-wave-status { padding: 3px; }
+  .defense-exit { padding: 0 5px; font-size: 7px; }
+  .defense-command-dock { right: 5px; bottom: 5px; left: 5px; min-height: 65px; padding: 5px; grid-template-columns: 125px 1fr 145px; gap: 4px; }
+  .defense-command-dock > header { padding: 3px 5px; }
+  .defense-command-dock > header small { font-size: 5px; }
+  .defense-command-dock > header strong { font-size: 8px; }
+  .defense-command-dock > header > span { margin-top: 2px; font-size: 6px; }
+  .defense-tower-palette { gap: 3px; }
+  .defense-tower-palette button { padding: 3px; grid-template-columns: 14px 18px 1fr; gap: 2px; }
+  .defense-tower-palette button kbd { font-size: 5px; }
+  .defense-tower-palette button > svg { width: 16px; height: 16px; }
+  .defense-tower-palette button b { font-size: 6px; }
+  .defense-tower-palette button small { display: none; }
+  .defense-tower-palette button em { right: 3px; bottom: 2px; font-size: 5px; }
+  .defense-upgrade-button, .defense-wave-button { padding: 3px 5px; grid-template-columns: 20px 1fr 13px; gap: 3px; }
+  .defense-upgrade-button small, .defense-wave-button small { font-size: 5px; }
+  .defense-upgrade-button b, .defense-wave-button b { font-size: 7px; }
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .base-primary-actions { grid-template-columns: 1fr 1fr 1fr; }
+  .base-defense-action { min-height: 52px; }
+  .defense-stage-select-screen { overflow-y: auto; }
+  .defense-select-heading { position: relative; top: auto; left: auto; width: auto; padding: 14px 14px 0; }
+  .defense-select-heading h1 { font-size: 34px; }
+  .defense-select-heading p { font-size: 11px; }
+  .defense-rhea-briefing { position: relative; top: auto; right: auto; width: calc(100% - 28px); min-height: 128px; margin: 10px 14px; grid-template-columns: 110px 1fr; }
+  .defense-rhea-briefing img { width: 112px; height: 142px; }
+  .defense-rhea-briefing small { font-size: 8px; }
+  .defense-rhea-briefing strong { font-size: 11px; }
+  .defense-stage-grid { position: relative; inset: auto; padding: 0 14px 20px; grid-template-columns: 1fr; }
+  .defense-stage-card { min-height: 210px; }
+  .defense-combat-hud { grid-template-columns: 1fr 1.3fr auto; }
+  .defense-rhea-chip { display: none; }
+  .defense-wave-status { grid-column: 1 / 3; grid-row: 2; }
+  .defense-exit { grid-column: 3; grid-row: 1 / 3; }
+  .defense-command-dock { grid-template-columns: 1fr; }
+  .defense-command-dock > header { display: none; }
+  .defense-tower-palette { grid-template-columns: repeat(2, 1fr); }
+  .defense-wave-button { min-height: 42px; }
+  .defense-result-screen > section { padding: 22px 14px; }
+  .defense-result-rewards { flex-wrap: wrap; gap: 8px; }
+  .defense-result-screen footer { grid-template-columns: 1fr; }
+}
+
 /* Campaign progression, HAVEN-09 and flight control ---------------------- */
 .campaign-shell {
   position: relative;

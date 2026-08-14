@@ -1851,3 +1851,50 @@ Pretendard, `Noto Sans KR`, `Apple SD Gothic Neo`, `Malgun Gothic`/`맑은 고�
 플랫폼 sans 순서의 로컬 시스템 서체를 사용하므로 추가 폰트 파일 출처는 없습니다.
 
 정확한 의존성 버전은 `package-lock.json`에 고정되어 있습니다.
+
+## HAVEN 타워 디펜스 전용 에셋
+
+### 방어 체계 6×4 모션 아틀라스
+
+- 도구: OpenAI 내장 ImageGen (`image_gen`), 프로젝트 결합형 생성
+- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-1e4ea91b-ab87-42e2-8611-e81cf3ad1c51.png`
+- 프로젝트 보존 원본: `reference/source-assets/overload/defense/defense-systems-motion-atlas-chroma.png`
+- 런타임: `public/assets/overload/defense/defense-systems-motion-atlas.png` (1536×1024, 6×4, 256px 셀)
+- 저사양 파생: `public/assets/overload/defense/performance/defense-systems-motion-atlas.png` (768×512, 6×4, 128px 셀)
+- 후처리: `remove_chroma_key.py --auto-key border --soft-matte --transparent-threshold 12 --opaque-threshold 220 --despill`; 저사양 버전은 Pillow LANCZOS 셀별 결정론적 축소입니다. 외부 미술 에셋은 추가하지 않았습니다.
+
+```text
+Use case: stylized-concept
+Asset type: production top-down defense-system motion atlas for the 2D Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+Primary request: create one exact 6-column by 4-row spritesheet, exactly 24 isolated square cells. Each row is one original resistance defense system, shown in six coherent animation beats from idle to charge to attack to recoil/recovery.
+Row 1 — PULSE SENTRY: compact gunmetal and white automated twin pulse turret with cyan emitter.
+Row 2 — ARC RELAY: triangular three-prong electromagnetic tower with cyan-violet coils and a central lightning capacitor.
+Row 3 — SKYFIRE BATTERY: heavy squat artillery platform with four short missile/mortar tubes and amber targeting lights.
+Row 4 — AEGIS BASTION: broad hexagonal hard-light projector with white armor, cyan shield vanes, and a protected central core.
+Exact column beats for every row: c1 quiet idle, c2 tracking/activation, c3 early charge, c4 full charge, c5 attack discharge pose, c6 recoil/cooldown.
+Viewpoint: strict orthographic 90-degree overhead/nadir camera in every cell; identical center pivot, scale, and footprint within each row; all parts fully inside each cell with generous padding; no perspective tilt.
+Style/medium: polished cybernetic 2D game sprite illustration matching a dark near-future anime resistance game; crisp readable silhouette at 96px display size; white and gunmetal armor, cyan energy, restrained magenta accents, amber only for artillery; production asset, not concept sheet.
+Composition: exact 6x4 grid filling a 3:2 landscape canvas; equal square slots; one complete defense system per cell; no overlap or crossing cell boundaries.
+Scene/backdrop: perfectly flat solid #ff00ff chroma-key background across every empty pixel for local removal. No shadows, gradients, grid lines, borders, labels, text, numbers, scenery, floor, smoke, detached projectiles, watermark, extra rows, or extra columns. Do not use #ff00ff in any defense system. Crisp separated edges, no magenta rim.
+```
+
+### HAVEN-09 외곽 방어 전장
+
+- 도구: OpenAI 내장 ImageGen (`image_gen`), 프로젝트 결합형 생성
+- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-1a21b6ee-7352-4d0e-a43d-966b0b2e193a.png`
+- 프로젝트 보존 원본: `reference/source-assets/overload/defense/haven-defense-grid-source.png`
+- 런타임: `public/assets/overload/defense/haven-defense-grid.webp` (1920×1080)
+- 저사양 파생: `public/assets/overload/defense/performance/haven-defense-grid.webp` (960×540)
+- 후처리: Pillow LANCZOS 결정론적 리사이즈와 WebP 인코딩. 외부 게임 이미지나 미술 에셋은 사용하지 않았습니다.
+
+```text
+Use case: stylized-concept
+Asset type: production top-down battlefield background for a Phaser tower-defense mode in HUMAN OVERRIDE: OVERLOAD.
+Primary request: a vast original cyberpunk resistance-base perimeter named HAVEN-09 under siege, designed as a readable tower-defense arena.
+Viewpoint: strict orthographic 90-degree overhead/nadir camera, wide 16:9 landscape.
+Layout: one defended hexagonal cyan reactor core in the lower-center area; three broad mechanical invasion routes visibly enter from upper-left, top-center, and upper-right, then curve and merge before reaching the core. Twelve clearly readable empty circular/hexagonal defense pads sit beside but never on the routes, spaced across the arena for turret placement. Keep paths wide enough for enemy formations and keep pad silhouettes unobstructed.
+Environment: colossal mobile airborne base hull, dark gunmetal armor decks, cyan resistance lighting, red distant hostile warning gates at the three entry points, maintenance trenches and restrained machinery around the outer edges.
+Style/medium: polished high-detail 2D game environment, dark near-future anime military science fiction, realistic metal texture with crisp tactical readability, consistent with HUMAN OVERRIDE's black/gunmetal/cyan palette.
+Lighting/mood: midnight siege alert, cool cyan base light, restrained red warning light at entrances; the central battlefield remains bright enough for units and UI to read.
+Constraints: environment only. No characters, enemies, towers on pads, projectiles, explosions, text, labels, numbers, logos, UI, grid overlay, watermark, perspective view, buildings covering paths, or deep black empty regions. Preserve generous clear play space and exact top-down geometry.
+```

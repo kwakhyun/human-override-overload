@@ -567,7 +567,7 @@ export function MikaRecruitScreen({ assets, onComplete }) {
   );
 }
 
-export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCharacterChange, onCloseFacility, onBoard, onTitle }) {
+export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCharacterChange, onCloseFacility, onBoard, onDefense, onTitle }) {
   const background = assetSource(assets?.homeBase);
   const completed = campaign?.completedRegionIds?.length || 0;
   const activeCharacterId = campaign?.loadout?.characterId || "aegis";
@@ -617,6 +617,9 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
         <button type="button" className="base-sortie-action command-ui-button" data-ui-sound="uiConfirm" onClick={onBoard}>
           <AirplaneTilt weight="fill" /><span><small>스텔스 비행선 나이트자</small><b>작전 권역 · 출격</b></span><Play weight="fill" />
         </button>
+        <button type="button" className="base-defense-action command-ui-button" data-ui-sound="uiConfirm" onClick={onDefense}>
+          <ShieldChevron weight="fill" /><span><small>전술 관제관 레아</small><b>기지 방어 · 디펜스</b></span><Crosshair weight="bold" />
+        </button>
       </aside>
 
       <aside className="base-objective">
@@ -636,6 +639,48 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
 
       <NpcDialoguePanel npc={activeNpc} assets={assets} lineIndex={lineIndex} onAdvance={onAdvanceNpc} onClose={onCloseNpc} onFacility={onOpenFacility} onInteraction={onNpcInteraction} />
       <BaseFacilityPanel facility={activeFacility ? { ...activeFacility, onCharacterChange } : null} onPurchase={onPurchaseUpgrade} onClose={onCloseFacility} />
+    </main>
+  );
+}
+
+export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, onBack }) {
+  const background = assetSource(assets?.defenseBattlefield || assets?.homeBase);
+  const portrait = assetSource(assets?.controlOfficer);
+  const completedIds = campaign?.completedDefenseStageIds || [];
+  const unlockedIds = campaign?.unlockedDefenseStageIds || [];
+  return (
+    <main className="campaign-shell defense-stage-select-screen">
+      {background && <img className="campaign-background" src={background} alt="헤이븐-09 기지 방어 전술 지도" />}
+      <div className="defense-select-shade" aria-hidden="true" />
+      <header className="defense-select-heading">
+        <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={onBack}><ArrowLeft weight="bold" /> 기지로 <kbd>ESC</kbd></button>
+        <small>RHEA DEFENSE CONTROL · 독립 방어 작전</small>
+        <h1>헤이븐 방어망</h1>
+        <p>고정 포대에 방어 체계를 배치하고, 처치 자원으로 강화해 추론핵을 지키세요.</p>
+      </header>
+      <aside className="defense-rhea-briefing">
+        {portrait && <img src={portrait} alt="디펜스 작전을 지휘하는 전술 관제관 레아" />}
+        <div><small>전술 관제관 · 레아</small><strong>“침투로는 셋. 방어 패드는 열둘. 웨이브가 시작되기 전에 화력 축선을 계산해.”</strong></div>
+      </aside>
+      <section className="defense-stage-grid" aria-label="디펜스 스테이지 선택">
+        {(stages || []).map((stage) => {
+          const unlocked = unlockedIds.includes(stage.id);
+          const completed = completedIds.includes(stage.id);
+          const record = campaign?.defenseStageRecords?.[stage.id];
+          return (
+            <button type="button" className={`defense-stage-card${unlocked ? "" : " is-locked"}${completed ? " is-cleared" : ""}`} disabled={!unlocked} onClick={() => onSelect(stage.id)} key={stage.id}>
+              <span>DEFENSE {String(stage.order).padStart(2, "0")}</span>
+              <strong>{stage.name}</strong><small>{stage.subtitle}</small>
+              <p>{stage.description}</p>
+              <dl><div><dt>웨이브</dt><dd>{stage.waveCounts.length}</dd></div><div><dt>기지 내구</dt><dd>{stage.baseHp}</dd></div><div><dt>위험도</dt><dd>{"◆".repeat(stage.order)}</dd></div></dl>
+              <footer>
+                <span>{unlocked ? completed ? `클리어 ${record?.clears || 1}회` : "작전 가능" : "이전 방어선 클리어 필요"}</span>
+                <b>연구 {stage.rewards.firstClear.researchData} · 부품 {stage.rewards.firstClear.equipmentParts} · 코어 {stage.rewards.firstClear.augmentationCores}</b>
+              </footer>
+            </button>
+          );
+        })}
+      </section>
     </main>
   );
 }

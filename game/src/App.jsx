@@ -43,12 +43,15 @@ import {
 } from "./game/content/baseUpgrades.js";
 import { getMainWeapons } from "./game/content/weapons.js";
 import { getPlayableCharacters, isCharacterUnlocked } from "./game/content/characters.js";
+import { DEFENSE_TOWER_DEFINITIONS, getDefenseStage, getDefenseStages } from "./defense/content.js";
 import {
   canLaunchRegion,
+  canLaunchDefenseStage,
   completeAbilityGuide,
   completeCombatOverlay,
   completeOuterSectorBriefing,
   completeRegion,
+  completeDefenseStage,
   createCampaignSlot,
   getCampaignCombatBonuses,
   getCampaignMainWeapon,
@@ -63,6 +66,7 @@ import {
 } from "./game/save/campaignSave.js";
 import {
   AbilityGuideScreen,
+  DefenseStageSelectScreen,
   HomeBaseScreen,
   MANUAL_ABILITY_GUIDE,
   MikaRecruitScreen,
@@ -113,6 +117,7 @@ const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "tutorialStratosRun",
   "tutorialHelixTempest",
 ]);
+const DEFENSE_DOM_ASSET_KEYS = Object.freeze(["defenseBattlefield", "rheaControlOfficer"]);
 const COMBAT_DOM_ASSET_KEYS = Object.freeze([
   "portrait",
   "mikaPortrait",
@@ -2223,6 +2228,106 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   );
 }
 
+const DEFENSE_TOWER_ICONS = Object.freeze({
+  pulseSentry: Target,
+  arcRelay: Lightning,
+  skyfireBattery: Robot,
+  aegisBastion: ShieldChevron,
+});
+
+function DefenseArenaScreen({ stageId, assets, sfx, onFinish, onBase }) {
+  const hostRef = useRef(null);
+  const controllerRef = useRef(null);
+  const [hud, setHud] = useState(null);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const stage = getDefenseStage(stageId);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return undefined;
+    let cancelled = false;
+    let controller = null;
+    void import("./phaser/createDefenseGame.ts").then(({ createDefenseGame }) => {
+      if (cancelled) return;
+      controller = createDefenseGame(host, {
+        onHud: (nextHud) => !cancelled && setHud(nextHud),
+        onEvent: (event) => {
+          if (cancelled) return;
+          if (event.type === "defenseTowerBuilt" || event.type === "defenseTowerUpgraded") sfx.play("upgrade");
+          else if (event.type === "defenseCoreHit") sfx.play("playerHit");
+          else if (event.type === "defenseWaveStarted") sfx.play("alert");
+          else if (event.type === "defenseVictory") sfx.play("victory");
+        },
+        onFinish: (result) => !cancelled && onFinish(result),
+        onLoadProgress: (progress) => !cancelled && setLoadProgress(progress),
+        onReady: () => !cancelled && setLoadProgress(1),
+      }, stageId);
+      controllerRef.current = controller;
+    });
+    return () => {
+      cancelled = true;
+      controllerRef.current = null;
+      controller?.destroy();
+    };
+  }, [onFinish, sfx, stageId]);
+
+  useEffect(() => {
+    const escape = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onBase?.();
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [onBase]);
+
+  const selectedTowerDefinition = hud?.selectedTower ? DEFENSE_TOWER_DEFINITIONS[hud.selectedTower.type] : null;
+  return (
+    <main className="defense-runtime-screen">
+      <div className="defense-phaser-host" ref={hostRef} />
+      {loadProgress < 1 && <div className="defense-load-chip">방어 체계 동기화 {Math.round(loadProgress * 100)}%</div>}
+      <header className="defense-combat-hud">
+        <div className="defense-rhea-chip">{assets?.controlOfficer && <img src={assets.controlOfficer?.src || assets.controlOfficer} alt="" />}<span><small>레아 관제</small><b>{stage?.name}</b></span></div>
+        <div className="defense-core-status"><span><small>추론핵 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
+        <div className="defense-wave-status"><span><small>웨이브</small><b>{hud?.wave || 1} / {hud?.totalWaves || stage?.waveCounts.length}</b></span><span><small>잔존 적</small><b>{hud?.liveEnemies || 0}</b></span><span><small>배치 자원</small><b>{hud?.credits || 0}</b></span></div>
+        <button type="button" className="defense-exit" data-ui-sound="uiClose" onClick={onBase}><HouseLine weight="bold" /> 기지로 <kbd>ESC</kbd></button>
+      </header>
+
+      <aside className="defense-command-dock">
+        <header><div><small>선택 패드</small><strong>{hud?.selectedNodeId || "전장의 방어 패드를 선택하세요"}</strong></div>{hud?.selectedTower && <span>LV.{hud.selectedTower.rank} / 3 · {selectedTowerDefinition?.name}</span>}</header>
+        {!hud?.selectedTower ? (
+          <div className="defense-tower-palette">
+            {Object.values(DEFENSE_TOWER_DEFINITIONS).map((tower, index) => {
+              const Icon = DEFENSE_TOWER_ICONS[tower.id] || Crosshair;
+              const disabled = !hud?.selectedNodeId || (hud?.credits || 0) < tower.cost;
+              return <button type="button" disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="fill" /><span><b>{tower.name}</b><small>{tower.role}</small></span><em>{tower.cost}</em></button>;
+            })}
+          </div>
+        ) : (
+          <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="fill" /><span><small>{selectedTowerDefinition?.role}</small><b>{hud.selectedTower.rank >= 3 ? "최대 강화 완료" : `${selectedTowerDefinition?.name} 강화`}</b></span><ArrowRight weight="bold" /></button>
+        )}
+        <button type="button" className="defense-wave-button" disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="fill" /><span><small>{hud?.wave === 1 ? "첫 공세" : `다음 공세까지 ${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "웨이브 조기 개시" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
+      </aside>
+    </main>
+  );
+}
+
+function DefenseResultScreen({ result, stage, rewards, onRetry, onBase }) {
+  const victory = result?.status === "victory";
+  return (
+    <main className={`defense-result-screen${victory ? " is-victory" : " is-defeat"}`}>
+      <section>
+        <small>RHEA DEFENSE CONTROL · {stage?.subtitle}</small>
+        <h1>{victory ? "방어 작전 성공" : "추론핵 방어 실패"}</h1>
+        <p>{victory ? "레아의 관제 기록이 확정됐습니다. 회수 자원이 기지 저장고로 전송됩니다." : "배치 순서와 화력 축선을 재편한 뒤 다시 도전하세요."}</p>
+        <div className="defense-result-stats"><span><small>도달 웨이브</small><b>{result?.waves || 0} / {result?.totalWaves || stage?.waveCounts.length}</b></span><span><small>격파</small><b>{result?.kills || 0}</b></span><span><small>기지 피해</small><b>{result?.leaks || 0}</b></span></div>
+        {victory && rewards && <div className="defense-result-rewards"><span>회수 보상</span><b>연구 자료 +{rewards.researchData}</b><b>장비 부품 +{rewards.equipmentParts}</b><b>동기화 코어 +{rewards.augmentationCores}</b></div>}
+        <footer><button type="button" className="primary-cta" onClick={onRetry}><ArrowCounterClockwise weight="bold" /> 같은 방어선 재도전</button><button type="button" className="result-base-return" onClick={onBase}><HouseLine weight="bold" /> 헤이븐-09로 복귀</button></footer>
+      </section>
+    </main>
+  );
+}
+
 function ResultScreen({ result, assets, region, onRestart, onBase }) {
   const victory = result?.status === "victory" || result?.phase === "victory";
   const accuracy = result?.stats?.shots ? Math.round((result.stats.hits || 0) / result.stats.shots * 100) : 0;
@@ -2261,6 +2366,8 @@ export function App() {
   const [campaign, setCampaign] = useState(() => loadCampaign());
   const [activeSlotId, setActiveSlotId] = useState(null);
   const [activeRegionId, setActiveRegionId] = useState(DEFAULT_REGION_ID);
+  const [activeDefenseStageId, setActiveDefenseStageId] = useState("haven-perimeter");
+  const [defenseResult, setDefenseResult] = useState(null);
   const [activeNpc, setActiveNpc] = useState(null);
   const [npcLineIndex, setNpcLineIndex] = useState(0);
   const [activeFacilityId, setActiveFacilityId] = useState(null);
@@ -2275,6 +2382,7 @@ export function App() {
   const transitionTokenRef = useRef(0);
   const sfx = useMemo(() => createSfxEngine(), []);
   const regions = useMemo(() => getCampaignRegions(), []);
+  const defenseStages = useMemo(() => getDefenseStages(), []);
   const regionClusters = useMemo(() => getRegionClusters(), []);
   const mainWeapons = useMemo(() => getMainWeapons(), []);
   const playableCharacterDefinitions = useMemo(() => getPlayableCharacters(), []);
@@ -2397,6 +2505,7 @@ export function App() {
     tutorialStratosRun: assets?.tutorialStratosRun,
     tutorialHelixTempest: assets?.tutorialHelixTempest,
     returnToHaven: assets?.returnToHaven,
+    defenseBattlefield: assets?.defenseBattlefield,
     sortieVideos: Object.freeze({
       "wrong-engine-core": assets?.sortieWrongEngine,
       "glass-dune": assets?.sortieGlassDune,
@@ -2632,6 +2741,35 @@ export function App() {
     );
   }, [closeFacility, closeNpc, prepareSurface, regionPreviewSources]);
 
+  const openDefenseSelect = useCallback(() => {
+    closeNpc();
+    closeFacility();
+    prepareSurface("레아 방어 관제망 준비 중", domAssetSources(DEFENSE_DOM_ASSET_KEYS), () => setScreen("defense-select"));
+  }, [closeFacility, closeNpc, prepareSurface]);
+
+  const launchDefense = useCallback((stageId) => {
+    const slot = activeSlotId ? getCampaignSlot(campaign, activeSlotId) : null;
+    if (!slot || !canLaunchDefenseStage(slot, stageId)) {
+      sfx.play("denied");
+      return;
+    }
+    setActiveDefenseStageId(stageId);
+    setDefenseResult(null);
+    setScreen("defense");
+  }, [activeSlotId, campaign, sfx]);
+
+  const finishDefense = useCallback((nextResult) => {
+    if (nextResult?.status === "victory" && activeSlotId) {
+      const completed = completeDefenseStage(campaign, activeSlotId, nextResult.stageId || activeDefenseStageId, nextResult);
+      saveCampaign(completed);
+      setCampaign(completed);
+      setDefenseResult({ ...nextResult, rewards: getCampaignSlot(completed, activeSlotId)?.lastDefenseRewards || null });
+    } else {
+      setDefenseResult(nextResult);
+    }
+    setScreen("defense-result");
+  }, [activeDefenseStageId, activeSlotId, campaign]);
+
   const handleNpcInteraction = useCallback((interaction) => {
     closeNpc();
     closeFacility();
@@ -2741,11 +2879,18 @@ export function App() {
         onCharacterChange={selectCharacter}
         onCloseFacility={closeFacility}
         onBoard={openRegionSelect}
+        onDefense={openDefenseSelect}
         onTitle={() => { closeNpc(); closeFacility(); setScreen("save"); }}
       />
     );
   } else if (screen === "regions" && campaignView) {
     content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={unlockedPlayableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onWeaponChange={selectMainWeapon} onSelect={launchCombat} onBack={() => setScreen("base")} />;
+  } else if (screen === "defense-select" && campaignView) {
+    content = <DefenseStageSelectScreen stages={defenseStages} campaign={campaignView} assets={campaignAssets} onSelect={launchDefense} onBack={() => setScreen("base")} />;
+  } else if (screen === "defense") {
+    content = <DefenseArenaScreen stageId={activeDefenseStageId} assets={campaignAssets} sfx={sfx} onFinish={finishDefense} onBase={() => setScreen("base")} />;
+  } else if (screen === "defense-result") {
+    content = <DefenseResultScreen result={defenseResult} stage={getDefenseStage(activeDefenseStageId)} rewards={defenseResult?.rewards} onRetry={() => { setDefenseResult(null); setScreen("defense"); }} onBase={() => setScreen("base")} />;
   } else if (screen === "recruit") {
     content = <MikaRecruitScreen assets={campaignAssets} onComplete={finishMikaRecruitment} />;
   } else if (screen === "sortie" || screen === "game") {

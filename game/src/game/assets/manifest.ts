@@ -76,6 +76,8 @@ export const ASSET_KEYS = Object.freeze({
   geneVaultRouteExpanded: "overload-gene-vault-route-expanded-v2",
   geneVaultEnemyForms: "overload-gene-vault-enemy-forms",
   geneVaultBossForms: "overload-gene-vault-boss-forms",
+  defenseBattlefield: "overload-haven-defense-grid",
+  defenseSystemsMotion: "overload-defense-systems-motion-atlas",
 } as const);
 
 export const DEFAULT_REGION_ID = "wrong-engine-core" as const;
@@ -128,6 +130,16 @@ export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
   { key: ASSET_KEYS.suppressorDrone, path: "./assets/overload/allies/suppressor-drone.png", kind: "image" },
   { key: ASSET_KEYS.sentry, path: "./assets/overload/allies/pulse-sentry.png", kind: "image" },
   { key: ASSET_KEYS.emp, path: "./assets/overload/allies/emp-pylon.png", kind: "image" },
+]);
+
+export const DEFENSE_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
+  { key: ASSET_KEYS.defenseBattlefield, path: "./assets/overload/defense/haven-defense-grid.webp", performancePath: "./assets/overload/defense/performance/haven-defense-grid.webp", kind: "image" },
+  { key: ASSET_KEYS.defenseSystemsMotion, path: "./assets/overload/defense/defense-systems-motion-atlas.png", performancePath: "./assets/overload/defense/performance/defense-systems-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
+  { key: ASSET_KEYS.enemyHunter, path: "./assets/overload/enemies/hunter.png", kind: "image" },
+  { key: ASSET_KEYS.enemyRifleman, path: "./assets/overload/enemies/suppressor.png", kind: "image" },
+  { key: ASSET_KEYS.enemySniper, path: "./assets/overload/enemies/brute.png", kind: "image" },
+  { key: ASSET_KEYS.enemySiegeWalkerMotion, path: "./assets/overload/enemies/motion-v3/siege-walker-motion-atlas.png", performancePath: "./assets/overload/enemies/motion-v3/performance/siege-walker-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
+  { key: ASSET_KEYS.enemyDeathPixel, path: "./assets/overload/vfx/pixel/enemy-death-pixel-atlas.png", kind: "atlas", columns: 6, rows: 1 },
 ]);
 
 export const WEAPON_GAME_ASSETS: Readonly<Record<MainWeaponId, readonly AssetDefinition[]>> = Object.freeze({
@@ -308,6 +320,7 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
   outerFrontierRegionMap: "./assets/overload/campaign/outer-frontier-region-map.webp",
   returnToHaven: "./assets/overload/campaign/return-to-haven.webp",
   characterEnhancement: "./assets/overload/campaign/character-enhancement.webp",
+  defenseBattlefield: "./assets/overload/defense/haven-defense-grid.webp",
   sortieWrongEngine: "./assets/overload/campaign/sortie/wrong-engine-sortie.mp4",
   sortieGlassDune: "./assets/overload/campaign/sortie/glass-dune-sortie.mp4",
   sortieAbyssalArchive: "./assets/overload/campaign/sortie/abyssal-archive-sortie.mp4",

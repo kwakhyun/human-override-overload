@@ -18,6 +18,7 @@ import {
 } from "../progression/baseProgression.js";
 import { DEFAULT_MAIN_WEAPON_ID, sanitizeMainWeaponId } from "../content/weapons.js";
 import { DEFAULT_CHARACTER_ID, isCharacterUnlocked, sanitizeCharacterId } from "../content/characters.js";
+import { DEFENSE_STAGES, getDefenseStage, getUnlockedDefenseStageIds } from "../../defense/content.js";
 
 export const CAMPAIGN_SAVE_VERSION = 2;
 export const CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v2";
@@ -27,6 +28,7 @@ export const CAMPAIGN_SLOT_PROGRESSION_FIELD = "progression";
 
 const KNOWN_REGION_IDS = new Set(getCampaignRegions().map((region) => region.id));
 const KNOWN_CHAPTER_IDS = new Set(CAMPAIGN_CHAPTERS.map((chapter) => chapter.id));
+const KNOWN_DEFENSE_STAGE_IDS = new Set(DEFENSE_STAGES.map((stage) => stage.id));
 
 function resolveBrowserStorage() {
   try {
@@ -90,6 +92,42 @@ function sanitizeRegionRecords(records) {
   return sanitized;
 }
 
+function sanitizeDefenseRecord(record) {
+  if (!record || typeof record !== "object") return null;
+  const bestTime = finiteNonNegative(record.bestTime, 0);
+  return {
+    clears: Math.max(1, Math.floor(finiteNonNegative(record.clears, 1))),
+    bestTime: bestTime > 0 ? bestTime : null,
+    highestWave: Math.max(1, Math.floor(finiteNonNegative(record.highestWave, 1))),
+    mostKills: Math.floor(finiteNonNegative(record.mostKills, 0)),
+    lastClearedAt: typeof record.lastClearedAt === "string" ? record.lastClearedAt : null,
+    lastRunId: typeof record.lastRunId === "string" ? record.lastRunId : null,
+  };
+}
+
+function sanitizeDefenseRecords(records) {
+  if (!records || typeof records !== "object" || Array.isArray(records)) return {};
+  const sanitized = {};
+  for (const stageId of KNOWN_DEFENSE_STAGE_IDS) {
+    const record = sanitizeDefenseRecord(records[stageId]);
+    if (record) sanitized[stageId] = record;
+  }
+  return sanitized;
+}
+
+function sanitizeLastDefenseRewards(value) {
+  if (!value || typeof value !== "object" || !KNOWN_DEFENSE_STAGE_IDS.has(value.stageId)) return null;
+  return {
+    stageId: value.stageId,
+    firstClear: Boolean(value.firstClear),
+    researchData: Math.floor(finiteNonNegative(value.researchData, 0)),
+    equipmentParts: Math.floor(finiteNonNegative(value.equipmentParts, 0)),
+    augmentationCores: Math.floor(finiteNonNegative(value.augmentationCores, 0)),
+    grantedAt: typeof value.grantedAt === "string" ? value.grantedAt : null,
+    runId: typeof value.runId === "string" ? value.runId : null,
+  };
+}
+
 function migrateLegacyProgression(slot, completedRegionIds) {
   if (slot?.progression) return sanitizeBaseProgression(slot.progression);
   let progression = createEmptyBaseProgression();
@@ -137,6 +175,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
   const homeBaseUnlocked = true;
   const requestedCharacterId = sanitizeCharacterId(slot.loadout?.characterId ?? slot.characterId);
   const characterId = isCharacterUnlocked(requestedCharacterId, completedRegionIds) ? requestedCharacterId : DEFAULT_CHARACTER_ID;
+  const completedDefenseStageIds = uniqueKnown(slot.completedDefenseStageIds, KNOWN_DEFENSE_STAGE_IDS);
   return {
     id: slotIdForIndex(index),
     createdAt: typeof slot.createdAt === "string" ? slot.createdAt : fallbackDate,
@@ -155,8 +194,12 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
     },
     storyFlags: deriveStoryFlags(completedRegionIds, slot.storyFlags),
     regionRecords: sanitizeRegionRecords(slot.regionRecords),
+    completedDefenseStageIds,
+    unlockedDefenseStageIds: getUnlockedDefenseStageIds(completedDefenseStageIds),
+    defenseStageRecords: sanitizeDefenseRecords(slot.defenseStageRecords),
     progression,
     lastRegionRewards: sanitizeLastRegionRewards(slot.lastRegionRewards),
+    lastDefenseRewards: sanitizeLastDefenseRewards(slot.lastDefenseRewards),
     lastRegionId: KNOWN_REGION_IDS.has(slot.lastRegionId) ? slot.lastRegionId : null,
     lastCheckpoint: "home-base",
   };
@@ -407,6 +450,61 @@ export function completeRegion(campaign, slotId, regionId, result = {}, options 
 }
 
 export const recordRegionVictory = completeRegion;
+
+export function canLaunchDefenseStage(slot, stageId) {
+  const stage = getDefenseStage(stageId);
+  if (!stage || !slot) return false;
+  const sanitized = sanitizeSlot(slot, Math.max(0, normalizeSlotIndex(slot.id)));
+  return Boolean(sanitized?.unlockedDefenseStageIds.includes(stageId));
+}
+
+export function completeDefenseStage(campaign, slotId, stageId, result = {}, options = {}) {
+  const stage = getDefenseStage(stageId);
+  if (!stage || result?.status !== "victory") return sanitizeCampaign(campaign);
+  const index = normalizeSlotIndex(slotId);
+  if (index < 0) return sanitizeCampaign(campaign);
+  let nextCampaign = createCampaignSlot(campaign, slotId, options);
+  const slot = nextCampaign.slots[index];
+  if (!canLaunchDefenseStage(slot, stageId)) return nextCampaign;
+
+  const now = resolveNow(options.now);
+  const runId = typeof result?.runId === "string" ? result.runId : null;
+  const previous = slot.defenseStageRecords[stageId];
+  if (runId && previous?.lastRunId === runId) return nextCampaign;
+  const firstClear = !slot.completedDefenseStageIds.includes(stageId);
+  const rewards = firstClear ? stage.rewards.firstClear : stage.rewards.repeatClear;
+  const safeProgression = sanitizeBaseProgression(slot.progression);
+  const completedDefenseStageIds = [...new Set([...slot.completedDefenseStageIds, stageId])];
+  const runTime = finiteNonNegative(result?.time, 0);
+  const defenseStageRecords = {
+    ...slot.defenseStageRecords,
+    [stageId]: {
+      clears: (previous?.clears || 0) + 1,
+      bestTime: runTime > 0 && (!previous?.bestTime || runTime < previous.bestTime) ? runTime : previous?.bestTime || null,
+      highestWave: Math.max(previous?.highestWave || 1, Math.floor(finiteNonNegative(result?.waves, 1))),
+      mostKills: Math.max(previous?.mostKills || 0, Math.floor(finiteNonNegative(result?.kills, 0))),
+      lastClearedAt: now,
+      lastRunId: runId,
+    },
+  };
+  const nextSlot = sanitizeSlot({
+    ...slot,
+    updatedAt: now,
+    completedDefenseStageIds,
+    defenseStageRecords,
+    progression: {
+      ...safeProgression,
+      researchData: safeProgression.researchData + rewards.researchData,
+      equipmentParts: safeProgression.equipmentParts + rewards.equipmentParts,
+      augmentationCores: safeProgression.augmentationCores + rewards.augmentationCores,
+    },
+    lastDefenseRewards: { stageId, firstClear, ...rewards, grantedAt: now, runId },
+    lastCheckpoint: "home-base",
+  }, index);
+  const slots = nextCampaign.slots.slice();
+  slots[index] = nextSlot;
+  return { version: CAMPAIGN_SAVE_VERSION, slots };
+}
 
 export function getCampaignProgression(campaign, slotId) {
   return getCampaignSlot(campaign, slotId)?.progression ?? createEmptyBaseProgression();
