@@ -94,7 +94,17 @@ const DOM_ASSET_REFS = Object.freeze(Object.fromEntries(
 ));
 
 const INITIAL_DOM_ASSET_KEYS = Object.freeze(["intro", "commandButtonStates"]);
-const BASE_DOM_ASSET_KEYS = Object.freeze(["havenBase", "havenNpcPortraits", "rheaControlOfficer", "returnToHaven", "commandButtonStates", "characterEnhancement"]);
+const BASE_DOM_ASSET_KEYS = Object.freeze([
+  "havenBase",
+  "havenLobby",
+  "hanaResearchLab",
+  "ilyaEquipmentWorkshop",
+  "characterSyncChamber",
+  "havenNpcPortraits",
+  "rheaControlOfficer",
+  "returnToHaven",
+  "commandButtonStates",
+]);
 const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "commandButtonStates", "player", "mikaPortrait"]);
 const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "rheaControlOfficer",
@@ -2243,7 +2253,11 @@ export function App() {
       currency: progression[facility.currencyId] || 0,
       currencyLabel: currency?.koreanName || facility.currencyId,
       currencyShortLabel: facility.currencyId === "researchData" ? "연구 자료" : facility.currencyId === "augmentationCores" ? "동기화 코어" : "장비 부품",
-      artSource: facility.id === "augmentation" ? assets?.characterEnhancement : null,
+      artSource: facility.id === "research"
+        ? assets?.hanaResearchLab
+        : facility.id === "equipment"
+          ? assets?.ilyaEquipmentWorkshop
+          : facility.id === "augmentation" ? assets?.characterSyncChamber : null,
       selectedCharacterId: activeCharacterId,
       mainWeaponId: activeMainWeaponId,
       characters: facility.id === "augmentation" ? playableCharacters.map((character) => ({
@@ -2265,12 +2279,14 @@ export function App() {
     };
   }, [activeFacilityId, activeSlotId, activeSlot, campaign, assets, activeCharacterId, activeMainWeaponId, playableCharacters, mainWeapons, combatBonuses]);
   const campaignAssets = useMemo(() => ({
-    homeBase: assets?.havenBase,
+    homeBase: assets?.havenLobby || assets?.havenBase,
+    researchLab: assets?.hanaResearchLab,
+    equipmentWorkshop: assets?.ilyaEquipmentWorkshop,
+    characterSyncChamber: assets?.characterSyncChamber,
     npcPortraits: assets?.havenNpcPortraits,
     controlOfficer: assets?.rheaControlOfficer,
     regionMap: assets?.airshipRegionMap,
     buttonAtlas: assets?.commandButtonStates,
-    characterEnhancement: assets?.characterEnhancement,
     playerPortrait: assets?.player,
     mikaPortrait: assets?.mikaPortrait,
     tutorialEmpPulse: assets?.tutorialEmpPulse,

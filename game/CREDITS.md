@@ -1605,6 +1605,80 @@ Composition/framing: exact uniform 6x4 grid, equal square slots, one centered se
 Scene/backdrop: perfectly flat uniform #ff00ff chroma-key background. No text, numbers, labels, grid lines, environment, gradients, watermark, extra rows or columns. Do not use #ff00ff inside the effects.
 ```
 
+## 헤이븐-09 로비 및 상세 메뉴 배경 (2026-08-15)
+
+- 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 첨부된 외부 게임 화면은 UI 구도 참고에만
+  사용했으며 ImageGen 입력이나 런타임 에셋으로 사용하지 않았습니다.
+- 프로젝트 스타일 참조: `public/assets/overload/campaign/haven-09-base.webp`,
+  `public/assets/overload/campaign/lobby/haven-command-atrium.webp`,
+  `public/assets/overload/campaign/character-enhancement.webp`.
+- 선택 ImageGen 원본:
+  - 로비: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-e780a601-5a1e-4dd0-a795-1bd3e7db8f1a.png`
+  - 연구실: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a874cd6f-0518-4102-8072-de627f63aca2.png`
+  - 정비소: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a565edd5-9b22-4a3c-bfbe-c34116a4b240.png`
+  - 동기화실: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5d5f27df-2592-4bac-991e-3789c83d62ee.png`
+- 프로젝트 보존 원본:
+  - `reference/source-assets/overload/campaign/lobby/haven-command-atrium-imagegen.png`
+  - `reference/source-assets/overload/campaign/lobby/hana-research-lab-imagegen.png`
+  - `reference/source-assets/overload/campaign/lobby/ilya-equipment-workshop-imagegen.png`
+  - `reference/source-assets/overload/campaign/lobby/character-sync-chamber-imagegen.png`
+- 활성 런타임:
+  - `public/assets/overload/campaign/lobby/haven-command-atrium.webp`
+  - `public/assets/overload/campaign/lobby/hana-research-lab.webp`
+  - `public/assets/overload/campaign/lobby/ilya-equipment-workshop.webp`
+  - `public/assets/overload/campaign/lobby/character-sync-chamber.webp`
+- 후처리: 선택 원본을 중앙 기준으로 16:9에 맞춘 뒤 Pillow LANCZOS로 1920×1080 리샘플링하고
+  WebP quality 86으로 최적화했습니다. 합성 요소를 추가하거나 이미지 내용을 다시 그리지 않았습니다.
+
+### 헤이븐-09 로비 배경 프롬프트 전문
+
+```text
+Use case: stylized-concept
+Asset type: full-screen 16:9 main lobby background for the browser game HUMAN OVERRIDE: OVERLOAD
+Input images: Image 1 is the approved HAVEN-09 base art-direction reference only. Preserve its dark near-future industrial resistance-base architecture, gunmetal materials, cyan navigation lights, warm amber work lights, cinematic realism, and premium Korean sci-fi game quality. Create a new original scene rather than copying the reference composition.
+Primary request: create the command atrium of HAVEN-09 as a character-lobby background designed for a large transparent character portrait placed around the center-left. The background must provide clean visual breathing room behind that character while remaining rich and detailed around the edges.
+Scene/backdrop: a wide futuristic underground command hangar, panoramic reinforced windows showing a stormy occupied megacity at night, tactical hologram table and cyan command consoles toward the right, sleek black stealth airship visible through a hangar aperture in the upper-right distance, research alcove and workshop doors suggested at the far sides.
+Composition/framing: exact wide landscape 16:9, eye-level cinematic camera, broad unobstructed floor and subdued wall area from x=28% to x=61% for the character, most detailed machinery and bright light sources kept to the far left edge and right third, no foreground person.
+Lighting/mood: controlled cyan and dim amber practical lights, subtle rain glow outside, hopeful resistance stronghold rather than horror.
+Constraints: environment only; no people, no character, no UI, no text, no logos, no symbols, no watermark, no borders. Do not imitate any attached third-party game screenshot. Original HUMAN OVERRIDE: OVERLOAD project art.
+```
+
+### HANA 연구실 배경 프롬프트 전문
+
+```text
+Use case: stylized-concept
+Asset type: full-screen 16:9 research-laboratory menu background for HUMAN OVERRIDE: OVERLOAD
+Input images: Image 1 is the new HAVEN-09 lobby style reference; Image 2 is the approved original base art direction. Match their same premium dark industrial Korean sci-fi game rendering, gunmetal surfaces, cyan navigation lighting, restrained amber practical lights.
+Primary request: create a new original interior of HANA's AI research laboratory inside HAVEN-09. Show a tall transparent neural-core chamber, holographic AI lattice projections, diagnostic workbenches, suspended micro-drone parts, sealed glass partitions, and clean high-tech instruments.
+Composition/framing: wide exact 16:9 eye-level scene. Leave the left 58% relatively calm and dark for readable facility title, resource counter, and three upgrade cards; concentrate the neural chamber and richest details in the right third. Keep all visual focal points away from the center UI text area.
+Lighting/mood: cool violet-cyan research glow with small warm task lights, precise and intelligent, no horror.
+Constraints: environment only; no people, no character, no UI, no text, no logos, no symbols, no watermark. No third-party game imagery. Original HUMAN OVERRIDE: OVERLOAD project art.
+```
+
+### ILYA 정비소 배경 프롬프트 전문
+
+```text
+Use case: stylized-concept
+Asset type: full-screen 16:9 equipment-workshop menu background for HUMAN OVERRIDE: OVERLOAD
+Input images: Image 1 is the new HAVEN-09 lobby style reference; Image 2 is the approved original base art direction. Match their premium dark industrial resistance-base realism, gunmetal materials, cyan navigation accents, restrained amber work lighting.
+Primary request: create a new original interior of ILYA's equipment workshop inside HAVEN-09. Show a heavy futuristic pulse-rifle service cradle, a suspended beam-sword calibration rack, modular armor components, robotic tool arms, rugged workbenches and organized replacement parts. It must feel practical, advanced, and used by a veteran engineer.
+Composition/framing: wide exact 16:9 eye-level scene. Leave the left 58% calmer and lower contrast for readable facility title, resource counter, and three upgrade cards; concentrate the weapon cradles, tool arms, warm sparks and mechanical detail in the right third. No foreground object blocking UI areas.
+Lighting/mood: warm amber engineering bay balanced by cool cyan diagnostic light, credible industrial atmosphere.
+Constraints: environment only; no people, no character, no UI, no text, no logos, no symbols, no watermark. No third-party game imagery. Original HUMAN OVERRIDE: OVERLOAD project art.
+```
+
+### 전투원 동기화실 배경 프롬프트 전문
+
+```text
+Use case: stylized-concept
+Asset type: full-screen 16:9 character-synchronization menu background for HUMAN OVERRIDE: OVERLOAD
+Input images: Image 1 defines the new HAVEN-09 lobby material and lighting language. Image 2 is the approved synchronization-chamber reference for cyan AEGIS and magenta MIKA energy language, but its characters must not be copied into the new background.
+Primary request: create a new original dual-frame synchronization chamber inside HAVEN-09. Two empty upright calibration pods stand in the back wall: cyan on the left and magenta on the right, connected to a central circular neural interface, with holographic combat diagnostics, overhead mechanical rings and precise floor light paths.
+Composition/framing: wide exact 16:9 eye-level scene. Keep the left half subdued enough for a large transparent character portrait and the right half detailed but readable behind a stats console. Place the two empty pods deeper in the scene and never dominate the foreground.
+Lighting/mood: premium dark sci-fi, balanced cyan and magenta rim light, clinical but heroic, subtle amber maintenance accents.
+Constraints: empty environment only; absolutely no people, no human figures, no character silhouettes, no UI, no text, no logos, no symbols, no watermark. No third-party game imagery. Original HUMAN OVERRIDE: OVERLOAD project art.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License

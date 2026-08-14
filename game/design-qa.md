@@ -504,3 +504,51 @@ final result: pass — 01—03/04—06/07—09 상위 권역 지도, LARK 신규
 - Browser: console warning/error `[]`; 기본↔영구 강화, AEGIS↔MIKA, ESC 닫기/재열기 정상.
 
 final result: passed
+
+### Iteration 22 — complete · 모션 포트레이트 중심 헤이븐 로비
+
+- Source visual truth:
+  `C:/Users/82105/Downloads/KakaoTalk_20211112_103053137.jpg` (1024×576)를 주 레이아웃
+  기준으로 삼고, `gj_gallery_file_06143005_1.jpg`, `Portfolio_img_29182423_1.png`,
+  `RCLzrXEAuT7InkwJsS6JZorjCk1hxxe4etiyQ2dzJ3XQ7qLSNQmFQBDdzxIHQnqfZMmWdl3Q4CNJ6u8mOFUh5w.webp`의
+  중앙 캐릭터·가장자리 메뉴·우상단 재화 구조를 보조 기준으로 사용했습니다. 제3자 이미지는
+  구도 참고에만 사용했고 프로젝트 런타임에 포함하지 않았습니다.
+- Implementation evidence:
+  `qa/haven-lobby-motion-portrait-1569x912.png`, `qa/haven-lobby-motion-844x390.png`,
+  `qa/haven-research-facility-1569x912.png`, `qa/haven-character-info-motion-1569x912.png`,
+  `qa/haven-lobby-reference-comparison.png`.
+- State: 슬롯 01 헤이븐-09 로비에서 현재 편성된 AEGIS/MIKA 전신 일러스트를 중앙 주 시각으로
+  표시하고, 좌측 NPC 메뉴, 우측 전투원·출격 주요 행동, 우상단 연구 자료·장비 부품·동기화 코어를
+  배치했습니다. 재화 버튼은 연구실·정비소·전투원 정보로 직접 연결됩니다.
+- Motion portrait: 정적 PNG를 Cubism Live2D라고 표기하지 않습니다. 현재 포트레이트는 포인터
+  이동에 따라 최대 12px/7px 시선 이동과 0.75deg 기울기, 절제된 호흡 애니메이션을 제공하며
+  `prefers-reduced-motion`에서는 움직임을 정지합니다. 실제 Live2D는 분리·리깅된 `.moc3` 및
+  `model3.json`을 전달받으면 같은 무대 컴포넌트에 교체할 수 있습니다.
+- Authored backgrounds: 로비, HANA 연구실, ILYA 정비소, 전투원 동기화실에 각각 별도
+  1920×1080 WebP를 적용했습니다. 로비와 다음 상세 화면에 필요한 DOM 이미지 그룹은 기존
+  선로딩 경로에서 함께 디코드되어 화면 전환 때 빈 배경을 노출하지 않습니다.
+
+**Findings**
+
+- P0/P1/P2 없음. 1569×912과 844×390 가로 모두 document 가로·세로 넘침이 없고 재화,
+  NPC, 캐릭터 정보, 출격 버튼이 viewport 안에 있습니다.
+- 포인터를 포트레이트 우상단으로 이동했을 때 CSS 상태가 `7.70px / -2.80px / 0.48deg`로
+  갱신되어 모션이 실제 입력에 반응함을 확인했습니다.
+- 연구실 및 전투원 정보 화면의 별도 배경과 ESC/기지 복귀 동선을 확인했고 브라우저
+  warning/error는 `[]`입니다.
+
+**Comparison history**
+
+- `qa/haven-lobby-reference-comparison.png`에서 주 레퍼런스와 구현을 동일 높이로 나란히 비교했습니다.
+  레퍼런스의 중앙 캐릭터, 우상단 재화, 가장자리 메뉴 계층은 유지하면서 현재 프로젝트의 어두운
+  헤이븐-09 재질과 SOVEREIGN 청록/마젠타 상태색으로 통일했습니다.
+
+**Required fidelity surfaces**
+
+- Typography: 한국어 우선 UI 서체, 순수 영문 장식과 숫자만 기존 display/mono 서체 사용.
+- Spacing/layout: 중앙 캐릭터를 화면의 약 42~48% 주 시각으로 유지하고 좌우 메뉴와 겹치지 않음.
+- Colors/tokens: 청록 탐색/연구, 앰버 정비, 마젠타 동기화 코어의 기존 상태색 유지.
+- Image quality: 1920×1080 상세 배경과 기존 투명 전신 포트레이트를 비왜곡 표시.
+- Browser: 1569×912 및 844×390, warning/error `[]`, 연구실·전투원 정보 전환 정상.
+
+final result: passed

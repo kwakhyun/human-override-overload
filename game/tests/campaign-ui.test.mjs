@@ -95,23 +95,53 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   assert.match(app, /assets\?\.rheaControlOfficer/);
   assert.match(app, /assets\?\.airshipRegionMap/);
   assert.match(app, /assets\?\.commandButtonStates/);
-  assert.match(app, /assets\?\.characterEnhancement/);
+  assert.match(app, /assets\?\.characterSyncChamber/);
   assert.match(screens, /backgroundSize|background-size|backgroundPosition/);
   assert.match(screens, /NPC_ICON = Object\.freeze\(\{ hana: Broadcast, ilya: Wrench, lark: User, rhea: Crosshair \}\)/);
   assert.match(screens, /portraitMode === "standalone"/);
   assert.match(screens, /npc\.interactionLabel \|\| "상호작용"/);
-  assert.match(screens, /구역 선택 및 출격/);
+  assert.match(screens, /작전 권역 · 출격/);
   assert.match(screens, /BaseFacilityPanel/);
   assert.match(screens, /facility-upgrade-grid/);
-  assert.match(screens, /augmentation-hotspot/);
+  assert.match(screens, /base-motion-portrait/);
   assert.match(screens, /facility-key-art/);
-  assert.match(screens, /인물 영구 강화/);
+  assert.match(screens, /전투원 · 강화/);
   assert.match(app, /동기화 코어/);
   assert.match(screens, /region-sortie-launch command-ui-button/);
   assert.match(app, /getCampaignCombatBonuses\(campaign, activeSlotId\)/);
   assert.match(app, /purchaseCampaignUpgrade\(campaign, activeSlotId, upgradeId\)/);
   assert.match(app, /onOpenFacility=\{openFacility\}/);
   assert.doesNotMatch(app, /toggleAutoFire|autoFireEnabled|autoFireTogglePressed|클릭 수동 사격/);
+});
+
+test("HAVEN lobby uses a motion portrait, icon currencies, edge navigation, and authored facility backgrounds", async () => {
+  const [app, screens, styles, manifest] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/game/assets/manifest.ts", root), "utf8"),
+  ]);
+  assert.match(screens, /function MotionPortraitStage/);
+  assert.match(screens, /data-live2d-ready="true"/);
+  assert.match(screens, /className="base-currency-rail"/);
+  assert.match(screens, /className="base-lobby-navigation"/);
+  assert.match(screens, /className="base-sortie-action command-ui-button"/);
+  assert.match(app, /assets\?\.hanaResearchLab/);
+  assert.match(app, /assets\?\.ilyaEquipmentWorkshop/);
+  assert.match(app, /assets\?\.characterSyncChamber/);
+  assert.match(styles, /\.base-motion-portrait/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.motion-portrait-body/);
+  for (const [key, name] of [
+    ["havenLobby", "haven-command-atrium.webp"],
+    ["hanaResearchLab", "hana-research-lab.webp"],
+    ["ilyaEquipmentWorkshop", "ilya-equipment-workshop.webp"],
+    ["characterSyncChamber", "character-sync-chamber.webp"],
+  ]) {
+    assert.match(manifest, new RegExp(`${key}: "\\./assets/overload/campaign/lobby/${name}"`));
+    const asset = await stat(new URL(`public/assets/overload/campaign/lobby/${name}`, root));
+    assert.ok(asset.size > 180_000, `${name} should retain readable environment detail`);
+    assert.ok(asset.size < 400_000, `${name} should remain lobby-load optimized`);
+  }
 });
 
 test("character information presents full-height art, live stats, abilities, and persistent augmentation", async () => {

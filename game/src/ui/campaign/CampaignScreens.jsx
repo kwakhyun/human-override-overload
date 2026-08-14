@@ -273,22 +273,6 @@ function NpcPortrait({ npc, assets }) {
   );
 }
 
-function NpcWorldFigure({ npc, assets }) {
-  const standalone = npc.portraitMode === "standalone";
-  const source = assetSource(standalone ? assets?.controlOfficer : assets?.npcPortraits);
-  if (!source) return null;
-  return (
-    <span
-      className={`base-npc-world-figure${standalone ? " is-standalone" : ""}`}
-      aria-hidden="true"
-      style={{
-        backgroundImage: `url(${source})`,
-        backgroundPosition: standalone ? "center 16%" : `${(npc.portraitIndex || 0) * 50}% center`,
-      }}
-    />
-  );
-}
-
 export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, onFacility, onInteraction }) {
   const lines = npc?.dialogue || [];
   const line = localizeWorldText(lines[Math.min(lineIndex, Math.max(0, lines.length - 1))] || "통신 기록이 없습니다.");
@@ -494,48 +478,102 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
   );
 }
 
+function MotionPortraitStage({ source, characterId, name, onOpen }) {
+  const stageRef = useRef(null);
+  const movePortrait = useCallback((event) => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const bounds = stage.getBoundingClientRect();
+    const x = Math.max(-1, Math.min(1, ((event.clientX - bounds.left) / Math.max(1, bounds.width) - 0.5) * 2));
+    const y = Math.max(-1, Math.min(1, ((event.clientY - bounds.top) / Math.max(1, bounds.height) - 0.5) * 2));
+    stage.style.setProperty("--portrait-look-x", `${(x * 12).toFixed(2)}px`);
+    stage.style.setProperty("--portrait-look-y", `${(y * 7).toFixed(2)}px`);
+    stage.style.setProperty("--portrait-tilt", `${(x * 0.75).toFixed(2)}deg`);
+  }, []);
+  const resetPortrait = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    stage.style.setProperty("--portrait-look-x", "0px");
+    stage.style.setProperty("--portrait-look-y", "0px");
+    stage.style.setProperty("--portrait-tilt", "0deg");
+  }, []);
+
+  return (
+    <button
+      type="button"
+      ref={stageRef}
+      className={`base-motion-portrait is-${characterId}`}
+      data-live2d-ready="true"
+      onPointerMove={movePortrait}
+      onPointerLeave={resetPortrait}
+      onClick={onOpen}
+      aria-label={`${name} 전투원 정보 열기`}
+    >
+      <span className="motion-portrait-body">
+        {source && <img src={assetSource(source)} alt={`${name} 로비 전신 일러스트`} />}
+      </span>
+      <span className="motion-portrait-caption">
+        <small>ACTIVE OPERATIVE</small><strong>{name}</strong><em>전투원 정보</em>
+      </span>
+    </button>
+  );
+}
+
 export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCharacterChange, onCloseFacility, onBoard, onTitle }) {
   const background = assetSource(assets?.homeBase);
   const buttonAtlas = assetSource(assets?.buttonAtlas);
   const completed = campaign?.completedRegionIds?.length || 0;
+  const activeCharacterId = campaign?.loadout?.characterId || "aegis";
+  const activeCharacterName = activeCharacterId === "mika" ? "미카" : "이지스";
+  const activePortrait = activeCharacterId === "mika" ? assets?.mikaPortrait : assets?.playerPortrait;
   return (
     <main className="campaign-shell home-base-screen" style={buttonAtlas ? { "--command-button-atlas": `url(${buttonAtlas})` } : undefined}>
       {background && <img className="campaign-background" src={background} alt="인류 저항군의 이동 기지 헤이븐-09" />}
       <div className="base-vignette" aria-hidden="true" />
-      <header className="base-status">
-        <div><small>주 기지</small><strong>헤이븐-09</strong></div>
-        <span><FloppyDisk weight="fill" /> 슬롯 {(campaign?.slotIndex ?? 0) + 1} · 자동 저장</span>
-        <b>연구 {campaign?.progression?.researchData || 0} · 부품 {campaign?.progression?.equipmentParts || 0} · 코어 {campaign?.progression?.augmentationCores || 0} · 해방 {completed} / 6</b>
+      <header className="base-lobby-topbar">
+        <div className="base-identity">
+          <small>인류 저항 이동 기지</small><strong>헤이븐-09</strong>
+          <span><FloppyDisk weight="fill" /> 슬롯 {(campaign?.slotIndex ?? 0) + 1} · 자동 저장</span>
+        </div>
+        <nav className="base-currency-rail" aria-label="기지 보유 재화">
+          <button type="button" onClick={() => onOpenFacility("research")} aria-label="연구 자료로 연구실 열기"><Brain weight="fill" /><span><small>연구 자료</small><b>{campaign?.progression?.researchData || 0}</b></span></button>
+          <button type="button" onClick={() => onOpenFacility("equipment")} aria-label="장비 부품으로 정비소 열기"><Wrench weight="fill" /><span><small>장비 부품</small><b>{campaign?.progression?.equipmentParts || 0}</b></span></button>
+          <button type="button" onClick={() => onOpenFacility("augmentation")} aria-label="동기화 코어로 전투원 정보 열기"><Sparkle weight="fill" /><span><small>동기화 코어</small><b>{campaign?.progression?.augmentationCores || 0}</b></span></button>
+        </nav>
       </header>
 
-      {(npcs || []).map((npc) => {
+      <MotionPortraitStage source={activePortrait} characterId={activeCharacterId} name={activeCharacterName} onOpen={() => onOpenFacility("augmentation")} />
+
+      <nav className="base-lobby-navigation" aria-label="헤이븐-09 시설 메뉴">
+        {(npcs || []).map((npc) => {
         const Icon = NPC_ICON[npc.id] || User;
         const display = NPC_DISPLAY[npc.id] || { name: npc.name, role: npc.role };
         return (
           <button
             type="button"
-            className={`base-hotspot npc-${npc.id}${npc.id === "lark" && larkAlert ? " has-mission-alert" : ""}`}
+            className={`base-menu-button npc-${npc.id}${npc.id === "lark" && larkAlert ? " has-mission-alert" : ""}`}
             onClick={() => onNpc(npc)}
             aria-label={`${display.name}와 대화`}
             key={npc.id}
           >
             {npc.id === "lark" && larkAlert && <span className="npc-mission-alert" aria-label="신규 권역 브리핑"><Sparkle weight="fill" /><b>!</b></span>}
-            <NpcWorldFigure npc={npc} assets={assets} />
-            <Icon weight="fill" /><span className="base-hotspot-copy"><small>{display.role}</small><b>{display.name}</b></span>
+            <Icon weight="fill" /><span><small>{display.role}</small><b>{display.name}</b></span>
           </button>
         );
-      })}
+        })}
+      </nav>
 
-      <button type="button" className="base-hotspot airship-hotspot" onClick={onBoard}>
-        <AirplaneTilt weight="fill" /><span><small>스텔스 비행선</small><b>구역 선택 및 출격</b></span>
-      </button>
-
-      <button type="button" className="base-hotspot augmentation-hotspot" onClick={() => onOpenFacility("augmentation")}>
-        <Sparkle weight="fill" /><span><small>전투 프레임</small><b>인물 영구 강화</b></span>
-      </button>
+      <aside className="base-primary-actions">
+        <button type="button" className="base-character-action" onClick={() => onOpenFacility("augmentation")}>
+          <User weight="fill" /><span><small>전투 프레임</small><b>전투원 · 강화</b></span><ArrowRight weight="bold" />
+        </button>
+        <button type="button" className="base-sortie-action command-ui-button" data-ui-sound="uiConfirm" onClick={onBoard}>
+          <AirplaneTilt weight="fill" /><span><small>스텔스 비행선 나이트자</small><b>작전 권역 · 출격</b></span><Play weight="fill" />
+        </button>
+      </aside>
 
       <aside className="base-objective">
-        <small>현재 작전</small>
+        <small>현재 작전 · 해방 {completed} / 6</small>
         <strong>{larkAlert ? "라크가 신규 권역 신호를 해독했습니다" : completed >= 3 ? "외곽 권역 작전 진행 중" : "지역 추론핵을 추적하세요"}</strong>
         <p>{larkAlert ? "격납고의 느낌표가 표시된 라크와 대화하세요." : completed >= 3 ? "상위 권역을 선택한 뒤 개별 구역에 출격할 수 있습니다." : "비행선에서 다음 전투 구역을 선택할 수 있습니다."}</p>
         {campaign?.lastRegionRewards && (
