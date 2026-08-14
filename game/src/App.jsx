@@ -586,6 +586,7 @@ const COMBAT_DOCK_SLOTS = Object.freeze([
 ]);
 
 const REWARD_NAMES_KO = Object.freeze({
+  haloMatrix: "프리즘 링 동기화",
   scatter: "산탄 배열",
   rail: "관통 레일탄",
   rocket: "유도 폭발탄",
@@ -614,6 +615,7 @@ const REWARD_NAMES_KO = Object.freeze({
 const PAUSED_GAMEPLAY_KEYS = new Set(["Space", "KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyQ", "KeyE", "KeyF", "KeyR", "KeyT", "Digit1", "Digit2", "Digit3"]);
 
 const REWARD_COPY = Object.freeze({
+  haloMatrix: "미카의 기본 링 블레이드를 단발 무관통 상태에서 쌍발·고속·다중 관통 공격으로 단계적으로 동기화합니다.",
   scatter: "근거리 부채꼴 탄막으로 밀집한 적을 한 번에 찢습니다.",
   rail: "한 줄의 적을 끝까지 관통하는 고출력 레일 탄을 발사합니다.",
   rocket: "밀집 지점에 광역 폭발을 일으키는 유도 로켓을 추가합니다.",

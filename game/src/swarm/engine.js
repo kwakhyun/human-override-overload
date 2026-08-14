@@ -231,6 +231,7 @@ const ENEMY_DATA = Object.freeze({
 });
 
 export const REWARD_DEFINITIONS = Object.freeze({
+  haloMatrix: Object.freeze({ id: "haloMatrix", category: "weapon", name: "PRISM HALO MATRIX", description: "Synchronizes MIKA's basic ring blades from a single unpiercing shot into the full twin-blade attack." }),
   scatter: Object.freeze({ id: "scatter", category: "weapon", name: "SCATTER ARRAY", description: "Fires a close-range five-shot cone." }),
   rail: Object.freeze({ id: "rail", category: "weapon", name: "RAIL LANCE", description: "Pierces an entire lane with a heavy slug." }),
   rocket: Object.freeze({ id: "rocket", category: "weapon", name: "ROCKET POD", description: "Launches a missile with a wide blast radius." }),
@@ -268,7 +269,14 @@ const SWORD_REWARD_POOLS = Object.freeze({
   ally: RIFLE_REWARD_POOLS.ally,
 });
 
+const MIKA_REWARD_POOLS = Object.freeze({
+  weapon: Object.freeze(["haloMatrix", "orbit"]),
+  skill: RIFLE_REWARD_POOLS.skill,
+  ally: RIFLE_REWARD_POOLS.ally,
+});
+
 const MAX_REWARD_RANK = Object.freeze({
+  haloMatrix: 5,
   scatter: 5, rail: 5, rocket: 5, orbit: 5,
   crescentWave: 5, titanEdge: 5, flashRend: 5, bladeStorm: 5,
   chain: 3, nova: 3, airstrike: 3, omegaLaser: 3,
@@ -712,7 +720,7 @@ function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId =
     moveBlend: 0,
     dashBlend: 0,
     dead: false,
-    fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0, sword: 0, wave: 0, titan: 0, flash: 0, storm: 0 },
+    fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0, sword: 0, wave: 0, titan: 0, flash: 0, storm: 0, halo: 0 },
     swordCombo: 0,
     orbitAngle: 0,
     orbitMasterTimer: 0,
@@ -874,7 +882,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       combatInterval: REWARD_COMBAT_INTERVAL,
     },
     build: {
-      weapons: { pulse: 1, scatter: 0, rail: 0, rocket: 0, orbit: 0, crescentWave: 0, titanEdge: 0, flashRend: 0, bladeStorm: 0 },
+      weapons: { pulse: 1, haloMatrix: 0, scatter: 0, rail: 0, rocket: 0, orbit: 0, crescentWave: 0, titanEdge: 0, flashRend: 0, bladeStorm: 0 },
       skills: { damage: 0, fireRate: 0, multishot: 0, shield: 0, dash: 0, regen: 0, edgeReach: 0, edgeGuard: 0, chain: 0, nova: 0, airstrike: 0, omegaLaser: 0 },
       allies: { drone: 0, sentry: 0, suppressor: 0 },
     },
@@ -1389,11 +1397,16 @@ function updateMikaWeapons(state, attackSpeed) {
   const player = state.player;
   const timers = player.fireTimers;
   if (timers.halo > 0) return;
+  const haloRank = clamp(state.build.weapons.haloMatrix || 0, 0, 5);
   const overdriveBonus = Math.max(0, player.overdriveTier - 1);
-  const count = 2 + overdriveBonus;
-  fireBulletFan(state, "mikaHaloBlade", count, 0.22 + overdriveBonus * 0.07, 930, 48 + player.level * 1.25, 13, 1.55, {
+  const count = 1 + (haloRank >= 3 ? 1 : 0) + overdriveBonus;
+  const spread = count > 1 ? 0.12 + haloRank * 0.02 + overdriveBonus * 0.07 : 0;
+  const speed = 820 + haloRank * 22;
+  const damage = 34 + haloRank * 2.8 + player.level * (0.8 + haloRank * 0.09);
+  const pierce = (haloRank >= 5 ? 3 : Math.floor(haloRank / 2)) + player.overdriveTier;
+  fireBulletFan(state, "mikaHaloBlade", count, spread, speed, damage, 8 + haloRank, 1.3 + haloRank * 0.05, {
     color: "#ff8ada",
-    pierce: 3 + player.overdriveTier,
+    pierce,
   });
   if (player.overdriveTier >= 2 && player.overdriveVolleyTimer <= 0) {
     fireRadialVolley(state, "mikaHaloCarnival", player.overdriveTier >= 3 ? 16 : 10, 720, player.overdriveTier >= 3 ? 72 : 52, 12, 1.2, {
@@ -1406,8 +1419,8 @@ function updateMikaWeapons(state, attackSpeed) {
   player.attackTimer = Math.max(player.attackTimer, 0.22);
   player.animationState = "attack";
   player.animationTimer = Math.max(player.animationTimer, 0.22);
-  timers.halo += Math.max(0.18, 0.36 * attackSpeed);
-  emit(state, "mikaHaloAttack", { count, x: player.x, y: player.y, angle: player.angle });
+  timers.halo += Math.max(0.18, (0.42 - haloRank * 0.012) * attackSpeed);
+  emit(state, "mikaHaloAttack", { count, haloRank, x: player.x, y: player.y, angle: player.angle });
 }
 
 function updateAutoWeapons(state, dt) {
@@ -3473,11 +3486,18 @@ function updateAllies(state, dt) {
 function buildRewardOffer(state, batchLevels = 1) {
   const offer = [];
   const categories = ["weapon", "skill", "ally"];
-  const rewardPools = state.player.mainWeaponId === "beam-sword" ? SWORD_REWARD_POOLS : RIFLE_REWARD_POOLS;
+  const rewardPools = state.player.characterId === "mika"
+    ? MIKA_REWARD_POOLS
+    : state.player.mainWeaponId === "beam-sword"
+      ? SWORD_REWARD_POOLS
+      : RIFLE_REWARD_POOLS;
   for (let categoryIndex = 0; categoryIndex < categories.length; categoryIndex += 1) {
     const category = categories[categoryIndex];
     const bucket = category === "weapon" ? state.build.weapons : category === "skill" ? state.build.skills : state.build.allies;
     let pool = rewardPools[category].filter((candidate) => (bucket[candidate] || 0) < (MAX_REWARD_RANK[candidate] || 5));
+    if (state.player.characterId === "mika" && category === "weapon" && (state.build.weapons.haloMatrix || 0) === 0) {
+      pool = ["haloMatrix"];
+    }
     if (state.player.mainWeaponId === "pulse-rifle" && category === "skill" && state.rewardCycle === 0) {
       const openingCombatSkills = pool.filter((candidate) => ["airstrike", "omegaLaser", "chain", "nova"].includes(candidate));
       if (openingCombatSkills.length) pool = openingCombatSkills;

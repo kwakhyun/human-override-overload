@@ -486,6 +486,44 @@ test("MIKA fields ring blades, four exclusive actives, and a cooldown-limited ba
   assert.equal(hud.player.tagReady, false);
 });
 
+test("MIKA basic fire starts finite and reaches the former twin-piercing profile only through halo augmentation", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika" });
+  const input = createSwarmInput();
+  drainSwarmEvents(state);
+
+  stepFor(state, input, 1);
+  const baselineEvents = drainSwarmEvents(state).filter((event) => event.type === "mikaHaloAttack");
+  assert.ok(baselineEvents.length >= 2 && baselineEvents.length <= 3, `baseline cadence must be finite, received ${baselineEvents.length} attacks`);
+  assert.ok(baselineEvents.every((event) => event.count === 1 && event.haloRank === 0));
+  const baselineShot = state.projectiles.find((projectile) => projectile.kind === "mikaHaloBlade");
+  assert.ok(baselineShot);
+  assert.equal(baselineShot.pierce, 0);
+  assert.equal(baselineShot.radius, 8);
+  assert.ok(Number.isFinite(state.player.fireTimers.halo) && state.player.fireTimers.halo > 0);
+
+  state.levelFlow.queuedLevels = 1;
+  state.levelFlow.nextOfferAt = 0;
+  state.time = 6.5;
+  stepSwarm(state, input, 1 / 60);
+  assert.equal(state.rewardOptions[0]?.id, "haloMatrix", "MIKA's first weapon card teaches the basic-fire progression");
+  assert.equal(chooseLevelReward(state, "haloMatrix"), true);
+  for (let rank = 1; rank < 5; rank += 1) {
+    forceOffer(state, "haloMatrix", "weapon");
+    assert.equal(chooseLevelReward(state, "haloMatrix"), true);
+  }
+  assert.equal(state.build.weapons.haloMatrix, 5);
+
+  state.projectiles.length = 0;
+  state.player.fireTimers.halo = 0;
+  stepSwarm(state, input, 1 / 60);
+  const masteredShots = state.projectiles.filter((projectile) => projectile.kind === "mikaHaloBlade");
+  assert.equal(masteredShots.length, 2);
+  assert.ok(masteredShots.every((projectile) => projectile.pierce === 3));
+  assert.ok(masteredShots.every((projectile) => projectile.radius === 13));
+  assert.ok(masteredShots.every((projectile) => Math.abs(projectile.damage - 49.25) < 0.0001));
+  assert.ok(masteredShots.every((projectile) => Math.abs(Math.hypot(projectile.vx, projectile.vy) - 930) < 0.0001));
+});
+
 test("MIKA and the tag action stay unavailable before the first-region unlock", () => {
   const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika", mikaUnlocked: false });
   const input = createSwarmInput();
