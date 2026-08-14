@@ -592,3 +592,22 @@ final result: passed
   전체 테스트와 production build는 사용자의 마지막 최종 검증 지침에 따라 생략했습니다.
 
 final result: passed
+
+### Iteration 25 — complete · Cubism 상시 호흡 및 영역별 반응
+
+- Root cause: 두 MOC3는 정상 로드됐지만 원본 키폼의 시각 변형량이 작아 정지 이미지처럼
+  보였습니다. AEGIS 템플릿을 MIKA에 덮는 시도는 인물 실루엣이 겹치는 미리보기 단계에서
+  취소해 원본 리깅과 미술을 보존했습니다.
+- Runtime motion: 두 모델 모두 `requestAnimationFrame` 기반의 저속 호흡, 상하 중심 이동,
+  미세 좌우 흔들림, 시선/상체 변화와 간헐 표정을 Cubism 렌더러 내부에서 실행합니다.
+  `prefers-reduced-motion`에서는 상시 이동을 멈추되 터치 반응은 유지합니다.
+- Touch reactions: 머리·가슴·양팔·다리는 서로 다른 표정 파일, 시선, 상체 방향, 모델 중심과
+  배율 반동을 사용합니다. AEGIS는 절제된 회피 동작, MIKA는 더 큰 당황/부끄러움 동작입니다.
+- Framing: MIKA 모델 배율을 0.82로 낮추고 Y 기준점을 0.075로 올렸으며 로비 컨테이너도
+  448px 상한으로 축소했습니다. 모바일 가로에서도 별도 270px 상한을 사용합니다.
+- Focused QA: Cubism/캠페인 14/14와 typecheck가 통과했습니다. 1440×810 Edge에서 AEGIS와
+  MIKA 모두 720ms 간격의 idle canvas 프레임과 터치 전/후 프레임이 실제로 달라졌고,
+  `data-live2d-ready=true`, 폴백 opacity 0, 로드 오류 0을 확인했습니다. 전체 테스트와 build는
+  사용자의 빠른 반복 지침에 따라 실행하지 않았습니다.
+
+final result: passed

@@ -4,7 +4,7 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 
-test("AEGIS and MIKA ship real Cubism model3 bundles with moc3 and 2048px textures", async () => {
+test("AEGIS and MIKA ship real Cubism model3 bundles with touch-area expressions", async () => {
   for (const id of ["aegis", "mika"]) {
     const modelUrl = new URL(`public/assets/overload/live2d/${id}/${id}.model3.json`, root);
     const model = JSON.parse(await readFile(modelUrl, "utf8"));
@@ -12,12 +12,15 @@ test("AEGIS and MIKA ship real Cubism model3 bundles with moc3 and 2048px textur
     assert.equal(model.FileReferences.Moc, `${id}.moc3`);
     assert.deepEqual(model.FileReferences.Textures, [`${id}.2048/texture_00.png`]);
     assert.equal(model.FileReferences.DisplayInfo, `${id}.cdi3.json`);
-    assert.equal(model.FileReferences.Expressions.length, 1);
-    const expression = model.FileReferences.Expressions[0];
-    assert.equal(expression.Name, id === "aegis" ? "cold" : "shy");
-    const expressionJson = JSON.parse(await readFile(new URL(`public/assets/overload/live2d/${id}/${expression.File}`, root), "utf8"));
-    assert.equal(expressionJson.Type, "Live2D Expression");
-    assert.ok(expressionJson.Parameters.length >= 5);
+    const expectedExpressions = id === "aegis"
+      ? ["cold", "cold-idle", "cold-head", "cold-chest", "cold-arms", "cold-legs"]
+      : ["shy", "bright-idle", "shy-head", "shy-chest", "shy-arms", "shy-legs"];
+    assert.deepEqual(model.FileReferences.Expressions.map(({ Name }) => Name), expectedExpressions);
+    for (const expression of model.FileReferences.Expressions) {
+      const expressionJson = JSON.parse(await readFile(new URL(`public/assets/overload/live2d/${id}/${expression.File}`, root), "utf8"));
+      assert.equal(expressionJson.Type, "Live2D Expression");
+      assert.ok(expressionJson.Parameters.length >= 5);
+    }
     const mocBytes = await readFile(new URL(`public/assets/overload/live2d/${id}/${id}.moc3`, root));
     assert.equal(mocBytes.subarray(0, 4).toString("ascii"), "MOC3");
     assert.equal(mocBytes[4], 5, `${id} must remain compatible with the bundled Cubism 5.0 Core`);
@@ -28,7 +31,7 @@ test("AEGIS and MIKA ship real Cubism model3 bundles with moc3 and 2048px textur
   }
 });
 
-test("lobby uses bundled official Cubism Core, WebGL model rendering, and click-only rig reactions", async () => {
+test("lobby uses bundled Cubism rendering with idle breathing and click-only area reactions", async () => {
   const [component, screens, styles, packageJson] = await Promise.all([
     readFile(new URL("src/ui/live2d/CubismCharacter.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
@@ -42,9 +45,20 @@ test("lobby uses bundled official Cubism Core, WebGL model rendering, and click-
   assert.match(component, /<Live2DCanvas>/);
   assert.match(component, /<Live2DModel/);
   assert.match(component, /showHitAreas=\{false\}/);
+  assert.match(component, /function ModelMotionDriver/);
+  assert.match(component, /window\.requestAnimationFrame\(animate\)/);
+  assert.match(component, /window\.cancelAnimationFrame\(animationFrame\)/);
+  assert.match(component, /prefers-reduced-motion: reduce/);
+  assert.match(component, /const breath = reducedMotion \? 0 : Math\.sin/);
+  assert.match(component, /motionManager\.setScale\(/);
+  assert.match(component, /motionManager\.setPosition\(/);
   assert.match(component, /setLookTargetRelative/);
   assert.match(component, /setBodyOrientationTargetRelative/);
-  assert.match(component, /setExpression\(REACTION_EXPRESSIONS\[characterId\]\)/);
+  assert.match(component, /setExpression\(REACTION_EXPRESSIONS\[characterId\]\?\.\[reaction\.area\]\)/);
+  assert.match(component, /idleExpression: "cold-idle"/);
+  assert.match(component, /idleExpression: "bright-idle"/);
+  assert.match(component, /scale: 0\.82/);
+  assert.match(component, /positionY: 0\.075/);
   assert.match(component, /resetExpression\(\)/);
   assert.match(component, /data-live2d-ready=\{modelReady \? "true" : "false"\}/);
   assert.match(component, /cubism-character-fallback/);
@@ -52,6 +66,7 @@ test("lobby uses bundled official Cubism Core, WebGL model rendering, and click-
   assert.doesNotMatch(screens, /motion-portrait-expression/);
   assert.match(styles, /\.cubism-character-canvas[\s\S]*pointer-events: none/);
   assert.match(styles, /\.portrait-zone \{[\s\S]*background: transparent/);
+  assert.match(styles, /\.base-motion-portrait\.is-mika \{ width: min\(33vw, 448px\); left: 26%; \}/);
   const core = await readFile(new URL("public/vendor/live2d/live2dcubismcore.min.js", root), "utf8");
   assert.match(core, /Live2D Cubism Core/);
   assert.match(core, /Redistributable Code/);

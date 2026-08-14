@@ -14,36 +14,42 @@ export const CUBISM_CORE_SOURCE_URL = "https://cubism.live2d.com/sdk-web/cubismc
 const CUBISM_MODELS = Object.freeze({
   aegis: Object.freeze({
     modelJsonPath: "/assets/overload/live2d/aegis/aegis.model3.json",
-    scale: 1,
+    scale: 0.94,
     positionX: 0,
-    positionY: -0.03,
+    positionY: 0.025,
+    idlePeriod: 5_800,
+    idlePhase: 0.35,
+    idleExpression: "cold-idle",
   }),
   mika: Object.freeze({
     modelJsonPath: "/assets/overload/live2d/mika/mika.model3.json",
-    scale: 1,
+    scale: 0.82,
     positionX: 0,
-    positionY: -0.03,
+    positionY: 0.075,
+    idlePeriod: 4_900,
+    idlePhase: 1.6,
+    idleExpression: "bright-idle",
   }),
 });
 
 const REACTION_TARGETS = Object.freeze({
   aegis: Object.freeze({
-    head: Object.freeze({ x: -0.24, y: 0.18, bodyX: -0.08, bodyY: 0.03 }),
-    chest: Object.freeze({ x: 0.18, y: -0.08, bodyX: 0.1, bodyY: -0.08 }),
-    arms: Object.freeze({ x: -0.2, y: 0, bodyX: -0.18, bodyY: 0 }),
-    legs: Object.freeze({ x: 0.12, y: -0.22, bodyX: 0.08, bodyY: -0.12 }),
+    head: Object.freeze({ x: -0.3, y: 0.2, bodyX: -0.13, bodyY: 0.04, offsetX: -0.012, offsetY: 0.012, scale: 0.008, duration: 980 }),
+    chest: Object.freeze({ x: 0.24, y: -0.1, bodyX: 0.18, bodyY: -0.1, offsetX: 0.026, offsetY: 0, scale: -0.014, duration: 920 }),
+    arms: Object.freeze({ x: -0.26, y: 0.02, bodyX: -0.24, bodyY: 0.02, offsetX: -0.024, offsetY: 0.008, scale: 0.006, duration: 900 }),
+    legs: Object.freeze({ x: 0.16, y: -0.25, bodyX: 0.12, bodyY: -0.16, offsetX: 0.012, offsetY: 0.024, scale: -0.012, duration: 960 }),
   }),
   mika: Object.freeze({
-    head: Object.freeze({ x: 0.28, y: 0.2, bodyX: 0.14, bodyY: 0.04 }),
-    chest: Object.freeze({ x: -0.3, y: -0.08, bodyX: -0.18, bodyY: -0.08 }),
-    arms: Object.freeze({ x: 0.24, y: 0.02, bodyX: 0.2, bodyY: 0 }),
-    legs: Object.freeze({ x: -0.18, y: -0.24, bodyX: -0.12, bodyY: -0.13 }),
+    head: Object.freeze({ x: 0.34, y: 0.24, bodyX: 0.19, bodyY: 0.05, offsetX: 0.02, offsetY: 0.018, scale: 0.018, duration: 1_280 }),
+    chest: Object.freeze({ x: -0.36, y: -0.12, bodyX: -0.25, bodyY: -0.12, offsetX: -0.034, offsetY: 0.005, scale: -0.018, duration: 1_360 }),
+    arms: Object.freeze({ x: 0.3, y: 0.04, bodyX: 0.26, bodyY: 0.02, offsetX: 0.036, offsetY: 0.014, scale: 0.012, duration: 1_180 }),
+    legs: Object.freeze({ x: -0.22, y: -0.28, bodyX: -0.16, bodyY: -0.18, offsetX: -0.026, offsetY: 0.026, scale: -0.012, duration: 1_240 }),
   }),
 });
 
 const REACTION_EXPRESSIONS = Object.freeze({
-  aegis: "cold",
-  mika: "shy",
+  aegis: Object.freeze({ head: "cold-head", chest: "cold-chest", arms: "cold-arms", legs: "cold-legs" }),
+  mika: Object.freeze({ head: "shy-head", chest: "shy-chest", arms: "shy-arms", legs: "shy-legs" }),
 });
 
 let cubismCorePromise;
@@ -81,24 +87,103 @@ export function loadCubismCore() {
   return cubismCorePromise;
 }
 
-function ModelReactionDriver({ characterId, reaction }) {
+function reactionEnvelope(elapsed, duration) {
+  const attack = Math.min(1, elapsed / 150);
+  const release = Math.min(1, Math.max(0, duration - elapsed) / 260);
+  return Math.sin(Math.min(1, attack) * Math.PI * 0.5) * release;
+}
+
+function ModelMotionDriver({ characterId, reaction }) {
   const { motionManager } = useLive2DModelContext();
+  const model = CUBISM_MODELS[characterId] || CUBISM_MODELS.aegis;
+  const reactionRef = useRef(null);
+  const expressionOwnerRef = useRef("none");
 
   useEffect(() => {
     if (!motionManager || !reaction?.area) return undefined;
     const target = REACTION_TARGETS[characterId]?.[reaction.area];
     if (!target) return undefined;
 
-    motionManager.setLookTargetRelative(target.x, target.y, 5.8);
-    motionManager.setBodyOrientationTargetRelative(target.bodyX, target.bodyY, 3.8);
-    motionManager.setExpression(REACTION_EXPRESSIONS[characterId]);
-    const resetTimer = window.setTimeout(() => {
-      motionManager.setLookTargetRelative(0, 0, 2.6);
-      motionManager.setBodyOrientationTargetRelative(0, 0, 2.2);
-      motionManager.resetExpression();
-    }, characterId === "mika" ? 1050 : 760);
-    return () => window.clearTimeout(resetTimer);
+    reactionRef.current = { target, startedAt: performance.now(), token: reaction.token };
+    expressionOwnerRef.current = "reaction";
+    motionManager.setExpression(REACTION_EXPRESSIONS[characterId]?.[reaction.area]);
+    return undefined;
   }, [characterId, motionManager, reaction?.area, reaction?.token]);
+
+  useEffect(() => {
+    if (!motionManager) return undefined;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    let animationFrame = 0;
+    let disposed = false;
+    let nextIdleExpressionAt = performance.now() + 3_400 + model.idlePhase * 700;
+    let idleExpressionResetAt = 0;
+
+    const animate = (now) => {
+      if (disposed) return;
+      const time = now / model.idlePeriod + model.idlePhase;
+      const breath = reducedMotion ? 0 : Math.sin(time * Math.PI * 2);
+      const sway = reducedMotion ? 0 : Math.sin(time * Math.PI * 1.12 + 0.8);
+      const activeReaction = reactionRef.current;
+      let reactionMix = 0;
+      let target = null;
+
+      if (activeReaction) {
+        const elapsed = now - activeReaction.startedAt;
+        target = activeReaction.target;
+        if (elapsed < target.duration) reactionMix = reactionEnvelope(elapsed, target.duration);
+        else {
+          reactionRef.current = null;
+          if (expressionOwnerRef.current === "reaction") {
+            motionManager.resetExpression();
+            expressionOwnerRef.current = "none";
+          }
+          nextIdleExpressionAt = now + 3_200;
+        }
+      }
+
+      const idleScale = reducedMotion ? 0 : breath * (characterId === "mika" ? 0.0065 : 0.0045);
+      const idleX = reducedMotion ? 0 : sway * (characterId === "mika" ? 0.006 : 0.004);
+      const idleY = reducedMotion ? 0 : breath * (characterId === "mika" ? 0.011 : 0.008);
+      motionManager.setScale(model.scale + idleScale + (target?.scale || 0) * reactionMix);
+      motionManager.setPosition(
+        model.positionX + idleX + (target?.offsetX || 0) * reactionMix,
+        model.positionY + idleY + (target?.offsetY || 0) * reactionMix,
+      );
+      motionManager.setLookTargetRelative(
+        sway * 0.055 + (target?.x || 0) * reactionMix,
+        breath * 0.035 + (target?.y || 0) * reactionMix,
+        reactionMix > 0 ? 5.8 : 1.45,
+      );
+      motionManager.setBodyOrientationTargetRelative(
+        sway * 0.045 + (target?.bodyX || 0) * reactionMix,
+        breath * 0.025 + (target?.bodyY || 0) * reactionMix,
+        reactionMix > 0 ? 4.2 : 1.15,
+      );
+
+      if (!activeReaction && !reducedMotion && now >= nextIdleExpressionAt) {
+        motionManager.setExpression(model.idleExpression);
+        expressionOwnerRef.current = "idle";
+        idleExpressionResetAt = now + (characterId === "mika" ? 1_180 : 820);
+        nextIdleExpressionAt = now + model.idlePeriod * 1.55;
+      } else if (!activeReaction && expressionOwnerRef.current === "idle" && now >= idleExpressionResetAt) {
+        motionManager.resetExpression();
+        expressionOwnerRef.current = "none";
+      }
+
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    motionManager.setScale(model.scale);
+    motionManager.setPosition(model.positionX, model.positionY);
+    animationFrame = window.requestAnimationFrame(animate);
+    return () => {
+      disposed = true;
+      window.cancelAnimationFrame(animationFrame);
+      motionManager.resetExpression();
+      motionManager.setScale(model.scale);
+      motionManager.setPosition(model.positionX, model.positionY);
+    };
+  }, [characterId, model, motionManager]);
 
   return null;
 }
@@ -177,7 +262,7 @@ export function CubismCharacter({ characterId, fallbackSource, name, reaction })
               onLoad={() => setModelReady(true)}
               onError={() => setFailed(true)}
             >
-              <ModelReactionDriver characterId={characterId} reaction={reaction} />
+              <ModelMotionDriver characterId={characterId} reaction={reaction} />
             </Live2DModel>
           </Live2DCanvas>
         </Live2DRunner>

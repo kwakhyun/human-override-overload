@@ -5338,7 +5338,7 @@ kbd {
   transition: opacity 220ms ease-out;
 }
 .cubism-character.is-ready .cubism-character-fallback { opacity: 0; }
-.base-motion-portrait.is-mika { width: min(35vw, 480px); left: 25%; }
+.base-motion-portrait.is-mika { width: min(33vw, 448px); left: 26%; }
 
 .portrait-interaction-zones { position: absolute; z-index: 2; inset: 0; }
 .portrait-zone { position: absolute; margin: 0; padding: 0; border: 0; border-radius: 48%; background: transparent; cursor: pointer; touch-action: manipulation; }
@@ -5502,8 +5502,8 @@ kbd {
   .base-menu-button > svg { width: 19px; height: 19px; }
   .base-menu-button small { font-size: 5px; }
   .base-menu-button b { margin-top: 0; font-size: 8px; }
-  .base-motion-portrait,
-  .base-motion-portrait.is-mika { left: 24%; bottom: -5%; width: min(37vw, 300px); height: 91%; }
+  .base-motion-portrait { left: 24%; bottom: -5%; width: min(37vw, 300px); height: 91%; }
+  .base-motion-portrait.is-mika { left: 26%; bottom: -3%; width: min(33vw, 270px); height: 89%; }
   .motion-portrait-caption { right: 0; bottom: 4%; min-width: 108px; padding: 5px 7px; }
   .motion-portrait-caption small { font-size: 5px; }
   .motion-portrait-caption strong { font-size: 14px; }

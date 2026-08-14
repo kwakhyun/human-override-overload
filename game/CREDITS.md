@@ -1703,9 +1703,11 @@ Constraints: empty environment only; absolutely no people, no human figures, no 
   `https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html`입니다.
 - 소스 PSD 준비 스크립트: `scripts/build-cubism-source.py`. 이 스크립트는 MOC3를 위조하거나
   생성하지 않으며, 최종 `.cmo3` 리깅과 `.moc3` 출력은 Cubism Editor에서 수행했습니다.
-- 상호작용: 포인터 추적은 사용하지 않고 머리·가슴·양팔·다리 클릭에만 시선·상체·표정
-  파라미터를 적용합니다. AEGIS는 `cold`, MIKA는 `shy` 표정을 사용하며, 터치 영역 표시와
-  CSS 홍조/얼굴선 합성은 없습니다.
+- 상호작용: 포인터 추적은 사용하지 않습니다. 상시 호흡·미세 중심 이동은 Cubism 모델
+  행렬과 시선/상체 파라미터로 구동하고, 머리·가슴·양팔·다리 클릭에는 캐릭터별 4개 전용
+  표정 JSON과 영역별 반동을 적용합니다. AEGIS는 `cold-*`, MIKA는 `shy-*` 표정을 사용하며,
+  간헐 중립 변화는 `cold-idle`/`bright-idle`입니다. 터치 영역 표시와 CSS 홍조/얼굴선 합성은
+  없습니다.
 
 ## Open-source dependencies
 

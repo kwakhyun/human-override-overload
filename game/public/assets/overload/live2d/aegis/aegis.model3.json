@@ -9,6 +9,26 @@
 			{
 				"Name": "cold",
 				"File": "expressions/cold.exp3.json"
+			},
+			{
+				"Name": "cold-idle",
+				"File": "expressions/cold-idle.exp3.json"
+			},
+			{
+				"Name": "cold-head",
+				"File": "expressions/cold-head.exp3.json"
+			},
+			{
+				"Name": "cold-chest",
+				"File": "expressions/cold-chest.exp3.json"
+			},
+			{
+				"Name": "cold-arms",
+				"File": "expressions/cold-arms.exp3.json"
+			},
+			{
+				"Name": "cold-legs",
+				"File": "expressions/cold-legs.exp3.json"
 			}
 		],
 		"DisplayInfo": "aegis.cdi3.json"
