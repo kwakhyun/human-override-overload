@@ -610,4 +610,29 @@ final result: passed
   `data-live2d-ready=true`, 폴백 opacity 0, 로드 오류 0을 확인했습니다. 전체 테스트와 build는
   사용자의 빠른 반복 지침에 따라 실행하지 않았습니다.
 
+> Iteration 26의 실제 분리 리그와 전신 재출력이 이 배율·반응 구현을 대체합니다.
+
+final result: superseded
+
+### Iteration 26 — complete · 캐릭터별 분리 리그와 MIKA 전신 프레이밍
+
+- Root cause: Cubism Editor 5.3 기본 MOC 출력은 번들 Web Core와 맞지 않았고, 중복 MIKA
+  문서 중 빈 탭에서 호환 MOC를 한 차례 내보내 로딩 완료 캔버스가 투명해지는 문제도 있었습니다.
+  AEGIS와 전신 MIKA 원본 탭에서 각각 `SDK 5.0 / Cubism 5.0 대응` MOC3 v5를 다시 출력했습니다.
+- Character-specific rig: AEGIS와 MIKA는 별도 PSD·CMO3·MOC3·2048px 텍스처를 사용합니다.
+  눈 파츠에는 좌우 EyeOpen 키폼, 상체와 후면 머리카락에는 AngleX 키폼을 적용했으며 model3의
+  `EyeBlink` 그룹과 캐릭터별 idle/area expression을 결합했습니다. 한 캐릭터 리그를 다른
+  캐릭터에 복제하지 않았습니다.
+- Motion: 상시 호흡·좌우 상체/머리카락 흔들림과 간헐 표정을 Cubism 파라미터로 실행합니다.
+  터치 중에는 캔버스 위치와 전체 scale을 바꾸지 않고 머리·가슴·팔·다리별 방향, 진폭, 주기와
+  표정을 달리해 단순한 전신 위치 이동을 제거했습니다.
+- Framing: MIKA의 기존 상반신 원본을 프로젝트 정체성을 유지한 전신 941×1672 원본으로
+  확장하고 로비 scale 0.94, Y -0.035로 배치했습니다. 1440×810 캡처에서 머리 장식, 쌍환,
+  손끝, 양쪽 부츠가 모두 캔버스 안에 남습니다.
+- Focused QA: Cubism/캠페인 계약 14/14와 typecheck 통과. Edge WebGL에서 두 모델 모두
+  `data-live2d-ready=true`, 폴백 opacity 0, 8회 idle 표본 중 프레임 변화 감지, 터치 4영역에서
+  4개의 서로 다른 canvas 프레임을 확인했습니다. 물리·포즈·사용자 데이터가 없는 경량 모델의
+  선택적 경고 외 로드/페이지 오류는 없습니다. 전체 테스트와 production build는 실행하지
+  않았습니다.
+
 final result: passed

@@ -32,5 +32,12 @@
 			}
 		],
 		"DisplayInfo": "aegis.cdi3.json"
-	}
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": ["ParamEyeLOpen", "ParamEyeROpen"]
+		}
+	]
 }

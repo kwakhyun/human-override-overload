@@ -3,6 +3,8 @@
   "FadeInTime": 0.1,
   "FadeOutTime": 0.3,
   "Parameters": [
+    { "Id": "ParamEyeLOpen", "Value": -0.18, "Blend": "Add" },
+    { "Id": "ParamEyeROpen", "Value": -0.18, "Blend": "Add" },
     { "Id": "ParamBrowLY", "Value": -0.2, "Blend": "Add" },
     { "Id": "ParamBrowRY", "Value": -0.2, "Blend": "Add" },
     { "Id": "ParamBrowLAngle", "Value": -0.66, "Blend": "Add" },

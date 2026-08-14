@@ -3,6 +3,8 @@
   "FadeInTime": 0.1,
   "FadeOutTime": 0.36,
   "Parameters": [
+    { "Id": "ParamEyeLOpen", "Value": -0.18, "Blend": "Add" },
+    { "Id": "ParamEyeROpen", "Value": -0.08, "Blend": "Add" },
     { "Id": "ParamCheek", "Value": 0.48, "Blend": "Add" },
     { "Id": "ParamEyeLSmile", "Value": 0.7, "Blend": "Add" },
     { "Id": "ParamEyeRSmile", "Value": 0.55, "Blend": "Add" },

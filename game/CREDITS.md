@@ -1685,6 +1685,21 @@ Constraints: empty environment only; absolutely no people, no human figures, no 
 - 원본 캐릭터 일러스트: 프로젝트 원본
   `public/assets/overload/hero/survivor-portrait.png`,
   `public/assets/overload/hero/mika-portrait.png`.
+- MIKA 전신 확장 원본: 기존 MIKA의 얼굴·핑크 양갈래·흑백 마젠타 전투복·쌍환 장비를
+  정체성 참조로 사용해 OpenAI 내장 ImageGen에서 잘린 하체와 부츠를 완성했습니다. 선택 원본은
+  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-50635e01-96a3-4deb-a42f-0e34a40e4322.png`,
+  보존 원본은 `reference/source-assets/overload/live2d/mika-fullbody-chroma.png`, 투명 런타임
+  폴백은 `public/assets/overload/hero/mika-live2d-fullbody.png`입니다. 외부 게임 캐릭터 이미지는
+  ImageGen 참조나 런타임 에셋으로 사용하지 않았습니다.
+- MIKA 전신 확장 ImageGen 프롬프트:
+```text
+Use case: identity-preserve.
+Asset type: production full-body character source illustration for a rigged Live2D lobby model in HUMAN OVERRIDE: OVERLOAD.
+Input image: Image 1 is the approved MIKA identity. Preserve her exact adult anime face, vivid pink twin-tail hair, rose eyes, playful expression, black-and-white futuristic combat suit with magenta luminous seams, asymmetric white jacket panels, thigh holsters, and paired floating circular prism ring-blades. Do not redesign her identity, costume, proportions, colors, or equipment.
+Primary request: extend the cropped approved illustration into one coherent complete standing full-body MIKA. Reconstruct both legs below the existing crop with fitted black armored thigh straps, articulated cybernetic knee and shin armor, and matching black high combat boots with restrained magenta luminous accents. Keep the anatomy natural and the transition from the approved upper body seamless. Her relaxed confident pose and ring-blades remain unchanged.
+Composition/framing: exact 941x1672 portrait canvas; one centered character; complete hair ornaments, both ring-blades, fingertips, thighs, knees, shins, and both boot soles fully visible with safe transparent-production padding. No crop, duplicate limb, extra person, alternate costume, prop, floor, text, logo, or watermark.
+Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background covering every empty pixel, with no shadow, gradient, texture, reflection, or lighting variation. Do not use #00ff00 inside the character. Crisp separated edges suitable for local chroma removal and later Cubism segmentation.
+```
 - 편집 가능한 소스:
   `reference/source-assets/overload/cubism/aegis/aegis-cubism-source.psd`,
   `reference/source-assets/overload/cubism/aegis/aegis.cmo3`,
@@ -1703,11 +1718,16 @@ Constraints: empty environment only; absolutely no people, no human figures, no 
   `https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html`입니다.
 - 소스 PSD 준비 스크립트: `scripts/build-cubism-source.py`. 이 스크립트는 MOC3를 위조하거나
   생성하지 않으며, 최종 `.cmo3` 리깅과 `.moc3` 출력은 Cubism Editor에서 수행했습니다.
-- 상호작용: 포인터 추적은 사용하지 않습니다. 상시 호흡·미세 중심 이동은 Cubism 모델
-  행렬과 시선/상체 파라미터로 구동하고, 머리·가슴·양팔·다리 클릭에는 캐릭터별 4개 전용
-  표정 JSON과 영역별 반동을 적용합니다. AEGIS는 `cold-*`, MIKA는 `shy-*` 표정을 사용하며,
-  간헐 중립 변화는 `cold-idle`/`bright-idle`입니다. 터치 영역 표시와 CSS 홍조/얼굴선 합성은
-  없습니다.
+- 상호작용: 포인터 추적은 사용하지 않습니다. 상시 호흡·상체·머리카락 흔들림은 캐릭터별
+  Cubism 키폼과 시선/상체 파라미터로 구동합니다. 머리·가슴·양팔·다리 클릭에는 캐릭터별
+  전용 표정 JSON과 방향·진폭·주기가 다른 리그 반동을 적용하고, 캔버스 위치·전체 배율은 고정해
+  인물 전체가 미끄러지는 움직임을 제거했습니다. AEGIS는 `cold-*`, MIKA는 `shy-*` 표정을
+  사용하며, 간헐 중립 변화는 `cold-idle`/`bright-idle`입니다. model3의 `EyeBlink` 그룹이
+  양쪽 눈 파라미터를 구동합니다. 터치 영역 표시와 CSS 홍조/얼굴선 합성은 없습니다.
+- 상호작용 연출 밀도는 사용자가 지정한 캐릭터 로비 게임들의 클릭 반응·말풍선·아이들 변화
+  방식을 장르 참고로만 검토했습니다. 해당 작품의 미술, 모델, 리깅 데이터, 대사, UI 에셋은
+  복제하거나 프로젝트에 포함하지 않았고 AEGIS와 MIKA는 프로젝트 원본을 기반으로 각각
+  독립 제작했습니다.
 
 ## Open-source dependencies
 

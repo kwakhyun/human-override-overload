@@ -17,16 +17,17 @@ const CUBISM_MODELS = Object.freeze({
     scale: 0.94,
     positionX: 0,
     positionY: 0.025,
-    idlePeriod: 5_800,
+    idlePeriod: 5_400,
     idlePhase: 0.35,
     idleExpression: "cold-idle",
   }),
   mika: Object.freeze({
     modelJsonPath: "/assets/overload/live2d/mika/mika.model3.json",
-    scale: 0.82,
+    fallbackPath: "/assets/overload/hero/mika-live2d-fullbody.png",
+    scale: 0.94,
     positionX: 0,
-    positionY: 0.075,
-    idlePeriod: 4_900,
+    positionY: -0.035,
+    idlePeriod: 4_600,
     idlePhase: 1.6,
     idleExpression: "bright-idle",
   }),
@@ -34,16 +35,16 @@ const CUBISM_MODELS = Object.freeze({
 
 const REACTION_TARGETS = Object.freeze({
   aegis: Object.freeze({
-    head: Object.freeze({ x: -0.3, y: 0.2, bodyX: -0.13, bodyY: 0.04, offsetX: -0.012, offsetY: 0.012, scale: 0.008, duration: 980 }),
-    chest: Object.freeze({ x: 0.24, y: -0.1, bodyX: 0.18, bodyY: -0.1, offsetX: 0.026, offsetY: 0, scale: -0.014, duration: 920 }),
-    arms: Object.freeze({ x: -0.26, y: 0.02, bodyX: -0.24, bodyY: 0.02, offsetX: -0.024, offsetY: 0.008, scale: 0.006, duration: 900 }),
-    legs: Object.freeze({ x: 0.16, y: -0.25, bodyX: 0.12, bodyY: -0.16, offsetX: 0.012, offsetY: 0.024, scale: -0.012, duration: 960 }),
+    head: Object.freeze({ x: -0.3, y: 0.2, bodyX: -0.13, bodyY: 0.04, shake: 0.2, shakePeriod: 72, duration: 980 }),
+    chest: Object.freeze({ x: 0.24, y: -0.1, bodyX: 0.18, bodyY: -0.1, shake: 0.14, shakePeriod: 88, duration: 920 }),
+    arms: Object.freeze({ x: -0.26, y: 0.02, bodyX: -0.24, bodyY: 0.02, shake: 0.28, shakePeriod: 66, duration: 900 }),
+    legs: Object.freeze({ x: 0.16, y: -0.25, bodyX: 0.12, bodyY: -0.16, shake: 0.16, shakePeriod: 92, duration: 960 }),
   }),
   mika: Object.freeze({
-    head: Object.freeze({ x: 0.34, y: 0.24, bodyX: 0.19, bodyY: 0.05, offsetX: 0.02, offsetY: 0.018, scale: 0.018, duration: 1_280 }),
-    chest: Object.freeze({ x: -0.36, y: -0.12, bodyX: -0.25, bodyY: -0.12, offsetX: -0.034, offsetY: 0.005, scale: -0.018, duration: 1_360 }),
-    arms: Object.freeze({ x: 0.3, y: 0.04, bodyX: 0.26, bodyY: 0.02, offsetX: 0.036, offsetY: 0.014, scale: 0.012, duration: 1_180 }),
-    legs: Object.freeze({ x: -0.22, y: -0.28, bodyX: -0.16, bodyY: -0.18, offsetX: -0.026, offsetY: 0.026, scale: -0.012, duration: 1_240 }),
+    head: Object.freeze({ x: 0.34, y: 0.24, bodyX: 0.19, bodyY: 0.05, shake: 0.24, shakePeriod: 76, duration: 1_280 }),
+    chest: Object.freeze({ x: -0.36, y: -0.12, bodyX: -0.25, bodyY: -0.12, shake: 0.2, shakePeriod: 84, duration: 1_360 }),
+    arms: Object.freeze({ x: 0.3, y: 0.04, bodyX: 0.26, bodyY: 0.02, shake: 0.32, shakePeriod: 64, duration: 1_180 }),
+    legs: Object.freeze({ x: -0.22, y: -0.28, bodyX: -0.16, bodyY: -0.18, shake: 0.2, shakePeriod: 90, duration: 1_240 }),
   }),
 });
 
@@ -115,7 +116,7 @@ function ModelMotionDriver({ characterId, reaction }) {
     const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     let animationFrame = 0;
     let disposed = false;
-    let nextIdleExpressionAt = performance.now() + 3_400 + model.idlePhase * 700;
+    let nextIdleExpressionAt = performance.now() + 2_100 + model.idlePhase * 420;
     let idleExpressionResetAt = 0;
 
     const animate = (now) => {
@@ -125,12 +126,16 @@ function ModelMotionDriver({ characterId, reaction }) {
       const sway = reducedMotion ? 0 : Math.sin(time * Math.PI * 1.12 + 0.8);
       const activeReaction = reactionRef.current;
       let reactionMix = 0;
+      let reactionShake = 0;
       let target = null;
 
       if (activeReaction) {
         const elapsed = now - activeReaction.startedAt;
         target = activeReaction.target;
-        if (elapsed < target.duration) reactionMix = reactionEnvelope(elapsed, target.duration);
+        if (elapsed < target.duration) {
+          reactionMix = reactionEnvelope(elapsed, target.duration);
+          reactionShake = Math.sin(elapsed / target.shakePeriod * Math.PI * 2) * target.shake * reactionMix;
+        }
         else {
           reactionRef.current = null;
           if (expressionOwnerRef.current === "reaction") {
@@ -141,30 +146,25 @@ function ModelMotionDriver({ characterId, reaction }) {
         }
       }
 
-      const idleScale = reducedMotion ? 0 : breath * (characterId === "mika" ? 0.0065 : 0.0045);
-      const idleX = reducedMotion ? 0 : sway * (characterId === "mika" ? 0.006 : 0.004);
-      const idleY = reducedMotion ? 0 : breath * (characterId === "mika" ? 0.011 : 0.008);
-      motionManager.setScale(model.scale + idleScale + (target?.scale || 0) * reactionMix);
-      motionManager.setPosition(
-        model.positionX + idleX + (target?.offsetX || 0) * reactionMix,
-        model.positionY + idleY + (target?.offsetY || 0) * reactionMix,
-      );
+      // Keep the model anchored. All visible movement is driven through Cubism
+      // parameters, so a touch bends the rigged body/hair instead of sliding the
+      // entire portrait around the lobby.
       motionManager.setLookTargetRelative(
-        sway * 0.055 + (target?.x || 0) * reactionMix,
-        breath * 0.035 + (target?.y || 0) * reactionMix,
-        reactionMix > 0 ? 5.8 : 1.45,
+        sway * 0.075 + (target?.x || 0) * reactionMix + reactionShake,
+        breath * 0.045 + (target?.y || 0) * reactionMix,
+        reactionMix > 0 ? 8.2 : 1.35,
       );
       motionManager.setBodyOrientationTargetRelative(
-        sway * 0.045 + (target?.bodyX || 0) * reactionMix,
-        breath * 0.025 + (target?.bodyY || 0) * reactionMix,
-        reactionMix > 0 ? 4.2 : 1.15,
+        sway * 0.085 + (target?.bodyX || 0) * reactionMix + reactionShake * 0.72,
+        breath * 0.04 + (target?.bodyY || 0) * reactionMix,
+        reactionMix > 0 ? 7.4 : 1.1,
       );
 
       if (!activeReaction && !reducedMotion && now >= nextIdleExpressionAt) {
         motionManager.setExpression(model.idleExpression);
         expressionOwnerRef.current = "idle";
-        idleExpressionResetAt = now + (characterId === "mika" ? 1_180 : 820);
-        nextIdleExpressionAt = now + model.idlePeriod * 1.55;
+        idleExpressionResetAt = now + (characterId === "mika" ? 920 : 720);
+        nextIdleExpressionAt = now + model.idlePeriod * 0.92;
       } else if (!activeReaction && expressionOwnerRef.current === "idle" && now >= idleExpressionResetAt) {
         motionManager.resetExpression();
         expressionOwnerRef.current = "none";
@@ -191,6 +191,7 @@ function ModelMotionDriver({ characterId, reaction }) {
 export function CubismCharacter({ characterId, fallbackSource, name, reaction }) {
   const ticker = useTicker();
   const model = CUBISM_MODELS[characterId] || CUBISM_MODELS.aegis;
+  const resolvedFallbackSource = model.fallbackPath || fallbackSource;
   const hostRef = useRef(null);
   const canvasRef = useRef(null);
   const [coreReady, setCoreReady] = useState(Boolean(globalThis.Live2DCubismCore));
@@ -233,10 +234,10 @@ export function CubismCharacter({ characterId, fallbackSource, name, reaction })
       data-live2d-ready={modelReady ? "true" : "false"}
       data-live2d-model={characterId}
     >
-      {fallbackSource && (
+      {resolvedFallbackSource && (
         <img
           className="cubism-character-fallback"
-          src={fallbackSource}
+          src={resolvedFallbackSource}
           alt={`${name} 로비 전신 일러스트`}
           aria-hidden={modelReady ? "true" : undefined}
         />

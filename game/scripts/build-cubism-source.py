@@ -11,7 +11,7 @@ import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 from psd_tools import PSDImage
 from psd_tools.api.layers import Group, PixelLayer
 
@@ -35,6 +35,8 @@ class CharacterSpec:
     source_name: str
     face_box: tuple[int, int, int, int]
     features: tuple[Feature, ...]
+    segment_polygons: tuple[tuple[str, tuple[tuple[int, int], ...]], ...]
+    hair_mode: str
 
 
 SPECS = (
@@ -47,16 +49,28 @@ SPECS = (
             Feature("Eye_R", (531, 260, 607, 316), underpaint_offset_y=43),
             Feature("Mouth", (502, 334, 572, 380), underpaint_offset_y=-34),
         ),
+        segment_polygons=(
+            ("Arm_L", ((62, 710), (245, 472), (400, 515), (332, 1370), (95, 1505))),
+            ("Arm_R", ((555, 455), (710, 492), (864, 1210), (750, 1355), (598, 950))),
+            ("Lower_Body", ((235, 1015), (710, 1015), (820, 1672), (155, 1672))),
+        ),
+        hair_mode="silver",
     ),
     CharacterSpec(
         character_id="mika",
-        source_name="mika-portrait.png",
-        face_box=(305, 160, 665, 535),
+        source_name="mika-live2d-fullbody.png",
+        face_box=(315, 130, 660, 445),
         features=(
-            Feature("Eye_L", (425, 333, 501, 395), underpaint_offset_y=48),
-            Feature("Eye_R", (536, 340, 611, 402), underpaint_offset_y=46),
-            Feature("Mouth", (482, 428, 560, 478), underpaint_offset_y=-38),
+            Feature("Eye_L", (420, 244, 493, 298), underpaint_offset_y=42),
+            Feature("Eye_R", (526, 249, 598, 304), underpaint_offset_y=40),
+            Feature("Mouth", (482, 328, 554, 375), underpaint_offset_y=-32),
         ),
+        segment_polygons=(
+            ("Arm_L", ((185, 495), (340, 390), (425, 560), (330, 925), (170, 910))),
+            ("Arm_R", ((585, 300), (750, 325), (820, 690), (675, 730), (555, 535))),
+            ("Lower_Body", ((300, 755), (650, 755), (690, 1645), (300, 1645))),
+        ),
+        hair_mode="pink",
     ),
 )
 
@@ -76,6 +90,84 @@ def feature_layer(source: Image.Image, feature: Feature) -> Image.Image:
     return layer
 
 
+def polygon_mask(size: tuple[int, int], points: tuple[tuple[int, int], ...], feather: int = 3) -> Image.Image:
+    mask = Image.new("L", size, 0)
+    ImageDraw.Draw(mask).polygon(points, fill=255)
+    if feather:
+        mask = mask.filter(ImageFilter.GaussianBlur(feather))
+    return mask
+
+
+def alpha_intersection(source: Image.Image, mask: Image.Image) -> Image.Image:
+    return ImageChops.multiply(source.getchannel("A"), mask)
+
+
+def masked_layer(source: Image.Image, mask: Image.Image) -> Image.Image:
+    layer = Image.new("RGBA", source.size, (0, 0, 0, 0))
+    layer.paste(source, (0, 0), alpha_intersection(source, mask))
+    return layer
+
+
+def color_hair_mask(source: Image.Image, mode: str) -> Image.Image:
+    """Extract a conservative hair core; soft region masks supply the loose tips."""
+    rgb = source.convert("RGB")
+    pixels = rgb.load()
+    out = Image.new("L", source.size, 0)
+    target = out.load()
+    for y in range(source.height):
+        for x in range(source.width):
+            r, g, b = pixels[x, y]
+            if mode == "pink":
+                keep = r > 125 and r > g * 1.12 and r > b * 1.02 and y < 790
+            else:
+                spread = max(r, g, b) - min(r, g, b)
+                keep = r > 95 and g > 95 and b > 105 and spread < 92 and y < 1180
+            if keep:
+                target[x, y] = 255
+    return out.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.GaussianBlur(2.2))
+
+
+def build_segment_masks(spec: CharacterSpec, source: Image.Image) -> list[tuple[str, Image.Image]]:
+    masks: list[tuple[str, Image.Image]] = []
+    hair = color_hair_mask(source, spec.hair_mode)
+    width, height = source.size
+    if spec.hair_mode == "pink":
+        front_region = polygon_mask(source.size, ((270, 80), (665, 80), (675, 440), (285, 455)), 8)
+        left_region = polygon_mask(source.size, ((105, 80), (455, 70), (470, 825), (135, 825)), 8)
+        right_region = polygon_mask(source.size, ((485, 75), (820, 75), (825, 800), (475, 800)), 8)
+    else:
+        front_region = polygon_mask(source.size, ((245, 55), (690, 55), (690, 525), (245, 540)), 8)
+        left_region = polygon_mask(source.size, ((20, 70), (475, 65), (455, 1230), (15, 1230)), 8)
+        right_region = polygon_mask(source.size, ((470, 65), (875, 70), (900, 1160), (455, 1160)), 8)
+    masks.extend((
+        ("Hair_Back_L", ImageChops.multiply(hair, left_region)),
+        ("Hair_Back_R", ImageChops.multiply(hair, right_region)),
+        ("Hair_Front", ImageChops.multiply(hair, front_region)),
+    ))
+    for name, points in spec.segment_polygons:
+        masks.append((name, polygon_mask((width, height), points)))
+    return masks
+
+
+def subtract_masks(source: Image.Image, masks: list[Image.Image]) -> Image.Image:
+    remaining = source.getchannel("A")
+    combined = Image.new("L", source.size, 0)
+    for mask in masks:
+        combined = ImageChops.lighter(combined, mask)
+    remaining = ImageChops.subtract(remaining, combined)
+    base = source.copy()
+    base.putalpha(remaining)
+    return base
+
+
+def add_trimmed_layer(parent: Group, image: Image.Image, name: str) -> PixelLayer:
+    bbox = image.getchannel("A").getbbox()
+    if bbox is None:
+        raise ValueError(f"Cubism source layer {name} is empty")
+    left, top, right, bottom = bbox
+    return PixelLayer.frompil(image.crop(bbox), parent, name=name, top=top, left=left)
+
+
 def underpaint_feature(base: Image.Image, feature: Feature) -> None:
     left, top, right, bottom = feature.box
     dy = feature.underpaint_offset_y
@@ -89,20 +181,22 @@ def underpaint_feature(base: Image.Image, feature: Feature) -> None:
 def build_psd(spec: CharacterSpec) -> Path:
     source_path = PUBLIC / spec.source_name
     source = Image.open(source_path).convert("RGBA")
-    base = source.copy()
+    segments = build_segment_masks(spec, source)
+    feature_masks = [ellipse_mask(source.size, feature.box, feature.feather) for feature in spec.features]
+    base = subtract_masks(source, [mask for _, mask in segments] + feature_masks)
     for feature in spec.features:
         underpaint_feature(base, feature)
 
     psd = PSDImage.new("RGBA", source.size, color=(0, 0, 0, 0))
     model = Group.new(psd, name=f"{spec.character_id.upper()}_CUBISM_SOURCE")
-    face_base = Group.new(model, name="Face_Base_Part")
-    PixelLayer.frompil(base, face_base, name="Face_Body_Base")
+    face_base = Group.new(model, name="Body_Base_Part")
+    add_trimmed_layer(face_base, base, "Body_Base")
+    for segment_name, segment_mask in reversed(segments):
+        segment_part = Group.new(model, name=f"{segment_name}_Part")
+        add_trimmed_layer(segment_part, masked_layer(source, segment_mask), segment_name)
     for feature in spec.features:
         feature_part = Group.new(model, name=f"{feature.name}_Part")
-        PixelLayer.frompil(feature_layer(source, feature), feature_part, name=feature.name)
-
-    guide = Group.new(model, name="GUIDE_HIDDEN")
-    PixelLayer.frompil(source, guide, name="Approved_Composite_Reference", opacity=0)
+        add_trimmed_layer(feature_part, feature_layer(source, feature), feature.name)
 
     target_dir = OUTPUT / spec.character_id
     target_dir.mkdir(parents=True, exist_ok=True)

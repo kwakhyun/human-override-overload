@@ -144,10 +144,6 @@
 			"Name": "MIKA_CUBISM_SOURCE"
 		},
 		{
-			"Id": "GUIDE_HIDDEN",
-			"Name": "GUIDE_HIDDEN"
-		},
-		{
 			"Id": "Mouth_Part",
 			"Name": "Mouth_Part"
 		},
@@ -160,8 +156,32 @@
 			"Name": "Eye_L_Part"
 		},
 		{
-			"Id": "Face_Base_Part",
-			"Name": "Face_Base_Part"
+			"Id": "Hair_Back_L_Part",
+			"Name": "Hair_Back_L_Part"
+		},
+		{
+			"Id": "Hair_Back_R_Part",
+			"Name": "Hair_Back_R_Part"
+		},
+		{
+			"Id": "Hair_Front_Part",
+			"Name": "Hair_Front_Part"
+		},
+		{
+			"Id": "Arm_L_Part",
+			"Name": "Arm_L_Part"
+		},
+		{
+			"Id": "Arm_R_Part",
+			"Name": "Arm_R_Part"
+		},
+		{
+			"Id": "Lower_Body_Part",
+			"Name": "Lower_Body_Part"
+		},
+		{
+			"Id": "Body_Base_Part",
+			"Name": "Body_Base_Part"
 		}
 	]
 }
