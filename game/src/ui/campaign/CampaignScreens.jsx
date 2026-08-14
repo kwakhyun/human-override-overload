@@ -519,12 +519,11 @@ function MotionPortraitStage({ source, characterId, name, onOpen }) {
   return (
     <section
       className={`base-motion-portrait is-${characterId}${reaction ? ` is-reacting reaction-${reaction.area}` : ""}`}
-      data-live2d-ready="true"
+      data-portrait-renderer="static-fallback"
       aria-label={`${name} 상호작용 포트레이트`}
     >
       <span className="motion-portrait-body">
         {source && <img src={assetSource(source)} alt={`${name} 로비 전신 일러스트`} />}
-        <span className="motion-portrait-expression" aria-hidden="true" />
       </span>
       <div className="portrait-interaction-zones" aria-label={`${name} 터치 상호작용`}>
         <button type="button" className="portrait-zone is-head" data-ui-sound="click" onClick={() => react("head")} aria-label={`${name} 머리 반응 보기`} />
