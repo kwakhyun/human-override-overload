@@ -2,7 +2,7 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const WORLD_WIDTH = 1920;
 export const WORLD_HEIGHT = 1080;
-export const EXPEDITION_WORLD_WIDTH = 13200;
+export const EXPEDITION_WORLD_WIDTH = 26400;
 
 const TAU = Math.PI * 2;
 const ARENA = Object.freeze({ left: 34, right: 1246, top: 34, bottom: 686 });
@@ -27,22 +27,26 @@ const EXPEDITION_WORLD_SIZE = Object.freeze({ width: EXPEDITION_WORLD_WIDTH, hei
 const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sword", "wave", "titan", "flash", "storm", "halo"]);
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
 const EXPEDITION_FLOOR_ELLIPSE = Object.freeze({ x: 960, y: 540, rx: 840, ry: 460 });
-const EXPEDITION_ROUTE_LENGTH = 12000;
+const EXPEDITION_ROUTE_LENGTH = 25000;
 const EXPEDITION_ROUTE_ORIGIN_X = 580;
 const EXPEDITION_CORRIDOR = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 150, bottom: 930 });
 const EXPEDITION_DEEP_PURSUIT_DISTANCE = 720;
 const EXPEDITION_PURSUIT_SPEED_MULTIPLIER = 1.12;
+const ENEMY_SEPARATION_GAP = 6;
+const ENEMY_SEPARATION_PASSES = 18;
+const ENEMY_SEPARATION_DIRECTIONS_X = Object.freeze([1, 0.70710678, 0, -0.70710678, -1, -0.70710678, 0, 0.70710678]);
+const ENEMY_SEPARATION_DIRECTIONS_Y = Object.freeze([0, 0.70710678, 1, 0.70710678, 0, -0.70710678, -1, -0.70710678]);
 const EXPEDITION_SPAWN_GATES = Object.freeze([
-  Object.freeze({ id: "east-upper", offsetX: 520, y: 270 }),
-  Object.freeze({ id: "east-lower", offsetX: 520, y: 810 }),
+  Object.freeze({ id: "east-upper", offsetX: 520, y: 400 }),
+  Object.freeze({ id: "east-lower", offsetX: 520, y: 680 }),
   Object.freeze({ id: "north-rail", offsetX: 400, y: 235 }),
   Object.freeze({ id: "south-rail", offsetX: 400, y: 845 }),
   Object.freeze({ id: "rear-breach", offsetX: -500, y: 540 }),
 ]);
 const EXPEDITION_TRACES = Object.freeze([
-  Object.freeze({ id: "rook", distance: 2200, y: 360, kind: "helmet", beat: "rook-trace" }),
-  Object.freeze({ id: "nyx", distance: 5600, y: 760, kind: "weapon", beat: "nyx-trace" }),
-  Object.freeze({ id: "moss", distance: 8600, y: 510, kind: "body", beat: "moss-trace" }),
+  Object.freeze({ id: "rook", distance: 4800, y: 360, kind: "helmet", beat: "rook-trace" }),
+  Object.freeze({ id: "nyx", distance: 13200, y: 760, kind: "weapon", beat: "nyx-trace" }),
+  Object.freeze({ id: "moss", distance: 21800, y: 510, kind: "body", beat: "moss-trace" }),
 ]);
 const SURGE_WAVES = Object.freeze([
   Object.freeze({ warnAt: 8, startAt: 8.72, warningLead: 0.72, count: 14, rate: 12, label: "근접 추격대 · WAVE I" }),
@@ -408,8 +412,15 @@ function edgeSpawn(state, index) {
     const streamIndex = Math.floor(index / 8);
     const gate = EXPEDITION_SPAWN_GATES[streamIndex % EXPEDITION_SPAWN_GATES.length];
     const slot = index % 8;
-    const x = clamp(state.player.x + gate.offsetX, EXPEDITION_ARENA.left + 34, EXPEDITION_ARENA.right - 34);
-    const y = clamp(gate.y + (slot - 3.5) * 8, EXPEDITION_ARENA.top + 12, EXPEDITION_ARENA.bottom - 12);
+    // Eight-unit reinforcements now materialize as a spacious two-column formation.
+    // The previous 8px slot offset was much smaller than the 92px+ authored
+    // sprites, so an entire wave appeared to be a single stacked unit.
+    const slotColumn = slot % 2;
+    const slotRow = Math.floor(slot / 2);
+    const formationX = (slotColumn - 0.5) * 104;
+    const formationY = (slotRow - 1.5) * 112;
+    const x = clamp(state.player.x + gate.offsetX + formationX, EXPEDITION_CORRIDOR.left + 54, EXPEDITION_CORRIDOR.right - 54);
+    const y = clamp(gate.y + formationY, EXPEDITION_CORRIDOR.top + 54, EXPEDITION_CORRIDOR.bottom - 54);
     const gateActive = state.spawnPortals.some((portal) => portal.gateId === gate.id && portal.life > 0.32);
     if (slot === 0 || !gateActive) {
       state.spawnPortals.push({
@@ -1480,6 +1491,89 @@ function rebuildEnemyGrid(state) {
     if (row < bounds.minRow) bounds.minRow = row;
     if (row > bounds.maxRow) bounds.maxRow = row;
   }
+}
+
+function enemyPresentationRadius(enemy) {
+  if (enemy?.isMidBoss) return 124;
+  const role = enemy?.combatRole ?? ENEMY_DATA[enemy?.type]?.role;
+  const baseRadius = role === "siegeWalker" ? 98
+    : role === "sniper" ? 69
+      : role === "rifleman" ? 54
+        : 46;
+  return baseRadius * (enemy?.elite ? 1.16 : 1);
+}
+
+function clampSeparatedEnemy(enemy) {
+  const radius = enemyPresentationRadius(enemy);
+  enemy.x = clamp(enemy.x, EXPEDITION_CORRIDOR.left + radius, EXPEDITION_CORRIDOR.right - radius);
+  enemy.y = clamp(enemy.y, EXPEDITION_CORRIDOR.top + radius, EXPEDITION_CORRIDOR.bottom - radius);
+}
+
+function resolveExpeditionEnemySeparation(state) {
+  if (!state.expedition) {
+    rebuildEnemyGrid(state);
+    return;
+  }
+
+  // Reuse the projectile collision grid instead of allocating a second crowd
+  // structure. Short solver passes keep even a 220-unit pressure wave
+  // visually distinct while preserving deterministic entity order.
+  for (let pass = 0; pass < ENEMY_SEPARATION_PASSES; pass += 1) {
+    rebuildEnemyGrid(state);
+    let overlapCount = 0;
+    for (let enemyIndex = 0; enemyIndex < state.enemies.length; enemyIndex += 1) {
+      const enemy = state.enemies[enemyIndex];
+      if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
+      const radius = enemyPresentationRadius(enemy);
+      const reach = Math.max(1, Math.ceil((radius + 124 + ENEMY_SEPARATION_GAP) / GRID_SIZE));
+      const column = Math.floor(enemy.x / GRID_SIZE);
+      const row = Math.floor(enemy.y / GRID_SIZE);
+      for (let gridColumn = column - reach; gridColumn <= column + reach; gridColumn += 1) {
+        for (let gridRow = row - reach; gridRow <= row + reach; gridRow += 1) {
+          const bucket = state.spatialGrid.get(gridKey(gridColumn, gridRow));
+          if (!bucket) continue;
+          for (let bucketIndex = 0; bucketIndex < bucket.length; bucketIndex += 1) {
+            const other = bucket[bucketIndex];
+            if (other === enemy || other.dead || finite(other.spawnDelay) > 0 || other.id <= enemy.id) continue;
+            const minimumDistance = radius + enemyPresentationRadius(other) + ENEMY_SEPARATION_GAP;
+            let dx = other.x - enemy.x;
+            let dy = other.y - enemy.y;
+            const distanceSq = dx * dx + dy * dy;
+            if (distanceSq >= minimumDistance * minimumDistance) continue;
+
+            let directionX;
+            let directionY;
+            let distance;
+            if (distanceSq <= 0.000001) {
+              const directionIndex = Math.abs((enemy.id * 31 + other.id * 17) % 8);
+              directionX = ENEMY_SEPARATION_DIRECTIONS_X[directionIndex];
+              directionY = ENEMY_SEPARATION_DIRECTIONS_Y[directionIndex];
+              distance = 0;
+            } else {
+              distance = Math.sqrt(distanceSq);
+              directionX = dx / distance;
+              directionY = dy / distance;
+            }
+            const overlap = minimumDistance - distance;
+            const enemyMobility = enemy.isMidBoss ? 0.22 : enemy.combatRole === "siegeWalker" ? 0.46 : 1;
+            const otherMobility = other.isMidBoss ? 0.22 : other.combatRole === "siegeWalker" ? 0.46 : 1;
+            const mobilityTotal = Math.max(0.01, enemyMobility + otherMobility);
+            const enemyShift = overlap * enemyMobility / mobilityTotal;
+            const otherShift = overlap * otherMobility / mobilityTotal;
+            enemy.x -= directionX * enemyShift;
+            enemy.y -= directionY * enemyShift;
+            other.x += directionX * otherShift;
+            other.y += directionY * otherShift;
+            clampSeparatedEnemy(enemy);
+            clampSeparatedEnemy(other);
+            overlapCount += 1;
+          }
+        }
+      }
+    }
+    if (overlapCount === 0) break;
+  }
+  rebuildEnemyGrid(state);
 }
 
 function nearbyEnemies(state, x, y, radius = 0) {
@@ -4927,7 +5021,7 @@ export function stepSwarm(state, input, dt) {
 
   if (state.phase === "swarm") {
     updateEnemies(state, worldDelta);
-    rebuildEnemyGrid(state);
+    resolveExpeditionEnemySeparation(state);
     updateOrbitWeapon(state, worldDelta);
     updateSupportSkills(state, worldDelta);
     updateProjectiles(state, worldDelta);

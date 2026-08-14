@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   BOSS_PATTERNS,
+  EXPEDITION_WORLD_WIDTH,
   GAME_HEIGHT,
   GAME_WIDTH,
   REGION_BOSS_PATTERNS,
@@ -111,6 +112,9 @@ test("the renewed mode has one hero, no regions, and a fixed 1000-unit assault",
 
 test("the expedition opens with eight durable melee units and scales pressure by cleared waves", () => {
   const state = createSwarmState({ random: () => 0.37, expedition: true });
+  assert.equal(EXPEDITION_WORLD_WIDTH, 26400);
+  assert.equal(state.expedition.routeLength, 25000);
+  assert.ok(state.expedition.routeLength < EXPEDITION_WORLD_WIDTH);
   assert.equal(state.enemies.length, 8);
   assert.equal(getEnemyPressureCap(state), 8);
   assert.deepEqual(new Set(state.enemies.map((enemy) => enemy.type)), new Set(["hunter"]));
@@ -121,6 +125,43 @@ test("the expedition opens with eight durable melee units and scales pressure by
   state.surgeIndex = 7;
   assert.ok(getEnemyPressureCap(state) >= 175);
   assert.ok(getEnemyPressureCap(state) <= 220);
+});
+
+test("expedition enemies resolve authored sprite footprints without stacking", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true, duration: 999 });
+  state.spawnedEnemies = state.enemyBudget;
+  state.levelFlow.nextOfferAt = 999;
+  state.levelFlow.firstDeadline = 999;
+  delayPlayerWeapons(state);
+  for (const enemy of state.enemies) {
+    enemy.x = 1120;
+    enemy.y = 540;
+    enemy.speed = 0;
+    enemy.damage = 0;
+    enemy.hp = 999999;
+    enemy.maxHp = enemy.hp;
+    enemy.spawnDelay = 0;
+    enemy.shootCooldown = 999;
+  }
+  stepFor(state, createSwarmInput(), 0.1);
+
+  const presentationRadius = (enemy) => {
+    const base = enemy.isMidBoss ? 124
+      : enemy.combatRole === "siegeWalker" ? 98
+        : enemy.combatRole === "sniper" ? 69
+          : enemy.combatRole === "rifleman" ? 54
+            : 46;
+    return base * (enemy.elite ? 1.16 : 1);
+  };
+  for (let left = 0; left < state.enemies.length; left += 1) {
+    for (let right = left + 1; right < state.enemies.length; right += 1) {
+      const a = state.enemies[left];
+      const b = state.enemies[right];
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      assert.ok(distance >= presentationRadius(a) + presentationRadius(b) - 0.1,
+        `enemy ${a.id}/${b.id} overlap at ${distance.toFixed(3)}px`);
+    }
+  }
 });
 
 test("expedition pressure rises with wave clears even when AEGIS does not move right", () => {
