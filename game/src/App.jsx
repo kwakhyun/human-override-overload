@@ -1218,6 +1218,112 @@ function TouchJoystick({ onMove, label = "이동 조이스틱" }) {
   );
 }
 
+const FLOATING_JOYSTICK_BLOCKED_SELECTOR = [
+  "button",
+  "a",
+  "input",
+  "select",
+  "textarea",
+  "[role='dialog']",
+  ".narrative-panel",
+  ".reward-backdrop",
+  ".expedition-pause",
+  ".combat-tutorial-layer",
+].join(",");
+
+function FloatingTouchJoystick({ surfaceRef, onMove }) {
+  const joystickRef = useRef(null);
+
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    const joystick = joystickRef.current;
+    if (!surface || !joystick) return undefined;
+    const pointer = { id: null, startX: 0, startY: 0 };
+    const radius = 58;
+    const deadzone = 0.12;
+
+    const setVisual = (clientX, clientY, knobX = 0, knobY = 0, active = false) => {
+      const bounds = surface.getBoundingClientRect();
+      const visualRadius = 72;
+      const x = Math.max(visualRadius, Math.min(bounds.width - visualRadius, clientX - bounds.left));
+      const y = Math.max(visualRadius, Math.min(bounds.height - visualRadius, clientY - bounds.top));
+      joystick.style.setProperty("--joystick-x", `${x}px`);
+      joystick.style.setProperty("--joystick-y", `${y}px`);
+      joystick.style.setProperty("--joystick-knob-x", `${knobX}px`);
+      joystick.style.setProperty("--joystick-knob-y", `${knobY}px`);
+      joystick.classList.toggle("is-active", active);
+    };
+
+    const update = (event) => {
+      const rawX = event.clientX - pointer.startX;
+      const rawY = event.clientY - pointer.startY;
+      const distance = Math.hypot(rawX, rawY);
+      const clampScale = distance > radius ? radius / distance : 1;
+      const knobX = rawX * clampScale;
+      const knobY = rawY * clampScale;
+      const magnitude = Math.min(1, distance / radius);
+      const activeMagnitude = magnitude <= deadzone ? 0 : (magnitude - deadzone) / (1 - deadzone);
+      const unitX = distance > 0 ? rawX / distance : 0;
+      const unitY = distance > 0 ? rawY / distance : 0;
+      setVisual(pointer.startX, pointer.startY, knobX, knobY, true);
+      onMove(unitX * activeMagnitude, unitY * activeMagnitude, event);
+    };
+
+    const begin = (event) => {
+      if (event.pointerType === "mouse" || pointer.id !== null) return;
+      if (event.target instanceof Element && event.target.closest(FLOATING_JOYSTICK_BLOCKED_SELECTOR)) return;
+      pointer.id = event.pointerId;
+      pointer.startX = event.clientX;
+      pointer.startY = event.clientY;
+      event.preventDefault();
+      surface.setPointerCapture?.(event.pointerId);
+      setVisual(event.clientX, event.clientY, 0, 0, true);
+      onMove(0, 0, event);
+    };
+
+    const move = (event) => {
+      if (pointer.id !== event.pointerId) return;
+      event.preventDefault();
+      update(event);
+    };
+
+    const end = (event) => {
+      if (pointer.id === null || (event?.pointerId !== undefined && pointer.id !== event.pointerId)) return;
+      pointer.id = null;
+      joystick.classList.remove("is-active");
+      joystick.style.setProperty("--joystick-knob-x", "0px");
+      joystick.style.setProperty("--joystick-knob-y", "0px");
+      onMove(0, 0, event);
+    };
+
+    const cancel = () => end();
+    surface.addEventListener("pointerdown", begin, { passive: false });
+    surface.addEventListener("pointermove", move, { passive: false });
+    surface.addEventListener("pointerup", end, { passive: false });
+    surface.addEventListener("pointercancel", end, { passive: false });
+    surface.addEventListener("lostpointercapture", end, { passive: false });
+    window.addEventListener("blur", cancel);
+    document.addEventListener("visibilitychange", cancel);
+    return () => {
+      surface.removeEventListener("pointerdown", begin);
+      surface.removeEventListener("pointermove", move);
+      surface.removeEventListener("pointerup", end);
+      surface.removeEventListener("pointercancel", end);
+      surface.removeEventListener("lostpointercapture", end);
+      window.removeEventListener("blur", cancel);
+      document.removeEventListener("visibilitychange", cancel);
+      onMove(0, 0);
+    };
+  }, [onMove, surfaceRef]);
+
+  return (
+    <div ref={joystickRef} className="floating-touch-joystick" aria-hidden="true">
+      <span className="floating-touch-joystick-ring" />
+      <i className="floating-touch-joystick-knob" />
+    </div>
+  );
+}
+
 function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
@@ -1729,17 +1835,16 @@ function RouteMinimap({ hud }) {
 
 function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, characterId, mikaUnlocked = false, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
+  const frameRef = useRef(null);
   const controllerRef = useRef(null);
   const finishReportedRef = useRef(false);
   const pausedRef = useRef(false);
   const [hud, setHud] = useState(null);
   const [banner, setBanner] = useState(null);
   const [dialogue, setDialogue] = useState(null);
-  const [needsLandscape, setNeedsLandscape] = useState(false);
   const [paused, setPaused] = useState(false);
   const [combatTutorialStep, setCombatTutorialStep] = useState(-1);
   const [runRevision, setRunRevision] = useState(0);
-  const needsLandscapeRef = useRef(false);
   const airstrikeBannerShownRef = useRef(false);
   const autoBossEntryHandledRef = useRef(false);
   const combatTutorialActiveRef = useRef(false);
@@ -1763,21 +1868,9 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   }, [soundEnabled]);
 
   useEffect(() => {
-    const query = window.matchMedia("(orientation: portrait) and (max-width: 900px)");
-    const syncOrientation = () => {
-      needsLandscapeRef.current = query.matches;
-      setNeedsLandscape(query.matches);
-      controllerRef.current?.setSuspended(preparingRef.current || query.matches || pausedRef.current || combatTutorialActiveRef.current);
-    };
-    syncOrientation();
-    query.addEventListener?.("change", syncOrientation);
-    return () => query.removeEventListener?.("change", syncOrientation);
-  }, []);
-
-  useEffect(() => {
     preparingRef.current = preparing;
-    controllerRef.current?.setSuspended(preparing || needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
-    if (!preparing && !needsLandscapeRef.current && !pausedRef.current && !combatTutorialActiveRef.current) {
+    controllerRef.current?.setSuspended(preparing || pausedRef.current || combatTutorialActiveRef.current);
+    if (!preparing && !pausedRef.current && !combatTutorialActiveRef.current) {
       controllerRef.current?.focus();
     }
   }, [preparing]);
@@ -1860,13 +1953,13 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
           if (!stopped) onRuntimeProgress?.(progress);
         },
         onReady: () => {
-          controllerRef.current?.setSuspended(preparingRef.current || needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
-          if (!preparingRef.current && !needsLandscapeRef.current && !pausedRef.current && !combatTutorialActiveRef.current) controllerRef.current?.focus();
+          controllerRef.current?.setSuspended(preparingRef.current || pausedRef.current || combatTutorialActiveRef.current);
+          if (!preparingRef.current && !pausedRef.current && !combatTutorialActiveRef.current) controllerRef.current?.focus();
           reportRuntimeReady();
         },
       }, { regionId, combatBonuses, mainWeaponId, characterId, mikaUnlocked, startSuspended: preparingRef.current });
       controllerRef.current = controller;
-      controller.setSuspended(preparingRef.current || needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
+      controller.setSuspended(preparingRef.current || pausedRef.current || combatTutorialActiveRef.current);
     }).catch(() => {
       if (stopped) return;
       setBanner({ key: "phaser-runtime-error", type: "playerHit", title: "게임 화면 초기화 실패", subtitle: "브라우저의 WebGL 또는 Canvas 지원을 확인해 주세요." });
@@ -1928,7 +2021,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
 
   useEffect(() => {
     if (!showCombatTutorial || combatTutorialHandledRef.current || combatTutorialStep >= 0) return;
-    if (!hud || dialogue || rewardOpen || needsLandscapeRef.current) return;
+    if (!hud || dialogue || rewardOpen) return;
     combatTutorialActiveRef.current = true;
     setCombatTutorialStep(0);
     controllerRef.current?.setSuspended(true);
@@ -1940,7 +2033,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
     combatTutorialActiveRef.current = false;
     setCombatTutorialStep(-1);
     onCombatTutorialComplete?.();
-    if (!needsLandscapeRef.current && !pausedRef.current && !dialogue && !rewardOpen) {
+    if (!pausedRef.current && !dialogue && !rewardOpen) {
       controllerRef.current?.setSuspended(false);
       controllerRef.current?.focus();
     }
@@ -1959,7 +2052,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   }, []);
 
   const resumeCombat = useCallback(() => {
-    if (needsLandscapeRef.current || combatTutorialActiveRef.current) return;
+    if (combatTutorialActiveRef.current) return;
     pausedRef.current = false;
     setPaused(false);
     controllerRef.current?.setSuspended(false);
@@ -2001,7 +2094,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
         resumeCombat();
         return;
       }
-      if (needsLandscapeRef.current || combatTutorialActiveRef.current || dialogue || rewardOpen) return;
+      if (combatTutorialActiveRef.current || dialogue || rewardOpen) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       pausedRef.current = true;
@@ -2034,13 +2127,13 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
       inert={preparing}
     >
       <section className="expedition-stage">
-          <div className="expedition-canvas-frame">
+          <div className="expedition-canvas-frame" ref={frameRef}>
             <div
               ref={hostRef}
               className="game-canvas phaser-host"
               role="application"
               tabIndex="0"
-              aria-label="HUMAN OVERRIDE Phaser 전진형 생존 전장. 포인터 위치가 조준점입니다."
+              aria-label="HUMAN OVERRIDE Phaser 전진형 생존 전장. 모바일에서는 가까운 적을 자동 조준합니다."
               onPointerDown={() => controllerRef.current?.focus()}
             />
             <div className="expedition-hud" aria-label="필수 전투 정보">
@@ -2114,21 +2207,14 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
               <span>이동: WASD</span>
               <span>{mainWeaponId === "beam-sword" ? "포인터 방향 · 빔 소드 자동 베기" : "포인터로 조준 · 소총 자동 발사"}</span>
             </div>
-            <div className="touch-controls expedition-touch-controls" aria-label="터치 전투 조작">
-              <TouchJoystick onMove={setTouchMovement} />
+            <div className="touch-controls expedition-touch-controls" aria-label="화면 어디서나 드래그하여 이동">
+              <FloatingTouchJoystick surfaceRef={frameRef} onMove={setTouchMovement} />
+              <span className="portrait-touch-hint">빈 곳을 누른 채 드래그해 이동 · 가까운 적 자동 조준</span>
             </div>
             <NarrativePanel dialogue={dialogue} assets={assets} region={region} bossStage={hud?.boss?.stage} characterId={hud?.player?.characterId || characterId} onAdvance={advanceDialogue} />
             {paused && <PauseOverlay onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}
           </div>
       </section>
-
-      {needsLandscape && (
-        <div className="landscape-guard" role="status" aria-live="polite">
-          <ArrowCounterClockwise weight="bold" />
-          <strong>가로 모드로 회전해 주세요</strong>
-          <span>전투는 화면이 가로로 전환될 때까지 일시 정지됩니다.</span>
-        </div>
-      )}
 
       <LevelUpOverlay offer={hud?.rewards?.options} level={hud?.level || 1} assets={assets} rewardState={hud?.rewards} onChoose={selectReward} />
     </main>

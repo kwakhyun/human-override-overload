@@ -237,6 +237,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private readonly characterId?: "aegis" | "mika";
   private readonly mikaUnlocked: boolean;
   private readonly assetProfile: AssetProfile;
+  private readonly mobileAutoAim: boolean;
   private state: any;
   private gameInput: any;
   private view?: BattleView;
@@ -277,6 +278,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     characterId?: "aegis" | "mika",
     mikaUnlocked = true,
     assetProfile: AssetProfile = "full",
+    mobileAutoAim = false,
   ) {
     super({ key: "OverloadBattle" });
     this.bridge = bridge;
@@ -286,6 +288,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.characterId = characterId;
     this.mikaUnlocked = mikaUnlocked;
     this.assetProfile = resolveAssetProfile(assetProfile);
+    this.mobileAutoAim = mobileAutoAim;
   }
 
   create() {
@@ -718,6 +721,27 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   private updateAimFromPointer() {
+    if (this.mobileAutoAim) {
+      const player = this.state?.player;
+      if (!player) return;
+      const boss = this.state?.phase === "boss" && this.state?.boss && !this.state.boss.dead && this.state.boss.hp > 0
+        ? this.state.boss
+        : null;
+      let target = boss;
+      let nearestDistanceSq = boss
+        ? (boss.x - player.x) ** 2 + (boss.y - player.y) ** 2
+        : Number.POSITIVE_INFINITY;
+      for (const enemy of this.state?.enemies || []) {
+        if (!enemy || enemy.dead || enemy.hp <= 0 || enemy.spawnDelay > 0) continue;
+        const distanceSq = (enemy.x - player.x) ** 2 + (enemy.y - player.y) ** 2;
+        if (distanceSq > nearestDistanceSq) continue;
+        if (distanceSq === nearestDistanceSq && target && String(enemy.id) > String(target.id)) continue;
+        target = enemy;
+        nearestDistanceSq = distanceSq;
+      }
+      if (target) setSwarmAim(this.state, target.x, target.y);
+      return;
+    }
     const pointer = this.input.activePointer;
     const camera = this.cameras.main;
     if (!pointer || !camera) return;

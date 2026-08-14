@@ -3230,6 +3230,8 @@ kbd {
   overflow: hidden;
   background: #020608;
   box-shadow: 0 0 80px rgba(0, 0, 0, 0.86);
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 .expedition-canvas-frame .phaser-host {
@@ -4257,9 +4259,7 @@ kbd {
 .expedition-touch-controls {
   position: absolute;
   z-index: 18;
-  right: 18px;
-  bottom: 18px;
-  left: 18px;
+  inset: 0;
   width: auto;
   margin: 0;
   pointer-events: none;
@@ -4285,30 +4285,44 @@ kbd {
   background: rgba(255, 45, 79, 0.1);
 }
 
-.landscape-guard {
-  position: fixed;
-  z-index: 100;
-  inset: 0;
-  display: grid;
-  padding: 32px;
-  place-content: center;
-  justify-items: center;
-  gap: 10px;
-  color: #e9fbff;
-  background: radial-gradient(circle at 50% 44%, rgba(13, 43, 51, 0.98), rgba(1, 5, 7, 0.995) 68%);
-  text-align: center;
+.floating-touch-joystick {
+  --joystick-x: 50%;
+  --joystick-y: 68%;
+  --joystick-knob-x: 0px;
+  --joystick-knob-y: 0px;
+  position: absolute;
+  top: var(--joystick-y);
+  left: var(--joystick-x);
+  width: 132px;
+  height: 132px;
+  opacity: 0;
+  border: 1px solid rgba(156, 244, 255, 0.58);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(65, 222, 244, 0.08) 0 42%, rgba(2, 9, 13, 0.58) 43% 67%, rgba(77, 228, 249, 0.13) 68% 70%, transparent 71%);
+  box-shadow: 0 0 0 8px rgba(64, 224, 247, 0.055), inset 0 0 24px rgba(78, 229, 250, 0.12);
+  transform: translate(-50%, -50%) scale(0.88);
+  transition: opacity 100ms ease, transform 100ms ease;
+  will-change: transform, opacity;
+  pointer-events: none;
 }
 
-.landscape-guard svg {
-  width: 54px;
-  height: 54px;
-  margin-bottom: 8px;
-  color: #68edff;
-  filter: drop-shadow(0 0 14px rgba(104, 237, 255, 0.5));
+.floating-touch-joystick.is-active { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+.floating-touch-joystick-ring { position: absolute; inset: 19px; border: 1px dashed rgba(147, 243, 255, 0.38); border-radius: 50%; }
+.floating-touch-joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  border: 2px solid rgba(223, 253, 255, 0.92);
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 36%, #aef8ff, #34c8dc 32%, rgba(5, 50, 61, 0.92) 72%);
+  box-shadow: 0 0 22px rgba(76, 231, 252, 0.58);
+  transform: translate(calc(-50% + var(--joystick-knob-x)), calc(-50% + var(--joystick-knob-y)));
+  will-change: transform;
 }
 
-.landscape-guard strong { font-size: clamp(20px, 6vw, 30px); letter-spacing: 0.06em; }
-.landscape-guard span { max-width: 360px; color: #88aab2; font-size: 13px; line-height: 1.55; }
+.portrait-touch-hint { display: none; }
 
 @media (hover: hover) and (pointer: fine) {
   .expedition-touch-controls { display: none; }
@@ -4385,19 +4399,14 @@ kbd {
   .route-minimap-player svg { width: 13px; height: 13px; }
   .route-minimap-enemy { width: 3px; height: 3px; }
   .expedition-touch-controls {
-    display: flex;
-    right: auto;
-    bottom: max(10px, env(safe-area-inset-bottom));
-    left: max(10px, env(safe-area-inset-left));
-    width: 150px;
-    min-height: 150px;
+    display: block;
+    inset: 0;
+    width: auto;
+    min-height: 0;
     padding: 0;
     border: 0;
-    align-items: center;
-    justify-content: center;
     background: transparent;
   }
-  .expedition-touch-controls .touch-joystick { width: 150px; height: 150px; flex-basis: 150px; }
   .transient-controls { display: none; }
   .expedition-xp { top: 119px; right: 12px; bottom: auto; width: 156px; }
   .expedition-alert { top: 158px; }
@@ -5180,6 +5189,263 @@ kbd {
   .character-roster-rail button { width: 46px; min-height: 58px; }
   .character-roster-rail button img { width: 40px; height: 40px; }
   .character-roster-rail button span { font-size: 6px; }
+}
+
+/* Portrait campaign baseline. A final cascade guard is repeated at EOF. */
+@media (max-width: 720px) and (orientation: portrait) {
+  .campaign-shell { min-height: 100dvh; overflow-x: hidden; }
+  .base-lobby-topbar { top: max(10px, env(safe-area-inset-top)); right: 10px; left: 10px; }
+  .base-identity { min-width: 0; width: 43%; padding: 8px 10px; }
+  .base-identity small { font-size: 8px; }
+  .base-identity strong { font-size: 20px; }
+  .base-currency-rail { width: 54%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .base-currency-rail button { min-width: 0; min-height: 46px; padding: 5px; grid-template-columns: 20px minmax(0, 1fr); gap: 3px; }
+  .base-currency-rail button > svg { width: 18px; height: 18px; }
+  .base-currency-rail button small { display: none; }
+  .base-currency-rail button b { font-size: 12px; }
+  .base-motion-portrait,
+  .base-motion-portrait.is-mika { bottom: 16%; left: 10%; width: 80%; height: 70%; }
+  .motion-portrait-speech { top: 22%; right: 2%; width: 72%; }
+  .base-lobby-navigation { top: auto; right: 10px; bottom: calc(max(92px, env(safe-area-inset-bottom) + 84px)); left: 10px; width: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .base-menu-button { min-height: 52px; padding: 7px 9px; }
+  .base-primary-actions { right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; width: auto; grid-template-columns: 1fr 1.25fr; gap: 7px; }
+  .home-base-screen .base-objective { display: none; }
+  .region-select-screen.is-cluster-map .region-select-heading { width: calc(100% - 24px); margin-left: 12px; padding-top: max(12px, env(safe-area-inset-top)); }
+  .region-select-screen.is-cluster-map .region-select-heading h1 { font-size: 31px; }
+  .region-map-hotspot { width: min(230px, 64vw); }
+  .region-sortie-dialog { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); width: auto; max-width: none; overflow-y: auto; }
+  .region-sortie-layout { display: block; }
+  .region-sortie-command-footer { position: sticky; bottom: 0; padding-top: 9px; background: rgba(2, 10, 14, 0.96); }
+  .region-sortie-command-footer .region-sortie-launch { width: 100%; min-height: 62px; }
+}
+
+/* Portrait-mobile shell --------------------------------------------------
+   Phaser keeps its deterministic 1280x720 world, while the DOM shell and
+   ENVELOP presentation protect a phone-sized combat viewport. */
+@media (max-width: 720px) and (orientation: portrait) {
+  html,
+  body,
+  #root,
+  .app-shell,
+  .expedition-game,
+  .expedition-stage {
+    width: 100%;
+    min-height: 100%;
+    overscroll-behavior: none;
+  }
+
+  .expedition-stage { place-items: stretch; }
+  .expedition-canvas-frame {
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    box-shadow: none;
+  }
+
+  .expedition-hud {
+    top: max(9px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
+    left: max(10px, env(safe-area-inset-left));
+    grid-template-columns: minmax(0, 1fr) 38px;
+    gap: 8px;
+  }
+  .route-objective {
+    grid-column: 1;
+    padding: 8px 10px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 3px 8px;
+    background: linear-gradient(90deg, rgba(2, 10, 14, 0.88), rgba(3, 14, 18, 0.62));
+    backdrop-filter: blur(7px);
+  }
+  .route-objective span,
+  .route-objective b { font-size: 9px; }
+  .route-objective strong { overflow: hidden; font-size: 14px; letter-spacing: 0.02em; text-overflow: ellipsis; white-space: nowrap; }
+  .route-objective > div { height: 5px; }
+  .expedition-sound { grid-column: 2; width: 38px; height: 38px; }
+
+  .route-minimap {
+    top: max(76px, calc(env(safe-area-inset-top) + 64px));
+    right: max(10px, env(safe-area-inset-right));
+    bottom: auto;
+    width: 132px;
+    padding: 6px 7px 7px;
+    opacity: 0.88;
+  }
+  .route-minimap header { font-size: 8px; }
+  .route-minimap-field { height: 52px; margin-top: 4px; }
+  .expedition-xp {
+    top: max(143px, calc(env(safe-area-inset-top) + 131px));
+    right: max(10px, env(safe-area-inset-right));
+    bottom: auto;
+    width: 132px;
+    height: 4px;
+  }
+
+  .expedition-combat-dock {
+    top: auto;
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: max(8px, env(safe-area-inset-left));
+    width: auto;
+    min-height: 0;
+    padding: 9px 9px 10px;
+    gap: 7px;
+    transform: none;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(4, 17, 22, 0.91), rgba(1, 7, 10, 0.96));
+  }
+  .expedition-combat-dock .vital-cluster { padding: 1px 3px 8px; gap: 4px 10px; }
+  .expedition-combat-dock .vital-cluster span { font-size: 10px; }
+  .expedition-combat-dock .vital-cluster b { font-size: 20px; }
+  .expedition-combat-dock .vital-cluster small { font-size: 8px; }
+  .expedition-combat-dock .vital-bar { height: 10px; }
+  .combat-dock-abilities { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  .combat-ability-chip,
+  .combat-tag-switch {
+    min-width: 0;
+    min-height: 54px;
+    padding: 4px;
+    grid-template-columns: 1fr;
+    place-items: center;
+  }
+  .combat-ability-icon { width: 39px; height: 39px; }
+  .combat-ability-icon > svg { width: 19px; height: 19px; }
+  .combat-ability-icon kbd { right: -5px; bottom: -4px; min-width: 20px; height: 17px; font-size: 8px; }
+  .combat-ability-copy { display: none; }
+  .combat-tag-switch > span { width: 100%; flex-direction: column; }
+  .combat-tag-switch strong { font-size: 9px; }
+  .combat-tag-switch small { display: none; }
+
+  .portrait-touch-hint {
+    position: absolute;
+    top: 54%;
+    left: 50%;
+    display: block;
+    width: max-content;
+    max-width: calc(100vw - 40px);
+    padding: 7px 11px;
+    border: 1px solid rgba(116, 232, 249, 0.2);
+    border-radius: 999px;
+    color: rgba(218, 250, 255, 0.76);
+    background: rgba(2, 11, 15, 0.54);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    transform: translateX(-50%);
+    animation: portrait-touch-hint 4.8s ease both;
+  }
+  .floating-touch-joystick { width: 124px; height: 124px; }
+  .floating-touch-joystick-knob { width: 50px; height: 50px; }
+  .transient-controls { display: none; }
+
+  .expedition-alert { top: max(156px, calc(env(safe-area-inset-top) + 144px)); width: calc(100% - 36px); }
+  .boss-parry-prompt { top: 46%; min-width: 190px; }
+  .boss-bomb-directive { top: max(154px, calc(env(safe-area-inset-top) + 142px)); min-width: 0; width: calc(100% - 28px); }
+  .boss-bomb-armor { top: max(210px, calc(env(safe-area-inset-top) + 198px)); min-width: 0; width: calc(100% - 28px); }
+
+  .narrative-panel {
+    right: 10px;
+    bottom: max(150px, calc(env(safe-area-inset-bottom) + 142px));
+    left: 10px;
+    min-height: 178px;
+    padding: 20px 16px 18px 126px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    overflow: hidden;
+  }
+  .narrative-portrait { left: 0; width: 126px; height: 184px; }
+  .narrative-copy small { font-size: 10px; letter-spacing: 0.04em; }
+  .narrative-copy strong { font-size: 18px; letter-spacing: 0.03em; }
+  .narrative-copy p { margin-top: 7px; font-size: 14px; line-height: 1.45; }
+  .narrative-panel > button { min-height: 50px; padding: 11px 13px; justify-content: center; font-size: 13px; }
+
+  .reward-backdrop { padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); overflow-y: auto; }
+  .reward-modal { width: 100%; max-height: calc(100dvh - 20px); padding: 17px 12px 14px; overflow-y: auto; }
+  .reward-modal > h2 { font-size: 28px; }
+  .reward-modal > p { margin: 7px 0 12px; font-size: 12px; }
+  .reward-options { grid-template-columns: 1fr; gap: 9px; }
+  .reward-card { min-height: 150px; padding: 10px 12px; display: grid; grid-template-columns: 108px minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; column-gap: 12px; }
+  .reward-card .reward-art { grid-column: 1; grid-row: 1 / -1; min-height: 126px; }
+  .reward-card > small,
+  .reward-card > strong,
+  .reward-card > p,
+  .reward-card > div:last-child { grid-column: 2; }
+  .reward-note { font-size: 10px; }
+
+  .result-shell { min-height: 100dvh; padding: max(10px, env(safe-area-inset-top)) 0 max(10px, env(safe-area-inset-bottom)); overflow-y: auto; }
+  .result-card { width: calc(100% - 20px); padding: 26px 14px 20px; }
+  .result-card h1 { font-size: 46px; }
+  .result-card > p { font-size: 14px; }
+  .result-stats { grid-template-columns: repeat(2, 1fr); margin: 20px 0; }
+  .result-actions { grid-template-columns: 1fr; }
+
+  .campaign-shell { min-height: 100dvh; overflow-x: hidden; }
+  .campaign-background { object-position: center; }
+  .base-lobby-topbar { top: max(10px, env(safe-area-inset-top)); right: 10px; left: 10px; align-items: start; }
+  .base-identity strong { font-size: 20px; }
+  .base-currency-rail { max-width: 54%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .base-currency-rail button { min-width: 0; min-height: 46px; padding: 5px; }
+  .base-currency-rail button > svg { width: 18px; height: 18px; }
+  .base-currency-rail button small { display: none; }
+  .base-currency-rail button b { font-size: 12px; }
+  .base-lobby-navigation { top: auto; right: 10px; bottom: calc(max(92px, env(safe-area-inset-bottom) + 84px)); left: 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .base-menu-button { min-height: 52px; padding: 7px 9px; }
+  .base-primary-actions { right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; display: grid; grid-template-columns: 1fr 1.25fr; gap: 7px; }
+  .base-character-action,
+  .base-sortie-action { min-height: 70px; }
+  .home-base-screen .base-objective { display: none; }
+
+  .region-select-heading { width: calc(100% - 24px); margin-left: 12px; padding-top: max(12px, env(safe-area-inset-top)); }
+  .region-select-heading h1 { font-size: 31px; }
+  .region-card-grid { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); left: 12px; overflow-x: auto; grid-template-columns: repeat(3, minmax(220px, 78vw)); scroll-snap-type: x mandatory; }
+  .region-card { min-height: 168px; scroll-snap-align: center; }
+  .region-sortie-dialog { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); width: auto; max-width: none; overflow-y: auto; }
+  .region-sortie-layout { display: block; }
+  .region-sortie-command-footer { position: sticky; bottom: 0; padding-top: 9px; background: rgba(2, 10, 14, 0.96); }
+  .region-sortie-command-footer .region-sortie-launch { width: 100%; min-height: 62px; }
+
+  .base-identity small {
+    font-size: 8px;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+
+  .region-select-screen:not(.is-cluster-map) .region-card-grid {
+    right: 0;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 12px;
+    padding-right: 18vw;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    grid-template-columns: repeat(3, 82vw);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .region-select-screen:not(.is-cluster-map) .region-card-grid::-webkit-scrollbar { display: none; }
+
+  .region-select-screen:not(.is-cluster-map) .region-card {
+    min-height: 210px;
+    padding: 16px 18px;
+    scroll-snap-align: start;
+  }
+
+  .region-select-screen:not(.is-cluster-map) .region-card > strong { font-size: 22px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > p { font-size: 11px; line-height: 1.5; }
+  .region-select-screen:not(.is-cluster-map) .region-threat i,
+  .region-select-screen:not(.is-cluster-map) .region-card > small,
+  .region-select-screen:not(.is-cluster-map) .region-card > b { font-size: 10px; }
+}
+
+@keyframes portrait-touch-hint {
+  0%, 12% { opacity: 0; transform: translate(-50%, 10px); }
+  24%, 72% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -7px); }
+}
+
+@media (max-width: 720px) and (orientation: portrait) and (prefers-reduced-motion: reduce) {
+  .portrait-touch-hint { animation: none; opacity: 0.82; }
 }
 
 .base-objective {
@@ -7454,4 +7720,50 @@ kbd,
   .mika-recruit-dialogue small { font-size: 9px; }
   .mika-recruit-dialogue strong { margin-top: 3px; font-size: 11px; line-height: 1.42; }
   .mika-recruit-card > button { min-height: 36px; margin-top: 8px; padding: 0 12px; font-size: 10px; }
+}
+
+/* Portrait campaign cascade guard --------------------------------------- */
+@media (max-width: 720px) and (orientation: portrait) {
+  .campaign-shell { min-height: 100dvh; overflow-x: hidden; }
+  .base-lobby-topbar { top: max(10px, env(safe-area-inset-top)); right: 10px; left: 10px; }
+  .base-identity { min-width: 0; width: 43%; padding: 8px 10px; }
+  .base-identity small { font-size: 8px; letter-spacing: 0; white-space: nowrap; }
+  .base-identity strong { font-size: 20px; }
+  .base-currency-rail { width: 54%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .base-currency-rail button { min-width: 0; min-height: 46px; padding: 5px; grid-template-columns: 20px minmax(0, 1fr); gap: 3px; }
+  .base-currency-rail button > svg { width: 18px; height: 18px; }
+  .base-currency-rail button small { display: none; }
+  .base-currency-rail button b { font-size: 12px; }
+  .base-motion-portrait,
+  .base-motion-portrait.is-mika { bottom: 16%; left: 10%; width: 80%; height: 70%; }
+  .motion-portrait-speech { top: 22%; right: 2%; width: 72%; }
+  .base-lobby-navigation { top: auto; right: 10px; bottom: calc(max(92px, env(safe-area-inset-bottom) + 84px)); left: 10px; width: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .base-menu-button { min-height: 52px; padding: 7px 9px; }
+  .base-primary-actions { right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; width: auto; grid-template-columns: 1fr 1.25fr; gap: 7px; }
+  .home-base-screen .base-objective { display: none; }
+  .region-select-screen.is-cluster-map .region-select-heading { width: calc(100% - 24px); margin-left: 12px; padding-top: max(12px, env(safe-area-inset-top)); }
+  .region-select-screen.is-cluster-map .region-select-heading h1 { font-size: 31px; }
+  .region-map-hotspot { width: min(230px, 64vw); }
+  .region-sortie-dialog { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); width: auto; max-width: none; overflow-y: auto; }
+  .region-sortie-layout { display: block; }
+  .region-sortie-command-footer { position: sticky; bottom: 0; padding-top: 9px; background: rgba(2, 10, 14, 0.96); }
+  .region-sortie-command-footer .region-sortie-launch { width: 100%; min-height: 62px; }
+  .region-select-screen:not(.is-cluster-map) .region-card-grid {
+    right: 0;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 12px;
+    padding-right: 18vw;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    grid-template-columns: repeat(3, 82vw);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .region-select-screen:not(.is-cluster-map) .region-card-grid::-webkit-scrollbar { display: none; }
+  .region-select-screen:not(.is-cluster-map) .region-card { min-height: 210px; padding: 16px 18px; scroll-snap-align: start; }
+  .region-select-screen:not(.is-cluster-map) .region-card > strong { font-size: 22px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > p { font-size: 11px; line-height: 1.5; }
+  .region-select-screen:not(.is-cluster-map) .region-threat i,
+  .region-select-screen:not(.is-cluster-map) .region-card > small,
+  .region-select-screen:not(.is-cluster-map) .region-card > b { font-size: 10px; }
 }

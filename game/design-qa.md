@@ -636,3 +636,27 @@ final result: superseded
   않았습니다.
 
 final result: passed
+
+### Iteration 27 — complete · 세로 모바일 전투와 앱 이관 경계
+
+- Mobile contract: 세로 화면 회전 가드와 시뮬레이션 정지를 제거했습니다. 터치 기기의 세로
+  전투는 Phaser `ENVELOP` 프레젠테이션으로 화면을 채우며, 내부 결정론 좌표계는 1280×720을
+  그대로 유지합니다.
+- Movement and aim: 버튼·대화·모달을 제외한 전투 화면 어디서든 touch/pen 드래그를 시작하면
+  접점에 플로팅 아날로그 조이스틱이 나타납니다. 12% deadzone, 연속 magnitude, 대각선 1.0
+  상한을 유지하고 pointer-up/cancel/lost-capture/blur에서 입력을 해제합니다. 모바일 세로
+  전투는 가장 가까운 materialized live hostile을 자동 조준하고, 보스전에서는 보스를 우선합니다.
+- Portrait UI: HP/액티브 도크는 하단 safe area 위에, 목표·사운드는 상단, 미니맵은 그 아래에
+  배치했습니다. 대화 다음 버튼, 세로 레벨업 목록, 결과 액션과 출격 확인 CTA는 세로 viewport
+  안에서 읽고 누를 수 있게 재배치했습니다.
+- Native boundary: `src/platform/mobileRuntime.ts`를 첫 플랫폼 감지 경계로 추가하고,
+  `docs/mobile-app-release-roadmap.md`에 Capacitor 셸, 저장·오디오·생명주기 어댑터,
+  AAB/TestFlight, 개인정보·서명·스토어 심사 체크리스트를 기록했습니다.
+- Verification: 모바일·Phaser HUD/runtime 집중 테스트 39/39와 typecheck가 통과했습니다.
+  Edge 390×844 실제 터치 에뮬레이션에서 플로팅 조이스틱으로 플레이어 X가 580→878.3으로
+  이동했고, 모바일 자동 조준과 세로 프레젠테이션이 활성화됐습니다. 목표·미니맵·하단 도크는
+  모두 viewport 안에 남았고 가로 overflow 0, console/page error 0을 확인했습니다. 세로 출격
+  확인 화면은 CTA가 스크롤 없이 노출되며, 구역 카드는 한 장을 크게 읽고 옆으로 넘기는
+  scroll-snap 구조로 보정했습니다.
+
+final result: passed

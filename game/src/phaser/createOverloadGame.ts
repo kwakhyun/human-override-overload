@@ -6,6 +6,7 @@ import { primeDeterministicArsenal } from "./profiling/deterministicArsenal";
 import { installDevRuntimeProfiler } from "./profiling/runtimeProfiler";
 import { BootScene } from "./scenes/BootScene";
 import { OverloadScene } from "./scenes/OverloadScene";
+import { detectMobileRuntime } from "../platform/mobileRuntime";
 
 export type OverloadGameController = Readonly<{
   game: Phaser.Game;
@@ -45,10 +46,11 @@ export function createOverloadGame(
   if (launch.startSuspended) bridge.setSuspended(true);
   const regionId = resolveRegionId(launch.regionId);
   const initialQuality = detectInitialQuality(window);
+  const mobileRuntime = detectMobileRuntime(window);
   const preset = QUALITY_PRESETS[initialQuality] ?? QUALITY_PRESETS.balanced;
   const assetProfile = initialQuality === "performance" ? "performance" : "full";
   const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, callbacks.onLoadProgress);
-  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, assetProfile);
+  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, assetProfile, mobileRuntime.autoAim);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
@@ -82,7 +84,7 @@ export function createOverloadGame(
       skipUnreadyShaders: true,
     },
     scale: {
-      mode: Phaser.Scale.FIT,
+      mode: mobileRuntime.portrait && mobileRuntime.touchOptimized ? Phaser.Scale.ENVELOP : Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
       width: 1280,
       height: 720,
@@ -133,6 +135,8 @@ export function createOverloadGame(
         sniperTelegraphs: state?.telegraphs?.filter((telegraph: any) => telegraph?.type === "sniperAim").length ?? 0,
         bossStage: state?.boss?.stage,
         bossPattern: state?.boss?.activePattern?.type ?? null,
+        mobileAutoAim: mobileRuntime.autoAim,
+        portraitPresentation: mobileRuntime.portrait && mobileRuntime.touchOptimized,
       };
     }, () => primeDeterministicArsenal(battleScene as unknown as Parameters<typeof primeDeterministicArsenal>[0]))
     : null;

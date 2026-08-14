@@ -33,7 +33,7 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   assert.match(app, /const targetAvailable = ability\?\.available !== false/);
   assert.match(app, /remaining > 0\.05 \? `\$\{remaining\.toFixed\(1\)\}초`[\s\S]*!targetAvailable \? "대상 없음"/);
   assert.match(app, /ability\?\.remaining \?\? ability\?\.cooldownRemaining \?\? ability\?\.cooldown/);
-  assert.match(app, /function ExpeditionCombatDock\(\{ hud, onDash, onActivateAbility, tutorialAbilityId = null, onTutorialTarget \}\)/);
+  assert.match(app, /function ExpeditionCombatDock\(\{ hud, onDash, onTag, onActivateAbility, tutorialAbilityId = null, onTutorialTarget \}\)/);
   assert.match(app, /className="vital-bar"[\s\S]*aria-valuenow=\{Math\.ceil\(hp\)\}/);
   assert.match(app, /<button[\s\S]*className=\{`combat-ability-chip[\s\S]*aria-label=\{`\$\{slot\.key\} \$\{slot\.label\}\. \$\{slot\.status\}`\}/);
   assert.match(app, /if \(slot\.action === "dash"\) onDash\?\.\(\);\s*else onActivateAbility\?\.\(slot\.action\)/);
@@ -64,10 +64,11 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   const mobileEnd = styles.indexOf("@media (prefers-reduced-motion: reduce)", mobileStart);
   const mobile = styles.slice(mobileStart, mobileEnd);
   assert.match(mobile, /\.expedition-combat-dock \{[\s\S]*top: 52px;[\s\S]*bottom: auto;[\s\S]*left: 12px;[\s\S]*width: min\(440px, calc\(100% - 190px\)\)/);
-  assert.match(mobile, /\.expedition-touch-controls \{[\s\S]*display: flex;[\s\S]*right: auto;[\s\S]*bottom: max\(10px, env\(safe-area-inset-bottom\)\);[\s\S]*width: 150px;[\s\S]*background: transparent;/);
-  assert.match(styles, /\.touch-joystick \{[\s\S]*width: 150px;[\s\S]*height: 150px;[\s\S]*border-radius: 50%;[\s\S]*touch-action: none/);
-  assert.match(mobile, /\.expedition-touch-controls \.touch-joystick \{ width: 150px; height: 150px; flex-basis: 150px; \}/);
-  assert.match(app, /function TouchJoystick[\s\S]*onPointerMove=\{move\}[\s\S]*onPointerCancel=\{end\}[\s\S]*onLostPointerCapture=\{end\}/);
+  assert.match(mobile, /\.expedition-touch-controls \{[\s\S]*display: block;[\s\S]*inset: 0;[\s\S]*width: auto;[\s\S]*background: transparent;/);
+  assert.match(styles, /\.floating-touch-joystick \{[\s\S]*border-radius: 50%;[\s\S]*pointer-events: none/);
+  assert.match(app, /function FloatingTouchJoystick[\s\S]*surface\.addEventListener\("pointerdown", begin[\s\S]*surface\.addEventListener\("pointermove", move[\s\S]*surface\.addEventListener\("pointercancel", end/);
+  assert.match(app, /event\.pointerType === "mouse"/);
+  assert.match(app, /FLOATING_JOYSTICK_BLOCKED_SELECTOR/);
   assert.match(app, /controllerRef\.current\?\.setMovement\?\.\(x, y\)/);
   assert.doesNotMatch(app, /function TouchDirectionButton|<TouchDirectionButton/);
   assert.match(mobile, /\.route-minimap \{[\s\S]*top: 51px;[\s\S]*right: 12px;[\s\S]*width: 156px/);
@@ -111,7 +112,7 @@ test("Phaser DOM HUD consumes automatic clear-transition and two-dimensional min
   assert.match(styles, /\.route-clear-transition \{/);
 });
 
-test("active HUD and HAVEN interactions expose Korean-first copy with in-world NPC figures", async () => {
+test("active HUD and HAVEN interactions expose Korean-first copy with NPC menu portraits", async () => {
   const [app, screens, styles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
@@ -126,10 +127,10 @@ test("active HUD and HAVEN interactions expose Korean-first copy with in-world N
   assert.match(app, /오답 엔진[\s\S]*거울 폭군[\s\S]*침몰한 예언자/);
   assert.match(app, /bossGroggy: \["보스 그로기 · 피해 2\.5배"/);
   assert.match(app, /<strong>\{REWARD_NAMES_KO\[option\.id\]/);
-  assert.match(screens, /function NpcWorldFigure/);
-  assert.match(screens, /<NpcWorldFigure npc=\{npc\} assets=\{assets\} \/>/);
+  assert.match(screens, /function NpcPortrait/);
+  assert.match(screens, /className=\{`base-menu-button npc-\$\{npc\.id\}/);
   for (const id of ["hana", "ilya", "lark", "rhea"]) assert.match(screens, new RegExp(`${id}: Object\\.freeze`));
-  assert.match(styles, /\.base-hotspot > \.base-npc-world-figure \{/);
+  assert.match(styles, /\.base-npc-portrait \{/);
   assert.match(styles, /background-size: auto 100%/);
 });
 
@@ -138,13 +139,13 @@ test("Escape pause is guarded from modal states and supports resume, local resta
   assert.match(app, /const pausedRef = useRef\(false\)/);
   assert.match(app, /const \[paused, setPaused\] = useState\(false\)/);
   assert.match(app, /const \[runRevision, setRunRevision\] = useState\(0\)/);
-  assert.match(app, /controllerRef\.current\?\.setSuspended\(preparingRef\.current \|\| query\.matches \|\| pausedRef\.current \|\| combatTutorialActiveRef\.current\)/);
+  assert.match(app, /controllerRef\.current\?\.setSuspended\(preparingRef\.current \|\| pausedRef\.current \|\| combatTutorialActiveRef\.current\)/);
   assert.match(app, /if \(event\.key !== "Escape" \|\| event\.repeat\) return/);
-  assert.match(app, /if \(needsLandscapeRef\.current \|\| combatTutorialActiveRef\.current \|\| dialogue \|\| rewardOpen\) return/);
+  assert.match(app, /if \(combatTutorialActiveRef\.current \|\| dialogue \|\| rewardOpen\) return/);
   assert.match(app, /pausedRef\.current = true;\s*setPaused\(true\);\s*controllerRef\.current\?\.setSuspended\(true\)/);
-  assert.match(app, /if \(needsLandscapeRef\.current \|\| combatTutorialActiveRef\.current\) return;[\s\S]*controllerRef\.current\?\.setSuspended\(false\)/);
+  assert.match(app, /if \(combatTutorialActiveRef\.current\) return;[\s\S]*controllerRef\.current\?\.setSuspended\(false\)/);
   assert.match(app, /setRunRevision\(\(revision\) => revision \+ 1\)/);
-  assert.match(app, /\[combatBonuses, mainWeaponId, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx\]/);
+  assert.match(app, /\[characterId, combatBonuses, mainWeaponId, mikaUnlocked, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx\]/);
   assert.match(app, /<PauseOverlay onResume=\{resumeCombat\} onRestart=\{restartCombat\} onBase=\{onBase \? returnToBase : null\} \/>/);
   assert.match(app, /onBase=\{activeSlot\?\.homeBaseUnlocked \? \(\) => setScreen\("base"\) : null\}/);
 });
@@ -207,5 +208,6 @@ test("phone landscape keeps rewards, defeat actions, dialogue advance, and movem
   assert.match(landscape, /\.narrative-panel \{[\s\S]*min-height: 132px/);
   assert.match(styles, /\.narrative-panel > button \{[\s\S]*min-width: 92px;[\s\S]*min-height: 58px/);
   assert.match(styles, /\.narrative-panel > button span \{ display: inline; \}/);
-  assert.equal((app.match(/<TouchJoystick onMove=/g) || []).length, 2);
+  assert.equal((app.match(/<TouchJoystick onMove=/g) || []).length, 1);
+  assert.equal((app.match(/<FloatingTouchJoystick surfaceRef=/g) || []).length, 1);
 });

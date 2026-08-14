@@ -40,22 +40,25 @@ test("the active App mounts the Phaser runtime while React owns the DOM HUD", as
   assert.match(activeRuntime, /event\.type === "bossAutoTransition" && !autoBossEntryHandledRef\.current/);
   assert.match(activeRuntime, /controller\?\.enterBossRoom\(\)/);
   assert.doesNotMatch(activeRuntime, /<BossGateOverlay/);
-  assert.match(activeRuntime, /className="landscape-guard"/);
+  assert.doesNotMatch(activeRuntime, /className="landscape-guard"/);
   assert.match(activeRuntime, /setSuspended/);
   assert.match(activeRuntime, /<LevelUpOverlay/);
   assert.doesNotMatch(activeRuntime, /overload-command-rail|<ProgressHud/);
 });
 
-test("dialogue crops the hero to a bust and mobile play is guarded for landscape", async () => {
+test("dialogue crops the hero to a bust and portrait mobile play stays active", async () => {
   const app = await read("src/App.jsx");
   const styles = await read("src/styles.css");
   const scene = await read("src/phaser/scenes/OverloadScene.ts");
   assert.match(app, /className=\{`narrative-portrait is-\$\{portrait\.variant\}`\}/);
-  assert.match(app, /orientation: portrait/);
+  assert.match(app, /<FloatingTouchJoystick surfaceRef=\{frameRef\}/);
   assert.match(styles, /\.narrative-portrait\s*\{[^}]*overflow: hidden/s);
   assert.match(styles, /\.narrative-portrait img\s*\{[^}]*width: 166%/s);
-  assert.match(styles, /\.landscape-guard\s*\{/);
+  assert.doesNotMatch(styles, /\.landscape-guard\s*\{/);
+  assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.expedition-canvas-frame \{[\s\S]*height: 100dvh/);
   assert.match(scene, /externallySuspended/);
+  assert.match(scene, /if \(this\.mobileAutoAim\)/);
+  assert.match(scene, /for \(const enemy of this\.state\?\.enemies \|\| \[\]\)/);
 });
 
 test("the active silver AEGIS sheets use authored 8-direction runtime geometry", async () => {
@@ -246,7 +249,7 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /launch: OverloadLaunchOptions = \{\}/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
   assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
-  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, assetProfile\)/);
+  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, assetProfile, mobileRuntime\.autoAim\)/);
   assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);
   assert.match(createGame, /playerX: state\?\.player\?\.x/);
   assert.match(scene, /setVirtualMovement\(x: number, y: number\)/);
