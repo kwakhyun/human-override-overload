@@ -2244,9 +2244,26 @@ export function App() {
       currencyLabel: currency?.koreanName || facility.currencyId,
       currencyShortLabel: facility.currencyId === "researchData" ? "연구 자료" : facility.currencyId === "augmentationCores" ? "동기화 코어" : "장비 부품",
       artSource: facility.id === "augmentation" ? assets?.characterEnhancement : null,
+      selectedCharacterId: activeCharacterId,
+      mainWeaponId: activeMainWeaponId,
+      characters: facility.id === "augmentation" ? playableCharacters.map((character) => ({
+        ...character,
+        weaponName: character.id === "mika"
+          ? character.weaponName
+          : mainWeapons.find((weapon) => weapon.id === activeMainWeaponId)?.koreanName || character.weaponName,
+        portraitSource: character.id === "mika" ? assets?.mikaPortrait : assets?.player,
+      })) : [],
+      combatStats: facility.id === "augmentation" ? {
+        maxHp: 360 + (combatBonuses?.maxHpFlat || 0),
+        damageOutput: Math.round((combatBonuses?.damageMultiplier || 1) * 100),
+        aegisSpeed: Math.round(245 * (combatBonuses?.moveSpeedMultiplier || 1)),
+        mikaSpeed: Math.round(245 * 1.08 * (combatBonuses?.moveSpeedMultiplier || 1)),
+        fireRate: Math.round((combatBonuses?.fireRateMultiplier || 1) * 100),
+        completedRegions: activeSlot.completedRegionIds?.length || 0,
+      } : null,
       upgrades,
     };
-  }, [activeFacilityId, activeSlotId, activeSlot, campaign, assets]);
+  }, [activeFacilityId, activeSlotId, activeSlot, campaign, assets, activeCharacterId, activeMainWeaponId, playableCharacters, mainWeapons, combatBonuses]);
   const campaignAssets = useMemo(() => ({
     homeBase: assets?.havenBase,
     npcPortraits: assets?.havenNpcPortraits,
@@ -2584,6 +2601,7 @@ export function App() {
         onOpenFacility={openFacility}
         onNpcInteraction={handleNpcInteraction}
         onPurchaseUpgrade={purchaseBaseUpgrade}
+        onCharacterChange={selectCharacter}
         onCloseFacility={closeFacility}
         onBoard={openRegionSelect}
         onTitle={() => { closeNpc(); closeFacility(); setScreen("save"); }}

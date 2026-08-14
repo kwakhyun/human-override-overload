@@ -39,6 +39,27 @@ const BOSS_DISPLAY = Object.freeze({
   "PALE ARCHON": "창백한 집정관 · PALE ARCHON",
 });
 
+const CHARACTER_ACTIVE_LOADOUTS = Object.freeze({
+  aegisRifle: Object.freeze([
+    Object.freeze({ key: "Q", name: "EMP 펄스", detail: "기계 정지", icon: Broadcast }),
+    Object.freeze({ key: "E", name: "방벽 전개", detail: "회복·보호", icon: ShieldChevron }),
+    Object.freeze({ key: "F", name: "항공 지원", detail: "3중 폭격", icon: AirplaneTilt }),
+    Object.freeze({ key: "R", name: "섬멸 모드", detail: "전방위 회전", icon: Crosshair }),
+  ]),
+  aegisSword: Object.freeze([
+    Object.freeze({ key: "Q", name: "환검진", detail: "다중 검기", icon: Sword }),
+    Object.freeze({ key: "E", name: "유령 참격", detail: "고속 관통", icon: Crosshair }),
+    Object.freeze({ key: "F", name: "천검 영역", detail: "광역 검진", icon: Sparkle }),
+    Object.freeze({ key: "R", name: "천검 낙하", detail: "거대 낙하검", icon: AirplaneTilt }),
+  ]),
+  mika: Object.freeze([
+    Object.freeze({ key: "Q", name: "프리즘 연무", detail: "연쇄 도탄", icon: Sparkle }),
+    Object.freeze({ key: "E", name: "리본 와류", detail: "주변 절단", icon: Crosshair }),
+    Object.freeze({ key: "F", name: "쌍성 질주", detail: "왕복 돌진", icon: AirplaneTilt }),
+    Object.freeze({ key: "R", name: "심장박동 카니발", detail: "링 블레이드 폭풍", icon: Broadcast }),
+  ]),
+});
+
 const ABILITY_CATEGORY_KO = Object.freeze({
   "TACTICAL UTILITY": "전술 유틸리티",
   "SURVIVAL SUPPORT": "생존 지원",
@@ -316,6 +337,9 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
 
 export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
   if (!facility) return null;
+  if (facility.id === "augmentation") {
+    return <CharacterInformationPanel facility={facility} onPurchase={onPurchase} onClose={onClose} onCharacterChange={facility.onCharacterChange} />;
+  }
   const FacilityIcon = facility.id === "research" ? Brain : facility.id === "augmentation" ? Sparkle : Wrench;
   return (
     <section className={`base-facility-panel facility-${facility.id}${facility.artSource ? " has-key-art" : ""}`} role="dialog" aria-modal="true" aria-labelledby="base-facility-name">
@@ -366,7 +390,111 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
   );
 }
 
-export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCloseFacility, onBoard, onTitle }) {
+function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterChange }) {
+  const [activeTab, setActiveTab] = useState("profile");
+  const [profileId, setProfileId] = useState(facility.selectedCharacterId || facility.characters?.[0]?.id || "aegis");
+  useEffect(() => {
+    setProfileId(facility.selectedCharacterId || facility.characters?.[0]?.id || "aegis");
+  }, [facility.selectedCharacterId, facility.characters]);
+  const profile = facility.characters?.find((character) => character.id === profileId) || facility.characters?.[0];
+  const totalRank = (facility.upgrades || []).reduce((sum, upgrade) => sum + upgrade.rank, 0);
+  const maxRank = (facility.upgrades || []).reduce((sum, upgrade) => sum + upgrade.maxRank, 0);
+  const activeLoadout = profile?.id === "mika"
+    ? CHARACTER_ACTIVE_LOADOUTS.mika
+    : facility.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
+  const chooseCharacter = (characterId) => {
+    setProfileId(characterId);
+    onCharacterChange?.(characterId);
+  };
+  return (
+    <section className={`character-information-panel is-${profile?.accent || "cyan"}`} role="dialog" aria-modal="true" aria-labelledby="character-information-name">
+      {facility.artSource && <img className="character-info-environment" src={assetSource(facility.artSource)} alt="" aria-hidden="true" />}
+      <header className="character-info-topbar">
+        <div>
+          <small>{facility.kicker}</small>
+          <strong>전투원 정보</strong>
+        </div>
+        <div className="character-core-balance" aria-label={`보유 ${facility.currencyLabel} ${facility.currency}`}>
+          <Sparkle weight="fill" /><span>{facility.currencyLabel}</span><b>{facility.currency}</b>
+        </div>
+        <button type="button" className="facility-close" data-ui-sound="uiClose" onClick={onClose} aria-label="전투원 정보 닫기"><ArrowLeft weight="bold" /> 기지로 <kbd>ESC</kbd></button>
+      </header>
+
+      <figure className="character-art-stage">
+        {profile?.portraitSource && <img src={assetSource(profile.portraitSource)} alt={`${profile.koreanName} 전신 일러스트`} />}
+        <figcaption>
+          <small>{profile?.role}</small>
+          <h2 id="character-information-name">{profile?.koreanName}</h2>
+          <strong>{profile?.name}</strong>
+          <span>동기화 랭크 {totalRank} / {maxRank}</span>
+        </figcaption>
+      </figure>
+
+      <section className="character-data-console">
+        <nav className="character-info-tabs" aria-label="전투원 정보 분류">
+          <button type="button" className={activeTab === "profile" ? "is-active" : ""} onClick={() => setActiveTab("profile")}><User weight="fill" /> 기본 정보</button>
+          <button type="button" className={activeTab === "upgrade" ? "is-active" : ""} onClick={() => setActiveTab("upgrade")}><Sparkle weight="fill" /> 영구 강화</button>
+        </nav>
+
+        {activeTab === "profile" ? (
+          <div className="character-profile-content">
+            <header>
+              <div><small>ACTIVE OPERATIVE</small><h3>{profile?.koreanName} · {profile?.name}</h3></div>
+              <span>{profile?.weaponName}</span>
+            </header>
+            <p>{profile?.description}</p>
+            <dl className="character-stat-grid">
+              <div><dt>최대 내구도</dt><dd>{facility.combatStats?.maxHp || 360}</dd></div>
+              <div><dt>공격 출력</dt><dd>{facility.combatStats?.damageOutput || 100}%</dd></div>
+              <div><dt>기동 속도</dt><dd>{profile?.id === "mika" ? facility.combatStats?.mikaSpeed : facility.combatStats?.aegisSpeed}</dd></div>
+              <div><dt>공격 주기</dt><dd>{facility.combatStats?.fireRate || 100}%</dd></div>
+              <div><dt>해방 구역</dt><dd>{facility.combatStats?.completedRegions || 0} / 6</dd></div>
+              <div><dt>태그 대기</dt><dd>10초</dd></div>
+            </dl>
+            <section className="character-active-kit" aria-label={`${profile?.koreanName} 액티브 스킬`}>
+              <header><small>MANUAL COMBAT LINK</small><strong>전투 회선</strong></header>
+              <div>
+                {activeLoadout.map((ability) => {
+                  const AbilityIcon = ability.icon;
+                  return <article key={ability.key}><kbd>{ability.key}</kbd><AbilityIcon weight="fill" /><span><b>{ability.name}</b><small>{ability.detail}</small></span></article>;
+                })}
+              </div>
+            </section>
+            <button type="button" className="character-open-upgrades command-ui-button" data-ui-sound="click" onClick={() => setActiveTab("upgrade")}><Sparkle weight="fill" /> 동기화 코어로 영구 강화</button>
+          </div>
+        ) : (
+          <div className="character-upgrade-content">
+            <header><div><small>PERMANENT AUGMENTATION</small><h3>동기화 프로토콜</h3></div><span>{facility.currencyHint}</span></header>
+            <div className="character-upgrade-list">
+              {(facility.upgrades || []).map((upgrade) => {
+                const maxed = upgrade.rank >= upgrade.maxRank;
+                const disabled = maxed || !upgrade.canPurchase;
+                return (
+                  <article className={maxed ? "character-upgrade-row is-maxed" : "character-upgrade-row"} key={upgrade.id}>
+                    <header><span>{String(upgrade.order || 1).padStart(2, "0")}</span><div><small>{upgrade.category}</small><h4>{upgrade.name}</h4></div><b>{upgrade.rank} / {upgrade.maxRank}</b></header>
+                    <p>{upgrade.description}</p>
+                    <div className="upgrade-ranks" aria-label={`${upgrade.maxRank}랭크 중 ${upgrade.rank}랭크`}>{Array.from({ length: upgrade.maxRank }, (_, index) => <i className={index < upgrade.rank ? "is-active" : ""} key={index} />)}</div>
+                    <footer><span>{maxed ? "최대 출력 도달" : upgrade.nextEffect}</span><button type="button" className="command-ui-button" data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => onPurchase(upgrade.id)}>{maxed ? <><CheckCircle weight="fill" /> 완료</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><Sparkle weight="fill" /> {upgrade.nextCost} 코어 강화</>}</button></footer>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <nav className="character-roster-rail" aria-label="전투원 선택">
+        {(facility.characters || []).map((character) => (
+          <button type="button" className={character.id === profile?.id ? "is-active" : ""} aria-label={`${character.koreanName} 정보 보기`} aria-pressed={character.id === profile?.id} onClick={() => chooseCharacter(character.id)} key={character.id}>
+            <img src={assetSource(character.portraitSource)} alt="" /><span>{character.koreanName}</span>
+          </button>
+        ))}
+      </nav>
+    </section>
+  );
+}
+
+export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCharacterChange, onCloseFacility, onBoard, onTitle }) {
   const background = assetSource(assets?.homeBase);
   const buttonAtlas = assetSource(assets?.buttonAtlas);
   const completed = campaign?.completedRegionIds?.length || 0;
@@ -422,7 +550,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
       </aside>
 
       <NpcDialoguePanel npc={activeNpc} assets={assets} lineIndex={lineIndex} onAdvance={onAdvanceNpc} onClose={onCloseNpc} onFacility={onOpenFacility} onInteraction={onNpcInteraction} />
-      <BaseFacilityPanel facility={activeFacility} onPurchase={onPurchaseUpgrade} onClose={onCloseFacility} />
+      <BaseFacilityPanel facility={activeFacility ? { ...activeFacility, onCharacterChange } : null} onPurchase={onPurchaseUpgrade} onClose={onCloseFacility} />
     </main>
   );
 }

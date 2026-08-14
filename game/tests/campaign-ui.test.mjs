@@ -114,6 +114,27 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   assert.doesNotMatch(app, /toggleAutoFire|autoFireEnabled|autoFireTogglePressed|클릭 수동 사격/);
 });
 
+test("character information presents full-height art, live stats, abilities, and persistent augmentation", async () => {
+  const [app, screens, styles] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
+  ]);
+  assert.match(screens, /function CharacterInformationPanel/);
+  assert.match(screens, /className="character-art-stage"/);
+  assert.match(screens, /className="character-data-console"/);
+  assert.match(screens, /기본 정보/);
+  assert.match(screens, /영구 강화/);
+  assert.match(screens, /CHARACTER_ACTIVE_LOADOUTS/);
+  assert.match(screens, /className="character-roster-rail"/);
+  assert.match(screens, /onCharacterChange\?\.\(characterId\)/);
+  assert.match(app, /portraitSource: character\.id === "mika" \? assets\?\.mikaPortrait : assets\?\.player/);
+  assert.match(app, /onCharacterChange=\{selectCharacter\}/);
+  assert.match(styles, /\.character-art-stage > img[\s\S]*object-fit: contain/);
+  assert.match(styles, /\.character-information-panel[\s\S]*grid-template-columns: minmax\(320px, 47%\)/);
+  assert.match(styles, /@media \(max-width: 900px\), \(max-height: 600px\)[\s\S]*\.character-information-panel/);
+});
+
 test("HAVEN NPC dialogue advances one line per Space press and closes on the final line", async () => {
   const screens = await readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8");
   const dialogue = screens.slice(screens.indexOf("export function NpcDialoguePanel"), screens.indexOf("export function BaseFacilityPanel"));

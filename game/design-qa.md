@@ -459,3 +459,48 @@
 final result: pass — 01—03/04—06/07—09 상위 권역 지도, LARK 신규 항로 브리핑과 저장 해금,
 외곽 생산권역의 전용 적·중간 보스·비원형 최종 보스, 전 지역 공통 귀환 연출을 구현했습니다.
 이번 변경의 필수 회귀 59/59와 TypeScript 검사가 통과했습니다.
+
+### Iteration 21 — complete · 캐릭터 정보 및 영구 강화 화면
+
+- Source visual truth:
+  `C:/Users/82105/Downloads/Screenshot_이환_20260531_160540.jpg` (576×500)와
+  `C:/Users/82105/Downloads/img (1).jpg` (1110×625). 두 레퍼런스의 공통 구성인 좌측 대형
+  캐릭터 일러스트, 우측 정보 콘솔, 상단 분류 탭, 외곽 캐릭터 선택 레일을 현재 프로젝트의
+  SOVEREIGN 청록/마젠타 시각 언어로 옮겼습니다.
+- Implementation evidence:
+  `qa/character-information-desktop.png` (1280×720),
+  `qa/character-information-mika.png` (1280×720),
+  `qa/character-information-upgrades.png` (1280×720),
+  `qa/character-information-mobile-landscape.png` (844×390).
+- Normalization: 브라우저 CSS viewport와 캡처 픽셀은 DPR 1에서 각각 1280×720 및 844×390으로
+  일치합니다. 전체 비교본 `qa/character-information-comparison.png`은 576×500 원본을 높이
+  720px, 폭 829px로 비례 확대하고 1280×720 구현 캡처와 나란히 배치했습니다.
+- State: 슬롯 01 헤이븐-09의 `인물 영구 강화` 화면. AEGIS 기본 정보, MIKA 전환, 영구 강화 탭,
+  ESC 닫기와 재열기를 확인했습니다. 캐릭터 전환은 실제 슬롯 출격 편성에 저장됩니다.
+- Full-view comparison: 레퍼런스와 구현 모두 일러스트가 약 47~52%의 주 시각 영역을 차지하고,
+  정보 패널과 캐릭터 레일이 우측에 머뭅니다. 구현은 투명 원본 포트레이트를 `contain`으로 표시해
+  얼굴·무기·복장 실루엣을 자르거나 늘이지 않습니다.
+- Focused comparison: 기본 능력치 2열, Q/E/F/R 4칸, 영구 강화 3행, 캐릭터 썸네일을 별도로
+  확인했습니다. 큰 한국어 이름과 능력치 숫자, 입력 키, 강화 비용의 계층이 유지됩니다.
+
+**Findings**
+
+- P0/P1/P2 없음. 데스크톱과 844×390 모바일 가로 모두 가로 넘침이 없고 핵심 버튼이 viewport
+  안에 있습니다. 모바일 구현은 긴 설명을 한 줄로 압축하고 캐릭터 일러스트를 계속 우선합니다.
+
+**Comparison history**
+
+- 첫 캡처에서 레퍼런스의 주요 비율, 캐릭터 크롭, 탭·정보·스킬·레일 구조가 모두 확인되어
+  수정이 필요한 P0/P1/P2가 없었습니다. 이후 MIKA, 강화 탭, 모바일 가로를 추가 캡처해 동일
+  구조가 유지되는 것을 확인했습니다.
+
+**Required fidelity surfaces**
+
+- Typography: 한국어 우선 Pretendard/Noto Sans KR 계열과 숫자 전용 mono를 유지하며 줄바꿈 없음.
+- Spacing/layout: 47% 일러스트 / 정보 콘솔 / 76px 선택 레일, 모바일은 42% / 콘솔 / 56px.
+- Colors/tokens: AEGIS 청록, MIKA 마젠타 상태색과 기존 기지 암색 재질을 사용.
+- Image quality: 941×1672 투명 원본 포트레이트를 비왜곡 표시하고 자연 크기 로드 완료 확인.
+- Copy/content: 실제 저장 슬롯 능력치, 주무기, 캐릭터별 Q/E/F/R, 동기화 랭크와 코어를 표시.
+- Browser: console warning/error `[]`; 기본↔영구 강화, AEGIS↔MIKA, ESC 닫기/재열기 정상.
+
+final result: passed
