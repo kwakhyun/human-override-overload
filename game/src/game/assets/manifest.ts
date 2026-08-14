@@ -36,6 +36,7 @@ export const ASSET_KEYS = Object.freeze({
   bossTimedBombPixel: "overload-boss-timed-bomb-pixel-atlas",
   automaticSkillPixel: "overload-automatic-skill-pixel-atlas",
   swordSkillPixel: "overload-sword-skill-pixel-atlas",
+  swordManualAbilityPixel: "overload-sword-manual-ability-pixel-atlas",
   sovereignGateMotion: "overload-sovereign-gate-motion-atlas",
   healingKitMotion: "overload-healing-kit-motion-atlas",
   squadTraces: "overload-squad-traces-atlas",
@@ -126,6 +127,7 @@ export const WEAPON_GAME_ASSETS: Readonly<Record<MainWeaponId, readonly AssetDef
   "beam-sword": Object.freeze([
     { key: ASSET_KEYS.playerSwordDirectionalAim, path: "./assets/overload/hero/survivor-sword-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
     { key: ASSET_KEYS.swordSkillPixel, path: "./assets/overload/vfx/pixel/sword-skill-pixel-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+    { key: ASSET_KEYS.swordManualAbilityPixel, path: "./assets/overload/vfx/pixel/sword-manual-ability-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
   ]),
 });
 

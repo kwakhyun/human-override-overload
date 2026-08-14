@@ -540,6 +540,10 @@ const ABILITY_COOLDOWN_FALLBACK = Object.freeze({
   aegisWard: 28,
   stratosRun: 34,
   helixTempest: 72,
+  spectralSwordArray: 14,
+  phantomRend: 20,
+  imperialSwordDomain: 32,
+  heavenfallExecution: 85,
   chain: 4.8,
   nova: 9,
   airstrike: 18,
@@ -889,7 +893,17 @@ function resolveCombatDockSlot(hud, slot) {
       : remaining > 0.05 ? `${remaining.toFixed(1)}초`
         : !targetAvailable ? "대상 없음"
           : ready ? "사용 가능" : "대기";
-  return { ...slot, ready, locked, available: targetAvailable, status, meter };
+  return {
+    ...slot,
+    id: ability?.id || slot.id,
+    label: ability?.nameKo || slot.label,
+    ultimate: Boolean(ability?.ultimate),
+    ready,
+    locked,
+    available: targetAvailable,
+    status,
+    meter,
+  };
 }
 
 function ExpeditionCombatDock({ hud, onDash, onActivateAbility, tutorialAbilityId = null, onTutorialTarget }) {
@@ -947,7 +961,7 @@ function ExpeditionCombatDock({ hud, onDash, onActivateAbility, tutorialAbilityI
           return (
             <button
               type="button"
-              className={`combat-ability-chip${slot.ready ? " is-ready" : " is-cooling"}${slot.locked && !tutorialTarget ? " is-locked" : ""}${slot.id === "helixTempest" ? " is-ultimate" : ""}${tutorialTarget ? " is-tutorial-target" : ""}${tutorialDimmed ? " is-tutorial-dimmed" : ""}`}
+              className={`combat-ability-chip${slot.ready ? " is-ready" : " is-cooling"}${slot.locked && !tutorialTarget ? " is-locked" : ""}${slot.ultimate ? " is-ultimate" : ""}${tutorialTarget ? " is-tutorial-target" : ""}${tutorialDimmed ? " is-tutorial-dimmed" : ""}`}
               onClick={activate}
               aria-label={`${slot.key} ${slot.label}. ${slot.status}`}
               aria-disabled={(slot.locked && !tutorialTarget) || tutorialDimmed}

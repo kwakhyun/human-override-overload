@@ -201,6 +201,12 @@ export const MANUAL_ACTIVE_ABILITIES = Object.freeze({
   stratosRun: Object.freeze({ id: "stratosRun", key: "F", name: "STRATOS RUN", baseCooldown: 34 }),
   helixTempest: Object.freeze({ id: "helixTempest", key: "R", name: "HELIX TEMPEST", baseCooldown: 72 }),
 });
+export const SWORD_MANUAL_ACTIVE_ABILITIES = Object.freeze({
+  empPulse: Object.freeze({ id: "spectralSwordArray", key: "Q", name: "SPECTRAL SWORD ARRAY", nameKo: "환검진", baseCooldown: 14 }),
+  aegisWard: Object.freeze({ id: "phantomRend", key: "E", name: "PHANTOM REND", nameKo: "유령 참격", baseCooldown: 20 }),
+  stratosRun: Object.freeze({ id: "imperialSwordDomain", key: "F", name: "IMPERIAL SWORD DOMAIN", nameKo: "천검 영역", baseCooldown: 32 }),
+  helixTempest: Object.freeze({ id: "heavenfallExecution", key: "R", name: "HEAVENFALL EXECUTION", nameKo: "천검 낙하", baseCooldown: 85 }),
+});
 const MANUAL_ABILITY_KEYS = Object.freeze(["empPulse", "aegisWard", "stratosRun", "helixTempest"]);
 const MANUAL_INPUT_FIELDS = Object.freeze(["empPulsePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]);
 
@@ -809,6 +815,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     helixTempests: [],
     bossBombBursts: [],
     swordEffects: [],
+    swordManualAbilities: [],
     allies: [],
     deployables: [],
     pickups: [],
@@ -872,7 +879,10 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       bossParryFailures: 0,
       bossBombsDefused: 0,
       bossBombFailures: 0,
-      activeAbilityCasts: { empPulse: 0, aegisWard: 0, stratosRun: 0, helixTempest: 0 },
+      activeAbilityCasts: {
+        empPulse: 0, aegisWard: 0, stratosRun: 0, helixTempest: 0,
+        spectralSwordArray: 0, phantomRend: 0, imperialSwordDomain: 0, heavenfallExecution: 0,
+      },
       overdriveTier: 0,
       batchedOverflowLevels: 0,
     },
@@ -2471,8 +2481,14 @@ function supportCooldownDuration(state, skill) {
   return (rank >= 3 ? 20 : 34 - Math.max(1, rank) * 4) * overdriveCooldownScale;
 }
 
-function manualAbilityCooldownDuration(_state, ability) {
-  return MANUAL_ACTIVE_ABILITIES[ability]?.baseCooldown ?? 0;
+function manualAbilityDefinition(state, ability) {
+  return state.player.mainWeaponId === "beam-sword"
+    ? SWORD_MANUAL_ACTIVE_ABILITIES[ability]
+    : MANUAL_ACTIVE_ABILITIES[ability];
+}
+
+function manualAbilityCooldownDuration(state, ability) {
+  return manualAbilityDefinition(state, ability)?.baseCooldown ?? 0;
 }
 
 function hasManualCombatTarget(state) {
@@ -2487,10 +2503,10 @@ function manualAbilityAvailable(state, ability) {
 }
 
 function rejectManualAbility(state, ability, reason) {
-  const definition = MANUAL_ACTIVE_ABILITIES[ability];
+  const definition = manualAbilityDefinition(state, ability);
   const entry = state.manualAbilities[ability];
   emit(state, "manualAbilityRejected", {
-    ability,
+    ability: definition.id,
     key: definition.key,
     reason,
     cooldown: Math.max(0, finite(entry.cooldown)),
@@ -2499,20 +2515,137 @@ function rejectManualAbility(state, ability, reason) {
 }
 
 function commitManualAbility(state, ability, payload = {}) {
-  const definition = MANUAL_ACTIVE_ABILITIES[ability];
+  const definition = manualAbilityDefinition(state, ability);
   const entry = state.manualAbilities[ability];
   const cooldown = manualAbilityCooldownDuration(state, ability);
   entry.cooldown = cooldown;
   entry.maxCooldown = cooldown;
-  state.stats.activeAbilityCasts[ability] += 1;
+  state.stats.activeAbilityCasts[definition.id] = finite(state.stats.activeAbilityCasts[definition.id]) + 1;
   emit(state, "manualAbilityActivated", {
-    ability,
+    ability: definition.id,
     key: definition.key,
     name: definition.name,
     cooldown,
     ...payload,
   });
   return true;
+}
+
+function applySwordAbilityArea(state, x, y, radius, damage, source, executeOrdinary = false) {
+  let hits = 0;
+  if (state.phase === "boss") {
+    const boss = state.boss;
+    if (boss.active && !boss.dead && Math.hypot(boss.x - x, boss.y - y) <= radius + boss.radius) {
+      if (damageBoss(state, damage, source) > 0) hits += 1;
+    }
+    return hits;
+  }
+  for (const enemy of state.enemies) {
+    if (enemy.dead || finite(enemy.spawnDelay) > 0 || Math.hypot(enemy.x - x, enemy.y - y) > radius + enemy.radius) continue;
+    const amount = executeOrdinary && !enemy.isMidBoss ? enemy.hp + 1 : damage;
+    if (damageEnemy(state, enemy, amount, source) > 0) hits += 1;
+  }
+  return hits;
+}
+
+function pushSwordManualEffect(state, type, x, y, radius, life, extra = {}) {
+  if (state.swordManualAbilities.length >= 12) state.swordManualAbilities.shift();
+  const effect = {
+    id: ++state.nextEntityId,
+    type,
+    x,
+    y,
+    radius,
+    life,
+    maxLife: life,
+    angle: state.player.angle,
+    phase: "active",
+    ...extra,
+  };
+  state.swordManualAbilities.push(effect);
+  return effect;
+}
+
+function triggerSpectralSwordArray(state) {
+  const radius = 350;
+  const damage = 260 * state.player.damageMultiplier * state.player.weaponDamageMultiplier;
+  const hits = applySwordAbilityArea(state, state.player.x, state.player.y, radius, damage, "spectralSwordArray");
+  pushSwordManualEffect(state, "spectralSwordArray", state.player.x, state.player.y, radius, 0.95, { hits });
+  state.shake = Math.max(state.shake, 9);
+  emit(state, "swordManualAbility", { ability: "spectralSwordArray", x: state.player.x, y: state.player.y, radius, hits });
+  return commitManualAbility(state, "empPulse", { hits, radius });
+}
+
+function triggerPhantomRend(state) {
+  const player = state.player;
+  const direction = normalize(state.aim.x - player.x, state.aim.y - player.y, Math.cos(player.angle), Math.sin(player.angle));
+  const startX = player.x;
+  const startY = player.y;
+  const arena = activeArena(state);
+  player.x = clamp(startX + direction.x * 290, arena.left + player.radius, arena.right - player.radius);
+  player.y = clamp(startY + direction.y * 290, arena.top + player.radius, arena.bottom - player.radius);
+  clampPlayerToFloor(player, state.expedition);
+  player.invulnerability = Math.max(player.invulnerability, 0.32);
+  const damage = 420 * player.damageMultiplier * player.weaponDamageMultiplier;
+  let hits = 0;
+  if (state.phase === "boss") {
+    if (state.boss.active && !state.boss.dead
+      && pointLineDistance(state.boss.x, state.boss.y, startX, startY, player.x, player.y) <= 54 + state.boss.radius) {
+      if (damageBoss(state, damage, "phantomRend") > 0) hits += 1;
+    }
+  } else {
+    for (const enemy of state.enemies) {
+      if (enemy.dead || finite(enemy.spawnDelay) > 0
+        || pointLineDistance(enemy.x, enemy.y, startX, startY, player.x, player.y) > 54 + enemy.radius) continue;
+      if (damageEnemy(state, enemy, damage, "phantomRend") > 0) hits += 1;
+    }
+  }
+  pushSwordManualEffect(state, "phantomRend", (startX + player.x) * 0.5, (startY + player.y) * 0.5, 320, 0.72, {
+    startX, startY, endX: player.x, endY: player.y, angle: Math.atan2(direction.y, direction.x), hits,
+  });
+  state.shake = Math.max(state.shake, 13);
+  emit(state, "swordManualAbility", { ability: "phantomRend", startX, startY, endX: player.x, endY: player.y, hits });
+  return commitManualAbility(state, "aegisWard", { hits, distance: Math.hypot(player.x - startX, player.y - startY) });
+}
+
+function triggerImperialSwordDomain(state) {
+  const radius = 520;
+  const damage = 680 * state.player.damageMultiplier * state.player.weaponDamageMultiplier;
+  const hits = applySwordAbilityArea(state, state.player.x, state.player.y, radius, damage, "imperialSwordDomain");
+  pushSwordManualEffect(state, "imperialSwordDomain", state.player.x, state.player.y, radius, 1.25, { hits });
+  state.shake = Math.max(state.shake, 18);
+  emit(state, "swordManualAbility", { ability: "imperialSwordDomain", x: state.player.x, y: state.player.y, radius, hits });
+  return commitManualAbility(state, "stratosRun", { hits, radius });
+}
+
+function triggerHeavenfallExecution(state) {
+  const radius = 720;
+  const effect = pushSwordManualEffect(state, "heavenfallExecution", state.player.x, state.player.y, radius, 1.65, {
+    phase: "warning",
+    warning: 0.68,
+    warningMax: 0.68,
+    detonated: false,
+  });
+  emit(state, "swordManualAbilityWarning", { ability: effect.type, x: effect.x, y: effect.y, radius, warning: effect.warning });
+  return commitManualAbility(state, "helixTempest", { radius, warning: effect.warning });
+}
+
+function updateSwordManualAbilities(state, dt) {
+  for (const effect of state.swordManualAbilities) {
+    effect.life -= dt;
+    if (effect.type !== "heavenfallExecution" || effect.detonated) continue;
+    effect.warning = Math.max(0, finite(effect.warning) - dt);
+    if (effect.warning > 0) continue;
+    effect.detonated = true;
+    effect.phase = "impact";
+    const bossDamage = 1900 * state.player.damageMultiplier * state.player.weaponDamageMultiplier;
+    const hits = applySwordAbilityArea(state, effect.x, effect.y, effect.radius, bossDamage, effect.type, true);
+    effect.hits = hits;
+    state.shake = Math.max(state.shake, 28);
+    state.shockwaves.push({ type: effect.type, x: effect.x, y: effect.y, maxRadius: effect.radius, life: 0.72, maxLife: 0.72, color: "#d8ffff", width: 18 });
+    emit(state, "swordManualAbilityImpact", { ability: effect.type, x: effect.x, y: effect.y, radius: effect.radius, hits });
+  }
+  compact(state.swordManualAbilities, keepPositiveLife);
 }
 
 function triggerEmpPulse(state) {
@@ -2843,6 +2976,7 @@ function updateManualAbilityEntities(state, dt) {
   updateAegisWards(state, dt);
   updateStratosRuns(state, dt);
   updateHelixTempests(state, dt);
+  updateSwordManualAbilities(state, dt);
 }
 
 function updateManualAbilities(state, input, dt) {
@@ -2869,7 +3003,12 @@ function updateManualAbilities(state, input, dt) {
       rejectManualAbility(state, ability, "cooldown");
       continue;
     }
-    if (ability === "empPulse") triggerEmpPulse(state);
+    if (state.player.mainWeaponId === "beam-sword") {
+      if (ability === "empPulse") triggerSpectralSwordArray(state);
+      else if (ability === "aegisWard") triggerPhantomRend(state);
+      else if (ability === "stratosRun") triggerImperialSwordDomain(state);
+      else triggerHeavenfallExecution(state);
+    } else if (ability === "empPulse") triggerEmpPulse(state);
     else if (ability === "aegisWard") triggerAegisWard(state);
     else if (ability === "stratosRun") triggerStratosRun(state);
     else triggerHelixTempest(state);
@@ -4706,12 +4845,13 @@ export function getSwarmHud(state) {
   const airstrikeMax = cooldownMax("airstrike", state.support.airstrikeCooldown, state.support.airstrikeCooldownMax);
   const omegaLaserMax = cooldownMax("omegaLaser", state.support.omegaLaserCooldown, state.support.omegaLaserCooldownMax);
   const manualHud = (ability) => {
-    const definition = MANUAL_ACTIVE_ABILITIES[ability];
+    const definition = manualAbilityDefinition(state, ability);
     const entry = state.manualAbilities[ability];
     const maxCooldown = entry.cooldown > 0 ? entry.maxCooldown : manualAbilityCooldownDuration(state, ability);
     return {
       id: definition.id,
       name: definition.name,
+      nameKo: definition.nameKo,
       rank: 1,
       upgradeRank: 0,
       base: true,
@@ -4722,7 +4862,7 @@ export function getSwarmHud(state) {
       available: manualAbilityAvailable(state, ability),
       maxRank: 3,
       manual: true,
-      ultimate: ability === "helixTempest",
+      ultimate: definition.key === "R",
       key: definition.key,
     };
   };

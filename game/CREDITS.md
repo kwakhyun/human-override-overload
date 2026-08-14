@@ -1472,8 +1472,6 @@ Lighting/mood: dark industrial night; orange left, electric cyan-violet center, 
 Constraints: no UI, no cards, no labels, no text, no numbers, no logos, no watermark, no people, no large aircraft, no split screen, no duplicated location. This is a clean background image behind interactive DOM elements.
 ```
 
-## Open-source dependencies
-
 ## 후반 공성 워커 유닛 (2026-08-15)
 
 - 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
@@ -1498,6 +1496,34 @@ Style/medium: the same polished dark sci-fi game-sprite rendering family as the 
 Composition/framing: exact equal 6x4 grid, one centered walker per cell, consistent center anchor and scale, generous gutters, nothing crosses cell boundaries.
 Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background. No transparency simulation, no shadow, floor, scenery, text, labels, grid lines, watermark, detached projectiles, smoke across cells, or extra objects. Do not use #ff00ff in the robot.
 ```
+
+## 빔 소드 수동 검술 아틀라스 (2026-08-15)
+
+- 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
+- 기능/팔레트 참조: 프로젝트 원본 `public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png`.
+- 선택 ImageGen 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-52ca4c3b-b71b-4cdf-aaf6-0d385346a3bc.png`.
+- 프로젝트 보존 원본: `reference/source-assets/overload/vfx/sword-manual-ability-atlas-{chroma,alpha}.png`.
+- 활성 런타임: `public/assets/overload/vfx/pixel/sword-manual-ability-atlas.png` (6×4, 64px 셀).
+- 후처리: `remove_chroma_key.py`와 `normalize-pixel-vfx-atlas.py`로 배경 제거, 제한 팔레트,
+  NEAREST 64px 셀을 확정했습니다.
+
+### 빔 소드 수동 검술 프롬프트 전문
+
+```text
+Use case: stylized-concept.
+Asset type: production 16-bit pixel-art manual sword ability VFX atlas for HUMAN OVERRIDE: OVERLOAD.
+Input image: Image 1 is the approved crisp pixel cluster, cyan-white energy palette, and exact 6x4 atlas style reference. Redesign four new active abilities rather than copying its frames.
+Primary request: one exact 6-column by 4-row atlas, exactly 24 isolated square animation cells, read left to right.
+Row 1 Q · SPECTRAL SWORD ARRAY: one small cyan blade seed, then 3, 5, and 8 floating swords orbiting a central point, blades converging outward into a circular slash, clean fade.
+Row 2 E · PHANTOM REND: forward arrow-like sword aura charges, accelerates through three long but cell-contained cutting silhouettes, crossing X slash impact, afterimage fade.
+Row 3 F · IMPERIAL SWORD DOMAIN: compact hilt/core, sword grows into a massive cyan-white energy blade, wide circular sweep arc, peak battlefield ring, shattered light fragments, fade.
+Row 4 R · HEAVENFALL EXECUTION: warning sigil, enormous vertical sword tip descending, giant sword impact, bright radial ground rupture, huge concentric shockwave, fading crater sparks. Every frame must clearly communicate a devastating ultimate without crossing cell boundaries.
+Style/medium: authentic authored 16-bit arcade pixel VFX, hard stair-step edges, no antialiasing, restrained cyan/white/ice-blue palette with minimal violet, dark navy outlines, readable at 64x64, polished production asset.
+Composition/framing: exact uniform 6x4 grid, equal square slots, one centered effect per cell, safe padding, no crossing boundaries.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background. No grid lines, labels, text, numbers, environment, floor, shadows, gradients, watermark, extra rows or columns. Do not use #ff00ff in effects.
+```
+
+## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License
 - TypeScript 5.9.3 — Apache License 2.0

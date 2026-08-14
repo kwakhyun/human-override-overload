@@ -332,6 +332,74 @@ test("Q/E/F/R expose four independent manual ability contracts and clear as inpu
   assert.equal("omegaLaser" in state.manualAbilities, false);
 });
 
+test("beam sword replaces rifle actives with four offensive flying-sword techniques", () => {
+  const createSwordAbilityState = () => {
+    const state = createSwarmState({ random: () => 0.5, mainWeaponId: "beam-sword" });
+    const templates = state.enemies.slice(0, 4).map((enemy, index) => ({
+      ...enemy,
+      id: 7000 + index,
+      x: state.player.x + 90 + index * 62,
+      y: state.player.y + (index % 2 ? 42 : -42),
+      hp: 9000,
+      maxHp: 9000,
+      speed: 0,
+      spawnDelay: 0,
+      dead: false,
+    }));
+    state.enemies = templates;
+    state.spawnedEnemies = state.enemyBudget;
+    state.player.invulnerability = 999;
+    delayPlayerWeapons(state);
+    return state;
+  };
+
+  const qState = createSwordAbilityState();
+  const qInput = createSwarmInput();
+  qInput.empPulsePressed = true;
+  stepSwarm(qState, qInput, 1 / 60);
+  assert.equal(qState.empPulses.length, 0);
+  assert.ok(qState.swordManualAbilities.some((effect) => effect.type === "spectralSwordArray"));
+  assert.ok(qState.manualAbilities.empPulse.cooldown > 13.9);
+  assert.ok(drainSwarmEvents(qState).some((event) => event.type === "manualAbilityActivated" && event.ability === "spectralSwordArray"));
+
+  const eState = createSwordAbilityState();
+  const eStartX = eState.player.x;
+  eState.aim.x = eStartX + 600;
+  const eInput = createSwarmInput();
+  eInput.aegisWardPressed = true;
+  stepSwarm(eState, eInput, 1 / 60);
+  assert.ok(eState.player.x > eStartX + 200);
+  assert.equal(eState.aegisWards.length, 0);
+  assert.ok(eState.swordManualAbilities.some((effect) => effect.type === "phantomRend"));
+
+  const fState = createSwordAbilityState();
+  const fInput = createSwarmInput();
+  fInput.stratosRunPressed = true;
+  stepSwarm(fState, fInput, 1 / 60);
+  assert.equal(fState.stratosRuns.length, 0);
+  assert.ok(fState.swordManualAbilities.some((effect) => effect.type === "imperialSwordDomain"));
+  assert.ok(fState.manualAbilities.stratosRun.cooldown > 31.9);
+
+  const rState = createSwordAbilityState();
+  const rInput = createSwarmInput();
+  rInput.helixTempestPressed = true;
+  stepSwarm(rState, rInput, 1 / 60);
+  assert.equal(rState.helixTempests.length, 0);
+  assert.ok(rState.swordManualAbilities.some((effect) => effect.type === "heavenfallExecution" && !effect.detonated));
+  assert.ok(rState.manualAbilities.helixTempest.cooldown > 84.9);
+  delayPlayerWeapons(rState);
+  stepFor(rState, createSwarmInput(), 0.82);
+  assert.equal(rState.killedEnemies, 4, "the heavenfall shockwave should execute every ordinary nearby enemy");
+  assert.ok(drainSwarmEvents(rState).some((event) => event.type === "swordManualAbilityImpact" && event.hits === 4));
+
+  const hud = getSwarmHud(createSwordAbilityState());
+  assert.deepEqual(
+    [hud.abilities.empPulse.id, hud.abilities.aegisWard.id, hud.abilities.stratosRun.id, hud.abilities.helixTempest.id],
+    ["spectralSwordArray", "phantomRend", "imperialSwordDomain", "heavenfallExecution"],
+  );
+  assert.equal(hud.abilities.helixTempest.maxCooldown, 85);
+});
+
 test("EMP PULSE stops mechanical enemies in pointer geometry without pulling units or projectiles", () => {
   const state = createSwarmState({ random: () => 0.5 });
   const target = state.enemies.find((enemy) => !enemy.elite);
@@ -860,6 +928,10 @@ test("level-up airstrike and omega laser remain automatic and separate from manu
     aegisWard: 0,
     stratosRun: 0,
     helixTempest: 0,
+    spectralSwordArray: 0,
+    phantomRend: 0,
+    imperialSwordDomain: 0,
+    heavenfallExecution: 0,
   });
   assert.equal(state.empPulses.length, 0);
   assert.equal(state.stratosRuns.length, 0);

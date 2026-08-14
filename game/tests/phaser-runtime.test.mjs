@@ -320,6 +320,7 @@ test("player skills use low-resolution pixel atlases while healing kits and gate
   const view = await read("src/phaser/view/BattleView.ts");
   const manualAtlas = await readBytes("public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png");
   const automaticAtlas = await readBytes("public/assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png");
+  const swordManualAtlas = await readBytes("public/assets/overload/vfx/pixel/sword-manual-ability-atlas.png");
   const gateAtlas = await readBytes("public/assets/overload/vfx/gates/sovereign-gate-motion-atlas.png");
   const healingAtlas = await readBytes("public/assets/overload/items/healing-kit-motion-atlas.png");
   assert.equal(manualAtlas.subarray(1, 4).toString("ascii"), "PNG");
@@ -330,6 +331,9 @@ test("player skills use low-resolution pixel atlases while healing kits and gate
   assert.equal(healingAtlas.readUInt32BE(20), 192);
   assert.match(manifest, /manual-ability-pixel-atlas\.png", kind: "atlas", columns: 6, rows: 4/);
   assert.match(manifest, /automatic-skill-pixel-atlas\.png", kind: "atlas", columns: 6, rows: 4/);
+  assert.deepEqual([swordManualAtlas.readUInt32BE(16), swordManualAtlas.readUInt32BE(20)], [384, 256]);
+  assert.match(manifest, /sword-manual-ability-atlas\.png", kind: "atlas" as const, columns: 6, rows: 4/);
+  assert.match(view, /syncSwordManualAbilityFx/);
   assert.match(manifest, /sovereign-gate-motion-atlas\.png", kind: "atlas", columns: 6, rows: 1/);
   assert.match(manifest, /healing-kit-motion-atlas\.png", kind: "atlas", columns: 4, rows: 1/);
   assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.automaticSkillPixel, 6, 4\)/);

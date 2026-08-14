@@ -385,6 +385,7 @@ export class BattleView {
   private readonly healingKitSprites: Phaser.GameObjects.Image[] = [];
   private readonly manualAbilitySprites: Phaser.GameObjects.Image[] = [];
   private readonly swordEffectSprites: Phaser.GameObjects.Image[] = [];
+  private readonly swordManualAbilitySprites: Phaser.GameObjects.Image[] = [];
   private readonly spawnGateSprites: Phaser.GameObjects.Image[] = [];
   private readonly bossPatternSprites: Phaser.GameObjects.Image[] = [];
   private readonly bossTimedBombSprites: Phaser.GameObjects.Image[] = [];
@@ -446,6 +447,7 @@ export class BattleView {
     this.prepareAtlas(ASSET_KEYS.aegisWardHd, 6, 1);
     this.prepareAtlas(ASSET_KEYS.empPulseHd, 6, 1);
     if (scene.textures.exists(ASSET_KEYS.swordSkillPixel)) this.preparePixelAtlas(ASSET_KEYS.swordSkillPixel, 6, 4);
+    if (scene.textures.exists(ASSET_KEYS.swordManualAbilityPixel)) this.preparePixelAtlas(ASSET_KEYS.swordManualAbilityPixel, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.enemyDeathPixel, 6, 1);
     const hasSquadTraces = scene.textures.exists(ASSET_KEYS.squadTraces);
     if (hasSquadTraces) ensureAtlasFrames(scene, ASSET_KEYS.squadTraces, 3, 1);
@@ -1805,6 +1807,7 @@ export class BattleView {
     }
     this.syncManualAbilityFx(state, time, quality);
     this.syncSwordEffectFx(state, quality);
+    this.syncSwordManualAbilityFx(state, quality);
     this.syncSkillFx(state, time, quality);
     this.syncUltimateFx(state, quality);
     this.syncOmegaLaserFx(state, time, quality);
@@ -2130,6 +2133,47 @@ export class BattleView {
       visible += 1;
     }
     for (let index = visible; index < this.swordEffectSprites.length; index += 1) this.swordEffectSprites[index].setVisible(false);
+  }
+
+  private syncSwordManualAbilityFx(state: any, quality: QualityPreset) {
+    const effects = Array.isArray(state?.swordManualAbilities) ? state.swordManualAbilities : [];
+    const cap = quality.id === "performance" ? 4 : 8;
+    let visible = 0;
+    for (let index = Math.max(0, effects.length - cap); index < effects.length && visible < cap; index += 1) {
+      const effect = effects[index];
+      const x = finite(effect?.x);
+      const y = finite(effect?.y);
+      const radius = Math.max(80, finite(effect?.radius, 320));
+      if (!this.isCircleVisible(x, y, radius, 96)) continue;
+      let image = this.swordManualAbilitySprites[visible];
+      if (!image) {
+        image = this.scene.add.image(0, 0, ASSET_KEYS.swordManualAbilityPixel).setBlendMode(Phaser.BlendModes.ADD);
+        this.worldFront.add(image);
+        this.swordManualAbilitySprites.push(image);
+      }
+      const type = String(effect?.type ?? "spectralSwordArray");
+      const row = type === "phantomRend" ? 1 : type === "imperialSwordDomain" ? 2 : type === "heavenfallExecution" ? 3 : 0;
+      const progress = 1 - clamp01(finite(effect?.life) / Math.max(0.001, finite(effect?.maxLife, 1)));
+      const visualProgress = type === "heavenfallExecution" && !effect?.detonated
+        ? 1 - clamp01(finite(effect?.warning) / Math.max(0.001, finite(effect?.warningMax, 0.68)))
+        : progress;
+      const frame = Math.min(5, Math.floor(visualProgress * 6));
+      const size = type === "heavenfallExecution"
+        ? Math.min(960, radius * 1.34)
+        : type === "imperialSwordDomain" ? Math.min(780, radius * 1.4) : Math.min(620, radius * 1.62);
+      setAtlasFrame(image, frame, row);
+      image
+        .setVisible(true)
+        .setPosition(x, y)
+        .setRotation(finite(effect?.angle))
+        .setDisplaySize(size, size)
+        .setAlpha(0.98 * clamp01(finite(effect?.life) / Math.max(0.12, finite(effect?.maxLife, 1) * 0.16)))
+        .clearTint();
+      visible += 1;
+    }
+    for (let index = visible; index < this.swordManualAbilitySprites.length; index += 1) {
+      this.swordManualAbilitySprites[index].setVisible(false);
+    }
   }
 
   private syncHealingKitFx(state: any, time: number, quality: QualityPreset) {
