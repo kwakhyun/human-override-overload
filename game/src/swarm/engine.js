@@ -8,9 +8,11 @@ const TAU = Math.PI * 2;
 const ARENA = Object.freeze({ left: 34, right: 1246, top: 34, bottom: 686 });
 const BOSS_ARENA = Object.freeze({ left: 54, right: WORLD_WIDTH - 54, top: 54, bottom: WORLD_HEIGHT - 54 });
 const EXPEDITION_ARENA = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 54, bottom: 1026 });
-const INITIAL_SWARM = 36;
+const LEGACY_INITIAL_SWARM = 36;
+const EXPEDITION_INITIAL_SWARM = 8;
 const DEFAULT_ENEMY_BUDGET = 1000;
 const FIRST_REGION_ENEMY_BUDGET = 300;
+const ENEMY_HEALTH_MULTIPLIER = 3;
 const MINIMAP_ENEMY_SAMPLE_CAP = 24;
 const MAX_LIVE_ENEMIES = 220;
 const MAX_PROJECTILES = 620;
@@ -26,8 +28,6 @@ const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sw
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
 const EXPEDITION_FLOOR_ELLIPSE = Object.freeze({ x: 960, y: 540, rx: 840, ry: 460 });
 const EXPEDITION_ROUTE_LENGTH = 12000;
-const EXPEDITION_BOSS_GATE = 11200;
-const EXPEDITION_GATE_LOCK_DISTANCE = 10680;
 const EXPEDITION_ROUTE_ORIGIN_X = 580;
 const EXPEDITION_CORRIDOR = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 150, bottom: 930 });
 const EXPEDITION_DEEP_PURSUIT_DISTANCE = 720;
@@ -45,10 +45,15 @@ const EXPEDITION_TRACES = Object.freeze([
   Object.freeze({ id: "moss", distance: 8600, y: 510, kind: "body", beat: "moss-trace" }),
 ]);
 const SURGE_WAVES = Object.freeze([
-  Object.freeze({ warnAt: 8, startAt: 9.25, progressAt: 0.1, warningLead: 1.25, count: 124, rate: 20, label: "GATE PRESSURE · TIER I" }),
-  Object.freeze({ warnAt: 33, startAt: 34.5, progressAt: 0.34, warningLead: 1.35, count: 180, rate: 30, label: "BREACH FLOOD · TIER II" }),
-  Object.freeze({ warnAt: 66, startAt: 67.5, progressAt: 0.6, warningLead: 1.45, count: 260, rate: 42, label: "SOVEREIGN SURGE · TIER III" }),
-  Object.freeze({ warnAt: 104, startAt: 105.5, progressAt: 0.82, warningLead: 1.5, count: 400, rate: 60, label: "TERMINAL OVERLOAD · MAXIMUM" }),
+  Object.freeze({ warnAt: 8, startAt: 8.72, warningLead: 0.72, count: 14, rate: 12, label: "근접 추격대 · WAVE I" }),
+  Object.freeze({ warnAt: 24, startAt: 24.76, warningLead: 0.76, count: 22, rate: 14, label: "근접 증원대 · WAVE II" }),
+  Object.freeze({ warnAt: 44, startAt: 44.82, warningLead: 0.82, count: 34, rate: 16, label: "소총 지원대 · WAVE III" }),
+  Object.freeze({ warnAt: 68, startAt: 68.88, warningLead: 0.88, count: 52, rate: 18, label: "혼성 타격대 · WAVE IV" }),
+  Object.freeze({ warnAt: 96, startAt: 96.94, warningLead: 0.94, count: 79, rate: 22, label: "원거리 봉쇄대 · WAVE V" }),
+  Object.freeze({ warnAt: 128, startAt: 129, warningLead: 1, count: 120, rate: 26, label: "SOVEREIGN 공세 · WAVE VI" }),
+  Object.freeze({ warnAt: 164, startAt: 165.06, warningLead: 1.06, count: 180, rate: 32, label: "중장거리 포화 · WAVE VII" }),
+  Object.freeze({ warnAt: 204, startAt: 205.12, warningLead: 1.12, count: 220, rate: 38, label: "최대 전력 투입 · WAVE VIII" }),
+  Object.freeze({ warnAt: 248, startAt: 249.2, warningLead: 1.2, count: 400, rate: 44, label: "종말 공세 · FINAL WAVE" }),
 ]);
 
 const OVERDRIVE_THRESHOLDS = Object.freeze([0.48, 0.72, 0.88]);
@@ -277,26 +282,23 @@ function activeWorldSize(state) {
 
 export function getEnemyPressureCap(state) {
   if (!state?.expedition) return MAX_LIVE_ENEMIES;
-  const routeProgress = clamp(finite(state.expedition.progress), 0, 1);
-  const levelPressure = clamp((finite(state.player?.level, 1) - 1) * 6, 0, 48);
-  const clearPressure = clamp(finite(state.killedEnemies) / Math.max(1, finite(state.enemyBudget, DEFAULT_ENEMY_BUDGET)) * 36, 0, 36);
-  const timePressure = clamp(finite(state.time) / 180 * 20, 0, 20);
-  // Route depth is the dominant crowd signal. The convex curve keeps the
-  // deployment readable, then opens substantially more live slots near the
-  // second half and terminal approach without changing the authored budget.
-  const routePressure = Math.pow(routeProgress, 1.55) * 132;
+  const openingCount = EXPEDITION_INITIAL_SWARM;
+  const levelPressure = clamp((finite(state.player?.level, 1) - 1) * 4, 0, 36);
+  const clearPressure = clamp(finite(state.killedEnemies) / Math.max(1, finite(state.enemyBudget, DEFAULT_ENEMY_BUDGET)) * 62, 0, 62);
+  const timePressure = clamp(finite(state.time) / 300 * 12, 0, 12);
+  const wavePressure = clamp(finite(state.surgeIndex) * 18, 0, 144);
   return Math.round(clamp(
-    INITIAL_SWARM + levelPressure + clearPressure + timePressure + routePressure,
-    INITIAL_SWARM,
+    openingCount + levelPressure + clearPressure + timePressure + wavePressure,
+    openingCount,
     MAX_LIVE_ENEMIES,
   ));
 }
 
 export function getSniperLockCap(state) {
   if (!state?.expedition) return 5;
-  const routeProgress = clamp(finite(state.expedition.progress), 0, 1);
-  if (routeProgress < 0.34) return 3;
-  if (routeProgress < 0.72) return 5;
+  const clearProgress = clamp(finite(state.killedEnemies) / Math.max(1, finite(state.enemyBudget, DEFAULT_ENEMY_BUDGET)), 0, 1);
+  if (clearProgress < 0.4) return 2;
+  if (clearProgress < 0.72) return 4;
   return 7;
 }
 
@@ -424,12 +426,36 @@ function edgeSpawn(state, index) {
 }
 
 function chooseEnemyType(state, index) {
-  const tier = index < INITIAL_SWARM ? "opening" : "reinforcement";
-  const profile = state.enemyProfile?.[tier] ?? REGION_ENEMY_PROFILES["wrong-engine-core"][tier];
-  const weights = profile.weights;
+  const openingCount = state.expedition ? EXPEDITION_INITIAL_SWARM : LEGACY_INITIAL_SWARM;
+  const datasetProgress = clamp(index / Math.max(1, state.enemyBudget - 1), 0, 1);
+  const openingProfile = state.enemyProfile?.opening ?? REGION_ENEMY_PROFILES["wrong-engine-core"].opening;
+  const reinforcementProfile = state.enemyProfile?.reinforcement ?? REGION_ENEMY_PROFILES["wrong-engine-core"].reinforcement;
+  if (state.expedition && (index < openingCount || datasetProgress < 0.12)) return "hunter";
+
+  let weights;
+  let offset;
+  if (state.expedition && datasetProgress < 0.42) {
+    weights = {
+      hunter: Math.max(4, finite(openingProfile.weights.hunter)),
+      suppressor: Math.max(1, finite(openingProfile.weights.suppressor)),
+      brute: 0,
+    };
+    offset = openingProfile.offset;
+  } else if (state.expedition && datasetProgress < 0.72) {
+    weights = {
+      hunter: Math.max(2, Math.round((finite(openingProfile.weights.hunter) + finite(reinforcementProfile.weights.hunter)) * 0.5)),
+      suppressor: Math.max(2, Math.round((finite(openingProfile.weights.suppressor) + finite(reinforcementProfile.weights.suppressor)) * 0.5)),
+      brute: Math.max(1, Math.floor(finite(reinforcementProfile.weights.brute) * 0.5)),
+    };
+    offset = reinforcementProfile.offset;
+  } else {
+    const profile = index < openingCount ? openingProfile : reinforcementProfile;
+    weights = profile.weights;
+    offset = profile.offset;
+  }
   const totalWeight = ENEMY_TYPE_ORDER.reduce((total, type) => total + Math.max(0, finite(weights[type])), 0);
   if (totalWeight <= 0) return "hunter";
-  let slot = ((index * 7 + finite(profile.offset)) % totalWeight + totalWeight) % totalWeight;
+  let slot = ((index * 7 + finite(offset)) % totalWeight + totalWeight) % totalWeight;
   for (const type of ENEMY_TYPE_ORDER) {
     const weight = Math.max(0, finite(weights[type]));
     if (slot < weight) return type;
@@ -446,7 +472,7 @@ function spawnEnemy(state) {
   const elite = spawnIndex > 0 && spawnIndex % 29 === 0;
   const datasetProgress = clamp(spawnIndex / Math.max(1, state.enemyBudget - 1), 0, 1);
   const scale = elite ? 1.3 : 1;
-  const hpScale = (elite ? 2.35 : 1) * (1 + datasetProgress * 0.45);
+  const hpScale = ENEMY_HEALTH_MULTIPLIER * (elite ? 2.35 : 1) * (1 + datasetProgress * 0.45);
   const point = edgeSpawn(state, spawnIndex);
   state.enemies.push({
     id: ++state.nextEntityId,
@@ -496,7 +522,7 @@ function spawnEnemy(state) {
     moveBlend: 0,
     spawnGateId: point.gateId ?? null,
     spawnDelay: state.expedition
-      ? spawnIndex < INITIAL_SWARM
+      ? spawnIndex < EXPEDITION_INITIAL_SWARM
         ? 0.08 + finite(point.gateSlot) * 0.008
         : 0.38 + finite(point.gateSlot) * 0.025
       : 0,
@@ -541,14 +567,15 @@ function spawnRouteMidBoss(state) {
 }
 
 function spawnInitialSwarm(state) {
-  const count = Math.min(INITIAL_SWARM, state.enemyBudget, getEnemyPressureCap(state));
+  const openingCount = state.expedition ? EXPEDITION_INITIAL_SWARM : LEGACY_INITIAL_SWARM;
+  const count = Math.min(openingCount, state.enemyBudget, getEnemyPressureCap(state));
   for (let index = 0; index < count; index += 1) spawnEnemy(state);
 }
 
 function spawnRouteHealingKits(state) {
   if (!state.expedition) return;
   const routeStart = finite(state.expedition.originX, EXPEDITION_ROUTE_ORIGIN_X);
-  const routeEnd = routeStart + finite(state.expedition.gateLockDistance, EXPEDITION_GATE_LOCK_DISTANCE) - 260;
+  const routeEnd = routeStart + finite(state.expedition.routeLength, EXPEDITION_ROUTE_LENGTH) - 260;
   const span = Math.max(1, routeEnd - routeStart - 760);
   for (let index = 0; index < ROUTE_HEALING_KITS; index += 1) {
     const laneProgress = (index + 0.55 + (state.random() - 0.5) * 0.36) / ROUTE_HEALING_KITS;
@@ -745,17 +772,10 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       distance: 0,
       originX: EXPEDITION_ROUTE_ORIGIN_X,
       routeLength: EXPEDITION_ROUTE_LENGTH,
-      bossGate: EXPEDITION_BOSS_GATE,
-      gateLockDistance: EXPEDITION_GATE_LOCK_DISTANCE,
       progress: 0,
       checkpointIndex: 0,
       objective: regionConfig.objective,
       reachedGate: false,
-      gateLocked: true,
-      gateUnlocked: false,
-      gateWarningShown: false,
-      gateLockedPrompted: false,
-      atLockedGate: false,
       clearTransition: null,
       entryPrompted: false,
       awaitingBossEntry: false,
@@ -945,7 +965,7 @@ function clampPlayerToFloor(player, expedition = null) {
   if (expedition) {
     const minX = EXPEDITION_CORRIDOR.left + player.radius;
     const routeLimit = finite(expedition.originX, EXPEDITION_ROUTE_ORIGIN_X)
-      + (expedition.gateUnlocked ? finite(expedition.routeLength, EXPEDITION_ROUTE_LENGTH) : finite(expedition.gateLockDistance, EXPEDITION_GATE_LOCK_DISTANCE));
+      + finite(expedition.routeLength, EXPEDITION_ROUTE_LENGTH);
     const maxX = Math.min(EXPEDITION_CORRIDOR.right - player.radius, routeLimit);
     const minY = EXPEDITION_CORRIDOR.top + player.radius;
     const maxY = EXPEDITION_CORRIDOR.bottom - player.radius;
@@ -1065,26 +1085,8 @@ function updatePlayer(state, input, dt) {
 function updateExpedition(state) {
   const expedition = state.expedition;
   if (!expedition || state.phase !== "swarm") return;
-  const allHostilesKilled = allRouteHostilesKilled(state);
-  expedition.gateUnlocked = allHostilesKilled;
-  expedition.gateLocked = !allHostilesKilled;
-  const maximumDistance = allHostilesKilled ? expedition.routeLength : expedition.gateLockDistance;
-  expedition.distance = clamp(state.player.x - expedition.originX, 0, maximumDistance);
+  expedition.distance = clamp(state.player.x - expedition.originX, 0, expedition.routeLength);
   expedition.progress = clamp(expedition.distance / expedition.routeLength, 0, 1);
-  expedition.reachedGate = allHostilesKilled && expedition.distance >= expedition.routeLength;
-  expedition.atLockedGate = !allHostilesKilled && expedition.distance >= expedition.gateLockDistance - 4;
-  if (expedition.atLockedGate && !expedition.gateLockedPrompted) {
-    const remainingEnemies = Math.max(0, state.enemyBudget - state.killedEnemies);
-    const midBossPending = expedition.midBoss?.spawned && !expedition.midBoss?.defeated;
-    expedition.gateLockedPrompted = true;
-    emit(state, "bossGateLocked", {
-      regionId: state.regionId,
-      reason: "hostilesRemaining",
-      title: "보스 구역 봉쇄",
-      message: midBossPending ? `${expedition.midBoss.definition.koreanName}을 먼저 격파하세요.` : `잔존 적 ${remainingEnemies}기를 먼저 처치하세요.`,
-      remainingEnemies,
-    });
-  }
   expedition.objective = expedition.clearTransition?.phase === "warning"
     ? "적 전멸 · 보스 구역 전환 준비"
     : expedition.clearTransition?.phase === "panic"
@@ -1093,13 +1095,7 @@ function updateExpedition(state) {
       ? `${state.bossChamber} · 자동 진입`
     : expedition.midBoss?.spawned && !expedition.midBoss?.defeated
       ? `중간보스 · ${expedition.midBoss.definition.koreanName} 격파`
-    : expedition.reachedGate
-      ? `${state.bossChamber} READY`
-    : allHostilesKilled
-      ? `REACH ${state.bossChamber}`
-      : expedition.distance >= EXPEDITION_GATE_LOCK_DISTANCE - 4
-        ? "PURGE ALL HOSTILES · GATE SEALED"
-        : state.regionObjective;
+    : state.regionObjective;
 
   for (const trace of expedition.traces) {
     if (trace.triggered || expedition.distance < trace.distance) continue;
@@ -3214,8 +3210,6 @@ function startBossPhase(state) {
     state.expedition.distance = state.expedition.routeLength;
     state.expedition.progress = 1;
     state.expedition.reachedGate = true;
-    state.expedition.gateLocked = false;
-    state.expedition.gateUnlocked = true;
     state.expedition.awaitingBossEntry = false;
     state.expedition.autoBossEntry = false;
     state.expedition.bossEntryConfirmed = true;
@@ -3264,9 +3258,6 @@ export function enterBossRoom(state) {
 function beginRouteClearTransition(state) {
   const expedition = state.expedition;
   if (!expedition || expedition.clearTransition) return;
-  expedition.gateLocked = false;
-  expedition.gateUnlocked = true;
-  expedition.atLockedGate = false;
   expedition.objective = "적 전멸 · 보스 구역 전환 준비";
   expedition.clearTransition = {
     phase: "warning",
@@ -3333,7 +3324,7 @@ function updateRouteClearTransition(state, dt) {
 function updateSwarmSpawning(state, dt) {
   const wave = SURGE_WAVES[state.surgeIndex];
   const triggerReached = state.expedition
-    ? finite(state.expedition.progress) >= finite(wave?.progressAt, 1)
+    ? !hasLivingEnemy(state.enemies)
     : state.time >= finite(wave?.warnAt, Infinity);
   if (wave
     && state.spawnedEnemies < state.enemyBudget
@@ -3349,7 +3340,7 @@ function updateSwarmSpawning(state, dt) {
     const deploymentCount = isFinalWave
       ? remainingBudget
       : Math.min(wave.count, remainingBudget);
-    const startAt = state.expedition ? state.time + finite(wave.warningLead, 1.25) : wave.startAt;
+    const startAt = state.expedition ? state.time + finite(wave.warningLead, 0.8) : wave.startAt;
     state.surgeWarning = {
       index: state.surgeIndex,
       label: wave.label,
@@ -3362,7 +3353,9 @@ function updateSwarmSpawning(state, dt) {
       label: wave.label,
       count: deploymentCount,
       startsIn: Math.max(0, startAt - state.time),
-      progressAt: state.expedition ? wave.progressAt : null,
+      clearProgress: state.expedition
+        ? clamp(state.killedEnemies / Math.max(1, state.enemyBudget), 0, 1)
+        : null,
     });
   }
   if (wave && state.surgeWarning?.index === state.surgeIndex) {
@@ -4683,11 +4676,6 @@ function buildExpeditionMinimap(state) {
     enemies,
     liveEnemyCount,
     sampleCap: MINIMAP_ENEMY_SAMPLE_CAP,
-    bossGate: {
-      x: clamp(state.expedition.bossGate / Math.max(1, state.expedition.routeLength), 0, 1),
-      y: 0.5,
-      locked: state.expedition.gateLocked,
-    },
   };
 }
 
@@ -4732,23 +4720,10 @@ export function getSwarmHud(state) {
     expedition: state.expedition ? {
       distance: state.expedition.distance,
       routeLength: state.expedition.routeLength,
-      bossGate: state.expedition.bossGate,
       progress: state.expedition.progress,
       checkpoint: state.expedition.checkpointIndex,
       objective: state.expedition.objective,
       reachedGate: state.expedition.reachedGate,
-      gateLocked: state.expedition.gateLocked,
-      gateUnlocked: state.expedition.gateUnlocked,
-      atLockedGate: state.expedition.atLockedGate,
-      gateNotice: state.expedition.atLockedGate && state.expedition.gateLocked ? {
-        active: true,
-        reason: state.expedition.midBoss?.spawned && !state.expedition.midBoss?.defeated ? "midBoss" : "hostilesRemaining",
-        title: "보스 구역 봉쇄",
-        message: state.expedition.midBoss?.spawned && !state.expedition.midBoss?.defeated
-          ? `${state.expedition.midBoss.definition.koreanName}을 먼저 격파하세요.`
-          : `잔존 적 ${remaining}기를 먼저 처치하세요.`,
-        remainingEnemies: remaining,
-      } : null,
       clearTransition: state.expedition.clearTransition
         ? { ...state.expedition.clearTransition }
         : null,

@@ -39,7 +39,6 @@ test("Korean combat, campaign, dialogue, and guide copy avoid Latin display face
   for (const selector of [
     ".route-objective",
     ".expedition-combat-dock",
-    ".gate-locked-notice",
     ".narrative-copy",
     ".base-dialogue",
     ".ability-guide-copy",

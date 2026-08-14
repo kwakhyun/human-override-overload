@@ -172,7 +172,6 @@ const OBJECTIVE_NAME_KO = Object.freeze({
   "SHUT DOWN THE FOUNDRY": "네온 주조구 정지",
   "BREAK THE STORM GRID": "폭풍 제어망 파괴",
   "PURGE THE GENE VAULT": "생체 금고 소거",
-  "PURGE ALL HOSTILES · GATE SEALED": "남은 적 전멸 · 보스 입구 봉쇄",
   "적 전멸 · 보스 구역 전환 준비": "적 전멸 · 보스 구역 전환 준비",
   "SOVEREIGN 신호 폭주 감지": "소버린 비상 신호 감지",
   ADVANCE: "전진",
@@ -197,8 +196,7 @@ function localizeObjective(name, hud) {
   const normalized = raw.toUpperCase();
   const expedition = hud?.expedition;
   const remainingEnemies = Math.max(0, Number(
-    expedition?.gateNotice?.remainingEnemies
-    ?? hud?.enemiesRemaining
+    hud?.enemiesRemaining
     ?? 0,
   ) || 0);
   const clearPhase = expedition?.clearTransition?.phase;
@@ -208,8 +206,8 @@ function localizeObjective(name, hud) {
   if (OBJECTIVE_NAME_KO[normalized]) return OBJECTIVE_NAME_KO[normalized];
   if (normalized.includes("GATE SEALED") || normalized.includes("PURGE ALL HOSTILES")) {
     return remainingEnemies > 0
-      ? `남은 적 ${remainingEnemies}기 전멸 · 보스 입구 봉쇄`
-      : "남은 적 전멸 · 보스 입구 봉쇄";
+      ? `현재 공세의 적 ${remainingEnemies}기 전멸`
+      : "현재 공세 전멸";
   }
   if (normalized.startsWith("DESTROY ")) return `${localizeBossName(raw.slice(8))} 파괴`;
   const chamberEntry = Object.entries(CHAMBER_NAME_KO).find(([key]) => normalized.includes(key));
@@ -252,8 +250,6 @@ const EVENT_SOUNDS = Object.freeze({
   dash: "dash",
   playerHit: "playerHit",
   swarmCleared: "merge",
-  bossGatePrompt: "alert",
-  bossGateLocked: "alert",
   routeClearWarning: "alert",
   routeClearPanic: "bossBreak",
   bossAutoTransition: "boss",
@@ -334,14 +330,14 @@ const IMPACT_EVENT_TYPES = new Set([
 ]);
 
 const EVENT_BANNERS = Object.freeze({
-  swarmCleared: ["적 전력 소거", "보스 구역으로 이어지는 격벽이 열렸습니다."],
+  swarmCleared: ["적 전력 소거", "독립 보스 전장으로 자동 전환합니다."],
   bossStage: ["공격 패턴 진화", "보스의 공격 조합이 더 빨라집니다."],
   bossStagePulse: ["⚠ 광폭화 진행", "장갑 형상과 공격 알고리즘이 다시 변이합니다."],
   bossWeakness: ["코어 노출 · 피해 2배", "돌진이 벽에 충돌했습니다. 지금 화력을 집중하세요."],
   bossGroggy: ["보스 그로기 · 피해 2.5배", "첫 추론핵이 무방비 상태입니다. 모든 화력을 집중하세요."],
   bossRoomLoading: ["보스 구역 연결", "선택한 지역의 보스 구역을 불러오는 중입니다."],
   surgeWarning: ["⚠ 대규모 공세 접근", "전방 관문 신호가 폭증합니다. 곧 적 증원이 진입합니다."],
-  surgeStart: ["증원 공세 시작", "전방 관문에서 적이 밀려옵니다. 계속 전진하세요."],
+  surgeStart: ["증원 공세 시작", "전송 관문에서 적이 밀려옵니다. 현재 공세를 소거하세요."],
   skillMastered: ["기술 최종 진화", "광역 섬멸 프로토콜이 활성화되었습니다."],
   ultimateWarning: ["공중 지원 조준 완료", "표시된 공격 범위에서 벗어나 화력을 집중하세요."],
   squadSummon: ["동료 연결 완료", "전술 동료의 전투 회선이 동기화되었습니다."],
@@ -349,7 +345,6 @@ const EVENT_BANNERS = Object.freeze({
   bossContact: ["⚠ 본체 충돌", "보스 본체와 충돌해 구동계가 잠시 정지됩니다."],
   bossContactHit: ["⚠ 본체 충돌", "보스 본체와 충돌해 구동계가 잠시 정지됩니다."],
   playerStunned: ["구동계 교란", "이동과 대시가 잠시 차단됩니다."],
-  bossGateLocked: ["보스 구역 봉쇄", "남은 적을 모두 처치해야 입구가 열립니다."],
   bossSiren: ["⚠ 전역 폭발 경보", "시한폭탄을 화면에 표시된 숫자 순서대로 클릭해 해제하세요."],
   bossBombSequenceArmed: ["시한폭탄 활성화", "1번부터 차례대로 클릭하세요. 순서가 틀리면 모두 폭발합니다."],
   bossBombSequenceCleared: ["폭탄 해제 완료", "보스 회로가 정지했습니다. 지금 화력을 집중하세요."],
@@ -1618,20 +1613,6 @@ function NarrativePanel({ dialogue, assets, region, bossStage, onAdvance }) {
   );
 }
 
-function GateLockedNotice({ notice }) {
-  if (!notice?.active) return null;
-  const remaining = Math.max(0, Number(notice.remainingEnemies) || 0);
-  return (
-    <aside className="gate-locked-notice" role="status" aria-live="assertive">
-      <Warning weight="fill" aria-hidden="true" />
-      <div>
-        <strong>{notice.title || "보스 구역 봉쇄"}</strong>
-        <span>{notice.message || `남은 적 ${remaining}기를 먼저 처치하세요.`}</span>
-      </div>
-    </aside>
-  );
-}
-
 const CLEAR_TRANSITION_COPY = Object.freeze({
   warning: Object.freeze(["적 전력 소거 확인", "보스 구역의 방어망이 붕괴합니다."]),
   panic: Object.freeze(["소버린 비상 신호 포착", "지역 추론핵이 퇴로를 봉쇄합니다. 추격을 계속하세요."]),
@@ -1669,7 +1650,6 @@ function RouteMinimap({ hud }) {
   const minimap = expedition.minimap || hud?.minimap || {};
   const player = minimap.player || { x: progress, y: 0.5 };
   const enemies = Array.isArray(minimap.enemies) ? minimap.enemies.slice(0, 32) : [];
-  const gate = minimap.bossGate || { x: 1, y: 0.5, locked: expedition.gateLocked };
   const hostiles = Math.max(0, Number(minimap.liveEnemyCount ?? hud?.enemiesRemaining) || 0);
 
   return (
@@ -1691,10 +1671,6 @@ function RouteMinimap({ hud }) {
             key={enemy?.id ?? `${index}-${enemy?.x}-${enemy?.y}`}
           />
         ))}
-        <span
-          className={`route-minimap-engine${gate?.locked ? " is-locked" : ""}`}
-          style={{ left: `${clampMapRatio(gate?.x, 1) * 100}%`, top: `${clampMapRatio(gate?.y) * 100}%` }}
-        ><Robot weight="fill" /></span>
         <span
           className="route-minimap-player"
           style={{ left: `${clampMapRatio(player?.x, progress) * 100}%`, top: `${clampMapRatio(player?.y) * 100}%` }}
@@ -2080,7 +2056,6 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
             {(parryActive || bossSiren) && <div className="boss-crisis-screen" aria-hidden="true"><i /><i /></div>}
             {playerStunned && <div className="stun-screen-effect" aria-hidden="true"><i /><i /><i /><i /></div>}
             {!dialogue && <RouteMinimap hud={hud} />}
-            {!dialogue && <GateLockedNotice notice={hud?.expedition?.gateNotice} />}
             {!dialogue && <RouteClearTransition transition={hud?.expedition?.clearTransition} />}
             <div className="expedition-xp"><i style={{ width: `${xpRatio * 100}%` }} /></div>
             <div className="transient-controls">

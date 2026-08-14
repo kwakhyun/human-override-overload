@@ -58,24 +58,6 @@ function applyDebugScene(game: any, debugScene: string | null) {
     game.player.invulnerability = 30;
     return;
   }
-  if (debugScene === "gateLocked" && game.expedition) {
-    game.enemies.splice(1);
-    game.spawnedEnemies = game.enemyBudget;
-    game.killedEnemies = game.enemyBudget - 1;
-    game.stats.kills = game.killedEnemies;
-    game.expedition.distance = game.expedition.bossGate - 520;
-    game.player.x = game.expedition.originX + game.expedition.distance;
-    game.expedition.progress = game.expedition.distance / game.expedition.routeLength;
-    game.expedition.gateLocked = true;
-    game.expedition.gateUnlocked = false;
-    game.expedition.reachedGate = false;
-    game.expedition.objective = "PURGE ALL HOSTILES · GATE SEALED";
-    game.expedition.checkpointIndex = game.expedition.traces.length;
-    for (const trace of game.expedition.traces) trace.triggered = true;
-    game.player.invulnerability = 30;
-    game.events.length = 0;
-    return;
-  }
   if (debugScene === "arsenal") {
     game.killedEnemies = 950;
     game.stats.kills = 950;
@@ -187,8 +169,6 @@ function applyDebugScene(game: any, debugScene: string | null) {
     game.expedition.distance = game.expedition.routeLength;
     game.expedition.progress = 1;
     game.expedition.reachedGate = true;
-    game.expedition.gateLocked = false;
-    game.expedition.gateUnlocked = true;
     game.expedition.entryPrompted = true;
     game.expedition.awaitingBossEntry = true;
   }
@@ -302,7 +282,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   create() {
-    this.state = createSwarmState({ duration: 360, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId });
+    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId });
     applyDebugScene(this.state, this.bridge.debugScene);
     this.gameInput = createSwarmInput();
     this.governor = createPerformanceGovernor({ environment: window });

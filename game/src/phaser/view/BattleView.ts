@@ -759,10 +759,10 @@ export class BattleView {
     const camera = state?.camera ?? { x: WIDTH / 2, y: HEIGHT / 2, zoom: 1.46 };
     const expedition = state?.expedition;
     const distance = Math.max(0, finite(expedition?.distance));
-    const bossGate = Math.max(1, finite(expedition?.bossGate, 6000));
+    const routeLength = Math.max(1, finite(expedition?.routeLength, 12000));
     const bossMapIndex = this.routeMapCount;
     const lastRouteIndex = Math.max(0, this.routeMapCount - 1);
-    const segmentLength = bossGate / Math.max(1, this.routeMapCount);
+    const segmentLength = routeLength / Math.max(1, this.routeMapCount);
     let sector = clamp(Math.floor(distance / segmentLength), 0, lastRouteIndex);
     let nextSector = sector;
     let blend = 0;
@@ -1236,14 +1236,8 @@ export class BattleView {
       const border = 1.25 / zoom;
       const left = image.x - width * 0.5;
       const top = image.y - image.displayHeight * 0.56 - 10 / zoom;
-      const healthColor = entity?.elite
-        ? COLORS.amber
-        : candidate.roleIndex === 2
-          ? COLORS.violet
-          : candidate.roleIndex === 0
-            ? COLORS.red
-            : COLORS.cyan;
-      const outlineColor = finite(entity?.hitFlash) > 0.04 ? COLORS.white : entity?.elite ? COLORS.amber : 0x9fb5bd;
+      const healthColor = COLORS.red;
+      const outlineColor = finite(entity?.hitFlash) > 0.04 ? COLORS.white : 0xb77a84;
 
       graphics.fillStyle(COLORS.black, alpha * 0.9);
       graphics.fillRect(left - border, top - border, width + border * 2, height + border * 2);
@@ -2829,7 +2823,6 @@ export class BattleView {
   private drawExpeditionMarkers(state: any, time: number, graphics: Phaser.GameObjects.Graphics) {
     const expedition = state?.expedition;
     if (!expedition) return;
-    const playerX = finite(state?.player?.x, WIDTH * 0.5);
     const originX = finite(expedition.originX);
     const view = this.mainCamera.worldView;
     for (const trace of expedition.traces ?? []) {
@@ -2843,19 +2836,6 @@ export class BattleView {
       graphics.lineBetween(x, y - 31, x, y - 66);
       graphics.fillStyle(trace.triggered ? COLORS.red : COLORS.cyan, 0.92);
       graphics.fillCircle(x, y - 70, 4);
-    }
-
-    const gateX = playerX + finite(expedition.bossGate) - finite(expedition.distance);
-    if (expedition.gateLocked && gateX > view.left - 120 && gateX < view.right + 160) {
-      const alpha = 0.32 + Math.sin(time * 7) * 0.1;
-      graphics.fillStyle(COLORS.redDark, alpha);
-      graphics.fillRect(gateX - 32, 126, 64, WORLD_HEIGHT - 252);
-      graphics.lineStyle(5, COLORS.red, 0.72);
-      graphics.lineBetween(gateX, 126, gateX, WORLD_HEIGHT - 126);
-      for (let y = 152; y < WORLD_HEIGHT - 136; y += 68) {
-        graphics.lineStyle(2, COLORS.amber, 0.7);
-        graphics.lineBetween(gateX - 34, y, gateX + 34, y + 30);
-      }
     }
   }
 

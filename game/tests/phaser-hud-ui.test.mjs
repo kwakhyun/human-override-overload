@@ -87,14 +87,13 @@ test("level-up focus starts on the dialog, not option one, until real keyboard n
   assert.match(styles, /\.reward-card:hover,[\s\S]*\.reward-card:focus-visible/);
 });
 
-test("Phaser DOM HUD consumes route gate, clear-transition, and two-dimensional minimap payloads", async () => {
+test("Phaser DOM HUD consumes automatic clear-transition and two-dimensional minimap payloads without a boss gate", async () => {
   const [app, styles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
 
-  assert.match(app, /function GateLockedNotice\(\{ notice \}\)/);
-  assert.match(app, /hud\?\.expedition\?\.gateNotice/);
+  assert.doesNotMatch(app, /GateLockedNotice|gateNotice/);
   assert.match(app, /function RouteClearTransition\(\{ transition \}\)/);
   assert.match(app, /hud\?\.expedition\?\.clearTransition/);
   assert.match(app, /CLEAR_TRANSITION_COPY[\s\S]*warning[\s\S]*panic[\s\S]*swap/);
@@ -104,11 +103,11 @@ test("Phaser DOM HUD consumes route gate, clear-transition, and two-dimensional 
 
   assert.match(app, /const minimap = expedition\.minimap \|\| hud\?\.minimap \|\| \{\}/);
   assert.match(app, /Array\.isArray\(minimap\.enemies\)/);
-  assert.match(app, /minimap\.bossGate/);
+  assert.doesNotMatch(app, /minimap\.bossGate|route-minimap-engine/);
   assert.match(app, /className=\{`route-minimap-enemy/);
   assert.match(styles, /\.route-minimap-field \{/);
   assert.match(styles, /\.route-minimap-enemy \{/);
-  assert.match(styles, /\.gate-locked-notice \{/);
+  assert.doesNotMatch(styles, /\.gate-locked-notice/);
   assert.match(styles, /\.route-clear-transition \{/);
 });
 

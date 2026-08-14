@@ -3722,7 +3722,6 @@ kbd {
 }
 
 .route-minimap-node,
-.route-minimap-engine,
 .route-minimap-player {
   position: absolute;
   display: grid;
@@ -3735,9 +3734,6 @@ kbd {
 .route-minimap-node { color: #637f86; }
 .route-minimap-node.is-cleared { color: #69e7f5; }
 .route-minimap-node svg { width: 11px; height: 11px; }
-.route-minimap-engine { right: auto; color: #ff6c82; }
-.route-minimap-engine svg { width: 14px; height: 14px; filter: drop-shadow(0 0 5px rgba(255, 68, 96, 0.7)); }
-.route-minimap-engine.is-locked { color: #ff334f; }
 .route-minimap-player {
   color: #f4feff;
   filter: drop-shadow(0 0 5px #57e8f8);
@@ -3853,36 +3849,6 @@ kbd {
 }
 .expedition-alert strong { font-size: 14px; letter-spacing: 0.12em; }
 .expedition-alert span { margin-top: 2px; color: #e3b9c0; font-size: 11px; }
-
-.gate-locked-notice {
-  position: absolute;
-  z-index: 26;
-  top: 20%;
-  left: 50%;
-  display: grid;
-  width: min(470px, calc(100% - 40px));
-  padding: 13px 18px;
-  grid-template-columns: 34px minmax(0, 1fr);
-  align-items: center;
-  gap: 12px;
-  border: 1px solid rgba(255, 75, 102, 0.62);
-  color: #fff2f4;
-  background: linear-gradient(100deg, rgba(63, 5, 16, 0.96), rgba(12, 5, 9, 0.92));
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.66), 0 0 22px rgba(255, 47, 79, 0.2);
-  transform: translateX(-50%);
-  pointer-events: none;
-  animation: gate-locked-in 280ms ease-out both;
-}
-
-.gate-locked-notice > svg { width: 30px; height: 30px; color: #ff5570; filter: drop-shadow(0 0 9px rgba(255, 65, 94, 0.66)); }
-.gate-locked-notice > div { display: flex; min-width: 0; flex-direction: column; }
-.gate-locked-notice strong { font-size: 17px; letter-spacing: 0.06em; }
-.gate-locked-notice span { margin-top: 3px; color: #e8bec5; font-size: 12px; }
-
-@keyframes gate-locked-in {
-  from { opacity: 0; transform: translate(-50%, -10px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
 
 .route-clear-transition {
   position: absolute;
@@ -4394,7 +4360,6 @@ kbd {
   }
   .route-minimap-field { height: 45px; margin-top: 3px; background-size: 12px 12px; }
   .route-minimap-node,
-  .route-minimap-engine,
   .route-minimap-player { width: 14px; height: 14px; }
   .route-minimap-player svg { width: 13px; height: 13px; }
   .route-minimap-enemy { width: 3px; height: 3px; }
@@ -4429,10 +4394,6 @@ kbd {
   .boss-bomb-armor small { font-size: 8px; }
   .boss-bomb-armor strong { font-size: 12px; }
   .boss-bomb-armor > b { font-size: 13px; }
-  .gate-locked-notice { top: 34%; width: min(420px, calc(100% - 24px)); padding: 9px 12px; grid-template-columns: 25px 1fr; }
-  .gate-locked-notice > svg { width: 23px; height: 23px; }
-  .gate-locked-notice strong { font-size: 13px; }
-  .gate-locked-notice span { font-size: 9px; }
   .route-clear-transition > strong { font-size: clamp(26px, 7vw, 46px); }
   .route-clear-transition > span { margin-top: 7px; font-size: 11px; }
   .route-clear-progress { margin-top: 12px; }
@@ -4488,7 +4449,6 @@ kbd {
   .route-clear-progress > i,
   .expedition-xp i { transition: none; }
   .vital-damage-flash { opacity: 1; animation: none; }
-  .gate-locked-notice,
   .route-clear-transition { animation: none; }
   .route-clear-rings i { display: none; animation: none; }
 }
@@ -5801,7 +5761,6 @@ kbd {
 .expedition-combat-dock,
 .route-minimap,
 .expedition-alert,
-.gate-locked-notice,
 .route-clear-transition,
 .expedition-pause-card,
 .pause-action,
@@ -5862,7 +5821,6 @@ kbd {
 
 .route-objective strong,
 .expedition-alert strong,
-.gate-locked-notice strong,
 .route-clear-transition > small,
 .route-clear-transition > strong,
 .expedition-pause-card h2,
@@ -5890,7 +5848,6 @@ kbd {
 .region-card > p,
 .combat-tutorial-copy p,
 .combat-tutorial-copy > b,
-.gate-locked-notice span,
 .route-clear-transition > span,
 .reward-modal > p,
 .reward-card > p,

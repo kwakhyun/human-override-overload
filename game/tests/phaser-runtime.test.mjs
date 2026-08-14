@@ -35,7 +35,7 @@ test("the active App mounts the Phaser runtime while React owns the DOM HUD", as
   assert.match(activeRuntime, /className="expedition-hud"/);
   assert.match(activeRuntime, /<RouteMinimap hud=\{hud\}/);
   assert.match(activeRuntime, /<NarrativePanel/);
-  assert.match(activeRuntime, /<GateLockedNotice notice=\{hud\?\.expedition\?\.gateNotice\}/);
+  assert.doesNotMatch(activeRuntime, /GateLockedNotice|gateNotice/);
   assert.match(activeRuntime, /<RouteClearTransition transition=\{hud\?\.expedition\?\.clearTransition\}/);
   assert.match(activeRuntime, /event\.type === "bossAutoTransition" && !autoBossEntryHandledRef\.current/);
   assert.match(activeRuntime, /controller\?\.enterBossRoom\(\)/);
@@ -250,7 +250,7 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /playerX: state\?\.player\?\.x/);
   assert.match(scene, /setVirtualMovement\(x: number, y: number\)/);
   assert.match(scene, /this\.gameInput\.moveX = this\.virtualMovement\.x/);
-  assert.match(scene, /createSwarmState\(\{ duration: 360, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId \}\)/);
+  assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId \}\)/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);
   for (const key of [

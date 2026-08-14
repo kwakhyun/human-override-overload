@@ -121,7 +121,7 @@ test("hostiles passed on the route remain authoritative and accelerate into pers
   assert.ok(finalGap < initialGap, `expected pursuit to close the gap, got ${initialGap} -> ${finalGap}`);
 });
 
-test("the engine gate hard-locks before the three-hundredth hostile is dead and warns once", () => {
+test("the route has no boss-door lock and never requires rightward travel to unlock spawning", () => {
   const state = createSwarmState({ random: seededRandom(23), duration: 360, expedition: true });
   const input = createSwarmInput();
   input.right = true;
@@ -135,26 +135,15 @@ test("the engine gate hard-locks before the three-hundredth hostile is dead and 
   drainSwarmEvents(state);
 
   for (let index = 0; index < 180; index += 1) stepSwarm(state, input, 1 / 60);
-  const gateEvents = drainSwarmEvents(state);
+  const routeEvents = drainSwarmEvents(state);
 
-  assert.ok(state.expedition.distance < state.expedition.bossGate);
-  assert.equal(state.expedition.gateLocked, true);
-  assert.equal(state.expedition.gateUnlocked, false);
+  assert.equal(state.expedition.distance, state.expedition.routeLength);
   assert.equal(state.expedition.reachedGate, false);
   assert.equal(state.phase, "swarm");
   assert.equal(state.boss.active, false);
-  assert.match(state.expedition.objective, /GATE SEALED/);
   assert.equal(enterBossRoom(state), false);
-  assert.equal(gateEvents.filter((event) => event.type === "bossGateLocked").length, 1);
-  assert.deepEqual(getSwarmHud(state).expedition.gateNotice, {
-    active: true,
-    reason: "hostilesRemaining",
-    title: "보스 구역 봉쇄",
-    message: "잔존 적 1기를 먼저 처치하세요.",
-    remainingEnemies: 1,
-  });
-  stepSwarm(state, input, 1 / 60);
-  assert.equal(drainSwarmEvents(state).filter((event) => event.type === "bossGateLocked").length, 0);
+  assert.equal(routeEvents.some((event) => event.type === "bossGateLocked"), false);
+  assert.equal("gateNotice" in getSwarmHud(state).expedition, false);
 });
 
 test("clearing all 300 enemies runs warning and panic beats before automatic boss-room entry", () => {
@@ -170,7 +159,6 @@ test("clearing all 300 enemies runs warning and panic beats before automatic bos
 
   stepSwarm(state, input, 1 / 60);
   assert.equal(state.phase, "swarm");
-  assert.equal(state.expedition.gateUnlocked, true);
   assert.equal(state.expedition.clearTransition.phase, "warning");
   assert.equal(state.expedition.clearTransition.duration, 1.2);
   assert.equal(state.expedition.reachedGate, false);
@@ -228,7 +216,7 @@ test("outer-frontier routes deploy every budgeted enemy, defeat a midboss, and e
 
     state.enemies.length = 0;
     state.spawnedEnemies = 600;
-    state.surgeIndex = 3;
+    state.surgeIndex = 8;
     state.surgeWarning = null;
     state.surgeQueued = 0;
     state.activeSurge = null;
@@ -289,11 +277,11 @@ test("the route minimap exposes capped deterministic normalized player and live-
   assert.equal(first.player.x, 0.25);
   assert.equal(first.player.y, 0.5);
   assert.equal(first.sampleCap, 24);
-  assert.equal(first.liveEnemyCount, 36);
-  assert.equal(first.enemies.length, 24);
+  assert.equal(first.liveEnemyCount, 8);
+  assert.equal(first.enemies.length, 8);
   assert.deepEqual(first, second);
   assert.ok(first.enemies.every((enemy) => enemy.x >= 0 && enemy.x <= 1 && enemy.y >= 0 && enemy.y <= 1));
-  assert.deepEqual(first.bossGate, { x: 11200 / 12000, y: 0.5, locked: true });
+  assert.equal("bossGate" in first, false);
 });
 
 test("expedition navigation blocks the lower cliff outside the authored route floor", () => {

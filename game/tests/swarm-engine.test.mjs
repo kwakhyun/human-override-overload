@@ -109,68 +109,65 @@ test("the renewed mode has one hero, no regions, and a fixed 1000-unit assault",
   assert.equal("heroes" in state, false);
 });
 
-test("the expedition opens with a readable force that scales with player growth", () => {
+test("the expedition opens with eight durable melee units and scales pressure by cleared waves", () => {
   const state = createSwarmState({ random: () => 0.37, expedition: true });
-  assert.equal(state.enemies.length, 36);
-  assert.equal(getEnemyPressureCap(state), 36);
-  assert.deepEqual(new Set(state.enemies.map((enemy) => enemy.type)), new Set(["hunter", "suppressor", "brute"]));
-  assert.ok(state.enemies.some((enemy) => enemy.elite));
-  assert.ok(state.enemies.every((enemy) => enemy.hp > 0 && Number.isFinite(enemy.x) && Number.isFinite(enemy.y)));
+  assert.equal(state.enemies.length, 8);
+  assert.equal(getEnemyPressureCap(state), 8);
+  assert.deepEqual(new Set(state.enemies.map((enemy) => enemy.type)), new Set(["hunter"]));
+  assert.ok(state.enemies.every((enemy) => enemy.hp >= 38 * 3 && Number.isFinite(enemy.x) && Number.isFinite(enemy.y)));
   state.player.level = 8;
-  state.killedEnemies = 420;
+  state.killedEnemies = 240;
   state.time = 64;
-  state.expedition.progress = 0.7;
-  assert.ok(getEnemyPressureCap(state) >= 155);
+  state.surgeIndex = 7;
+  assert.ok(getEnemyPressureCap(state) >= 175);
   assert.ok(getEnemyPressureCap(state) <= 220);
 });
 
-test("expedition pressure rises primarily with route depth and remains capped", () => {
+test("expedition pressure rises with wave clears even when AEGIS does not move right", () => {
   const state = createSwarmState({ random: () => 0.37, expedition: true, regionId: "glass-dune" });
   state.player.level = 1;
   state.killedEnemies = 0;
   state.time = 0;
-  const caps = [0, 0.25, 0.5, 0.75, 1].map((progress) => {
-    state.expedition.progress = progress;
+  const caps = [0, 2, 4, 6, 8].map((waveIndex, index) => {
+    state.surgeIndex = waveIndex;
+    state.killedEnemies = Math.round(state.enemyBudget * index * 0.2);
     return getEnemyPressureCap(state);
   });
-  assert.equal(caps[0], 36);
+  assert.equal(caps[0], 8);
   assert.ok(caps.every((cap, index) => index === 0 || cap > caps[index - 1]), `expected rising caps, got ${caps}`);
   state.player.level = 20;
   state.killedEnemies = state.enemyBudget;
   state.time = 180;
+  state.surgeIndex = 9;
   assert.equal(getEnemyPressureCap(state), 220);
 });
 
-test("each campaign region deterministically fields a distinct opening and reinforcement mix", () => {
+test("every region starts melee-only, then restores a distinct late reinforcement mix", () => {
   const regionIds = ["wrong-engine-core", "glass-dune", "abyssal-archive"];
-  const openings = [];
   const reinforcements = [];
   for (const regionId of regionIds) {
     const state = createSwarmState({ random: () => 0.5, expedition: true, regionId });
     assert.equal(state.enemyBudget, regionId === "wrong-engine-core" ? 300 : 1000);
-    assert.equal(state.enemies.length, 36);
+    assert.equal(state.enemies.length, 8);
     assert.equal(state.enemyProfile, REGION_ENEMY_PROFILES[regionId]);
-    openings.push(countEnemyTypes(state.enemies));
+    assert.deepEqual(countEnemyTypes(state.enemies), { hunter: 8, suppressor: 0, brute: 0 });
 
     state.enemies.length = 0;
-    state.spawnedEnemies = 36;
-    state.killedEnemies = 500;
+    state.spawnedEnemies = Math.floor(state.enemyBudget * 0.8);
+    state.killedEnemies = state.spawnedEnemies;
     state.player.level = 20;
     state.player.invulnerability = 999;
-    state.surgeIndex = 4;
+    state.surgeIndex = 7;
     state.surgeWarning = null;
     state.surgeQueued = 60;
     state.surgeSpawnAccumulator = 12;
-    state.activeSurge = { index: 4, label: "PROFILE TEST", count: 60, remaining: 60, rate: 1000 };
+    state.activeSurge = { index: 7, label: "PROFILE TEST", count: 60, remaining: 60, rate: 1000 };
     delayPlayerWeapons(state);
     stepFor(state, createSwarmInput(), 0.3);
-    assert.equal(state.spawnedEnemies, 96);
+    assert.equal(state.spawnedEnemies, Math.floor(state.enemyBudget * 0.8) + 60);
     assert.equal(state.enemies.length, 60);
     reinforcements.push(countEnemyTypes(state.enemies));
   }
-  assert.notDeepEqual(openings[0], openings[1]);
-  assert.notDeepEqual(openings[0], openings[2]);
-  assert.notDeepEqual(openings[1], openings[2]);
   assert.notDeepEqual(reinforcements[0], reinforcements[1]);
   assert.notDeepEqual(reinforcements[0], reinforcements[2]);
   assert.notDeepEqual(reinforcements[1], reinforcements[2]);
@@ -181,16 +178,16 @@ test("every expedition attacker materializes through one of five authored SOVERE
     let value = 0;
     return () => ((value = (value + 0.137) % 1));
   })() });
-  assert.equal(state.enemies.length, 36);
-  assert.deepEqual(new Set(state.enemies.map((enemy) => enemy.spawnGateId)), new Set(["east-upper", "east-lower", "north-rail", "south-rail", "rear-breach"]));
-  assert.equal(state.spawnPortals.length, 5);
+  assert.equal(state.enemies.length, 8);
+  assert.ok(state.enemies.every((enemy) => ["east-upper", "east-lower", "north-rail", "south-rail", "rear-breach"].includes(enemy.spawnGateId)));
+  assert.equal(state.spawnPortals.length, 1);
   assert.ok(state.enemies.every((enemy) => enemy.spawnDelay > 0));
   assert.ok(state.enemies.every((enemy) => Math.hypot(enemy.x - state.player.x, enemy.y - state.player.y) > 430));
   const halfWidth = GAME_WIDTH / (2 * state.camera.zoom);
   const halfHeight = GAME_HEIGHT / (2 * state.camera.zoom);
   const inOpeningView = (enemy) => enemy.x >= state.camera.x - halfWidth && enemy.x <= state.camera.x + halfWidth
     && enemy.y >= state.camera.y - halfHeight && enemy.y <= state.camera.y + halfHeight;
-  assert.ok(state.enemies.filter(inOpeningView).length >= 32, "the opening gates should place a meaningful force inside the 1.08 camera");
+  assert.equal(state.enemies.filter(inOpeningView).length, 8, "the small opening wave should remain fully readable inside the 1.08 camera");
   stepSwarm(state, createSwarmInput(), 1 / 60);
   const readable = state.enemies.filter((enemy) => {
     if (!inOpeningView(enemy)) return false;
@@ -198,7 +195,7 @@ test("every expedition attacker materializes through one of five authored SOVERE
     const alpha = Math.max(0, Math.min(1, (materialize - 0.08) / 0.72));
     return alpha >= 0.8;
   });
-  assert.ok(readable.length >= 32, "deployment dialogue must not freeze an effectively invisible opening force");
+  assert.equal(readable.length, 8, "deployment dialogue must not freeze an effectively invisible opening force");
 });
 
 test("basic weapons are always automatic and expose no toggle or manual-fire state", () => {
@@ -520,13 +517,14 @@ test("suicide drone blast radii stay compact for normal and elite attackers", ()
 
 test("sniper lanes stay readable under pressure and cancelled locks disappear", () => {
   const state = createSwarmState({ expedition: true, regionId: "glass-dune", random: () => 0.5 });
-  const template = state.enemies.find((enemy) => enemy.combatRole === "sniper" && !enemy.elite);
+  const lateWaveTemplate = createSwarmState({ random: () => 0.5 });
+  const template = lateWaveTemplate.enemies.find((enemy) => enemy.combatRole === "sniper" && !enemy.elite);
   assert.ok(template);
   state.enemies = Array.from({ length: 16 }, (_, index) => ({
     ...template,
     id: 10_000 + index,
-    x: state.player.x + 560 + (index % 4) * 34,
-    y: state.player.y - 210 + Math.floor(index / 4) * 140,
+    x: state.player.x + 460 + (index % 4) * 24,
+    y: state.player.y - 120 + Math.floor(index / 4) * 80,
     spawnDelay: 0,
     shootCooldown: 0,
     aimTimer: 0,
@@ -537,18 +535,19 @@ test("sniper lanes stay readable under pressure and cancelled locks disappear", 
   delayPlayerWeapons(state);
   state.player.invulnerability = 30;
 
-  assert.equal(getSniperLockCap(state), 3);
+  assert.equal(getSniperLockCap(state), 2);
   stepSwarm(state, createSwarmInput(), 1 / 60);
-  assert.equal(state.enemies.filter((enemy) => enemy.aimTimer > 0).length, 3);
-  assert.equal(state.telegraphs.filter((telegraph) => telegraph.type === "sniperAim").length, 3);
-  assert.equal(drainSwarmEvents(state).filter((event) => event.type === "sniperLock").length, 3);
+  const activeLocks = state.enemies.filter((enemy) => enemy.aimTimer > 0).length;
+  assert.ok(activeLocks > 0 && activeLocks <= getSniperLockCap(state));
+  assert.equal(state.telegraphs.filter((telegraph) => telegraph.type === "sniperAim").length, activeLocks);
+  assert.equal(drainSwarmEvents(state).filter((event) => event.type === "sniperLock").length, activeLocks);
 
   state.player.x += 1800;
   stepSwarm(state, createSwarmInput(), 1 / 60);
   assert.equal(state.enemies.filter((enemy) => enemy.aimTimer > 0).length, 0);
   assert.equal(state.telegraphs.filter((telegraph) => telegraph.type === "sniperAim").length, 0);
 
-  state.expedition.progress = 0.9;
+  state.killedEnemies = Math.floor(state.enemyBudget * 0.9);
   assert.equal(getSniperLockCap(state), 7);
 });
 
@@ -567,8 +566,8 @@ test("deterministic route healing kits repair hull on contact", () => {
   assert.ok(drainSwarmEvents(state).some((event) => event.type === "healthKitPicked" && event.healed === 92));
 });
 
-test("common enemies die in one to three base pulse hits and produce collectible XP", () => {
-  for (const [type, expectedMaxHits] of [["hunter", 1], ["suppressor", 2], ["brute", 3]]) {
+test("durable common enemies take four to twelve base pulse hits and produce collectible XP", () => {
+  for (const [type, expectedMaxHits] of [["hunter", 4], ["suppressor", 6], ["brute", 12]]) {
     const state = createSwarmState({ random: () => 0.5 });
     const enemy = state.enemies.find((candidate) => candidate.type === type && !candidate.elite);
     state.enemies = [enemy];
@@ -576,6 +575,7 @@ test("common enemies die in one to three base pulse hits and produce collectible
     enemy.x = state.player.x + 58;
     enemy.y = state.player.y;
     enemy.speed = 0;
+    enemy.selfDestructTriggerRadius = 0;
     setSwarmAim(state, enemy.x, enemy.y);
     stepFor(state, createSwarmInput(), expectedMaxHits * 0.18 + 0.3);
     assert.equal(enemy.dead, true, `${type} should die in <= ${expectedMaxHits} hits`);
@@ -778,31 +778,27 @@ test("skill cooldown HUD exposes the exact reset duration used by combat", () =>
   assert.equal("squadRecall" in manual, false);
 });
 
-test("route-paced gate waves wait for forward progress, then warn before filling only the current pressure cap", () => {
+test("clearing a wave triggers the next larger gate wave without rightward movement", () => {
   const state = createSwarmState({ random: () => 0.5, expedition: true });
-  for (const enemy of state.enemies) {
-    enemy.hp = 999999;
-    enemy.maxHp = enemy.hp;
-    enemy.speed = 0;
-    enemy.damage = 0;
-  }
   state.player.invulnerability = 99;
   state.levelFlow.firstDeadline = 999;
   state.levelFlow.nextOfferAt = 999;
   drainSwarmEvents(state);
-  stepFor(state, createSwarmInput(), 8.2);
-  assert.equal(drainSwarmEvents(state).some((event) => event.type === "surgeWarning"), false);
-  state.player.x = state.expedition.originX + state.expedition.routeLength * 0.11;
+  state.killedEnemies = state.spawnedEnemies;
+  state.stats.kills = state.killedEnemies;
+  state.enemies.length = 0;
   stepSwarm(state, createSwarmInput(), 1 / 60);
   const warning = drainSwarmEvents(state).find((event) => event.type === "surgeWarning");
   assert.equal(warning.wave, 1);
-  assert.equal(warning.count, 124);
-  assert.equal(warning.progressAt, 0.1);
+  assert.equal(warning.count, 14);
+  assert.equal(warning.clearProgress, 8 / 300);
+  assert.equal(state.expedition.progress, 0);
   assert.ok(getSwarmHud(state).surge.warning.startsIn > 0);
-  stepFor(state, createSwarmInput(), 1.4);
+  stepFor(state, createSwarmInput(), 2.1);
   const surgeEvents = drainSwarmEvents(state);
   assert.ok(surgeEvents.some((event) => event.type === "surgeStart"));
-  assert.ok(state.spawnedEnemies > 36);
+  assert.equal(state.spawnedEnemies, 22);
+  assert.ok(state.enemies.every((enemy) => enemy.type === "hunter"));
   assert.ok(state.enemies.length <= getEnemyPressureCap(state));
   assert.ok(getSwarmHud(state).surge.active || state.surgeQueued === 0);
 });
@@ -1788,15 +1784,15 @@ test("seeded simulations remain deterministic and finite under the live entity c
   const fingerprint = run(12345);
   assert.deepEqual(fingerprint, run(12345));
   assert.deepEqual(fingerprint, {
-    values: [10.000000000000076, 1089.1666666666688, 360, 169.15171171171173, 1772.576576576577],
-    kills: 35,
-    spawned: 51,
+    values: [10.000000000000076, 1089.1666666666688, 360, 187.10502502502507, 2222.056756756757],
+    kills: 23,
+    spawned: 50,
     phase: "swarm",
-    nextEntityId: 355,
-    shots: 139,
-    hits: 72,
-    projectiles: 65,
-    enemyProjectiles: 7,
+    nextEntityId: 295,
+    shots: 69,
+    hits: 67,
+    projectiles: 2,
+    enemyProjectiles: 23,
     rewards: 1,
   });
 });
