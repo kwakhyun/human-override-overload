@@ -13,7 +13,8 @@ test("DOM art uses scoped decode warmups without mirroring Phaser texture groups
 
   assert.match(source, /const DOM_ASSET_REFS = Object\.freeze\(Object\.fromEntries/);
   assert.match(source, /Object\.freeze\(\{ src: source \}\)/);
-  assert.match(source, /INITIAL_DOM_ASSET_KEYS = Object\.freeze\(\["intro", "commandButtonStates"\]\)/);
+  assert.match(source, /INITIAL_DOM_ASSET_KEYS = Object\.freeze\(\["intro"\]\)/);
+  assert.doesNotMatch(source, /commandButtonStates/);
   assert.match(source, /scheduleDomImagePreload\(\[/);
   assert.match(source, /preloadDomImages\(domAssetSources\(COMBAT_DOM_ASSET_KEYS\)\)/);
   assert.doesNotMatch(source, /Promise\.all\(Object\.entries\(ASSET_PATHS\)/);

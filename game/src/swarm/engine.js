@@ -637,15 +637,16 @@ function sanitizeCharacterId(value) {
   return value === "mika" ? "mika" : "aegis";
 }
 
-function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId = "aegis") {
+function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true) {
   const bonuses = sanitizeCombatBonuses(combatBonuses);
   const weaponId = sanitizeMainWeaponId(mainWeaponId);
-  const safeCharacterId = sanitizeCharacterId(characterId);
+  const safeCharacterId = mikaUnlocked ? sanitizeCharacterId(characterId) : "aegis";
   const maxHp = 360 + bonuses.maxHpFlat;
   return {
     name: safeCharacterId === "mika" ? "MIKA" : "AEGIS",
     characterId: safeCharacterId,
-    reserveCharacterId: safeCharacterId === "mika" ? "aegis" : "mika",
+    reserveCharacterId: mikaUnlocked ? (safeCharacterId === "mika" ? "aegis" : "mika") : null,
+    mikaUnlocked: Boolean(mikaUnlocked),
     tagCooldown: 0,
     tagCooldownMax: 10,
     mainWeaponId: weaponId,
@@ -763,7 +764,7 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
   };
 }
 
-export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle", characterId = "aegis" } = {}) {
+export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
   const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
   const state = {
@@ -787,7 +788,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       encounter: regionConfig.encounterBeat,
       victory: regionConfig.victoryBeat,
     },
-    player: createPlayer(combatBonuses, mainWeaponId, characterId),
+    player: createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked),
     boss: createBoss(regionConfig),
     aim: { x: GAME_WIDTH * 0.82, y: GAME_HEIGHT * 0.5 },
     aimX: GAME_WIDTH * 0.82,
@@ -1035,7 +1036,7 @@ function clampPlayerToFloor(player, expedition = null) {
 
 function tagCharacter(state) {
   const player = state.player;
-  if (player.dead || player.stunTimer > 0 || player.tagCooldown > 0) return false;
+  if (!player.mikaUnlocked || !player.reserveCharacterId || player.dead || player.stunTimer > 0 || player.tagCooldown > 0) return false;
   const nextCharacterId = player.characterId === "mika" ? "aegis" : "mika";
   player.characterId = nextCharacterId;
   player.reserveCharacterId = nextCharacterId === "mika" ? "aegis" : "mika";

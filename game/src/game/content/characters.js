@@ -16,6 +16,7 @@ export const PLAYABLE_CHARACTERS = deepFreeze({
     description: "펄스 소총과 빔 소드를 교체하며 안정적인 화력과 방어를 운용합니다.",
     portraitAssetKey: "player",
     accent: "cyan",
+    unlockRegionId: null,
   },
   mika: {
     id: "mika",
@@ -26,6 +27,7 @@ export const PLAYABLE_CHARACTERS = deepFreeze({
     description: "핑크 에너지 고리를 튕겨 다수의 적을 연쇄 절단하는 변칙 근접 전투원입니다.",
     portraitAssetKey: "mikaPortrait",
     accent: "magenta",
+    unlockRegionId: "wrong-engine-core",
   },
 });
 
@@ -41,4 +43,14 @@ export function getPlayableCharacter(value) {
 
 export function getPlayableCharacters() {
   return ORDERED_CHARACTERS;
+}
+
+export function isCharacterUnlocked(characterId, completedRegionIds = []) {
+  const character = PLAYABLE_CHARACTERS[sanitizeCharacterId(characterId)];
+  if (!character?.unlockRegionId) return true;
+  return Array.isArray(completedRegionIds) && completedRegionIds.includes(character.unlockRegionId);
+}
+
+export function getUnlockedPlayableCharacters(completedRegionIds = []) {
+  return ORDERED_CHARACTERS.filter((character) => isCharacterUnlocked(character.id, completedRegionIds));
 }

@@ -235,6 +235,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private readonly combatBonuses?: Readonly<Record<string, number>>;
   private readonly mainWeaponId?: "pulse-rifle" | "beam-sword";
   private readonly characterId?: "aegis" | "mika";
+  private readonly mikaUnlocked: boolean;
   private readonly assetProfile: AssetProfile;
   private state: any;
   private gameInput: any;
@@ -274,6 +275,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     combatBonuses?: Readonly<Record<string, number>>,
     mainWeaponId?: "pulse-rifle" | "beam-sword",
     characterId?: "aegis" | "mika",
+    mikaUnlocked = true,
     assetProfile: AssetProfile = "full",
   ) {
     super({ key: "OverloadBattle" });
@@ -282,11 +284,12 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.combatBonuses = combatBonuses;
     this.mainWeaponId = mainWeaponId;
     this.characterId = characterId;
+    this.mikaUnlocked = mikaUnlocked;
     this.assetProfile = resolveAssetProfile(assetProfile);
   }
 
   create() {
-    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId, characterId: this.characterId });
+    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId, characterId: this.characterId, mikaUnlocked: this.mikaUnlocked });
     applyDebugScene(this.state, this.bridge.debugScene);
     this.gameInput = createSwarmInput();
     this.governor = createPerformanceGovernor({ environment: window });

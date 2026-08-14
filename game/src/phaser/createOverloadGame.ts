@@ -28,6 +28,7 @@ export type OverloadLaunchOptions = Readonly<{
   combatBonuses?: Readonly<Record<string, number>>;
   mainWeaponId?: "pulse-rifle" | "beam-sword";
   characterId?: "aegis" | "mika";
+  mikaUnlocked?: boolean;
   startSuspended?: boolean;
 }>;
 
@@ -47,7 +48,7 @@ export function createOverloadGame(
   const preset = QUALITY_PRESETS[initialQuality] ?? QUALITY_PRESETS.balanced;
   const assetProfile = initialQuality === "performance" ? "performance" : "full";
   const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, callbacks.onLoadProgress);
-  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, assetProfile);
+  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, assetProfile);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,

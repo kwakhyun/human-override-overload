@@ -60,6 +60,28 @@ const CHARACTER_ACTIVE_LOADOUTS = Object.freeze({
   ]),
 });
 
+const PORTRAIT_REACTIONS = Object.freeze({
+  aegis: Object.freeze({
+    head: Object.freeze(["머리 만지지 마. 작전 브리핑이나 계속해.", "집중이 흐트러져. 손을 거둬."]),
+    chest: Object.freeze(["손 치워. 다음엔 경고 없이 제압한다.", "접촉 허가 안 했어. 선을 지켜."]),
+    arms: Object.freeze(["장비 점검이면 일리야에게 가.", "팔은 멀쩡해. 네 걱정은 필요 없어."]),
+    legs: Object.freeze(["기동부는 정상. 발목 잡지 마.", "출격 전이야. 장난은 여기까지."]),
+  }),
+  mika: Object.freeze({
+    head: Object.freeze(["으앗… 머리 흐트러지잖아. 그래도 조금은 괜찮아.", "또 쓰다듬는 거야? 싫진 않지만… 딱 한 번만이야."]),
+    chest: Object.freeze(["자, 잠깐! 거긴 안 돼… 정말 하지 마. …미워하진 않지만.", "너무 가깝잖아! 심장 소리 들리면 책임져."]),
+    arms: Object.freeze(["손잡고 싶으면 그냥 말해. 이번만이야.", "팔은 전투 준비 완료! 네가 잡아 주면… 조금 더 든든할지도."]),
+    legs: Object.freeze(["간지럽잖아! 출격 전에 장난치지 마… 조금만 더.", "도망 못 가게 잡는 거야? 나도 같이 갈 테니까 놔 줘."]),
+  }),
+});
+
+export const MIKA_RECRUIT_DIALOGUE = Object.freeze([
+  Object.freeze({ speaker: "레아", text: "오답 엔진 잔해에서 미확인 저항군 신호를 회수했어. 생존자가 직접 헤이븐-09 연결을 요청한다." }),
+  Object.freeze({ speaker: "미카", text: "미카야! 네가 그 소문난 이지스지? 혼자 멋있는 건 불공평하니까, 다음 작전부터 나도 같이 갈게." }),
+  Object.freeze({ speaker: "이지스", text: "전투 기록은 확인했어. 명령을 따를 수 있다면 합류를 허가한다." }),
+  Object.freeze({ speaker: "미카", text: "차갑기는. 그래도 방금 나 받아 준 거 맞지? 링블레이드 전투원 미카, 지금부터 팀에 합류합니다!" }),
+]);
+
 const ABILITY_CATEGORY_KO = Object.freeze({
   "TACTICAL UTILITY": "전술 유틸리티",
   "SURVIVAL SUPPORT": "생존 지원",
@@ -387,6 +409,8 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
     ? CHARACTER_ACTIVE_LOADOUTS.mika
     : facility.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
   const chooseCharacter = (characterId) => {
+    const selected = facility.characters?.find((character) => character.id === characterId);
+    if (!selected?.unlocked) return;
     setProfileId(characterId);
     onCharacterChange?.(characterId);
   };
@@ -469,8 +493,8 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
 
       <nav className="character-roster-rail" aria-label="전투원 선택">
         {(facility.characters || []).map((character) => (
-          <button type="button" className={character.id === profile?.id ? "is-active" : ""} aria-label={`${character.koreanName} 정보 보기`} aria-pressed={character.id === profile?.id} onClick={() => chooseCharacter(character.id)} key={character.id}>
-            <img src={assetSource(character.portraitSource)} alt="" /><span>{character.koreanName}</span>
+          <button type="button" className={`${character.id === profile?.id ? "is-active" : ""}${character.unlocked ? "" : " is-locked"}`} aria-label={character.unlocked ? `${character.koreanName} 정보 보기` : `${character.koreanName} 잠김. 오답 엔진 중앙로 최초 클리어 필요`} aria-pressed={character.id === profile?.id} aria-disabled={!character.unlocked} onClick={() => chooseCharacter(character.id)} key={character.id}>
+            <img src={assetSource(character.portraitSource)} alt="" /><span>{character.unlocked ? character.koreanName : <><Lock weight="fill" /> 미해금</>}</span>
           </button>
         ))}
       </nav>
@@ -479,55 +503,75 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
 }
 
 function MotionPortraitStage({ source, characterId, name, onOpen }) {
-  const stageRef = useRef(null);
-  const movePortrait = useCallback((event) => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const bounds = stage.getBoundingClientRect();
-    const x = Math.max(-1, Math.min(1, ((event.clientX - bounds.left) / Math.max(1, bounds.width) - 0.5) * 2));
-    const y = Math.max(-1, Math.min(1, ((event.clientY - bounds.top) / Math.max(1, bounds.height) - 0.5) * 2));
-    stage.style.setProperty("--portrait-look-x", `${(x * 12).toFixed(2)}px`);
-    stage.style.setProperty("--portrait-look-y", `${(y * 7).toFixed(2)}px`);
-    stage.style.setProperty("--portrait-tilt", `${(x * 0.75).toFixed(2)}deg`);
-  }, []);
-  const resetPortrait = useCallback(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    stage.style.setProperty("--portrait-look-x", "0px");
-    stage.style.setProperty("--portrait-look-y", "0px");
-    stage.style.setProperty("--portrait-tilt", "0deg");
-  }, []);
+  const [reaction, setReaction] = useState(null);
+  const reactionIndex = useRef(0);
+  const reactionTimer = useRef(null);
+  useEffect(() => () => clearTimeout(reactionTimer.current), []);
+  const react = useCallback((area) => {
+    const lines = PORTRAIT_REACTIONS[characterId]?.[area] || [];
+    const text = lines[reactionIndex.current % Math.max(1, lines.length)] || "작전 준비를 계속하세요.";
+    reactionIndex.current += 1;
+    clearTimeout(reactionTimer.current);
+    setReaction({ area, text, token: reactionIndex.current });
+    reactionTimer.current = setTimeout(() => setReaction(null), 4200);
+  }, [characterId]);
 
   return (
-    <button
-      type="button"
-      ref={stageRef}
-      className={`base-motion-portrait is-${characterId}`}
+    <section
+      className={`base-motion-portrait is-${characterId}${reaction ? ` is-reacting reaction-${reaction.area}` : ""}`}
       data-live2d-ready="true"
-      onPointerMove={movePortrait}
-      onPointerLeave={resetPortrait}
-      onClick={onOpen}
-      aria-label={`${name} 전투원 정보 열기`}
+      aria-label={`${name} 상호작용 포트레이트`}
     >
       <span className="motion-portrait-body">
         {source && <img src={assetSource(source)} alt={`${name} 로비 전신 일러스트`} />}
+        <span className="motion-portrait-expression" aria-hidden="true" />
       </span>
-      <span className="motion-portrait-caption">
+      <div className="portrait-interaction-zones" aria-label={`${name} 터치 상호작용`}>
+        <button type="button" className="portrait-zone is-head" data-ui-sound="click" onClick={() => react("head")} aria-label={`${name} 머리 반응 보기`} />
+        <button type="button" className="portrait-zone is-chest" data-ui-sound="click" onClick={() => react("chest")} aria-label={`${name} 상체 반응 보기`} />
+        <button type="button" className="portrait-zone is-arm is-left" data-ui-sound="click" onClick={() => react("arms")} aria-label={`${name} 왼팔 반응 보기`} />
+        <button type="button" className="portrait-zone is-arm is-right" data-ui-sound="click" onClick={() => react("arms")} aria-label={`${name} 오른팔 반응 보기`} />
+        <button type="button" className="portrait-zone is-legs" data-ui-sound="click" onClick={() => react("legs")} aria-label={`${name} 다리 반응 보기`} />
+      </div>
+      {reaction && <aside className="motion-portrait-speech" key={reaction.token} role="status" aria-live="polite"><strong>{name}</strong><p>{reaction.text}</p></aside>}
+      <button type="button" className="motion-portrait-caption" onClick={onOpen} aria-label={`${name} 전투원 정보 열기`}>
         <small>ACTIVE OPERATIVE</small><strong>{name}</strong><em>전투원 정보</em>
-      </span>
-    </button>
+      </button>
+    </section>
+  );
+}
+
+export function MikaRecruitScreen({ assets, onComplete }) {
+  const [lineIndex, setLineIndex] = useState(0);
+  const line = MIKA_RECRUIT_DIALOGUE[Math.min(lineIndex, MIKA_RECRUIT_DIALOGUE.length - 1)];
+  const finalLine = lineIndex >= MIKA_RECRUIT_DIALOGUE.length - 1;
+  const next = () => finalLine ? onComplete?.() : setLineIndex((index) => index + 1);
+  return (
+    <main className="campaign-shell mika-recruit-screen">
+      {assets?.characterSyncChamber && <img className="campaign-background" src={assetSource(assets.characterSyncChamber)} alt="헤이븐-09 전투원 동기화실" />}
+      <div className="mika-recruit-shade" aria-hidden="true" />
+      <section className="mika-recruit-card" role="dialog" aria-modal="true" aria-labelledby="mika-recruit-title">
+        <small>신규 전투원 합류 · FIRST CLEAR REWARD</small>
+        <h1 id="mika-recruit-title">미카 · MIKA</h1>
+        <p>프리즘 링블레이드 전투원이 헤이븐-09 편성에 등록되었습니다.</p>
+        <div className="mika-recruit-dialogue">
+          {assets?.mikaPortrait && <img src={assetSource(assets.mikaPortrait)} alt="새로 합류한 전투원 미카" />}
+          <div><small>{line.speaker}</small><strong>{line.text}</strong></div>
+        </div>
+        <button type="button" data-ui-sound={finalLine ? "uiConfirm" : "click"} onClick={next}>{finalLine ? "팀 합류 확인" : "다음 대화"}<ArrowRight weight="bold" /></button>
+      </section>
+    </main>
   );
 }
 
 export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCharacterChange, onCloseFacility, onBoard, onTitle }) {
   const background = assetSource(assets?.homeBase);
-  const buttonAtlas = assetSource(assets?.buttonAtlas);
   const completed = campaign?.completedRegionIds?.length || 0;
   const activeCharacterId = campaign?.loadout?.characterId || "aegis";
   const activeCharacterName = activeCharacterId === "mika" ? "미카" : "이지스";
   const activePortrait = activeCharacterId === "mika" ? assets?.mikaPortrait : assets?.playerPortrait;
   return (
-    <main className="campaign-shell home-base-screen" style={buttonAtlas ? { "--command-button-atlas": `url(${buttonAtlas})` } : undefined}>
+    <main className="campaign-shell home-base-screen">
       {background && <img className="campaign-background" src={background} alt="인류 저항군의 이동 기지 헤이븐-09" />}
       <div className="base-vignette" aria-hidden="true" />
       <header className="base-lobby-topbar">
@@ -678,7 +722,6 @@ export function AbilityGuideScreen({ assets, onComplete, onBack }) {
 
 export function RegionSelectScreen({ regions, clusters = [], campaign, assets, weapons = [], equippedWeaponId = "pulse-rifle", characters = [], selectedCharacterId = "aegis", onCharacterChange, onWeaponChange, onSelect, onBack }) {
   const background = assetSource(assets?.regionMap);
-  const buttonAtlas = assetSource(assets?.buttonAtlas);
   const unlocked = new Set(campaign?.unlockedRegionIds || ["wrong-engine-core"]);
   const completed = new Set(campaign?.completedRegionIds || []);
   const storyFlags = new Set(campaign?.storyFlags || []);
@@ -731,7 +774,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
     return !cluster.briefingFlag || storyFlags.has(cluster.briefingFlag);
   };
   return (
-    <main className={`campaign-shell region-select-screen${selectedRegion ? " has-selection" : ""}${selectedCluster ? " has-cluster" : " is-cluster-map"}`} style={buttonAtlas ? { "--command-button-atlas": `url(${buttonAtlas})` } : undefined}>
+    <main className={`campaign-shell region-select-screen${selectedRegion ? " has-selection" : ""}${selectedCluster ? " has-cluster" : " is-cluster-map"}`}>
       {background && <img className="campaign-background" src={background} alt="나이트자 비행선의 권역 전술 지도" />}
       {previewSource && (
         <img

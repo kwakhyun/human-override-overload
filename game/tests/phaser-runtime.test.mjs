@@ -221,7 +221,7 @@ test("authored trace props and campaign region art are registered without restor
   assert.match(manifest, /airshipRegionMap: "\.\/assets\/overload\/campaign\/strategic-world-map\.webp"/);
   assert.match(manifest, /innerNetworkRegionMap: "\.\/assets\/overload\/campaign\/airship-region-map-v2\.webp"/);
   assert.match(manifest, /outerFrontierRegionMap: "\.\/assets\/overload\/campaign\/outer-frontier-region-map\.webp"/);
-  assert.match(manifest, /commandButtonStates: "\.\/assets\/overload\/ui\/buttons\/command-button-states-atlas\.png"/);
+  assert.doesNotMatch(manifest, /commandButtonStates|command-button-states-atlas/);
   for (const path of [
     "regions/glass-dune/route.webp",
     "regions/glass-dune/boss-room.webp",
@@ -246,12 +246,12 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /launch: OverloadLaunchOptions = \{\}/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
   assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
-  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, assetProfile\)/);
+  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, assetProfile\)/);
   assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);
   assert.match(createGame, /playerX: state\?\.player\?\.x/);
   assert.match(scene, /setVirtualMovement\(x: number, y: number\)/);
   assert.match(scene, /this\.gameInput\.moveX = this\.virtualMovement\.x/);
-  assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId, characterId: this\.characterId \}\)/);
+  assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId, characterId: this\.characterId, mikaUnlocked: this\.mikaUnlocked \}\)/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);
   for (const key of [

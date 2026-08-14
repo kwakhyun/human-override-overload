@@ -445,6 +445,18 @@ test("MIKA fields ring blades, four exclusive actives, and a cooldown-limited ba
   assert.equal(hud.player.tagReady, false);
 });
 
+test("MIKA and the tag action stay unavailable before the first-region unlock", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika", mikaUnlocked: false });
+  const input = createSwarmInput();
+  assert.equal(state.player.characterId, "aegis");
+  assert.equal(state.player.reserveCharacterId, null);
+  input.tagPressed = true;
+  stepSwarm(state, input, 1 / 60);
+  assert.equal(state.player.characterId, "aegis");
+  assert.equal(state.player.reserveCharacterId, null);
+  assert.ok(!drainSwarmEvents(state).some((event) => event.type === "characterTagged"));
+});
+
 test("EMP PULSE stops mechanical enemies in pointer geometry without pulling units or projectiles", () => {
   const state = createSwarmState({ random: () => 0.5 });
   const target = state.enemies.find((enemy) => !enemy.elite);

@@ -42,7 +42,7 @@ import {
   getBaseUpgrades,
 } from "./game/content/baseUpgrades.js";
 import { getMainWeapons } from "./game/content/weapons.js";
-import { getPlayableCharacters } from "./game/content/characters.js";
+import { getPlayableCharacters, isCharacterUnlocked } from "./game/content/characters.js";
 import {
   canLaunchRegion,
   completeAbilityGuide,
@@ -65,6 +65,7 @@ import {
   AbilityGuideScreen,
   HomeBaseScreen,
   MANUAL_ABILITY_GUIDE,
+  MikaRecruitScreen,
   RegionSelectScreen,
   ReturnCinematicScreen,
   SaveSlotScreen,
@@ -93,7 +94,7 @@ const DOM_ASSET_REFS = Object.freeze(Object.fromEntries(
   Object.entries(ASSET_PATHS).map(([key, source]) => [key, Object.freeze({ src: source })]),
 ));
 
-const INITIAL_DOM_ASSET_KEYS = Object.freeze(["intro", "commandButtonStates"]);
+const INITIAL_DOM_ASSET_KEYS = Object.freeze(["intro"]);
 const BASE_DOM_ASSET_KEYS = Object.freeze([
   "havenBase",
   "havenLobby",
@@ -103,16 +104,14 @@ const BASE_DOM_ASSET_KEYS = Object.freeze([
   "havenNpcPortraits",
   "rheaControlOfficer",
   "returnToHaven",
-  "commandButtonStates",
 ]);
-const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "commandButtonStates", "player", "mikaPortrait"]);
+const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "player", "mikaPortrait"]);
 const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "rheaControlOfficer",
   "tutorialEmpPulse",
   "tutorialAegisWard",
   "tutorialStratosRun",
   "tutorialHelixTempest",
-  "commandButtonStates",
 ]);
 const COMBAT_DOM_ASSET_KEYS = Object.freeze([
   "portrait",
@@ -173,6 +172,7 @@ function mixedRegionName(region) {
 
 const SPEAKER_NAME_KO = Object.freeze({
   AEGIS: "이지스",
+  MIKA: "미카",
   OPERATOR: "관제관",
   HANA: "하나",
   ILYA: "일리야",
@@ -468,6 +468,7 @@ const SCENARIO_SCRIPT = Object.freeze({
 
 const NARRATIVE_STANDALONE_PORTRAITS = Object.freeze({
   AEGIS: Object.freeze({ assetKey: "portrait", variant: "hero", alt: "이지스 상반신 일러스트" }),
+  MIKA: Object.freeze({ assetKey: "mikaPortrait", variant: "mika", alt: "미카 상반신 일러스트" }),
   OPERATOR: Object.freeze({ assetKey: "rheaControlOfficer", variant: "operator", alt: "전술 관제관 레아 상반신 일러스트" }),
   RHEA: Object.freeze({ assetKey: "rheaControlOfficer", variant: "operator", alt: "전술 관제관 레아 상반신 일러스트" }),
 });
@@ -729,7 +730,6 @@ function InitialAssetLoadingScreen({ progress = 0, label = "초기 작전 자료
 }
 
 function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic }) {
-  const buttonAtlas = assets?.commandButtonStates?.src;
   return (
     <main className="overload-intro intro-cinematic">
       {assets?.intro && (
@@ -750,7 +750,6 @@ function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic 
           className="primary-cta intro-start command-ui-button"
           type="button"
           data-ui-sound="uiConfirm"
-          style={buttonAtlas ? { "--command-button-atlas": `url(${buttonAtlas})` } : undefined}
           onClick={onStart}
           disabled={!assets && !assetError}
         >
@@ -1007,16 +1006,18 @@ function ExpeditionCombatDock({ hud, onDash, onTag, onActivateAbility, tutorialA
             </button>
           );
         })}
-        <button
-          type="button"
-          className={`combat-tag-switch${player.tagReady ? " is-ready" : " is-cooling"}${player.characterId === "mika" ? " is-mika" : " is-aegis"}`}
-          onClick={() => onTag?.()}
-          disabled={!player.tagReady}
-          aria-label={`T 캐릭터 교대. 대기 ${Math.ceil(player.tagCooldown || 0)}초`}
-        >
-          <span><kbd>T</kbd><strong>{player.reserveCharacterId === "mika" ? "미카" : "이지스"}</strong></span>
-          <small>{player.tagReady ? "교대 가능" : `${(player.tagCooldown || 0).toFixed(1)}초`}</small>
-        </button>
+        {player.reserveCharacterId && (
+          <button
+            type="button"
+            className={`combat-tag-switch${player.tagReady ? " is-ready" : " is-cooling"}${player.characterId === "mika" ? " is-mika" : " is-aegis"}`}
+            onClick={() => onTag?.()}
+            disabled={!player.tagReady}
+            aria-label={`T 캐릭터 교대. 대기 ${Math.ceil(player.tagCooldown || 0)}초`}
+          >
+            <span><kbd>T</kbd><strong>{player.reserveCharacterId === "mika" ? "미카" : "이지스"}</strong></span>
+            <small>{player.tagReady ? "교대 가능" : `${(player.tagCooldown || 0).toFixed(1)}초`}</small>
+          </button>
+        )}
       </div>
     </aside>
   );
@@ -1633,11 +1634,14 @@ function NarrativePortrait({ portrait }) {
   );
 }
 
-function NarrativePanel({ dialogue, assets, region, bossStage, onAdvance }) {
+function NarrativePanel({ dialogue, assets, region, bossStage, characterId = "aegis", onAdvance }) {
   if (!dialogue) return null;
   const lines = SCENARIO_SCRIPT[dialogue.beat] || [];
-  const line = lines[dialogue.index];
-  if (!line) return null;
+  const scriptedLine = lines[dialogue.index];
+  if (!scriptedLine) return null;
+  const line = scriptedLine.speaker === "AEGIS" && characterId === "mika"
+    ? { ...scriptedLine, speaker: "MIKA", text: scriptedLine.mikaText || scriptedLine.text }
+    : scriptedLine;
   const finalLine = dialogue.index >= lines.length - 1;
   const portrait = resolveNarrativePortrait(line.speaker, assets, region, bossStage);
   const hostile = Boolean(NARRATIVE_BOSS_REGION_IDS[line.speaker]);
@@ -1723,7 +1727,7 @@ function RouteMinimap({ hud }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, characterId, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, characterId, mikaUnlocked = false, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const controllerRef = useRef(null);
   const finishReportedRef = useRef(false);
@@ -1860,7 +1864,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
           if (!preparingRef.current && !needsLandscapeRef.current && !pausedRef.current && !combatTutorialActiveRef.current) controllerRef.current?.focus();
           reportRuntimeReady();
         },
-      }, { regionId, combatBonuses, mainWeaponId, characterId, startSuspended: preparingRef.current });
+      }, { regionId, combatBonuses, mainWeaponId, characterId, mikaUnlocked, startSuspended: preparingRef.current });
       controllerRef.current = controller;
       controller.setSuspended(preparingRef.current || needsLandscapeRef.current || pausedRef.current || combatTutorialActiveRef.current);
     }).catch(() => {
@@ -1875,7 +1879,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [characterId, combatBonuses, mainWeaponId, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx]);
+  }, [characterId, combatBonuses, mainWeaponId, mikaUnlocked, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx]);
 
   const selectReward = useCallback((id) => {
     controllerRef.current?.chooseReward(id);
@@ -2113,7 +2117,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
             <div className="touch-controls expedition-touch-controls" aria-label="터치 전투 조작">
               <TouchJoystick onMove={setTouchMovement} />
             </div>
-            <NarrativePanel dialogue={dialogue} assets={assets} region={region} bossStage={hud?.boss?.stage} onAdvance={advanceDialogue} />
+            <NarrativePanel dialogue={dialogue} assets={assets} region={region} bossStage={hud?.boss?.stage} characterId={hud?.player?.characterId || characterId} onAdvance={advanceDialogue} />
             {paused && <PauseOverlay onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}
           </div>
       </section>
@@ -2185,7 +2189,7 @@ export function App() {
   const regions = useMemo(() => getCampaignRegions(), []);
   const regionClusters = useMemo(() => getRegionClusters(), []);
   const mainWeapons = useMemo(() => getMainWeapons(), []);
-  const playableCharacters = useMemo(() => getPlayableCharacters(), []);
+  const playableCharacterDefinitions = useMemo(() => getPlayableCharacters(), []);
   const regionPreviewSources = useMemo(
     () => regions.map((region) => region?.assets?.dom?.thumbnail?.path).filter(Boolean),
     [regions],
@@ -2195,6 +2199,18 @@ export function App() {
     () => (activeSlotId ? getCampaignSlot(campaign, activeSlotId) : null),
     [activeSlotId, campaign],
   );
+  const playableCharacters = useMemo(
+    () => playableCharacterDefinitions.map((character) => ({
+      ...character,
+      unlocked: isCharacterUnlocked(character.id, activeSlot?.completedRegionIds || []),
+    })),
+    [activeSlot?.completedRegionIds, playableCharacterDefinitions],
+  );
+  const unlockedPlayableCharacters = useMemo(
+    () => playableCharacters.filter((character) => character.unlocked),
+    [playableCharacters],
+  );
+  const mikaUnlocked = isCharacterUnlocked("mika", activeSlot?.completedRegionIds || []);
   const activeRegion = useMemo(() => getRegion(activeRegionId) || getRegion(DEFAULT_REGION_ID), [activeRegionId]);
   const activeBgmPath = useMemo(() => resolveMusicTrack(screen, activeRegionId), [screen, activeRegionId]);
   const slotIndex = activeSlotId ? Math.max(0, Number(activeSlotId.split("-")[1] || 1) - 1) : 0;
@@ -2286,7 +2302,6 @@ export function App() {
     npcPortraits: assets?.havenNpcPortraits,
     controlOfficer: assets?.rheaControlOfficer,
     regionMap: assets?.airshipRegionMap,
-    buttonAtlas: assets?.commandButtonStates,
     playerPortrait: assets?.player,
     mikaPortrait: assets?.mikaPortrait,
     tutorialEmpPulse: assets?.tutorialEmpPulse,
@@ -2464,6 +2479,8 @@ export function App() {
     const status = nextResult?.status || nextResult?.phase;
     const regionId = nextResult?.regionId || activeRegionId;
     if (status === "victory" && activeSlotId) {
+      const slotBeforeVictory = getCampaignSlot(campaign, activeSlotId);
+      const mikaWasUnlocked = isCharacterUnlocked("mika", slotBeforeVictory?.completedRegionIds || []);
       const completed = completeRegion(campaign, activeSlotId, regionId, {
         ...nextResult,
         status: "victory",
@@ -2474,12 +2491,28 @@ export function App() {
       setResult({ ...nextResult, regionId });
       setActiveNpc(null);
       setActiveFacilityId(null);
+      const completedSlot = getCampaignSlot(completed, activeSlotId);
+      const mikaJustUnlocked = regionId === DEFAULT_REGION_ID
+        && !mikaWasUnlocked
+        && isCharacterUnlocked("mika", completedSlot?.completedRegionIds || []);
+      if (mikaJustUnlocked) {
+        prepareSurface(
+          "신규 전투원 미카 연결 중",
+          [DOM_ASSET_REFS.mikaPortrait?.src, DOM_ASSET_REFS.characterSyncChamber?.src],
+          () => setScreen("recruit"),
+        );
+        return;
+      }
       prepareSurface("나이트자 귀환 항로 준비 중", [DOM_ASSET_REFS.returnToHaven?.src], () => setScreen("return"));
       return;
     }
     setResult({ ...nextResult, regionId });
     setScreen("result");
   }, [activeRegionId, activeSlotId, campaign, prepareSurface]);
+
+  const finishMikaRecruitment = useCallback(() => {
+    prepareSurface("나이트자 귀환 항로 준비 중", [DOM_ASSET_REFS.returnToHaven?.src], () => setScreen("return"));
+  }, [prepareSurface]);
 
   const talkToNpc = useCallback((npc) => {
     setActiveFacilityId(null);
@@ -2624,7 +2657,9 @@ export function App() {
       />
     );
   } else if (screen === "regions" && campaignView) {
-    content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={playableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onWeaponChange={selectMainWeapon} onSelect={launchCombat} onBack={() => setScreen("base")} />;
+    content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={unlockedPlayableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onWeaponChange={selectMainWeapon} onSelect={launchCombat} onBack={() => setScreen("base")} />;
+  } else if (screen === "recruit") {
+    content = <MikaRecruitScreen assets={campaignAssets} onComplete={finishMikaRecruitment} />;
   } else if (screen === "sortie" || screen === "game") {
     content = (
       <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>
@@ -2635,6 +2670,7 @@ export function App() {
           combatBonuses={combatBonuses}
           mainWeaponId={activeMainWeaponId}
           characterId={activeCharacterId}
+          mikaUnlocked={mikaUnlocked}
           soundEnabled={soundEnabled}
           sfx={sfx}
           onToggleSound={toggleSound}

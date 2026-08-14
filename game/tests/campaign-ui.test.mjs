@@ -12,7 +12,7 @@ test("App connects save slots to the base, hierarchical airship selection, retur
   assert.match(app, /createCampaignSlot\(campaign, slotId\)/);
   assert.match(app, /completeRegion\(campaign, activeSlotId, regionId/);
   assert.match(app, /saveCampaign\(completed\)/);
-  assert.match(app, /createOverloadGame\(host,[\s\S]*\}, \{ regionId, combatBonuses, mainWeaponId, characterId, startSuspended: preparingRef\.current \}\)/);
+  assert.match(app, /createOverloadGame\(host,[\s\S]*\}, \{ regionId, combatBonuses, mainWeaponId, characterId, mikaUnlocked, startSuspended: preparingRef\.current \}\)/);
   assert.match(app, /status === "victory"[\s\S]*setScreen\("return"\)/);
   assert.match(app, /getRegionClusters\(\)/);
   assert.match(app, /completeOuterSectorBriefing\(campaign, activeSlotId\)/);
@@ -94,7 +94,7 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   assert.match(app, /assets\?\.havenNpcPortraits/);
   assert.match(app, /assets\?\.rheaControlOfficer/);
   assert.match(app, /assets\?\.airshipRegionMap/);
-  assert.match(app, /assets\?\.commandButtonStates/);
+  assert.doesNotMatch(app, /commandButtonStates|--command-button-atlas/);
   assert.match(app, /assets\?\.characterSyncChamber/);
   assert.match(screens, /backgroundSize|background-size|backgroundPosition/);
   assert.match(screens, /NPC_ICON = Object\.freeze\(\{ hana: Broadcast, ilya: Wrench, lark: User, rhea: Crosshair \}\)/);
@@ -123,6 +123,10 @@ test("HAVEN lobby uses a motion portrait, icon currencies, edge navigation, and 
   ]);
   assert.match(screens, /function MotionPortraitStage/);
   assert.match(screens, /data-live2d-ready="true"/);
+  assert.doesNotMatch(screens, /onPointerMove|--portrait-look-x|--portrait-tilt/);
+  for (const zone of ["is-head", "is-chest", "is-arm is-left", "is-arm is-right", "is-legs"]) assert.match(screens, new RegExp(`portrait-zone ${zone}`));
+  assert.match(screens, /PORTRAIT_REACTIONS[\s\S]*머리 만지지 마[\s\S]*싫진 않지만/);
+  assert.match(styles, /\.motion-portrait-speech/);
   assert.match(screens, /className="base-currency-rail"/);
   assert.match(screens, /className="base-lobby-navigation"/);
   assert.match(screens, /className="base-sortie-action command-ui-button"/);
@@ -142,6 +146,22 @@ test("HAVEN lobby uses a motion portrait, icon currencies, edge navigation, and 
     assert.ok(asset.size > 180_000, `${name} should retain readable environment detail`);
     assert.ok(asset.size < 400_000, `${name} should remain lobby-load optimized`);
   }
+});
+
+test("MIKA unlocks on the first Wrong Engine victory and receives a one-time recruitment screen", async () => {
+  const [app, characters, screens] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/game/content/characters.js", root), "utf8"),
+    readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
+  ]);
+  assert.match(characters, /unlockRegionId: "wrong-engine-core"/);
+  assert.match(app, /const mikaJustUnlocked = regionId === DEFAULT_REGION_ID/);
+  assert.match(app, /setScreen\("recruit"\)/);
+  assert.match(app, /<MikaRecruitScreen/);
+  assert.match(screens, /export const MIKA_RECRUIT_DIALOGUE/);
+  assert.match(screens, /링블레이드 전투원 미카, 지금부터 팀에 합류합니다/);
+  assert.match(app, /scriptedLine\.speaker === "AEGIS" && characterId === "mika"/);
+  assert.match(app, /MIKA: Object\.freeze\(\{ assetKey: "mikaPortrait"/);
 });
 
 test("character information presents full-height art, live stats, abilities, and persistent augmentation", async () => {

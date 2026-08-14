@@ -225,6 +225,10 @@ test("campaign loadout persists the selected lead character independently per sl
   campaign = createCampaignSlot(campaign, "slot-2", { now: NOW });
   assert.equal(getCampaignCharacter(campaign, "slot-1"), "aegis");
   campaign = setCampaignCharacter(campaign, "slot-1", "mika", { now: NOW });
+  assert.equal(getCampaignCharacter(campaign, "slot-1"), "aegis", "MIKA stays locked before the first regional clear");
+  campaign = completeRegion(campaign, "slot-1", "wrong-engine-core", { status: "victory", runId: "mika-unlock" }, { now: NOW });
+  assert.ok(getCampaignSlot(campaign, "slot-1").storyFlags.includes("mika-unlocked"));
+  campaign = setCampaignCharacter(campaign, "slot-1", "mika", { now: NOW });
   assert.equal(getCampaignCharacter(campaign, "slot-1"), "mika");
   assert.equal(getCampaignCharacter(campaign, "slot-2"), "aegis");
   assert.equal(getCampaignCharacter(setCampaignCharacter(campaign, "slot-1", "unknown"), "slot-1"), "aegis");

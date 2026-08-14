@@ -17,7 +17,7 @@ import {
   sanitizeBaseProgression,
 } from "../progression/baseProgression.js";
 import { DEFAULT_MAIN_WEAPON_ID, sanitizeMainWeaponId } from "../content/weapons.js";
-import { DEFAULT_CHARACTER_ID, sanitizeCharacterId } from "../content/characters.js";
+import { DEFAULT_CHARACTER_ID, isCharacterUnlocked, sanitizeCharacterId } from "../content/characters.js";
 
 export const CAMPAIGN_SAVE_VERSION = 2;
 export const CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v2";
@@ -116,6 +116,7 @@ function deriveStoryFlags(completedRegionIds, inputFlags = []) {
   const flags = new Set(uniqueStrings(inputFlags));
   const completedChapters = getCompletedChapterIds(completedRegionIds);
   if (completedRegionIds.includes(DEFAULT_REGION_ID)) flags.add("home-base-unlocked");
+  if (completedRegionIds.includes(DEFAULT_REGION_ID)) flags.add("mika-unlocked");
   for (const chapterId of completedChapters) flags.add(`${chapterId}-cleared`);
   return [...flags];
 }
@@ -134,6 +135,8 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
   // the regional unlock milestone, but a fresh slot must be able to brief,
   // research and board the airship before its first sortie.
   const homeBaseUnlocked = true;
+  const requestedCharacterId = sanitizeCharacterId(slot.loadout?.characterId ?? slot.characterId);
+  const characterId = isCharacterUnlocked(requestedCharacterId, completedRegionIds) ? requestedCharacterId : DEFAULT_CHARACTER_ID;
   return {
     id: slotIdForIndex(index),
     createdAt: typeof slot.createdAt === "string" ? slot.createdAt : fallbackDate,
@@ -148,7 +151,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
     combatOverlaySeen: Boolean(slot.combatOverlaySeen),
     loadout: {
       mainWeaponId: sanitizeMainWeaponId(slot.loadout?.mainWeaponId ?? slot.mainWeaponId),
-      characterId: sanitizeCharacterId(slot.loadout?.characterId ?? slot.characterId),
+      characterId,
     },
     storyFlags: deriveStoryFlags(completedRegionIds, slot.storyFlags),
     regionRecords: sanitizeRegionRecords(slot.regionRecords),
@@ -295,6 +298,7 @@ export function setCampaignCharacter(campaign, slotId, characterId, options = {}
   const slot = index >= 0 ? sanitized.slots[index] : null;
   if (!slot) return sanitized;
   const nextCharacterId = sanitizeCharacterId(characterId);
+  if (!isCharacterUnlocked(nextCharacterId, slot.completedRegionIds)) return sanitized;
   if ((slot.loadout?.characterId || DEFAULT_CHARACTER_ID) === nextCharacterId) return sanitized;
   const nextSlot = sanitizeSlot({
     ...slot,

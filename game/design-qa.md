@@ -520,10 +520,9 @@ final result: passed
 - State: 슬롯 01 헤이븐-09 로비에서 현재 편성된 AEGIS/MIKA 전신 일러스트를 중앙 주 시각으로
   표시하고, 좌측 NPC 메뉴, 우측 전투원·출격 주요 행동, 우상단 연구 자료·장비 부품·동기화 코어를
   배치했습니다. 재화 버튼은 연구실·정비소·전투원 정보로 직접 연결됩니다.
-- Motion portrait: 정적 PNG를 Cubism Live2D라고 표기하지 않습니다. 현재 포트레이트는 포인터
-  이동에 따라 최대 12px/7px 시선 이동과 0.75deg 기울기, 절제된 호흡 애니메이션을 제공하며
-  `prefers-reduced-motion`에서는 움직임을 정지합니다. 실제 Live2D는 분리·리깅된 `.moc3` 및
-  `model3.json`을 전달받으면 같은 무대 컴포넌트에 교체할 수 있습니다.
+- Motion portrait (superseded by Iteration 23): 이 단계의 포인터 시차는 이후 사용자 요청에 따라
+  제거했습니다. 정적 PNG를 Cubism Live2D라고 표기하지 않는 원칙과 리깅 모델 교체 조건만
+  유지합니다.
 - Authored backgrounds: 로비, HANA 연구실, ILYA 정비소, 전투원 동기화실에 각각 별도
   1920×1080 WebP를 적용했습니다. 로비와 다음 상세 화면에 필요한 DOM 이미지 그룹은 기존
   선로딩 경로에서 함께 디코드되어 화면 전환 때 빈 배경을 노출하지 않습니다.
@@ -550,5 +549,28 @@ final result: passed
 - Colors/tokens: 청록 탐색/연구, 앰버 정비, 마젠타 동기화 코어의 기존 상태색 유지.
 - Image quality: 1920×1080 상세 배경과 기존 투명 전신 포트레이트를 비왜곡 표시.
 - Browser: 1569×912 및 844×390, warning/error `[]`, 연구실·전투원 정보 전환 정상.
+
+final result: passed
+
+### Iteration 23 — complete · 클릭 반응 로비와 MIKA 합류
+
+- Interaction: 중앙 포트레이트의 수동 포인터 추적을 제거했습니다. 머리·가슴·왼팔·오른팔·다리
+  영역을 클릭하거나 터치할 때만 가벼운 표정 처리와 말풍선이 나타납니다. AEGIS는 냉정하고
+  차가운 반응, MIKA는 홍조와 부끄러운 항의를 영역별로 표시합니다. 현재 구현은 정적 PNG 기반
+  상호작용이며 Cubism Live2D 모델로 오표기하지 않습니다.
+- Progression: 새 슬롯에서는 MIKA 선택과 태그를 잠급니다. 첫 `wrong-engine-core` 승리 때만
+  구조 신호·합류 시나리오를 재생하고 `mika-unlocked`를 저장한 뒤 캐릭터 정보, 출격 편성,
+  전투 태그에 노출합니다. 잠긴 저장 데이터나 직접 런치 주입도 AEGIS로 안전하게 정규화됩니다.
+- Narrative: 전투 대화 패널은 현재 조작 캐릭터 ID를 소비해 AEGIS/MIKA 화자명과 전용
+  일러스트를 함께 전환합니다. 태그 후에도 이전 캐릭터 초상화가 남지 않습니다.
+- UI: 로비·연구실·정비소·동기화실의 배경 명도를 올리고 한국어 메뉴 글자 크기 하한을
+  확대했습니다. 공용 커맨드 버튼은 이미지 아틀라스를 제거하고 CSS hover/focus/pressed 상태로
+  통일했습니다. 잠긴 MIKA 카드는 해금 조건을 명시합니다.
+- Verification: 캠페인 진행·UI·시각 자산·지연 로딩·전투 엔진·Phaser 계약 집중 테스트
+  `128/128`, `npm run typecheck`, `git diff --check`를 통과했습니다. 1569×912 데스크톱과
+  844×390 모바일 가로에서 AEGIS/MIKA 반응, MIKA 잠금 카드, 해금 후 편성, MIKA 전투 초상화,
+  배경 가독성과 overflow를 확인했고 브라우저 warning/error는 `[]`였습니다. 전체 테스트와
+  production build는 사용자의 시간 우선 검증 지침에 따라 이번 논리 변경에서는 실행하지
+  않았습니다.
 
 final result: passed
