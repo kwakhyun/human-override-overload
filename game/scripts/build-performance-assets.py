@@ -31,6 +31,7 @@ JOBS = (
     Job("enemies/motion-v2/suicide-drone-motion-atlas.png", "enemies/motion-v2/performance/suicide-drone-motion-atlas.png", 0.75, 6, 4),
     Job("enemies/motion-v2/rifleman-motion-atlas.png", "enemies/motion-v2/performance/rifleman-motion-atlas.png", 0.75, 6, 4),
     Job("enemies/motion-v2/sniper-motion-atlas.png", "enemies/motion-v2/performance/sniper-motion-atlas.png", 0.75, 6, 4),
+    Job("enemies/motion-v3/siege-walker-motion-atlas.png", "enemies/motion-v3/performance/siege-walker-motion-atlas.png", 0.75, 6, 4),
     Job("allies/motion-v2/hunter-drone-motion-atlas.png", "allies/motion-v2/performance/hunter-drone-motion-atlas.png", 0.75, 5, 4),
     Job("allies/motion-v2/pulse-sentry-motion-atlas.png", "allies/motion-v2/performance/pulse-sentry-motion-atlas.png", 0.75, 5, 4),
     Job("allies/motion-v2/suppressor-drone-motion-atlas.png", "allies/motion-v2/performance/suppressor-drone-motion-atlas.png", 0.75, 5, 4),

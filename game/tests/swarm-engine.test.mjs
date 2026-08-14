@@ -166,11 +166,43 @@ test("every region starts melee-only, then restores a distinct late reinforcemen
     stepFor(state, createSwarmInput(), 0.3);
     assert.equal(state.spawnedEnemies, Math.floor(state.enemyBudget * 0.8) + 60);
     assert.equal(state.enemies.length, 60);
+    assert.ok(state.enemies.some((enemy) => enemy.type === "siegeWalker"), `${regionId} should field a late siege walker`);
     reinforcements.push(countEnemyTypes(state.enemies));
   }
   assert.notDeepEqual(reinforcements[0], reinforcements[1]);
   assert.notDeepEqual(reinforcements[0], reinforcements[2]);
   assert.notDeepEqual(reinforcements[1], reinforcements[2]);
+});
+
+test("late-wave siege walkers are durable giants with a dedicated heavy cannon", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true, regionId: "wrong-engine-core" });
+  assert.ok(state.enemies.every((enemy) => enemy.type !== "siegeWalker"));
+  state.enemies.length = 0;
+  state.spawnedEnemies = 240;
+  state.killedEnemies = 240;
+  state.player.level = 20;
+  state.player.invulnerability = 999;
+  state.surgeIndex = 7;
+  state.surgeQueued = 60;
+  state.surgeSpawnAccumulator = 12;
+  state.activeSurge = { index: 7, label: "SIEGE TEST", count: 60, remaining: 60, rate: 1000 };
+  delayPlayerWeapons(state);
+  stepFor(state, createSwarmInput(), 0.3);
+  const walker = state.enemies.find((enemy) => enemy.type === "siegeWalker");
+  assert.ok(walker);
+  assert.equal(walker.combatRole, "siegeWalker");
+  assert.ok(walker.radius >= 58);
+  assert.ok(walker.maxHp >= 720 * 3);
+
+  state.enemies = [walker];
+  state.spawnedEnemies = state.enemyBudget;
+  walker.spawnDelay = 0;
+  walker.x = state.player.x + 700;
+  walker.y = state.player.y;
+  walker.shootCooldown = 0;
+  stepFor(state, createSwarmInput(), 0.1);
+  assert.ok(state.enemyProjectiles.some((projectile) => projectile.kind === "siegeCannon" && projectile.radius === 11));
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "enemyShot" && event.kind === "siegeCannon"));
 });
 
 test("every expedition attacker materializes through one of five authored SOVEREIGN gates", () => {

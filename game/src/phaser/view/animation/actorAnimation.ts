@@ -363,6 +363,7 @@ export function resolveActorAnimationProfileId(
   if (actorType.includes("suppress")) return "enemy-suppressor";
   if (actorType.includes("hunter")) return "enemy-hunter";
   const combatRole = normalized(state.combatRole);
+  if (combatRole.includes("siegewalker")) return "enemy-brute";
   if (combatRole.includes("sniper")) return "enemy-brute";
   if (combatRole.includes("rifle")) return "enemy-suppressor";
   return "enemy-hunter";

@@ -151,6 +151,7 @@ test("unified art and renderer-local impact effects replace legacy combat sprite
   assert.match(manifest, /assets\/overload\/enemies\/motion-v2\/suicide-drone-motion-atlas\.png/);
   assert.match(manifest, /assets\/overload\/enemies\/motion-v2\/rifleman-motion-atlas\.png/);
   assert.match(manifest, /assets\/overload\/enemies\/motion-v2\/sniper-motion-atlas\.png/);
+  assert.match(manifest, /assets\/overload\/enemies\/motion-v3\/siege-walker-motion-atlas\.png/);
   assert.match(manifest, /assets\/overload\/allies\/motion-v2\/hunter-drone-motion-atlas\.png/);
   assert.match(manifest, /assets\/overload\/allies\/rook\.png/);
   assert.match(manifest, /assets\/overload\/boss\/wrong-engine-forms-atlas\.png/);
@@ -531,7 +532,7 @@ test("expanded expedition framing makes every hostile larger than AEGIS and stab
   assert.match(engine, /const EXPEDITION_ROUTE_LENGTH = 12000/);
   assert.match(engine, /export const EXPEDITION_WORLD_WIDTH = 13200/);
   assert.match(view, /const size = state\?\.phase === "boss" \? 64 : 74/);
-  assert.match(view, /const baseSize = entity\?\.isMidBoss \? 248 : role === 2 \? 138 : role === 1 \? 108 : 92/);
+  assert.match(view, /const baseSize = entity\?\.isMidBoss \? 248 : role === 3 \? 196 : role === 2 \? 138 : role === 1 \? 108 : 92/);
   assert.match(view, /const recoil = rifleEquipped && animation\.clipId === "attack" \?/);
   assert.match(view, /setAtlasFrame\(ghost, Math\.max\(0, directionalFrame\.column - index - 1\), presentation\.row\)/);
   assert.match(view, /resolveHeroDirectionalAimFrame\(animation, entity\)/);

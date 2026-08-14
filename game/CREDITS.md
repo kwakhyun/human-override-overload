@@ -1474,6 +1474,31 @@ Constraints: no UI, no cards, no labels, no text, no numbers, no logos, no water
 
 ## Open-source dependencies
 
+## 후반 공성 워커 유닛 (2026-08-15)
+
+- 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
+- 스타일/시트 참조: 프로젝트 원본 적 모션 아틀라스 `public/assets/overload/enemies/motion-v2/`.
+- 선택 ImageGen 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-34b888f1-5c6b-46ad-ae2b-849668811297.png`.
+- 프로젝트 보존 원본: `reference/source-assets/overload/enemies/siege-walker-motion-atlas-{chroma,alpha}.png`.
+- 활성 런타임: `public/assets/overload/enemies/motion-v3/siege-walker-motion-atlas.png` 및
+  `public/assets/overload/enemies/motion-v3/performance/siege-walker-motion-atlas.png`.
+- 후처리: `remove_chroma_key.py`로 배경을 제거하고 `normalize-motion-atlas.py`로 6×4·192px 셀에
+  중심/스케일을 정규화했습니다. PERFORMANCE본은 `scripts/build-performance-assets.py`가 셀별
+  LANCZOS 75% 축소로 생성합니다.
+
+### 공성 워커 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production top-down Phaser enemy motion sprite atlas for HUMAN OVERRIDE: OVERLOAD.
+Input image: Image 1 is the approved enemy rendering style and 6x4 motion-sheet layout reference only. Create a new, clearly different late-wave GIANT SIEGE WALKER unit.
+Primary request: one exact 6-column by 4-row atlas, 24 isolated frames, on a 3:2 landscape canvas. Strict 90-degree true-nadir overhead view in every cell. The unit is an enormous bipedal combat robot, black gunmetal and dark ceramic armor, broad shoulders, massive legs, a compact torso, red hostile sensors, one heavy rotary cannon arm and one armored crushing fist. It must read much larger and heavier than ordinary drones while remaining fully inside every cell.
+Rows: row 1 heavy walk/advance across six beats; row 2 cannon windup, firing, recoil, recovery; row 3 armor hit, stagger, enraged red-overheat pulses; row 4 shutdown and explosive destruction across six progressive frames.
+Style/medium: the same polished dark sci-fi game-sprite rendering family as the input; crisp mechanical details, stable silhouette, restrained adjacent-frame articulation, no camera rotation or scale drift.
+Composition/framing: exact equal 6x4 grid, one centered walker per cell, consistent center anchor and scale, generous gutters, nothing crosses cell boundaries.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background. No transparency simulation, no shadow, floor, scenery, text, labels, grid lines, watermark, detached projectiles, smoke across cells, or extra objects. Do not use #ff00ff in the robot.
+```
+
 - Phaser 4.2.1 — MIT License
 - TypeScript 5.9.3 — Apache License 2.0
 - React — MIT License

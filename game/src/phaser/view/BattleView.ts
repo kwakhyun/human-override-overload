@@ -276,6 +276,7 @@ function actorAngle(entity: any) {
 function enemyRoleIndex(enemy: any) {
   const type = String(enemy?.type ?? "hunter").toLowerCase();
   const combatRole = String(enemy?.combatRole ?? "").toLowerCase();
+  if (type.includes("siegewalker") || combatRole.includes("siegewalker")) return 3;
   if (type.includes("brute") || combatRole.includes("sniper")) return 2;
   if (type.includes("suppress") || combatRole.includes("rifle")) return 1;
   return 0;
@@ -283,7 +284,13 @@ function enemyRoleIndex(enemy: any) {
 
 function enemyMotionTexture(enemy: any) {
   const role = enemyRoleIndex(enemy);
-  return role === 2 ? ASSET_KEYS.enemySniperMotion : role === 1 ? ASSET_KEYS.enemyRiflemanMotion : ASSET_KEYS.enemyHunterMotion;
+  return role === 3
+    ? ASSET_KEYS.enemySiegeWalkerMotion
+    : role === 2
+      ? ASSET_KEYS.enemySniperMotion
+      : role === 1
+        ? ASSET_KEYS.enemyRiflemanMotion
+        : ASSET_KEYS.enemyHunterMotion;
 }
 
 function regionalEnemyTexture(enemy: any) {
@@ -297,6 +304,7 @@ function regionalEnemyTexture(enemy: any) {
 
 function enemyFallbackTexture(enemy: any) {
   const role = enemyRoleIndex(enemy);
+  if (role === 3) return ASSET_KEYS.enemySniper;
   return role === 2 ? ASSET_KEYS.enemySniper : role === 1 ? ASSET_KEYS.enemyRifleman : ASSET_KEYS.enemyHunter;
 }
 
@@ -427,6 +435,7 @@ export class BattleView {
     this.prepareAtlas(ASSET_KEYS.enemyHunterMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemyRiflemanMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemySniperMotion, 6, 4);
+    this.prepareAtlas(ASSET_KEYS.enemySiegeWalkerMotion, 6, 4);
     if (regionAssets.enemyForms) this.prepareAtlas(regionAssets.enemyForms, 4, 1);
     if (scene.textures.exists(regionAssets.bossForms)) ensureAtlasFrames(scene, regionAssets.bossForms, 3, 1);
     ensureAtlasFrames(scene, ASSET_KEYS.combatFx, 4, 3);
@@ -1087,7 +1096,7 @@ export class BattleView {
         }
         setAtlasFrame(image, record.frameColumn, record.frameRow);
       }
-      const baseSize = entity?.isMidBoss ? 248 : role === 2 ? 138 : role === 1 ? 108 : 92;
+      const baseSize = entity?.isMidBoss ? 248 : role === 3 ? 196 : role === 2 ? 138 : role === 1 ? 108 : 92;
       const materialize = finite(entity?.spawnDuration) > 0
         ? clamp01(1 - finite(entity?.spawnDelay) / Math.max(0.01, finite(entity?.spawnDuration)))
         : 1;
@@ -1181,7 +1190,7 @@ export class BattleView {
         && aimLateral <= Math.max(34, finite(entity?.radius, 22) + 18);
       if (!recentlyDamaged && !elite && !nearPlayer && !sniperEngaged && !rifleEngaged && !suicideDanger && !aimTargeted) continue;
 
-      const persistent = elite || nearPlayer || sniperEngaged || rifleEngaged || suicideDanger || aimTargeted;
+      const persistent = roleIndex === 3 || elite || nearPlayer || sniperEngaged || rifleEngaged || suicideDanger || aimTargeted;
       const proximityBonus = Math.max(0, 360 * 360 - distanceSq) / (360 * 360) * 100;
       const priority = (recentlyDamaged ? 1000 : 0)
         + (selfDestructArmed ? 1200 : 0)
@@ -1229,7 +1238,7 @@ export class BattleView {
       const alpha = Math.min(image.alpha, candidate.persistent ? 0.96 : holdAlpha * 0.96);
       if (alpha <= 0.02) continue;
 
-      const screenWidth = entity?.isMidBoss ? 190 : (candidate.roleIndex === 2 ? 72 : candidate.roleIndex === 1 ? 64 : 54)
+      const screenWidth = entity?.isMidBoss ? 190 : (candidate.roleIndex === 3 ? 104 : candidate.roleIndex === 2 ? 72 : candidate.roleIndex === 1 ? 64 : 54)
         + (entity?.elite ? 8 : 0);
       const width = screenWidth / zoom;
       const height = (entity?.isMidBoss ? 11 : entity?.elite ? 7 : 6) / zoom;

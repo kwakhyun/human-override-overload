@@ -208,6 +208,7 @@ const ENEMY_DATA = Object.freeze({
   hunter: Object.freeze({ role: "suicideDrone", hp: 38, speed: 118, radius: 22, damage: 78, xp: 4, color: "#ff526d" }),
   suppressor: Object.freeze({ role: "rifleman", hp: 68, speed: 64, radius: 27, damage: 10, xp: 7, color: "#f3ab42" }),
   brute: Object.freeze({ role: "sniper", hp: 132, speed: 48, radius: 36, damage: 44, xp: 10, color: "#d93955" }),
+  siegeWalker: Object.freeze({ role: "siegeWalker", hp: 720, speed: 34, radius: 58, damage: 36, xp: 32, color: "#ff435f" }),
 });
 
 export const REWARD_DEFINITIONS = Object.freeze({
@@ -431,6 +432,11 @@ function chooseEnemyType(state, index) {
   const openingProfile = state.enemyProfile?.opening ?? REGION_ENEMY_PROFILES["wrong-engine-core"].opening;
   const reinforcementProfile = state.enemyProfile?.reinforcement ?? REGION_ENEMY_PROFILES["wrong-engine-core"].reinforcement;
   if (state.expedition && (index < openingCount || datasetProgress < 0.12)) return "hunter";
+  // Giant siege walkers are a late-wave threat, never part of the opening
+  // crowd. The index gate keeps their cadence deterministic across replays.
+  if (state.expedition && datasetProgress >= 0.72 && (index + finite(reinforcementProfile.offset)) % 31 === 0) {
+    return "siegeWalker";
+  }
 
   let weights;
   let offset;
@@ -535,7 +541,7 @@ function spawnEnemy(state) {
 function spawnRouteMidBoss(state) {
   const definition = state.expedition?.midBoss?.definition;
   if (!definition || state.expedition.midBoss.spawned) return false;
-  const x = clamp(state.player.x + 520, state.expedition.originX + 800, state.expedition.originX + state.expedition.gateLockDistance - 160);
+  const x = clamp(state.player.x + 520, state.expedition.originX + 800, state.expedition.originX + state.expedition.routeLength - 160);
   const y = WORLD_HEIGHT * 0.5;
   const hp = Math.max(1, finite(definition.maxHp, 52000));
   const enemy = {
@@ -2037,6 +2043,7 @@ function updateEnemies(state, dt) {
     }
     let movement = 1;
     if (!deepPursuit && role === "rifleman" && distance < 520) movement = distance < 285 ? -0.5 : 0;
+    if (!deepPursuit && role === "siegeWalker" && distance < 620) movement = distance < 330 ? -0.28 : 0;
     if (!deepPursuit && role === "sniper") movement = wasAiming ? 0 : distance < 520 ? -0.62 : distance < 820 ? 0 : 1;
     const movementSpeed = deepPursuit
       ? Math.max(enemy.speed, finite(player.speed, 245) * EXPEDITION_PURSUIT_SPEED_MULTIPLIER)
@@ -2066,6 +2073,17 @@ function updateEnemies(state, dt) {
       enemy.animationTimer = 0.16;
       enemy.recoil = 0.72;
       emit(state, "enemyShot", { role, kind: "rifleman", x: enemy.x, y: enemy.y });
+    }
+    if (!deepPursuit && role === "siegeWalker" && distance < 860 && enemy.shootCooldown <= 0) {
+      const spread = (state.random() - 0.5) * 0.035;
+      pushEnemyProjectile(state, enemy.x, enemy.y, enemy.angle + spread, 640, enemy.damage, "siegeCannon", 11, 2.6);
+      enemy.shootCooldown = enemy.elite ? 2.1 : 2.75;
+      enemy.attackState = "siegeCannon";
+      enemy.attackTimer = 0.46;
+      enemy.animationState = "attack";
+      enemy.animationTimer = 0.46;
+      enemy.recoil = 1.45;
+      emit(state, "enemyShot", { role, kind: "siegeCannon", x: enemy.x, y: enemy.y });
     }
     if (role === "sniper" && wasAiming && enemy.aimTimer <= 0) {
       activeSniperLocks = Math.max(0, activeSniperLocks - 1);
