@@ -1679,6 +1679,34 @@ Lighting/mood: premium dark sci-fi, balanced cyan and magenta rim light, clinica
 Constraints: empty environment only; absolutely no people, no human figures, no character silhouettes, no UI, no text, no logos, no symbols, no watermark. No third-party game imagery. Original HUMAN OVERRIDE: OVERLOAD project art.
 ```
 
+## HAVEN-09 Cubism Live2D character models
+
+- 도구: 사용자가 설치하고 PRO 평가판을 승인한 Live2D Cubism Editor 5.3.03.
+- 원본 캐릭터 일러스트: 프로젝트 원본
+  `public/assets/overload/hero/survivor-portrait.png`,
+  `public/assets/overload/hero/mika-portrait.png`.
+- 편집 가능한 소스:
+  `reference/source-assets/overload/cubism/aegis/aegis-cubism-source.psd`,
+  `reference/source-assets/overload/cubism/aegis/aegis.cmo3`,
+  `reference/source-assets/overload/cubism/mika/mika-cubism-source.psd`,
+  `reference/source-assets/overload/cubism/mika/mika.cmo3`.
+- 런타임 모델:
+  `public/assets/overload/live2d/aegis/aegis.model3.json`,
+  `public/assets/overload/live2d/aegis/aegis.moc3`,
+  `public/assets/overload/live2d/mika/mika.model3.json`,
+  `public/assets/overload/live2d/mika/mika.moc3`와 각 2048px 텍스처·CDI·표정 JSON.
+- 호환성: 공개 Cubism Web Core가 지원하는 MOC3 v5로 출력했습니다. `MOC3` 헤더와 버전 바이트
+  5를 집중 테스트로 잠급니다.
+- 브라우저 런타임: `@greenmansk/react-live2d` 0.1.1(MIT)과 번들한 공식
+  `Live2D Cubism Core` Redistributable Code를 사용합니다. Core 원본 주소는
+  `https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js`, 라이선스는
+  `https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html`입니다.
+- 소스 PSD 준비 스크립트: `scripts/build-cubism-source.py`. 이 스크립트는 MOC3를 위조하거나
+  생성하지 않으며, 최종 `.cmo3` 리깅과 `.moc3` 출력은 Cubism Editor에서 수행했습니다.
+- 상호작용: 포인터 추적은 사용하지 않고 머리·가슴·양팔·다리 클릭에만 시선·상체·표정
+  파라미터를 적용합니다. AEGIS는 `cold`, MIKA는 `shy` 표정을 사용하며, 터치 영역 표시와
+  CSS 홍조/얼굴선 합성은 없습니다.
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License
@@ -1688,6 +1716,10 @@ Constraints: empty environment only; absolutely no people, no human figures, no 
 - Phosphor Icons — MIT License
 - Rajdhani — SIL Open Font License 1.1
 - IBM Plex Mono — SIL Open Font License 1.1
+- @greenmansk/react-live2d 0.1.1 — MIT License
+
+Live2D Cubism Core는 오픈소스 항목이 아니라 위 Live2D Proprietary Software License의
+Redistributable Code입니다.
 
 Rajdhani와 IBM Plex Mono는 번들 크기와 한국어 가독성을 위해 Latin 서브셋만 로드합니다.
 Rajdhani는 영문 브랜드·표제 장식, IBM Plex Mono는 영문 텔레메트리·코드·키·숫자에만

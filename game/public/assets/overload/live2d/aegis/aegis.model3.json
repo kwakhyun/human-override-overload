@@ -1,0 +1,16 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "aegis.moc3",
+		"Textures": [
+			"aegis.2048/texture_00.png"
+		],
+		"Expressions": [
+			{
+				"Name": "cold",
+				"File": "expressions/cold.exp3.json"
+			}
+		],
+		"DisplayInfo": "aegis.cdi3.json"
+	}
+}

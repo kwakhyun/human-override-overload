@@ -122,8 +122,9 @@ test("HAVEN lobby uses a motion portrait, icon currencies, edge navigation, and 
     readFile(new URL("src/game/assets/manifest.ts", root), "utf8"),
   ]);
   assert.match(screens, /function MotionPortraitStage/);
-  assert.match(screens, /data-portrait-renderer="static-fallback"/);
-  assert.doesNotMatch(screens, /motion-portrait-expression|data-live2d-ready/);
+  assert.match(screens, /data-portrait-renderer="cubism-live2d"/);
+  assert.match(screens, /<CubismCharacter/);
+  assert.doesNotMatch(screens, /motion-portrait-expression/);
   assert.doesNotMatch(screens, /onPointerMove|--portrait-look-x|--portrait-tilt/);
   for (const zone of ["is-head", "is-chest", "is-arm is-left", "is-arm is-right", "is-legs"]) assert.match(screens, new RegExp(`portrait-zone ${zone}`));
   assert.match(screens, /PORTRAIT_REACTIONS[\s\S]*머리 만지지 마[\s\S]*싫진 않지만/);

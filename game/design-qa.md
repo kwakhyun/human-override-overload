@@ -574,3 +574,21 @@ final result: passed
   않았습니다.
 
 final result: passed
+
+### Iteration 24 — complete · 실제 Cubism Live2D 로비 모델
+
+- Model pipeline: AEGIS/MIKA 원본을 분리한 PSD와 편집 가능한 `.cmo3`를 보존하고, Cubism
+  Editor 5.3.03에서 브라우저 Core 호환 MOC3 v5·model3·CDI·2048px 텍스처를 출력했습니다.
+- Runtime: 번들한 공식 Cubism Core와 React WebGL 런타임으로 로비 모델을 그립니다. 모델이
+  준비된 뒤 기존 PNG 폴백의 opacity는 0이며, 오류일 때만 정적 일러스트가 남습니다.
+- Interaction: 기본 포인터 추적 없음. 투명한 머리·가슴·양팔·다리 버튼만 시선·상체와 실제
+  Cubism `cold`/`shy` 표정 파라미터를 실행합니다. `showHitAreas=false`이며 AEGIS 얼굴의 청록
+  실루엣, MIKA의 CSS 홍조 등 합성 오버레이는 없습니다.
+- Browser QA: 1440×810 Edge WebGL에서 AEGIS와 MIKA 모두 `data-live2d-ready=true`, 실제
+  canvas 520×737/480×737, 폴백 opacity 0을 확인했습니다. 두 영역 클릭 후 인물별 말풍선과
+  표정 호출이 정상입니다. 물리·포즈·사용자 데이터 파일이 없는 현재 경량 모델의 선택적 경고만
+  존재하며 모델 로드·렌더 오류는 없습니다.
+- Focused verification: Cubism 모델 번들/버전/표정, 캠페인 UI, typecheck만 실행했습니다.
+  전체 테스트와 production build는 사용자의 마지막 최종 검증 지침에 따라 생략했습니다.
+
+final result: passed

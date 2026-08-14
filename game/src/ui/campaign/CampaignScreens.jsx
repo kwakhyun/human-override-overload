@@ -18,6 +18,7 @@ import {
   User,
   Wrench,
 } from "@phosphor-icons/react";
+import { CubismCharacter } from "../live2d/CubismCharacter";
 
 function assetSource(asset, fallback = "") {
   return asset?.src || asset || fallback;
@@ -519,12 +520,15 @@ function MotionPortraitStage({ source, characterId, name, onOpen }) {
   return (
     <section
       className={`base-motion-portrait is-${characterId}${reaction ? ` is-reacting reaction-${reaction.area}` : ""}`}
-      data-portrait-renderer="static-fallback"
+      data-portrait-renderer="cubism-live2d"
       aria-label={`${name} 상호작용 포트레이트`}
     >
-      <span className="motion-portrait-body">
-        {source && <img src={assetSource(source)} alt={`${name} 로비 전신 일러스트`} />}
-      </span>
+      <CubismCharacter
+        characterId={characterId}
+        fallbackSource={assetSource(source)}
+        name={name}
+        reaction={reaction}
+      />
       <div className="portrait-interaction-zones" aria-label={`${name} 터치 상호작용`}>
         <button type="button" className="portrait-zone is-head" data-ui-sound="click" onClick={() => react("head")} aria-label={`${name} 머리 반응 보기`} />
         <button type="button" className="portrait-zone is-chest" data-ui-sound="click" onClick={() => react("chest")} aria-label={`${name} 상체 반응 보기`} />

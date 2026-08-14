@@ -12,6 +12,7 @@ HANDOFF/
 .env
 .env.*
 .google/
+.codex-tools/
 google-credentials*.json
 *.log
 *.local

@@ -1,0 +1,16 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "mika.moc3",
+		"Textures": [
+			"mika.2048/texture_00.png"
+		],
+		"Expressions": [
+			{
+				"Name": "shy",
+				"File": "expressions/shy.exp3.json"
+			}
+		],
+		"DisplayInfo": "mika.cdi3.json"
+	}
+}

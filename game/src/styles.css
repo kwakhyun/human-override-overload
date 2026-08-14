@@ -5308,7 +5308,8 @@ kbd {
   display: block;
   transform-origin: 52% 64%;
 }
-.motion-portrait-body > img {
+.motion-portrait-body > img,
+.cubism-character-fallback {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -5318,6 +5319,25 @@ kbd {
   animation: lobby-portrait-breathe 5.8s ease-in-out infinite;
   pointer-events: none;
 }
+.cubism-character { overflow: hidden; }
+.cubism-character-canvas {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(22px 18px 30px rgba(0, 0, 0, 0.78));
+  pointer-events: none;
+}
+.cubism-character-fallback {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  opacity: 1;
+  transition: opacity 220ms ease-out;
+}
+.cubism-character.is-ready .cubism-character-fallback { opacity: 0; }
 .base-motion-portrait.is-mika { width: min(35vw, 480px); left: 25%; }
 
 .portrait-interaction-zones { position: absolute; z-index: 2; inset: 0; }
