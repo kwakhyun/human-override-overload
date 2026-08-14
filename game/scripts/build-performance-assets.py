@@ -42,17 +42,23 @@ JOBS = (
     Job("environment/sector-01-shattered-approach.webp", "environment/performance/sector-01-shattered-approach.webp", 0.5),
     Job("environment/sector-02-flooded-memorial.webp", "environment/performance/sector-02-flooded-memorial.webp", 0.5),
     Job("environment/sector-03-engine-causeway.webp", "environment/performance/sector-03-engine-causeway.webp", 0.5),
+    Job("environment/sector-04-reactor-vault-expanded.webp", "environment/performance/sector-04-reactor-vault-expanded.webp", 0.5),
     Job("environment/boss-chamber.webp", "environment/performance/boss-chamber.webp", 0.5),
     Job("boss/wrong-engine-forms-atlas.png", "boss/performance/wrong-engine-forms-atlas.png", 0.5, 3, 1),
     Job("boss/motion-v2/wrong-engine-motion-atlas.png", "boss/motion-v2/performance/wrong-engine-motion-atlas.png", 0.75, 6, 4),
     Job("regions/glass-dune/route.webp", "regions/glass-dune/performance/route.webp", 0.5),
+    Job("regions/glass-dune/route-expanded-v2.webp", "regions/glass-dune/performance/route-expanded-v2.webp", 0.5),
     Job("regions/glass-dune/boss-room.webp", "regions/glass-dune/performance/boss-room.webp", 0.5),
     Job("regions/glass-dune/boss-forms-atlas.png", "regions/glass-dune/performance/boss-forms-atlas.png", 0.5, 3, 1),
     Job("regions/glass-dune/motion-v2/mirror-tyrant-motion-atlas.png", "regions/glass-dune/motion-v2/performance/mirror-tyrant-motion-atlas.png", 0.75, 6, 4),
     Job("regions/abyssal-archive/route.webp", "regions/abyssal-archive/performance/route.webp", 0.5),
+    Job("regions/abyssal-archive/route-expanded-v2.webp", "regions/abyssal-archive/performance/route-expanded-v2.webp", 0.5),
     Job("regions/abyssal-archive/boss-room.webp", "regions/abyssal-archive/performance/boss-room.webp", 0.5),
     Job("regions/abyssal-archive/boss-forms-atlas.png", "regions/abyssal-archive/performance/boss-forms-atlas.png", 0.5, 3, 1),
     Job("regions/abyssal-archive/motion-v2/drowned-oracle-motion-atlas.png", "regions/abyssal-archive/motion-v2/performance/drowned-oracle-motion-atlas.png", 0.75, 6, 4),
+    Job("regions/neon-foundry/route-expanded-v2.webp", "regions/neon-foundry/performance/route-expanded-v2.webp", 0.5),
+    Job("regions/storm-spire/route-expanded-v2.webp", "regions/storm-spire/performance/route-expanded-v2.webp", 0.5),
+    Job("regions/gene-vault/route-expanded-v2.webp", "regions/gene-vault/performance/route-expanded-v2.webp", 0.5),
 )
 
 

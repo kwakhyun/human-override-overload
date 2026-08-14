@@ -1729,6 +1729,107 @@ Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background cover
   복제하거나 프로젝트에 포함하지 않았고 AEGIS와 MIKA는 프로젝트 원본을 기반으로 각각
   독립 제작했습니다.
 
+## Expanded regional route backgrounds v2
+
+- 도구: OpenAI 내장 ImageGen.
+- 목적: 26,400×1,080 초장거리 월드에서 최대 220기 편대가 겹치지 않고 펼쳐질 수 있도록,
+  각 구역의 기존 미술 정체성을 유지한 후반 전용 넓은 전투로를 신규 제작했습니다.
+- 후처리: 선택된 1672×941 ImageGen 원본을 PIL LANCZOS로 1920×1080에 결정론적으로
+  리사이즈하고 WebP quality 88/method 6으로 저장했습니다. PERFORMANCE 960×540 파생본은
+  `scripts/build-performance-assets.py`가 0.5배 PIL LANCZOS로 생성했으며 ImageGen을 다시
+  사용하거나 수작업으로 고치지 않았습니다.
+- WRONG ENGINE: 기존 참조 `public/assets/overload/environment/sector-03-engine-causeway.webp`;
+  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a1ebd9b8-7b30-4a7d-9ddf-2e1dfc2ba218.png`;
+  보존 원본 `reference/source-assets/overload/environment/sector-04-reactor-vault-expanded.png`;
+  런타임 `public/assets/overload/environment/sector-04-reactor-vault-expanded.webp` 및
+  `public/assets/overload/environment/performance/sector-04-reactor-vault-expanded.webp`.
+- GLASS DUNE: 기존 참조 `public/assets/overload/regions/glass-dune/route.webp`;
+  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-9bb9ca64-8083-4af7-af1a-376b98a9868b.png`;
+  보존 원본 `reference/source-assets/overload/regions/glass-dune/route-expanded-v2.png`;
+  런타임 `public/assets/overload/regions/glass-dune/route-expanded-v2.webp` 및 performance 동명 경로.
+- ABYSSAL ARCHIVE: 기존 참조 `public/assets/overload/regions/abyssal-archive/route.webp`;
+  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5a3993bc-c979-4021-a54d-2155b4112a6c.png`;
+  보존 원본 `reference/source-assets/overload/regions/abyssal-archive/route-expanded-v2.png`;
+  런타임 `public/assets/overload/regions/abyssal-archive/route-expanded-v2.webp` 및 performance 동명 경로.
+- NEON FOUNDRY: 기존 참조 `public/assets/overload/regions/neon-foundry/route.webp`;
+  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-4fbdf489-471d-4b92-8ef5-a1f83687fc6a.png`;
+  보존 원본 `reference/source-assets/overload/regions/neon-foundry/route-expanded-v2.png`;
+  런타임 `public/assets/overload/regions/neon-foundry/route-expanded-v2.webp` 및 performance 동명 경로.
+- STORM SPIRE: 기존 참조 `public/assets/overload/regions/storm-spire/route.webp`;
+  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-8781ec3b-3ca2-4893-af69-b5cb23da9e83.png`;
+  보존 원본 `reference/source-assets/overload/regions/storm-spire/route-expanded-v2.png`;
+  런타임 `public/assets/overload/regions/storm-spire/route-expanded-v2.webp` 및 performance 동명 경로.
+- GENE VAULT: 기존 참조 `public/assets/overload/regions/gene-vault/route.webp`;
+  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-f8b32bfd-0321-4055-97f4-7c343044b755.png`;
+  보존 원본 `reference/source-assets/overload/regions/gene-vault/route-expanded-v2.png`;
+  런타임 `public/assets/overload/regions/gene-vault/route-expanded-v2.webp` 및 performance 동명 경로.
+
+### WRONG ENGINE 확장 구역 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down battlefield background for the Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+Image 1 is the approved WRONG ENGINE route art and establishes the world identity only. Create a NEW, distinct expanded-route sector farther inside the same machine megastructure; do not copy the existing layout.
+Strict orthographic 90-degree overhead/nadir camera, exact 16:9 landscape composition. A very broad horizontal traversable causeway must occupy the middle 72% of the image from left edge to right edge, suitable for hundreds of separated enemy units. Keep the central combat surface flat, continuous, high contrast, and free of walls, pits, giant props, characters, enemies, vehicles, text, UI, arrows, logos, or perspective vanishing points.
+Environment identity: colossal black gunmetal AI engine interior, scarred wet steel floor plates, red reactor furnaces and restrained cyan guidance lamps around the upper and lower perimeter, turbine chambers, cable trenches, mechanical ribs, drifting heat only outside the playable center. Add new details such as opened maintenance vaults, damaged data conduits, and distant rotating reactor wells at the margins. Dark cinematic cyberpunk military rendering, crisp game-readable materials, realistic high-detail painted environment, not pixel art.
+The left and right boundaries should have compatible floor tone and plate rhythm so TileSprite repetition is unobtrusive. The upper and lower margins clearly read as blocked machinery while the entire central horizontal route remains walkable. Even lighting across the center; no deep black void or crushed shadow in the playable lane. No lettering, symbols, watermark, border, grid overlay, or interface.
+```
+
+### GLASS DUNE 확장 구역 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down battlefield background for the Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+Image 1 is the approved GLASS DUNE route art and establishes the region identity only. Create a NEW, distinct expanded-route sector deeper in the same shattered mirror desert; do not copy the existing layout.
+Strict orthographic 90-degree overhead/nadir camera, exact 16:9 landscape composition. A very broad horizontal traversable avenue must occupy the middle 72% from left edge to right edge, giving large formations room to remain visually separated. The center must be continuous flat ground with no walls, pits, giant debris, characters, enemies, vehicles, text, UI, arrows, logos, or perspective view.
+Environment identity: fractured charcoal ceramic roadway fused with pale ivory mirror stone, black glass sand, amber energy veins, collapsed prism pylons, reflective crystal dunes and broken gold-black AI machinery limited to the upper and lower margins. Introduce a distinctive mirage-processing field with half-buried lens arrays, long crystalline fault lines, and restrained warm glints, but keep dangerous shards outside the playable middle. High-detail realistic sci-fi game background, elegant white/black/amber palette, readable silhouettes, not pixel art.
+Make left and right edges compatible in floor tone and crack rhythm for unobtrusive TileSprite repetition. Margins clearly read as blocked terrain; central route stays evenly illuminated and walkable with no black void. No labels, lettering, watermark, border, grid overlay, or interface.
+```
+
+### ABYSSAL ARCHIVE 확장 구역 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down battlefield background for the Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+Image 1 is the approved ABYSSAL ARCHIVE route art and establishes the region identity only. Create a NEW, distinct expanded-route sector deeper inside the submerged AI memory archive; do not copy the existing layout.
+Strict orthographic 90-degree overhead/nadir camera, exact 16:9 landscape composition. A very broad horizontal traversable data-deck occupies the middle 72% from left edge to right edge, large enough for hundreds of separated units. Keep the central combat surface flat, continuous, and clear of walls, pits, giant props, characters, enemies, creatures, text, UI, arrows, logos, or perspective vanishing point.
+Environment identity: wet black ribbed metal, cyan memory conduits, restrained violet nodes, pressure-glass reservoirs, drowned server cathedrals and biomechanical cable roots only around upper and lower margins. Add a new mnemonic current chamber with luminous data shoals behind glass, cracked archive capsules, condensation and subtle water caustics outside the playable center. Dark abyssal cyan/violet palette, realistic high-detail cybernetic environment, crisp game-readable floor, not pixel art.
+Make left and right edges compatible in deck tone and panel rhythm for unobtrusive TileSprite repetition. Margins read as blocked machinery and deep water; the center remains evenly lit, dry-looking, walkable, and never becomes a black void. No labels, lettering, watermark, border, grid overlay, or interface.
+```
+
+### NEON FOUNDRY 확장 구역 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down battlefield background for the Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+Image 1 is the approved NEON FOUNDRY route art and establishes the region identity only. Create a NEW, distinct expanded-route production deck deeper in the same autonomous factory; do not copy the existing layout.
+Strict orthographic 90-degree overhead/nadir camera, exact 16:9 landscape composition. A very broad horizontal traversable factory avenue fills the middle 72% from left edge to right edge, providing clear space for many separated units. The center is flat and continuous with no walls, pits, conveyor obstacles, giant props, characters, enemies, vehicles, text, UI, arrows, logos, or perspective view.
+Environment identity: black industrial armor plate, intense molten amber channels, bright cyan coolant columns, robotic assembly arms, sealed forge presses, hazard detailing and dense machine bays confined to upper and lower margins. Add a distinctive drone-fabrication line with inactive chassis racks, magnetic crane rails, sparks and heat shimmer only outside the playable center. High-detail realistic sci-fi factory environment, cyan/amber on charcoal, crisp readable materials, not pixel art.
+Make left and right edges compatible in plate scale and lighting for unobtrusive TileSprite repetition. The margins are clearly blocked machinery; the central route remains evenly lit and walkable without black voids. No lettering, labels, watermark, border, grid overlay, or interface.
+```
+
+### STORM SPIRE 확장 구역 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down battlefield background for the Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+Image 1 is the approved STORM SPIRE route art and establishes the region identity only. Create a NEW, distinct expanded-route sky bridge on a higher ring of the same AI weather-control spire; do not copy the existing layout.
+Strict orthographic 90-degree overhead/nadir camera, exact 16:9 landscape composition. A very broad horizontal traversable armored bridge occupies the middle 72% from left edge to right edge, sized for large separated enemy formations. The central bridge deck is flat, continuous, and free of walls, holes, giant props, characters, enemies, aircraft, text, UI, arrows, logos, or perspective vanishing point.
+Environment identity: dark hexagonal aerospace armor, cyan capacitor towers, restrained violet power rails, storm clouds and lightning far below, colossal turbine rings and weather antennae restricted to upper and lower margins. Add a distinctive thunder-harvesting span with grounded lightning rods, ion collectors and blue-white electrical veins at the edges, while the playable deck stays safe and uncluttered. High-detail realistic sci-fi game environment, cold blue/violet palette, crisp readable floor, not pixel art.
+Make left and right bridge edges compatible in panel rhythm and lighting for unobtrusive TileSprite repetition. Outer margins clearly read as non-traversable open sky; center remains evenly illuminated and never fades into black. No labels, lettering, watermark, border, grid overlay, or interface.
+```
+
+### GENE VAULT 확장 구역 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D top-down battlefield background for the Phaser browser game HUMAN OVERRIDE: OVERLOAD.
+Image 1 is the approved GENE VAULT route art and establishes the region identity only. Create a NEW, distinct expanded-route containment avenue deeper in the same AI bioengineering vault; do not copy the existing layout.
+Strict orthographic 90-degree overhead/nadir camera, exact 16:9 landscape composition. A very broad horizontal traversable quarantine deck occupies the middle 72% from left edge to right edge, leaving enough clear room for hundreds of separated units. The center is flat, continuous, and free of walls, pits, giant organisms, characters, enemies, creatures, text, UI, arrows, logos, or perspective view.
+Environment identity: black medical alloy floor, pale bone-like biomechanical frames, emerald and teal bioluminescent growth, suspended gene capsules, sealed specimen tanks and branching synthetic tissue limited to upper and lower margins. Add a distinctive genome-splicing hall with helix conduits, cracked incubation pods, sterile white structural ribs and restrained green mist outside the playable center. High-detail realistic biotech sci-fi environment, black/ivory/teal palette, crisp readable game floor, not pixel art.
+Make left and right edges compatible in deck tone and seam rhythm for unobtrusive TileSprite repetition. Margins clearly read as hazardous containment; central route stays evenly lit, dry, walkable, and free of black voids. No labels, lettering, watermark, border, grid overlay, or interface.
+```
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License

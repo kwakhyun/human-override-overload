@@ -660,3 +660,22 @@ final result: passed
   scroll-snap 구조로 보정했습니다.
 
 final result: passed
+
+### Iteration 28 — complete · 초장거리 구역과 유닛 비겹침
+
+- Route scale: 일반전 월드를 26,400×1,080, 실제 전진 거리를 25,000으로 확장했습니다.
+- Crowd readability: 적의 실제 일러스트 반경과 엘리트 배율을 사용하는 결정론적 공간 해시
+  분리로 최대 220기 압력에서도 실루엣이 한 점에 포개지지 않습니다. 게이트 8기 편대는
+  104×112 간격의 2열×4행으로 먼저 물질화하며, 핫 루프는 기존 버킷과 scratch를 재사용합니다.
+- Regional art: WRONG ENGINE의 원자로 금고와 GLASS DUNE, ABYSSAL ARCHIVE, NEON FOUNDRY,
+  STORM SPIRE, GENE VAULT의 후반 확장 섹터를 각각 새로 제작했습니다. 중앙 72%는 넓고
+  연속된 전투로이며 지역별 위험 지형은 상·하단 비이동 영역으로 한정했습니다.
+- Low-memory parity: 원본 1920×1080 WebP와 동일 구도의 PERFORMANCE 960×540 WebP를
+  같은 텍스처 키로 선택 로드합니다. 두 품질 계층을 한 런에서 중복 로드하지 않습니다.
+- Focused verification: 공간 분리·고정 시드 엔진 테스트 78/78, 지역 매니페스트·캠페인
+  계약 35/35와 TypeScript 검사가 통과했습니다. 6개 1920×1080 원본과 6개 960×540
+  PERFORMANCE 파생본의 치수·파일 존재를 확인하고, 원본 6장을 직접 비교해 중앙 전투로,
+  지역 팔레트, 상·하단 비이동 경계, 글자·유닛 부재를 확인했습니다. 전체 테스트와 production
+  build는 사용자의 빠른 반복 지침에 따라 실행하지 않았습니다.
+
+final result: passed

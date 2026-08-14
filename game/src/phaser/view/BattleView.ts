@@ -105,7 +105,7 @@ type RegionVisualAssets = Readonly<{
 
 const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Object.freeze({
   "wrong-engine-core": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.sector1, ASSET_KEYS.sector2, ASSET_KEYS.sector3]),
+    route: Object.freeze([ASSET_KEYS.sector1, ASSET_KEYS.sector2, ASSET_KEYS.sector3, ASSET_KEYS.sector4Expanded]),
     routeSourceWidth: 1600,
     routeSourceHeight: 900,
     bossRoom: ASSET_KEYS.bossRoom,
@@ -113,7 +113,7 @@ const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Objec
     bossMotion: ASSET_KEYS.bossMotion,
   }),
   "glass-dune": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.glassDuneRoute]),
+    route: Object.freeze([ASSET_KEYS.glassDuneRoute, ASSET_KEYS.glassDuneRouteExpanded]),
     routeSourceWidth: 1920,
     routeSourceHeight: 1080,
     bossRoom: ASSET_KEYS.glassDuneBossRoom,
@@ -121,7 +121,7 @@ const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Objec
     bossMotion: ASSET_KEYS.glassDuneBossMotion,
   }),
   "abyssal-archive": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.abyssalArchiveRoute]),
+    route: Object.freeze([ASSET_KEYS.abyssalArchiveRoute, ASSET_KEYS.abyssalArchiveRouteExpanded]),
     routeSourceWidth: 1920,
     routeSourceHeight: 1080,
     bossRoom: ASSET_KEYS.abyssalArchiveBossRoom,
@@ -129,7 +129,7 @@ const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Objec
     bossMotion: ASSET_KEYS.abyssalArchiveBossMotion,
   }),
   "neon-foundry": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.neonFoundryRoute]),
+    route: Object.freeze([ASSET_KEYS.neonFoundryRoute, ASSET_KEYS.neonFoundryRouteExpanded]),
     routeSourceWidth: 1920,
     routeSourceHeight: 1080,
     bossRoom: ASSET_KEYS.neonFoundryRoute,
@@ -137,7 +137,7 @@ const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Objec
     enemyForms: ASSET_KEYS.neonFoundryEnemyForms,
   }),
   "storm-spire": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.stormSpireRoute]),
+    route: Object.freeze([ASSET_KEYS.stormSpireRoute, ASSET_KEYS.stormSpireRouteExpanded]),
     routeSourceWidth: 1920,
     routeSourceHeight: 1080,
     bossRoom: ASSET_KEYS.stormSpireRoute,
@@ -145,7 +145,7 @@ const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Objec
     enemyForms: ASSET_KEYS.stormSpireEnemyForms,
   }),
   "gene-vault": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.geneVaultRoute]),
+    route: Object.freeze([ASSET_KEYS.geneVaultRoute, ASSET_KEYS.geneVaultRouteExpanded]),
     routeSourceWidth: 1920,
     routeSourceHeight: 1080,
     bossRoom: ASSET_KEYS.geneVaultRoute,

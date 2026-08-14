@@ -133,6 +133,7 @@ test("the Phaser view crossfades authored sectors and keeps engine-owned boss co
   assert.match(view, /ASSET_KEYS\.sector1/);
   assert.match(view, /ASSET_KEYS\.sector2/);
   assert.match(view, /ASSET_KEYS\.sector3/);
+  assert.match(view, /ASSET_KEYS\.sector4Expanded/);
   assert.match(view, /ASSET_KEYS\.bossRoom/);
   assert.match(view, /setTilePosition/);
   assert.doesNotMatch(view, /overload-minimap|drawMinimap/);
@@ -259,13 +260,18 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(scene, /beat: game\.storyBeats\.victory/);
   for (const key of [
     "glassDuneRoute",
+    "glassDuneRouteExpanded",
     "glassDuneBossRoom",
     "glassDuneBossForms",
     "glassDuneBossMotion",
     "abyssalArchiveRoute",
+    "abyssalArchiveRouteExpanded",
     "abyssalArchiveBossRoom",
     "abyssalArchiveBossForms",
     "abyssalArchiveBossMotion",
+    "neonFoundryRouteExpanded",
+    "stormSpireRouteExpanded",
+    "geneVaultRouteExpanded",
   ]) assert.match(view, new RegExp(`ASSET_KEYS\\.${key}`));
   assert.match(view, /activateBossAssets\(\)/);
   assert.match(view, /this\.bossMap\.setTexture\(bossRoom\)/);
@@ -284,8 +290,11 @@ test("BootScene registers common assets plus only the selected region with a saf
   const glass = paths("glass-dune");
   assert.ok(glass.includes("./assets/overload/hero/survivor-directional-aim-atlas.png"));
   assert.ok(glass.includes("./assets/overload/regions/glass-dune/route.webp"));
+  assert.ok(glass.includes("./assets/overload/regions/glass-dune/route-expanded-v2.webp"));
   assert.ok(!glass.includes("./assets/overload/regions/glass-dune/boss-room.webp"));
   assert.ok(!glass.includes("./assets/overload/regions/glass-dune/boss-forms-atlas.png"));
+  const glassPerformance = manifest.getGameAssetsForRegion("glass-dune", "performance").map((asset) => asset.path);
+  assert.ok(glassPerformance.includes("./assets/overload/regions/glass-dune/performance/route-expanded-v2.webp"));
   const glassBoss = manifest.getBossGameAssetsForRegion("glass-dune").map((asset) => asset.path);
   assert.deepEqual(glassBoss, [
     "./assets/overload/regions/glass-dune/boss-room.webp",
@@ -543,8 +552,8 @@ test("expanded expedition framing makes every hostile larger than AEGIS and stab
   const view = await read("src/phaser/view/BattleView.ts");
   assert.match(engine, /export const WORLD_WIDTH = 1920/);
   assert.match(engine, /export const WORLD_HEIGHT = 1080/);
-  assert.match(engine, /const EXPEDITION_ROUTE_LENGTH = 12000/);
-  assert.match(engine, /export const EXPEDITION_WORLD_WIDTH = 13200/);
+  assert.match(engine, /const EXPEDITION_ROUTE_LENGTH = 25000/);
+  assert.match(engine, /export const EXPEDITION_WORLD_WIDTH = 26400/);
   assert.match(view, /const size = state\?\.phase === "boss" \? 64 : 74/);
   assert.match(view, /const baseSize = entity\?\.isMidBoss \? 248 : role === 3 \? 196 : role === 2 \? 138 : role === 1 \? 108 : 92/);
   assert.match(view, /const recoil = rifleEquipped && animation\.clipId === "attack" \?/);

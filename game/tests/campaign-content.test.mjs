@@ -75,10 +75,10 @@ test("region clusters expose a two-step 1—3, 4—6, and future 7—9 hierarchy
   assert.equal(Object.isFrozen(REGION_CLUSTERS), true);
 });
 
-test("every region exposes manifest-aligned existing assets with three route descriptors", async () => {
+test("every region exposes manifest-aligned existing expanded route descriptors", async () => {
   const pathsByKey = new Map();
   for (const region of getCampaignRegions()) {
-    assert.equal(region.assets.battle.sectors.length, 3);
+    assert.equal(region.assets.battle.sectors.length, region.id === "wrong-engine-core" ? 4 : 3);
     assert.equal(region.assets.battle.bossForms.columns, 3);
     assert.equal(region.assets.battle.bossForms.rows, 1);
     for (const asset of [
@@ -97,8 +97,9 @@ test("every region exposes manifest-aligned existing assets with three route des
     }
   }
   assert.match(getRegion("wrong-engine-core").assets.battle.sectors[0].path, /sector-01-shattered-approach\.webp$/);
-  assert.deepEqual(new Set(getRegion("glass-dune").assets.battle.sectors.map((asset) => asset.key)), new Set(["overload-glass-dune-route"]));
-  assert.deepEqual(new Set(getRegion("glass-dune").assets.battle.sectors.map((asset) => asset.path)), new Set(["./assets/overload/regions/glass-dune/route.webp"]));
+  assert.match(getRegion("wrong-engine-core").assets.battle.sectors.at(-1).path, /sector-04-reactor-vault-expanded\.webp$/);
+  assert.deepEqual(new Set(getRegion("glass-dune").assets.battle.sectors.map((asset) => asset.key)), new Set(["overload-glass-dune-route", "overload-glass-dune-route-expanded-v2"]));
+  assert.deepEqual(new Set(getRegion("glass-dune").assets.battle.sectors.map((asset) => asset.path)), new Set(["./assets/overload/regions/glass-dune/route.webp", "./assets/overload/regions/glass-dune/route-expanded-v2.webp"]));
   assert.equal(getRegion("glass-dune").assets.battle.bossRoom.key, "overload-glass-dune-boss-room");
   assert.equal(getRegion("abyssal-archive").assets.battle.bossForms.key, "overload-abyssal-archive-boss-forms");
 });
