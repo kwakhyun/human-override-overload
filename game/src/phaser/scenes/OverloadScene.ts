@@ -238,6 +238,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private readonly mikaUnlocked: boolean;
   private readonly assetProfile: AssetProfile;
   private readonly mobileAutoAim: boolean;
+  private readonly portraitPresentation: boolean;
   private state: any;
   private gameInput: any;
   private view?: BattleView;
@@ -279,6 +280,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     mikaUnlocked = true,
     assetProfile: AssetProfile = "full",
     mobileAutoAim = false,
+    portraitPresentation = false,
   ) {
     super({ key: "OverloadBattle" });
     this.bridge = bridge;
@@ -289,6 +291,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.mikaUnlocked = mikaUnlocked;
     this.assetProfile = resolveAssetProfile(assetProfile);
     this.mobileAutoAim = mobileAutoAim;
+    this.portraitPresentation = portraitPresentation;
   }
 
   create() {
@@ -297,7 +300,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.gameInput = createSwarmInput();
     this.governor = createPerformanceGovernor({ environment: window });
     this.applyQualityLimit();
-    this.view = new BattleView(this, this.state.regionId);
+    this.view = new BattleView(this, this.state.regionId, this.portraitPresentation);
     if (this.state.phase === "boss" || this.state.expedition?.bossRoom || isTerminal(this.state)) {
       this.prepareBossAssets();
     }

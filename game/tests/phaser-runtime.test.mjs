@@ -250,13 +250,13 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /launch: OverloadLaunchOptions = \{\}/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
   assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
-  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, assetProfile, mobileRuntime\.autoAim\)/);
+  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, assetProfile, mobileRuntime\.autoAim, portraitPresentation\)/);
   assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);
   assert.match(createGame, /playerX: state\?\.player\?\.x/);
   assert.match(scene, /setVirtualMovement\(x: number, y: number\)/);
   assert.match(scene, /this\.gameInput\.moveX = this\.virtualMovement\.x/);
   assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId, characterId: this\.characterId, mikaUnlocked: this\.mikaUnlocked \}\)/);
-  assert.match(scene, /new BattleView\(this, this\.state\.regionId\)/);
+  assert.match(scene, /new BattleView\(this, this\.state\.regionId, this\.portraitPresentation\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);
   for (const key of [
     "glassDuneRoute",
@@ -583,7 +583,8 @@ test("directional hero art, rifle-origin projectiles, reticle cue, and wheel zoo
   assert.match(foreground, /drawPixelDottedLine\([\s\S]*?COLORS\.cyan[\s\S]*?0\.32/);
   assert.match(foreground, /graphics\.strokeCircle\(aimX, aimY, 4\)/);
   assert.match(camera, /this\.userZoomFactor = clamp/);
-  assert.match(camera, /bossStageActive[\s\S]*?0\.68, 0\.94[\s\S]*?0\.84, 1\.34/);
+  assert.match(camera, /const portraitZoom = this\.portraitPresentation \? \(bossStageActive \? 1\.06 : 1\.12\) : 1/);
+  assert.match(camera, /bossStageActive[\s\S]*?0\.68, 0\.98[\s\S]*?0\.84, 1\.42/);
   assert.match(scene, /Phaser\.Input\.Events\.POINTER_WHEEL/);
   assert.match(scene, /addEventListener\("wheel", blockCanvasWheel, \{ passive: false \}\)/);
   assert.match(scene, /event\?\.preventDefault\?\.\(\)/);

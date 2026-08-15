@@ -51,7 +51,30 @@ try {
     }));
   }, { key: campaignKey });
   await page.reload({ waitUntil: "domcontentloaded" });
+  await page.locator(".initial-asset-loading").waitFor({ state: "detached", timeout: 30_000 });
+  await page.locator(".intro-start:not([disabled])").waitFor({ state: "visible", timeout: 30_000 });
+  await page.screenshot({ path: path.join(qaDir, "mobile-portrait-title-390x844.png"), fullPage: false });
+  const introMetrics = await page.evaluate(() => {
+    const title = document.querySelector(".intro-minimal-content h1");
+    const start = document.querySelector(".intro-start")?.getBoundingClientRect();
+    return {
+      titleFont: title ? Number.parseFloat(getComputedStyle(title).fontSize) : 0,
+      startHeight: start?.height || 0,
+      startWidth: start?.width || 0,
+    };
+  });
+  assert.ok(introMetrics.titleFont >= 58, JSON.stringify(introMetrics));
+  assert.ok(introMetrics.startHeight >= 56 && introMetrics.startWidth >= 300, JSON.stringify(introMetrics));
   await page.locator(".intro-start").tap();
+  await page.locator(".save-slot-screen").waitFor({ state: "visible" });
+  await page.screenshot({ path: path.join(qaDir, "mobile-portrait-save-slots-390x844.png"), fullPage: false });
+  const slotMetrics = await page.locator(".save-slot-card").evaluateAll((cards) => cards.map((card) => {
+    const box = card.getBoundingClientRect();
+    return { left: box.left, top: box.top, width: box.width, height: box.height, font: Number.parseFloat(getComputedStyle(card.querySelector("strong")).fontSize) };
+  }));
+  assert.equal(slotMetrics.length, 3);
+  assert.ok(slotMetrics.every((slot) => slot.width >= 350 && slot.height >= 170 && slot.font >= 18), JSON.stringify(slotMetrics));
+  assert.ok(slotMetrics[1].top > slotMetrics[0].top + slotMetrics[0].height - 1, JSON.stringify(slotMetrics));
   await page.locator(".save-slot-card").first().tap();
   await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 20_000 });
   if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
@@ -72,6 +95,13 @@ try {
   assert.ok(homeMetrics.actions && homeMetrics.actions.left >= 0 && homeMetrics.actions.right <= 390 && homeMetrics.actions.bottom <= 844);
 
   await page.locator(".base-sortie-action").tap();
+  await page.locator(".region-world-map").waitFor({ state: "visible" });
+  await page.screenshot({ path: path.join(qaDir, "mobile-portrait-world-map-390x844.png"), fullPage: false });
+  const hotspotMetrics = await page.locator(".region-map-hotspot").first().evaluate((node) => {
+    const box = node.getBoundingClientRect();
+    return { left: box.left, right: box.right, width: box.width, height: box.height, nameFont: Number.parseFloat(getComputedStyle(node.querySelector("strong")).fontSize) };
+  });
+  assert.ok(hotspotMetrics.left >= 0 && hotspotMetrics.right <= 390 && hotspotMetrics.width >= 250 && hotspotMetrics.height >= 84 && hotspotMetrics.nameFont >= 18, JSON.stringify(hotspotMetrics));
   await page.locator(".region-map-hotspot").first().tap();
   await page.locator(".region-card").first().waitFor({ state: "visible" });
   const regionCard = await page.locator(".region-card").first().boundingBox();
@@ -136,16 +166,20 @@ try {
       dock: rect(".expedition-combat-dock"),
       minimap: rect(".route-minimap"),
       objective: rect(".route-objective"),
+      objectiveFont: Number.parseFloat(getComputedStyle(document.querySelector(".route-objective strong")).fontSize),
+      abilityLabelFont: Number.parseFloat(getComputedStyle(document.querySelector(".combat-ability-copy strong")).fontSize),
+      abilityLabelDisplay: getComputedStyle(document.querySelector(".combat-ability-copy")).display,
       horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     };
   });
   for (const [name, box] of Object.entries({ dock: layout.dock, minimap: layout.minimap, objective: layout.objective })) {
     assert.ok(box && box.left >= -1 && box.top >= -1 && box.right <= layout.viewport.width + 1 && box.bottom <= layout.viewport.height + 1, `${name}: ${JSON.stringify(box)}`);
   }
+  assert.ok(layout.objectiveFont >= 16 && layout.abilityLabelFont >= 10 && layout.abilityLabelDisplay !== "none", JSON.stringify(layout));
   assert.ok(layout.horizontalOverflow <= 1, JSON.stringify(layout));
   assert.deepEqual(errors, []);
 
-  console.log(JSON.stringify({ result: "pass", homeMetrics, runtime: after, layout, errors }, null, 2));
+  console.log(JSON.stringify({ result: "pass", introMetrics, slotMetrics, homeMetrics, hotspotMetrics, runtime: after, layout, errors }, null, 2));
 } finally {
   await browser.close();
 }

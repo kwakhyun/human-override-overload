@@ -352,6 +352,7 @@ function projectileArt(projectile: any) {
 export class BattleView {
   private readonly scene: Phaser.Scene;
   private readonly mainCamera: Phaser.Cameras.Scene2D.Camera;
+  private readonly portraitPresentation: boolean;
   private readonly hudCamera: Phaser.Cameras.Scene2D.Camera;
   private readonly regionAssets: RegionVisualAssets;
   private readonly maps: Array<Phaser.GameObjects.TileSprite | Phaser.GameObjects.Image>;
@@ -426,7 +427,7 @@ export class BattleView {
   private bossRevealFromZoom = 1.08;
   private userZoomFactor = 1;
 
-  constructor(scene: Phaser.Scene, regionId = "wrong-engine-core") {
+  constructor(scene: Phaser.Scene, regionId = "wrong-engine-core", portraitPresentation = false) {
     this.scene = scene;
     const regionAssets = getRegionVisualAssets(regionId);
     this.regionAssets = regionAssets;
@@ -455,6 +456,7 @@ export class BattleView {
     const hasSquadTraces = scene.textures.exists(ASSET_KEYS.squadTraces);
     if (hasSquadTraces) ensureAtlasFrames(scene, ASSET_KEYS.squadTraces, 3, 1);
     this.mainCamera = scene.cameras.main;
+    this.portraitPresentation = portraitPresentation;
     this.mainCamera.setBackgroundColor("#020608");
 
     const routeBackdropHeight = WORLD_HEIGHT + 360;
@@ -803,9 +805,10 @@ export class BattleView {
         .setAlpha(alpha);
     }
     const engineZoom = finite(camera.zoom, 1.08);
+    const portraitZoom = this.portraitPresentation ? (bossStageActive ? 1.06 : 1.12) : 1;
     const targetZoom = bossStageActive
-      ? clamp(engineZoom * this.userZoomFactor, 0.68, 0.94)
-      : clamp(engineZoom * this.userZoomFactor, 0.84, 1.34);
+      ? clamp(engineZoom * this.userZoomFactor * portraitZoom, 0.68, 0.98)
+      : clamp(engineZoom * this.userZoomFactor * portraitZoom, 0.84, 1.42);
     const targetX = finite(camera.x, WORLD_WIDTH / 2);
     const targetY = finite(camera.y, WORLD_HEIGHT / 2);
     if (this.bossRevealStartedAt >= 0) {

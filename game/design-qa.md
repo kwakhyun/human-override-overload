@@ -809,3 +809,24 @@ final result: passed
   `[]`였습니다. 사용자의 빠른 반복 지침에 따라 전체 테스트와 production build는 실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 35 — complete · 모바일 세로 전용 UI와 전투 프레이밍
+
+- Portrait menu system: 390×844 화면에서 타이틀을 68px, 주요 CTA를 58px 높이로 확대하고,
+  저장 슬롯을 358px 폭의 한 열 카드로 전환했습니다. 상위 권역 지도는 258×95px 좌표 버튼과
+  19px 지역명을 사용하며, 하위 구역은 88vw 단일 스냅 카드, 출격 준비는 전체 높이 상세 패널과
+  하단 고정 승인 버튼으로 재구성했습니다. `viewport-fit=cover`와 safe-area inset을 모든 핵심
+  상·하단 표면에 적용했습니다.
+- Portrait combat: Phaser 논리 전장은 1280×720과 동일하게 유지하면서 touch+portrait 런타임에만
+  route 1.12 / boss 1.06 표시 배율을 적용했습니다. 캔버스는 390×844 전체를 채우고 목표 17px,
+  HP 25px, 148px 전술 미니맵, 158px 하단 전투 도크와 아이콘 아래 한국어 스킬명을 제공합니다.
+  빈 전장 터치 조이스틱과 근접 적 자동 조준은 그대로 유지하며 판정·스폰·공격 규칙은 변경하지
+  않았습니다.
+- Essential verification: 모바일/Phaser HUD·런타임·캠페인 UI 집중 테스트 50/50과 TypeScript
+  검사가 통과했습니다. Edge 390×844 실제 터치 QA에서 슬롯 3장이 한 열로 배치되고, 월드맵 버튼이
+  viewport 안에 유지되며, 전투 가로 overflow 0px, 플레이어 이동, 세로 자동 조준, console/page/network
+  오류 0을 확인했습니다. `qa/playtest-mobile-portrait.mjs`가 타이틀부터 저장 슬롯, 기지, 권역,
+  구역, 출격, 전투, 조이스틱까지 캡처와 최소 크기를 회귀 검증합니다. 사용자의 빠른 반복 지침에
+  따라 전체 테스트와 production build는 실행하지 않았습니다.
+
+final result: passed

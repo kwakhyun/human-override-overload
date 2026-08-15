@@ -50,7 +50,8 @@ export function createOverloadGame(
   const preset = QUALITY_PRESETS[initialQuality] ?? QUALITY_PRESETS.balanced;
   const assetProfile = initialQuality === "performance" ? "performance" : "full";
   const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, callbacks.onLoadProgress);
-  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, assetProfile, mobileRuntime.autoAim);
+  const portraitPresentation = mobileRuntime.portrait && mobileRuntime.touchOptimized;
+  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
@@ -136,7 +137,7 @@ export function createOverloadGame(
         bossStage: state?.boss?.stage,
         bossPattern: state?.boss?.activePattern?.type ?? null,
         mobileAutoAim: mobileRuntime.autoAim,
-        portraitPresentation: mobileRuntime.portrait && mobileRuntime.touchOptimized,
+        portraitPresentation,
       };
     }, () => primeDeterministicArsenal(battleScene as unknown as Parameters<typeof primeDeterministicArsenal>[0]))
     : null;

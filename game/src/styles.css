@@ -5683,6 +5683,378 @@ kbd {
   .region-select-screen:not(.is-cluster-map) .region-card > b { font-size: 10px; }
 }
 
+/* Keep the authored portrait scale last in the campaign cascade. */
+@media (max-width: 720px) and (orientation: portrait) {
+  .campaign-heading { width: calc(100% - 32px); padding-top: max(22px, calc(env(safe-area-inset-top) + 14px)); }
+  .campaign-heading .campaign-back,
+  .region-select-heading .campaign-back { min-height: 44px; margin-bottom: 16px; padding: 9px 13px; font-size: 12px; }
+  .campaign-heading > small,
+  .region-select-heading > small { font-size: 11px; letter-spacing: 0.08em; }
+  .campaign-heading h1,
+  .region-select-heading h1 { margin-top: 8px; font-size: 34px; line-height: 1.08; }
+  .campaign-heading p,
+  .region-select-heading p { display: block; margin-top: 10px; font-size: 14px; line-height: 1.45; }
+  .save-slot-grid { width: calc(100% - 32px); margin: 22px auto max(24px, env(safe-area-inset-bottom)); grid-template-columns: 1fr; gap: 12px; }
+  .save-slot-card { min-height: 172px; padding: 17px 18px; }
+  .save-slot-number { font-size: 11px; }
+  .save-slot-card > svg { width: 32px; height: 32px; margin-top: 13px; }
+  .save-slot-card > strong { margin-top: 10px; font-size: 19px; }
+  .save-slot-card > p { min-height: 0; margin-top: 6px; font-size: 13px; }
+  .save-slot-card > i { margin-top: 10px; }
+  .save-slot-card > small { margin-top: 7px; font-size: 11px; }
+  .save-slot-card > b { margin-top: 12px; font-size: 13px; }
+  .empty-slot-mark { margin-top: 10px; font-size: 48px; }
+
+  .base-identity { width: 46%; min-height: 58px; padding: 9px 11px; }
+  .base-identity small { font-size: 10px; }
+  .base-identity strong { font-size: 22px; }
+  .base-currency-rail { width: 51%; }
+  .base-currency-rail button { min-height: 54px; grid-template-columns: 24px 1fr; }
+  .base-currency-rail button > svg { width: 22px; height: 22px; }
+  .base-currency-rail button b { font-size: 14px; }
+  .base-lobby-navigation { bottom: calc(max(166px, env(safe-area-inset-bottom) + 158px)); gap: 8px; }
+  .base-menu-button { min-height: 62px; padding: 9px 11px; }
+  .base-menu-button > svg { width: 24px; height: 24px; }
+  .base-menu-button small { font-size: 10px !important; }
+  .base-menu-button b { font-size: 14px; }
+  .base-primary-actions { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .base-character-action,
+  .base-sortie-action,
+  .base-defense-action { min-height: 74px; padding: 10px 12px; }
+  .base-primary-actions small,
+  .base-defense-action small { font-size: 10px !important; }
+  .base-primary-actions b,
+  .base-defense-action b { font-size: 14px; }
+
+  .region-select-screen.is-cluster-map .region-select-heading { width: calc(100% - 28px); margin-left: 14px; padding: max(16px, calc(env(safe-area-inset-top) + 10px)) 12px 13px; }
+  .region-select-screen.is-cluster-map .region-select-heading h1 { font-size: 34px; }
+  .region-map-hotspot { left: clamp(136px, var(--map-x), calc(100% - 136px)); top: clamp(190px, var(--map-y), calc(100% - 92px)); width: min(258px, 68vw); min-height: 86px; padding: 12px 34px 12px 60px; }
+  .region-map-hotspot > i:first-child { left: -21px; width: 48px; height: 48px; }
+  .region-map-hotspot > i:first-child::after { inset: 18px; }
+  .region-map-hotspot > span { font-size: 10px; }
+  .region-map-hotspot > strong { font-size: 19px; }
+  .region-map-hotspot > strong em { display: block; margin: 4px 0 0; font-size: 9px; }
+  .region-map-hotspot > small { font-size: 11px; }
+  .region-map-hotspot > svg { width: 22px; height: 22px; }
+  .region-select-screen:not(.is-cluster-map) .region-select-heading { margin: 0; padding: max(16px, calc(env(safe-area-inset-top) + 10px)) 16px 14px; }
+  .region-select-screen:not(.is-cluster-map) .region-card-grid { left: 16px; padding-right: 10vw; grid-template-columns: repeat(3, 88vw); gap: 12px; }
+  .region-select-screen:not(.is-cluster-map) .region-card { min-height: 236px; padding: 18px 20px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > span { font-size: 11px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > strong { font-size: 27px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > p { font-size: 14px; line-height: 1.5; }
+  .region-select-screen:not(.is-cluster-map) .region-threat i,
+  .region-select-screen:not(.is-cluster-map) .region-card > small,
+  .region-select-screen:not(.is-cluster-map) .region-card > b { font-size: 12px; }
+  .region-select-screen:not(.is-cluster-map) .region-threat em { font-size: 10px; }
+
+  .region-sortie-dialog { padding: 14px 14px max(14px, env(safe-area-inset-bottom)); }
+  .region-sortie-command-header { min-height: 50px; }
+  .region-sortie-command-header small { font-size: 11px; }
+  .region-sortie-briefing h2 { font-size: 34px; }
+  .region-sortie-briefing > p { display: block; font-size: 14px; line-height: 1.5; -webkit-line-clamp: unset; }
+  .region-sortie-briefing .region-sortie-intel > div { min-height: 52px; padding: 9px 10px; grid-template-columns: 76px 1fr; }
+  .region-sortie-briefing .region-sortie-intel dt,
+  .region-sortie-briefing .region-sortie-intel dd { font-size: 12px; }
+  .sortie-character-loadout,
+  .region-sortie-layout .sortie-weapon-loadout { padding: 12px; }
+  .sortie-character-loadout > header h3,
+  .region-sortie-layout .sortie-weapon-loadout > header h3 { font-size: 16px; }
+  .sortie-character-card { min-height: 98px; padding: 10px 10px 10px 80px; }
+  .sortie-character-card img { width: 80px; height: 132px; }
+  .sortie-character-card strong { font-size: 17px; }
+  .region-sortie-layout .sortie-weapon-card { min-height: 92px; padding: 10px; grid-template-columns: 46px 1fr; }
+  .region-sortie-layout .sortie-weapon-card > span { width: 42px; height: 42px; }
+  .region-sortie-layout .sortie-weapon-card div strong { font-size: 15px; }
+  .region-sortie-layout .sortie-weapon-card div small,
+  .region-sortie-layout .sortie-weapon-card div em,
+  .region-sortie-layout .sortie-weapon-card footer { font-size: 10px; }
+  .region-sortie-command-footer { padding: 10px 0 0; }
+  .region-sortie-command-footer > span { font-size: 11px; }
+  .region-sortie-command-footer .region-sortie-launch { min-height: 62px; font-size: 15px; }
+
+  .base-facility-panel { inset: 8px; display: block; padding: 16px; overflow-y: auto; }
+  .base-facility-panel > header { position: sticky; top: -16px; z-index: 4; min-height: 72px; padding: 10px 0; grid-template-columns: 48px 1fr auto; background: rgba(2, 10, 14, 0.96); }
+  .base-facility-panel > header > span { width: 46px; height: 46px; }
+  .base-facility-panel > header h2 { font-size: 26px; }
+  .base-facility-panel > header p { display: block; max-height: none; font-size: 13px; }
+  .facility-resource { margin: 12px 0; min-height: 58px; }
+  .facility-resource strong { font-size: 24px; }
+  .facility-upgrade-grid { grid-template-columns: 1fr; gap: 12px; }
+  .facility-upgrade { min-height: 210px; padding: 14px; }
+  .facility-upgrade > header h3 { font-size: 17px; }
+  .facility-upgrade > header b,
+  .facility-upgrade > p,
+  .facility-upgrade dt,
+  .facility-upgrade dd { display: block; font-size: 12px; }
+  .facility-upgrade > button { min-height: 48px; font-size: 13px; }
+
+  .character-information-panel { inset: 6px; display: grid; padding: 8px; overflow-y: auto; grid-template-columns: 1fr 60px; grid-template-rows: 54px minmax(310px, 45vh) auto; gap: 8px; }
+  .character-info-topbar { grid-column: 1 / -1; }
+  .character-info-topbar small { font-size: 10px; }
+  .character-info-topbar strong { font-size: 20px; }
+  .character-art-stage { grid-column: 1; grid-row: 2; }
+  .character-roster-rail { grid-column: 2; grid-row: 2; }
+  .character-data-console { grid-column: 1 / -1; grid-row: 3; min-height: 430px; }
+  .character-info-tabs button { min-height: 48px; font-size: 13px; }
+  .character-profile-content,
+  .character-upgrade-content { padding: 14px; }
+  .character-profile-content h3,
+  .character-upgrade-content h3 { font-size: 23px; }
+  .character-profile-content > p { overflow: visible; font-size: 13px; white-space: normal; }
+  .character-upgrade-row h4 { font-size: 15px; }
+  .character-upgrade-row > p,
+  .character-upgrade-row footer > span { display: block; font-size: 11px; }
+  .character-upgrade-row footer button { min-height: 44px; font-size: 12px; }
+}
+
+/* Portrait-mobile interface v3 -----------------------------------------
+   Phone portrait is an authored layout, never a scaled desktop canvas. */
+@media (max-width: 720px) and (orientation: portrait) {
+  :root { font-size: 16px; }
+  body { min-width: 320px; }
+  button, [role="button"] { touch-action: manipulation; }
+
+  .intro-minimal-content {
+    top: max(28px, calc(env(safe-area-inset-top) + 18px));
+    right: 18px;
+    left: 18px;
+    width: auto;
+    padding: 18px 18px 16px;
+    border-left: 3px solid #78eafa;
+    background: linear-gradient(90deg, rgba(1, 7, 11, 0.88), rgba(1, 7, 11, 0.46) 82%, transparent);
+    backdrop-filter: blur(5px);
+  }
+  .intro-minimal-content > small { font-size: 12px; letter-spacing: 0.12em; }
+  .intro-minimal-content h1 { margin-top: 15px; font-size: clamp(58px, 17.5vw, 76px); line-height: 0.82; }
+  .intro-minimal-content h1 b { font-size: 0.34em; }
+  .intro-minimal-content > p:not(.asset-warning) { margin-top: 20px; max-width: none; font-size: 15px; line-height: 1.55; }
+  .intro-start { width: 100%; min-width: 0; height: 58px; margin-top: 22px; padding-inline: 18px; font-size: 16px; }
+  .intro-start-note { margin-top: 9px; font-size: 12px !important; }
+  .intro-music-toggle { min-height: 46px; margin-top: 13px; padding: 9px 13px; font-size: 13px; }
+  .intro-minimal-controls { display: grid; width: 100%; margin-top: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; font-size: 11px; }
+  .intro-minimal-controls span,
+  .intro-minimal-controls strong { min-height: 30px; padding: 5px 7px; justify-content: flex-start; border: 1px solid rgba(126, 226, 241, 0.16); background: rgba(2, 10, 14, 0.48); }
+  .intro-minimal-controls strong { grid-column: 1 / -1; }
+
+  .save-slot-screen { height: 100dvh; min-height: 100dvh; overflow-y: auto; }
+  .campaign-heading { width: calc(100% - 32px); padding-top: max(22px, calc(env(safe-area-inset-top) + 14px)); }
+  .campaign-heading .campaign-back,
+  .region-select-heading .campaign-back { min-height: 44px; margin-bottom: 16px; padding: 9px 13px; font-size: 12px; }
+  .campaign-heading > small,
+  .region-select-heading > small { font-size: 11px; letter-spacing: 0.08em; }
+  .campaign-heading h1,
+  .region-select-heading h1 { margin-top: 8px; font-size: 34px; line-height: 1.08; }
+  .campaign-heading p,
+  .region-select-heading p { display: block; margin-top: 10px; font-size: 14px; line-height: 1.45; }
+  .save-slot-grid { width: calc(100% - 32px); margin: 22px auto max(24px, env(safe-area-inset-bottom)); grid-template-columns: 1fr; gap: 12px; }
+  .save-slot-card { min-height: 172px; padding: 17px 18px; }
+  .save-slot-number { font-size: 11px; }
+  .save-slot-card > svg { width: 32px; height: 32px; margin-top: 13px; }
+  .save-slot-card > strong { margin-top: 10px; font-size: 19px; }
+  .save-slot-card > p { min-height: 0; margin-top: 6px; font-size: 13px; }
+  .save-slot-card > i { margin-top: 10px; }
+  .save-slot-card > small { margin-top: 7px; font-size: 11px; }
+  .save-slot-card > b { margin-top: 12px; font-size: 13px; }
+  .empty-slot-mark { margin-top: 10px; font-size: 48px; }
+
+  .base-identity { width: 46%; min-height: 58px; padding: 9px 11px; }
+  .base-identity small { font-size: 10px; }
+  .base-identity strong { font-size: 22px; }
+  .base-currency-rail { width: 51%; }
+  .base-currency-rail button { min-height: 54px; grid-template-columns: 24px 1fr; }
+  .base-currency-rail button > svg { width: 22px; height: 22px; }
+  .base-currency-rail button b { font-size: 14px; }
+  .base-lobby-navigation { bottom: calc(max(166px, env(safe-area-inset-bottom) + 158px)); gap: 8px; }
+  .base-menu-button { min-height: 62px; padding: 9px 11px; }
+  .base-menu-button > svg { width: 24px; height: 24px; }
+  .base-menu-button small { font-size: 10px !important; }
+  .base-menu-button b { font-size: 14px; }
+  .base-primary-actions { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .base-character-action,
+  .base-sortie-action,
+  .base-defense-action { min-height: 74px; padding: 10px 12px; }
+  .base-primary-actions small,
+  .base-defense-action small { font-size: 10px !important; }
+  .base-primary-actions b,
+  .base-defense-action b { font-size: 14px; }
+
+  .region-select-screen.is-cluster-map .region-select-heading {
+    width: calc(100% - 28px);
+    margin-left: 14px;
+    padding: max(16px, calc(env(safe-area-inset-top) + 10px)) 12px 13px;
+    background: linear-gradient(90deg, rgba(1, 7, 11, 0.9), rgba(1, 7, 11, 0.48), transparent);
+  }
+  .region-select-screen.is-cluster-map .region-select-heading h1 { font-size: 34px; }
+  .region-map-hotspot {
+    left: clamp(136px, var(--map-x), calc(100% - 136px));
+    top: clamp(190px, var(--map-y), calc(100% - 92px));
+    width: min(258px, 68vw);
+    min-height: 86px;
+    padding: 12px 34px 12px 60px;
+  }
+  .region-map-hotspot > i:first-child { left: -21px; width: 48px; height: 48px; }
+  .region-map-hotspot > i:first-child::after { inset: 18px; }
+  .region-map-hotspot > span { font-size: 10px; }
+  .region-map-hotspot > strong { font-size: 19px; }
+  .region-map-hotspot > strong em { display: block; margin: 4px 0 0; font-size: 9px; }
+  .region-map-hotspot > small { font-size: 11px; }
+  .region-map-hotspot > svg { width: 22px; height: 22px; }
+
+  .region-select-screen:not(.is-cluster-map) .region-select-heading {
+    margin: 0;
+    padding: max(16px, calc(env(safe-area-inset-top) + 10px)) 16px 14px;
+    background: linear-gradient(180deg, rgba(1, 7, 11, 0.94), rgba(1, 7, 11, 0.52), transparent);
+  }
+  .region-select-screen:not(.is-cluster-map) .region-card-grid { left: 16px; padding-right: 10vw; grid-template-columns: repeat(3, 88vw); gap: 12px; }
+  .region-select-screen:not(.is-cluster-map) .region-card { min-height: 236px; padding: 18px 20px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > span { font-size: 11px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > strong { font-size: 27px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > p { font-size: 14px; line-height: 1.5; }
+  .region-select-screen:not(.is-cluster-map) .region-threat i,
+  .region-select-screen:not(.is-cluster-map) .region-card > small,
+  .region-select-screen:not(.is-cluster-map) .region-card > b { font-size: 12px; }
+  .region-threat em { font-size: 10px; }
+
+  .region-sortie-dialog { padding: 14px 14px max(14px, env(safe-area-inset-bottom)); }
+  .region-sortie-command-header { min-height: 50px; }
+  .region-sortie-command-header small { font-size: 11px; }
+  .region-sortie-briefing h2 { font-size: 34px; }
+  .region-sortie-briefing > p { display: block; font-size: 14px; line-height: 1.5; -webkit-line-clamp: unset; }
+  .region-sortie-briefing .region-sortie-intel > div { min-height: 52px; padding: 9px 10px; grid-template-columns: 76px 1fr; }
+  .region-sortie-briefing .region-sortie-intel dt,
+  .region-sortie-briefing .region-sortie-intel dd { font-size: 12px; }
+  .sortie-character-loadout,
+  .region-sortie-layout .sortie-weapon-loadout { padding: 12px; }
+  .sortie-character-loadout > header h3,
+  .region-sortie-layout .sortie-weapon-loadout > header h3 { font-size: 16px; }
+  .sortie-character-card { min-height: 98px; padding: 10px 10px 10px 80px; }
+  .sortie-character-card img { width: 80px; height: 132px; }
+  .sortie-character-card strong { font-size: 17px; }
+  .region-sortie-layout .sortie-weapon-card { min-height: 92px; padding: 10px; grid-template-columns: 46px 1fr; }
+  .region-sortie-layout .sortie-weapon-card > span { width: 42px; height: 42px; }
+  .region-sortie-layout .sortie-weapon-card div strong { font-size: 15px; }
+  .region-sortie-layout .sortie-weapon-card div small,
+  .region-sortie-layout .sortie-weapon-card div em,
+  .region-sortie-layout .sortie-weapon-card footer { font-size: 10px; }
+  .region-sortie-command-footer { padding: 10px 0 0; }
+  .region-sortie-command-footer > span { font-size: 11px; }
+  .region-sortie-command-footer .region-sortie-launch { min-height: 62px; font-size: 15px; }
+
+  .base-facility-panel { inset: 8px; display: block; padding: 16px; overflow-y: auto; }
+  .base-facility-panel > header { position: sticky; top: -16px; z-index: 4; min-height: 72px; padding: 10px 0; grid-template-columns: 48px 1fr auto; background: rgba(2, 10, 14, 0.96); }
+  .base-facility-panel > header > span { width: 46px; height: 46px; }
+  .base-facility-panel > header h2 { font-size: 26px; }
+  .base-facility-panel > header p { display: block; max-height: none; font-size: 13px; }
+  .facility-resource { margin: 12px 0; min-height: 58px; }
+  .facility-resource strong { font-size: 24px; }
+  .facility-upgrade-grid { grid-template-columns: 1fr; gap: 12px; }
+  .facility-upgrade { min-height: 210px; padding: 14px; }
+  .facility-upgrade > header h3 { font-size: 17px; }
+  .facility-upgrade > header b,
+  .facility-upgrade > p,
+  .facility-upgrade dt,
+  .facility-upgrade dd { display: block; font-size: 12px; }
+  .facility-upgrade > button { min-height: 48px; font-size: 13px; }
+
+  .character-information-panel { inset: 6px; display: grid; padding: 8px; overflow-y: auto; grid-template-columns: 1fr 60px; grid-template-rows: 54px minmax(310px, 45vh) auto; gap: 8px; }
+  .character-info-topbar { grid-column: 1 / -1; }
+  .character-info-topbar small { font-size: 10px; }
+  .character-info-topbar strong { font-size: 20px; }
+  .character-art-stage { grid-column: 1; grid-row: 2; }
+  .character-roster-rail { grid-column: 2; grid-row: 2; }
+  .character-data-console { grid-column: 1 / -1; grid-row: 3; min-height: 430px; }
+  .character-info-tabs button { min-height: 48px; font-size: 13px; }
+  .character-profile-content,
+  .character-upgrade-content { padding: 14px; }
+  .character-profile-content h3,
+  .character-upgrade-content h3 { font-size: 23px; }
+  .character-profile-content > p { overflow: visible; font-size: 13px; white-space: normal; }
+  .character-upgrade-row h4 { font-size: 15px; }
+  .character-upgrade-row > p,
+  .character-upgrade-row footer > span { display: block; font-size: 11px; }
+  .character-upgrade-row footer button { min-height: 44px; font-size: 12px; }
+
+  .expedition-canvas-frame .phaser-host canvas { width: 100% !important; height: 100% !important; object-fit: cover; }
+  .expedition-hud { top: max(12px, env(safe-area-inset-top)); right: 10px; left: 10px; grid-template-columns: minmax(0, 1fr) 48px; }
+  .route-objective { min-height: 72px; padding: 10px 12px; gap: 5px 9px; border-radius: 10px; }
+  .route-objective span,
+  .route-objective b { font-size: 11px; }
+  .route-objective strong { font-size: 17px; }
+  .route-objective > div { height: 7px; }
+  .expedition-sound { width: 48px; height: 48px; border-radius: 50%; }
+  .expedition-sound svg { width: 23px; height: 23px; }
+  .route-minimap { top: max(94px, calc(env(safe-area-inset-top) + 82px)); right: 10px; width: 148px; padding: 8px; border-radius: 9px; }
+  .route-minimap header { font-size: 10px; }
+  .route-minimap header b { font-size: 10px; }
+  .route-minimap-field { height: 58px; }
+  .expedition-xp { top: max(177px, calc(env(safe-area-inset-top) + 165px)); right: 10px; width: 148px; height: 5px; }
+  .expedition-combat-dock {
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: max(8px, env(safe-area-inset-left));
+    padding: 10px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+  .expedition-combat-dock .vital-cluster { min-height: 52px; padding: 2px 4px 9px; }
+  .expedition-combat-dock .vital-cluster span { font-size: 12px; }
+  .expedition-combat-dock .vital-cluster b { font-size: 25px; }
+  .expedition-combat-dock .vital-cluster small { font-size: 10px; }
+  .expedition-combat-dock .vital-bar { height: 11px; }
+  .combat-dock-abilities { grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 5px; }
+  .combat-ability-chip,
+  .combat-tag-switch { min-height: 76px; padding: 5px 3px; grid-template-columns: 1fr; grid-template-rows: 44px auto; place-items: center; border-radius: 8px; }
+  .combat-ability-icon { width: 43px; height: 43px; }
+  .combat-ability-icon > svg { width: 22px; height: 22px; }
+  .combat-ability-icon kbd { right: -5px; bottom: -4px; min-width: 22px; height: 19px; font-size: 9px; }
+  .combat-ability-copy { display: flex; min-width: 0; align-items: center; }
+  .combat-ability-copy strong { max-width: 58px; overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  .combat-ability-copy b { display: none; }
+  .combat-tag-switch > span { flex-direction: row; justify-content: center; gap: 4px; }
+  .combat-tag-switch strong { font-size: 10px; }
+  .combat-tag-switch small { display: block; font-size: 9px; }
+  .floating-touch-joystick { width: 140px; height: 140px; }
+  .floating-touch-joystick-knob { width: 56px; height: 56px; }
+  .portrait-touch-hint { top: 50%; min-height: 40px; padding: 10px 15px; font-size: 13px; }
+
+  .combat-tutorial-card { right: 10px; bottom: calc(180px + env(safe-area-inset-bottom)); left: 10px; width: auto; min-height: 220px; padding: 16px 16px 14px 104px; }
+  .combat-tutorial-card > img { width: 102px; }
+  .combat-tutorial-copy > small { font-size: 10px; }
+  .combat-tutorial-copy h2 { font-size: 23px; }
+  .combat-tutorial-copy header span { font-size: 12px; }
+  .combat-tutorial-copy p { font-size: 14px; line-height: 1.4; }
+  .combat-tutorial-copy > b { font-size: 12px; }
+  .combat-tutorial-card > footer button { min-height: 42px; padding: 7px 10px; font-size: 12px; }
+
+  .reward-modal > h2 { font-size: 32px; }
+  .reward-modal > p { font-size: 14px; }
+  .reward-card { min-height: 170px; grid-template-columns: 112px 1fr; }
+  .reward-card > strong { font-size: 19px; }
+  .reward-card > p { font-size: 13px; }
+  .overload-result .result-card h1,
+  .defense-result-screen h1 { font-size: 48px; }
+  .overload-result .result-card > p,
+  .defense-result-screen p { font-size: 14px; }
+
+  .defense-core-status small,
+  .defense-wave-status small { font-size: 10px; }
+  .defense-core-status b,
+  .defense-wave-status b { font-size: 16px; }
+  .defense-exit { min-height: 48px; font-size: 11px; }
+  .defense-command-dock { min-height: 128px; padding: 7px; }
+  .defense-tower-palette button { min-height: 58px; }
+  .defense-tower-palette button b { font-size: 11px; }
+  .defense-tower-palette button em { font-size: 9px; }
+  .defense-upgrade-button b,
+  .defense-wave-button b { font-size: 12px; }
+  .defense-guide-card,
+  .defense-guide-overlay.is-wave .defense-guide-card { bottom: calc(246px + env(safe-area-inset-bottom)); min-height: 184px; grid-template-columns: 86px 1fr; }
+  .defense-guide-card > img { width: 92px; height: 190px; }
+  .defense-guide-copy h2 { font-size: 20px; }
+  .defense-guide-copy p { font-size: 12px; }
+  .defense-guide-card footer button { min-height: 38px; font-size: 11px; }
+}
+
 @keyframes portrait-touch-hint {
   0%, 12% { opacity: 0; transform: translate(-50%, 10px); }
   24%, 72% { opacity: 1; transform: translate(-50%, 0); }
@@ -7941,48 +8313,87 @@ kbd,
   .mika-recruit-card > button { min-height: 36px; margin-top: 8px; padding: 0 12px; font-size: 10px; }
 }
 
-/* Portrait campaign cascade guard --------------------------------------- */
+/* Portrait campaign cascade guard ---------------------------------------
+   This block deliberately stays last: late campaign styles must never
+   shrink the authored phone layout back into a desktop thumbnail. */
 @media (max-width: 720px) and (orientation: portrait) {
   .campaign-shell { min-height: 100dvh; overflow-x: hidden; }
+  .campaign-shell .campaign-heading { width: calc(100% - 32px); padding-top: max(22px, calc(env(safe-area-inset-top) + 14px)); }
+  .campaign-shell .campaign-heading .campaign-back,
+  .campaign-shell .region-select-heading .campaign-back { min-height: 44px; margin-bottom: 16px; padding: 9px 13px; font-size: 12px; }
+  .campaign-shell .campaign-heading > small,
+  .campaign-shell .region-select-heading > small { font-size: 11px; letter-spacing: 0.08em; }
+  .campaign-shell .campaign-heading h1,
+  .campaign-shell .region-select-heading h1 { margin-top: 8px; font-size: 34px; line-height: 1.08; }
+  .campaign-shell .campaign-heading p,
+  .campaign-shell .region-select-heading p { display: block; margin-top: 10px; font-size: 14px; line-height: 1.45; }
+
+  .campaign-shell .save-slot-grid { width: calc(100% - 32px); margin: 22px auto max(24px, env(safe-area-inset-bottom)); grid-template-columns: 1fr; gap: 12px; }
+  .campaign-shell .save-slot-card { min-height: 172px; padding: 17px 18px; }
+  .campaign-shell .save-slot-number { font-size: 11px; }
+  .campaign-shell .save-slot-card > svg { width: 32px; height: 32px; margin-top: 13px; }
+  .campaign-shell .save-slot-card > strong { margin-top: 10px; font-size: 19px; }
+  .campaign-shell .save-slot-card > p { min-height: 0; margin-top: 6px; font-size: 13px; }
+  .campaign-shell .save-slot-card > small { margin-top: 7px; font-size: 11px; }
+  .campaign-shell .save-slot-card > b { margin-top: 12px; font-size: 13px; }
+  .campaign-shell .empty-slot-mark { margin-top: 10px; font-size: 48px; }
+
   .base-lobby-topbar { top: max(10px, env(safe-area-inset-top)); right: 10px; left: 10px; }
-  .base-identity { min-width: 0; width: 43%; padding: 8px 10px; }
-  .base-identity small { font-size: 8px; letter-spacing: 0; white-space: nowrap; }
-  .base-identity strong { font-size: 20px; }
-  .base-currency-rail { width: 54%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
-  .base-currency-rail button { min-width: 0; min-height: 46px; padding: 5px; grid-template-columns: 20px minmax(0, 1fr); gap: 3px; }
-  .base-currency-rail button > svg { width: 18px; height: 18px; }
+  .base-identity { min-width: 0; width: 46%; min-height: 58px; padding: 9px 11px; }
+  .base-identity small { font-size: 10px; letter-spacing: 0; white-space: nowrap; }
+  .base-identity strong { font-size: 22px; }
+  .base-currency-rail { width: 51%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+  .base-currency-rail button { min-width: 0; min-height: 54px; padding: 5px; grid-template-columns: 24px minmax(0, 1fr); gap: 3px; }
+  .base-currency-rail button > svg { width: 22px; height: 22px; }
   .base-currency-rail button small { display: none; }
-  .base-currency-rail button b { font-size: 12px; }
+  .base-currency-rail button b { font-size: 14px; }
   .base-motion-portrait,
   .base-motion-portrait.is-mika { bottom: 16%; left: 10%; width: 80%; height: 70%; }
   .motion-portrait-speech { top: 22%; right: 2%; width: 72%; }
-  .base-lobby-navigation { top: auto; right: 10px; bottom: calc(max(92px, env(safe-area-inset-bottom) + 84px)); left: 10px; width: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-  .base-menu-button { min-height: 52px; padding: 7px 9px; }
-  .base-primary-actions { right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; width: auto; grid-template-columns: 1fr 1.25fr; gap: 7px; }
+  .base-lobby-navigation { top: auto; right: 10px; bottom: calc(max(166px, env(safe-area-inset-bottom) + 158px)); left: 10px; width: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .base-menu-button { min-height: 62px; padding: 9px 11px; }
+  .base-menu-button > svg { width: 24px; height: 24px; }
+  .base-menu-button small { font-size: 10px !important; }
+  .base-menu-button b { font-size: 14px; }
+  .base-primary-actions { right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; width: auto; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .base-character-action,
+  .base-sortie-action,
+  .base-defense-action { min-height: 74px; padding: 10px 12px; }
+  .base-primary-actions small,
+  .base-defense-action small { font-size: 10px !important; }
+  .base-primary-actions b,
+  .base-defense-action b { font-size: 14px; }
   .home-base-screen .base-objective { display: none; }
-  .region-select-screen.is-cluster-map .region-select-heading { width: calc(100% - 24px); margin-left: 12px; padding-top: max(12px, env(safe-area-inset-top)); }
-  .region-select-screen.is-cluster-map .region-select-heading h1 { font-size: 31px; }
-  .region-map-hotspot { width: min(230px, 64vw); }
-  .region-sortie-dialog { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); width: auto; max-width: none; overflow-y: auto; }
-  .region-sortie-layout { display: block; }
-  .region-sortie-command-footer { position: sticky; bottom: 0; padding-top: 9px; background: rgba(2, 10, 14, 0.96); }
-  .region-sortie-command-footer .region-sortie-launch { width: 100%; min-height: 62px; }
-  .region-select-screen:not(.is-cluster-map) .region-card-grid {
-    right: 0;
-    bottom: max(12px, env(safe-area-inset-bottom));
-    left: 12px;
-    padding-right: 18vw;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    grid-template-columns: repeat(3, 82vw);
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
+
+  .region-select-screen.is-cluster-map .region-select-heading { width: calc(100% - 28px); margin-left: 14px; padding: max(16px, calc(env(safe-area-inset-top) + 10px)) 12px 13px; }
+  .region-select-screen.is-cluster-map .region-select-heading h1 { font-size: 34px; }
+  .region-map-hotspot { left: clamp(136px, var(--map-x), calc(100% - 136px)); top: clamp(190px, var(--map-y), calc(100% - 92px)); width: min(258px, 68vw); min-height: 86px; padding: 12px 34px 12px 60px; }
+  .region-map-hotspot > i:first-child { left: -21px; width: 48px; height: 48px; }
+  .region-map-hotspot > i:first-child::after { inset: 18px; }
+  .region-map-hotspot > span { font-size: 10px; }
+  .region-map-hotspot > strong { font-size: 19px; }
+  .region-map-hotspot > strong em { display: block; margin: 4px 0 0; font-size: 9px; }
+  .region-map-hotspot > small { font-size: 11px; }
+  .region-map-hotspot > svg { width: 22px; height: 22px; }
+
+  .region-select-screen:not(.is-cluster-map) .region-select-heading { margin: 0; padding: max(16px, calc(env(safe-area-inset-top) + 10px)) 16px 14px; }
+  .region-select-screen:not(.is-cluster-map) .region-card-grid { right: 0; bottom: max(12px, env(safe-area-inset-bottom)); left: 16px; padding-right: 10vw; overflow-x: auto; overscroll-behavior-x: contain; grid-template-columns: repeat(3, 88vw); gap: 12px; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .region-select-screen:not(.is-cluster-map) .region-card-grid::-webkit-scrollbar { display: none; }
-  .region-select-screen:not(.is-cluster-map) .region-card { min-height: 210px; padding: 16px 18px; scroll-snap-align: start; }
-  .region-select-screen:not(.is-cluster-map) .region-card > strong { font-size: 22px; }
-  .region-select-screen:not(.is-cluster-map) .region-card > p { font-size: 11px; line-height: 1.5; }
+  .region-select-screen:not(.is-cluster-map) .region-card { min-height: 236px; padding: 18px 20px; scroll-snap-align: start; }
+  .region-select-screen:not(.is-cluster-map) .region-card > span { font-size: 11px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > strong { font-size: 27px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > p { font-size: 14px; line-height: 1.5; }
   .region-select-screen:not(.is-cluster-map) .region-threat i,
   .region-select-screen:not(.is-cluster-map) .region-card > small,
-  .region-select-screen:not(.is-cluster-map) .region-card > b { font-size: 10px; }
+  .region-select-screen:not(.is-cluster-map) .region-card > b { font-size: 12px; }
+  .region-select-screen:not(.is-cluster-map) .region-threat em { font-size: 10px; }
+
+  .region-sortie-dialog { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); width: auto; max-width: none; padding: 14px 14px max(14px, env(safe-area-inset-bottom)); overflow-y: auto; }
+  .region-sortie-layout { display: block; }
+  .campaign-shell .region-sortie-briefing h2 { font-size: 34px; }
+  .campaign-shell .region-sortie-briefing > p { display: block; font-size: 14px; line-height: 1.5; -webkit-line-clamp: unset; }
+  .campaign-shell .region-sortie-intel dt,
+  .campaign-shell .region-sortie-intel dd { font-size: 12px; }
+  .region-sortie-command-footer { position: sticky; bottom: 0; padding-top: 10px; background: rgba(2, 10, 14, 0.96); }
+  .region-sortie-command-footer .region-sortie-launch { width: 100%; min-height: 62px; font-size: 15px; }
 }
