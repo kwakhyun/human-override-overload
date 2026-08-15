@@ -79,7 +79,8 @@ await unlockCampaign();
 
 async function launchRegion(regionIndex, expectedFile, screenshotName) {
   await enterBase();
-  await page.locator(".airship-hotspot").click();
+  await page.locator(".base-sortie-action").click();
+  await page.locator(".region-map-hotspot").first().click();
   await page.locator(".region-card").nth(regionIndex).click();
   await page.locator(".region-sortie-launch").click();
   await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });

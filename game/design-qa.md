@@ -744,3 +744,30 @@ final result: passed
   빠른 반복 지침에 따라 실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 32 — complete · 포트폴리오 전체 회귀 검증
+
+- Static suite: 현재 확장 전장 거리(동료 흔적 4,800/13,200/21,800)와 MIKA 전용 사격 렌더
+  계약을 과거 테스트에 반영했습니다. `npm test` 266/266, TypeScript 검사, production Vite build
+  (4,613 modules), Sites worker 4/4가 모두 통과했습니다.
+- Core browser flow: Edge에서 데스크톱 1440×810, 모바일 가로 812×375, 모바일 세로
+  390×844를 각각 검증했습니다. 첫 로딩, 저장 슬롯, 기지, 상위 권역/개별 구역 선택, 첫 전투
+  가이드, 출격 영상, 일반전, 보스 패턴, 레벨업, 일시정지, 전술 미니맵, 세로 터치 조이스틱과
+  자동 조준까지 console/page/network error 0을 확인했습니다.
+- Presentation and media: AEGIS 520×737, MIKA 448×737 Cubism 캔버스는 idle frame 변화,
+  터치 반응, 부위별 서로 다른 4개 반응이 모두 확인됐습니다. 타이틀/기지/2·3구역 BGM과
+  Q/E/F/R 한국어 에이전트 음원(0.768~1.296초)은 실제 재생·MIME·metadata를 통과했습니다.
+  세 출격 영상은 6.041667초이며, 숨겨진 Phaser 캔버스를 379~468ms 안에 백그라운드에
+  장착하고 영상 종료 약 6.67초에 동일 런타임을 노출했습니다.
+- Extended modes: 외곽 생산권역 4~6 월드맵·지역 배경·NEON FOUNDRY 전투 자산·브리핑 저장과
+  타워 디펜스 3단계 선택, 패드 선택, 펄스 센트리 설치, 첫 웨이브 개시를 실제 브라우저에서
+  검증했습니다. 캡처를 육안 확인해 화면 잘림, 빈 이미지, 치명적 겹침을 발견하지 않았습니다.
+- Performance: RTX 4060 Ti/Edge WebGL의 8개 240-frame 프로파일이 오류 0으로 완료됐습니다.
+  220적/620투사체 장면은 데스크톱·모바일에서 scene P95 36.7/36.5ms, render-submit P95
+  2.9/2.5ms이며 adaptive PERFORMANCE를 유지했습니다. 보스 장면 render-submit P95는
+  1.1~1.3ms, 최악 scene P95는 모바일 WRONG ENGINE의 48.2ms(50ms 예산 초과 4.6%)였습니다.
+  프로파일의 decoded RGBA8는 장면별 58.317~76.032MiB이고 오류·리소스 실패는 0입니다.
+- Runtime state: 검증 종료 후 `http://127.0.0.1:4174/`는 HTTP 200이며 QA 서버를 종료하지
+  않았습니다.
+
+final result: passed

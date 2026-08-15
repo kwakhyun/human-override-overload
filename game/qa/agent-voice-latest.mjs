@@ -8,10 +8,10 @@ const { chromium } = require("C:/Users/82105/.cache/codex-runtimes/codex-primary
 const qaDir = path.dirname(fileURLToPath(import.meta.url));
 const baseUrl = "http://127.0.0.1:4174/?debug=1";
 const expected = [
-  "emp-pulse-online.mp3",
-  "aegis-ward-online.mp3",
-  "stratos-run-confirmed.mp3",
-  "helix-tempest-authorized.mp3",
+  "emp-pulse-start.mp3",
+  "aegis-ward-start.mp3",
+  "stratos-run-v2.mp3",
+  "helix-tempest-start.mp3",
 ];
 
 const errors = [];
@@ -50,7 +50,8 @@ await page.locator(".intro-start").click();
 await page.locator(".save-slot-card").first().click();
 await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
 if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
-await page.locator(".airship-hotspot").click();
+await page.locator(".base-sortie-action").click();
+await page.locator(".region-map-hotspot").first().click();
 await page.locator(".region-card").first().click();
 await page.locator(".region-sortie-launch").click();
 for (let step = 0; step < 5; step += 1) {
@@ -59,8 +60,8 @@ for (let step = 0; step < 5; step += 1) {
   await next.click();
   await page.waitForTimeout(80);
 }
-await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
-await page.waitForTimeout(3_500);
+await page.locator(".combat-runtime-shell.is-live canvas").waitFor({ state: "visible", timeout: 30_000 });
+await page.waitForTimeout(600);
 const modalDeadline = Date.now() + 15_000;
 let quietSince = 0;
 while (Date.now() < modalDeadline) {
@@ -85,15 +86,13 @@ while (Date.now() < modalDeadline) {
 await page.waitForTimeout(500);
 
 const requestedAbilities = ["empPulse", "aegisWard", "stratosRun", "helixTempest"];
-const abilityKeys = { empPulse: "KeyQ", aegisWard: "KeyE", stratosRun: "KeyF", helixTempest: "KeyR" };
 const buttonLabelsBefore = {};
 const buttonLabelsAfter = {};
-await page.locator("canvas").click({ position: { x: 720, y: 405 } });
 for (const ability of requestedAbilities) {
   const button = page.locator(`[data-combat-ability="${ability}"]`);
   await button.waitFor({ state: "visible", timeout: 10_000 });
   buttonLabelsBefore[ability] = await button.getAttribute("aria-label");
-  await page.keyboard.press(abilityKeys[ability]);
+  await button.click();
   await page.waitForTimeout(260);
   buttonLabelsAfter[ability] = await button.getAttribute("aria-label");
 }

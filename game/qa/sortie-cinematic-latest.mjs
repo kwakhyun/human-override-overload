@@ -46,7 +46,8 @@ async function openRegionDetail(page, index) {
   await page.locator(".save-slot-card").first().click();
   await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
   if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
-  await page.locator(".airship-hotspot").click();
+  await page.locator(".base-sortie-action").click();
+  await page.locator(".region-map-hotspot").first().click();
   await page.locator(".region-card").nth(index).click();
   await page.locator(".region-sortie-dialog").waitFor({ state: "visible" });
 }
@@ -102,18 +103,27 @@ async function runDesktopRegion(page, spec, errors) {
   await page.waitForFunction(() => window.__sortieQa?.playingAt > 0, null, { timeout: 10_000 });
   await page.waitForFunction(() => document.querySelector(".sortie-cinematic-video")?.currentTime >= 2, null, { timeout: 10_000 });
   const canvasBeforeEnded = await page.locator("canvas").count();
+  const preloadState = await page.evaluate(() => ({
+    preparing: document.querySelector(".combat-runtime-shell")?.classList.contains("is-preparing") || false,
+    stageOpacity: getComputedStyle(document.querySelector(".expedition-game")).opacity,
+  }));
   await page.screenshot({ path: path.join(qaDir, spec.screenshot), fullPage: true });
-  await page.locator("canvas").waitFor({ state: "visible", timeout: 15_000 });
+  await page.locator(".combat-runtime-shell.is-live canvas").waitFor({ state: "visible", timeout: 15_000 });
+  const liveAt = await page.evaluate(() => performance.now());
   const probe = await page.evaluate(() => window.__sortieQa);
   const clickToCanvasMs = probe.canvasAt - clickedAt;
+  const clickToLiveMs = liveAt - clickedAt;
   const playbackMs = probe.endedAt - probe.playingAt;
   if (!probe.source.endsWith(spec.source)) errors.push(`${spec.id}: wrong source ${probe.source}`);
   if (Math.abs(probe.duration - 6) > 0.05) errors.push(`${spec.id}: duration ${probe.duration}`);
   if (probe.width !== 1264 || probe.height !== 720) errors.push(`${spec.id}: dimensions ${probe.width}x${probe.height}`);
-  if (canvasBeforeEnded !== 0) errors.push(`${spec.id}: Phaser canvas mounted before cinematic ended`);
+  if (canvasBeforeEnded !== 1 || !preloadState.preparing || preloadState.stageOpacity !== "0") {
+    errors.push(`${spec.id}: prepared Phaser runtime was not mounted invisibly behind the cinematic`);
+  }
   if (playbackMs < 5_800 || playbackMs > 6_350) errors.push(`${spec.id}: playback ${playbackMs.toFixed(1)}ms`);
-  if (clickToCanvasMs < 5_800 || clickToCanvasMs > 9_000) errors.push(`${spec.id}: click-to-canvas ${clickToCanvasMs.toFixed(1)}ms`);
-  return { ...probe, clickToCanvasMs, playbackMs, canvasBeforeEnded };
+  if (clickToCanvasMs < 0 || clickToCanvasMs > 2_000) errors.push(`${spec.id}: background preload mount ${clickToCanvasMs.toFixed(1)}ms`);
+  if (clickToLiveMs < 5_800 || clickToLiveMs > 9_000) errors.push(`${spec.id}: click-to-live ${clickToLiveMs.toFixed(1)}ms`);
+  return { ...probe, clickToCanvasMs, clickToLiveMs, playbackMs, canvasBeforeEnded, preloadState };
 }
 
 async function verifyFirstSortieGuide(browser) {
@@ -126,7 +136,8 @@ async function verifyFirstSortieGuide(browser) {
   await page.locator(".save-slot-card").first().click();
   await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
   if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
-  await page.locator(".airship-hotspot").click();
+  await page.locator(".base-sortie-action").click();
+  await page.locator(".region-map-hotspot").first().click();
   await page.locator(".region-card").first().click();
   await page.locator(".region-sortie-launch").click();
   await page.locator(".ability-guide-screen").waitFor({ state: "visible", timeout: 10_000 });
@@ -167,9 +178,9 @@ try {
   }
   if (report.firstSortie.afterBriefingComplete.guide !== 0
     || report.firstSortie.afterBriefingComplete.video !== 1
-    || report.firstSortie.afterBriefingComplete.canvas !== 0
+    || report.firstSortie.afterBriefingComplete.canvas !== 1
     || !report.firstSortie.afterBriefingComplete.source.endsWith("wrong-engine-sortie.mp4")) {
-    errors.push("first-sortie: briefing completion must start region video before Phaser");
+    errors.push("first-sortie: briefing completion must start the region video with one hidden preload canvas");
   }
   const desktop = await browser.newContext({ viewport: { width: 1440, height: 810 } });
   const desktopPage = await desktop.newPage();

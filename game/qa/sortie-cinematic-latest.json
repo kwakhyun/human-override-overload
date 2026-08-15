@@ -1,46 +1,61 @@
 {
   "desktop": {
     "wrong-engine-core": {
-      "attachedAt": 1257.0999999046326,
-      "metadataAt": 1286.2999997138977,
-      "playingAt": 1314.5999999046326,
-      "endedAt": 7428,
-      "canvasAt": 7575.599999904633,
+      "attachedAt": 1503.5999999046326,
+      "metadataAt": 1561.3000001907349,
+      "playingAt": 1610.8000001907349,
+      "endedAt": 7696.300000190735,
+      "canvasAt": 1657,
       "duration": 6.041667,
       "width": 1264,
       "height": 720,
       "source": "http://127.0.0.1:4174/assets/overload/campaign/sortie/wrong-engine-sortie.mp4",
-      "clickToCanvasMs": 6642.700000286102,
-      "playbackMs": 6113.400000095367,
-      "canvasBeforeEnded": 0
+      "clickToCanvasMs": 467.59999990463257,
+      "clickToLiveMs": 6670.5,
+      "playbackMs": 6085.5,
+      "canvasBeforeEnded": 1,
+      "preloadState": {
+        "preparing": true,
+        "stageOpacity": "0"
+      }
     },
     "glass-dune": {
-      "attachedAt": 1174.9000000953674,
-      "metadataAt": 1199.8000001907349,
-      "playingAt": 1219,
-      "endedAt": 7336.800000190735,
-      "canvasAt": 7405.599999904633,
+      "attachedAt": 1471.7999997138977,
+      "metadataAt": 1510.6999998092651,
+      "playingAt": 1607.7999997138977,
+      "endedAt": 7688.699999809265,
+      "canvasAt": 1559,
       "duration": 6.041667,
       "width": 1264,
       "height": 720,
       "source": "http://127.0.0.1:4174/assets/overload/campaign/sortie/glass-dune-sortie.mp4",
-      "clickToCanvasMs": 6471.799999713898,
-      "playbackMs": 6117.800000190735,
-      "canvasBeforeEnded": 0
+      "clickToCanvasMs": 403.5,
+      "clickToLiveMs": 6675.299999713898,
+      "playbackMs": 6080.900000095367,
+      "canvasBeforeEnded": 1,
+      "preloadState": {
+        "preparing": true,
+        "stageOpacity": "0"
+      }
     },
     "abyssal-archive": {
-      "attachedAt": 1222.3000001907349,
-      "metadataAt": 1244.8000001907349,
-      "playingAt": 1268.9000000953674,
-      "endedAt": 7373.400000095367,
-      "canvasAt": 7420.700000286102,
+      "attachedAt": 1503,
+      "metadataAt": 1541.3000001907349,
+      "playingAt": 1626.3000001907349,
+      "endedAt": 7718.5,
+      "canvasAt": 1568.0999999046326,
       "duration": 6.041667,
       "width": 1264,
       "height": 720,
       "source": "http://127.0.0.1:4174/assets/overload/campaign/sortie/abyssal-archive-sortie.mp4",
-      "clickToCanvasMs": 6503.700000286102,
-      "playbackMs": 6104.5,
-      "canvasBeforeEnded": 0
+      "clickToCanvasMs": 378.90000009536743,
+      "clickToLiveMs": 6683.800000190735,
+      "playbackMs": 6092.199999809265,
+      "canvasBeforeEnded": 1,
+      "preloadState": {
+        "preparing": true,
+        "stageOpacity": "0"
+      }
     }
   },
   "mobile": {
@@ -79,7 +94,7 @@
     "afterBriefingComplete": {
       "guide": 0,
       "video": 1,
-      "canvas": 0,
+      "canvas": 1,
       "source": "http://127.0.0.1:4174/assets/overload/campaign/sortie/wrong-engine-sortie.mp4"
     }
   }

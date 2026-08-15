@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-11T05:43:42.810Z",
+  "generatedAt": "2026-08-15T00:36:25.193Z",
   "url": "http://127.0.0.1:4174/?debug=1",
   "requestedAbilities": [
     "empPulse",
@@ -9,106 +9,106 @@
   ],
   "buttonLabelsBefore": {
     "empPulse": "Q EMP 펄스. 사용 가능",
-    "aegisWard": "E 이지스 방벽. 사용 가능",
-    "stratosRun": "F 공중 소사. 사용 가능",
-    "helixTempest": "R 나선 폭풍. 사용 가능"
+    "aegisWard": "E 방벽 전개. 사용 가능",
+    "stratosRun": "F 항공 지원. 사용 가능",
+    "helixTempest": "R 섬멸 모드. 사용 가능"
   },
   "buttonLabelsAfter": {
-    "empPulse": "Q EMP 펄스. 17.8초",
-    "aegisWard": "E 이지스 방벽. 27.8초",
-    "stratosRun": "F 공중 소사. 33.8초",
-    "helixTempest": "R 나선 폭풍. 71.8초"
+    "empPulse": "Q EMP 펄스. 17.9초",
+    "aegisWard": "E 방벽 전개. 27.8초",
+    "stratosRun": "F 항공 지원. 33.9초",
+    "helixTempest": "R 섬멸 모드. 71.8초"
   },
   "playedNames": [
-    "emp-pulse-online.mp3",
-    "aegis-ward-online.mp3",
-    "stratos-run-confirmed.mp3",
-    "helix-tempest-authorized.mp3"
+    "emp-pulse-start.mp3",
+    "aegis-ward-start.mp3",
+    "stratos-run-v2.mp3",
+    "helix-tempest-start.mp3"
   ],
   "resourceEntriesBeforeFetch": [
     {
-      "name": "emp-pulse-online.mp3",
-      "transferSize": 6540,
-      "decodedBodySize": 6240
+      "name": "emp-pulse-start.mp3",
+      "transferSize": 5100,
+      "decodedBodySize": 4800
     },
     {
-      "name": "aegis-ward-online.mp3",
-      "transferSize": 7020,
-      "decodedBodySize": 6720
+      "name": "aegis-ward-start.mp3",
+      "transferSize": 3372,
+      "decodedBodySize": 3072
     },
     {
-      "name": "stratos-run-confirmed.mp3",
-      "transferSize": 4620,
-      "decodedBodySize": 4320
+      "name": "stratos-run-v2.mp3",
+      "transferSize": 5484,
+      "decodedBodySize": 5184
     },
     {
-      "name": "helix-tempest-authorized.mp3",
-      "transferSize": 4236,
-      "decodedBodySize": 3936
+      "name": "helix-tempest-start.mp3",
+      "transferSize": 3948,
+      "decodedBodySize": 3648
     },
     {
-      "name": "emp-pulse-online.mp3",
-      "transferSize": 6540,
-      "decodedBodySize": 6240
+      "name": "emp-pulse-start.mp3",
+      "transferSize": 5100,
+      "decodedBodySize": 4800
     },
     {
-      "name": "aegis-ward-online.mp3",
-      "transferSize": 7020,
-      "decodedBodySize": 6720
+      "name": "aegis-ward-start.mp3",
+      "transferSize": 3372,
+      "decodedBodySize": 3072
     },
     {
-      "name": "stratos-run-confirmed.mp3",
-      "transferSize": 4620,
-      "decodedBodySize": 4320
+      "name": "stratos-run-v2.mp3",
+      "transferSize": 5484,
+      "decodedBodySize": 5184
     },
     {
-      "name": "helix-tempest-authorized.mp3",
-      "transferSize": 4236,
-      "decodedBodySize": 3936
+      "name": "helix-tempest-start.mp3",
+      "transferSize": 3948,
+      "decodedBodySize": 3648
     }
   ],
   "loaded": [
     {
-      "name": "emp-pulse-online.mp3",
+      "name": "emp-pulse-start.mp3",
       "status": 200,
-      "bytes": 6240,
+      "bytes": 4800,
       "contentType": "audio/mpeg"
     },
     {
-      "name": "aegis-ward-online.mp3",
+      "name": "aegis-ward-start.mp3",
       "status": 200,
-      "bytes": 6720,
+      "bytes": 3072,
       "contentType": "audio/mpeg"
     },
     {
-      "name": "stratos-run-confirmed.mp3",
+      "name": "stratos-run-v2.mp3",
       "status": 200,
-      "bytes": 4320,
+      "bytes": 5184,
       "contentType": "audio/mpeg"
     },
     {
-      "name": "helix-tempest-authorized.mp3",
+      "name": "helix-tempest-start.mp3",
       "status": 200,
-      "bytes": 3936,
+      "bytes": 3648,
       "contentType": "audio/mpeg"
     }
   ],
   "metadata": [
     {
-      "name": "emp-pulse-online.mp3",
-      "duration": 1.56
+      "name": "emp-pulse-start.mp3",
+      "duration": 1.2
     },
     {
-      "name": "aegis-ward-online.mp3",
-      "duration": 1.68
+      "name": "aegis-ward-start.mp3",
+      "duration": 0.768
     },
     {
-      "name": "stratos-run-confirmed.mp3",
-      "duration": 1.08
+      "name": "stratos-run-v2.mp3",
+      "duration": 1.296
     },
     {
-      "name": "helix-tempest-authorized.mp3",
-      "duration": 0.984
+      "name": "helix-tempest-start.mp3",
+      "duration": 0.912
     }
   ],
   "errors": []

@@ -78,11 +78,12 @@ async function startFreshRun(page, scene, region) {
     await page.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
     if (await page.locator(".base-dialogue:visible").count()) await page.keyboard.press("Escape");
   }
-  await page.locator(".airship-hotspot").click();
+  await page.locator(".base-sortie-action").click();
+  await page.locator(".region-map-hotspot").first().click();
   const regionIndex = region === "glass-dune" ? 1 : region === "abyssal-archive" ? 2 : 0;
   await page.locator(".region-card").nth(regionIndex).click();
   await page.locator(".region-sortie-launch").click();
-  await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
+  await page.locator(".combat-runtime-shell.is-live canvas").waitFor({ state: "visible", timeout: 30_000 });
   await page.waitForFunction(() => Boolean(window.__OVERLOAD_QA__), null, { timeout: 30_000 });
   await page.waitForTimeout(2_000);
 

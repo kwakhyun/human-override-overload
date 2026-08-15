@@ -40,7 +40,7 @@ test("BattleView uses weapon-specific hero poses and pooled quality-capped sword
   const app = await readFile(new URL("../src/App.jsx", import.meta.url), "utf8");
   assert.match(view, /entity\?\.mainWeaponId === "beam-sword"/);
   assert.match(view, /ASSET_KEYS\.playerSwordDirectionalAim/);
-  assert.match(view, /const rifleEquipped = entity\?\.mainWeaponId !== "beam-sword"/);
+  assert.match(view, /const rifleEquipped = entity\?\.characterId !== "mika" && entity\?\.mainWeaponId !== "beam-sword"/);
   assert.match(view, /const muzzleVisible = rifleEquipped &&/);
   assert.match(view, /syncSwordEffectFx\(state, quality\)/);
   assert.match(view, /quality\.id === "performance" \? 6 : quality\.id === "cinematic" \? 16 : 10/);

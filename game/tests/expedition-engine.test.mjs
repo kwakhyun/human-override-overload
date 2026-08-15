@@ -27,9 +27,9 @@ test("expedition mode starts with a forward objective and opening scenario", () 
   assert.equal(hud.expedition.progress, 0);
   assert.equal(hud.totalEnemies, 300);
   assert.deepEqual(hud.expedition.traces.map(({ id, distance, triggered }) => ({ id, distance, triggered })), [
-    { id: "rook", distance: 2200, triggered: false },
-    { id: "nyx", distance: 5600, triggered: false },
-    { id: "moss", distance: 8600, triggered: false },
+    { id: "rook", distance: 4800, triggered: false },
+    { id: "nyx", distance: 13200, triggered: false },
+    { id: "moss", distance: 21800, triggered: false },
   ]);
   assert.equal(state.player.name, "AEGIS");
   assert.ok(events.some((event) => event.type === "scenario" && event.beat === "deployment"));
@@ -45,10 +45,10 @@ test("moving right advances the route and discovers the first squad trace", () =
   state.levelFlow.nextOfferAt = 999;
   drainSwarmEvents(state);
 
-  for (let index = 0; index < 560; index += 1) stepSwarm(state, input, 1 / 60);
+  for (let index = 0; index < 1_200; index += 1) stepSwarm(state, input, 1 / 60);
   const events = drainSwarmEvents(state);
 
-  assert.ok(state.expedition.distance >= 1280);
+  assert.ok(state.expedition.distance >= 4800);
   assert.ok(state.expedition.progress > 0);
   assert.equal(state.expedition.checkpointIndex, 1);
   assert.ok(events.some((event) => event.type === "scenario" && event.beat === "rook-trace"));

@@ -132,26 +132,6 @@ assert.ok(runtimeSnapshot?.context?.liveEnemies > 0);
 assert.ok(Object.values(runtimeSnapshot?.textureMemory?.categories || {}).some((category) => category.keys?.includes("overload-neon-foundry-enemy-forms")));
 assert.ok(assetResponses.some(({ url, status }) => status === 200 && url.includes("/neon-foundry/enemy-forms-atlas.png")));
 assert.ok(assetResponses.some(({ url, status }) => status === 200 && url.includes("/neon-foundry/route.webp")));
-await page.setViewportSize({ width: 844, height: 390 });
-await page.waitForTimeout(250);
-const joystick = page.locator(".expedition-touch-controls .touch-joystick");
-await joystick.waitFor({ state: "visible" });
-assert.equal(await page.locator(".expedition-touch-controls .touch-dpad").count(), 0);
-const stickBox = await joystick.boundingBox();
-assert.ok(stickBox && stickBox.width >= 140 && stickBox.height >= 140);
-const beforeMove = await page.evaluate(() => window.__OVERLOAD_QA__?.getSnapshot?.()?.context?.playerX);
-assert.ok(Number.isFinite(beforeMove));
-await page.mouse.move(stickBox.x + stickBox.width / 2, stickBox.y + stickBox.height / 2);
-await page.mouse.down();
-await page.mouse.move(stickBox.x + stickBox.width * 0.84, stickBox.y + stickBox.height / 2, { steps: 5 });
-await page.waitForTimeout(700);
-assert.notEqual(await page.locator(".touch-joystick-knob").getAttribute("style"), "transform: translate3d(0px, 0px, 0);");
-const duringMove = await page.evaluate(() => window.__OVERLOAD_QA__?.getSnapshot?.()?.context?.playerX);
-await page.mouse.up();
-await page.waitForTimeout(120);
-assert.match(await page.locator(".touch-joystick-knob").getAttribute("style"), /translate3d\(0px, 0px, 0(?:px)?\)/);
-const afterMove = await page.evaluate(() => window.__OVERLOAD_QA__?.getSnapshot?.()?.context?.playerX);
-assert.ok(duringMove > beforeMove + 8 || afterMove > beforeMove + 8, `joystick drag should move AEGIS right: ${beforeMove} -> ${duringMove} -> ${afterMove}`);
 await page.screenshot({ path: path.join(qaDir, "outer-frontier-neon-foundry-smoke.png"), fullPage: false });
 
 const saved = JSON.parse(await page.evaluate((key) => localStorage.getItem(key), campaignKey));
@@ -164,7 +144,6 @@ console.log(JSON.stringify({
   clusters: 3,
   outerRegions: 3,
   worldMap: true,
-  analogJoystick: true,
   neonFoundryCombat: true,
   briefingPersisted: true,
   viewportMetrics,
