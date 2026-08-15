@@ -963,3 +963,15 @@ final result: passed
   공개 배포는 사용자의 빠른 반복 지침에 따라 생략했습니다.
 
 final result: passed
+
+### Iteration 43 — complete · 모바일 대화 초상화 레이어와 전체 폭 패널
+
+- Layering: 휴대폰 세로 화면에서 NPC 초상화를 154px로 확대하고 패널 높이보다 96px 위로 올려,
+  일러스트가 대화창 뒤에서 겹쳐 보이도록 초상화와 본문/행동의 z축을 분리했습니다. 긴 대사의
+  스크롤 권한은 패널 전체가 아니라 본문 레이어가 가집니다.
+- Width and safe area: 대화창은 좌우 여백 없이 화면 전체 폭을 차지하며 하단 safe area를 패딩으로
+  흡수합니다. 380px 이하에서는 초상화를 132px로 조정하고 행동 버튼은 기존처럼 한 줄씩 쌓습니다.
+- Verification scope: 캠페인 UI 집중 테스트와 420×900 브라우저 캡처를 확인하며, 전체 테스트·build·
+  배포는 실행하지 않습니다.
+
+final result: passed

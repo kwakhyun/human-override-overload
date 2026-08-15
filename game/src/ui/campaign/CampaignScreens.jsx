@@ -316,7 +316,7 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
   return (
     <section className="base-dialogue" role="dialog" aria-modal="true" aria-labelledby="base-dialogue-name">
       <NpcPortrait npc={npc} assets={assets} />
-      <div>
+      <div className="base-dialogue-copy">
         <small>{display.role}</small>
         <h2 id="base-dialogue-name">{display.name}</h2>
         <p>{line}</p>

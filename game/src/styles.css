@@ -8673,35 +8673,48 @@ kbd,
 @media (max-width: 720px) and (orientation: portrait) {
   .campaign-shell .base-dialogue {
     position: fixed;
-    right: 8px;
-    bottom: max(8px, env(safe-area-inset-bottom));
-    left: 8px;
+    right: 0;
+    bottom: 0;
+    left: 0;
     display: block;
     min-height: 0;
     max-height: min(390px, 52dvh);
-    padding: 17px 14px 14px 126px;
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    padding: 17px 14px max(14px, env(safe-area-inset-bottom)) 158px;
+    overflow: visible;
+    isolation: isolate;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
     border-color: rgba(102, 232, 251, 0.58);
     background: linear-gradient(105deg, rgba(2, 8, 12, 0.98), rgba(4, 20, 26, 0.97));
     box-shadow: 0 -16px 50px rgba(0, 0, 0, 0.62), inset 0 1px rgba(150, 243, 255, 0.08);
-    -webkit-overflow-scrolling: touch;
   }
 
-  .campaign-shell .base-dialogue > div { min-width: 0; }
+  .campaign-shell .base-dialogue-copy {
+    position: relative;
+    z-index: 2;
+    min-width: 0;
+    max-height: calc(min(390px, 52dvh) - 31px - env(safe-area-inset-bottom));
+    padding-right: 2px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
   .campaign-shell .base-npc-portrait {
-    top: 10px;
+    z-index: 1;
+    top: auto;
     bottom: 0;
-    left: 8px;
-    width: 108px;
-    height: auto;
-    background-size: 300% auto;
+    left: 4px;
+    width: 154px;
+    height: calc(100% + 96px);
+    background-size: auto 100%;
     background-position-y: bottom !important;
-    filter: drop-shadow(7px 0 13px rgba(0, 0, 0, 0.64));
+    filter: drop-shadow(8px 0 15px rgba(0, 0, 0, 0.68));
+    pointer-events: none;
   }
   .campaign-shell .base-npc-portrait.is-standalone {
-    background-size: contain;
+    background-size: auto 100%;
     background-position: center bottom !important;
   }
   .campaign-shell .base-dialogue > div > small {
@@ -8727,15 +8740,15 @@ kbd,
   .campaign-shell .base-dialogue-actions {
     display: grid;
     margin-top: 14px;
-    grid-template-columns: minmax(0, 1fr) minmax(88px, 0.56fr);
-    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(82px, 0.5fr);
+    gap: 6px;
     align-items: stretch;
   }
   .campaign-shell .base-dialogue-actions button {
     min-width: 0;
     min-height: 52px;
     margin: 0;
-    padding: 10px 12px;
+    padding: 10px 8px;
     justify-content: center;
     border-radius: 3px;
     font-size: 14px;
@@ -8754,9 +8767,10 @@ kbd,
 @media (max-width: 380px) and (orientation: portrait) {
   .campaign-shell .base-dialogue {
     max-height: min(430px, 58dvh);
-    padding-left: 108px;
+    padding-left: 138px;
   }
-  .campaign-shell .base-npc-portrait { width: 92px; }
+  .campaign-shell .base-dialogue-copy { max-height: calc(min(430px, 58dvh) - 31px - env(safe-area-inset-bottom)); }
+  .campaign-shell .base-npc-portrait { width: 132px; height: calc(100% + 76px); }
   .campaign-shell .base-dialogue-actions { grid-template-columns: 1fr; }
   .campaign-shell .base-dialogue-actions button,
   .campaign-shell .base-dialogue-next { grid-column: 1; width: 100%; }

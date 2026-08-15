@@ -206,15 +206,18 @@ test("HAVEN NPC dialogue advances one line per Space press and closes on the fin
   assert.match(dialogue, /if \(final\) onClose\?\.\(\);\s*else onAdvance\?\.\(\);/);
   assert.match(dialogue, /<kbd>SPACE<\/kbd> \{final \? "대화 종료" : "다음 대사"\}/);
   assert.match(dialogue, /className="base-dialogue-actions"/);
+  assert.match(dialogue, /className="base-dialogue-copy"/);
   assert.match(dialogue, /className="base-dialogue-next"/);
 
   const mobileDialogue = styles.slice(styles.indexOf("/* HAVEN NPC dialogue: portrait-phone bottom sheet"));
   assert.match(mobileDialogue, /@media \(max-width: 720px\) and \(orientation: portrait\)/);
-  assert.match(mobileDialogue, /\.campaign-shell \.base-dialogue \{[\s\S]*max-height: min\(390px, 52dvh\);[\s\S]*padding: 17px 14px 14px 126px/);
+  assert.match(mobileDialogue, /\.campaign-shell \.base-dialogue \{[\s\S]*right: 0;[\s\S]*bottom: 0;[\s\S]*left: 0;[\s\S]*max-height: min\(390px, 52dvh\);[\s\S]*padding: 17px 14px max\(14px, env\(safe-area-inset-bottom\)\) 158px;[\s\S]*overflow: visible/);
+  assert.match(mobileDialogue, /\.campaign-shell \.base-dialogue-copy \{[\s\S]*z-index: 2;[\s\S]*overflow-y: auto/);
+  assert.match(mobileDialogue, /\.campaign-shell \.base-npc-portrait \{[\s\S]*z-index: 1;[\s\S]*width: 154px;[\s\S]*height: calc\(100% \+ 96px\);[\s\S]*background-size: auto 100%/);
   assert.match(mobileDialogue, /\.campaign-shell \.base-dialogue p \{[\s\S]*font-size: 15px;[\s\S]*word-break: keep-all/);
   assert.match(mobileDialogue, /\.campaign-shell \.base-dialogue-actions button \{[\s\S]*min-height: 52px;[\s\S]*white-space: nowrap;[\s\S]*word-break: keep-all/);
   assert.match(mobileDialogue, /\.campaign-shell \.dialogue-escape-hint \{ display: none; \}/);
-  assert.match(mobileDialogue, /@media \(max-width: 380px\) and \(orientation: portrait\)[\s\S]*\.campaign-shell \.base-dialogue-actions \{ grid-template-columns: 1fr; \}/);
+  assert.match(mobileDialogue, /@media \(max-width: 380px\) and \(orientation: portrait\)[\s\S]*\.campaign-shell \.base-npc-portrait \{ width: 132px; height: calc\(100% \+ 76px\); \}[\s\S]*\.campaign-shell \.base-dialogue-actions \{ grid-template-columns: 1fr; \}/);
 });
 
 test("first-sortie briefing separates automatic build skills from four new manual abilities and persists completion", async () => {
