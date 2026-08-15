@@ -843,7 +843,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
       <header className="region-select-heading">
         <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={selectedCluster ? () => setSelectedClusterId(null) : onBack}><ArrowLeft weight="bold" /> {selectedCluster ? "권역 지도" : "기지"} <kbd>ESC</kbd></button>
         <small>나이트자 · 광역 항법 관제</small>
-        <h1>{selectedCluster ? `${selectedCluster.koreanName} · 구역 선택` : "작전 권역 선택"}</h1>
+        <h1>{selectedCluster ? <>{selectedCluster.koreanName}<span> · 구역 선택</span></> : "작전 권역 선택"}</h1>
         <p>{selectedCluster ? "권역 안의 개별 구역을 선택해 상세 정보를 확인하세요." : "먼저 3개 구역이 묶인 상위 권역을 선택하세요."}</p>
       </header>
       {selectedCluster && !selectedRegion && (

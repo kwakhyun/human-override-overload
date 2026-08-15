@@ -5489,7 +5489,7 @@ kbd {
   .region-select-screen.is-cluster-map .region-select-heading h1 { font-size: 31px; }
   .region-map-hotspot { width: min(230px, 64vw); }
   .region-sortie-dialog { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); width: auto; max-width: none; overflow-y: auto; }
-  .region-sortie-layout { display: block; }
+  .region-sortie-layout { display: block; padding-bottom: 86px; }
   .region-sortie-command-footer { position: sticky; bottom: 0; padding-top: 9px; background: rgba(2, 10, 14, 0.96); }
   .region-sortie-command-footer .region-sortie-launch { width: 100%; min-height: 62px; }
 }
@@ -7505,7 +7505,7 @@ kbd,
 .region-sortie-intel { display: grid; margin: 22px 0 0; gap: 7px; }
 .region-sortie-intel > div { display: grid; min-height: 44px; padding: 9px 12px; grid-template-columns: 105px minmax(0, 1fr); align-items: center; gap: 12px; border-left: 2px solid rgba(106, 231, 250, 0.54); background: rgba(89, 211, 231, 0.055); }
 .region-sortie-intel dt { color: #71939a; font-size: 11px; }
-.region-sortie-intel dd { margin: 0; color: #e1eff2; font-size: 12px; line-height: 1.45; text-align: right; }
+.region-sortie-intel dd { margin: 0; color: #e1eff2; font-size: 12px; line-height: 1.45; text-align: right; word-break: keep-all; overflow-wrap: normal; }
 .region-sortie-rewards { display: flex; margin-top: 16px; padding: 11px 12px; flex-wrap: wrap; align-items: center; gap: 7px 12px; border: 1px solid rgba(255, 194, 100, 0.22); background: rgba(87, 52, 11, 0.2); }
 .region-sortie-rewards small { width: 100%; color: #bd9459; font-size: 10px; }
 .region-sortie-rewards span { color: #ffd18b; font-size: 12px; font-weight: 700; }
@@ -7850,7 +7850,7 @@ kbd,
 
 .region-sortie-briefing h2 { margin: 0; font-size: clamp(34px, 4vw, 58px); line-height: 0.98; letter-spacing: -0.035em; }
 .region-sortie-briefing > p { margin: 10px 0 0; color: #b8cbd0; font-size: 14px; line-height: 1.55; word-break: keep-all; }
-.region-sortie-briefing .region-sortie-intel { margin-top: 15px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.region-sortie-briefing .region-sortie-intel { margin-top: 15px; grid-template-columns: 1fr; }
 .region-sortie-briefing .region-sortie-intel > div { min-height: 48px; grid-template-columns: 82px minmax(0, 1fr); }
 .region-sortie-briefing .region-sortie-intel > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .region-sortie-briefing .region-sortie-rewards { margin-top: auto; }
@@ -8386,17 +8386,22 @@ kbd,
   .base-menu-button small { font-size: 10px !important; }
   .base-menu-button b { font-size: 14px; }
   .base-primary-actions { right: 10px; bottom: max(10px, env(safe-area-inset-bottom)); left: 10px; width: auto; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .base-defense-action { grid-column: 1 / -1; }
   .base-character-action,
   .base-sortie-action,
   .base-defense-action { min-height: 74px; padding: 10px 12px; }
+  .base-character-action > svg:last-child,
+  .base-sortie-action > svg:last-child,
+  .base-defense-action > svg:last-child { display: none; }
   .base-primary-actions small,
   .base-defense-action small { font-size: 10px !important; }
   .base-primary-actions b,
-  .base-defense-action b { font-size: 14px; }
+  .base-defense-action b { font-size: 14px; white-space: nowrap; word-break: keep-all; }
   .home-base-screen .base-objective { display: none; }
 
   .region-select-screen.is-cluster-map .region-select-heading { width: calc(100% - 28px); margin-left: 14px; padding: max(16px, calc(env(safe-area-inset-top) + 10px)) 12px 13px; }
-  .region-select-screen.is-cluster-map .region-select-heading h1 { font-size: 34px; }
+  .region-select-screen .region-select-heading h1 { font-size: 34px; word-break: keep-all; overflow-wrap: normal; }
+  .region-select-screen .region-select-heading h1 > span { white-space: nowrap; }
   .region-map-hotspot { left: clamp(136px, var(--map-x), calc(100% - 136px)); top: clamp(190px, var(--map-y), calc(100% - 92px)); width: min(258px, 68vw); min-height: 86px; padding: 12px 34px 12px 60px; }
   .region-map-hotspot > i:first-child { left: -21px; width: 48px; height: 48px; }
   .region-map-hotspot > i:first-child::after { inset: 18px; }
@@ -8418,13 +8423,23 @@ kbd,
   .region-select-screen:not(.is-cluster-map) .region-card > b { font-size: 12px; }
   .region-select-screen:not(.is-cluster-map) .region-threat em { font-size: 10px; }
 
-  .region-sortie-dialog { inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); width: auto; max-width: none; padding: 14px 14px max(14px, env(safe-area-inset-bottom)); overflow-y: auto; }
-  .region-sortie-layout { display: block; }
+  .region-sortie-dialog { position: fixed; inset: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); width: auto; max-width: none; margin-left: 0; padding: 14px 14px max(14px, env(safe-area-inset-bottom)); overflow-y: auto; }
+  .region-sortie-layout { display: block; padding-bottom: 86px; }
   .campaign-shell .region-sortie-briefing h2 { font-size: 34px; }
   .campaign-shell .region-sortie-briefing > p { display: block; font-size: 14px; line-height: 1.5; -webkit-line-clamp: unset; }
+  .region-sortie-briefing .region-sortie-intel { grid-template-columns: 1fr; gap: 7px; }
+  .region-sortie-briefing .region-sortie-intel > div,
+  .region-sortie-briefing .region-sortie-intel > div:last-child:nth-child(odd) { min-height: 52px; padding: 9px 10px; grid-column: auto; grid-template-columns: 86px minmax(0, 1fr); gap: 10px; }
   .campaign-shell .region-sortie-intel dt,
   .campaign-shell .region-sortie-intel dd { font-size: 12px; }
-  .region-sortie-command-footer { position: sticky; bottom: 0; padding-top: 10px; background: rgba(2, 10, 14, 0.96); }
+  .campaign-shell .region-sortie-intel dd { word-break: keep-all; overflow-wrap: normal; }
+  .sortie-character-options { grid-template-columns: 1fr; }
+  .sortie-character-card strong,
+  .sortie-character-card p { word-break: keep-all; overflow-wrap: normal; }
+  .region-sortie-layout .sortie-weapon-card div em { display: none; }
+  .region-sortie-layout .sortie-weapon-card div strong { white-space: nowrap; word-break: keep-all; }
+  .region-sortie-command-footer { position: sticky; bottom: 0; display: block; padding-top: 10px; background: rgba(2, 10, 14, 0.96); }
+  .region-sortie-command-footer > span { display: none; }
   .region-sortie-command-footer .region-sortie-launch { width: 100%; min-height: 62px; font-size: 15px; }
 }
 
@@ -8464,9 +8479,11 @@ kbd,
     top: max(184px, calc(env(safe-area-inset-top) + 174px));
     left: 50%;
     display: flex;
+    min-width: 210px;
     min-height: 42px;
     padding: 8px 14px;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     border: 1px solid rgba(102, 231, 249, 0.34);
     border-radius: 999px;
@@ -8475,6 +8492,7 @@ kbd,
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42);
     font-size: 12px;
     font-weight: 800;
+    white-space: nowrap;
     transform: translateX(-50%);
     pointer-events: none;
     backdrop-filter: blur(8px);
@@ -8505,4 +8523,30 @@ kbd,
   .region-sortie-close { min-height: 48px; padding: 9px 12px; font-size: 13px; }
   .region-sortie-close kbd { display: none; }
   .region-sortie-dialog { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+}
+
+@media (max-width: 340px) and (orientation: portrait) {
+  .region-select-screen .region-select-heading h1 { font-size: 31px; }
+}
+
+/* Fine-pointer desktop guard -------------------------------------------
+   Short desktop windows may compact geometry, but never inherit phone
+   typography. This keeps PC and touch layouts as independent UI systems. */
+@media (min-width: 981px) and (max-height: 640px) and (pointer: fine) {
+  .campaign-shell.campaign-shell small { font-size: max(9px, 0.62rem); }
+  .campaign-shell.campaign-shell p,
+  .campaign-shell.campaign-shell li,
+  .campaign-shell.campaign-shell dt,
+  .campaign-shell.campaign-shell dd { font-size: max(11px, 0.72rem); line-height: 1.42; }
+  .campaign-shell.campaign-shell button { font-size: max(11px, 0.72rem); }
+  .campaign-back { min-height: 38px; padding: 7px 11px; }
+  .region-sortie-close { min-height: 36px; font-size: 11px; }
+  .region-sortie-briefing > p { font-size: 11px; line-height: 1.42; }
+  .region-sortie-briefing .region-sortie-intel dt,
+  .region-sortie-briefing .region-sortie-intel dd { font-size: 10px; }
+  .region-sortie-layout .sortie-weapon-card div small,
+  .region-sortie-layout .sortie-weapon-card div em,
+  .region-sortie-layout .sortie-weapon-card footer { font-size: 9px; }
+  .region-sortie-layout .sortie-weapon-card div strong { font-size: 14px; }
+  .region-sortie-command-footer > span { font-size: 10px; }
 }

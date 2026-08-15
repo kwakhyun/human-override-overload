@@ -847,3 +847,21 @@ final result: passed
   지침에 따라 실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 37 — complete · PC/모바일 독립 반응형 계층과 한글 가독성
+
+- Independent responsive systems: 세로 모바일과 fine-pointer PC의 마지막 CSS 계층을 분리했습니다.
+  1440×600처럼 높이가 짧은 PC도 모바일 8px 축소 타이포그래피를 상속하지 않으며, 캠페인 본문은
+  11px 이상, 뒤로가기/닫기 버튼은 36–38px 이상으로 유지합니다.
+- Portrait readability: 기지 명령을 2열 + 전체 폭 디펜스로 재배치하고 장식용 후행 아이콘을 숨겨
+  세 명령명을 한 줄로 유지했습니다. 권역 제목의 `· 구역 선택`을 의미 단위로 묶고 320px에서는
+  31px 제목을 사용합니다. 출격 상세의 정보표와 캐릭터 편성을 한 열로 전환하고 무기 영문 보조명을
+  숨겨 한글 이름을 우선했으며, 전체 폭 출격 버튼과 86px 스크롤 여유를 확보했습니다.
+- Essential verification: 모바일/캠페인 집중 테스트 14/14와 TypeScript 검사가 통과했습니다.
+  Edge에서 320×700, 360×800, 390×844 세로 모바일과 1440×600/1440×810 PC를 직접 조작했습니다.
+  360px 홈 명령은 모두 20px 높이 한 줄, 출격 정보는 최대 두 줄, 단일 캐릭터 카드는 298px,
+  출격 버튼은 314px 전체 폭이었고 가로 overflow와 console/page 오류는 모두 0이었습니다. 320px
+  상세창은 viewport 기준 `(8, 8)–(312, 692)` 안에 고정됐습니다. 전체 테스트와 production build는
+  사용자 지침에 따라 실행하지 않았습니다.
+
+final result: passed

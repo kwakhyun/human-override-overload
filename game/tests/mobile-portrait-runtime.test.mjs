@@ -55,8 +55,30 @@ test("portrait combat owns the full safe viewport and exposes a touch-anywhere f
   assert.match(portrait, /\.intro-minimal-controls \{ display: none; \}/);
   assert.match(portrait, /\.intro-mobile-controls \{[\s\S]*display: grid;[\s\S]*min-height: 48px/);
   assert.match(portrait, /\.region-mobile-swipe-hint \{[\s\S]*display: flex;[\s\S]*min-height: 42px/);
+  assert.match(portrait, /\.base-defense-action \{ grid-column: 1 \/ -1; \}/);
+  assert.match(portrait, /\.base-sortie-action > svg:last-child,[\s\S]*display: none/);
+  assert.match(portrait, /\.base-primary-actions b,[\s\S]*white-space: nowrap; word-break: keep-all/);
+  assert.match(portrait, /\.region-select-screen \.region-select-heading h1 \{[\s\S]*word-break: keep-all/);
+  assert.match(portrait, /\.region-select-screen \.region-select-heading h1 > span \{ white-space: nowrap; \}/);
+  assert.match(portrait, /\.region-sortie-briefing \.region-sortie-intel \{ grid-template-columns: 1fr/);
+  assert.match(portrait, /\.sortie-character-options \{ grid-template-columns: 1fr; \}/);
+  assert.match(portrait, /\.region-sortie-layout \.sortie-weapon-card div em \{ display: none; \}/);
+  assert.match(portrait, /\.region-sortie-command-footer \{[\s\S]*display: block/);
+  assert.match(portrait, /\.region-sortie-command-footer > span \{ display: none; \}/);
+  assert.match(portrait, /\.region-sortie-dialog \{ position: fixed;[\s\S]*margin-left: 0/);
+  assert.match(portrait, /\.region-mobile-swipe-hint \{[\s\S]*min-width: 210px;[\s\S]*white-space: nowrap/);
   assert.match(portrait, /\.expedition-pause-toggle \{ width: 48px; height: 48px; \}/);
   assert.match(portrait, /\.expedition-pause-card button \{[\s\S]*min-height: 56px;[\s\S]*font-size: 14px/);
   assert.match(app, /aria-label="모바일 게임 조작"/);
   assert.match(app, /className="expedition-pause-toggle"[\s\S]*aria-label="전투 일시정지"/);
+});
+
+test("short fine-pointer desktop windows keep desktop typography instead of phone compaction", async () => {
+  const styles = await read("src/styles.css");
+  const desktopGuard = styles.slice(styles.indexOf("/* Fine-pointer desktop guard"));
+
+  assert.match(desktopGuard, /@media \(min-width: 981px\) and \(max-height: 640px\) and \(pointer: fine\)/);
+  assert.match(desktopGuard, /\.campaign-shell\.campaign-shell p,[\s\S]*font-size: max\(11px, 0\.72rem\)/);
+  assert.match(desktopGuard, /\.campaign-back \{ min-height: 38px/);
+  assert.match(desktopGuard, /\.region-sortie-close \{ min-height: 36px; font-size: 11px/);
 });

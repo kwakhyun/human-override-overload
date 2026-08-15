@@ -23,10 +23,11 @@ test("App connects save slots to the base, hierarchical airship selection, retur
 });
 
 test("region selection previews and confirms a sortie instead of launching on card click", async () => {
-  const [app, screens, sounds] = await Promise.all([
+  const [app, screens, sounds, styles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/audio/sfx.js", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
   ]);
   assert.match(screens, /setSelectedRegionId\(region\.id\)/);
   assert.match(screens, /className="region-world-map"/);
@@ -41,6 +42,7 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /className="region-sortie-command-footer"/);
   assert.match(screens, /className="region-mobile-swipe-hint"/);
   assert.match(screens, /좌우로 밀어 구역 선택/);
+  assert.match(screens, /selectedCluster\.koreanName\}<span> · 구역 선택<\/span>/);
   assert.match(screens, /className="region-mixed-name"/);
   for (const mixedBoss of ["오답 엔진 · THE WRONG ENGINE", "거울 폭군 · MIRROR TYRANT", "침몰한 예언자 · DROWNED ORACLE"]) {
     assert.match(screens, new RegExp(mixedBoss));
@@ -48,6 +50,7 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /편성 확정 · 작전 시작/);
   assert.match(screens, /className="sortie-weapon-loadout"/);
   assert.match(screens, /className="sortie-character-loadout"/);
+  assert.match(styles, /\.region-sortie-briefing \.region-sortie-intel \{ margin-top: 15px; grid-template-columns: 1fr; \}/);
   assert.match(screens, /전투 중 <kbd>T<\/kbd>로 두 캐릭터를 교대합니다/);
   assert.match(app, /setCampaignCharacter\(campaign, activeSlotId, characterId\)/);
   assert.match(screens, /onClick=\{\(\) => onSelect\(selectedRegion\.id\)\}/);
