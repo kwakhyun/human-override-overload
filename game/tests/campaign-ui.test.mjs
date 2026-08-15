@@ -41,13 +41,13 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /className="region-sortie-layout"/);
   assert.match(screens, /className="region-sortie-command-footer"/);
   assert.match(screens, /className="region-mobile-swipe-hint"/);
-  assert.match(screens, /좌우로 밀어 구역 선택/);
+  assert.match(screens, /좌우로 밀어 출격 구역 선택/);
   assert.match(screens, /selectedCluster\.koreanName\}<span> · 구역 선택<\/span>/);
   assert.match(screens, /className="region-mixed-name"/);
   for (const mixedBoss of ["오답 엔진 · THE WRONG ENGINE", "거울 폭군 · MIRROR TYRANT", "침몰한 예언자 · DROWNED ORACLE"]) {
     assert.match(screens, new RegExp(mixedBoss));
   }
-  assert.match(screens, /편성 확정 · 작전 시작/);
+  assert.match(screens, /이 편성으로 출격/);
   assert.match(screens, /className="sortie-weapon-loadout"/);
   assert.match(screens, /className="sortie-character-loadout"/);
   assert.match(styles, /\.region-sortie-briefing \.region-sortie-intel \{ margin-top: 15px; grid-template-columns: 1fr; \}/);
@@ -236,7 +236,7 @@ test("first-sortie briefing separates automatic build skills from four new manua
     assert.match(screens, new RegExp(`key: "${key}"[\\s\\S]*?id: "${id}"[\\s\\S]*?name: "${name}"[\\s\\S]*?cooldown: ${cooldown}`));
   }
   assert.match(screens, /레벨업 기술/);
-  assert.match(screens, /직접 눌러 사용 · 자동 기술과 완전히 별개/);
+  assert.match(screens, /직접 사용 · 레벨업 기술과 별도/);
   assert.match(screens, /여러 바퀴 회전하며 사방을 연속 타격/);
   assert.match(screens, /실제 전투 화면/);
   assert.match(screens, /ability-example-callout/);

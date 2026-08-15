@@ -33,7 +33,7 @@ const HANA_RESEARCH_LINES = {
     currencyId: "researchData",
     name: "COMBAT FORECAST",
     koreanName: "전투 예측 모델",
-    description: "SOVEREIGN의 대응 패턴을 선행 분석해 모든 공격 피해를 높입니다.",
+    description: "SOVEREIGN의 대응 패턴을 미리 분석해 모든 공격의 피해를 높입니다.",
     ranks: [
       { rank: 1, cost: 3, requiresCompletedRegions: 1, bonuses: { damageMultiplier: 0.04 } },
       { rank: 2, cost: 6, requiresCompletedRegions: 2, bonuses: { damageMultiplier: 0.04 } },
@@ -47,7 +47,7 @@ const HANA_RESEARCH_LINES = {
     currencyId: "researchData",
     name: "ADAPTIVE LEARNING",
     koreanName: "적응 학습 회로",
-    description: "전투 데이터를 더 빠르게 해석해 출격 중 경험치 획득량을 높입니다.",
+    description: "전투 데이터를 빠르게 분석해 출격 중 얻는 경험치를 늘립니다.",
     ranks: [
       { rank: 1, cost: 2, requiresCompletedRegions: 1, bonuses: { xpGainMultiplier: 0.08 } },
       { rank: 2, cost: 5, requiresCompletedRegions: 2, bonuses: { xpGainMultiplier: 0.08 } },
@@ -61,7 +61,7 @@ const HANA_RESEARCH_LINES = {
     currencyId: "researchData",
     name: "THREAT CARTOGRAPHY",
     koreanName: "위협 지도화",
-    description: "실시간 안전 경로를 계산해 AEGIS의 기본 이동 속도를 높입니다.",
+    description: "안전한 경로를 실시간으로 계산해 AEGIS의 이동 속도를 높입니다.",
     ranks: [
       { rank: 1, cost: 2, requiresCompletedRegions: 1, bonuses: { moveSpeedMultiplier: 0.04 } },
       { rank: 2, cost: 4, requiresCompletedRegions: 2, bonuses: { moveSpeedMultiplier: 0.04 } },
@@ -78,7 +78,7 @@ const ILYA_EQUIPMENT_LINES = {
     currencyId: "equipmentParts",
     name: "PULSE EMITTER",
     koreanName: "펄스 소총 방출기",
-    description: "펄스 소총과 사격 계열 증강의 피해 출력을 영구적으로 높입니다.",
+    description: "펄스 소총과 사격 계열 증강의 피해를 영구적으로 높입니다.",
     ranks: [
       { rank: 1, cost: 2, requiresCompletedRegions: 0, bonuses: { rifleDamageMultiplier: 0.08 } },
       { rank: 2, cost: 6, requiresCompletedRegions: 1, bonuses: { rifleDamageMultiplier: 0.1 } },
@@ -92,7 +92,7 @@ const ILYA_EQUIPMENT_LINES = {
     currencyId: "equipmentParts",
     name: "EDGE RESONATOR",
     koreanName: "빔 소드 공명기",
-    description: "빔 소드 기본 베기와 모든 검술 증강의 피해 출력을 영구적으로 높입니다.",
+    description: "빔 소드의 기본 베기와 모든 검술 증강의 피해를 영구적으로 높입니다.",
     ranks: [
       { rank: 1, cost: 2, requiresCompletedRegions: 0, bonuses: { swordDamageMultiplier: 0.1 } },
       { rank: 2, cost: 6, requiresCompletedRegions: 1, bonuses: { swordDamageMultiplier: 0.12 } },
@@ -106,7 +106,7 @@ const ILYA_EQUIPMENT_LINES = {
     currencyId: "equipmentParts",
     name: "ACCELERATOR COIL",
     koreanName: "가속 코일",
-    description: "소총 구동계를 교체해 기본 무기와 획득 무기의 발사 속도를 높입니다.",
+    description: "소총 구동계를 교체해 기본 사격과 사격 증강의 발사 속도를 높입니다.",
     ranks: [
       { rank: 1, cost: 3, requiresCompletedRegions: 1, bonuses: { fireRateMultiplier: 0.05 } },
       { rank: 2, cost: 7, requiresCompletedRegions: 2, bonuses: { fireRateMultiplier: 0.06 } },
@@ -120,7 +120,7 @@ const ILYA_EQUIPMENT_LINES = {
     currencyId: "equipmentParts",
     name: "REACTIVE PLATING",
     koreanName: "반응 장갑",
-    description: "충격 분산 장갑판을 증설해 출격 시 최대 내구도를 영구적으로 높입니다.",
+    description: "충격 분산 장갑판을 보강해 출격 시 최대 내구도를 영구적으로 늘립니다.",
     ranks: [
       { rank: 1, cost: 3, requiresCompletedRegions: 1, bonuses: { maxHpFlat: 35 } },
       { rank: 2, cost: 6, requiresCompletedRegions: 2, bonuses: { maxHpFlat: 45 } },
@@ -134,7 +134,7 @@ const ILYA_EQUIPMENT_LINES = {
     currencyId: "equipmentParts",
     name: "NANITE INJECTOR",
     koreanName: "나나이트 주입기",
-    description: "회복 키트와 전투 중 복구 프로토콜의 회복 효율을 높입니다.",
+    description: "회복 키트와 전투 중 복구 효과를 강화합니다.",
     ranks: [
       { rank: 1, cost: 2, requiresCompletedRegions: 1, bonuses: { healingMultiplier: 0.1 } },
       { rank: 2, cost: 5, requiresCompletedRegions: 2, bonuses: { healingMultiplier: 0.12 } },
@@ -146,7 +146,7 @@ const ILYA_EQUIPMENT_LINES = {
 const AEGIS_AUGMENTATION_LINES = {
   "aegis-assault-sync": {
     id: "aegis-assault-sync", ownerId: "aegis", category: "augmentation", currencyId: "augmentationCores",
-    name: "ASSAULT SYNCHRONIZATION", koreanName: "공격 동기화", description: "전투 신경과 주무기 코어를 동기화해 모든 피해를 영구적으로 높입니다.",
+    name: "ASSAULT SYNCHRONIZATION", koreanName: "공격 동기화", description: "전투 신경과 주무기 코어의 반응을 맞춰 모든 공격의 피해를 영구적으로 높입니다.",
     ranks: [
       { rank: 1, cost: 2, requiresCompletedRegions: 1, bonuses: { damageMultiplier: 0.06 } },
       { rank: 2, cost: 5, requiresCompletedRegions: 3, bonuses: { damageMultiplier: 0.08 } },
@@ -155,7 +155,7 @@ const AEGIS_AUGMENTATION_LINES = {
   },
   "aegis-vital-frame": {
     id: "aegis-vital-frame", ownerId: "aegis", category: "augmentation", currencyId: "augmentationCores",
-    name: "VITAL FRAME", koreanName: "생존 프레임", description: "신체 보조 프레임과 충격 분산층을 강화해 최대 내구도를 크게 높입니다.",
+    name: "VITAL FRAME", koreanName: "생존 프레임", description: "신체 보조 프레임과 충격 분산층을 강화해 최대 내구도를 크게 늘립니다.",
     ranks: [
       { rank: 1, cost: 2, requiresCompletedRegions: 1, bonuses: { maxHpFlat: 55 } },
       { rank: 2, cost: 5, requiresCompletedRegions: 3, bonuses: { maxHpFlat: 75 } },
@@ -164,7 +164,7 @@ const AEGIS_AUGMENTATION_LINES = {
   },
   "aegis-reflex-drive": {
     id: "aegis-reflex-drive", ownerId: "aegis", category: "augmentation", currencyId: "augmentationCores",
-    name: "REFLEX DRIVE", koreanName: "반응 가속", description: "시각·운동 보조 회선을 가속해 이동과 기본 공격의 반응 속도를 함께 높입니다.",
+    name: "REFLEX DRIVE", koreanName: "반응 가속", description: "시각·운동 보조 장치의 반응을 높여 이동과 기본 공격을 모두 빠르게 만듭니다.",
     ranks: [
       { rank: 1, cost: 2, requiresCompletedRegions: 1, bonuses: { moveSpeedMultiplier: 0.04, fireRateMultiplier: 0.04 } },
       { rank: 2, cost: 5, requiresCompletedRegions: 3, bonuses: { moveSpeedMultiplier: 0.05, fireRateMultiplier: 0.05 } },

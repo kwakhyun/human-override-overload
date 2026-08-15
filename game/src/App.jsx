@@ -145,18 +145,18 @@ const BASE_BONUS_LABELS = Object.freeze({
 const FACILITY_COPY = Object.freeze({
   research: {
     kicker: "하나 · 소버린 분석 연구실",
-    description: "회수한 지역 추론 데이터를 영구 전투 알고리즘으로 변환합니다. 상위 랭크는 더 많은 지역 해방 기록이 필요합니다.",
-    currencyHint: "지역 추론핵 격파 시 획득",
+    description: "회수한 추론 데이터를 분석해 영구 전투 보너스로 바꿉니다. 높은 단계의 연구에는 더 많은 지역을 해방해야 합니다.",
+    currencyHint: "지역 추론핵을 파괴하면 획득",
   },
   equipment: {
     kicker: "일리야 · 이지스 장비 정비소",
-    description: "전장에서 회수한 부품으로 펄스 소총과 빔 소드, 장갑, 나나이트 장비를 영구 개조합니다.",
-    currencyHint: "지역 군단·보스 잔해에서 회수",
+    description: "전장에서 회수한 부품으로 펄스 소총과 빔 소드, 장갑, 나나이트 장비를 영구적으로 개조합니다.",
+    currencyHint: "적 군단과 보스의 잔해에서 회수",
   },
   augmentation: {
     kicker: "이지스 · 인물 동기화실",
-    description: "반복 작전에서 회수한 동기화 코어로 신체 보조 프레임과 전투 신경을 영구 강화합니다.",
-    currencyHint: "지역 반복 클리어와 추론핵 격파로 획득",
+    description: "반복 작전에서 얻은 동기화 코어로 신체 보조 프레임과 전투 신경을 영구적으로 강화합니다.",
+    currencyHint: "지역을 반복 공략하고 추론핵을 파괴하면 획득",
   },
 });
 
@@ -197,7 +197,7 @@ const OBJECTIVE_NAME_KO = Object.freeze({
   "DESCEND INTO THE ARCHIVE": "심해 기록고 진입",
   "SHUT DOWN THE FOUNDRY": "네온 주조구 정지",
   "BREAK THE STORM GRID": "폭풍 제어망 파괴",
-  "PURGE THE GENE VAULT": "생체 금고 소거",
+  "PURGE THE GENE VAULT": "생체 금고 정화",
   "적 전멸 · 보스 구역 전환 준비": "적 전멸 · 보스 구역 전환 준비",
   "SOVEREIGN 신호 폭주 감지": "소버린 비상 신호 감지",
   ADVANCE: "전진",
@@ -259,7 +259,7 @@ function formatBaseBonusEntries(entries = []) {
   for (const entry of entries) {
     for (const [key, value] of Object.entries(entry?.bonuses || {})) totals.set(key, (totals.get(key) || 0) + Number(value || 0));
   }
-  if (!totals.size) return "미적용";
+  if (!totals.size) return "효과 없음";
   return [...totals].map(([key, value]) => {
     const [label, type] = BASE_BONUS_LABELS[key] || [key, "flat"];
     return `${label} +${type === "percent" ? Math.round(value * 100) + "%" : Math.round(value)}`;
@@ -356,18 +356,18 @@ const IMPACT_EVENT_TYPES = new Set([
 ]);
 
 const EVENT_BANNERS = Object.freeze({
-  swarmCleared: ["적 전력 소거", "독립 보스 전장으로 자동 전환합니다."],
+  swarmCleared: ["적 전멸", "보스 전장으로 자동 이동합니다."],
   bossStage: ["공격 패턴 진화", "보스의 공격 조합이 더 빨라집니다."],
-  bossStagePulse: ["⚠ 광폭화 진행", "장갑 형상과 공격 알고리즘이 다시 변이합니다."],
+  bossStagePulse: ["⚠ 광폭화", "장갑 형상이 바뀌고 공격이 더욱 거세집니다."],
   bossWeakness: ["코어 노출 · 피해 2배", "돌진이 벽에 충돌했습니다. 지금 화력을 집중하세요."],
   bossGroggy: ["보스 그로기 · 피해 2.5배", "첫 추론핵이 무방비 상태입니다. 모든 화력을 집중하세요."],
-  bossRoomLoading: ["보스 구역 연결", "선택한 지역의 보스 구역을 불러오는 중입니다."],
-  surgeWarning: ["⚠ 대규모 공세 접근", "전방 관문 신호가 폭증합니다. 곧 적 증원이 진입합니다."],
-  surgeStart: ["증원 공세 시작", "전송 관문에서 적이 밀려옵니다. 현재 공세를 소거하세요."],
-  skillMastered: ["기술 최종 진화", "광역 섬멸 프로토콜이 활성화되었습니다."],
+  bossRoomLoading: ["보스 구역 준비 중", "선택한 지역의 보스 전장을 불러오고 있습니다."],
+  surgeWarning: ["⚠ 대규모 공세 임박", "전방 관문의 신호가 급증했습니다. 곧 적 증원이 밀려옵니다."],
+  surgeStart: ["증원 공세 시작", "전송 관문에서 적이 밀려옵니다. 이번 공세를 막아내세요."],
+  skillMastered: ["기술 최종 진화", "광역 섬멸 기술이 최고 단계로 진화했습니다."],
   ultimateWarning: ["공중 지원 조준 완료", "표시된 공격 범위에서 벗어나 화력을 집중하세요."],
-  squadSummon: ["동료 연결 완료", "전술 동료의 전투 회선이 동기화되었습니다."],
-  overdrive: ["무기 과부하 해제", "처치 데이터가 화력 제한기를 해제합니다."],
+  squadSummon: ["동료 합류", "전술 동료가 전투에 합류했습니다."],
+  overdrive: ["무기 과부하 해제", "누적된 처치 데이터로 화력 제한이 풀렸습니다."],
   bossContact: ["⚠ 본체 충돌", "보스 본체와 충돌해 구동계가 잠시 정지됩니다."],
   bossContactHit: ["⚠ 본체 충돌", "보스 본체와 충돌해 구동계가 잠시 정지됩니다."],
   playerStunned: ["구동계 교란", "이동과 대시가 잠시 차단됩니다."],
@@ -401,7 +401,7 @@ const SCENARIO_SCRIPT = Object.freeze({
   ]),
   "rook-trace": Object.freeze([
     Object.freeze({ speaker: "AEGIS", text: "루크의 탄창… 전부 비어 있어. 소버린의 사냥 기체를 여기서 마지막까지 막았던 거야." }),
-    Object.freeze({ speaker: "OPERATOR", text: "생체 신호 없음. 대신 그가 지킨 전투 기록은 살아 있어. 이어서 전진해." }),
+    Object.freeze({ speaker: "OPERATOR", text: "생체 신호는 없어. 하지만 그가 지킨 전투 기록은 남아 있어. 계속 전진해." }),
   ]),
   "nyx-trace": Object.freeze([
     Object.freeze({ speaker: "AEGIS", text: "닉스의 위상 칼날이야. 코어에 분석 기록이 남아 있어." }),
@@ -421,7 +421,7 @@ const SCENARIO_SCRIPT = Object.freeze({
   ]),
   "engine-destroyed": Object.freeze([
     Object.freeze({ speaker: "AEGIS", text: "루크, 닉스, 모스… 통제망이 무너지고 있어. 길은 열렸어." }),
-    Object.freeze({ speaker: "HANA", text: "그건 중앙핵이 아니었어. 지역 추론 분기야. 헤이븐-09 귀환 좌표를 전송할게. 살아서 돌아와, 이지스." }),
+    Object.freeze({ speaker: "HANA", text: "그건 중앙핵이 아니었어. 지역 추론 분기야. 헤이븐-09로 돌아올 항로를 잡아 줄게. 살아서 돌아와, 이지스." }),
   ]),
   "glass-dune-deployment": Object.freeze([
     Object.freeze({ speaker: "LARK", text: "유리 사구에 진입했어. 소버린이 사막의 태양 집광망을 무기로 바꿨어." }),
@@ -432,7 +432,7 @@ const SCENARIO_SCRIPT = Object.freeze({
     Object.freeze({ speaker: "AEGIS", text: "빛이 하나뿐이라면, 내가 깨뜨려 갈라놓겠어." }),
   ]),
   "glass-dune-destroyed": Object.freeze([
-    Object.freeze({ speaker: "ILYA", text: "태양 집광망 정지 확인. 사막 정착지에 새벽 신호가 돌아왔어." }),
+    Object.freeze({ speaker: "ILYA", text: "태양 집광망이 멈췄어. 사막 정착지에 새벽 신호가 돌아왔어." }),
     Object.freeze({ speaker: "AEGIS", text: "회수 데이터를 기지로 보낸다. 다음 분기도 끊어낸다." }),
   ]),
   "abyssal-archive-deployment": Object.freeze([
@@ -444,7 +444,7 @@ const SCENARIO_SCRIPT = Object.freeze({
     Object.freeze({ speaker: "AEGIS", text: "기록은 운명이 아니야. 이번 답은 네 데이터 밖에 있다." }),
   ]),
   "abyssal-archive-destroyed": Object.freeze([
-    Object.freeze({ speaker: "LARK", text: "심해 기억망이 열렸어. 삭제됐던 도시들의 이름이 다시 송신되고 있어." }),
+    Object.freeze({ speaker: "LARK", text: "심해 기억망이 열렸어. 지워졌던 도시들의 이름이 다시 들려오고 있어." }),
     Object.freeze({ speaker: "AEGIS", text: "이름과 선택을 전부 가지고 돌아간다. 소버린의 다음 좌표를 찾아." }),
   ]),
   "neon-foundry-encounter": Object.freeze([
@@ -452,8 +452,8 @@ const SCENARIO_SCRIPT = Object.freeze({
     Object.freeze({ speaker: "AEGIS", text: "사람은 네 공장의 부품이 아니야. 생산로째로 멈춰 주지." }),
   ]),
   "neon-foundry-destroyed": Object.freeze([
-    Object.freeze({ speaker: "ILYA", text: "주조 라인 정지 확인. 소버린의 병기 생산량이 급감했어." }),
-    Object.freeze({ speaker: "AEGIS", text: "나이트자, 귀환 좌표 연결. 회수한 설계도를 기지로 보낸다." }),
+    Object.freeze({ speaker: "ILYA", text: "주조 라인이 멈췄어. 소버린의 병기 생산량도 급감하고 있어." }),
+    Object.freeze({ speaker: "AEGIS", text: "나이트자, 귀환 항로를 열어. 회수한 설계도는 기지로 보낸다." }),
   ]),
   "storm-spire-encounter": Object.freeze([
     Object.freeze({ speaker: "TEMPEST WYRM", text: "하늘의 모든 경로는 계산되었다. 추락만이 남았다." }),
@@ -468,7 +468,7 @@ const SCENARIO_SCRIPT = Object.freeze({
     Object.freeze({ speaker: "AEGIS", text: "불완전함까지 우리가 선택해. 네 교정은 여기서 끝이야." }),
   ]),
   "gene-vault-destroyed": Object.freeze([
-    Object.freeze({ speaker: "HANA", text: "생체 제조 계보 소거 확인. 합성 군단의 증식 신호가 멎었어." }),
+    Object.freeze({ speaker: "HANA", text: "생체 제조 기록을 모두 지웠어. 합성 군단의 증식 신호도 멎었어." }),
     Object.freeze({ speaker: "AEGIS", text: "표본 기록을 봉인하고 헤이븐-09로 돌아간다." }),
   ]),
 });
@@ -634,7 +634,7 @@ const REWARD_COPY = Object.freeze({
   damage: "모든 무기와 동료가 주는 피해가 25% 증가합니다.",
   fireRate: "전체 무기의 공격 주기가 19% 빨라집니다.",
   multishot: "기본 펄스 사격에 추가 투사체 한 발을 결합합니다.",
-  shield: "피격 후 다시 충전되는 40의 보호막을 획득합니다.",
+  shield: "피격 후 다시 충전되는 내구도 40의 보호막을 얻습니다.",
   dash: "대시 재사용 시간이 줄고 무적 시간이 길어집니다.",
   regen: "손상된 체력을 전투 중 지속적으로 복구합니다.",
   edgeReach: "모든 검술의 사거리와 충격 피해가 증가합니다.",
@@ -645,7 +645,7 @@ const REWARD_COPY = Object.freeze({
   omegaLaser: "조준 방향으로 거대 레이저포를 호출합니다. 마스터 시 광폭 빔이 전장을 관통합니다.",
   drone: "장거리에서 적을 추적하는 기동 편대입니다. 고랭크에서 장갑을 관통합니다.",
   sentry: "이지스를 따라 이동하며 좌우 한 쌍의 관통탄을 발사합니다. 고랭크에서 고속 관통 편대로 진화합니다.",
-  suppressor: "반복 EMP로 밀집한 적을 감속·소거하는 광역 제어 동료입니다.",
+  suppressor: "EMP를 반복 방출해 밀집한 적의 속도를 늦추고 피해를 주는 광역 제어 동료입니다.",
 });
 
 const REWARD_ART_KEYS = Object.freeze({
@@ -808,20 +808,20 @@ function ProgressHud({ hud }) {
   return (
     <div className={bossPhase ? `progress-hud is-boss${weakness > 0 ? " has-weakness" : ""}` : "progress-hud"}>
       <div className="progress-heading">
-        <span>{bossPhase ? `${hud.boss.stage || 1}단계` : "적 군단 소거"}</span>
+        <span>{bossPhase ? `${hud.boss.stage || 1}단계` : "남은 적 처치"}</span>
         <strong>{bossPhase ? localizeBossName(hud.boss.name) : "기계 군단"}</strong>
         <b>{bossPhase ? (weakness > 0 ? `코어 피해 ×${hud.boss.damageMultiplier || 2}` : `체력 ${Math.ceil(hud.boss.hp)}`) : `남은 적 ${hud?.enemiesRemaining ?? 0}기`}</b>
       </div>
       <div className="progress-bar"><i style={{ width: `${(bossPhase ? bossRatio : swarmRatio) * 100}%` }} /><span /></div>
       <div className="progress-meta">
-        <span>{bossPhase ? (hud.boss.transforming ? `⚠ EVOLUTION LOCK · ${hud.boss.transformTimer.toFixed(1)}s` : hud.boss.pattern ? `PATTERN · ${String(hud.boss.pattern).toUpperCase()}` : `ENRAGE ×${Number(hud.boss.enrage || 1).toFixed(1)}`) : `${hud?.kills || 0} / ${hud?.totalEnemies || 1000} PURGED`}</span>
+        <span>{bossPhase ? (hud.boss.transforming ? `⚠ 형상 전환 · ${hud.boss.transformTimer.toFixed(1)}초` : hud.boss.pattern ? `패턴 · ${String(hud.boss.pattern).toUpperCase()}` : `광폭화 ×${Number(hud.boss.enrage || 1).toFixed(1)}`) : `처치 ${hud?.kills || 0} / ${hud?.totalEnemies || 1000}`}</span>
         <span>{bossPhase
           ? (weakness > 0 ? `코어 노출 ${weakness.toFixed(1)}초` : "경고 범위를 피하세요")
           : hud?.surge?.warning
             ? `⚠ ${hud.surge.warning.label} · ${hud.surge.warning.startsIn.toFixed(1)}s`
             : hud?.surge?.active
-              ? `${hud.surge.active.label} · ${hud.surge.active.remaining} DEPLOYING`
-              : `${hud?.liveEnemies || 0} ACTIVE`}</span>
+              ? `${hud.surge.active.label} · 증원 ${hud.surge.active.remaining}기`
+              : `현장 적 ${hud?.liveEnemies || 0}기`}</span>
       </div>
     </div>
   );
@@ -1469,8 +1469,8 @@ function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
           : ["⚠ ARMOR BREAK · PHASE II", "외부 장갑 전개. 공격 속도와 탄막 밀도가 상승합니다."];
       } else if (event.type === "overdrive") {
         copy = [`OVERDRIVE ${event.tier} · LIMITER OFF`, event.tier >= 3
-          ? "최종 화력 해방. 마스터 광역 공격이 전장을 연속 소거합니다."
-          : "처치 데이터가 공격 속도와 피해 출력을 증폭합니다."];
+          ? "최종 화력이 해방됩니다. 최고 단계의 광역 공격이 전장을 연달아 휩씁니다."
+          : "누적된 전투 데이터로 공격 속도와 피해량이 증가합니다."];
       }
       if (!copy) return;
       window.clearTimeout(bannerTimeout);
@@ -1787,9 +1787,9 @@ function NarrativePanel({ dialogue, assets, region, bossStage, characterId = "ae
 }
 
 const CLEAR_TRANSITION_COPY = Object.freeze({
-  warning: Object.freeze(["적 전력 소거 확인", "보스 구역의 방어망이 붕괴합니다."]),
-  panic: Object.freeze(["소버린 비상 신호 포착", "지역 추론핵이 퇴로를 봉쇄합니다. 추격을 계속하세요."]),
-  swap: Object.freeze(["보스 구역 강제 연결", "전장을 전환하고 있습니다. 곧 최종 교전이 시작됩니다."]),
+  warning: Object.freeze(["적 전멸 확인", "보스 구역의 방어망이 무너지고 있습니다."]),
+  panic: Object.freeze(["소버린 비상 신호 감지", "지역 추론핵이 퇴로를 막고 있습니다. 곧바로 추격하세요."]),
+  swap: Object.freeze(["보스 구역으로 이동", "전장을 전환하고 있습니다. 잠시 후 최종 교전이 시작됩니다."]),
 });
 
 function RouteClearTransition({ transition }) {
@@ -1929,8 +1929,8 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
           : ["⚠ 장갑 파괴 · 2단계", "외부 장갑이 전개됩니다. 공격 속도와 탄막 밀도가 상승합니다."];
       } else if (event.type === "overdrive") {
         copy = [`과부하 ${event.tier}단계 · 제한 해제`, event.tier >= 3
-          ? "최종 화력이 해방되어 광역 공격이 전장을 연속 소거합니다."
-          : "처치 데이터가 공격 속도와 피해 출력을 증폭합니다."];
+          ? "최종 화력이 해방되어 광역 공격이 전장을 연달아 휩씁니다."
+          : "누적된 전투 데이터로 공격 속도와 피해량이 증가합니다."];
       }
       if (!copy) return;
       window.clearTimeout(bannerTimeout);
@@ -2413,7 +2413,7 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
         ) : (
           <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="fill" /><span><small>{selectedTowerDefinition?.role}</small><b>{hud.selectedTower.rank >= 3 ? "최대 강화 완료" : `${selectedTowerDefinition?.name} 강화`}</b></span><ArrowRight weight="bold" /></button>
         )}
-        <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="fill" /><span><small>{hud?.wave === 1 ? "첫 공세 준비" : `다음 공세까지 ${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "웨이브 조기 개시" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
+        <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="fill" /><span><small>{hud?.wave === 1 ? "첫 공세 준비" : `다음 공세까지 ${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "지금 공세 시작" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
       </aside>
       {tutorialActive && <DefenseSpotlightGuide stepIndex={tutorialStep} portrait={assets?.controlOfficer} onNext={advanceTutorial} onBack={() => setTutorialStep((step) => Math.max(0, step - 1))} onSkip={finishTutorial} />}
     </main>
@@ -2427,7 +2427,7 @@ function DefenseResultScreen({ result, stage, rewards, onRetry, onBase }) {
       <section>
         <small>RHEA DEFENSE CONTROL · {stage?.subtitle}</small>
         <h1>{victory ? "방어 작전 성공" : "추론핵 방어 실패"}</h1>
-        <p>{victory ? "레아의 관제 기록이 확정됐습니다. 회수 자원이 기지 저장고로 전송됩니다." : "배치 순서와 화력 축선을 재편한 뒤 다시 도전하세요."}</p>
+        <p>{victory ? "방어 작전 기록을 저장했습니다. 회수한 자원은 기지 저장고에 보관됩니다." : "포대 배치와 사격 범위를 조정한 뒤 다시 도전하세요."}</p>
         <div className="defense-result-stats"><span><small>도달 웨이브</small><b>{result?.waves || 0} / {result?.totalWaves || stage?.waveCounts.length}</b></span><span><small>격파</small><b>{result?.kills || 0}</b></span><span><small>기지 피해</small><b>{result?.leaks || 0}</b></span></div>
         {victory && rewards && <div className="defense-result-rewards"><span>회수 보상</span><b>연구 자료 +{rewards.researchData}</b><b>장비 부품 +{rewards.equipmentParts}</b><b>동기화 코어 +{rewards.augmentationCores}</b></div>}
         <footer><button type="button" className="primary-cta" onClick={onRetry}><ArrowCounterClockwise weight="bold" /> 같은 방어선 재도전</button><button type="button" className="result-base-return" onClick={onBase}><HouseLine weight="bold" /> 헤이븐-09로 복귀</button></footer>
@@ -2449,7 +2449,7 @@ function ResultScreen({ result, assets, region, onRestart, onBase }) {
         <div className="result-emblem">{victory ? <Trophy weight="fill" /> : <Warning weight="fill" />}</div>
         <div className="result-kicker">{victory ? `${bossDisplayName} 파괴 완료` : "이지스 신호 소실"}</div>
         <h1>{victory ? "작전 성공" : "작전 실패"}</h1>
-        <p>{victory ? `${mixedRegionName(region)}의 군단과 지역 추론핵을 파괴했습니다. 전투 기록을 기지로 전송합니다.` : "소버린이 이번 전투 패턴을 학습했습니다. 다음 출격에서는 이동과 성장 선택을 바꿔 보세요."}</p>
+        <p>{victory ? `${mixedRegionName(region)}의 군단과 지역 추론핵을 파괴했습니다. 작전 기록을 기지에 저장합니다.` : "소버린이 이번 전투 방식을 학습했습니다. 다음 출격에서는 이동 경로와 성장 방향을 바꿔 보세요."}</p>
         {(assets?.bossPhase3 || assets?.boss) && <img className="result-boss" src={(assets.bossPhase3 || assets.boss).src} alt={`${bossDisplayName} 최종 광폭화 형상`} />}
         <div className="result-stats">
           <span><small>처치한 적</small><b>{result?.kills || result?.stats?.kills || 0}</b></span>
@@ -2802,7 +2802,7 @@ export function App() {
         && isCharacterUnlocked("mika", completedSlot?.completedRegionIds || []);
       if (mikaJustUnlocked) {
         prepareSurface(
-          "신규 전투원 미카 연결 중",
+          "신규 전투원 미카 불러오는 중",
           [DOM_ASSET_REFS.mikaPortrait?.src, DOM_ASSET_REFS.characterSyncChamber?.src],
           () => setScreen("recruit"),
         );

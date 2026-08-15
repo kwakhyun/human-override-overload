@@ -1782,7 +1782,7 @@ function killEnemy(state, enemy, source = "weapon") {
       koreanName: state.expedition.midBoss.definition.koreanName,
       next: "bossRoom",
     });
-    addText(state, "중간보스 격파 · 보스방 연결", enemy.x, enemy.y - 74, "#72f2ff", 1.25);
+    addText(state, "중간 보스 처치 · 보스 구역 준비", enemy.x, enemy.y - 74, "#72f2ff", 1.25);
   } else {
     state.killedEnemies += 1;
   }
@@ -3706,11 +3706,11 @@ function beginRouteClearTransition(state) {
   emit(state, "routeClearWarning", {
     duration: ROUTE_CLEAR_WARNING_DURATION,
     title: "적 전멸 확인",
-    message: "SOVEREIGN 방어망이 붕괴합니다.",
+    message: "SOVEREIGN 방어망이 무너지고 있습니다.",
     kills: state.killedEnemies,
     regionId: state.regionId,
   });
-  addText(state, "구역 소거 완료", state.player.x, state.player.y - 86, "#72f2ff", 1.45);
+  addText(state, "구역의 적을 모두 처치했습니다", state.player.x, state.player.y - 86, "#72f2ff", 1.45);
 }
 
 function updateRouteClearTransition(state, dt) {
@@ -3733,7 +3733,7 @@ function updateRouteClearTransition(state, dt) {
       duration: ROUTE_CLEAR_PANIC_DURATION,
       beat: "sovereign-panic",
       title: "경고 · 적 지휘망 폭주",
-      message: "보스 코어가 전장을 강제로 전환합니다.",
+      message: "보스 코어가 전장을 강제로 바꾸고 있습니다.",
       regionId: state.regionId,
     });
     return;
@@ -3753,8 +3753,8 @@ function updateRouteClearTransition(state, dt) {
     regionId: state.regionId,
     bossName: state.boss.name,
     chamber: state.bossChamber,
-    title: "보스 구역 강제 연결",
-    message: "전장 좌표를 동기화합니다.",
+    title: "보스 구역으로 이동",
+    message: "보스 전장으로 이동합니다.",
   });
 }
 
