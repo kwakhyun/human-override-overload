@@ -94,9 +94,13 @@ await page.screenshot({ path: path.join(qaDir, "defense-mode-mobile-portrait.png
 
 const mobileGuideContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const mobileGuidePage = await mobileGuideContext.newPage();
+const mobileDefenseAssetUrls = [];
 mobileGuidePage.on("pageerror", (error) => errors.push(`mobile-page:${error.message}`));
 mobileGuidePage.on("console", (message) => {
   if (message.type() === "error") errors.push(`mobile-console:${message.text()}`);
+});
+mobileGuidePage.on("response", (response) => {
+  if (response.url().includes("/assets/overload/defense/")) mobileDefenseAssetUrls.push(response.url());
 });
 await mobileGuidePage.goto("http://127.0.0.1:4174/", { waitUntil: "domcontentloaded" });
 await mobileGuidePage.evaluate(() => localStorage.clear());
@@ -111,11 +115,20 @@ await mobileGuidePage.locator(".defense-load-chip").waitFor({ state: "detached",
 const mobileGuide = mobileGuidePage.locator(".defense-guide-overlay");
 await mobileGuide.waitFor({ state: "visible" });
 assert.equal(await mobileGuide.getAttribute("data-defense-guide-step"), "1");
+assert.ok(mobileDefenseAssetUrls.some((url) => url.includes("/defense/performance/")), "portrait defense should boot performance atlases");
+const runtimeAssetNames = [
+  "defense-systems-motion-atlas.png",
+  "defense-enemy-motion-atlas-v2.png",
+  "defense-combat-vfx-atlas-v2.png",
+];
+const mobileRuntimeAssets = mobileDefenseAssetUrls.filter((url) => runtimeAssetNames.some((name) => url.endsWith(name)));
+assert.equal(mobileRuntimeAssets.length, runtimeAssetNames.length, "portrait defense should load every runtime atlas once");
+assert.equal(mobileRuntimeAssets.every((url) => url.includes("/defense/performance/")), true, "portrait defense must use performance runtime atlases");
 const mobileGuideCard = await mobileGuidePage.locator(".defense-guide-card").boundingBox();
 assert.ok(mobileGuideCard && mobileGuideCard.x >= 0 && mobileGuideCard.y >= 0 && mobileGuideCard.x + mobileGuideCard.width <= 390 && mobileGuideCard.y + mobileGuideCard.height <= 844);
 await mobileGuidePage.screenshot({ path: path.join(qaDir, "defense-guide-mobile-portrait.png"), fullPage: true });
 await mobileGuideContext.close();
 
 assert.deepEqual(errors, []);
-console.log(JSON.stringify({ result: "pass", stages: 3, guideSteps: 4, guidePersisted: true, mobileGuideFits: true, towerBuilt: "pulseSentry", waveStarted: true, mobileBounds, errors }, null, 2));
+console.log(JSON.stringify({ result: "pass", stages: 3, guideSteps: 4, guidePersisted: true, mobileGuideFits: true, mobilePerformanceAssets: mobileRuntimeAssets.length, towerBuilt: "pulseSentry", waveStarted: true, mobileBounds, errors }, null, 2));
 await browser.close();

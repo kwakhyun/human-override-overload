@@ -27,6 +27,14 @@ export class DefenseView {
   private readonly enemySprites = new Map<string, Phaser.GameObjects.Sprite>();
   private readonly projectileSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private readonly effectSprites = new Map<string, Phaser.GameObjects.Sprite>();
+  // Reuse hot-loop scratch collections. Defense waves can keep hundreds of
+  // actors alive, so allocating four Sets and a Map every render creates
+  // avoidable garbage-collector spikes on mobile browsers.
+  private readonly liveTowerIds = new Set<string>();
+  private readonly liveEnemyIds = new Set<string>();
+  private readonly liveProjectileIds = new Set<string>();
+  private readonly liveEffectIds = new Set<string>();
+  private readonly occupiedRanks = new Map<string, number>();
   private readonly deathSprites: Phaser.GameObjects.Sprite[] = [];
   private readonly nodeZones = new Map<string, Phaser.GameObjects.Arc>();
   private readonly nodeLabels = new Map<string, Phaser.GameObjects.Text>();
@@ -116,7 +124,8 @@ export class DefenseView {
   }
 
   private syncTowers(state: DefenseState) {
-    const live = new Set<string>();
+    const live = this.liveTowerIds;
+    live.clear();
     for (const tower of state.towers) {
       live.add(tower.id);
       let sprite = this.towerSprites.get(tower.id);
@@ -128,7 +137,8 @@ export class DefenseView {
       const row = tower.type === "pulseSentry" ? 0 : tower.type === "arcRelay" ? 1 : tower.type === "skyfireBattery" ? 2 : 3;
       const progress = tower.attackTimer > 0 ? 1 - tower.attackTimer / 0.32 : 0;
       const column = tower.attackTimer > 0 ? Math.min(5, 2 + Math.floor(progress * 4)) : Math.floor(state.time * 2.4 + tower.rank) % 2;
-      sprite.setFrame(`defense-system-${row}-${column}`);
+      const frameName = `defense-system-${row}-${column}`;
+      if (sprite.frame.name !== frameName) sprite.setFrame(frameName);
       sprite.setPosition(point.x, point.y);
       const baseSize = this.portrait ? 78 : 88;
       sprite.setDisplaySize(baseSize + tower.rank * 7, baseSize + tower.rank * 7);
@@ -142,7 +152,8 @@ export class DefenseView {
   }
 
   private syncEnemies(state: DefenseState) {
-    const live = new Set<string>();
+    const live = this.liveEnemyIds;
+    live.clear();
     for (const enemy of state.enemies) {
       live.add(enemy.id);
       const point = this.toDisplay(enemy.x, enemy.y);
@@ -150,14 +161,16 @@ export class DefenseView {
       if (!sprite) {
         sprite = this.scene.add.sprite(point.x, point.y, ASSET_KEYS.defenseEnemyMotion).setDepth(3);
         sprite.setData("previousX", point.x);
+        sprite.setData("frameOffset", Number(String(enemy.id).split("-").at(-1)) || 0);
         this.enemySprites.set(enemy.id, sprite);
       }
       const row = ENEMY_ROWS[enemy.role] ?? 0;
-      const frameOffset = Number(String(enemy.id).split("-").at(-1)) || 0;
+      const frameOffset = Number(sprite.getData("frameOffset")) || 0;
       let column = Math.floor(state.time * (enemy.role === "siegeWalker" ? 4.5 : 7) + frameOffset) % 3;
       if (enemy.role === "hunter" && enemy.pathProgress > 3.3) column = 3 + Math.floor(state.time * 8) % 2;
       if (enemy.hitFlash > 0) column = enemy.role === "siegeWalker" ? 2 : 4;
-      sprite.setFrame(`defense-enemy-${row}-${column}`);
+      const frameName = `defense-enemy-${row}-${column}`;
+      if (sprite.frame.name !== frameName) sprite.setFrame(frameName);
       const previousX = Number(sprite.getData("previousX") ?? point.x);
       if (Math.abs(point.x - previousX) > 0.15) sprite.setFlipX(point.x < previousX);
       sprite.setData("previousX", point.x);
@@ -173,7 +186,8 @@ export class DefenseView {
   }
 
   private syncProjectiles(state: DefenseState) {
-    const live = new Set<string>();
+    const live = this.liveProjectileIds;
+    live.clear();
     for (const projectile of state.projectiles) {
       live.add(projectile.id);
       const point = this.toDisplay(projectile.x, projectile.y);
@@ -184,7 +198,8 @@ export class DefenseView {
       }
       const row = projectile.kind === "mortar" ? 2 : 0;
       const column = projectile.kind === "mortar" ? 1 : 1 + Math.floor(state.time * 18) % 2;
-      sprite.setFrame(`defense-fx-${row}-${column}`);
+      const frameName = `defense-fx-${row}-${column}`;
+      if (sprite.frame.name !== frameName) sprite.setFrame(frameName);
       sprite.setPosition(point.x, point.y);
       const size = projectile.kind === "mortar" ? (this.portrait ? 38 : 44) : (this.portrait ? 30 : 36);
       sprite.setDisplaySize(size, size);
@@ -202,7 +217,8 @@ export class DefenseView {
 
   private syncEffects(state: DefenseState) {
     this.effectGraphics.clear();
-    const live = new Set<string>();
+    const live = this.liveEffectIds;
+    live.clear();
     for (const effect of state.effects) {
       live.add(effect.id);
       const progress = clamp01(1 - effect.life / Math.max(0.001, effect.maxLife));
@@ -239,7 +255,8 @@ export class DefenseView {
         sprite = this.scene.add.sprite(point.x, point.y, ASSET_KEYS.defenseCombatFxMotion).setDepth(effect.kind === "bastion" ? 2 : 7);
         this.effectSprites.set(effect.id, sprite);
       }
-      sprite.setFrame(`defense-fx-${row}-${column}`);
+      const frameName = `defense-fx-${row}-${column}`;
+      if (sprite.frame.name !== frameName) sprite.setFrame(frameName);
       sprite.setPosition(point.x, point.y).setDisplaySize(size, size).setAlpha(0.92 - progress * 0.24);
     }
     for (const [id, sprite] of this.effectSprites) {
@@ -297,7 +314,9 @@ export class DefenseView {
         zone.setStrokeStyle(id === state.selectedNodeId ? 4 : 2, id === state.selectedNodeId ? 0xffffff : 0x63efff, id === state.selectedNodeId ? 0.95 : 0.52);
       }
     }
-    const occupiedRanks = new Map<string, number>(state.towers.map((tower: any) => [tower.nodeId, tower.rank]));
+    const occupiedRanks = this.occupiedRanks;
+    occupiedRanks.clear();
+    for (const tower of state.towers) occupiedRanks.set(tower.nodeId, tower.rank);
     const pulse = 0.72 + Math.sin(state.time * 3.2) * 0.16;
     for (const [id, zone] of this.nodeZones) {
       const rank = occupiedRanks.get(id);

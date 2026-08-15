@@ -17,13 +17,15 @@ export type DefenseGameController = Readonly<{
 export function createDefenseGame(parent: HTMLElement, callbacks: DefenseSceneCallbacks, stageId: string): DefenseGameController {
   const quality = detectInitialQuality(window);
   const preset = QUALITY_PRESETS[quality] ?? QUALITY_PRESETS.balanced;
-  const assetProfile = quality === "performance" ? "performance" : "full";
   const mobile = detectMobileRuntime(window);
   // The defense battlefield owns a native portrait composition.  Use it for
   // every portrait viewport instead of relying on pointer-capability hints:
   // desktop mobile emulation and some Android WebViews report a fine pointer
   // during startup even though their usable canvas is still portrait.
   const portrait = mobile.portrait || window.innerHeight > window.innerWidth;
+  const assetProfile = quality === "performance" || mobile.touchOptimized || portrait
+    ? "performance"
+    : "full";
   const logicalWidth = portrait ? 720 : 1280;
   const logicalHeight = portrait ? 1280 : 720;
   const boot = new DefenseBootScene(assetProfile, (callbacks as any).onLoadProgress);

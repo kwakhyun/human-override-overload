@@ -83,6 +83,7 @@ test("the runtime exposes profiling only behind Vite DEV and tears it down with 
   assert.doesNotMatch(fixture, /setQuality\?\.\("cinematic"\)/);
   assert.match(fixture, /simulation rules and campaign saves were not/i);
   assert.match(harness, /\.home-base-screen/);
-  assert.match(harness, /\.airship-hotspot/);
+  assert.match(harness, /\.base-sortie-action/);
   assert.match(harness, /\.region-sortie-launch/);
+  assert.match(harness, /mobile-portrait-390x844/);
 });

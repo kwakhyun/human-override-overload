@@ -68,7 +68,7 @@ await dialogue.waitFor({ state: "visible" });
 assert.match(await dialogue.innerText(), /외곽 권역 항로|외곽 권역/);
 await page.getByRole("button", { name: /^다음/ }).click();
 await page.getByRole("button", { name: /^다음/ }).click();
-assert.match(await dialogue.innerText(), /상위 권역 지도를 확장/);
+assert.match(await dialogue.innerText(), /권역 지도를 확장할게/);
 await page.locator(".base-interaction-cta").click();
 
 await page.locator(".region-world-map").waitFor({ state: "visible", timeout: 15_000 });

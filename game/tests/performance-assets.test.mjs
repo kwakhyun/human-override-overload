@@ -12,6 +12,7 @@ function pngDimensions(bytes) {
 const PERFORMANCE_PNG_SPECS = Object.freeze([
   ["hero/performance/survivor-directional-aim-atlas.png", 768, 768],
   ["hero/performance/survivor-sword-directional-aim-atlas.png", 768, 768],
+  ["hero/performance/mika-directional-aim-atlas.png", 768, 768],
   ["enemies/motion-v2/performance/suicide-drone-motion-atlas.png", 720, 480],
   ["enemies/motion-v2/performance/rifleman-motion-atlas.png", 720, 480],
   ["enemies/motion-v2/performance/sniper-motion-atlas.png", 720, 480],
@@ -46,6 +47,11 @@ test("PERFORMANCE selects lighter paths without changing stable Phaser texture k
     await access(new URL(`../public/${asset.path.replace(/^\.\//, "")}`, import.meta.url));
   }
   assert.ok(variants >= 11, "route bundle must replace all dominant decoded textures");
+  assert.equal(
+    performance.find((asset) => asset.key === manifest.ASSET_KEYS.playerMikaDirectionalAim)?.path,
+    "./assets/overload/hero/performance/mika-directional-aim-atlas.png",
+    "mobile tag swaps must not keep MIKA's full 8-direction atlas resident",
+  );
 
   const fullBoss = manifest.getBossGameAssetsForRegion("wrong-engine-core", "full");
   const performanceBoss = manifest.getBossGameAssetsForRegion("wrong-engine-core", "performance");
@@ -72,6 +78,8 @@ test("generated low-memory atlases keep their authored grids and expected dimens
   }
 
   for (const relativePath of [
+    "defense/performance/haven-defense-grid.webp",
+    "defense/performance/haven-defense-grid-portrait.webp",
     "environment/performance/sector-01-shattered-approach.webp",
     "environment/performance/sector-02-flooded-memorial.webp",
     "environment/performance/sector-03-engine-causeway.webp",

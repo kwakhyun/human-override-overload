@@ -76,7 +76,7 @@ test("sortie cinematic warms the selected suspended Phaser runtime in the backgr
   assert.match(app, /<SortieCinematicScreen[\s\S]*?combatLoadProgress=\{combatLoadProgress\}/);
   assert.match(app, /onComplete=\{enterCombat\}/);
   assert.match(screens, /<video[\s\S]*?poster=\{assetSource\(posterSource\)\}[\s\S]*?autoPlay[\s\S]*?playsInline[\s\S]*?preload="auto"/);
-  assert.match(screens, /백그라운드 전장 로딩/);
+  assert.match(screens, /전장 불러오는 중/);
   assert.match(screens, /onEnded=\{complete\}/);
   assert.match(
     screens,

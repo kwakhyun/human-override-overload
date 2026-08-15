@@ -249,6 +249,7 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /type OverloadLaunchOptions/);
   assert.match(createGame, /launch: OverloadLaunchOptions = \{\}/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
+  assert.match(createGame, /initialQuality === "performance" \|\| mobileRuntime\.touchOptimized/);
   assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
   assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, assetProfile, mobileRuntime\.autoAim, portraitPresentation\)/);
   assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);

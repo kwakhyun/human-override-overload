@@ -383,8 +383,10 @@ BALANCED 1050×590/45fps, PERFORMANCE 896×504/30fps로 제한합니다. 전투 
 표시 주기와 독립된 결정론적 60Hz 고정 스텝을 유지하므로 품질 단계, 렌더 프레임 수 또는
 해상도가 내려가도 이동·공격·보스 판정은 변하지 않습니다.
 
-시작 시 PERFORMANCE가 선택되면 `performance` 에셋 프로필을 해당 Phaser 인스턴스에
-고정합니다. 이 프로필은 플레이어·적·동료·보스 모션, 일반/보스 전장, 흔적, 게이트와 일부
+시작 시 PERFORMANCE가 선택되거나 터치 중심 모바일 전투·세로 디펜스 화면이면
+`performance` 에셋 프로필을 해당 Phaser 인스턴스에 고정합니다. 모바일 표시 크기에서는
+저메모리 아틀라스의 셀 해상도도 충분하므로 기기 CPU/GPU 등급이 높아도 불필요한 원본 텍스처
+디코딩과 업로드를 피합니다. 이 프로필은 플레이어·적·동료·보스 모션, 일반/보스 전장, 흔적, 게이트와 일부
 VFX의 저메모리 파생본을 원본과 동일한 texture key 및 atlas 행·열 계약으로 로드합니다.
 실행 중 품질 governor가 바뀌어도 두 해상도의 아틀라스를 함께 올리지 않으며, 저메모리
 아틀라스는 `scripts/build-performance-assets.py`가 프로젝트 원본을 PIL LANCZOS로 셀마다
@@ -413,9 +415,8 @@ Phaser 공통·수송로·보스 텍스처는 이 DOM 캐시에 넣지 않습니
 선택 구역 전장 로딩을 영상 뒤의 정지된 Phaser 인스턴스에서 병렬 수행하고, 실제 로더 진행률을
 출격 UI에 표시합니다. 영상과 런타임이 모두 준비되면 같은 인스턴스를 바로 공개하므로 빈 캔버스나
 두 번째 텍스처 로딩이 없습니다. 이때 보스방 에셋은 여전히 군단 전멸 전까지 로드하지 않습니다.
-런타임은
 기존 약 1.8MB 단일 런타임은 `phaser-vendor`(약 1,685kB raw / 381kB gzip), 시뮬레이션
-(약 78kB), 뷰(약 38kB), 씬 런타임(약 16kB), 에셋 매니페스트(약 6kB) 청크로 분리됩니다.
+(약 125kB), 뷰(약 94kB), 씬 런타임(약 44kB), 에셋 매니페스트(약 23kB) 청크로 분리됩니다.
 React vendor도 별도 청크라 기지 UI 수정과 Phaser 엔진 캐시가 서로 독립적으로 갱신됩니다.
 
 Edge WebGL/RTX 4060 Ti에서 240프레임씩 실제 계측한 결과, 적 220기·플레이어 투사체 620개
@@ -453,6 +454,17 @@ drop 17%가 발생하므로 최저 사양 보장값이 아니라 병목 상한�
 [`qa/runtime-profile-crowd-optimized.md`](./qa/runtime-profile-crowd-optimized.md),
 [`qa/runtime-profile-crowd-optimized-low-end.md`](./qa/runtime-profile-crowd-optimized-low-end.md),
 [`qa/runtime-profile-crowd-optimized-cpu4.md`](./qa/runtime-profile-crowd-optimized-cpu4.md)에 있습니다.
+
+모바일 부트 프로필을 다시 계측한 결과, 390×844 세로 전투의 220기/620발 장면은 데스크톱
+원본 텍스처 기준 58.317MiB에서 26.025MiB로 55.4%, 수송로 텍스처는 26.077MiB에서
+6.519MiB로 75.0% 감소했습니다. 태그 전환용 MIKA 8방향 아틀라스까지 경량화한
+WRONG ENGINE 보스 장면은 76.030MiB에서 33.094MiB로 56.5% 감소했습니다.
+2코어/2GiB 저사양 에뮬레이션의
+전투 scene/render-submit P95는 37.9/3.7ms, 보스는 35.7/1.1ms였으며 240프레임 동안
+전투 drop 0%, console/page 오류 0개였습니다. 디펜스 렌더러도 생존 ID와 점유 랭크용
+Set/Map을 프레임마다 만들지 않고 재사용하며, 바뀐 아틀라스 프레임만 Phaser에 설정합니다.
+결과는 `qa/runtime-profile-optimization-mobile-final-2026-08-15.md`와
+`qa/runtime-profile-optimization-low-end-final-2026-08-15.md`에 기록됩니다.
 
 현재 반영한 최적화와 다음 개선 우선순위는 [`qa/phaser-quality-review-2026-08-10.md`](./qa/phaser-quality-review-2026-08-10.md)에 정리했습니다.
 

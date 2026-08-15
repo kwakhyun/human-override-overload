@@ -32,6 +32,7 @@ const requestedScenarios = new Set((process.env.OVERLOAD_QA_SCENARIOS || "").spl
 const viewports = [
   { id: "desktop-1440x810", viewport: { width: 1440, height: 810 }, mobile: false },
   { id: "mobile-landscape-812x375", viewport: { width: 812, height: 375 }, mobile: true },
+  { id: "mobile-portrait-390x844", viewport: { width: 390, height: 844 }, mobile: true },
 ].filter((viewport) => requestedViewports.size === 0 || requestedViewports.has(viewport.id));
 
 const scenarios = [

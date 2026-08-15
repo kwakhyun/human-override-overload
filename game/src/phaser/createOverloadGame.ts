@@ -48,7 +48,12 @@ export function createOverloadGame(
   const initialQuality = detectInitialQuality(window);
   const mobileRuntime = detectMobileRuntime(window);
   const preset = QUALITY_PRESETS[initialQuality] ?? QUALITY_PRESETS.balanced;
-  const assetProfile = initialQuality === "performance" ? "performance" : "full";
+  // A phone displays actors below the PERFORMANCE atlas' authored cell size,
+  // so full desktop textures only increase decode/upload memory there.  Keep
+  // the profile fixed for the whole scene to avoid texture churn mid-run.
+  const assetProfile = initialQuality === "performance" || mobileRuntime.touchOptimized
+    ? "performance"
+    : "full";
   const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, callbacks.onLoadProgress);
   const portraitPresentation = mobileRuntime.portrait && mobileRuntime.touchOptimized;
   const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);

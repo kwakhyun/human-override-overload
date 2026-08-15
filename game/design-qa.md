@@ -897,3 +897,29 @@ final result: passed
   실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 40 — complete · 모바일 텍스처 상주량 및 디펜스 렌더 핫루프 최적화
+
+- Boot-time texture policy: 터치 중심 모바일 전투와 세로 디펜스는 기기 성능 등급과 무관하게
+  표시 크기에 충분한 PERFORMANCE 아틀라스를 부트 시 한 번만 선택합니다. 데스크톱은 기존
+  품질 감지를 유지하며, 실행 중 full/performance 텍스처 교체나 이중 상주는 허용하지 않습니다.
+  태그 전환에 필요한 MIKA 8방향 시트도 8×8 셀 경계를 보존한 768×768 파생본으로 추가했습니다.
+- Defense render loop: 타워·적·투사체·효과의 생존 ID Set과 건설 패드 랭크 Map을 재사용하고,
+  적 애니메이션 오프셋은 생성 시 한 번만 파싱합니다. 같은 프레임은 `setFrame`을 다시 호출하지
+  않아 다수 웨이브에서 GC 압력과 Texture frame lookup을 줄였습니다.
+- Full verification: `npm test` 269/269, TypeScript 검사, production Vite build(4,610 modules),
+  Sites worker 4/4가 통과했습니다. 타이틀→저장 슬롯→기지→권역/구역→출격→일반전/보스,
+  외곽 4~6구역, BGM, 한국어 문구, 로비 초상화, 디펜스 첫 가이드와 모바일 세로 전장을
+  Edge에서 재검증했으며 console/page/network 오류는 0개였습니다.
+- Measured result: RTX 4060 Ti/Edge WebGL 240-frame 계측에서 390×844의 220적/620투사체
+  decoded RGBA8는 58.317MiB에서 26.025MiB(-55.4%), 수송로는 26.077MiB에서
+  6.519MiB(-75.0%)로 감소했습니다. 모바일 WRONG ENGINE 보스는 76.030MiB에서
+  33.094MiB(-56.5%)였고, 2코어/2GiB 에뮬레이션은 전투 scene/render-submit P95
+  37.9/3.7ms, 보스 35.7/1.1ms, 전투 drop 0%를 기록했습니다. 실제 VRAM과 GPU 완료 시간은
+  브라우저가 공개하지 않으므로 수치는 TextureManager 중복 제거 RGBA8와 CPU 제출 시간입니다.
+- Visual QA: 1440×810, 812×375, 390×844 캡처를 육안 확인했습니다. 일반 부하와 보스 위험
+  패턴, 모바일 하단 스킬 도크, 전술 지도, 디펜스 720×1280 전장과 명령 도크가 모두 표시되며
+  검은 빈 화면, HTTP 실패, 가로 overflow가 없었습니다. 세로 디펜스가 실제 performance
+  전용 6×4 아틀라스 세 개를 요청하는 것도 네트워크 응답으로 고정했습니다.
+
+final result: passed

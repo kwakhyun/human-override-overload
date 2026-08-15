@@ -15,6 +15,7 @@ test("portrait touch runtime uses ENVELOP presentation, a closer camera, and det
   assert.match(platform, /touchOptimized = nativeShell \|\| touchPoints > 0 \|\| coarsePointer/);
   assert.match(platform, /autoAim: touchOptimized && portrait/);
   assert.match(createGame, /detectMobileRuntime\(window\)/);
+  assert.match(createGame, /initialQuality === "performance" \|\| mobileRuntime\.touchOptimized/);
   assert.match(createGame, /Phaser\.Scale\.ENVELOP : Phaser\.Scale\.FIT/);
   assert.match(createGame, /const portraitPresentation = mobileRuntime\.portrait && mobileRuntime\.touchOptimized/);
   assert.match(createGame, /new OverloadScene\([\s\S]*mobileRuntime\.autoAim, portraitPresentation\)/);

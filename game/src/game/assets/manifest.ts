@@ -108,7 +108,7 @@ export function resolveRegionId(regionId?: string): RegionId {
 }
 
 export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
-  { key: ASSET_KEYS.playerMikaDirectionalAim, path: "./assets/overload/hero/mika-directional-aim-atlas.png", kind: "motion", columns: 8, rows: 8 },
+  { key: ASSET_KEYS.playerMikaDirectionalAim, path: "./assets/overload/hero/mika-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/mika-directional-aim-atlas.png", kind: "motion", columns: 8, rows: 8 },
   { key: ASSET_KEYS.mikaAbilityPixel, path: "./assets/overload/vfx/pixel/mika-ability-atlas.png", kind: "atlas", columns: 6, rows: 4 },
   { key: ASSET_KEYS.enemyHunter, path: "./assets/overload/enemies/hunter.png", kind: "image" },
   { key: ASSET_KEYS.enemyRifleman, path: "./assets/overload/enemies/suppressor.png", kind: "image" },

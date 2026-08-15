@@ -23,10 +23,18 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(view, /ASSET_KEYS\.defenseSystemsMotion/);
   assert.match(view, /ASSET_KEYS\.defenseEnemyMotion/);
   assert.match(view, /ASSET_KEYS\.defenseCombatFxMotion/);
+  assert.match(view, /private readonly liveEnemyIds = new Set<string>\(\)/);
+  assert.match(view, /private readonly occupiedRanks = new Map<string, number>\(\)/);
+  assert.match(view, /const live = this\.liveProjectileIds;\s*live\.clear\(\)/);
+  assert.match(view, /if \(sprite\.frame\.name !== frameName\) sprite\.setFrame\(frameName\)/);
+  assert.match(view, /sprite\.setData\("frameOffset"/);
+  assert.doesNotMatch(view, /const live = new Set<string>\(\)/);
+  assert.doesNotMatch(view, /new Map<string, number>\(state\.towers\.map/);
   assert.match(scene, /this\.view\?\.handleEvent\(event/);
   assert.match(createGame, /const logicalWidth = portrait \? 720 : 1280/);
   assert.match(createGame, /const logicalHeight = portrait \? 1280 : 720/);
   assert.match(createGame, /mobile\.portrait \|\| window\.innerHeight > window\.innerWidth/);
+  assert.match(createGame, /quality === "performance" \|\| mobile\.touchOptimized \|\| portrait/);
   assert.match(createGame, /mode: Phaser\.Scale\.FIT/);
   assert.doesNotMatch(createGame, /Phaser\.Scale\.ENVELOP/);
   assert.match(manifest, /export const DEFENSE_GAME_ASSETS/);

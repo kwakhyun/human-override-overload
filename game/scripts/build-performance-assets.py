@@ -28,6 +28,7 @@ class Job:
 JOBS = (
     Job("hero/survivor-directional-aim-atlas.png", "hero/performance/survivor-directional-aim-atlas.png", 0.75, 8, 8),
     Job("hero/survivor-sword-directional-aim-atlas.png", "hero/performance/survivor-sword-directional-aim-atlas.png", 0.75, 8, 8),
+    Job("hero/mika-directional-aim-atlas.png", "hero/performance/mika-directional-aim-atlas.png", 0.75, 8, 8),
     Job("enemies/motion-v2/suicide-drone-motion-atlas.png", "enemies/motion-v2/performance/suicide-drone-motion-atlas.png", 0.75, 6, 4),
     Job("enemies/motion-v2/rifleman-motion-atlas.png", "enemies/motion-v2/performance/rifleman-motion-atlas.png", 0.75, 6, 4),
     Job("enemies/motion-v2/sniper-motion-atlas.png", "enemies/motion-v2/performance/sniper-motion-atlas.png", 0.75, 6, 4),
@@ -42,6 +43,7 @@ JOBS = (
     Job("defense/defense-systems-motion-atlas.png", "defense/performance/defense-systems-motion-atlas.png", 0.5, 6, 4),
     Job("defense/defense-enemy-motion-atlas-v2.png", "defense/performance/defense-enemy-motion-atlas-v2.png", 0.75, 6, 4),
     Job("defense/defense-combat-vfx-atlas-v2.png", "defense/performance/defense-combat-vfx-atlas-v2.png", 0.75, 6, 4),
+    Job("defense/haven-defense-grid.webp", "defense/performance/haven-defense-grid.webp", 0.5),
     Job("defense/haven-defense-grid-portrait.webp", "defense/performance/haven-defense-grid-portrait.webp", 0.5),
     Job("environment/sector-01-shattered-approach.webp", "environment/performance/sector-01-shattered-approach.webp", 0.5),
     Job("environment/sector-02-flooded-memorial.webp", "environment/performance/sector-02-flooded-memorial.webp", 0.5),
