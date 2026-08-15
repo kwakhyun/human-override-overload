@@ -43,6 +43,10 @@ function emit(state, type, payload = {}) {
   state.events.push({ type, time: state.time, ...payload });
 }
 
+function pushEffect(state, effect) {
+  state.effects.push({ id: `defense-effect-${state.nextEffectId++}`, ...effect });
+}
+
 function enemyRoleFor(stage, waveIndex, enemyIndex, count) {
   const progress = waveIndex / Math.max(1, stage.waveCounts.length - 1);
   if (stage.order === 3 && waveIndex === stage.waveCounts.length - 1 && enemyIndex === count - 1) return "siegeWalker";
@@ -149,12 +153,12 @@ function fireTower(state, tower) {
         if (!next || distanceSquared(current, enemy) < distanceSquared(current, next)) next = enemy;
       }
       if (!next) break;
-      state.effects.push({ kind: "arc", life: 0.16, maxLife: 0.16, x1: current.x, y1: current.y, x2: next.x, y2: next.y });
+      pushEffect(state, { kind: "arc", life: 0.16, maxLife: 0.16, x1: current.x, y1: current.y, x2: next.x, y2: next.y });
       damageEnemy(state, next, stats.damage * (1 - chain * 0.13), "arcRelay", tower.id);
       struck.push(next);
       current = next;
     }
-    state.effects.push({ kind: "arc", life: 0.16, maxLife: 0.16, x1: tower.x, y1: tower.y, x2: target.x, y2: target.y });
+    pushEffect(state, { kind: "arc", life: 0.16, maxLife: 0.16, x1: tower.x, y1: tower.y, x2: target.x, y2: target.y });
   } else {
     let affected = 0;
     for (const enemy of state.enemies) {
@@ -164,7 +168,7 @@ function fireTower(state, tower) {
       damageEnemy(state, enemy, stats.damage, "aegisBastion", tower.id);
       affected += 1;
     }
-    state.effects.push({ kind: "bastion", life: 0.5, maxLife: 0.5, x: tower.x, y: tower.y, radius: stats.range });
+    pushEffect(state, { kind: "bastion", life: 0.5, maxLife: 0.5, x: tower.x, y: tower.y, radius: stats.range });
     emit(state, "defenseBastionPulse", { towerId: tower.id, affected });
   }
 }
@@ -206,10 +210,10 @@ function updateProjectiles(state, dt) {
       for (const enemy of state.enemies) {
         if (enemy.hp > 0 && distanceSquared(projectile, enemy) <= projectile.splash * projectile.splash) damageEnemy(state, enemy, projectile.damage, "skyfireBattery", projectile.towerId);
       }
-      state.effects.push({ kind: "blast", life: 0.42, maxLife: 0.42, x: projectile.x, y: projectile.y, radius: projectile.splash });
+      pushEffect(state, { kind: "blast", life: 0.42, maxLife: 0.42, x: projectile.x, y: projectile.y, radius: projectile.splash });
     } else if (target) {
       damageEnemy(state, target, projectile.damage, "pulseSentry", projectile.towerId);
-      state.effects.push({ kind: "impact", life: 0.18, maxLife: 0.18, x: projectile.x, y: projectile.y, radius: 18 });
+      pushEffect(state, { kind: "impact", life: 0.18, maxLife: 0.18, x: projectile.x, y: projectile.y, radius: 18 });
     }
     state.projectiles.splice(index, 1);
   }
@@ -294,6 +298,7 @@ export function createDefenseState({ stageId = DEFAULT_DEFENSE_STAGE_ID } = {}) 
     nextEnemyId: 1,
     nextTowerId: 1,
     nextProjectileId: 1,
+    nextEffectId: 1,
   };
 }
 

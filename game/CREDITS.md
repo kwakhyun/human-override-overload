@@ -1945,3 +1945,90 @@ Style/medium: polished high-detail 2D game environment, dark near-future anime m
 Lighting/mood: midnight siege alert, cool cyan base light, restrained red warning light at entrances; the central battlefield remains bright enough for units and UI to read.
 Constraints: environment only. No characters, enemies, towers on pads, projectiles, explosions, text, labels, numbers, logos, UI, grid overlay, watermark, perspective view, buildings covering paths, or deep black empty regions. Preserve generous clear play space and exact top-down geometry.
 ```
+
+### 디펜스 적군 6×4 고프레임 아틀라스 v2
+
+- 도구: OpenAI 내장 ImageGen (`image_gen`) + 프로젝트 로컬 결정론 후처리
+- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-125115ba-24bf-41a9-a814-53057d63bbb9.png`
+- 중간 산출: `exec-dab8fc68-c0f0-4e98-858c-c75be9bd1bda.png`, `exec-99337b30-15f1-401e-90aa-aeaee37f05cf.png`
+- 프로젝트 보존 원본: `reference/source-assets/overload/defense/defense-enemy-motion-v2-{chroma,alpha,sanitized}.png`
+- 런타임: `public/assets/overload/defense/defense-enemy-motion-atlas-v2.png` (1152×768, 6×4, 192px 셀)
+- 저사양 파생: `public/assets/overload/defense/performance/defense-enemy-motion-atlas-v2.png` (864×576, 144px 셀)
+- 정체성 참조: `public/assets/overload/enemies/hunter.png`, `suppressor.png`, `brute.png`, `enemies/motion-v3/siege-walker-motion-atlas.png`
+- 후처리: `remove_chroma_key.py`, `scripts/sanitize-defense-enemy-atlas.py`, `scripts/normalize-motion-atlas.py`, `scripts/build-performance-assets.py`. 외부 게임 이미지는 런타임에 포함하지 않았습니다.
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D browser-game defense-mode enemy motion spritesheet for HUMAN OVERRIDE: OVERLOAD.
+Input images: Image 1 is the approved hunter suicide drone; Image 2 is the approved armored rifleman; Image 3 is the approved heavy sniper drone; Image 4 is the approved siege walker motion identity. Preserve their black gunmetal SOVEREIGN military identity, red sensors, hard-surface detail, and readable silhouettes.
+Primary request: create ONE exact 6-column by 4-row motion atlas, exactly 24 isolated square animation cells, read left-to-right.
+Row 1 hunter drone: idle/hover A, hover B, fast advance, red self-destruct charge, critical blinking charge, compact mechanical rupture.
+Row 2 rifleman: idle A, marching A, marching B, weapon aim, muzzle-fire recoil, armored destruction.
+Row 3 sniper drone: idle A, hover B, long-range aim, red optic charge, firing recoil, shattered destruction.
+Row 4 siege walker: idle A, heavy step A, heavy step B, cannon windup, cannon fire/recoil, reactor-collapse destruction.
+Style/medium: polished high-detail isometric/top-down 2D game sprites, crisp hard-surface rendering, cohesive black/gunmetal armor, restrained red emissive lights, subtle cyan only on damaged electronics, production asset rather than concept art. Consistent identity and proportions across each row.
+Composition/framing: exact uniform 6x4 grid filling a 3:2 landscape canvas; equal square slots; one centered complete unit per slot; shared scale and bottom-center anchor within each row; generous safety padding; no object crossing cell boundaries. Row 4 may be larger but must remain fully inside every cell.
+Scene/backdrop: genuinely transparent background in every empty pixel. No scenery, floor, shadows outside the unit, labels, text, numbers, grid lines, borders, poster composition, extra objects, extra rows, extra columns, watermark, or cropped parts.
+Constraints: strict 24-cell layout; same viewing angle across every frame; motion should read clearly at 64-120px in game; final column of every row must be a distinct destruction frame, not an intact idle pose.
+```
+
+```text
+Use case: precise-object-edit.
+Asset type: production 2D browser-game motion spritesheet correction.
+Image 1 is the approved exact 6-column by 4-row defense enemy motion atlas. Preserve every unit, every animation pose, the exact 24-cell layout, scale, spacing, colors, silhouettes, weapon effects, destruction debris, and viewing angle.
+Primary request: replace ONLY the fake gray-and-white checkerboard background with one perfectly flat uniform solid #ff00ff chroma-key background across every empty pixel.
+Constraints: do not redraw, move, crop, resize, recolor, simplify, add, remove, or alter any unit or effect. Exactly 6 columns and 4 rows. No grid lines, no labels, no text, no shadows on the background, no gradients, no checkerboard, no texture, no watermark. Do not use #ff00ff anywhere inside the units. Crisp separated edges suitable for local chroma removal.
+```
+
+```text
+Use case: precise-object-edit.
+Asset type: production defense enemy motion spritesheet correction.
+Image 1 is the approved exact 6-column by 4-row defense enemy atlas. Preserve rows 1, 2, and 3 exactly, including every hunter, rifleman, sniper pose, effect, scale, color, and the flat #ff00ff background.
+Primary request: correct ONLY row 4, the six siege-walker cells. In every row-4 cell, scale and reposition the complete siege walker so its entire head, shoulders, upper cannons, arms, legs, muzzle flash, and destruction debris fit fully inside that single square cell with at least 12 percent clear magenta padding on every edge. Reconstruct any currently clipped top or side part using the same approved black gunmetal/red-reactor design. Keep the six beats: idle, heavy step A, heavy step B, cannon windup, cannon fire/recoil, reactor-collapse destruction.
+Also remove any row-4 fragments that currently spill upward into row 3 or sideways into neighboring cells. Do not otherwise alter row 3.
+Constraints: exact 6 columns, exact 4 rows, exact 24 cells; same viewing angle and stable scale across row 4; no object may cross a cell boundary. Perfectly flat uniform #ff00ff in every empty pixel. No checkerboard, scenery, floor, shadows on the background, grid lines, labels, text, numbers, watermark, extra objects, extra rows, or extra columns. Do not use #ff00ff inside any unit.
+```
+
+### 디펜스 전투 VFX 6×4 아틀라스 v2
+
+- 도구: OpenAI 내장 ImageGen (`image_gen`) + 프로젝트 로컬 결정론 후처리
+- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d73425ba-1ada-4706-8193-2ead8b4377f7.png`
+- 프로젝트 보존 원본: `reference/source-assets/overload/defense/defense-combat-vfx-v2-{chroma,alpha}.png`
+- 런타임: `public/assets/overload/defense/defense-combat-vfx-atlas-v2.png` (768×512, 6×4, 128px 셀)
+- 저사양 파생: `public/assets/overload/defense/performance/defense-combat-vfx-atlas-v2.png` (576×384, 96px 셀)
+- 정체성 참조: `public/assets/overload/defense/defense-systems-motion-atlas.png`, `public/assets/overload/vfx/combat-fx-atlas.png`
+
+```text
+Use case: identity-preserve.
+Asset type: production 2D browser-game defense-mode combat VFX spritesheet for HUMAN OVERRIDE: OVERLOAD.
+Input images: Image 1 is the approved defense-system identity atlas for pulse sentry, arc relay, skyfire mortar, and aegis bastion. Image 2 is the approved general combat VFX style reference. Preserve the defense systems' cyan/amber/violet hard-light palette and the project's crisp dark sci-fi rendering language, but create new effects rather than copying existing cells.
+Primary request: create ONE exact 6-column by 4-row motion atlas, exactly 24 isolated square animation cells, read left-to-right.
+Row 1 PULSE SENTRY: compact cyan muzzle seed, accelerated rifle bolt, brighter bolt, armor impact, expanding cyan hit shards, fading residue.
+Row 2 ARC RELAY: small violet-cyan electric node, branching charge, short chained arc burst, brighter chained impact, fractured electric sparks, fading motes. Keep each cell self-contained; do not paint a continuous beam across cell boundaries.
+Row 3 SKYFIRE MORTAR: amber warning reticle, descending shell, ground contact flash, large contained orange-cyan explosion, fragmented blast ring, smoke-free fading embers.
+Row 4 AEGIS BASTION: cyan shield core, hexagonal barrier forming, solid hard-light shield pulse, outward protection wave, shield shards dispersing, dim recovery ring.
+Style/medium: polished high-detail 2D game VFX with crisp authored shapes, strong silhouettes, restrained bloom painted into the effect, layered pixel-sharp energy filaments, readable at 48-160px, no blurry photorealism, no excessive fog. Production sprite asset, not concept art.
+Composition/framing: exact uniform 6x4 grid filling a 3:2 landscape canvas; equal square slots; one complete centered effect per slot; shared center anchor within each row; generous safety padding; no effect crosses cell boundaries.
+Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background across every empty pixel. No transparency checkerboard, scenery, floor, grid lines, borders, labels, text, numbers, logos, watermark, extra rows, extra columns, duplicate sheets, or cropped effects. Do not use #ff00ff inside any effect.
+Constraints: exact 6 columns, exact 4 rows, exact 24 cells; obvious animation progression; no detached weapon/tower bodies—effects only; final frame of every row must visibly fade toward completion.
+```
+
+### HAVEN-09 세로 디펜스 전장
+
+- 도구: OpenAI 내장 ImageGen (`image_gen`)
+- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a292d2ba-b8d7-4cb5-ae4a-0cbbca67b9a9.png`
+- 프로젝트 보존 원본: `reference/source-assets/overload/defense/haven-defense-grid-portrait-source.png`
+- 런타임: `public/assets/overload/defense/haven-defense-grid-portrait.webp` (720×1280)
+- 저사양 파생: `public/assets/overload/defense/performance/haven-defense-grid-portrait.webp` (360×640)
+- 정체성 참조: `public/assets/overload/defense/haven-defense-grid.webp`
+- 후처리: Pillow LANCZOS 리사이즈와 WebP 인코딩. 외부 게임 이미지는 런타임에 포함하지 않았습니다.
+
+```text
+Use case: identity-preserve.
+Asset type: production vertical mobile battlefield background for the tower-defense mode of HUMAN OVERRIDE: OVERLOAD.
+Input image: Image 1 is the approved HAVEN-09 defense battlefield. Preserve its dark gunmetal orbital-base identity, cyan tactical conduits, amber lower lighting, industrial panels, and clean top-down/isometric game readability.
+Primary request: recompose the same location as a tall 9:16 mobile battlefield, designed for a 720×1280 portrait game canvas. Show three clearly separated enemy approach lanes entering from the upper-left, upper-center, and upper-right, converging gradually toward a fortified cyan command core near the lower center. Include twelve subtle circular construction pads distributed evenly along and between the lanes. The lower 22 percent must remain visually quieter and darker for a translucent mobile build-command dock; the top 12 percent must remain readable and relatively uncluttered for HUD overlays.
+Style/medium: polished high-detail 2D sci-fi game map, top-down tactical view with restrained perspective, sharp industrial details, coherent black/gunmetal/cyan palette, subtle depth and atmosphere, production background rather than concept art.
+Composition/framing: exact portrait composition, strong vertical progression, all three lane entrances visible inside the top edge, fortified core fully inside the lower playfield, construction pads never touching the borders, generous mobile-safe margins. No giant characters, enemies, towers, projectiles, UI, icons, text, logos, numbers, labels, grid lines, watermark, or letterboxing.
+Constraints: no black empty margins; background must fill the entire canvas; lane geometry must remain visible beneath transparent sprites and effects; do not replicate or tile the landscape image; create a deliberate native portrait composition.
+```

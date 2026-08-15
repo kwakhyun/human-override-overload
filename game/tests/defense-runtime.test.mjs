@@ -5,13 +5,14 @@ import { readFile, stat } from "node:fs/promises";
 const root = new URL("../", import.meta.url);
 
 test("Phaser defense runtime stays behind its own deterministic bridge and guided DOM HUD", async () => {
-  const [app, scene, view, manifest, screens, styles] = await Promise.all([
+  const [app, scene, view, manifest, screens, styles, createGame] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/phaser/scenes/DefenseScene.ts", root), "utf8"),
     readFile(new URL("src/phaser/view/DefenseView.ts", root), "utf8"),
     readFile(new URL("src/game/assets/manifest.ts", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/phaser/createDefenseGame.ts", root), "utf8"),
   ]);
   assert.match(app, /import\("\.\/phaser\/createDefenseGame\.ts"\)/);
   assert.match(app, /<DefenseStageSelectScreen/);
@@ -20,6 +21,14 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(scene, /stepDefense\(this\.state, 1 \/ 60\)/);
   assert.match(scene, /if \(this\.suspended\) return false;/);
   assert.match(view, /ASSET_KEYS\.defenseSystemsMotion/);
+  assert.match(view, /ASSET_KEYS\.defenseEnemyMotion/);
+  assert.match(view, /ASSET_KEYS\.defenseCombatFxMotion/);
+  assert.match(scene, /this\.view\?\.handleEvent\(event/);
+  assert.match(createGame, /const logicalWidth = portrait \? 720 : 1280/);
+  assert.match(createGame, /const logicalHeight = portrait \? 1280 : 720/);
+  assert.match(createGame, /mobile\.portrait \|\| window\.innerHeight > window\.innerWidth/);
+  assert.match(createGame, /mode: Phaser\.Scale\.FIT/);
+  assert.doesNotMatch(createGame, /Phaser\.Scale\.ENVELOP/);
   assert.match(manifest, /export const DEFENSE_GAME_ASSETS/);
   assert.match(screens, /전술 관제관 · 레아/);
   assert.match(styles, /\.defense-tower-palette/);
@@ -31,17 +40,32 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(styles, /\.defense-guide-spotlight/);
   assert.match(styles, /\.defense-guide-card/);
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.defense-guide-card/);
+  assert.match(styles, /--defense-battlefield-portrait/);
+  assert.match(styles, /\.defense-tower-palette \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
   assert.match(screens, /defense-stage-card-top/);
 });
 
-test("defense art ships a 6x4 transparent motion atlas and full/performance battlefields", async () => {
-  const [atlas, atlasLow, map, mapLow] = await Promise.all([
+test("defense art ships dedicated 6x4 enemy and VFX atlases plus portrait performance maps", async () => {
+  const [atlas, atlasLow, enemy, enemyLow, fx, fxLow, map, mapLow, portraitMap, portraitMapLow] = await Promise.all([
     stat(new URL("public/assets/overload/defense/defense-systems-motion-atlas.png", root)),
     stat(new URL("public/assets/overload/defense/performance/defense-systems-motion-atlas.png", root)),
+    readFile(new URL("public/assets/overload/defense/defense-enemy-motion-atlas-v2.png", root)),
+    readFile(new URL("public/assets/overload/defense/performance/defense-enemy-motion-atlas-v2.png", root)),
+    readFile(new URL("public/assets/overload/defense/defense-combat-vfx-atlas-v2.png", root)),
+    readFile(new URL("public/assets/overload/defense/performance/defense-combat-vfx-atlas-v2.png", root)),
     stat(new URL("public/assets/overload/defense/haven-defense-grid.webp", root)),
     stat(new URL("public/assets/overload/defense/performance/haven-defense-grid.webp", root)),
+    stat(new URL("public/assets/overload/defense/haven-defense-grid-portrait.webp", root)),
+    stat(new URL("public/assets/overload/defense/performance/haven-defense-grid-portrait.webp", root)),
   ]);
   assert.ok(atlas.size > 1_000_000);
   assert.ok(atlasLow.size < atlas.size);
   assert.ok(map.size > mapLow.size);
+  assert.deepEqual([enemy.readUInt32BE(16), enemy.readUInt32BE(20), enemy[25]], [1152, 768, 6]);
+  assert.deepEqual([enemyLow.readUInt32BE(16), enemyLow.readUInt32BE(20), enemyLow[25]], [864, 576, 6]);
+  assert.deepEqual([fx.readUInt32BE(16), fx.readUInt32BE(20), fx[25]], [768, 512, 6]);
+  assert.deepEqual([fxLow.readUInt32BE(16), fxLow.readUInt32BE(20), fxLow[25]], [576, 384, 6]);
+  assert.ok(enemyLow.byteLength < enemy.byteLength);
+  assert.ok(fxLow.byteLength < fx.byteLength);
+  assert.ok(portraitMap.size > portraitMapLow.size);
 });

@@ -28,11 +28,13 @@ export class DefenseScene extends Phaser.Scene {
   private suspended = false;
   private finishSent = false;
   private hudElapsed = 0;
+  private readonly portrait: boolean;
 
-  constructor(stageId: string, callbacks: DefenseSceneCallbacks) {
+  constructor(stageId: string, callbacks: DefenseSceneCallbacks, portrait = false) {
     super({ key: "DefenseBattle" });
     this.state = createDefenseState({ stageId });
     this.callbacks = callbacks;
+    this.portrait = portrait;
   }
 
   create() {
@@ -40,7 +42,7 @@ export class DefenseScene extends Phaser.Scene {
       if (this.suspended) return;
       selectDefenseNode(this.state, nodeId);
       this.publishHud();
-    });
+    }, this.portrait);
     this.input.keyboard?.on("keydown-SPACE", () => this.startWave());
     this.input.keyboard?.on("keydown-ONE", () => this.buildTower("pulseSentry"));
     this.input.keyboard?.on("keydown-TWO", () => this.buildTower("arcRelay"));
@@ -64,7 +66,10 @@ export class DefenseScene extends Phaser.Scene {
       this.accumulator -= 1 / 60;
     }
     this.view?.render(this.state);
-    for (const event of drainDefenseEvents(this.state)) this.callbacks.onEvent(event as Record<string, unknown>);
+    for (const event of drainDefenseEvents(this.state)) {
+      this.view?.handleEvent(event as Record<string, unknown>);
+      this.callbacks.onEvent(event as Record<string, unknown>);
+    }
     this.hudElapsed += delta;
     if (this.hudElapsed >= 0.1 || this.state.finished) {
       this.hudElapsed = 0;

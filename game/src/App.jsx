@@ -119,7 +119,7 @@ const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "tutorialStratosRun",
   "tutorialHelixTempest",
 ]);
-const DEFENSE_DOM_ASSET_KEYS = Object.freeze(["defenseBattlefield", "rheaControlOfficer"]);
+const DEFENSE_DOM_ASSET_KEYS = Object.freeze(["defenseBattlefield", "defenseBattlefieldPortrait", "rheaControlOfficer"]);
 const COMBAT_DOM_ASSET_KEYS = Object.freeze([
   "portrait",
   "mikaPortrait",
@@ -2388,7 +2388,10 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
   return (
     <main
       className="defense-runtime-screen"
-      style={assets?.defenseBattlefield ? { "--defense-battlefield": `url("${assets.defenseBattlefield?.src || assets.defenseBattlefield}")` } : undefined}
+      style={assets?.defenseBattlefield ? {
+        "--defense-battlefield": `url("${assets.defenseBattlefield?.src || assets.defenseBattlefield}")`,
+        "--defense-battlefield-portrait": `url("${assets.defenseBattlefieldPortrait?.src || assets.defenseBattlefieldPortrait || assets.defenseBattlefield?.src || assets.defenseBattlefield}")`,
+      } : undefined}
     >
       <div className="defense-phaser-host" ref={hostRef} />
       {loadProgress < 1 && <div className="defense-load-chip">방어 체계 동기화 {Math.round(loadProgress * 100)}%</div>}
@@ -2614,6 +2617,7 @@ export function App() {
     tutorialHelixTempest: assets?.tutorialHelixTempest,
     returnToHaven: assets?.returnToHaven,
     defenseBattlefield: assets?.defenseBattlefield,
+    defenseBattlefieldPortrait: assets?.defenseBattlefieldPortrait,
     sortieVideos: Object.freeze({
       "wrong-engine-core": assets?.sortieWrongEngine,
       "glass-dune": assets?.sortieGlassDune,

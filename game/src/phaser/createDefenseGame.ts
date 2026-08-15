@@ -19,13 +19,20 @@ export function createDefenseGame(parent: HTMLElement, callbacks: DefenseSceneCa
   const preset = QUALITY_PRESETS[quality] ?? QUALITY_PRESETS.balanced;
   const assetProfile = quality === "performance" ? "performance" : "full";
   const mobile = detectMobileRuntime(window);
+  // The defense battlefield owns a native portrait composition.  Use it for
+  // every portrait viewport instead of relying on pointer-capability hints:
+  // desktop mobile emulation and some Android WebViews report a fine pointer
+  // during startup even though their usable canvas is still portrait.
+  const portrait = mobile.portrait || window.innerHeight > window.innerWidth;
+  const logicalWidth = portrait ? 720 : 1280;
+  const logicalHeight = portrait ? 1280 : 720;
   const boot = new DefenseBootScene(assetProfile, (callbacks as any).onLoadProgress);
-  const battle = new DefenseScene(stageId, callbacks);
+  const battle = new DefenseScene(stageId, callbacks, portrait);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
-    width: 1280,
-    height: 720,
+    width: logicalWidth,
+    height: logicalHeight,
     backgroundColor: "#020608",
     antialias: quality !== "performance",
     antialiasGL: quality !== "performance",
@@ -35,7 +42,7 @@ export function createDefenseGame(parent: HTMLElement, callbacks: DefenseSceneCa
     scene: [boot, battle],
     fps: { target: preset.renderFps, limit: preset.renderFps, smoothStep: true },
     render: { antialias: quality !== "performance", antialiasGL: quality !== "performance", powerPreference: "high-performance", batchSize: 4096, maxTextures: -1 },
-    scale: { mode: mobile.portrait && mobile.touchOptimized ? Phaser.Scale.ENVELOP : Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: 1280, height: 720, expandParent: true },
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH, width: logicalWidth, height: logicalHeight, expandParent: true },
     input: { activePointers: 3, windowEvents: true },
     banner: false,
     audio: { noAudio: true },

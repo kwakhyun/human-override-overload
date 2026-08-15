@@ -76,6 +76,23 @@ test("later defense waves schedule more and stronger roles while towers fight de
   assert.ok(late.pendingSpawns.some((spawn) => spawn.role === "sniper"));
 });
 
+test("defense presentation effects expose stable ids without changing combat authority", () => {
+  const state = createDefenseState({ stageId: "haven-perimeter" });
+  state.credits = 999;
+  selectDefenseNode(state, "node-03");
+  assert.equal(buildDefenseTower(state, "skyfireBattery"), true);
+  assert.equal(startDefenseWave(state), true);
+  let observed = false;
+  for (let frame = 0; frame < 900 && !observed; frame += 1) {
+    stepDefense(state, 1 / 60);
+    if (!state.effects.length) continue;
+    observed = true;
+    assert.ok(state.effects.every((effect) => /^defense-effect-\d+$/.test(effect.id)));
+    assert.equal(new Set(state.effects.map((effect) => effect.id)).size, state.effects.length);
+  }
+  assert.equal(observed, true);
+});
+
 test("defense victories grant first and repeat rewards and unlock stages sequentially", () => {
   let campaign = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: "2026-08-15T00:00:00.000Z" });
   let slot = getCampaignSlot(campaign, "slot-1");

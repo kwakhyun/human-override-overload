@@ -2,12 +2,14 @@ import Phaser from "phaser";
 import { ASSET_KEYS } from "../../game/assets/manifest";
 
 type DefenseState = any;
+type DefenseEvent = Readonly<Record<string, unknown>>;
+type WorldPoint = Readonly<{ x: number; y: number }>;
 
-const ENEMY_TEXTURES: Readonly<Record<string, string>> = Object.freeze({
-  hunter: ASSET_KEYS.enemyHunter,
-  rifleman: ASSET_KEYS.enemyRifleman,
-  sniper: ASSET_KEYS.enemySniper,
-  siegeWalker: ASSET_KEYS.enemySniper,
+const ENEMY_ROWS: Readonly<Record<string, number>> = Object.freeze({
+  hunter: 0,
+  rifleman: 1,
+  sniper: 2,
+  siegeWalker: 3,
 });
 
 const DEFENSE_ROUTE_POINTS = Object.freeze([
@@ -16,72 +18,101 @@ const DEFENSE_ROUTE_POINTS = Object.freeze([
   Object.freeze([{ x: 1315, y: 120 }, { x: 1050, y: 195 }, { x: 920, y: 365 }, { x: 760, y: 470 }, { x: 640, y: 590 }]),
 ]);
 
+const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+
 export class DefenseView {
   private readonly scene: Phaser.Scene;
+  private readonly portrait: boolean;
   private readonly towerSprites = new Map<string, Phaser.GameObjects.Sprite>();
-  private readonly enemySprites = new Map<string, Phaser.GameObjects.Image>();
+  private readonly enemySprites = new Map<string, Phaser.GameObjects.Sprite>();
+  private readonly projectileSprites = new Map<string, Phaser.GameObjects.Sprite>();
+  private readonly effectSprites = new Map<string, Phaser.GameObjects.Sprite>();
+  private readonly deathSprites: Phaser.GameObjects.Sprite[] = [];
   private readonly nodeZones = new Map<string, Phaser.GameObjects.Arc>();
   private readonly nodeLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly routeGraphics: Phaser.GameObjects.Graphics;
-  private readonly projectileGraphics: Phaser.GameObjects.Graphics;
   private readonly effectGraphics: Phaser.GameObjects.Graphics;
   private readonly healthGraphics: Phaser.GameObjects.Graphics;
   private readonly coreGlow: Phaser.GameObjects.Arc;
+  private readonly coreLabel: Phaser.GameObjects.Text;
   private selectedNodeId: string | null = null;
 
-  constructor(scene: Phaser.Scene, state: DefenseState, onSelectNode: (nodeId: string) => void) {
+  constructor(scene: Phaser.Scene, state: DefenseState, onSelectNode: (nodeId: string) => void, portrait = false) {
     this.scene = scene;
-    scene.add.image(640, 360, ASSET_KEYS.defenseBattlefield).setDisplaySize(1280, 720).setDepth(-20);
+    this.portrait = portrait;
+    const width = portrait ? 720 : 1280;
+    const height = portrait ? 1280 : 720;
+    const backgroundKey = portrait ? ASSET_KEYS.defenseBattlefieldPortrait : ASSET_KEYS.defenseBattlefield;
+    scene.add.image(width / 2, height / 2, backgroundKey).setDisplaySize(width, height).setDepth(-20);
     this.routeGraphics = scene.add.graphics().setDepth(-4);
     for (const route of DEFENSE_ROUTE_POINTS) {
-      const points = route.map(({ x, y }) => new Phaser.Math.Vector2(x, y));
-      this.routeGraphics.lineStyle(14, 0xff5876, 0.08).strokePoints(points, false, false);
-      this.routeGraphics.lineStyle(2, 0xff7d93, 0.38).strokePoints(points, false, false);
+      const points = route.map(({ x, y }) => {
+        const point = this.toDisplay(x, y);
+        return new Phaser.Math.Vector2(point.x, point.y);
+      });
+      this.routeGraphics.lineStyle(portrait ? 12 : 14, 0xff5876, 0.06).strokePoints(points, false, false);
+      this.routeGraphics.lineStyle(2, 0xff7d93, portrait ? 0.26 : 0.38).strokePoints(points, false, false);
     }
-    this.coreGlow = scene.add.circle(640, 590, 54, 0x63efff, 0.12).setStrokeStyle(3, 0x9bfbff, 0.86).setDepth(-3);
-    scene.add.text(640, 590, "HAVEN\nCORE", {
+    const core = this.toDisplay(640, 590);
+    const coreRadius = portrait ? 46 : 54;
+    this.coreGlow = scene.add.circle(core.x, core.y, coreRadius, 0x63efff, 0.12).setStrokeStyle(3, 0x9bfbff, 0.86).setDepth(-3);
+    this.coreLabel = scene.add.text(core.x, core.y, "헤이븐\n코어", {
       align: "center",
       color: "#c9fbff",
-      fontFamily: "Arial, sans-serif",
-      fontSize: "12px",
+      fontFamily: "Pretendard Variable, Arial, sans-serif",
+      fontSize: portrait ? "13px" : "12px",
       fontStyle: "bold",
       lineSpacing: 1,
-    }).setOrigin(0.5).setDepth(0).setAlpha(0.86);
+    }).setOrigin(0.5).setDepth(0).setAlpha(0.9);
     this.effectGraphics = scene.add.graphics().setDepth(7);
-    this.projectileGraphics = scene.add.graphics().setDepth(8);
     this.healthGraphics = scene.add.graphics().setDepth(9);
-    this.ensureTowerFrames();
+    this.ensureAtlasFrames(ASSET_KEYS.defenseSystemsMotion, "defense-system", 6, 4);
+    this.ensureAtlasFrames(ASSET_KEYS.defenseEnemyMotion, "defense-enemy", 6, 4);
+    this.ensureAtlasFrames(ASSET_KEYS.defenseCombatFxMotion, "defense-fx", 6, 4);
 
     for (const node of state.nodes) {
-      const zone = scene.add.circle(node.x, node.y, 34, 0x061116, 0.2)
-        .setStrokeStyle(2, 0x63efff, 0.48)
+      const point = this.toDisplay(node.x, node.y);
+      const zone = scene.add.circle(point.x, point.y, portrait ? 31 : 34, 0x061116, 0.24)
+        .setStrokeStyle(2, 0x63efff, 0.58)
         .setDepth(1)
         .setInteractive({ useHandCursor: true });
       zone.on("pointerdown", () => onSelectNode(node.id));
       zone.on("pointerover", () => zone.setScale(1.08));
       zone.on("pointerout", () => zone.setScale(1));
       this.nodeZones.set(node.id, zone);
-      const label = scene.add.text(node.x, node.y, "+", {
+      const label = scene.add.text(point.x, point.y, "+", {
         color: "#b9f8ff",
-        fontFamily: "Arial, sans-serif",
-        fontSize: "22px",
+        fontFamily: "Pretendard Variable, Arial, sans-serif",
+        fontSize: portrait ? "20px" : "22px",
         fontStyle: "bold",
-      }).setOrigin(0.5).setDepth(2).setAlpha(0.78);
+      }).setOrigin(0.5).setDepth(2).setAlpha(0.82);
       this.nodeLabels.set(node.id, label);
     }
   }
 
-  private ensureTowerFrames() {
-    const texture = this.scene.textures.get(ASSET_KEYS.defenseSystemsMotion);
-    const source = texture.getSourceImage() as HTMLImageElement;
-    const frameWidth = Math.floor(source.width / 6);
-    const frameHeight = Math.floor(source.height / 4);
-    for (let row = 0; row < 4; row += 1) {
-      for (let column = 0; column < 6; column += 1) {
-        const name = `defense-${row}-${column}`;
+  private toDisplay(x: number, y: number): WorldPoint {
+    if (!this.portrait) return { x, y };
+    return { x: 44 + (x / 1280) * 632, y: 110 + (y / 720) * 980 };
+  }
+
+  private ensureAtlasFrames(textureKey: string, prefix: string, columns: number, rows: number) {
+    const texture = this.scene.textures.get(textureKey);
+    const source = texture.getSourceImage() as { width: number; height: number };
+    const frameWidth = Math.floor(source.width / columns);
+    const frameHeight = Math.floor(source.height / rows);
+    for (let row = 0; row < rows; row += 1) {
+      for (let column = 0; column < columns; column += 1) {
+        const name = `${prefix}-${row}-${column}`;
         if (!texture.has(name)) texture.add(name, 0, column * frameWidth, row * frameHeight, frameWidth, frameHeight);
       }
     }
+  }
+
+  private enemySize(role: string) {
+    const sizes: Readonly<Record<string, number>> = this.portrait
+      ? { hunter: 56, rifleman: 66, sniper: 76, siegeWalker: 118 }
+      : { hunter: 62, rifleman: 74, sniper: 84, siegeWalker: 136 };
+    return sizes[role] || sizes.hunter;
   }
 
   private syncTowers(state: DefenseState) {
@@ -89,16 +120,18 @@ export class DefenseView {
     for (const tower of state.towers) {
       live.add(tower.id);
       let sprite = this.towerSprites.get(tower.id);
+      const point = this.toDisplay(tower.x, tower.y);
       if (!sprite) {
-        sprite = this.scene.add.sprite(tower.x, tower.y, ASSET_KEYS.defenseSystemsMotion).setDepth(4);
+        sprite = this.scene.add.sprite(point.x, point.y, ASSET_KEYS.defenseSystemsMotion).setDepth(4);
         this.towerSprites.set(tower.id, sprite);
       }
       const row = tower.type === "pulseSentry" ? 0 : tower.type === "arcRelay" ? 1 : tower.type === "skyfireBattery" ? 2 : 3;
       const progress = tower.attackTimer > 0 ? 1 - tower.attackTimer / 0.32 : 0;
       const column = tower.attackTimer > 0 ? Math.min(5, 2 + Math.floor(progress * 4)) : Math.floor(state.time * 2.4 + tower.rank) % 2;
-      sprite.setFrame(`defense-${row}-${column}`);
-      sprite.setPosition(tower.x, tower.y);
-      sprite.setDisplaySize(84 + tower.rank * 7, 84 + tower.rank * 7);
+      sprite.setFrame(`defense-system-${row}-${column}`);
+      sprite.setPosition(point.x, point.y);
+      const baseSize = this.portrait ? 78 : 88;
+      sprite.setDisplaySize(baseSize + tower.rank * 7, baseSize + tower.rank * 7);
       sprite.setTint(tower.nodeId === state.selectedNodeId ? 0xffffff : 0xd7f8ff);
     }
     for (const [id, sprite] of this.towerSprites) {
@@ -112,13 +145,24 @@ export class DefenseView {
     const live = new Set<string>();
     for (const enemy of state.enemies) {
       live.add(enemy.id);
+      const point = this.toDisplay(enemy.x, enemy.y);
       let sprite = this.enemySprites.get(enemy.id);
       if (!sprite) {
-        sprite = this.scene.add.image(enemy.x, enemy.y, ENEMY_TEXTURES[enemy.role] || ASSET_KEYS.enemyHunter).setDepth(3);
+        sprite = this.scene.add.sprite(point.x, point.y, ASSET_KEYS.defenseEnemyMotion).setDepth(3);
+        sprite.setData("previousX", point.x);
         this.enemySprites.set(enemy.id, sprite);
       }
-      const size = enemy.role === "siegeWalker" ? 116 : enemy.radius * 2.65;
-      sprite.setPosition(enemy.x, enemy.y).setDisplaySize(size, size).setRotation(0);
+      const row = ENEMY_ROWS[enemy.role] ?? 0;
+      const frameOffset = Number(String(enemy.id).split("-").at(-1)) || 0;
+      let column = Math.floor(state.time * (enemy.role === "siegeWalker" ? 4.5 : 7) + frameOffset) % 3;
+      if (enemy.role === "hunter" && enemy.pathProgress > 3.3) column = 3 + Math.floor(state.time * 8) % 2;
+      if (enemy.hitFlash > 0) column = enemy.role === "siegeWalker" ? 2 : 4;
+      sprite.setFrame(`defense-enemy-${row}-${column}`);
+      const previousX = Number(sprite.getData("previousX") ?? point.x);
+      if (Math.abs(point.x - previousX) > 0.15) sprite.setFlipX(point.x < previousX);
+      sprite.setData("previousX", point.x);
+      const size = this.enemySize(enemy.role);
+      sprite.setPosition(point.x, point.y).setDisplaySize(size, size);
       sprite.setTint(enemy.hitFlash > 0 ? 0xffffff : enemy.slowTimer > 0 ? 0x9ab7ff : 0xffffff);
     }
     for (const [id, sprite] of this.enemySprites) {
@@ -128,39 +172,119 @@ export class DefenseView {
     }
   }
 
-  private drawWorldFx(state: DefenseState) {
-    this.projectileGraphics.clear();
+  private syncProjectiles(state: DefenseState) {
+    const live = new Set<string>();
     for (const projectile of state.projectiles) {
-      this.projectileGraphics.fillStyle(projectile.color || 0x63efff, 1);
-      this.projectileGraphics.fillCircle(projectile.x, projectile.y, projectile.radius || 7);
-      this.projectileGraphics.lineStyle(2, projectile.color || 0x63efff, 0.5);
-      this.projectileGraphics.strokeCircle(projectile.x, projectile.y, (projectile.radius || 7) + 4);
-    }
-
-    this.effectGraphics.clear();
-    for (const effect of state.effects) {
-      const alpha = Math.max(0, effect.life / effect.maxLife);
-      if (effect.kind === "arc") {
-        this.effectGraphics.lineStyle(5, 0xb789ff, alpha * 0.85);
-        this.effectGraphics.lineBetween(effect.x1, effect.y1, effect.x2, effect.y2);
-        this.effectGraphics.lineStyle(2, 0xffffff, alpha);
-        this.effectGraphics.lineBetween(effect.x1, effect.y1, effect.x2, effect.y2);
-      } else {
-        const color = effect.kind === "blast" ? 0xffa24f : effect.kind === "bastion" ? 0x63efff : 0xffffff;
-        const radius = (effect.radius || 24) * (1.15 - alpha * 0.15);
-        this.effectGraphics.lineStyle(effect.kind === "bastion" ? 5 : 3, color, alpha * 0.9);
-        this.effectGraphics.strokeCircle(effect.x, effect.y, radius);
+      live.add(projectile.id);
+      const point = this.toDisplay(projectile.x, projectile.y);
+      let sprite = this.projectileSprites.get(projectile.id);
+      if (!sprite) {
+        sprite = this.scene.add.sprite(point.x, point.y, ASSET_KEYS.defenseCombatFxMotion).setDepth(8);
+        this.projectileSprites.set(projectile.id, sprite);
+      }
+      const row = projectile.kind === "mortar" ? 2 : 0;
+      const column = projectile.kind === "mortar" ? 1 : 1 + Math.floor(state.time * 18) % 2;
+      sprite.setFrame(`defense-fx-${row}-${column}`);
+      sprite.setPosition(point.x, point.y);
+      const size = projectile.kind === "mortar" ? (this.portrait ? 38 : 44) : (this.portrait ? 30 : 36);
+      sprite.setDisplaySize(size, size);
+      if (Number.isFinite(projectile.targetX) && Number.isFinite(projectile.targetY)) {
+        const target = this.toDisplay(projectile.targetX, projectile.targetY);
+        sprite.setRotation(Math.atan2(target.y - point.y, target.x - point.x));
       }
     }
+    for (const [id, sprite] of this.projectileSprites) {
+      if (live.has(id)) continue;
+      sprite.destroy();
+      this.projectileSprites.delete(id);
+    }
+  }
 
+  private syncEffects(state: DefenseState) {
+    this.effectGraphics.clear();
+    const live = new Set<string>();
+    for (const effect of state.effects) {
+      live.add(effect.id);
+      const progress = clamp01(1 - effect.life / Math.max(0.001, effect.maxLife));
+      let row = 0;
+      let column = Math.min(5, Math.floor(progress * 6));
+      let x = effect.x;
+      let y = effect.y;
+      let size = this.portrait ? 62 : 72;
+      if (effect.kind === "arc") {
+        row = 1;
+        const start = this.toDisplay(effect.x1, effect.y1);
+        const end = this.toDisplay(effect.x2, effect.y2);
+        x = (effect.x1 + effect.x2) * 0.5;
+        y = (effect.y1 + effect.y2) * 0.5;
+        this.effectGraphics.lineStyle(this.portrait ? 3 : 5, 0xb789ff, (1 - progress) * 0.78);
+        this.effectGraphics.lineBetween(start.x, start.y, end.x, end.y);
+        this.effectGraphics.lineStyle(1, 0xffffff, 1 - progress);
+        this.effectGraphics.lineBetween(start.x, start.y, end.x, end.y);
+      } else if (effect.kind === "blast") {
+        row = 2;
+        column = Math.min(5, 2 + Math.floor(progress * 4));
+        size = Math.max(this.portrait ? 92 : 120, (effect.radius || 72) * (this.portrait ? 1.28 : 2));
+      } else if (effect.kind === "bastion") {
+        row = 3;
+        size = (effect.radius || 145) * (this.portrait ? 1.18 : 2);
+      } else {
+        row = 0;
+        column = Math.min(5, 3 + Math.floor(progress * 3));
+        size = this.portrait ? 54 : 64;
+      }
+      const point = this.toDisplay(x, y);
+      let sprite = this.effectSprites.get(effect.id);
+      if (!sprite) {
+        sprite = this.scene.add.sprite(point.x, point.y, ASSET_KEYS.defenseCombatFxMotion).setDepth(effect.kind === "bastion" ? 2 : 7);
+        this.effectSprites.set(effect.id, sprite);
+      }
+      sprite.setFrame(`defense-fx-${row}-${column}`);
+      sprite.setPosition(point.x, point.y).setDisplaySize(size, size).setAlpha(0.92 - progress * 0.24);
+    }
+    for (const [id, sprite] of this.effectSprites) {
+      if (live.has(id)) continue;
+      sprite.destroy();
+      this.effectSprites.delete(id);
+    }
+  }
+
+  private drawHealth(state: DefenseState) {
     this.healthGraphics.clear();
     for (const enemy of state.enemies) {
       if (enemy.hp >= enemy.maxHp || enemy.hp <= 0) continue;
-      const width = enemy.role === "siegeWalker" ? 88 : 38;
-      const ratio = Math.max(0, enemy.hp / enemy.maxHp);
-      this.healthGraphics.fillStyle(0x020608, 0.88).fillRect(enemy.x - width / 2, enemy.y - enemy.radius - 14, width, 5);
-      this.healthGraphics.fillStyle(0xff526d, 1).fillRect(enemy.x - width / 2 + 1, enemy.y - enemy.radius - 13, (width - 2) * ratio, 3);
+      const point = this.toDisplay(enemy.x, enemy.y);
+      const width = enemy.role === "siegeWalker" ? (this.portrait ? 82 : 96) : (this.portrait ? 38 : 44);
+      const ratio = clamp01(enemy.hp / enemy.maxHp);
+      const y = point.y - this.enemySize(enemy.role) * 0.48 - 10;
+      this.healthGraphics.fillStyle(0x020608, 0.9).fillRoundedRect(point.x - width / 2, y, width, 6, 2);
+      this.healthGraphics.fillStyle(0xff5876, 1).fillRoundedRect(point.x - width / 2 + 1, y + 1, (width - 2) * ratio, 4, 1);
     }
+  }
+
+  handleEvent(event: DefenseEvent) {
+    if (event.type !== "defenseEnemyDestroyed") return;
+    const role = String(event.role || "hunter");
+    const point = this.toDisplay(Number(event.x) || 0, Number(event.y) || 0);
+    const sprite = this.scene.add.sprite(point.x, point.y, ASSET_KEYS.defenseEnemyMotion, `defense-enemy-${ENEMY_ROWS[role] ?? 0}-5`)
+      .setDepth(6)
+      .setDisplaySize(this.enemySize(role) * 1.08, this.enemySize(role) * 1.08);
+    this.deathSprites.push(sprite);
+    while (this.deathSprites.length > 28) this.deathSprites.shift()?.destroy();
+    this.scene.tweens.add({
+      targets: sprite,
+      alpha: 0,
+      scaleX: sprite.scaleX * 1.18,
+      scaleY: sprite.scaleY * 1.18,
+      angle: sprite.angle + ((Number(String(event.enemyId || "0").split("-").at(-1)) || 0) % 2 ? 8 : -8),
+      duration: 360,
+      ease: "Quad.easeOut",
+      onComplete: () => {
+        const index = this.deathSprites.indexOf(sprite);
+        if (index >= 0) this.deathSprites.splice(index, 1);
+        sprite.destroy();
+      },
+    });
   }
 
   render(state: DefenseState) {
@@ -170,7 +294,7 @@ export class DefenseView {
       this.selectedNodeId = state.selectedNodeId;
       for (const [id, zone] of this.nodeZones) {
         zone.setFillStyle(id === state.selectedNodeId ? 0x63efff : 0x061116, id === state.selectedNodeId ? 0.28 : 0.18);
-        zone.setStrokeStyle(id === state.selectedNodeId ? 4 : 2, id === state.selectedNodeId ? 0xffffff : 0x63efff, id === state.selectedNodeId ? 0.95 : 0.45);
+        zone.setStrokeStyle(id === state.selectedNodeId ? 4 : 2, id === state.selectedNodeId ? 0xffffff : 0x63efff, id === state.selectedNodeId ? 0.95 : 0.52);
       }
     }
     const occupiedRanks = new Map<string, number>(state.towers.map((tower: any) => [tower.nodeId, tower.rank]));
@@ -188,18 +312,23 @@ export class DefenseView {
     }
     this.syncTowers(state);
     this.syncEnemies(state);
-    this.drawWorldFx(state);
+    this.syncProjectiles(state);
+    this.syncEffects(state);
+    this.drawHealth(state);
   }
 
   destroy() {
     for (const sprite of this.towerSprites.values()) sprite.destroy();
     for (const sprite of this.enemySprites.values()) sprite.destroy();
+    for (const sprite of this.projectileSprites.values()) sprite.destroy();
+    for (const sprite of this.effectSprites.values()) sprite.destroy();
+    for (const sprite of this.deathSprites) sprite.destroy();
     for (const zone of this.nodeZones.values()) zone.destroy();
     for (const label of this.nodeLabels.values()) label.destroy();
     this.routeGraphics.destroy();
-    this.projectileGraphics.destroy();
     this.effectGraphics.destroy();
     this.healthGraphics.destroy();
     this.coreGlow.destroy();
+    this.coreLabel.destroy();
   }
 }

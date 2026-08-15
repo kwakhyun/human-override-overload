@@ -880,3 +880,20 @@ final result: passed
   사용자 지침에 따라 실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 39 — complete · 디펜스 고프레임 미술과 네이티브 세로 전장
+
+- Dedicated defense art: 헌터·소총수·저격수·공성 워커를 역할별 행으로 나눈 6×4 적 모션
+  아틀라스와 펄스 탄도·연쇄 전격·박격 폭발·이지스 방벽을 분리한 6×4 전투 VFX 아틀라스를
+  제작했습니다. 이동·충전·피격·파괴 프레임은 안정적인 적/effect ID로 재사용하며, Phaser tween은
+  판정이 아닌 파괴 연출에만 사용합니다.
+- Native portrait runtime: 세로 화면은 데스크톱 16:9 캔버스를 축소하지 않고 720×1280 전용
+  HAVEN-09 전장과 고정 좌표 변환을 사용합니다. WebView가 fine pointer를 보고해도 세로 비율이면
+  전용 런타임을 선택합니다. 기지 내구도 우선 HUD, 한 줄 포대 팔레트, 하단 명령 도크와 4단계
+  레아 가이드는 390×844 safe area 안에서 스크롤과 가로 overflow 없이 유지됩니다.
+- Essential verification: 디펜스 엔진·런타임 집중 테스트와 TypeScript 검사가 통과했습니다.
+  Edge 390×844에서 실제 720×1280 Phaser 캔버스, 패드 선택, 펄스 센트리 배치, 첫 공세 6기,
+  파괴 모션과 세로 전장 표시를 확인했습니다. 전체 테스트와 production build는 사용자 지침에 따라
+  실행하지 않았습니다.
+
+final result: passed
