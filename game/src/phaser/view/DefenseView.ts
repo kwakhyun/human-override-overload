@@ -10,11 +10,19 @@ const ENEMY_TEXTURES: Readonly<Record<string, string>> = Object.freeze({
   siegeWalker: ASSET_KEYS.enemySniper,
 });
 
+const DEFENSE_ROUTE_POINTS = Object.freeze([
+  Object.freeze([{ x: -35, y: 120 }, { x: 230, y: 195 }, { x: 360, y: 365 }, { x: 520, y: 470 }, { x: 640, y: 590 }]),
+  Object.freeze([{ x: 640, y: -35 }, { x: 640, y: 185 }, { x: 640, y: 360 }, { x: 640, y: 480 }, { x: 640, y: 590 }]),
+  Object.freeze([{ x: 1315, y: 120 }, { x: 1050, y: 195 }, { x: 920, y: 365 }, { x: 760, y: 470 }, { x: 640, y: 590 }]),
+]);
+
 export class DefenseView {
   private readonly scene: Phaser.Scene;
   private readonly towerSprites = new Map<string, Phaser.GameObjects.Sprite>();
   private readonly enemySprites = new Map<string, Phaser.GameObjects.Image>();
   private readonly nodeZones = new Map<string, Phaser.GameObjects.Arc>();
+  private readonly nodeLabels = new Map<string, Phaser.GameObjects.Text>();
+  private readonly routeGraphics: Phaser.GameObjects.Graphics;
   private readonly projectileGraphics: Phaser.GameObjects.Graphics;
   private readonly effectGraphics: Phaser.GameObjects.Graphics;
   private readonly healthGraphics: Phaser.GameObjects.Graphics;
@@ -24,7 +32,21 @@ export class DefenseView {
   constructor(scene: Phaser.Scene, state: DefenseState, onSelectNode: (nodeId: string) => void) {
     this.scene = scene;
     scene.add.image(640, 360, ASSET_KEYS.defenseBattlefield).setDisplaySize(1280, 720).setDepth(-20);
+    this.routeGraphics = scene.add.graphics().setDepth(-4);
+    for (const route of DEFENSE_ROUTE_POINTS) {
+      const points = route.map(({ x, y }) => new Phaser.Math.Vector2(x, y));
+      this.routeGraphics.lineStyle(14, 0xff5876, 0.08).strokePoints(points, false, false);
+      this.routeGraphics.lineStyle(2, 0xff7d93, 0.38).strokePoints(points, false, false);
+    }
     this.coreGlow = scene.add.circle(640, 590, 54, 0x63efff, 0.12).setStrokeStyle(3, 0x9bfbff, 0.86).setDepth(-3);
+    scene.add.text(640, 590, "HAVEN\nCORE", {
+      align: "center",
+      color: "#c9fbff",
+      fontFamily: "Arial, sans-serif",
+      fontSize: "12px",
+      fontStyle: "bold",
+      lineSpacing: 1,
+    }).setOrigin(0.5).setDepth(0).setAlpha(0.86);
     this.effectGraphics = scene.add.graphics().setDepth(7);
     this.projectileGraphics = scene.add.graphics().setDepth(8);
     this.healthGraphics = scene.add.graphics().setDepth(9);
@@ -36,7 +58,16 @@ export class DefenseView {
         .setDepth(1)
         .setInteractive({ useHandCursor: true });
       zone.on("pointerdown", () => onSelectNode(node.id));
+      zone.on("pointerover", () => zone.setScale(1.08));
+      zone.on("pointerout", () => zone.setScale(1));
       this.nodeZones.set(node.id, zone);
+      const label = scene.add.text(node.x, node.y, "+", {
+        color: "#b9f8ff",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "22px",
+        fontStyle: "bold",
+      }).setOrigin(0.5).setDepth(2).setAlpha(0.78);
+      this.nodeLabels.set(node.id, label);
     }
   }
 
@@ -142,6 +173,19 @@ export class DefenseView {
         zone.setStrokeStyle(id === state.selectedNodeId ? 4 : 2, id === state.selectedNodeId ? 0xffffff : 0x63efff, id === state.selectedNodeId ? 0.95 : 0.45);
       }
     }
+    const occupiedRanks = new Map<string, number>(state.towers.map((tower: any) => [tower.nodeId, tower.rank]));
+    const pulse = 0.72 + Math.sin(state.time * 3.2) * 0.16;
+    for (const [id, zone] of this.nodeZones) {
+      const rank = occupiedRanks.get(id);
+      const selected = id === state.selectedNodeId;
+      zone.setAlpha(rank ? (selected ? 0.92 : 0.38) : selected ? 1 : pulse);
+      const label = this.nodeLabels.get(id);
+      if (!label) continue;
+      const nextLabel = rank ? `L${rank}` : "+";
+      if (label.text !== nextLabel) label.setText(nextLabel);
+      label.setColor(selected ? "#ffffff" : rank ? "#8eeeff" : "#b9f8ff");
+      label.setAlpha(rank ? 0.72 : pulse);
+    }
     this.syncTowers(state);
     this.syncEnemies(state);
     this.drawWorldFx(state);
@@ -151,6 +195,8 @@ export class DefenseView {
     for (const sprite of this.towerSprites.values()) sprite.destroy();
     for (const sprite of this.enemySprites.values()) sprite.destroy();
     for (const zone of this.nodeZones.values()) zone.destroy();
+    for (const label of this.nodeLabels.values()) label.destroy();
+    this.routeGraphics.destroy();
     this.projectileGraphics.destroy();
     this.effectGraphics.destroy();
     this.healthGraphics.destroy();

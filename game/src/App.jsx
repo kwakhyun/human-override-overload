@@ -49,6 +49,7 @@ import {
   canLaunchDefenseStage,
   completeAbilityGuide,
   completeCombatOverlay,
+  completeDefenseGuide,
   completeOuterSectorBriefing,
   completeRegion,
   completeDefenseStage,
@@ -2235,12 +2236,63 @@ const DEFENSE_TOWER_ICONS = Object.freeze({
   aegisBastion: ShieldChevron,
 });
 
-function DefenseArenaScreen({ stageId, assets, sfx, onFinish, onBase }) {
+const DEFENSE_GUIDE_STEPS = Object.freeze([
+  Object.freeze({ target: "core", kicker: "01 · 방어 목표", title: "헤이븐 방벽을 지키세요", description: "세 침투로의 적이 중앙 추론핵에 도달하면 방벽이 손상됩니다. 상단 내구도가 0이 되면 작전 실패입니다." }),
+  Object.freeze({ target: "field", kicker: "02 · 건설 위치", title: "빛나는 방어 패드를 선택하세요", description: "전장에 표시된 원형 패드 하나를 클릭하세요. 적의 세 이동 경로가 겹치는 지점부터 확보하면 유리합니다." }),
+  Object.freeze({ target: "palette", kicker: "03 · 화력 배치", title: "역할이 다른 포대를 건설하세요", description: "센트리는 단일 화력, 릴레이는 연쇄 공격, 포대는 광역 공격, 바스티온은 감속을 담당합니다. 처치 자원으로 건설·강화합니다." }),
+  Object.freeze({ target: "wave", kicker: "04 · 공세 시작", title: "준비가 끝나면 웨이브를 시작하세요", description: "조기 개시로 다음 공세를 즉시 호출할 수 있습니다. 숫자키 1~4로 건설하고 U로 선택 포대를 강화할 수도 있습니다." }),
+]);
+
+function DefenseSpotlightGuide({ stepIndex, portrait, onNext, onBack, onSkip }) {
+  const step = DEFENSE_GUIDE_STEPS[stepIndex];
+  if (!step) return null;
+  const final = stepIndex === DEFENSE_GUIDE_STEPS.length - 1;
+  return (
+    <section className={`defense-guide-overlay is-${step.target}`} data-defense-guide-step={stepIndex + 1} aria-label={`디펜스 첫 도전 가이드 ${stepIndex + 1}단계`}>
+      <div className={`defense-guide-spotlight is-${step.target}`} aria-hidden="true" />
+      <article className="defense-guide-card" role="dialog" aria-modal="true" aria-labelledby="defense-guide-title">
+        {portrait && <img src={portrait?.src || portrait} alt="전술 관제관 레아" />}
+        <div className="defense-guide-copy">
+          <small>{step.kicker} · 레아 전술 교신</small>
+          <h2 id="defense-guide-title">{step.title}</h2>
+          <p>{step.description}</p>
+          <div className="defense-guide-progress" aria-label={`${DEFENSE_GUIDE_STEPS.length}단계 중 ${stepIndex + 1}단계`}>
+            {DEFENSE_GUIDE_STEPS.map((item, index) => <i className={index <= stepIndex ? "is-active" : ""} key={item.target} />)}
+          </div>
+          <footer>
+            <button type="button" className="defense-guide-skip" onClick={onSkip}>가이드 건너뛰기 <kbd>ESC</kbd></button>
+            <span>
+              <button type="button" disabled={stepIndex === 0} onClick={onBack}><ArrowLeft weight="bold" /> 이전</button>
+              <button type="button" className="defense-guide-next" onClick={onNext}>{final ? "배치 시작" : "다음"}<ArrowRight weight="bold" /></button>
+            </span>
+          </footer>
+        </div>
+      </article>
+    </section>
+  );
+}
+
+function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTutorialComplete, onFinish, onBase }) {
   const hostRef = useRef(null);
   const controllerRef = useRef(null);
   const [hud, setHud] = useState(null);
   const [loadProgress, setLoadProgress] = useState(0);
+  const [tutorialStep, setTutorialStep] = useState(showTutorial ? 0 : -1);
   const stage = getDefenseStage(stageId);
+  const tutorialActive = showTutorial && tutorialStep >= 0;
+
+  useEffect(() => setTutorialStep(showTutorial ? 0 : -1), [showTutorial, stageId]);
+
+  const finishTutorial = useCallback(() => {
+    controllerRef.current?.setSuspended(false);
+    setTutorialStep(-1);
+    onTutorialComplete?.();
+  }, [onTutorialComplete]);
+
+  const advanceTutorial = useCallback(() => {
+    if (tutorialStep >= DEFENSE_GUIDE_STEPS.length - 1) finishTutorial();
+    else setTutorialStep((step) => Math.min(DEFENSE_GUIDE_STEPS.length - 1, step + 1));
+  }, [finishTutorial, tutorialStep]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -2272,42 +2324,63 @@ function DefenseArenaScreen({ stageId, assets, sfx, onFinish, onBase }) {
   }, [onFinish, sfx, stageId]);
 
   useEffect(() => {
+    if (loadProgress < 1) return;
+    controllerRef.current?.setSuspended(tutorialActive);
+  }, [loadProgress, tutorialActive]);
+
+  useEffect(() => {
     const escape = (event) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      onBase?.();
+      if (tutorialActive && ["Escape", "Enter", " ", "ArrowRight", "ArrowLeft"].includes(event.key)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (event.key === "Escape") finishTutorial();
+        else if (event.key === "ArrowLeft") setTutorialStep((step) => Math.max(0, step - 1));
+        else advanceTutorial();
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onBase?.();
+      }
     };
-    window.addEventListener("keydown", escape);
-    return () => window.removeEventListener("keydown", escape);
-  }, [onBase]);
+    window.addEventListener("keydown", escape, true);
+    return () => window.removeEventListener("keydown", escape, true);
+  }, [advanceTutorial, finishTutorial, onBase, tutorialActive]);
 
   const selectedTowerDefinition = hud?.selectedTower ? DEFENSE_TOWER_DEFINITIONS[hud.selectedTower.type] : null;
+  const selectedNodeLabel = hud?.selectedNodeId ? `방어 패드 ${String(hud.selectedNodeId).split("-").at(-1)}` : "전장의 원형 패드를 선택하세요";
+  const guideTarget = tutorialActive ? DEFENSE_GUIDE_STEPS[tutorialStep]?.target : null;
   return (
-    <main className="defense-runtime-screen">
+    <main
+      className="defense-runtime-screen"
+      style={assets?.defenseBattlefield ? { "--defense-battlefield": `url("${assets.defenseBattlefield?.src || assets.defenseBattlefield}")` } : undefined}
+    >
       <div className="defense-phaser-host" ref={hostRef} />
       {loadProgress < 1 && <div className="defense-load-chip">방어 체계 동기화 {Math.round(loadProgress * 100)}%</div>}
       <header className="defense-combat-hud">
-        <div className="defense-rhea-chip">{assets?.controlOfficer && <img src={assets.controlOfficer?.src || assets.controlOfficer} alt="" />}<span><small>레아 관제</small><b>{stage?.name}</b></span></div>
-        <div className="defense-core-status"><span><small>추론핵 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
-        <div className="defense-wave-status"><span><small>웨이브</small><b>{hud?.wave || 1} / {hud?.totalWaves || stage?.waveCounts.length}</b></span><span><small>잔존 적</small><b>{hud?.liveEnemies || 0}</b></span><span><small>배치 자원</small><b>{hud?.credits || 0}</b></span></div>
+        <div className="defense-rhea-chip">{assets?.controlOfficer && <img src={assets.controlOfficer?.src || assets.controlOfficer} alt="" />}<span><small>{hud?.phase === "wave" ? "교전 관제 중" : "배치 준비"}</small><b>{stage?.name}</b></span></div>
+        <div className={`defense-core-status${guideTarget === "core" ? " is-guide-target" : ""}`}><span><small>헤이븐 방벽 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
+        <div className="defense-wave-status"><span><small>웨이브</small><b>{hud?.wave || 1}/{hud?.totalWaves || stage?.waveCounts.length}</b></span><span><small>현장 적</small><b>{hud?.liveEnemies || 0}</b></span><span><small>격파</small><b>{hud?.kills || 0}</b></span><span><small>배치 자원</small><b>{hud?.credits || 0}</b></span></div>
         <button type="button" className="defense-exit" data-ui-sound="uiClose" onClick={onBase}><HouseLine weight="bold" /> 기지로 <kbd>ESC</kbd></button>
       </header>
 
+      <div className={`defense-guide-world-target${guideTarget === "field" ? " is-guide-target" : ""}`} aria-hidden="true" />
       <aside className="defense-command-dock">
-        <header><div><small>선택 패드</small><strong>{hud?.selectedNodeId || "전장의 방어 패드를 선택하세요"}</strong></div>{hud?.selectedTower && <span>LV.{hud.selectedTower.rank} / 3 · {selectedTowerDefinition?.name}</span>}</header>
+        <header><div><small>{hud?.selectedTower ? "선택 방어 체계" : "건설 위치"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>{hud?.selectedTower ? <span>강화 단계 {hud.selectedTower.rank} / 3</span> : <span>패드 선택 → 체계 배치 → 공세 개시</span>}</header>
         {!hud?.selectedTower ? (
-          <div className="defense-tower-palette">
+          <div className={`defense-tower-palette${guideTarget === "palette" ? " is-guide-target" : ""}`} data-defense-tower-palette>
             {Object.values(DEFENSE_TOWER_DEFINITIONS).map((tower, index) => {
               const Icon = DEFENSE_TOWER_ICONS[tower.id] || Crosshair;
               const disabled = !hud?.selectedNodeId || (hud?.credits || 0) < tower.cost;
-              return <button type="button" disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="fill" /><span><b>{tower.name}</b><small>{tower.role}</small></span><em>{tower.cost}</em></button>;
+              return <button type="button" data-defense-tower={tower.id} aria-label={`${tower.name}, ${tower.role}, 자원 ${tower.cost}`} title={tower.description} disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="fill" /><span><b>{tower.name}</b><small>{tower.role}</small></span><em>{tower.cost}</em></button>;
             })}
           </div>
         ) : (
           <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="fill" /><span><small>{selectedTowerDefinition?.role}</small><b>{hud.selectedTower.rank >= 3 ? "최대 강화 완료" : `${selectedTowerDefinition?.name} 강화`}</b></span><ArrowRight weight="bold" /></button>
         )}
-        <button type="button" className="defense-wave-button" disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="fill" /><span><small>{hud?.wave === 1 ? "첫 공세" : `다음 공세까지 ${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "웨이브 조기 개시" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
+        <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="fill" /><span><small>{hud?.wave === 1 ? "첫 공세 준비" : `다음 공세까지 ${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "웨이브 조기 개시" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
       </aside>
+      {tutorialActive && <DefenseSpotlightGuide stepIndex={tutorialStep} portrait={assets?.controlOfficer} onNext={advanceTutorial} onBack={() => setTutorialStep((step) => Math.max(0, step - 1))} onSkip={finishTutorial} />}
     </main>
   );
 }
@@ -2812,6 +2885,13 @@ export function App() {
     saveCampaign(nextCampaign);
   }, [activeSlotId, campaign]);
 
+  const finishDefenseGuide = useCallback(() => {
+    if (!activeSlotId) return;
+    const nextCampaign = completeDefenseGuide(campaign, activeSlotId);
+    setCampaign(nextCampaign);
+    saveCampaign(nextCampaign);
+  }, [activeSlotId, campaign]);
+
   const purchaseBaseUpgrade = useCallback((upgradeId) => {
     if (!activeSlotId) return;
     const purchase = purchaseCampaignUpgrade(campaign, activeSlotId, upgradeId);
@@ -2888,7 +2968,7 @@ export function App() {
   } else if (screen === "defense-select" && campaignView) {
     content = <DefenseStageSelectScreen stages={defenseStages} campaign={campaignView} assets={campaignAssets} onSelect={launchDefense} onBack={() => setScreen("base")} />;
   } else if (screen === "defense") {
-    content = <DefenseArenaScreen stageId={activeDefenseStageId} assets={campaignAssets} sfx={sfx} onFinish={finishDefense} onBase={() => setScreen("base")} />;
+    content = <DefenseArenaScreen stageId={activeDefenseStageId} assets={campaignAssets} sfx={sfx} showTutorial={activeDefenseStageId === "haven-perimeter" && !activeSlot?.defenseGuideSeen} onTutorialComplete={finishDefenseGuide} onFinish={finishDefense} onBase={() => setScreen("base")} />;
   } else if (screen === "defense-result") {
     content = <DefenseResultScreen result={defenseResult} stage={getDefenseStage(activeDefenseStageId)} rewards={defenseResult?.rewards} onRetry={() => { setDefenseResult(null); setScreen("defense"); }} onBase={() => setScreen("base")} />;
   } else if (screen === "recruit") {

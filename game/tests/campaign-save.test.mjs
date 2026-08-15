@@ -9,6 +9,7 @@ import {
   clearCampaignSlot,
   completeAbilityGuide,
   completeCombatOverlay,
+  completeDefenseGuide,
   completeOuterSectorBriefing,
   completeRegion,
   createCampaignSlot,
@@ -48,6 +49,7 @@ test("an empty campaign is versioned and always contains exactly three slots", (
   assert.equal(slot.lastCheckpoint, "home-base");
   assert.equal(slot.abilityGuideSeen, false);
   assert.equal(slot.combatOverlaySeen, false);
+  assert.equal(slot.defenseGuideSeen, false);
   assert.equal(campaign.slots[0], null, "slot creation must not mutate the previous campaign");
 });
 
@@ -83,6 +85,21 @@ test("the first live-combat interface overlay persists independently from the br
 
   const repeated = completeCombatOverlay(completed, "slot-1", { now: "2026-08-10T07:00:00.000Z" });
   assert.deepEqual(repeated, completed);
+});
+
+test("the first defense spotlight guide persists independently per save slot", () => {
+  const created = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
+  const completed = completeDefenseGuide(created, "slot-1", { now: "2026-08-10T06:07:00.000Z" });
+  const slot = getCampaignSlot(completed, "slot-1");
+  assert.equal(slot.defenseGuideSeen, true);
+  assert.equal(slot.combatOverlaySeen, false);
+  assert.ok(slot.storyFlags.includes("defense-guide-complete"));
+  assert.equal(slot.updatedAt, "2026-08-10T06:07:00.000Z");
+
+  const repeated = completeDefenseGuide(completed, "slot-1", { now: "2026-08-10T07:00:00.000Z" });
+  assert.deepEqual(repeated, completed);
+  const legacy = sanitizeCampaign({ version: 1, slots: [{ completedRegionIds: [] }, null, null] });
+  assert.equal(getCampaignSlot(legacy, "slot-1").defenseGuideSeen, false);
 });
 
 test("save and load round-trip while corrupt, missing, and future data recover safely", () => {

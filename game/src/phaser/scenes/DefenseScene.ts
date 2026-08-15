@@ -37,6 +37,7 @@ export class DefenseScene extends Phaser.Scene {
 
   create() {
     this.view = new DefenseView(this, this.state, (nodeId) => {
+      if (this.suspended) return;
       selectDefenseNode(this.state, nodeId);
       this.publishHud();
     });
@@ -80,24 +81,28 @@ export class DefenseScene extends Phaser.Scene {
   }
 
   selectNode(nodeId: string) {
+    if (this.suspended) return false;
     const changed = selectDefenseNode(this.state, nodeId);
     if (changed) this.publishHud();
     return changed;
   }
 
   buildTower(towerType: string) {
+    if (this.suspended) return false;
     const built = buildDefenseTower(this.state, towerType);
     if (built) this.publishHud();
     return built;
   }
 
   upgradeTower() {
+    if (this.suspended) return false;
     const upgraded = upgradeDefenseTower(this.state);
     if (upgraded) this.publishHud();
     return upgraded;
   }
 
   startWave() {
+    if (this.suspended) return false;
     const started = startDefenseWave(this.state);
     if (started) this.publishHud();
     return started;

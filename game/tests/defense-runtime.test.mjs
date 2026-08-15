@@ -4,7 +4,7 @@ import { readFile, stat } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
 
-test("Phaser defense runtime stays behind its own deterministic bridge and DOM HUD", async () => {
+test("Phaser defense runtime stays behind its own deterministic bridge and guided DOM HUD", async () => {
   const [app, scene, view, manifest, screens, styles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/phaser/scenes/DefenseScene.ts", root), "utf8"),
@@ -18,10 +18,20 @@ test("Phaser defense runtime stays behind its own deterministic bridge and DOM H
   assert.match(app, /<DefenseArenaScreen/);
   assert.match(scene, /createDefenseState\(\{ stageId \}\)/);
   assert.match(scene, /stepDefense\(this\.state, 1 \/ 60\)/);
+  assert.match(scene, /if \(this\.suspended\) return false;/);
   assert.match(view, /ASSET_KEYS\.defenseSystemsMotion/);
   assert.match(manifest, /export const DEFENSE_GAME_ASSETS/);
   assert.match(screens, /전술 관제관 · 레아/);
   assert.match(styles, /\.defense-tower-palette/);
+  assert.match(app, /const DEFENSE_GUIDE_STEPS/);
+  assert.match(app, /data-defense-guide-step=\{stepIndex \+ 1\}/);
+  assert.match(app, /completeDefenseGuide\(campaign, activeSlotId\)/);
+  assert.match(app, /showTutorial=\{activeDefenseStageId === "haven-perimeter" && !activeSlot\?\.defenseGuideSeen\}/);
+  assert.match(app, /controllerRef\.current\?\.setSuspended\(tutorialActive\)/);
+  assert.match(styles, /\.defense-guide-spotlight/);
+  assert.match(styles, /\.defense-guide-card/);
+  assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.defense-guide-card/);
+  assert.match(screens, /defense-stage-card-top/);
 });
 
 test("defense art ships a 6x4 transparent motion atlas and full/performance battlefields", async () => {

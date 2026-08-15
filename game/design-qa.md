@@ -790,3 +790,22 @@ final result: passed
   시간 절약 지침에 따라 전체 테스트와 production build는 실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 34 — complete · 디펜스 첫 도전 가이드와 전술 UI 개편
+
+- First-attempt onboarding: 새 저장 슬롯의 첫 `HAVEN 방어선`에서 레아가 기지 내구도, 건설 패드,
+  네 포대의 역할, 공세 개시를 실제 UI 위 4단계 스포트라이트로 안내합니다. 안내 중에는 Phaser
+  시뮬레이션과 건설·강화·웨이브 입력을 모두 정지시키며 Space/Enter/방향키/ESC는 가이드 전용으로
+  처리합니다. 완료 또는 건너뛰기는 슬롯의 `defenseGuideSeen`과 호환 스토리 플래그로 영구 저장됩니다.
+- Tactical hierarchy: 상단은 헤이븐 방벽 내구도를 가장 크게 두고 웨이브, 현장 적, 격파, 배치 자원을
+  한 번에 읽도록 정리했습니다. 전장에는 세 침공 경로, 코어 표식, 12개 건설 패드의 선택·점유·강화
+  단계를 추가하고, 하단 도크는 포대 역할·비용·단축키와 공세 상태를 명확히 분리했습니다.
+- Responsive presentation: 데스크톱과 390×844 세로 모바일 모두 핵심 HUD, 명령 도크, 나가기 버튼,
+  가이드 카드가 뷰포트 안에 유지됩니다. 세로 화면에서 16:9 Phaser 전장을 `contain`으로 보존하면서
+  남는 영역은 동일 전장 배경으로 채워 검은 공백처럼 보이지 않게 했습니다.
+- Essential verification: 디펜스 엔진·런타임·캠페인 저장 집중 테스트 17/17과 TypeScript 검사가
+  통과했습니다. Edge 실전 QA에서 3단계 잠금, 4단계 가이드, Space 입력 차단, 가이드 저장, 패드 선택,
+  펄스 센트리 설치, 첫 웨이브 개시, 데스크톱·세로 모바일 경계를 확인했고 console/page/HTTP 오류는
+  `[]`였습니다. 사용자의 빠른 반복 지침에 따라 전체 테스트와 production build는 실행하지 않았습니다.
+
+final result: passed

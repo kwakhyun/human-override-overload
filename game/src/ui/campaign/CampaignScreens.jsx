@@ -644,6 +644,15 @@ export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, o
   const portrait = assetSource(assets?.controlOfficer);
   const completedIds = campaign?.completedDefenseStageIds || [];
   const unlockedIds = campaign?.unlockedDefenseStageIds || [];
+  useEffect(() => {
+    const close = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onBack?.();
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [onBack]);
   return (
     <main className="campaign-shell defense-stage-select-screen">
       {background && <img className="campaign-background" src={background} alt="헤이븐-09 기지 방어 전술 지도" />}
@@ -664,14 +673,15 @@ export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, o
           const completed = completedIds.includes(stage.id);
           const record = campaign?.defenseStageRecords?.[stage.id];
           return (
-            <button type="button" className={`defense-stage-card${unlocked ? "" : " is-locked"}${completed ? " is-cleared" : ""}`} disabled={!unlocked} onClick={() => onSelect(stage.id)} key={stage.id}>
-              <span>DEFENSE {String(stage.order).padStart(2, "0")}</span>
+            <button type="button" className={`defense-stage-card${unlocked ? "" : " is-locked"}${completed ? " is-cleared" : ""}`} aria-label={`${stage.name}, ${unlocked ? completed ? "클리어 기록 있음" : "출격 가능" : "잠김"}`} disabled={!unlocked} onClick={() => onSelect(stage.id)} key={stage.id}>
+              <div className="defense-stage-card-top"><span>DEFENSE {String(stage.order).padStart(2, "0")}</span><b>{unlocked ? completed ? "방어 완료" : "출격 가능" : "잠김"}</b></div>
               <strong>{stage.name}</strong><small>{stage.subtitle}</small>
               <p>{stage.description}</p>
               <dl><div><dt>웨이브</dt><dd>{stage.waveCounts.length}</dd></div><div><dt>기지 내구</dt><dd>{stage.baseHp}</dd></div><div><dt>위험도</dt><dd>{"◆".repeat(stage.order)}</dd></div></dl>
               <footer>
                 <span>{unlocked ? completed ? `클리어 ${record?.clears || 1}회` : "작전 가능" : "이전 방어선 클리어 필요"}</span>
                 <b>연구 {stage.rewards.firstClear.researchData} · 부품 {stage.rewards.firstClear.equipmentParts} · 코어 {stage.rewards.firstClear.augmentationCores}</b>
+                <em>{unlocked ? "방어 작전 시작" : "선행 방어선 필요"}<ArrowRight weight="bold" /></em>
               </footer>
             </button>
           );

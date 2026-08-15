@@ -188,6 +188,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
     baseUnlocked: homeBaseUnlocked,
     abilityGuideSeen: Boolean(slot.abilityGuideSeen),
     combatOverlaySeen: Boolean(slot.combatOverlaySeen),
+    defenseGuideSeen: Boolean(slot.defenseGuideSeen || uniqueStrings(slot.storyFlags).includes("defense-guide-complete")),
     loadout: {
       mainWeaponId: sanitizeMainWeaponId(slot.loadout?.mainWeaponId ?? slot.mainWeaponId),
       characterId,
@@ -308,6 +309,24 @@ export function completeCombatOverlay(campaign, slotId, options = {}) {
     updatedAt: resolveNow(options.now),
     combatOverlaySeen: true,
     storyFlags: [...slot.storyFlags, "combat-overlay-complete"],
+  }, index);
+  const slots = sanitized.slots.slice();
+  slots[index] = nextSlot;
+  return { version: CAMPAIGN_SAVE_VERSION, slots };
+}
+
+export function completeDefenseGuide(campaign, slotId, options = {}) {
+  const sanitized = sanitizeCampaign(campaign);
+  const index = normalizeSlotIndex(slotId);
+  const slot = index >= 0 ? sanitized.slots[index] : null;
+  if (!slot) return sanitized;
+  if (slot.defenseGuideSeen && slot.storyFlags.includes("defense-guide-complete")) return sanitized;
+
+  const nextSlot = sanitizeSlot({
+    ...slot,
+    updatedAt: resolveNow(options.now),
+    defenseGuideSeen: true,
+    storyFlags: [...slot.storyFlags, "defense-guide-complete"],
   }, index);
   const slots = sanitized.slots.slice();
   slots[index] = nextSlot;
