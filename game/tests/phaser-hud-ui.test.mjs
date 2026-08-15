@@ -135,7 +135,10 @@ test("active HUD and HAVEN interactions expose Korean-first copy with NPC menu p
 });
 
 test("Escape pause is guarded from modal states and supports resume, local restart, and unlocked base exit", async () => {
-  const app = await readFile(new URL("src/App.jsx", root), "utf8");
+  const [app, styles] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
+  ]);
   assert.match(app, /const pausedRef = useRef\(false\)/);
   assert.match(app, /const \[paused, setPaused\] = useState\(false\)/);
   assert.match(app, /const \[runRevision, setRunRevision\] = useState\(0\)/);
@@ -145,6 +148,12 @@ test("Escape pause is guarded from modal states and supports resume, local resta
   assert.match(app, /pausedRef\.current = true;\s*setPaused\(true\);\s*controllerRef\.current\?\.setSuspended\(true\)/);
   assert.match(app, /if \(combatTutorialActiveRef\.current\) return;[\s\S]*controllerRef\.current\?\.setSuspended\(false\)/);
   assert.match(app, /setRunRevision\(\(revision\) => revision \+ 1\)/);
+  assert.match(app, /const pauseCombat = useCallback\(\(\) => \{[\s\S]*pausedRef\.current = true;[\s\S]*controllerRef\.current\?\.setSuspended\(true\)/);
+  assert.match(app, /className="expedition-hud-actions"[\s\S]*className="expedition-pause-toggle"[\s\S]*onClick=\{pauseCombat\}/);
+  assert.match(app, /function triggerTouchFeedback\(pattern = 12\)/);
+  assert.match(styles, /\.expedition-hud-actions \{[\s\S]*pointer-events: auto/);
+  assert.match(styles, /\.expedition-pause-toggle \{[\s\S]*width: 38px;[\s\S]*height: 38px/);
+  assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.expedition-pause-toggle \{ width: 48px; height: 48px; \}/);
   assert.match(app, /\[characterId, combatBonuses, mainWeaponId, mikaUnlocked, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx\]/);
   assert.match(app, /<PauseOverlay onResume=\{resumeCombat\} onRestart=\{restartCombat\} onBase=\{onBase \? returnToBase : null\} \/>/);
   assert.match(app, /onBase=\{activeSlot\?\.homeBaseUnlocked \? \(\) => setScreen\("base"\) : null\}/);

@@ -846,6 +846,11 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
         <h1>{selectedCluster ? `${selectedCluster.koreanName} · 구역 선택` : "작전 권역 선택"}</h1>
         <p>{selectedCluster ? "권역 안의 개별 구역을 선택해 상세 정보를 확인하세요." : "먼저 3개 구역이 묶인 상위 권역을 선택하세요."}</p>
       </header>
+      {selectedCluster && !selectedRegion && (
+        <div className="region-mobile-swipe-hint" role="status">
+          <ArrowLeft weight="bold" /><span>좌우로 밀어 구역 선택</span><ArrowRight weight="bold" />
+        </div>
+      )}
       {!selectedCluster ? (
         <section className="region-world-map" aria-label="작전 권역 월드맵">
           {(clusters || []).map((cluster) => {

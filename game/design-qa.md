@@ -830,3 +830,20 @@ final result: passed
   따라 전체 테스트와 production build는 실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 36 — complete · 모바일 세로 편의성 및 접근성 보강
+
+- Touch-first guidance: 모바일 타이틀에서 데스크톱 WASD·마우스 문구를 숨기고 화면 드래그 이동,
+  근접 적 자동 조준, 하단 스킬 아이콘 사용을 48px 터치 카드로 설명합니다. 하위 구역의 가로 스냅
+  카드 위에는 42px `좌우로 밀어 구역 선택` 안내를 추가했습니다.
+- In-combat convenience: 사운드 버튼 옆에 48×48px 일시정지 버튼을 상시 배치하고 대화·레벨업·
+  튜토리얼 중에는 중복 입력을 차단합니다. 세로 일시정지 화면은 36px 제목, 14px 본문 버튼과
+  56px 이상 한 열 액션으로 바꿔 `처음부터`와 `헤이븐-09 기지로`가 줄바꿈되지 않습니다.
+  대시·태그·Q/E/F/R·일시정지/재개는 coarse pointer에서만 짧은 선택적 진동을 사용합니다.
+- Essential verification: 모바일 세로·Phaser HUD·캠페인 UI 집중 테스트 21/21과 TypeScript 검사가
+  통과했습니다. Edge 390×844 실제 터치 QA에서 모바일 조작 카드 48.75/48.75/42px, 스와이프 안내
+  42px 이상, 일시정지 버튼 48×48px, 일시정지 액션 56px 이상, 가로 overflow 0px, 조이스틱 이동,
+  console/page/network 오류 0을 확인했습니다. 전체 테스트와 production build는 사용자의 빠른 반복
+  지침에 따라 실행하지 않았습니다.
+
+final result: passed

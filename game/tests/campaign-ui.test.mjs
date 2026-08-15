@@ -39,6 +39,8 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /className="region-sortie-dialog"/);
   assert.match(screens, /className="region-sortie-layout"/);
   assert.match(screens, /className="region-sortie-command-footer"/);
+  assert.match(screens, /className="region-mobile-swipe-hint"/);
+  assert.match(screens, /좌우로 밀어 구역 선택/);
   assert.match(screens, /className="region-mixed-name"/);
   for (const mixedBoss of ["오답 엔진 · THE WRONG ENGINE", "거울 폭군 · MIRROR TYRANT", "침몰한 예언자 · DROWNED ORACLE"]) {
     assert.match(screens, new RegExp(mixedBoss));

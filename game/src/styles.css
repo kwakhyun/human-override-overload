@@ -3503,6 +3503,33 @@ kbd {
 }
 .expedition-sound svg { width: 18px; height: 18px; }
 
+.expedition-hud-actions {
+  display: flex;
+  grid-column: 3;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  pointer-events: auto;
+}
+
+.expedition-pause-toggle {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(174, 225, 234, 0.22);
+  border-radius: 50%;
+  place-items: center;
+  color: #d8f9ff;
+  background: rgba(2, 8, 10, 0.68);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
+.expedition-pause-toggle svg { width: 18px; height: 18px; }
+.expedition-pause-toggle:focus-visible,
+.expedition-sound:focus-visible { border-color: #8ff2ff; outline: 3px solid rgba(105, 235, 252, 0.2); }
+.expedition-pause-toggle:disabled { opacity: 0.34; cursor: default; }
+
 .expedition-combat-dock {
   position: absolute;
   z-index: 13;
@@ -4626,6 +4653,9 @@ kbd {
   width: 12px;
   height: 12px;
 }
+
+.intro-mobile-controls,
+.region-mobile-swipe-hint { display: none; }
 
 .intro-music-toggle {
   display: inline-flex;
@@ -8396,4 +8426,83 @@ kbd,
   .campaign-shell .region-sortie-intel dd { font-size: 12px; }
   .region-sortie-command-footer { position: sticky; bottom: 0; padding-top: 10px; background: rgba(2, 10, 14, 0.96); }
   .region-sortie-command-footer .region-sortie-launch { width: 100%; min-height: 62px; font-size: 15px; }
+}
+
+/* Portrait-mobile convenience controls --------------------------------- */
+@media (max-width: 720px) and (orientation: portrait) {
+  button,
+  [role="button"] { -webkit-tap-highlight-color: transparent; }
+
+  .intro-minimal-controls { display: none; }
+  .intro-mobile-controls {
+    display: grid;
+    width: 100%;
+    margin-top: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .intro-mobile-controls span,
+  .intro-mobile-controls strong {
+    display: grid;
+    min-height: 48px;
+    padding: 8px 9px;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: center;
+    gap: 2px 7px;
+    border: 1px solid rgba(126, 226, 241, 0.2);
+    color: #dffbff;
+    background: rgba(2, 10, 14, 0.58);
+  }
+  .intro-mobile-controls svg { grid-row: 1 / 3; width: 20px; height: 20px; color: #68e9fb; }
+  .intro-mobile-controls b { min-width: 0; font-size: 11px; line-height: 1.25; }
+  .intro-mobile-controls small { color: #85aab2; font-size: 10px; }
+  .intro-mobile-controls strong { grid-column: 1 / -1; min-height: 42px; font-size: 11px; }
+
+  .region-mobile-swipe-hint {
+    position: absolute;
+    z-index: 7;
+    top: max(184px, calc(env(safe-area-inset-top) + 174px));
+    left: 50%;
+    display: flex;
+    min-height: 42px;
+    padding: 8px 14px;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(102, 231, 249, 0.34);
+    border-radius: 999px;
+    color: #d9faff;
+    background: rgba(2, 12, 16, 0.8);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42);
+    font-size: 12px;
+    font-weight: 800;
+    transform: translateX(-50%);
+    pointer-events: none;
+    backdrop-filter: blur(8px);
+  }
+  .region-mobile-swipe-hint svg { width: 16px; height: 16px; color: #72edff; }
+  .region-select-screen:not(.is-cluster-map) .region-card-grid {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+  }
+
+  .expedition-hud { grid-template-columns: minmax(0, 1fr) auto; }
+  .expedition-hud-actions { grid-column: 2; flex-direction: row; gap: 6px; }
+  .expedition-hud-actions .expedition-sound,
+  .expedition-pause-toggle { width: 48px; height: 48px; }
+  .expedition-hud-actions .expedition-sound svg,
+  .expedition-pause-toggle svg { width: 22px; height: 22px; }
+
+  .expedition-pause { padding: max(12px, env(safe-area-inset-top)) 10px max(12px, env(safe-area-inset-bottom)); }
+  .expedition-pause-card { width: 100%; padding: 24px 18px; }
+  .expedition-pause-card > small { font-size: 10px; letter-spacing: 0.12em; }
+  .expedition-pause-card h2 { margin-top: 8px; font-size: 36px; }
+  .expedition-pause-card p { margin-top: 8px; font-size: 13px; line-height: 1.45; }
+  .expedition-pause-card > div { margin-top: 20px; grid-template-columns: 1fr; gap: 10px; }
+  .expedition-pause-card button { min-height: 56px; padding: 11px 18px; grid-template-columns: 24px 1fr; gap: 12px; font-size: 14px; white-space: nowrap; }
+  .expedition-pause-card button svg { width: 21px; height: 21px; }
+  .expedition-pause-card button kbd { display: none; }
+
+  .region-sortie-close { min-height: 48px; padding: 9px 12px; font-size: 13px; }
+  .region-sortie-close kbd { display: none; }
+  .region-sortie-dialog { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 }

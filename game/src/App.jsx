@@ -10,6 +10,7 @@ import {
   MapTrifold,
   HouseLine,
   NavigationArrow,
+  Pause,
   Play,
   Pulse,
   Robot,
@@ -737,6 +738,12 @@ function InitialAssetLoadingScreen({ progress = 0, label = "초기 작전 자료
   );
 }
 
+function triggerTouchFeedback(pattern = 12) {
+  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+  if (typeof window !== "undefined" && !window.matchMedia?.("(pointer: coarse)").matches) return;
+  navigator.vibrate(pattern);
+}
+
 function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic }) {
   return (
     <main className="overload-intro intro-cinematic">
@@ -782,6 +789,11 @@ function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic 
           <span><kbd>스페이스</kbd> 대시</span>
           <span><kbd>Q/E/F/R</kbd> 액티브</span>
           <strong><Pulse weight="fill" /> 기본 공격 상시 자동</strong>
+        </div>
+        <div className="intro-mobile-controls" aria-label="모바일 게임 조작">
+          <span><NavigationArrow weight="fill" /><b>화면을 누른 채 드래그</b><small>이동</small></span>
+          <span><Crosshair weight="fill" /><b>가까운 적 자동 추적</b><small>조준·사격</small></span>
+          <strong><Lightning weight="fill" /> 하단 스킬 아이콘을 눌러 능력 사용</strong>
         </div>
       </section>
     </main>
@@ -1992,14 +2004,17 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   }, []);
 
   const activateDash = useCallback(() => {
+    triggerTouchFeedback(12);
     controllerRef.current?.dash();
   }, []);
 
   const activateAbility = useCallback((slot) => {
+    triggerTouchFeedback(14);
     controllerRef.current?.activateAbility?.(slot);
   }, []);
 
   const activateTag = useCallback(() => {
+    triggerTouchFeedback([10, 20, 10]);
     controllerRef.current?.tag?.();
   }, []);
 
@@ -2026,6 +2041,14 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   }, [advanceDialogue, dialogue, preparing]);
 
   const rewardOpen = Boolean(hud?.rewards?.options?.length);
+
+  const pauseCombat = useCallback(() => {
+    if (preparing || pausedRef.current || combatTutorialActiveRef.current || dialogue || rewardOpen) return;
+    triggerTouchFeedback(10);
+    pausedRef.current = true;
+    setPaused(true);
+    controllerRef.current?.setSuspended(true);
+  }, [dialogue, preparing, rewardOpen]);
 
   useEffect(() => {
     if (!showCombatTutorial || combatTutorialHandledRef.current || combatTutorialStep >= 0) return;
@@ -2061,6 +2084,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
 
   const resumeCombat = useCallback(() => {
     if (combatTutorialActiveRef.current) return;
+    triggerTouchFeedback(8);
     pausedRef.current = false;
     setPaused(false);
     controllerRef.current?.setSuspended(false);
@@ -2151,9 +2175,20 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
                 <div><i style={{ width: `${routeRatio * 100}%` }} /></div>
                 <b>{hud?.boss ? `체력 ${Math.ceil(hud.boss.hp || 0)}` : `남은 적 ${hud?.enemiesRemaining ?? 0}기`}</b>
               </div>
-              <button type="button" className="expedition-sound" onClick={onToggleSound} aria-label={soundEnabled ? "전체 사운드 끄기" : "전체 사운드 켜기"}>
-                {soundEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}
-              </button>
+              <div className="expedition-hud-actions" aria-label="전투 편의 기능">
+                <button type="button" className="expedition-sound" onClick={onToggleSound} aria-label={soundEnabled ? "전체 사운드 끄기" : "전체 사운드 켜기"}>
+                  {soundEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}
+                </button>
+                <button
+                  type="button"
+                  className="expedition-pause-toggle"
+                  onClick={pauseCombat}
+                  disabled={Boolean(dialogue || rewardOpen || combatTutorialStep >= 0)}
+                  aria-label="전투 일시정지"
+                >
+                  <Pause weight="fill" />
+                </button>
+              </div>
             </div>
             <ExpeditionCombatDock
               hud={hud}

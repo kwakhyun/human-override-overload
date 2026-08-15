@@ -52,4 +52,11 @@ test("portrait combat owns the full safe viewport and exposes a touch-anywhere f
   assert.match(portrait, /\.save-slot-grid \{[\s\S]*grid-template-columns: 1fr/);
   assert.match(portrait, /\.region-select-screen:not\(\.is-cluster-map\) \.region-card-grid \{[\s\S]*grid-template-columns: repeat\(3, 88vw\);[\s\S]*scroll-snap-type: x mandatory/);
   assert.match(portrait, /\.combat-ability-copy \{ display: flex/);
+  assert.match(portrait, /\.intro-minimal-controls \{ display: none; \}/);
+  assert.match(portrait, /\.intro-mobile-controls \{[\s\S]*display: grid;[\s\S]*min-height: 48px/);
+  assert.match(portrait, /\.region-mobile-swipe-hint \{[\s\S]*display: flex;[\s\S]*min-height: 42px/);
+  assert.match(portrait, /\.expedition-pause-toggle \{ width: 48px; height: 48px; \}/);
+  assert.match(portrait, /\.expedition-pause-card button \{[\s\S]*min-height: 56px;[\s\S]*font-size: 14px/);
+  assert.match(app, /aria-label="모바일 게임 조작"/);
+  assert.match(app, /className="expedition-pause-toggle"[\s\S]*aria-label="전투 일시정지"/);
 });

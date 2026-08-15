@@ -57,14 +57,22 @@ try {
   const introMetrics = await page.evaluate(() => {
     const title = document.querySelector(".intro-minimal-content h1");
     const start = document.querySelector(".intro-start")?.getBoundingClientRect();
+    const mobileControls = document.querySelector(".intro-mobile-controls");
+    const desktopControls = document.querySelector(".intro-minimal-controls");
     return {
       titleFont: title ? Number.parseFloat(getComputedStyle(title).fontSize) : 0,
       startHeight: start?.height || 0,
       startWidth: start?.width || 0,
+      mobileControlsDisplay: mobileControls ? getComputedStyle(mobileControls).display : "missing",
+      desktopControlsDisplay: desktopControls ? getComputedStyle(desktopControls).display : "missing",
+      mobileControlHeights: mobileControls ? [...mobileControls.children].map((node) => node.getBoundingClientRect().height) : [],
     };
   });
   assert.ok(introMetrics.titleFont >= 58, JSON.stringify(introMetrics));
   assert.ok(introMetrics.startHeight >= 56 && introMetrics.startWidth >= 300, JSON.stringify(introMetrics));
+  assert.equal(introMetrics.mobileControlsDisplay, "grid", JSON.stringify(introMetrics));
+  assert.equal(introMetrics.desktopControlsDisplay, "none", JSON.stringify(introMetrics));
+  assert.ok(introMetrics.mobileControlHeights.every((height) => height >= 42), JSON.stringify(introMetrics));
   await page.locator(".intro-start").tap();
   await page.locator(".save-slot-screen").waitFor({ state: "visible" });
   await page.screenshot({ path: path.join(qaDir, "mobile-portrait-save-slots-390x844.png"), fullPage: false });
@@ -106,6 +114,8 @@ try {
   await page.locator(".region-card").first().waitFor({ state: "visible" });
   const regionCard = await page.locator(".region-card").first().boundingBox();
   assert.ok(regionCard && regionCard.width >= 300, JSON.stringify(regionCard));
+  const swipeHint = await page.locator(".region-mobile-swipe-hint").boundingBox();
+  assert.ok(swipeHint && swipeHint.height >= 40 && swipeHint.x >= 0 && swipeHint.x + swipeHint.width <= 390, JSON.stringify(swipeHint));
   await page.screenshot({ path: path.join(qaDir, "mobile-portrait-region-list-390x844.png"), fullPage: false });
   await page.locator(".region-card").first().tap();
   await page.locator(".region-sortie-dialog").waitFor({ state: "visible" });
@@ -134,6 +144,31 @@ try {
 
   const frame = await page.locator(".expedition-canvas-frame").boundingBox();
   assert.ok(frame && frame.width >= 389 && frame.height >= 843, JSON.stringify(frame));
+  const pauseButton = page.locator(".expedition-pause-toggle");
+  const pauseButtonMetrics = await pauseButton.evaluate((node) => {
+    const box = node.getBoundingClientRect();
+    return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+  });
+  assert.ok(
+    pauseButtonMetrics.width >= 47 && pauseButtonMetrics.height >= 47
+      && pauseButtonMetrics.left >= 0 && pauseButtonMetrics.right <= 390
+      && pauseButtonMetrics.top >= 0 && pauseButtonMetrics.bottom <= 844,
+    JSON.stringify(pauseButtonMetrics),
+  );
+  await pauseButton.tap();
+  await page.locator(".expedition-pause").waitFor({ state: "visible" });
+  const pauseMetrics = await page.evaluate(() => ({
+    titleFont: Number.parseFloat(getComputedStyle(document.querySelector(".expedition-pause-card h2")).fontSize),
+    buttons: [...document.querySelectorAll(".expedition-pause-card button")].map((button) => ({
+      height: button.getBoundingClientRect().height,
+      font: Number.parseFloat(getComputedStyle(button).fontSize),
+    })),
+  }));
+  assert.ok(pauseMetrics.titleFont >= 35, JSON.stringify(pauseMetrics));
+  assert.ok(pauseMetrics.buttons.every((button) => button.height >= 55 && button.font >= 13), JSON.stringify(pauseMetrics));
+  await page.screenshot({ path: path.join(qaDir, "mobile-portrait-pause-390x844.png"), fullPage: false });
+  await page.locator(".pause-resume").tap();
+  await page.locator(".expedition-pause").waitFor({ state: "detached" });
   const start = { x: frame.x + 105, y: frame.y + 430 };
   const finish = { x: start.x + 82, y: start.y };
   const session = await context.newCDPSession(page);
@@ -179,7 +214,7 @@ try {
   assert.ok(layout.horizontalOverflow <= 1, JSON.stringify(layout));
   assert.deepEqual(errors, []);
 
-  console.log(JSON.stringify({ result: "pass", introMetrics, slotMetrics, homeMetrics, hotspotMetrics, runtime: after, layout, errors }, null, 2));
+  console.log(JSON.stringify({ result: "pass", introMetrics, slotMetrics, homeMetrics, hotspotMetrics, pauseButtonMetrics, pauseMetrics, runtime: after, layout, errors }, null, 2));
 } finally {
   await browser.close();
 }
