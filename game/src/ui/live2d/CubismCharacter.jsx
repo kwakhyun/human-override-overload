@@ -20,6 +20,7 @@ const CUBISM_MODELS = Object.freeze({
     idlePeriod: 5_400,
     idlePhase: 0.35,
     idleExpression: "cold-idle",
+    idleMotionCadence: 10_800,
   }),
   mika: Object.freeze({
     modelJsonPath: "/assets/overload/live2d/mika/mika.model3.json",
@@ -30,6 +31,7 @@ const CUBISM_MODELS = Object.freeze({
     idlePeriod: 4_600,
     idlePhase: 1.6,
     idleExpression: "bright-idle",
+    idleMotionCadence: 8_600,
   }),
 });
 
@@ -52,6 +54,18 @@ const REACTION_EXPRESSIONS = Object.freeze({
   aegis: Object.freeze({ head: "cold-head", chest: "cold-chest", arms: "cold-arms", legs: "cold-legs" }),
   mika: Object.freeze({ head: "shy-head", chest: "shy-chest", arms: "shy-arms", legs: "shy-legs" }),
 });
+
+const REACTION_MOTIONS = Object.freeze({
+  head: "TouchHead",
+  chest: "TouchChest",
+  arms: "TouchArms",
+  legs: "TouchLegs",
+});
+
+function supportsMotionGroup(motionManager, group) {
+  const groups = motionManager?.getMotionGroups?.();
+  return Boolean(groups?.has?.(group) && groups.get(group) > 0);
+}
 
 let cubismCorePromise;
 
@@ -99,6 +113,13 @@ function ModelMotionDriver({ characterId, reaction }) {
   const model = CUBISM_MODELS[characterId] || CUBISM_MODELS.aegis;
   const reactionRef = useRef(null);
   const expressionOwnerRef = useRef("none");
+  const idleVariantRef = useRef(1);
+
+  const startBaseIdle = useCallback(() => {
+    if (supportsMotionGroup(motionManager, "Idle")) {
+      motionManager.setMotion("Idle", 0, 1);
+    }
+  }, [motionManager]);
 
   useEffect(() => {
     if (!motionManager || !reaction?.area) return undefined;
@@ -108,8 +129,18 @@ function ModelMotionDriver({ characterId, reaction }) {
     reactionRef.current = { target, startedAt: performance.now(), token: reaction.token };
     expressionOwnerRef.current = "reaction";
     motionManager.setExpression(REACTION_EXPRESSIONS[characterId]?.[reaction.area]);
+    const motionGroup = REACTION_MOTIONS[reaction.area];
+    if (supportsMotionGroup(motionManager, motionGroup)) {
+      const reactionToken = reaction.token;
+      motionManager.setMotion(motionGroup, 0, 3, () => {
+        if (reactionRef.current?.token === reactionToken) {
+          reactionRef.current = null;
+        }
+        startBaseIdle();
+      });
+    }
     return undefined;
-  }, [characterId, motionManager, reaction?.area, reaction?.token]);
+  }, [characterId, motionManager, reaction?.area, reaction?.token, startBaseIdle]);
 
   useEffect(() => {
     if (!motionManager) return undefined;
@@ -118,6 +149,9 @@ function ModelMotionDriver({ characterId, reaction }) {
     let disposed = false;
     let nextIdleExpressionAt = performance.now() + 2_100 + model.idlePhase * 420;
     let idleExpressionResetAt = 0;
+    let nextIdleMotionAt = performance.now() + model.idleMotionCadence * 0.72;
+
+    if (!reducedMotion) startBaseIdle();
 
     const animate = (now) => {
       if (disposed) return;
@@ -170,6 +204,13 @@ function ModelMotionDriver({ characterId, reaction }) {
         expressionOwnerRef.current = "none";
       }
 
+      if (!activeReaction && !reducedMotion && now >= nextIdleMotionAt && supportsMotionGroup(motionManager, "Idle")) {
+        const idleVariant = idleVariantRef.current;
+        idleVariantRef.current = idleVariant === 1 ? 2 : 1;
+        motionManager.setMotion("Idle", idleVariant, 2, startBaseIdle);
+        nextIdleMotionAt = now + model.idleMotionCadence;
+      }
+
       animationFrame = window.requestAnimationFrame(animate);
     };
 
@@ -183,7 +224,7 @@ function ModelMotionDriver({ characterId, reaction }) {
       motionManager.setScale(model.scale);
       motionManager.setPosition(model.positionX, model.positionY);
     };
-  }, [characterId, model, motionManager]);
+  }, [characterId, model, motionManager, startBaseIdle]);
 
   return null;
 }
@@ -233,6 +274,7 @@ export function CubismCharacter({ characterId, fallbackSource, name, reaction })
       className={`motion-portrait-body cubism-character${modelReady ? " is-ready" : ""}${failed ? " is-fallback" : ""}`}
       data-live2d-ready={modelReady ? "true" : "false"}
       data-live2d-model={characterId}
+      data-live2d-rig="premium-motion-v2"
     >
       {resolvedFallbackSource && (
         <img

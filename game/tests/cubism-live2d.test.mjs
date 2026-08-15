@@ -12,6 +12,42 @@ test("AEGIS and MIKA ship real Cubism model3 bundles with touch-area expressions
     assert.equal(model.FileReferences.Moc, `${id}.moc3`);
     assert.deepEqual(model.FileReferences.Textures, [`${id}.2048/texture_00.png`]);
     assert.equal(model.FileReferences.DisplayInfo, `${id}.cdi3.json`);
+    assert.equal(model.FileReferences.Physics, `${id}.physics3.json`);
+    assert.equal(model.FileReferences.Pose, `${id}.pose3.json`);
+    assert.equal(model.FileReferences.UserData, `${id}.userdata3.json`);
+    assert.deepEqual(Object.keys(model.FileReferences.Motions), [
+      "Idle",
+      "TouchHead",
+      "TouchChest",
+      "TouchArms",
+      "TouchLegs",
+    ]);
+    assert.equal(model.FileReferences.Motions.Idle.length, 3);
+    for (const group of Object.values(model.FileReferences.Motions)) {
+      for (const motionRef of group) {
+        const motion = JSON.parse(await readFile(new URL(`public/assets/overload/live2d/${id}/${motionRef.File}`, root), "utf8"));
+        assert.equal(motion.Version, 3);
+        assert.equal(motion.Meta.CurveCount, motion.Curves.length);
+        assert.ok(motion.Meta.TotalSegmentCount > 0);
+        assert.ok(motion.Curves.some(({ Id }) => Id === "ParamBodyAngleX"));
+        assert.ok(motion.Curves.some(({ Id }) => Id.startsWith("ParamHair")));
+      }
+    }
+    const physics = JSON.parse(await readFile(new URL(`public/assets/overload/live2d/${id}/${model.FileReferences.Physics}`, root), "utf8"));
+    assert.equal(physics.Version, 3);
+    assert.equal(physics.Meta.PhysicsSettingCount, 3);
+    assert.deepEqual(
+      physics.PhysicsSettings.map(({ Output }) => Output[0].Destination.Id),
+      ["ParamHairFront", "ParamHairSide", "ParamHairBack"],
+    );
+    const [pose, userData] = await Promise.all([
+      readFile(new URL(`public/assets/overload/live2d/${id}/${model.FileReferences.Pose}`, root), "utf8").then(JSON.parse),
+      readFile(new URL(`public/assets/overload/live2d/${id}/${model.FileReferences.UserData}`, root), "utf8").then(JSON.parse),
+    ]);
+    assert.equal(pose.Type, "Live2D Pose");
+    assert.deepEqual(pose.Groups, []);
+    assert.equal(userData.Version, 3);
+    assert.deepEqual(userData.UserData, []);
     assert.deepEqual(model.Groups, [{
       Target: "Parameter",
       Name: "EyeBlink",
@@ -62,6 +98,10 @@ test("lobby uses bundled Cubism rendering with idle breathing and click-only are
   assert.match(component, /setLookTargetRelative/);
   assert.match(component, /setBodyOrientationTargetRelative/);
   assert.match(component, /setExpression\(REACTION_EXPRESSIONS\[characterId\]\?\.\[reaction\.area\]\)/);
+  assert.match(component, /const REACTION_MOTIONS/);
+  assert.match(component, /motionManager\.setMotion\(motionGroup, 0, 3/);
+  assert.match(component, /motionManager\.setMotion\("Idle", idleVariant, 2, startBaseIdle\)/);
+  assert.match(component, /data-live2d-rig="premium-motion-v2"/);
   assert.match(component, /idleExpression: "cold-idle"/);
   assert.match(component, /idleExpression: "bright-idle"/);
   assert.match(component, /scale: 0\.94/);
@@ -96,4 +136,13 @@ test("Cubism editable sources are preserved separately from browser runtime file
     assert.ok(psd.size > 1_000_000);
     assert.ok(cmo3.size > 1_000_000);
   }
+  const [sourceBuilder, motionBuilder] = await Promise.all([
+    readFile(new URL("scripts/build-premium-cubism-source.py", root), "utf8"),
+    readFile(new URL("scripts/build-cubism-motion-library.mjs", root), "utf8"),
+  ]);
+  assert.match(sourceBuilder, /Hair_Inner_L/);
+  assert.match(sourceBuilder, /TwinTail_Outer_R/);
+  assert.match(sourceBuilder, /Ring_R/);
+  assert.match(motionBuilder, /HairFrontPhysics/);
+  assert.match(motionBuilder, /touch\/chest\.motion3\.json/);
 });

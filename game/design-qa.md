@@ -720,3 +720,27 @@ final result: passed
   유지됩니다.
 
 final result: passed
+
+### Iteration 31 — complete · Cubism premium motion/physics v2
+
+- Professional reference: Live2D 공식 소재 분리, 수동 메쉬, 워프 디포머, 표준 파라미터,
+  XY 얼굴 회전, 눈 깜빡임, 물리 연산 문서를 기준으로 기존 로비 리그의 병목을 다시
+  감사했습니다. 외부 게임의 원화·모델·모션은 가져오지 않았습니다.
+- Rig sources: AEGIS/MIKA 정체성을 유지한 정면 전신 중립 원화를 ImageGen으로 새로 만들고,
+  얼굴·눈·눈썹·입·머리카락·양팔·양다리·코트·트윈테일·링 장비를 캐릭터별 28개 의미
+  레이어로 분리하는 재현 가능한 PSD 파이프라인을 추가했습니다. Cubism 자동 템플릿은 몸통
+  디포머 참고로만 사용하고 검증되지 않은 얼굴 키폼은 현재 정상 MOC에 덮어쓰지 않았습니다.
+- Runtime motion: 각 모델의 model3에 3종 Idle, 머리·가슴·팔·다리 4종 Touch motion3와
+  앞·옆·뒷머리 3계통 physics3를 연결했습니다. AEGIS는 절제된 느린 복귀, MIKA는 더 빠르고
+  탄성 있는 트윈테일 반응으로 진폭·지연·가속도를 독립 조정했습니다. 터치 종료 후 기본 대기
+  루프로 자연스럽게 복귀하며 캔버스 앵커와 배율은 계속 고정됩니다.
+- Runtime hygiene: 빈 Pose/UserData 파일을 정식 Cubism 형식으로 제공해 로더의 선택 파일
+  경고를 제거했습니다. 폴백 PNG는 모델 준비 뒤 opacity 0을 유지하고, 터치 실루엣과 포인터
+  추적은 다시 추가하지 않았습니다.
+- Focused verification: Cubism 모델·모션·물리와 캠페인 UI 14/14, TypeScript 검사가
+  통과했습니다. Edge 1440×810에서 AEGIS 520×737, MIKA 448×737 캔버스가 모두 ready,
+  폴백 opacity 0, 대기 프레임 변화 true, 터치 반응 변화 true, 서로 다른 터치 프레임 4/4,
+  console/page error·warning 0을 확인했습니다. 전체 테스트와 production build는 사용자의
+  빠른 반복 지침에 따라 실행하지 않았습니다.
+
+final result: passed

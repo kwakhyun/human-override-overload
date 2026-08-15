@@ -31,6 +31,20 @@
 				"File": "expressions/cold-legs.exp3.json"
 			}
 		],
+		"Physics": "aegis.physics3.json",
+		"Pose": "aegis.pose3.json",
+		"UserData": "aegis.userdata3.json",
+		"Motions": {
+			"Idle": [
+				{ "File": "motions/idle/idle-01.motion3.json", "FadeInTime": 0.6, "FadeOutTime": 0.6 },
+				{ "File": "motions/idle/idle-02.motion3.json", "FadeInTime": 0.45, "FadeOutTime": 0.65 },
+				{ "File": "motions/idle/idle-03.motion3.json", "FadeInTime": 0.45, "FadeOutTime": 0.65 }
+			],
+			"TouchHead": [{ "File": "motions/touch/head.motion3.json", "FadeInTime": 0.1, "FadeOutTime": 0.4 }],
+			"TouchChest": [{ "File": "motions/touch/chest.motion3.json", "FadeInTime": 0.08, "FadeOutTime": 0.38 }],
+			"TouchArms": [{ "File": "motions/touch/arms.motion3.json", "FadeInTime": 0.08, "FadeOutTime": 0.38 }],
+			"TouchLegs": [{ "File": "motions/touch/legs.motion3.json", "FadeInTime": 0.1, "FadeOutTime": 0.4 }]
+		},
 		"DisplayInfo": "aegis.cdi3.json"
 	},
 	"Groups": [

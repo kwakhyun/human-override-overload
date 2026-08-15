@@ -1729,6 +1729,53 @@ Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background cover
   복제하거나 프로젝트에 포함하지 않았고 AEGIS와 MIKA는 프로젝트 원본을 기반으로 각각
   독립 제작했습니다.
 
+### HAVEN-09 Cubism premium motion v2
+
+- 조사 기준: Live2D 공식 Cubism 문서의 PSD 소재 분리, 수동 메쉬, 워프 디포머, 표준
+  파라미터, XY 얼굴 회전, 눈 깜빡임, 물리 연산 지침을 기준으로 삼았습니다. 다른 게임의
+  캐릭터 원화·모델·모션 데이터는 사용하지 않았습니다.
+- 도구: OpenAI 내장 ImageGen과 사용자가 설치·승인한 Live2D Cubism Editor 5.3.03.
+- AEGIS 선택 ImageGen 원본:
+  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-ae464a1e-9e91-4658-821a-996f34bcfe35.png`.
+- MIKA 선택 ImageGen 원본:
+  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-51d11449-6278-4b1b-81f3-938adbdeeefa.png`.
+- 편집 소스 경로:
+  `reference/source-assets/overload/cubism-v2/aegis/`와
+  `reference/source-assets/overload/cubism-v2/mika/`. `scripts/build-premium-cubism-source.py`가
+  얼굴, 눈, 눈썹, 입, 머리카락 덩어리, 양팔, 양다리, 코트, MIKA 트윈테일·링 장비를
+  캐릭터별 28개 의미 레이어로 분리한 PSD와 합성 검수 이미지를 재생성합니다. Cubism Editor
+  자동 템플릿은 몸통 디포머 배치의 참고에만 사용했고, 검증되지 않은 얼굴 자동 키폼을 런타임
+  MOC에 덮어쓰지 않았습니다.
+- 런타임 출력: 각 캐릭터에 3개 Idle 모션, 머리·가슴·팔·다리 4개 Touch 모션과
+  앞머리·옆머리·뒷머리 3계통 물리를 추가했습니다. 재현 스크립트는
+  `scripts/build-cubism-motion-library.mjs`, 런타임 경로는
+  `public/assets/overload/live2d/{aegis,mika}/motions/`와 각 `*.physics3.json`입니다.
+  AEGIS는 낮은 진폭과 긴 복귀, MIKA는 큰 트윈테일 관성과 빠른 탄성으로 독립 조정했습니다.
+
+#### AEGIS premium rig source 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: premium production source illustration for a Live2D Cubism character rig in the game HUMAN OVERRIDE: OVERLOAD.
+Image 1 is the approved AEGIS character identity. Preserve her exact adult silver-haired cybernetic operative identity: long silver-white hair, cool gray eyes, black high-neck armored bodysuit, white technical coat panels with black star hardware, cyan micro-lights, elegant severe expression, realistic anime proportions, and premium dark sci-fi rendering. Do not redesign her face, age, hairstyle, palette, or costume language.
+Create one new complete FULL-BODY neutral rigging source, strict straight-on front view with a subtle natural contrapposto no more than 3 degrees. Head upright, both eyes clearly visible, shoulders level. Both arms held slightly away from the torso with elbows softly bent so the upper arms, forearms, gloved hands, waist, and coat panels do not overlap. Legs separated by a small gap, both boots fully visible. Long hair must be readable as distinct bangs, side locks, rear mass, and several clean long strand groups, with no strand crossing the eyes or hands. Keep the mouth closed in a calm neutral line and eyes naturally open. Include generous transparent-looking safety margin around hair, hands, coat tails, and boots.
+Live2D separation requirements: clean unobstructed silhouette, face and neck fully drawable behind hair, torso fully drawable behind arms and coat tails, complete hidden limb edges implied cleanly, crisp high-detail cel-painted anime game art, stable symmetric anatomy, clear joints at shoulders/elbows/wrists/hips/knees, no motion blur, no perspective distortion, no dramatic pose, no weapon, no foreground effects.
+Composition: exact 9:16 portrait canvas, character centered, complete head-to-toe body occupying about 84 percent of canvas height.
+Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background, no shadow, gradient, texture, environment, reflection, floor, text, UI, watermark, or extra objects. Do not use #00ff00 anywhere in the character.
+```
+
+#### MIKA premium rig source 프롬프트 전문
+
+```text
+Use case: identity-preserve.
+Asset type: premium production source illustration for a Live2D Cubism character rig in the game HUMAN OVERRIDE: OVERLOAD.
+Image 1 is the approved MIKA character identity. Preserve her exact adult pink-haired twin-tail cybernetic striker identity: long vivid pink twin tails with black-and-magenta mechanical ornaments and two circular floating blade rings, bright magenta eyes, playful cute face, black fitted futuristic combat bodysuit, cropped white technical jacket, hot-pink luminous seams, gloves, belts and thigh gear. Preserve her unique cheerful mischievous appeal, anime proportions, premium dark sci-fi rendering, and exact palette. Do not redesign her age, face, hairstyle, costume language, or weapons.
+Create one new complete FULL-BODY neutral rigging source, strict straight-on front view with a lively but rig-safe contrapposto no more than 3 degrees. Head upright, both eyes clearly visible, shoulders level. Both arms held slightly away from the torso with elbows softly bent so upper arms, forearms, gloved hands, jacket sleeves, waist, and hips do not overlap. Legs separated by a small gap, both boots fully visible. Each twin tail must be clearly separated into front strand, main tail mass, outer loose strands and tips. Keep the two ring ornaments behind the shoulders, symmetric and not crossing the face, arms, or torso. Mouth closed in a small confident smile and eyes naturally open. Include generous safety margin around twin tails, hands, rings, jacket, and boots.
+Live2D separation requirements: clean unobstructed silhouette, face and neck fully drawable behind bangs, torso fully drawable behind arms and jacket, complete hidden limb edges implied cleanly, crisp high-detail cel-painted anime game art, stable anatomy, clear joints at shoulders/elbows/wrists/hips/knees, no motion blur, no perspective distortion, no dramatic pose, no foreground VFX.
+Composition: exact 9:16 portrait canvas, character centered, complete head-to-toe body occupying about 84 percent of canvas height.
+Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background, no shadow, gradient, texture, environment, reflection, floor, text, UI, watermark, or extra objects. Do not use #00ff00 anywhere in the character.
+```
+
 ## Expanded regional route backgrounds v2
 
 - 도구: OpenAI 내장 ImageGen.

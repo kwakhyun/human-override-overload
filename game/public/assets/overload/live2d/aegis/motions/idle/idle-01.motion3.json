@@ -1,0 +1,248 @@
+{
+  "Version": 3,
+  "Meta": {
+    "Duration": 6.4,
+    "Fps": 30,
+    "Loop": true,
+    "AreBeziersRestricted": true,
+    "CurveCount": 11,
+    "TotalSegmentCount": 40,
+    "TotalPointCount": 51,
+    "UserDataCount": 0,
+    "TotalUserDataSize": 0,
+    "FadeInTime": 0.4,
+    "FadeOutTime": 0.5
+  },
+  "Curves": [
+    {
+      "Target": "Parameter",
+      "Id": "ParamAngleX",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        0,
+        0,
+        1.6,
+        -3.2,
+        0,
+        3.2,
+        2.2,
+        0,
+        4.8,
+        -1.4,
+        0,
+        6.4,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamAngleY",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        0,
+        0,
+        2.1,
+        1.8,
+        0,
+        4.3,
+        -1.2,
+        0,
+        6.4,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamAngleZ",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        0,
+        0,
+        1.7,
+        -1.7,
+        0,
+        3.5,
+        1.2,
+        0,
+        5.1,
+        -0.8,
+        0,
+        6.4,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamBodyAngleX",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        0,
+        0,
+        1.6,
+        -2.4,
+        0,
+        3.4,
+        1.8,
+        0,
+        5.2,
+        -1.1,
+        0,
+        6.4,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamBodyAngleZ",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        0,
+        0,
+        2.2,
+        1.25,
+        0,
+        4.3,
+        -0.8,
+        0,
+        6.4,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamBreath",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        0.12,
+        0,
+        1.55,
+        0.92,
+        0,
+        3.1,
+        0.18,
+        0,
+        4.75,
+        1,
+        0,
+        6.4,
+        0.12
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamHairFront",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        0,
+        0,
+        1.8,
+        0.24,
+        0,
+        3.7,
+        -0.18,
+        0,
+        5.3,
+        0.12,
+        0,
+        6.4,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamHairSide",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        0,
+        0,
+        1.95,
+        0.42,
+        0,
+        3.85,
+        -0.34,
+        0,
+        5.5,
+        0.18,
+        0,
+        6.4,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamHairBack",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        0,
+        0,
+        2.1,
+        0.56,
+        0,
+        4.05,
+        -0.42,
+        0,
+        5.7,
+        0.2,
+        0,
+        6.4,
+        0
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamEyeLOpen",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        1,
+        0,
+        2.84,
+        1,
+        0,
+        2.92,
+        0,
+        0,
+        3.04,
+        1
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Id": "ParamEyeROpen",
+      "FadeInTime": 0.35,
+      "FadeOutTime": 0.35,
+      "Segments": [
+        0,
+        1,
+        0,
+        2.84,
+        1,
+        0,
+        2.92,
+        0,
+        0,
+        3.04,
+        1
+      ]
+    }
+  ]
+}
