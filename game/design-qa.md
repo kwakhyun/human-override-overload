@@ -771,3 +771,22 @@ final result: passed
   않았습니다.
 
 final result: passed
+
+### Iteration 33 — complete · 로비 Cubism 최종 판정과 원본 일러스트 전환
+
+- Final diagnosis: 공개 런타임에서 두 MOC3와 WebGL Canvas는 로드됐지만, 8회 표본의 MIKA
+  유휴 변화량이 화면 픽셀의 약 0.25%에 그쳐 육안상 정지 상태와 다르지 않았습니다. AEGIS도
+  승인 원본의 얼굴을 독립적으로 변형할 수 없는 프록시 구조여서 이음새 없는 표정·머리카락
+  반응을 동시에 만족하지 못했습니다. 파일이 로드되는 것과 고품질 Live2D가 완성된 것은
+  다르다고 판정하고 마지막 프록시 리깅 시도를 종료했습니다.
+- Runtime fallback: 로비는 `survivor-portrait.png`와 `mika-portrait.png` 원본을 고정된 3/4
+  구도로 직접 렌더링합니다. Cubism React 의존성과 활성 컴포넌트를 제거했으며 Canvas, CSS
+  홍조·얼굴선, 전신 이동 애니메이션을 만들지 않습니다. 투명한 머리·가슴·양팔·다리 터치
+  영역과 캐릭터별 말풍선 대사는 유지합니다. 제작용 Cubism 자료는 향후 전문 독립 리깅을 위한
+  비활성 자료로만 보존합니다.
+- Focused verification: 로비/캠페인 계약 13/13과 TypeScript 검사가 통과했습니다. Edge
+  1440×810에서 두 원본이 각각 941×1672로 완전히 로드되고 Canvas 0개, 터치 대사 정상,
+  console/page error 0임을 확인하고 AEGIS·MIKA 로비 캡처를 육안 검토했습니다. 사용자의
+  시간 절약 지침에 따라 전체 테스트와 production build는 실행하지 않았습니다.
+
+final result: passed

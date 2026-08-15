@@ -114,7 +114,7 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   assert.doesNotMatch(app, /toggleAutoFire|autoFireEnabled|autoFireTogglePressed|클릭 수동 사격/);
 });
 
-test("HAVEN lobby uses a motion portrait, icon currencies, edge navigation, and authored facility backgrounds", async () => {
+test("HAVEN lobby uses original character art, icon currencies, edge navigation, and authored facility backgrounds", async () => {
   const [app, screens, styles, manifest] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
@@ -122,8 +122,9 @@ test("HAVEN lobby uses a motion portrait, icon currencies, edge navigation, and 
     readFile(new URL("src/game/assets/manifest.ts", root), "utf8"),
   ]);
   assert.match(screens, /function MotionPortraitStage/);
-  assert.match(screens, /data-portrait-renderer="cubism-live2d"/);
-  assert.match(screens, /<CubismCharacter/);
+  assert.match(screens, /data-portrait-renderer="original-illustration"/);
+  assert.match(screens, /className="motion-portrait-original"/);
+  assert.doesNotMatch(screens, /CubismCharacter|data-live2d/);
   assert.doesNotMatch(screens, /motion-portrait-expression/);
   assert.doesNotMatch(screens, /onPointerMove|--portrait-look-x|--portrait-tilt/);
   for (const zone of ["is-head", "is-chest", "is-arm is-left", "is-arm is-right", "is-legs"]) assert.match(screens, new RegExp(`portrait-zone ${zone}`));

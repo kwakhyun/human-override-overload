@@ -5758,39 +5758,18 @@ kbd {
   position: absolute;
   inset: 0;
   display: block;
+  overflow: hidden;
   transform-origin: 52% 64%;
 }
-.motion-portrait-body > img,
-.cubism-character-fallback {
+.motion-portrait-original {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  object-position: center bottom;
-  filter: drop-shadow(22px 18px 30px rgba(0, 0, 0, 0.78));
-  transform-origin: 50% 75%;
-  animation: lobby-portrait-breathe 5.8s ease-in-out infinite;
-  pointer-events: none;
-}
-.cubism-character { overflow: hidden; }
-.cubism-character-canvas {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
+  object-position: center top;
   filter: drop-shadow(22px 18px 30px rgba(0, 0, 0, 0.78));
   pointer-events: none;
 }
-.cubism-character-fallback {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  opacity: 1;
-  transition: opacity 220ms ease-out;
-}
-.cubism-character.is-ready .cubism-character-fallback { opacity: 0; }
-.base-motion-portrait.is-mika { bottom: -7%; left: 23.5%; width: min(39vw, 532px); height: 98%; }
+.base-motion-portrait.is-mika { bottom: -1%; left: 23.5%; width: min(39vw, 532px); height: 94%; }
 
 .portrait-interaction-zones { position: absolute; z-index: 2; inset: 0; }
 .portrait-zone { position: absolute; margin: 0; padding: 0; border: 0; border-radius: 48%; background: transparent; cursor: pointer; touch-action: manipulation; }
@@ -5933,11 +5912,6 @@ kbd {
 .base-facility-panel.has-key-art .facility-key-art { opacity: 0.62; filter: brightness(0.82) saturate(1.05) contrast(1.08); }
 .character-information-panel .character-info-environment { opacity: 0.48; filter: saturate(1.02) brightness(0.72) contrast(1.08); }
 
-@keyframes lobby-portrait-breathe {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-5px) scale(1.006); }
-}
-
 @media (max-width: 900px), (max-height: 600px) {
   .base-lobby-topbar { top: max(6px, env(safe-area-inset-top)); right: 7px; left: 7px; gap: 7px; }
   .base-identity { min-width: 165px; padding: 6px 8px 6px 10px; }
@@ -5955,7 +5929,7 @@ kbd {
   .base-menu-button small { font-size: 5px; }
   .base-menu-button b { margin-top: 0; font-size: 8px; }
   .base-motion-portrait { left: 24%; bottom: -5%; width: min(37vw, 300px); height: 91%; }
-  .base-motion-portrait.is-mika { left: 23%; bottom: -8%; width: min(39vw, 318px); height: 98%; }
+  .base-motion-portrait.is-mika { left: 23%; bottom: -1%; width: min(39vw, 318px); height: 94%; }
   .motion-portrait-caption { right: 0; bottom: 4%; min-width: 108px; padding: 5px 7px; }
   .motion-portrait-caption small { font-size: 5px; }
   .motion-portrait-caption strong { font-size: 14px; }
@@ -5984,7 +5958,7 @@ kbd {
 
 @media (prefers-reduced-motion: reduce) {
   .motion-portrait-body,
-  .motion-portrait-body > img,
+  .motion-portrait-original,
   .base-menu-button,
   .base-character-action,
   .base-sortie-action { animation: none !important; transition: none !important; }
