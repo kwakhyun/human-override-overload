@@ -2,7 +2,7 @@
 
 아래 프롬프트는 모두 `Instrumental` 모드용입니다. 한 곡당 2분 30초~3분 30초 길이로 생성한 뒤,
 게임에 사용할 최종 파일은 시작·끝이 자연스럽게 이어지는 루프 버전을 선택합니다. 특정 아티스트나
-기존 게임 음악을 모방하지 않고 `TRAIN ME WRONG: OVERLOAD`의 지역 정체성만 설명합니다.
+기존 게임 음악을 모방하지 않고 `HUMAN OVERRIDE: OVERLOAD`의 지역 정체성만 설명합니다.
 
 ## 헤이븐-09 메인 기지 로비
 
@@ -35,3 +35,7 @@ Instrumental dark sci-fi combat music for ABYSSAL ARCHIVE, a drowned machine mem
 - 1구역 오답 엔진 중앙로: 기존 `overload-main-theme.mp3`만 사용
 - 2구역 유리 사구: 사용자 제공 `2구역_Refraction War.mp3` 적용 완료
 - 3구역 심해 기록고: 사용자 제공 `3구역_Memory Below Pressure.mp3` 적용 완료
+- 4~6구역 외곽 생산권역: 전용 음원이 아직 없어 현재 무음 전투로 처리
+
+이 문서는 현재 적용된 5개 트랙의 제작 브리프입니다. 외곽 권역용 음악을 추가할 때는 기존
+1~3구역 파일을 복제하지 말고, 각 지역의 고유 전투 정체성과 새 런타임 경로를 함께 기록합니다.

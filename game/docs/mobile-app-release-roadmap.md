@@ -8,15 +8,19 @@
 플랫폼 어댑터로 분리합니다. Capacitor는 기존 웹 프로젝트에 Android/iOS 플랫폼을 추가하고
 네이티브 API에 접근하는 공식적인 웹 네이티브 런타임입니다.
 
+현재 웹 기준선(2026년 8월 15일)은 캠페인 6개 구역, AEGIS·MIKA 태그, 펄스 소총·빔 소드,
+3단계 타워 디펜스와 모바일 세로 전용 UI까지 포함합니다. 앱 이관은 이 기능을 줄이는 재개발이
+아니라, 검증된 웹 빌드를 네이티브 생명주기와 스토어 배포 체계에 연결하는 작업으로 봅니다.
+
 - Capacitor 문서: <https://capacitorjs.com/docs>
 - Android App Bundle: <https://developer.android.com/guide/app-bundle>
 - Apple 앱 심사 지침: <https://developer.apple.com/app-store/review/guidelines/>
 
 ## 지금부터 유지할 경계
 
-1. `src/swarm/engine.js`는 플랫폼과 무관한 전투 권위 계층으로 유지합니다.
-2. `src/phaser/`는 화면·입력 어댑터이며 모바일은 세로 화면, 플로팅 조이스틱, 자동 조준을 사용합니다.
-3. React는 HUD·로비·상점·저장 슬롯을 담당하고 CSS `safe-area-inset-*`를 항상 존중합니다.
+1. `src/swarm/engine.js`와 `src/defense/engine.js`는 플랫폼과 무관한 캠페인·방어 작전 권위 계층으로 유지합니다.
+2. `src/phaser/`는 화면·입력 어댑터이며 모바일 캠페인은 세로 화면, 플로팅 조이스틱, 자동 조준을 사용하고 디펜스는 독립 720×1,280 전장을 사용합니다.
+3. React는 HUD·로비·캐릭터·장비·지역 선택·타워 디펜스 메뉴·저장 슬롯을 담당하고 CSS `safe-area-inset-*`를 항상 존중합니다.
 4. `src/platform/` 아래에 웹/Capacitor 차이를 모읍니다. 전투 코드가 Android 또는 iOS API를 직접
    호출하지 않게 합니다.
 5. 사용자 제공 음원과 필수 전투 에셋은 앱 번들에 포함해 오프라인 첫 실행에서도 빈 화면이 없게 합니다.
@@ -28,6 +32,7 @@
 - 오디오: 통화·다른 앱 오디오 인터럽션과 무음 모드 정책 처리
 - 입력: Android 시스템 백버튼, iOS 홈 인디케이터 안전 영역, 선택적 햅틱
 - 화면: Android manifest와 iOS Info.plist에서 세로 방향 기본값 설정
+- 에셋: 6개 지역·2개 캐릭터·디펜스의 지연 로딩 계약과 PERFORMANCE 텍스처 프로필 유지
 - 업데이트: 세이브 스키마 버전과 에셋 캐시 버전을 앱 버전과 독립적으로 관리
 
 ## 권장 출시 순서
@@ -37,6 +42,7 @@
 - 360×800, 390×844, 430×932 세로 화면에서 HUD·조이스틱·대화·레벨업·결과 화면 검증
 - 저사양 Android 기준으로 30fps PERFORMANCE, 중간 기기 45fps BALANCED 목표
 - 터치 2개 이상을 사용해 이동 중 Q/E/F/R/대시가 동시 입력되는지 검증
+- 태그·무기 전환, 보스 패링·순서형 시한폭탄과 디펜스 건설·웨이브 시작까지 실기기 터치 검증
 - 브라우저 새로고침·백그라운드·화면 잠금 이후 세이브와 전투 정지 상태 검증
 
 ### 2. Capacitor 셸 추가
@@ -61,7 +67,8 @@ npx cap sync
 
 - Android: 서명된 AAB를 Play Console 내부 테스트에 먼저 배포합니다. 신규 앱과 업데이트는
   Google Play의 현재 target API 요구사항을 따라야 합니다. 2026년 8월 31일부터 신규 앱과
-  업데이트는 Android 16 / API 36 대상 요구가 적용됩니다.
+  업데이트는 Android 16 / API 36 이상 대상 요구가 적용됩니다. 실제 제출 직전에는 아래 공식
+  문서에서 일정과 예외를 다시 확인합니다.
 - iOS: Xcode로 archive를 만들고 App Store Connect에 업로드한 뒤 TestFlight 내부 테스트부터
   진행합니다.
 - 실기기 최소 행렬: 저사양 Android 1대, 중간 Android 1대, 최신 Android 1대, 작은 iPhone 1대,

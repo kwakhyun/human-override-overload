@@ -1,9 +1,10 @@
 # Design QA — HUMAN OVERRIDE: OVERLOAD
 
-- 검증일: 2026-08-10
-- 브라우저: Codex 인앱 브라우저
+- 최초 검증일: 2026-08-10
+- 최신 전체 검증일: 2026-08-15
+- 브라우저: Codex 인앱 브라우저·Edge WebGL
 - 데스크톱 뷰포트: 1440×810, DPR 1
-- 모바일 가로 뷰포트: 812×375, DPR 1
+- 모바일 기준 뷰포트: 320×700, 360×800, 390×844 세로 · 812×375 보조 가로
 - 시작 화면 원본: `reference/source-assets/overload/intro/start-screen-key-art-user.png`
 - 은발 AEGIS 원본: `reference/source-assets/overload/hero/silver-aegis-portrait-user-chroma.png`
 - 시작 화면 캡처: `qa/intro-implementation-1440x810.png`
@@ -20,6 +21,11 @@
 - 점진형 게이트 스폰: `qa/progressive-gate-spawn.png`
 - 스킬 모션 실전 화면: `qa/skill-motion-combat.png`, `qa/omega-laser-live.png`
 - 최신 모바일 가로 전투: `qa/mobile-landscape-combat-812x375.png`
+- 최신 모바일 세로 흐름: `qa/mobile-portrait-title-390x844.png`,
+  `qa/mobile-portrait-home-390x844.png`, `qa/mobile-portrait-combat-390x844.png`,
+  `qa/mobile-portrait-joystick-390x844.png`
+- 최신 세로 디펜스: `qa/defense-mode-mobile-portrait.png`,
+  `qa/defense-guide-mobile-portrait.png`
 - OMEGA LASER 아틀라스 단독 렌더: `qa/omega-laser-atlas-only.png`
 - SKYFALL 전용 경고·충돌: `qa/skyfall-warning-atlas-only.png`, `qa/skyfall-impact-atlas-only.png`
 - 진행 경로 미니맵: `qa/route-minimap-desktop.png`, `qa/route-minimap-mobile-812x375.png`
@@ -921,5 +927,26 @@ final result: passed
   패턴, 모바일 하단 스킬 도크, 전술 지도, 디펜스 720×1280 전장과 명령 도크가 모두 표시되며
   검은 빈 화면, HTTP 실패, 가로 overflow가 없었습니다. 세로 디펜스가 실제 performance
   전용 6×4 아틀라스 세 개를 요청하는 것도 네트워크 응답으로 고정했습니다.
+
+final result: passed
+
+### Iteration 41 — complete · 대규모 업데이트 이후 문서 정합성 감사
+
+- Runtime-to-document audit: 최근 활성 소스와 2026-08-15 검증 기준을 루트 소개서,
+  런타임 README, durable decisions, 프로젝트 가이드, AI 활용 보고서, CREDITS, BGM·TTS 절차와
+  모바일 앱 출시 로드맵을 대조했습니다. 6개 구역의 300/1,000/1,000/1,100/1,150/1,200기 예산, AEGIS·MIKA와
+  소총·검별 스킬, 태그, 외곽 중간 보스, 모바일 세로 플로팅 조이스틱, 타워 디펜스, 출격 중
+  백그라운드 로딩을 현재 계약으로 통일했습니다.
+- Retired-feature clarity: 활성 로비는 승인된 정적 AEGIS·MIKA 원본을 사용하며 Cubism 모델·모션은
+  비활성 제작 자료라는 점을 CREDITS와 가이드에 명시했습니다. 01—03구역만 6초 출격 MP4와 전용
+  BGM을 갖고, 04—06구역은 포스터 전환·무음 전투라는 현재 에셋 수명도 구분했습니다. 원격
+  GitHub 저장소는 소유자 관리 Private, 공개 플레이는 현재 Sites 주소로 표기했습니다.
+- Deliverables: 두 프로젝트 Markdown 원본을 갱신하고 `scripts/build-project-pdfs.py`로 게임 소개와
+  AI 활용 PDF를 다시 생성했습니다. 링크·경로·금지된 이전 명칭·PDF 필수 문구를 정적 검사하고
+  모든 PDF 페이지를 PNG로 렌더해 표·문단·이미지·페이지 번호의 잘림과 겹침을 확인했습니다.
+  Google Play API 36 일정과 Apple 최소 기능 기준은 각 플랫폼의 공식 문서로 다시 확인했습니다.
+- Verification scope: 이번 변경은 문서와 생성 PDF만 대상으로 했습니다. 사용자의 빠른 반복 지침에
+  따라 전체 게임 테스트·production build·Sites 검증은 다시 실행하지 않았으며, 최신 전체 기준은
+  Iteration 40의 269/269와 build/Sites 통과 상태입니다.
 
 final result: passed

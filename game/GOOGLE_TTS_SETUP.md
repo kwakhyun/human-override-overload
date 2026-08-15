@@ -20,6 +20,7 @@ Google Cloud Text-to-Speech의 `ko-KR-Chirp3-HD-Kore`로 네 개의 한국어 MP
 - 발화 속도: 1.3배(`speakingRate: 1.3`)
 - 출력: MP3 4개, `public/assets/audio/agent/`
 - 런타임: `src/audio/agentVoice.js`가 성공한 `manualAbilityActivated`만 재생
+- 적용 범위: AEGIS 펄스 소총 Q/E/F/R 세트만 재생. 빔 소드·MIKA는 전용 파일이 없어 무음
 - 인증: Cloud Shell의 일시 접근 토큰으로 개발 단계에서만 합성했으며 저장소·브라우저 번들에는 없음
 
 | 키 | 파일 | 크기 | SHA-256 |

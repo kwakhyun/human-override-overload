@@ -1679,7 +1679,14 @@ Lighting/mood: premium dark sci-fi, balanced cyan and magenta rim light, clinica
 Constraints: empty environment only; absolutely no people, no human figures, no character silhouettes, no UI, no text, no logos, no symbols, no watermark. No third-party game imagery. Original HUMAN OVERRIDE: OVERLOAD project art.
 ```
 
-## HAVEN-09 Cubism Live2D character models
+## HAVEN-09 Cubism 제작 자료 (비활성·보존)
+
+> **현재 런타임:** HAVEN-09 로비는
+> `public/assets/overload/hero/survivor-portrait.png`와
+> `public/assets/overload/hero/mika-portrait.png` 원본 정적 일러스트를 사용합니다.
+> 아래 Cubism 모델·모션·물리 파일은 제작 이력과 향후 전문 리깅을 위해 보존한 자료이며,
+> 현재 React 로비에는 마운트되지 않습니다. `@greenmansk/react-live2d`와 Cubism Web Core도
+> 활성 번들에서 제거했습니다. 따라서 아래 항목을 현재 동작하는 Live2D 기능으로 해석하면 안 됩니다.
 
 - 도구: 사용자가 설치하고 PRO 평가판을 승인한 Live2D Cubism Editor 5.3.03.
 - 원본 캐릭터 일러스트: 프로젝트 원본
@@ -1688,8 +1695,8 @@ Constraints: empty environment only; absolutely no people, no human figures, no 
 - MIKA 전신 확장 원본: 기존 MIKA의 얼굴·핑크 양갈래·흑백 마젠타 전투복·쌍환 장비를
   정체성 참조로 사용해 OpenAI 내장 ImageGen에서 잘린 하체와 부츠를 완성했습니다. 선택 원본은
   `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-50635e01-96a3-4deb-a42f-0e34a40e4322.png`,
-  보존 원본은 `reference/source-assets/overload/live2d/mika-fullbody-chroma.png`, 투명 런타임
-  폴백은 `public/assets/overload/hero/mika-live2d-fullbody.png`입니다. 외부 게임 캐릭터 이미지는
+  보존 원본은 `reference/source-assets/overload/live2d/mika-fullbody-chroma.png`, 비활성 투명
+  검수본은 `public/assets/overload/hero/mika-live2d-fullbody.png`입니다. 외부 게임 캐릭터 이미지는
   ImageGen 참조나 런타임 에셋으로 사용하지 않았습니다.
 - MIKA 전신 확장 ImageGen 프롬프트:
 ```text
@@ -1705,20 +1712,20 @@ Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background cover
   `reference/source-assets/overload/cubism/aegis/aegis.cmo3`,
   `reference/source-assets/overload/cubism/mika/mika-cubism-source.psd`,
   `reference/source-assets/overload/cubism/mika/mika.cmo3`.
-- 런타임 모델:
+- 보존 모델 출력물:
   `public/assets/overload/live2d/aegis/aegis.model3.json`,
   `public/assets/overload/live2d/aegis/aegis.moc3`,
   `public/assets/overload/live2d/mika/mika.model3.json`,
   `public/assets/overload/live2d/mika/mika.moc3`와 각 2048px 텍스처·CDI·표정 JSON.
 - 호환성: 공개 Cubism Web Core가 지원하는 MOC3 v5로 출력했습니다. `MOC3` 헤더와 버전 바이트
   5를 집중 테스트로 잠급니다.
-- 브라우저 런타임: `@greenmansk/react-live2d` 0.1.1(MIT)과 번들한 공식
+- 과거 브라우저 검증에 사용한 런타임: `@greenmansk/react-live2d` 0.1.1(MIT)과 번들한 공식
   `Live2D Cubism Core` Redistributable Code를 사용합니다. Core 원본 주소는
   `https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js`, 라이선스는
   `https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html`입니다.
 - 소스 PSD 준비 스크립트: `scripts/build-cubism-source.py`. 이 스크립트는 MOC3를 위조하거나
   생성하지 않으며, 최종 `.cmo3` 리깅과 `.moc3` 출력은 Cubism Editor에서 수행했습니다.
-- 상호작용: 포인터 추적은 사용하지 않습니다. 상시 호흡·상체·머리카락 흔들림은 캐릭터별
+- 보존된 상호작용 설계: 포인터 추적은 사용하지 않습니다. 상시 호흡·상체·머리카락 흔들림은 캐릭터별
   Cubism 키폼과 시선/상체 파라미터로 구동합니다. 머리·가슴·양팔·다리 클릭에는 캐릭터별
   전용 표정 JSON과 방향·진폭·주기가 다른 리그 반동을 적용하고, 캔버스 위치·전체 배율은 고정해
   인물 전체가 미끄러지는 움직임을 제거했습니다. AEGIS는 `cold-*`, MIKA는 `shy-*` 표정을
@@ -1729,7 +1736,7 @@ Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background cover
   복제하거나 프로젝트에 포함하지 않았고 AEGIS와 MIKA는 프로젝트 원본을 기반으로 각각
   독립 제작했습니다.
 
-### HAVEN-09 Cubism premium motion v2
+### HAVEN-09 Cubism premium motion v2 (비활성 제작 이력)
 
 - 조사 기준: Live2D 공식 Cubism 문서의 PSD 소재 분리, 수동 메쉬, 워프 디포머, 표준
   파라미터, XY 얼굴 회전, 눈 깜빡임, 물리 연산 지침을 기준으로 삼았습니다. 다른 게임의
@@ -1746,7 +1753,7 @@ Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background cover
   캐릭터별 28개 의미 레이어로 분리한 PSD와 합성 검수 이미지를 재생성합니다. Cubism Editor
   자동 템플릿은 몸통 디포머 배치의 참고에만 사용했고, 검증되지 않은 얼굴 자동 키폼을 런타임
   MOC에 덮어쓰지 않았습니다.
-- 런타임 출력: 각 캐릭터에 3개 Idle 모션, 머리·가슴·팔·다리 4개 Touch 모션과
+- 보존 출력: 각 캐릭터에 3개 Idle 모션, 머리·가슴·팔·다리 4개 Touch 모션과
   앞머리·옆머리·뒷머리 3계통 물리를 추가했습니다. 재현 스크립트는
   `scripts/build-cubism-motion-library.mjs`, 런타임 경로는
   `public/assets/overload/live2d/{aegis,mika}/motions/`와 각 `*.physics3.json`입니다.
