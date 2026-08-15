@@ -8666,3 +8666,98 @@ kbd,
   .region-sortie-layout .sortie-weapon-card div strong { font-size: 14px; }
   .region-sortie-command-footer > span { font-size: 10px; }
 }
+
+/* HAVEN NPC dialogue: portrait-phone bottom sheet ----------------------
+   Do not let the compact landscape rule squeeze Korean actions into a
+   vertical stack. The portrait, copy, and controls have separate space. */
+@media (max-width: 720px) and (orientation: portrait) {
+  .campaign-shell .base-dialogue {
+    position: fixed;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: 8px;
+    display: block;
+    min-height: 0;
+    max-height: min(390px, 52dvh);
+    padding: 17px 14px 14px 126px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-color: rgba(102, 232, 251, 0.58);
+    background: linear-gradient(105deg, rgba(2, 8, 12, 0.98), rgba(4, 20, 26, 0.97));
+    box-shadow: 0 -16px 50px rgba(0, 0, 0, 0.62), inset 0 1px rgba(150, 243, 255, 0.08);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .campaign-shell .base-dialogue > div { min-width: 0; }
+  .campaign-shell .base-npc-portrait {
+    top: 10px;
+    bottom: 0;
+    left: 8px;
+    width: 108px;
+    height: auto;
+    background-size: 300% auto;
+    background-position-y: bottom !important;
+    filter: drop-shadow(7px 0 13px rgba(0, 0, 0, 0.64));
+  }
+  .campaign-shell .base-npc-portrait.is-standalone {
+    background-size: contain;
+    background-position: center bottom !important;
+  }
+  .campaign-shell .base-dialogue > div > small {
+    display: block;
+    font-size: 11px;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    word-break: keep-all;
+  }
+  .campaign-shell .base-dialogue h2 {
+    margin-top: 4px;
+    font-size: 24px;
+    line-height: 1.1;
+  }
+  .campaign-shell .base-dialogue p {
+    min-height: 0;
+    margin-top: 9px;
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-wrap: normal;
+    word-break: keep-all;
+  }
+  .campaign-shell .base-dialogue-actions {
+    display: grid;
+    margin-top: 14px;
+    grid-template-columns: minmax(0, 1fr) minmax(88px, 0.56fr);
+    gap: 8px;
+    align-items: stretch;
+  }
+  .campaign-shell .base-dialogue-actions button {
+    min-width: 0;
+    min-height: 52px;
+    margin: 0;
+    padding: 10px 12px;
+    justify-content: center;
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: normal;
+    white-space: nowrap;
+    word-break: keep-all;
+    touch-action: manipulation;
+  }
+  .campaign-shell .base-dialogue-actions button svg { flex: 0 0 auto; width: 18px; height: 18px; }
+  .campaign-shell .base-dialogue-next { grid-column: 2; }
+  .campaign-shell .dialogue-escape-hint { display: none; }
+}
+
+@media (max-width: 380px) and (orientation: portrait) {
+  .campaign-shell .base-dialogue {
+    max-height: min(430px, 58dvh);
+    padding-left: 108px;
+  }
+  .campaign-shell .base-npc-portrait { width: 92px; }
+  .campaign-shell .base-dialogue-actions { grid-template-columns: 1fr; }
+  .campaign-shell .base-dialogue-actions button,
+  .campaign-shell .base-dialogue-next { grid-column: 1; width: 100%; }
+}

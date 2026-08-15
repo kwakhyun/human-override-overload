@@ -320,7 +320,7 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
         <small>{display.role}</small>
         <h2 id="base-dialogue-name">{display.name}</h2>
         <p>{line}</p>
-        <footer>
+        <footer className="base-dialogue-actions">
           {npc.facilityId && onFacility && (
             <button type="button" className="base-facility-cta" onClick={() => onFacility(npc.facilityId)}>
               {npc.facilityLabel || "기지 설비 열기"}{npc.facilityId === "research" ? <Brain weight="fill" /> : <Wrench weight="fill" />}
@@ -331,7 +331,7 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
               {npc.interactionLabel || "상호작용"}{npc.interaction === "open-region-select" ? <AirplaneTilt weight="fill" /> : <Crosshair weight="bold" />}
             </button>
           )}
-          <button type="button" data-ui-sound={final ? "uiClose" : "click"} onClick={final ? onClose : onAdvance}>
+          <button className="base-dialogue-next" type="button" data-ui-sound={final ? "uiClose" : "click"} onClick={final ? onClose : onAdvance}>
             {final ? "대화 종료" : "다음"}<ChatText weight="bold" />
           </button>
           <small className="dialogue-escape-hint"><kbd>SPACE</kbd> {final ? "대화 종료" : "다음 대사"} · <kbd>ESC</kbd> 닫기</small>

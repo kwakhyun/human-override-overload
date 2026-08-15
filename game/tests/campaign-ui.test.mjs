@@ -196,12 +196,25 @@ test("character information presents full-height art, live stats, abilities, and
 });
 
 test("HAVEN NPC dialogue advances one line per Space press and closes on the final line", async () => {
-  const screens = await readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8");
+  const [screens, styles] = await Promise.all([
+    readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
+  ]);
   const dialogue = screens.slice(screens.indexOf("export function NpcDialoguePanel"), screens.indexOf("export function BaseFacilityPanel"));
   assert.match(dialogue, /event\.code !== "Space" \|\| event\.repeat/);
   assert.match(dialogue, /event\.preventDefault\(\)/);
   assert.match(dialogue, /if \(final\) onClose\?\.\(\);\s*else onAdvance\?\.\(\);/);
   assert.match(dialogue, /<kbd>SPACE<\/kbd> \{final \? "대화 종료" : "다음 대사"\}/);
+  assert.match(dialogue, /className="base-dialogue-actions"/);
+  assert.match(dialogue, /className="base-dialogue-next"/);
+
+  const mobileDialogue = styles.slice(styles.indexOf("/* HAVEN NPC dialogue: portrait-phone bottom sheet"));
+  assert.match(mobileDialogue, /@media \(max-width: 720px\) and \(orientation: portrait\)/);
+  assert.match(mobileDialogue, /\.campaign-shell \.base-dialogue \{[\s\S]*max-height: min\(390px, 52dvh\);[\s\S]*padding: 17px 14px 14px 126px/);
+  assert.match(mobileDialogue, /\.campaign-shell \.base-dialogue p \{[\s\S]*font-size: 15px;[\s\S]*word-break: keep-all/);
+  assert.match(mobileDialogue, /\.campaign-shell \.base-dialogue-actions button \{[\s\S]*min-height: 52px;[\s\S]*white-space: nowrap;[\s\S]*word-break: keep-all/);
+  assert.match(mobileDialogue, /\.campaign-shell \.dialogue-escape-hint \{ display: none; \}/);
+  assert.match(mobileDialogue, /@media \(max-width: 380px\) and \(orientation: portrait\)[\s\S]*\.campaign-shell \.base-dialogue-actions \{ grid-template-columns: 1fr; \}/);
 });
 
 test("first-sortie briefing separates automatic build skills from four new manual abilities and persists completion", async () => {

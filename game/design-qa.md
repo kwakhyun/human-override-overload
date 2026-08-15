@@ -950,3 +950,16 @@ final result: passed
   Iteration 40의 269/269와 build/Sites 통과 상태입니다.
 
 final result: passed
+
+### Iteration 42 — complete · 모바일 기지 NPC 대화창 재구성
+
+- Root cause: 세로 휴대폰에서도 900px 이하 공통 압축 규칙이 적용되어 초상화용 230px 왼쪽 여백 뒤에
+  본문과 두 행동 버튼이 함께 눌렸고, `사용 스킬 브리핑` 같은 한국어 행동명이 글자 단위 세로 줄바꿈으로
+  무너졌습니다.
+- Portrait layout: 기지 NPC 대화창을 safe area 안의 하단 시트로 분리하고, 화자 초상화 108px,
+  본문 15px, 52px 행동 버튼을 각각 독립 영역에 배치했습니다. 380px 이하에서는 보조 행동과 `다음`을
+  한 줄씩 쌓고, 터치 화면에 불필요한 Space/ESC 도움말은 숨깁니다.
+- Verification scope: 캠페인 UI 집중 테스트와 TypeScript 검사를 실행했으며, 전체 테스트·production build·
+  공개 배포는 사용자의 빠른 반복 지침에 따라 생략했습니다.
+
+final result: passed
