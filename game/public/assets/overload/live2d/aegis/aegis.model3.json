@@ -46,12 +46,5 @@
 			"TouchLegs": [{ "File": "motions/touch/legs.motion3.json", "FadeInTime": 0.1, "FadeOutTime": 0.4 }]
 		},
 		"DisplayInfo": "aegis.cdi3.json"
-	},
-	"Groups": [
-		{
-			"Target": "Parameter",
-			"Name": "EyeBlink",
-			"Ids": ["ParamEyeLOpen", "ParamEyeROpen"]
-		}
-	]
+	}
 }

@@ -51,6 +51,11 @@ async function sampleTouchAreas(canvas) {
   return new Set(frames.map((frame) => frame.toString("base64"))).size;
 }
 
+async function waitForIdlePortrait() {
+  await page.waitForTimeout(1_800);
+  await page.locator(".motion-portrait-speech").waitFor({ state: "hidden", timeout: 4_000 }).catch(() => {});
+}
+
 await openBase();
 try {
   await page.locator('[data-live2d-ready="true"]').waitFor({ state: "attached", timeout: 8_000 });
@@ -66,7 +71,9 @@ await page.locator(".portrait-zone.is-head").click();
 await page.locator(".motion-portrait-speech").waitFor({ state: "visible" });
 await page.waitForTimeout(240);
 const aegisReactionFrame = await aegisCanvas.screenshot();
+await page.screenshot({ path: path.join(qaDir, "live2d-aegis-reaction.png"), fullPage: true });
 const aegisDistinctTouchFrames = await sampleTouchAreas(aegisCanvas);
+await waitForIdlePortrait();
 await page.screenshot({ path: path.join(qaDir, "live2d-aegis.png"), fullPage: true });
 const aegis = await page.locator(".cubism-character").evaluate((element) => ({
   ready: element.dataset.live2dReady,
@@ -96,7 +103,9 @@ await page.locator(".portrait-zone.is-chest").click();
 await page.locator(".motion-portrait-speech").waitFor({ state: "visible" });
 await page.waitForTimeout(240);
 const mikaReactionFrame = await mikaCanvas.screenshot();
+await page.screenshot({ path: path.join(qaDir, "live2d-mika-reaction.png"), fullPage: true });
 const mikaDistinctTouchFrames = await sampleTouchAreas(mikaCanvas);
+await waitForIdlePortrait();
 await page.screenshot({ path: path.join(qaDir, "live2d-mika.png"), fullPage: true });
 const mika = await page.locator(".cubism-character").evaluate((element) => ({
   ready: element.dataset.live2dReady,

@@ -5,9 +5,9 @@
     "Fps": 30,
     "Loop": false,
     "AreBeziersRestricted": true,
-    "CurveCount": 5,
-    "TotalSegmentCount": 16,
-    "TotalPointCount": 21,
+    "CurveCount": 3,
+    "TotalSegmentCount": 10,
+    "TotalPointCount": 13,
     "UserDataCount": 0,
     "TotalUserDataSize": 0,
     "FadeInTime": 0.08,
@@ -31,44 +31,6 @@
         0,
         0.58,
         -2.5,
-        0,
-        1.2,
-        0
-      ]
-    },
-    {
-      "Target": "Parameter",
-      "Id": "ParamAngleX",
-      "FadeInTime": 0.08,
-      "FadeOutTime": 0.35,
-      "Segments": [
-        0,
-        0,
-        0,
-        0.16,
-        -7,
-        0,
-        0.4,
-        3,
-        0,
-        1.2,
-        0
-      ]
-    },
-    {
-      "Target": "Parameter",
-      "Id": "ParamAngleZ",
-      "FadeInTime": 0.08,
-      "FadeOutTime": 0.35,
-      "Segments": [
-        0,
-        0,
-        0,
-        0.18,
-        -4,
-        0,
-        0.48,
-        2,
         0,
         1.2,
         0

@@ -5,72 +5,15 @@
     "Fps": 30,
     "Loop": false,
     "AreBeziersRestricted": true,
-    "CurveCount": 9,
-    "TotalSegmentCount": 27,
-    "TotalPointCount": 36,
+    "CurveCount": 4,
+    "TotalSegmentCount": 12,
+    "TotalPointCount": 16,
     "UserDataCount": 0,
     "TotalUserDataSize": 0,
     "FadeInTime": 0.1,
     "FadeOutTime": 0.4
   },
   "Curves": [
-    {
-      "Target": "Parameter",
-      "Id": "ParamAngleX",
-      "FadeInTime": 0.1,
-      "FadeOutTime": 0.4,
-      "Segments": [
-        0,
-        0,
-        0,
-        0.18,
-        -8,
-        0,
-        0.62,
-        -5,
-        0,
-        1.35,
-        0
-      ]
-    },
-    {
-      "Target": "Parameter",
-      "Id": "ParamAngleY",
-      "FadeInTime": 0.1,
-      "FadeOutTime": 0.4,
-      "Segments": [
-        0,
-        0,
-        0,
-        0.2,
-        4,
-        0,
-        0.65,
-        2,
-        0,
-        1.35,
-        0
-      ]
-    },
-    {
-      "Target": "Parameter",
-      "Id": "ParamAngleZ",
-      "FadeInTime": 0.1,
-      "FadeOutTime": 0.4,
-      "Segments": [
-        0,
-        0,
-        0,
-        0.2,
-        -6,
-        0,
-        0.7,
-        -2.5,
-        0,
-        1.35,
-        0
-      ]
-    },
     {
       "Target": "Parameter",
       "Id": "ParamBodyAngleX",
@@ -145,44 +88,6 @@
         0,
         1.35,
         0
-      ]
-    },
-    {
-      "Target": "Parameter",
-      "Id": "ParamEyeLOpen",
-      "FadeInTime": 0.08,
-      "FadeOutTime": 0.25,
-      "Segments": [
-        0,
-        1,
-        0,
-        0.18,
-        0.72,
-        0,
-        0.42,
-        1,
-        0,
-        1.35,
-        1
-      ]
-    },
-    {
-      "Target": "Parameter",
-      "Id": "ParamEyeROpen",
-      "FadeInTime": 0.08,
-      "FadeOutTime": 0.25,
-      "Segments": [
-        0,
-        1,
-        0,
-        0.18,
-        0.72,
-        0,
-        0.42,
-        1,
-        0,
-        1.35,
-        1
       ]
     }
   ]

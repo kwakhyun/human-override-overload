@@ -48,11 +48,15 @@ test("AEGIS and MIKA ship real Cubism model3 bundles with touch-area expressions
     assert.deepEqual(pose.Groups, []);
     assert.equal(userData.Version, 3);
     assert.deepEqual(userData.UserData, []);
-    assert.deepEqual(model.Groups, [{
-      Target: "Parameter",
-      Name: "EyeBlink",
-      Ids: ["ParamEyeLOpen", "ParamEyeROpen"],
-    }]);
+    if (id === "aegis") {
+      assert.ok(!model.Groups || model.Groups.length === 0, "AEGIS must not drive rectangular legacy eye proxies");
+    } else {
+      assert.deepEqual(model.Groups, [{
+        Target: "Parameter",
+        Name: "EyeBlink",
+        Ids: ["ParamEyeLOpen", "ParamEyeROpen"],
+      }]);
+    }
     const expectedExpressions = id === "aegis"
       ? ["cold", "cold-idle", "cold-head", "cold-chest", "cold-arms", "cold-legs"]
       : ["shy", "bright-idle", "shy-head", "shy-chest", "shy-arms", "shy-legs"];
@@ -69,6 +73,26 @@ test("AEGIS and MIKA ship real Cubism model3 bundles with touch-area expressions
     const texture = await stat(new URL(`public/assets/overload/live2d/${id}/${id}.2048/texture_00.png`, root));
     assert.ok(moc.size > 18_000, `${id} moc3 should contain exported Cubism data`);
     assert.ok(texture.size > 1_000_000, `${id} texture should retain source detail`);
+    const displayInfo = JSON.parse(await readFile(new URL(`public/assets/overload/live2d/${id}/${id}.cdi3.json`, root), "utf8"));
+    if (id === "aegis") {
+      assert.ok(displayInfo.Parts.some(({ Id }) => Id === "AEGIS_CUBISM_SOURCE"), "AEGIS must preserve the seamless approved face source");
+      assert.equal(displayInfo.Parts.some(({ Id }) => Id === "Face_Base_Part"), false, "AEGIS must not use the rectangular face proxy export");
+    }
+    const motionParameterIds = new Set();
+    for (const group of Object.values(model.FileReferences.Motions)) {
+      for (const motionRef of group) {
+        const motion = JSON.parse(await readFile(new URL(`public/assets/overload/live2d/${id}/${motionRef.File}`, root), "utf8"));
+        for (const curve of motion.Curves) motionParameterIds.add(curve.Id);
+      }
+    }
+    if (id === "aegis") {
+      for (const faceProxyId of ["ParamAngleX", "ParamAngleY", "ParamAngleZ", "ParamEyeLOpen", "ParamEyeROpen", "ParamEyeBallX", "ParamEyeBallY", "ParamBrowLY", "ParamBrowRY", "ParamMouthForm"]) {
+        assert.equal(motionParameterIds.has(faceProxyId), false, `AEGIS motion must keep ${faceProxyId} neutral to preserve the seamless face`);
+      }
+    } else {
+      assert.ok(motionParameterIds.has("ParamEyeLOpen"), "MIKA must retain authored eye blinks");
+      assert.ok(motionParameterIds.has("ParamMouthForm"), "MIKA must retain authored expression changes");
+    }
   }
 });
 
@@ -90,22 +114,25 @@ test("lobby uses bundled Cubism rendering with idle breathing and click-only are
   assert.match(component, /window\.requestAnimationFrame\(animate\)/);
   assert.match(component, /window\.cancelAnimationFrame\(animationFrame\)/);
   assert.match(component, /prefers-reduced-motion: reduce/);
-  assert.match(component, /const breath = reducedMotion \? 0 : Math\.sin/);
-  assert.match(component, /const sway = reducedMotion \? 0 : Math\.sin/);
+  assert.match(component, /const motionStrength = reducedMotion \? 0\.36 : 1/);
+  assert.match(component, /const breath = Math\.sin[\s\S]*motionStrength/);
+  assert.match(component, /const sway = Math\.sin[\s\S]*motionStrength/);
   assert.match(component, /reactionShake = Math\.sin/);
   assert.match(component, /motionManager\.setScale\(/);
   assert.match(component, /motionManager\.setPosition\(/);
   assert.match(component, /setLookTargetRelative/);
   assert.match(component, /setBodyOrientationTargetRelative/);
-  assert.match(component, /setExpression\(REACTION_EXPRESSIONS\[characterId\]\?\.\[reaction\.area\]\)/);
+  assert.match(component, /const expression = REACTION_EXPRESSIONS\[characterId\]\?\.\[reaction\.area\]/);
+  assert.match(component, /if \(expression\) \{[\s\S]*setExpression\(expression\)/);
   assert.match(component, /const REACTION_MOTIONS/);
   assert.match(component, /motionManager\.setMotion\(motionGroup, 0, 3/);
   assert.match(component, /motionManager\.setMotion\("Idle", idleVariant, 2, startBaseIdle\)/);
-  assert.match(component, /data-live2d-rig="premium-motion-v2"/);
-  assert.match(component, /idleExpression: "cold-idle"/);
+  assert.match(component, /data-live2d-rig="premium-motion-v3"/);
+  assert.match(component, /idleExpression: null/);
   assert.match(component, /idleExpression: "bright-idle"/);
-  assert.match(component, /scale: 0\.94/);
-  assert.match(component, /positionY: -0\.035/);
+  assert.match(component, /scale: 1\.3/);
+  assert.match(component, /scale: 1\.55/);
+  assert.match(component, /positionY: -0\.22/);
   assert.match(component, /fallbackPath: "\/assets\/overload\/hero\/mika-live2d-fullbody\.png"/);
   assert.match(component, /Keep the model anchored/);
   assert.match(component, /resetExpression\(\)/);
@@ -115,10 +142,10 @@ test("lobby uses bundled Cubism rendering with idle breathing and click-only are
   assert.doesNotMatch(screens, /motion-portrait-expression/);
   assert.match(styles, /\.cubism-character-canvas[\s\S]*pointer-events: none/);
   assert.match(styles, /\.portrait-zone \{[\s\S]*background: transparent/);
-  assert.match(styles, /\.base-motion-portrait\.is-mika \{ width: min\(33vw, 448px\); left: 26%; \}/);
+  assert.match(styles, /\.base-motion-portrait\.is-mika \{ bottom: -7%; left: 23\.5%; width: min\(39vw, 532px\); height: 98%; \}/);
   const fullBodyUrl = new URL("public/assets/overload/hero/mika-live2d-fullbody.png", root);
   const [fullBody, fullBodyPng] = await Promise.all([stat(fullBodyUrl), readFile(fullBodyUrl)]);
-  assert.ok(fullBody.size > 1_000_000, "MIKA lobby fallback must retain the uncropped full-body source");
+  assert.ok(fullBody.size > 1_000_000, "MIKA loading fallback must retain the original high-detail source");
   assert.equal(fullBodyPng.readUInt32BE(16), 941);
   assert.equal(fullBodyPng.readUInt32BE(20), 1672);
   const core = await readFile(new URL("public/vendor/live2d/live2dcubismcore.min.js", root), "utf8");
