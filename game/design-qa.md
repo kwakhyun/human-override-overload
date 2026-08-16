@@ -1023,3 +1023,18 @@ final result: passed
   승리 직후 검술 교본을 확인했습니다. 전체 테스트·production build·배포는 실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 47 — complete · 모바일 대화·스킬 가이드 품질 점검
+
+- Dialogue QA: 390×844와 320×700 세로 화면에서 미카 합류 장면의 중앙 일러스트, 266px 하단
+  대화창, 56px 진행 버튼을 확인했습니다. 긴 대사에서도 가로 넘침·문자 단위 줄바꿈·화면 밖 잘림은
+  발생하지 않았습니다.
+- Guide root cause: 900px 이하 공통 압축 규칙의 `left: 128px` 가로 화면용 관제관 레일이 세로
+  휴대폰에도 적용되어 320px 화면의 스킬 예시가 10px 폭까지 압축되고 오른쪽 조작부가 잘렸습니다.
+- Portrait guide: 레아를 88px 상단 안내 띠로 분리하고, 가이드 콘솔은 safe area 안의 전체 폭을
+  사용합니다. Q/E/F/R은 66px 터치 탭, 스킬 예시와 설명은 내부 세로 스크롤, 이전·다음 버튼은
+  48px 고정 행동 영역으로 구성해 작은 글자로 전체 화면을 억지 압축하지 않습니다.
+- Verification scope: 모바일 세로·캠페인 UI 집중 테스트와 TypeScript 검사, 390×844 및 320×700
+  실제 브라우저 확인만 실행했습니다. 전체 테스트·production build·배포는 실행하지 않았습니다.
+
+final result: passed

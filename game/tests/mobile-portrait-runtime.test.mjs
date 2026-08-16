@@ -70,6 +70,14 @@ test("portrait combat owns the full safe viewport and exposes a touch-anywhere f
   assert.match(portrait, /\.region-mobile-swipe-hint \{[\s\S]*min-width: 210px;[\s\S]*white-space: nowrap/);
   assert.match(portrait, /\.expedition-pause-toggle \{ width: 48px; height: 48px; \}/);
   assert.match(portrait, /\.expedition-pause-card button \{[\s\S]*min-height: 56px;[\s\S]*font-size: 14px/);
+  assert.match(portrait, /Ability guide: portrait-phone command deck/);
+  assert.match(portrait, /\.ability-guide-rhea \{[\s\S]*right: 6px;[\s\S]*left: 6px;[\s\S]*height: 88px/);
+  assert.match(portrait, /\.ability-guide-console \{[\s\S]*right: 6px;[\s\S]*left: 6px;[\s\S]*width: auto;[\s\S]*grid-template-rows: auto auto auto minmax\(0, 1fr\) auto/);
+  assert.match(portrait, /\.ability-guide-tabs button \{[\s\S]*min-height: 66px;[\s\S]*grid-template-columns: 1fr/);
+  assert.match(portrait, /\.ability-guide-detail \{[\s\S]*display: block;[\s\S]*overflow-y: auto/);
+  assert.match(portrait, /\.ability-guide-example \{[\s\S]*width: 100%;[\s\S]*height: clamp\(156px, 25dvh, 205px\)/);
+  assert.match(portrait, /\.ability-guide-actions > button \{[\s\S]*min-height: 48px;[\s\S]*white-space: nowrap;[\s\S]*word-break: keep-all/);
+  assert.match(portrait, /\.ability-guide-actions > button:not\(\.ability-guide-next\) \{ min-width: 64px/);
   assert.match(app, /aria-label="모바일 게임 조작"/);
   assert.match(app, /className="expedition-pause-toggle"[\s\S]*aria-label="전투 일시정지"/);
 });
