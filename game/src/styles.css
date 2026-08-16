@@ -4756,9 +4756,11 @@ kbd {
 .defense-rhea-briefing small { color: #63efff; font-size: 10px; letter-spacing: 0.12em; }
 .defense-rhea-briefing strong { display: block; margin-top: 8px; font-size: 15px; line-height: 1.55; }
 .defense-stage-grid { position: absolute; z-index: 3; right: 30px; bottom: 26px; left: 30px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
-.defense-stage-card { position: relative; min-height: 300px; padding: 22px; overflow: hidden; border: 1px solid rgba(99, 239, 255, 0.32); color: #eaffff; text-align: left; background: linear-gradient(145deg, rgba(4, 23, 30, 0.97), rgba(2, 8, 12, 0.92)); box-shadow: inset 0 1px rgba(255, 255, 255, 0.04), 0 18px 44px rgba(0, 0, 0, 0.28); backdrop-filter: blur(12px); }
+.defense-stage-card { position: relative; min-height: 300px; padding: 22px; overflow: hidden; isolation: isolate; border: 1px solid rgba(99, 239, 255, 0.32); color: #eaffff; text-align: left; background: linear-gradient(145deg, rgba(4, 23, 30, 0.9), rgba(2, 8, 12, 0.96)); box-shadow: inset 0 1px rgba(255, 255, 255, 0.04), 0 18px 44px rgba(0, 0, 0, 0.28); backdrop-filter: blur(12px); }
+.defense-stage-card::after { position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, rgba(2, 9, 13, 0.34), rgba(2, 9, 13, 0.98) 66%), var(--defense-stage-art) center / cover no-repeat; opacity: 0.68; content: ""; transition: transform 220ms ease, opacity 220ms ease; }
 .defense-stage-card::before { position: absolute; top: 0; right: 0; left: 0; height: 3px; background: linear-gradient(90deg, transparent, #63efff 30%, transparent); opacity: 0.7; content: ""; }
 .defense-stage-card:hover:not(:disabled), .defense-stage-card:focus-visible:not(:disabled) { border-color: #63efff; transform: translateY(-8px); box-shadow: 0 18px 55px rgba(0, 0, 0, 0.44), inset 0 0 28px rgba(99, 239, 255, 0.08); }
+.defense-stage-card:hover:not(:disabled)::after, .defense-stage-card:focus-visible:not(:disabled)::after { opacity: 0.88; transform: scale(1.04); }
 .defense-stage-card-top { display: flex; align-items: center; justify-content: space-between; }
 .defense-stage-card-top span { color: #63efff; font: 700 10px var(--font-mono); letter-spacing: 0.15em; }
 .defense-stage-card-top b { padding: 4px 7px; border: 1px solid rgba(99, 239, 255, 0.28); color: #8af4ff; font-size: 9px; background: rgba(99, 239, 255, 0.08); }
@@ -8774,4 +8776,31 @@ kbd,
   .campaign-shell .base-dialogue-actions { grid-template-columns: 1fr; }
   .campaign-shell .base-dialogue-actions button,
   .campaign-shell .base-dialogue-next { grid-column: 1; width: 100%; }
+}
+
+/* Defense is an optional side operation: keep sortie as the primary CTA. */
+.base-primary-actions > .base-defense-action {
+  width: 78%;
+  min-height: 46px;
+  padding: 7px 10px;
+  justify-self: end;
+  grid-template-columns: 24px minmax(0, 1fr) 16px;
+  gap: 7px;
+  border-color: rgba(255, 108, 132, 0.38);
+  background: linear-gradient(135deg, rgba(64, 18, 31, 0.9), rgba(17, 8, 14, 0.93));
+  box-shadow: 0 9px 22px rgba(0, 0, 0, 0.3);
+}
+.base-primary-actions > .base-defense-action > svg:first-child { width: 21px; height: 21px; }
+.base-primary-actions > .base-defense-action small { font-size: 7px !important; }
+.base-primary-actions > .base-defense-action b { font-size: 12px; }
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .base-primary-actions > .base-defense-action {
+    grid-column: 1 / -1;
+    width: 68%;
+    min-height: 50px;
+    padding: 8px 10px;
+  }
+  .base-primary-actions > .base-defense-action small { font-size: 9px !important; }
+  .base-primary-actions > .base-defense-action b { font-size: 13px; }
 }

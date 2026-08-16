@@ -2039,3 +2039,53 @@ Style/medium: polished high-detail 2D sci-fi game map, top-down tactical view wi
 Composition/framing: exact portrait composition, strong vertical progression, all three lane entrances visible inside the top edge, fortified core fully inside the lower playfield, construction pads never touching the borders, generous mobile-safe margins. No giant characters, enemies, towers, projectiles, UI, icons, text, logos, numbers, labels, grid lines, watermark, or letterboxing.
 Constraints: no black empty margins; background must fill the entire canvas; lane geometry must remain visible beneath transparent sprites and effects; do not replicate or tile the landscape image; create a deliberate native portrait composition.
 ```
+
+### 단계별 디펜스 전장 v2
+
+- 도구: OpenAI 내장 ImageGen (`image_gen`) + Pillow 결정론적 합성
+- 선택 원본:
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-4d614010-7e02-42bc-b031-d8dd81ad3ac8.png`
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-de1e45da-59ba-4da9-a9d1-c95874175db3.png`
+  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-12c3395f-fbe9-4b4c-8869-aa0d91feec1c.png`
+- 프로젝트 보존 원본: `reference/source-assets/overload/defense/battlefields-v2/{haven-perimeter,relay-blackout,sovereign-night-siege}-base.png`
+- 런타임: `public/assets/overload/defense/battlefields-v2/<stage>/battlefield.webp` (1920×1080), `battlefield-portrait.webp` (720×1280)
+- 저사양 파생: `public/assets/overload/defense/battlefields-v2/performance/<stage>/battlefield.webp` (960×540), `battlefield-portrait.webp` (360×640)
+- 정체성 참조: 기존 프로젝트 원본 `public/assets/overload/defense/haven-defense-grid.webp`
+- 후처리: `scripts/build-defense-battlefields.py`가 `src/defense/battlefields.json`의 코어·경로·건설 패드를 읽어 런타임 도로와 소켓을 같은 좌표로 합성하고 Pillow LANCZOS/WebP로 full·PERFORMANCE를 생성합니다. 외부 게임 미술은 포함하지 않았습니다.
+
+HAVEN 외곽선 원본 프롬프트:
+
+```text
+Use case: precise-object-edit
+Asset type: production top-down defense battlefield base for the Phaser browser game HUMAN OVERRIDE: OVERLOAD
+Input image: preserve the strict 90-degree overhead camera, dense gunmetal sci-fi engineering, cyan utility lights, realistic hard-surface detail, and dark premium game-art finish of the approved defense battlefield. Redesign the layout as a clean HAVEN-09 outer perimeter deck intended for a deterministic lane overlay added later.
+Primary request: create a wide 16:9 orthographic battlefield base with three visually distinct open approach sectors converging toward one luminous cyan command core in the lower-center quarter. Keep broad uninterrupted steel floor areas where three authored invasion lanes and twelve circular tower sockets can later be composited. The left approach should feel like a curved maintenance causeway, the center approach like a direct reinforced transit spine, and the right approach like a segmented cargo bypass, but do not paint explicit roads or tower pads.
+Scene/backdrop: fortified airborne resistance base perimeter over a stormy night city, industrial bulkheads at the outer edges, damaged armor seams, subtle hazard lights.
+Composition/framing: exact nadir camera, no perspective tilt, symmetric enough to read strategically but not mirrored, central lower core fully visible, all playable floor within frame, generous safe margins.
+Color palette: black and gunmetal, cool cyan/teal lights, restrained red warning accents.
+Constraints: no characters, no enemies, no towers, no text, no letters, no numbers, no UI, no grid, no painted route lines, no circular build pads, no watermark, no logo, no cropped core. Production background, not concept art.
+```
+
+중계망 정전 원본 프롬프트:
+
+```text
+Use case: precise-object-edit
+Asset type: production top-down defense battlefield base for the Phaser browser game HUMAN OVERRIDE: OVERLOAD
+Input image: Image 1 is the approved clean HAVEN defense deck and the project style reference. Preserve the exact strict 90-degree overhead camera, premium dark hard-surface sci-fi rendering, tactical readability, and safe wide composition, but redesign the environment completely for stage 2.
+Primary request: create a wide 16:9 RELAY BLACKOUT battlefield: an enormous disabled AI communications relay platform during a storm, with a cold blue-violet palette, cracked luminous conduits, dead server pylons around the perimeter, intermittent electrical arcs and blackout sectors. Leave broad uninterrupted floor space for three later-authored invasion lanes that will take different zigzag routes toward one violet-cyan relay core in the lower-center quarter. Leave room for twelve later-authored circular tower sockets. Do not paint explicit roads or tower pads.
+Composition/framing: exact nadir orthographic camera, asymmetrical machinery islands around the outer margins, relay core fully visible, playable floor clear and readable, generous safe margins.
+Lighting/mood: power failure, moody indigo emergency lighting, sparse cyan circuit light and restrained violet energy, no screen-filling darkness.
+Constraints: no characters, no enemies, no towers, no text, no letters, no numbers, no UI, no grid, no painted route lines, no circular build pads, no watermark, no logo, no cropped core. Production background, not concept art.
+```
+
+소버린 야간 공성 원본 프롬프트:
+
+```text
+Use case: precise-object-edit
+Asset type: production top-down defense battlefield base for the Phaser browser game HUMAN OVERRIDE: OVERLOAD
+Input image: Image 1 is the approved clean HAVEN defense deck and project style reference. Preserve its strict 90-degree overhead camera, premium dense hard-surface sci-fi finish, tactical readability, wide safe composition, and lower-center objective placement, but redesign the environment completely for stage 3.
+Primary request: create a wide 16:9 SOVEREIGN NIGHT SIEGE battlefield on a heavily damaged fortress carrier deck under maximum red alert. The deck should feel wider, harsher and more militarized than prior stages, with scorched armor, broken barricades at the perimeter, angular black AI architecture, red reactor veins, amber fires safely outside the playable floor, and one massive crimson-white inference core in the lower-center quarter. Leave broad uninterrupted floor space for three later-authored invasion lanes with sharply different sweeping routes and twelve later-authored tower sockets. Do not paint explicit roads or tower pads.
+Composition/framing: exact nadir orthographic camera, asymmetrical ruined machine bastions around the margins, core fully visible, center playable floor clear and readable, generous safe margins.
+Lighting/mood: desperate final night siege, black gunmetal, deep crimson emergency light, hot amber sparks, restrained cyan resistance lights around the core; clear silhouettes, not too dark.
+Constraints: no characters, no enemies, no towers, no text, no letters, no numbers, no UI, no grid, no painted route lines, no circular build pads, no watermark, no logo, no cropped core. Production background, not concept art.
+```

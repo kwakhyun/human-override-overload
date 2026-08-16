@@ -37,7 +37,12 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(createGame, /quality === "performance" \|\| mobile\.touchOptimized \|\| portrait/);
   assert.match(createGame, /mode: Phaser\.Scale\.FIT/);
   assert.doesNotMatch(createGame, /Phaser\.Scale\.ENVELOP/);
-  assert.match(manifest, /export const DEFENSE_GAME_ASSETS/);
+  assert.match(manifest, /export function getDefenseGameAssets\(stageId\?/);
+  assert.match(manifest, /battlefields-v2\/relay-blackout\/battlefield\.webp/);
+  assert.match(manifest, /battlefields-v2\/sovereign-night-siege\/battlefield-portrait\.webp/);
+  assert.match(createGame, /new DefenseBootScene\(stageId, assetProfile/);
+  assert.match(view, /state\.battlefield\.routes/);
+  assert.match(view, /state\.battlefield\.core/);
   assert.match(screens, /전술 관제관 · 레아/);
   assert.match(styles, /\.defense-tower-palette/);
   assert.match(app, /const DEFENSE_GUIDE_STEPS/);
@@ -53,27 +58,31 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(screens, /defense-stage-card-top/);
 });
 
-test("defense art ships dedicated 6x4 enemy and VFX atlases plus portrait performance maps", async () => {
-  const [atlas, atlasLow, enemy, enemyLow, fx, fxLow, map, mapLow, portraitMap, portraitMapLow] = await Promise.all([
+test("defense art ships dedicated atlases plus three full and performance stage maps", async () => {
+  const [atlas, atlasLow, enemy, enemyLow, fx, fxLow] = await Promise.all([
     stat(new URL("public/assets/overload/defense/defense-systems-motion-atlas.png", root)),
     stat(new URL("public/assets/overload/defense/performance/defense-systems-motion-atlas.png", root)),
     readFile(new URL("public/assets/overload/defense/defense-enemy-motion-atlas-v2.png", root)),
     readFile(new URL("public/assets/overload/defense/performance/defense-enemy-motion-atlas-v2.png", root)),
     readFile(new URL("public/assets/overload/defense/defense-combat-vfx-atlas-v2.png", root)),
     readFile(new URL("public/assets/overload/defense/performance/defense-combat-vfx-atlas-v2.png", root)),
-    stat(new URL("public/assets/overload/defense/haven-defense-grid.webp", root)),
-    stat(new URL("public/assets/overload/defense/performance/haven-defense-grid.webp", root)),
-    stat(new URL("public/assets/overload/defense/haven-defense-grid-portrait.webp", root)),
-    stat(new URL("public/assets/overload/defense/performance/haven-defense-grid-portrait.webp", root)),
   ]);
   assert.ok(atlas.size > 1_000_000);
   assert.ok(atlasLow.size < atlas.size);
-  assert.ok(map.size > mapLow.size);
   assert.deepEqual([enemy.readUInt32BE(16), enemy.readUInt32BE(20), enemy[25]], [1152, 768, 6]);
   assert.deepEqual([enemyLow.readUInt32BE(16), enemyLow.readUInt32BE(20), enemyLow[25]], [864, 576, 6]);
   assert.deepEqual([fx.readUInt32BE(16), fx.readUInt32BE(20), fx[25]], [768, 512, 6]);
   assert.deepEqual([fxLow.readUInt32BE(16), fxLow.readUInt32BE(20), fxLow[25]], [576, 384, 6]);
   assert.ok(enemyLow.byteLength < enemy.byteLength);
   assert.ok(fxLow.byteLength < fx.byteLength);
-  assert.ok(portraitMap.size > portraitMapLow.size);
+  for (const stageId of ["haven-perimeter", "relay-blackout", "sovereign-night-siege"]) {
+    const [map, mapLow, portraitMap, portraitMapLow] = await Promise.all([
+      stat(new URL(`public/assets/overload/defense/battlefields-v2/${stageId}/battlefield.webp`, root)),
+      stat(new URL(`public/assets/overload/defense/battlefields-v2/performance/${stageId}/battlefield.webp`, root)),
+      stat(new URL(`public/assets/overload/defense/battlefields-v2/${stageId}/battlefield-portrait.webp`, root)),
+      stat(new URL(`public/assets/overload/defense/battlefields-v2/performance/${stageId}/battlefield-portrait.webp`, root)),
+    ]);
+    assert.ok(map.size > mapLow.size);
+    assert.ok(portraitMap.size > portraitMapLow.size);
+  }
 });

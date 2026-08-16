@@ -11,6 +11,7 @@ import {
   upgradeDefenseTower,
 } from "../src/defense/engine.js";
 import { DEFENSE_STAGES, DEFENSE_TOWER_DEFINITIONS, getUnlockedDefenseStageIds } from "../src/defense/content.js";
+import { DEFENSE_BATTLEFIELDS, getDefenseBattlefield } from "../src/defense/battlefields.js";
 import {
   canLaunchDefenseStage,
   completeDefenseStage,
@@ -45,6 +46,54 @@ test("defense placement spends run credits, rejects overlap, and upgrades to ran
   assert.equal(upgradeDefenseTower(state), true);
   assert.equal(upgradeDefenseTower(state), false);
   assert.equal(state.towers[0].rank, 3);
+});
+
+function pointToSegmentDistance(point, segment) {
+  const dx = segment.end.x - segment.start.x;
+  const dy = segment.end.y - segment.start.y;
+  const lengthSq = dx * dx + dy * dy;
+  const ratio = lengthSq > 0
+    ? Math.max(0, Math.min(1, ((point.x - segment.start.x) * dx + (point.y - segment.start.y) * dy) / lengthSq))
+    : 0;
+  return Math.hypot(point.x - (segment.start.x + dx * ratio), point.y - (segment.start.y + dy * ratio));
+}
+
+test("each defense stage owns distinct lane geometry and build pads remain off the roads", () => {
+  assert.deepEqual(Object.keys(DEFENSE_BATTLEFIELDS), ["haven-perimeter", "relay-blackout", "sovereign-night-siege"]);
+  const routeFingerprints = new Set();
+  const nodeFingerprints = new Set();
+  for (const stage of DEFENSE_STAGES) {
+    const battlefield = getDefenseBattlefield(stage.id);
+    assert.equal(battlefield.routes.length, 3);
+    assert.equal(battlefield.nodes.length, 12);
+    routeFingerprints.add(JSON.stringify(battlefield.routes.map((route) => route.points)));
+    nodeFingerprints.add(JSON.stringify(battlefield.nodes));
+    for (const route of battlefield.routes) {
+      assert.ok(route.totalLength > 600);
+      assert.deepEqual(route.points.at(-1), battlefield.core);
+    }
+    for (const node of battlefield.nodes) {
+      const laneDistance = Math.min(...battlefield.routes.flatMap((route) => route.segments.map((segment) => pointToSegmentDistance(node, segment))));
+      assert.ok(laneDistance >= 72, `${stage.id}/${node.id} must sit beside, not on, an invasion lane`);
+    }
+  }
+  assert.equal(routeFingerprints.size, 3);
+  assert.equal(nodeFingerprints.size, 3);
+});
+
+test("enemies remain on their authored route centerline through every turn", () => {
+  for (const stage of DEFENSE_STAGES) {
+    const state = createDefenseState({ stageId: stage.id });
+    assert.equal(startDefenseWave(state), true);
+    stepFor(state, 7);
+    assert.ok(state.enemies.length > 0);
+    for (const enemy of state.enemies) {
+      const route = state.battlefield.routes[enemy.pathIndex];
+      const distance = Math.min(...route.segments.map((segment) => pointToSegmentDistance(enemy, segment)));
+      assert.ok(distance < 0.001, `${stage.id}/${enemy.id} drifted ${distance}px off route`);
+      assert.ok(enemy.pathProgress >= 0 && enemy.pathProgress < 1);
+    }
+  }
 });
 
 test("later defense waves schedule more and stronger roles while towers fight deterministically", () => {

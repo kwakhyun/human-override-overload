@@ -88,6 +88,7 @@ export const REGION_IDS = Object.freeze([DEFAULT_REGION_ID, "glass-dune", "abyss
 export type RegionId = (typeof REGION_IDS)[number];
 export type AssetProfile = "full" | "performance";
 export type MainWeaponId = "pulse-rifle" | "beam-sword";
+export type DefenseStageId = "haven-perimeter" | "relay-blackout" | "sovereign-night-siege";
 
 export function resolveAssetProfile(profile?: string): AssetProfile {
   return profile === "performance" ? "performance" : "full";
@@ -135,13 +136,37 @@ export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
   { key: ASSET_KEYS.emp, path: "./assets/overload/allies/emp-pylon.png", kind: "image" },
 ]);
 
-export const DEFENSE_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
-  { key: ASSET_KEYS.defenseBattlefield, path: "./assets/overload/defense/haven-defense-grid.webp", performancePath: "./assets/overload/defense/performance/haven-defense-grid.webp", kind: "image" },
-  { key: ASSET_KEYS.defenseBattlefieldPortrait, path: "./assets/overload/defense/haven-defense-grid-portrait.webp", performancePath: "./assets/overload/defense/performance/haven-defense-grid-portrait.webp", kind: "image" },
+const DEFENSE_STAGE_BATTLEFIELD_ASSETS: Readonly<Record<DefenseStageId, readonly AssetDefinition[]>> = Object.freeze({
+  "haven-perimeter": Object.freeze([
+    { key: ASSET_KEYS.defenseBattlefield, path: "./assets/overload/defense/battlefields-v2/haven-perimeter/battlefield.webp", performancePath: "./assets/overload/defense/battlefields-v2/performance/haven-perimeter/battlefield.webp", kind: "image" as const },
+    { key: ASSET_KEYS.defenseBattlefieldPortrait, path: "./assets/overload/defense/battlefields-v2/haven-perimeter/battlefield-portrait.webp", performancePath: "./assets/overload/defense/battlefields-v2/performance/haven-perimeter/battlefield-portrait.webp", kind: "image" as const },
+  ]),
+  "relay-blackout": Object.freeze([
+    { key: ASSET_KEYS.defenseBattlefield, path: "./assets/overload/defense/battlefields-v2/relay-blackout/battlefield.webp", performancePath: "./assets/overload/defense/battlefields-v2/performance/relay-blackout/battlefield.webp", kind: "image" as const },
+    { key: ASSET_KEYS.defenseBattlefieldPortrait, path: "./assets/overload/defense/battlefields-v2/relay-blackout/battlefield-portrait.webp", performancePath: "./assets/overload/defense/battlefields-v2/performance/relay-blackout/battlefield-portrait.webp", kind: "image" as const },
+  ]),
+  "sovereign-night-siege": Object.freeze([
+    { key: ASSET_KEYS.defenseBattlefield, path: "./assets/overload/defense/battlefields-v2/sovereign-night-siege/battlefield.webp", performancePath: "./assets/overload/defense/battlefields-v2/performance/sovereign-night-siege/battlefield.webp", kind: "image" as const },
+    { key: ASSET_KEYS.defenseBattlefieldPortrait, path: "./assets/overload/defense/battlefields-v2/sovereign-night-siege/battlefield-portrait.webp", performancePath: "./assets/overload/defense/battlefields-v2/performance/sovereign-night-siege/battlefield-portrait.webp", kind: "image" as const },
+  ]),
+});
+
+const DEFENSE_SHARED_ASSETS: readonly AssetDefinition[] = Object.freeze([
   { key: ASSET_KEYS.defenseSystemsMotion, path: "./assets/overload/defense/defense-systems-motion-atlas.png", performancePath: "./assets/overload/defense/performance/defense-systems-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
   { key: ASSET_KEYS.defenseEnemyMotion, path: "./assets/overload/defense/defense-enemy-motion-atlas-v2.png", performancePath: "./assets/overload/defense/performance/defense-enemy-motion-atlas-v2.png", kind: "motion", columns: 6, rows: 4 },
   { key: ASSET_KEYS.defenseCombatFxMotion, path: "./assets/overload/defense/defense-combat-vfx-atlas-v2.png", performancePath: "./assets/overload/defense/performance/defense-combat-vfx-atlas-v2.png", kind: "motion", columns: 6, rows: 4 },
 ]);
+
+export function resolveDefenseStageId(stageId?: string): DefenseStageId {
+  if (stageId === "relay-blackout" || stageId === "sovereign-night-siege") return stageId;
+  return "haven-perimeter";
+}
+
+export function getDefenseGameAssets(stageId?: string): readonly AssetDefinition[] {
+  return Object.freeze([...DEFENSE_STAGE_BATTLEFIELD_ASSETS[resolveDefenseStageId(stageId)], ...DEFENSE_SHARED_ASSETS]);
+}
+
+export const DEFENSE_GAME_ASSETS: readonly AssetDefinition[] = getDefenseGameAssets("haven-perimeter");
 
 export const WEAPON_GAME_ASSETS: Readonly<Record<MainWeaponId, readonly AssetDefinition[]>> = Object.freeze({
   "pulse-rifle": Object.freeze([
@@ -321,8 +346,8 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
   outerFrontierRegionMap: "./assets/overload/campaign/outer-frontier-region-map.webp",
   returnToHaven: "./assets/overload/campaign/return-to-haven.webp",
   characterEnhancement: "./assets/overload/campaign/character-enhancement.webp",
-  defenseBattlefield: "./assets/overload/defense/haven-defense-grid.webp",
-  defenseBattlefieldPortrait: "./assets/overload/defense/haven-defense-grid-portrait.webp",
+  defenseBattlefield: "./assets/overload/defense/battlefields-v2/haven-perimeter/battlefield.webp",
+  defenseBattlefieldPortrait: "./assets/overload/defense/battlefields-v2/haven-perimeter/battlefield-portrait.webp",
   sortieWrongEngine: "./assets/overload/campaign/sortie/wrong-engine-sortie.mp4",
   sortieGlassDune: "./assets/overload/campaign/sortie/glass-dune-sortie.mp4",
   sortieAbyssalArchive: "./assets/overload/campaign/sortie/abyssal-archive-sortie.mp4",

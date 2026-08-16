@@ -614,7 +614,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
           <AirplaneTilt weight="fill" /><span><small>스텔스 비행선 나이트자</small><b>작전 권역 · 출격</b></span><Play weight="fill" />
         </button>
         <button type="button" className="base-defense-action command-ui-button" data-ui-sound="uiConfirm" onClick={onDefense}>
-          <ShieldChevron weight="fill" /><span><small>전술 관제관 레아</small><b>기지 방어 · 디펜스</b></span><Crosshair weight="bold" />
+          <ShieldChevron weight="fill" /><span><small>서브 콘텐츠 · 레아 관제</small><b>기지 방어</b></span><Crosshair weight="bold" />
         </button>
       </aside>
 
@@ -673,7 +673,7 @@ export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, o
           const completed = completedIds.includes(stage.id);
           const record = campaign?.defenseStageRecords?.[stage.id];
           return (
-            <button type="button" className={`defense-stage-card${unlocked ? "" : " is-locked"}${completed ? " is-cleared" : ""}`} aria-label={`${stage.name}, ${unlocked ? completed ? "방어 완료" : "출격 가능" : "잠김"}`} disabled={!unlocked} onClick={() => onSelect(stage.id)} key={stage.id}>
+            <button type="button" className={`defense-stage-card${unlocked ? "" : " is-locked"}${completed ? " is-cleared" : ""}`} style={{ "--defense-stage-art": `url("${stage.previewPath}")` }} aria-label={`${stage.name}, ${unlocked ? completed ? "방어 완료" : "출격 가능" : "잠김"}`} disabled={!unlocked} onClick={() => onSelect(stage.id)} key={stage.id}>
               <div className="defense-stage-card-top"><span>DEFENSE {String(stage.order).padStart(2, "0")}</span><b>{unlocked ? completed ? "방어 완료" : "출격 가능" : "잠김"}</b></div>
               <strong>{stage.name}</strong><small>{stage.subtitle}</small>
               <p>{stage.description}</p>

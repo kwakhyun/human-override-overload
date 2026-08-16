@@ -12,12 +12,6 @@ const ENEMY_ROWS: Readonly<Record<string, number>> = Object.freeze({
   siegeWalker: 3,
 });
 
-const DEFENSE_ROUTE_POINTS = Object.freeze([
-  Object.freeze([{ x: -35, y: 120 }, { x: 230, y: 195 }, { x: 360, y: 365 }, { x: 520, y: 470 }, { x: 640, y: 590 }]),
-  Object.freeze([{ x: 640, y: -35 }, { x: 640, y: 185 }, { x: 640, y: 360 }, { x: 640, y: 480 }, { x: 640, y: 590 }]),
-  Object.freeze([{ x: 1315, y: 120 }, { x: 1050, y: 195 }, { x: 920, y: 365 }, { x: 760, y: 470 }, { x: 640, y: 590 }]),
-]);
-
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
 export class DefenseView {
@@ -53,15 +47,16 @@ export class DefenseView {
     const backgroundKey = portrait ? ASSET_KEYS.defenseBattlefieldPortrait : ASSET_KEYS.defenseBattlefield;
     scene.add.image(width / 2, height / 2, backgroundKey).setDisplaySize(width, height).setDepth(-20);
     this.routeGraphics = scene.add.graphics().setDepth(-4);
-    for (const route of DEFENSE_ROUTE_POINTS) {
-      const points = route.map(({ x, y }) => {
+    const routeColor = Phaser.Display.Color.HexStringToColor(String(state.battlefield?.routeColor || "#63efff")).color;
+    for (const route of state.battlefield.routes) {
+      const points = route.points.map(({ x, y }: WorldPoint) => {
         const point = this.toDisplay(x, y);
         return new Phaser.Math.Vector2(point.x, point.y);
       });
-      this.routeGraphics.lineStyle(portrait ? 12 : 14, 0xff5876, 0.06).strokePoints(points, false, false);
-      this.routeGraphics.lineStyle(2, 0xff7d93, portrait ? 0.26 : 0.38).strokePoints(points, false, false);
+      this.routeGraphics.lineStyle(portrait ? 10 : 12, routeColor, 0.08).strokePoints(points, false, false);
+      this.routeGraphics.lineStyle(2, routeColor, portrait ? 0.34 : 0.42).strokePoints(points, false, false);
     }
-    const core = this.toDisplay(640, 590);
+    const core = this.toDisplay(state.battlefield.core.x, state.battlefield.core.y);
     const coreRadius = portrait ? 46 : 54;
     this.coreGlow = scene.add.circle(core.x, core.y, coreRadius, 0x63efff, 0.12).setStrokeStyle(3, 0x9bfbff, 0.86).setDepth(-3);
     this.coreLabel = scene.add.text(core.x, core.y, "헤이븐\n코어", {
@@ -100,7 +95,7 @@ export class DefenseView {
 
   private toDisplay(x: number, y: number): WorldPoint {
     if (!this.portrait) return { x, y };
-    return { x: 44 + (x / 1280) * 632, y: 110 + (y / 720) * 980 };
+    return { x: 40 + (x / 1280) * 640, y: 80 + (y / 720) * 1180 };
   }
 
   private ensureAtlasFrames(textureKey: string, prefix: string, columns: number, rows: number) {
@@ -167,7 +162,7 @@ export class DefenseView {
       const row = ENEMY_ROWS[enemy.role] ?? 0;
       const frameOffset = Number(sprite.getData("frameOffset")) || 0;
       let column = Math.floor(state.time * (enemy.role === "siegeWalker" ? 4.5 : 7) + frameOffset) % 3;
-      if (enemy.role === "hunter" && enemy.pathProgress > 3.3) column = 3 + Math.floor(state.time * 8) % 2;
+      if (enemy.role === "hunter" && enemy.pathProgress > 0.78) column = 3 + Math.floor(state.time * 8) % 2;
       if (enemy.hitFlash > 0) column = enemy.role === "siegeWalker" ? 2 : 4;
       const frameName = `defense-enemy-${row}-${column}`;
       if (sprite.frame.name !== frameName) sprite.setFrame(frameName);

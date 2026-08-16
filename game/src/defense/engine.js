@@ -4,23 +4,11 @@ import {
   DEFENSE_TOWER_IDS,
   getDefenseStage,
 } from "./content.js";
+import { getDefenseBattlefield, sampleDefenseRoute } from "./battlefields.js";
 
 export const DEFENSE_WIDTH = 1280;
 export const DEFENSE_HEIGHT = 720;
 export const DEFENSE_FIXED_STEP = 1 / 60;
-
-const CORE_POSITION = Object.freeze({ x: 640, y: 590 });
-const DEFENSE_PATHS = Object.freeze([
-  Object.freeze([{ x: -35, y: 120 }, { x: 230, y: 195 }, { x: 360, y: 365 }, { x: 520, y: 470 }, CORE_POSITION]),
-  Object.freeze([{ x: 640, y: -35 }, { x: 640, y: 185 }, { x: 640, y: 360 }, { x: 640, y: 480 }, CORE_POSITION]),
-  Object.freeze([{ x: 1315, y: 120 }, { x: 1050, y: 195 }, { x: 920, y: 365 }, { x: 760, y: 470 }, CORE_POSITION]),
-]);
-
-const NODE_LAYOUT = Object.freeze([
-  ["node-01", 245, 275], ["node-02", 350, 375], ["node-03", 505, 145], ["node-04", 515, 290],
-  ["node-05", 775, 145], ["node-06", 765, 290], ["node-07", 1035, 275], ["node-08", 930, 375],
-  ["node-09", 455, 500], ["node-10", 825, 500], ["node-11", 440, 620], ["node-12", 840, 620],
-]);
 
 const ENEMY_DEFINITIONS = Object.freeze({
   hunter: Object.freeze({ hp: 72, speed: 82, radius: 18, reward: 6, baseDamage: 1, color: "#ff526d" }),
@@ -61,15 +49,15 @@ function createEnemy(state, role, pathIndex, sequence) {
   const definition = ENEMY_DEFINITIONS[role];
   const waveScale = 1 + state.waveIndex * 0.13;
   const hp = Math.round(definition.hp * state.stage.difficulty * waveScale);
-  const path = DEFENSE_PATHS[pathIndex];
-  const start = path[0];
+  const route = state.battlefield.routes[pathIndex];
+  const start = sampleDefenseRoute(route, 0);
   return {
     id: `defense-enemy-${state.nextEnemyId++}`,
     role,
     pathIndex,
     segmentIndex: 0,
-    x: start.x - (sequence % 3) * 18,
-    y: start.y - Math.floor(sequence / 3) * 22,
+    x: start.x,
+    y: start.y,
     hp,
     maxHp: hp,
     speed: definition.speed * (1 + state.waveIndex * 0.012),
@@ -79,7 +67,9 @@ function createEnemy(state, role, pathIndex, sequence) {
     color: definition.color,
     slowTimer: 0,
     slowFactor: 1,
+    pathDistance: 0,
     pathProgress: 0,
+    angle: start.angle,
     hitFlash: 0,
   };
 }
@@ -92,7 +82,7 @@ function queueWave(state) {
     state.pendingSpawns.push({
       at: index * interval,
       role: enemyRoleFor(state.stage, state.waveIndex, index, count),
-      pathIndex: (index + state.waveIndex) % DEFENSE_PATHS.length,
+      pathIndex: (index + state.waveIndex) % state.battlefield.routes.length,
       sequence: index,
     });
   }
@@ -229,28 +219,22 @@ function updateEnemies(state, dt) {
     }
     enemy.slowTimer = Math.max(0, enemy.slowTimer - dt);
     if (enemy.slowTimer <= 0) enemy.slowFactor = 1;
-    const path = DEFENSE_PATHS[enemy.pathIndex];
-    const nextPoint = path[enemy.segmentIndex + 1];
-    if (!nextPoint) {
+    const route = state.battlefield.routes[enemy.pathIndex];
+    const step = enemy.speed * enemy.slowFactor * dt;
+    enemy.pathDistance += step;
+    if (enemy.pathDistance >= route.totalLength) {
       state.baseHp = Math.max(0, state.baseHp - enemy.baseDamage);
       state.leaks += 1;
       emit(state, "defenseCoreHit", { role: enemy.role, damage: enemy.baseDamage, baseHp: state.baseHp });
       state.enemies.splice(index, 1);
       continue;
     }
-    const dx = nextPoint.x - enemy.x;
-    const dy = nextPoint.y - enemy.y;
-    const distance = Math.hypot(dx, dy);
-    const step = enemy.speed * enemy.slowFactor * dt;
-    if (distance <= step + 1) {
-      enemy.x = nextPoint.x;
-      enemy.y = nextPoint.y;
-      enemy.segmentIndex += 1;
-    } else {
-      enemy.x += dx / Math.max(1, distance) * step;
-      enemy.y += dy / Math.max(1, distance) * step;
-    }
-    enemy.pathProgress = enemy.segmentIndex + 1 - Math.min(1, distance / 500);
+    const sampled = sampleDefenseRoute(route, enemy.pathDistance);
+    enemy.x = sampled.x;
+    enemy.y = sampled.y;
+    enemy.angle = sampled.angle;
+    enemy.pathProgress = sampled.progress;
+    enemy.segmentIndex = route.segments.findIndex((segment) => enemy.pathDistance <= segment.startDistance + segment.length);
   }
 }
 
@@ -271,10 +255,12 @@ function finishWaveIfNeeded(state) {
 
 export function createDefenseState({ stageId = DEFAULT_DEFENSE_STAGE_ID } = {}) {
   const stage = getDefenseStage(stageId) || getDefenseStage(DEFAULT_DEFENSE_STAGE_ID);
+  const battlefield = getDefenseBattlefield(stage.id);
   return {
     mode: "defense",
     stage,
     stageId: stage.id,
+    battlefield,
     time: 0,
     phase: "intermission",
     finished: false,
@@ -288,7 +274,7 @@ export function createDefenseState({ stageId = DEFAULT_DEFENSE_STAGE_ID } = {}) 
     kills: 0,
     leaks: 0,
     selectedNodeId: null,
-    nodes: NODE_LAYOUT.map(([id, x, y]) => ({ id, x, y })),
+    nodes: battlefield.nodes.map((node) => ({ ...node })),
     towers: [],
     enemies: [],
     projectiles: [],

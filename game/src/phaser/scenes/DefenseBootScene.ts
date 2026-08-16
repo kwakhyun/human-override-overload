@@ -1,12 +1,14 @@
 import Phaser from "phaser";
-import { DEFENSE_GAME_ASSETS, resolveAssetProfile, type AssetProfile } from "../../game/assets/manifest";
+import { getDefenseGameAssets, resolveAssetProfile, type AssetProfile } from "../../game/assets/manifest";
 
 export class DefenseBootScene extends Phaser.Scene {
   private readonly assetProfile: AssetProfile;
+  private readonly stageId: string;
   private readonly onLoadProgress?: (progress: number) => void;
 
-  constructor(assetProfile: AssetProfile = "full", onLoadProgress?: (progress: number) => void) {
+  constructor(stageId: string, assetProfile: AssetProfile = "full", onLoadProgress?: (progress: number) => void) {
     super({ key: "DefenseBoot" });
+    this.stageId = stageId;
     this.assetProfile = resolveAssetProfile(assetProfile);
     this.onLoadProgress = onLoadProgress;
   }
@@ -28,7 +30,7 @@ export class DefenseBootScene extends Phaser.Scene {
       label.setText(`방어 체계 동기화 · ${Math.round(value * 100)}%`);
       this.onLoadProgress?.(value);
     });
-    for (const asset of DEFENSE_GAME_ASSETS) {
+    for (const asset of getDefenseGameAssets(this.stageId)) {
       const path = this.assetProfile === "performance" && asset.performancePath ? asset.performancePath : asset.path;
       this.load.image(asset.key, path);
     }

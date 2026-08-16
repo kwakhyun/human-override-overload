@@ -28,7 +28,7 @@ export function createDefenseGame(parent: HTMLElement, callbacks: DefenseSceneCa
     : "full";
   const logicalWidth = portrait ? 720 : 1280;
   const logicalHeight = portrait ? 1280 : 720;
-  const boot = new DefenseBootScene(assetProfile, (callbacks as any).onLoadProgress);
+  const boot = new DefenseBootScene(stageId, assetProfile, (callbacks as any).onLoadProgress);
   const battle = new DefenseScene(stageId, callbacks, portrait);
   const game = new Phaser.Game({
     type: Phaser.AUTO,

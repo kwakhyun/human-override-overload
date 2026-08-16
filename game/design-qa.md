@@ -975,3 +975,20 @@ final result: passed
   배포는 실행하지 않습니다.
 
 final result: passed
+
+### Iteration 44 — complete · 디펜스 단계별 전장과 경로 정합
+
+- Side-content hierarchy: 기지의 `기지 방어` 진입 버튼을 메인 출격보다 낮고 작은 보조 명령으로
+  축소하고, 모바일에서도 전체 폭 대형 CTA 대신 68% 폭의 얕은 버튼으로 유지했습니다.
+- Single geometry source: `src/defense/battlefields.json`에 세 단계의 코어·세 침공로·열두 건설 패드를
+  각각 분리했습니다. 적 이동은 점을 향한 조향에서 누적 경로 길이 샘플링으로 바뀌어 코너를 잘라
+  지나가지 않으며, 모든 패드는 침공로 외곽 72px 이상에 위치합니다.
+- Stage art and loading: 헤이븐 외곽선, 중계망 정전, 소버린 야간 공성의 가로/세로 전장을 별도로
+  제작하고 동일 좌표 데이터로 도로와 소켓을 합성했습니다. 선택 카드에는 저용량 단계 미리보기를
+  표시하고 Phaser는 선택 단계의 full 또는 PERFORMANCE 전장 한 쌍만 로드합니다.
+- Essential verification: 디펜스 엔진·런타임·캠페인 UI·모바일 세로 집중 테스트 23/23과 TypeScript
+  검사가 통과했습니다. 실제 브라우저에서 세 단계가 각자의 전장만 로드하는지, 새 건설 패드 선택과
+  첫 웨이브 시작, 390×844 세로 HUD 경계를 확인했으며 콘솔·페이지·HTTP 오류는 0건이었습니다.
+  전체 테스트·production build·배포는 사용자의 빠른 반복 지침에 따라 생략했습니다.
+
+final result: passed

@@ -60,7 +60,7 @@ assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("train-me
 
 const box = await canvas.boundingBox();
 assert.ok(box);
-await canvas.click({ position: { x: box.width * 245 / 1280, y: box.height * 275 / 720 } });
+await canvas.click({ position: { x: box.width * 330 / 1280, y: box.height * 135 / 720 } });
 const sentry = page.locator(".defense-tower-palette button").first();
 await sentry.waitFor({ state: "visible" });
 assert.equal(await sentry.isEnabled(), true);
@@ -129,6 +129,61 @@ assert.ok(mobileGuideCard && mobileGuideCard.x >= 0 && mobileGuideCard.y >= 0 &&
 await mobileGuidePage.screenshot({ path: path.join(qaDir, "defense-guide-mobile-portrait.png"), fullPage: true });
 await mobileGuideContext.close();
 
+const battlefieldContext = await browser.newContext({ viewport: { width: 1440, height: 810 } });
+const battlefieldPage = await battlefieldContext.newPage();
+const battlefieldAssets = [];
+let requestedStageId = null;
+battlefieldPage.on("pageerror", (error) => errors.push(`battlefield-page:${error.message}`));
+battlefieldPage.on("console", (message) => {
+  if (message.type() === "error") errors.push(`battlefield-console:${message.text()}`);
+});
+battlefieldPage.on("response", (response) => {
+  if (requestedStageId && response.url().includes("/defense/battlefields-v2/")) {
+    battlefieldAssets.push({ stageId: requestedStageId, url: response.url() });
+  }
+});
+await battlefieldPage.goto("http://127.0.0.1:4174/", { waitUntil: "domcontentloaded" });
+await battlefieldPage.evaluate(() => localStorage.clear());
+await battlefieldPage.reload({ waitUntil: "domcontentloaded" });
+await battlefieldPage.locator(".intro-start").click();
+await battlefieldPage.locator(".save-slot-card").first().click();
+await battlefieldPage.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
+await battlefieldPage.evaluate(() => {
+  const key = "train-me-wrong.overload.campaign.v2";
+  const campaign = JSON.parse(localStorage.getItem(key));
+  campaign.slots[0].completedDefenseStageIds = ["haven-perimeter", "relay-blackout"];
+  campaign.slots[0].defenseGuideSeen = true;
+  campaign.slots[0].storyFlags = [...new Set([...(campaign.slots[0].storyFlags || []), "defense-guide-complete"])];
+  localStorage.setItem(key, JSON.stringify(campaign));
+});
+await battlefieldPage.reload({ waitUntil: "domcontentloaded" });
+await battlefieldPage.locator(".intro-start").click();
+await battlefieldPage.locator(".save-slot-card").first().click();
+await battlefieldPage.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
+if (await battlefieldPage.locator(".base-dialogue:visible").count()) await battlefieldPage.keyboard.press("Escape");
+
+for (const stage of [
+  { id: "haven-perimeter", name: "헤이븐 외곽선" },
+  { id: "relay-blackout", name: "중계망 정전" },
+  { id: "sovereign-night-siege", name: "소버린 야간 공성" },
+]) {
+  await battlefieldPage.locator(".base-defense-action").click();
+  const card = battlefieldPage.locator(".defense-stage-card", { hasText: stage.name });
+  await card.waitFor({ state: "visible" });
+  assert.equal(await card.isEnabled(), true, `${stage.name} should be available in the QA campaign`);
+  requestedStageId = stage.id;
+  await card.click();
+  const battlefieldCanvas = battlefieldPage.locator(".defense-runtime-screen canvas");
+  await battlefieldCanvas.waitFor({ state: "visible", timeout: 30_000 });
+  await battlefieldPage.locator(".defense-load-chip").waitFor({ state: "detached", timeout: 30_000 });
+  assert.ok(battlefieldAssets.some((asset) => asset.stageId === stage.id && asset.url.includes(`/battlefields-v2/${stage.id}/battlefield.webp`)), `${stage.name} should load its own battlefield`);
+  await battlefieldPage.screenshot({ path: path.join(qaDir, `defense-battlefield-${stage.id}.png`), fullPage: true });
+  requestedStageId = null;
+  await battlefieldPage.locator(".defense-exit").click();
+  await battlefieldPage.locator(".home-base-screen").waitFor({ state: "visible", timeout: 15_000 });
+}
+await battlefieldContext.close();
+
 assert.deepEqual(errors, []);
-console.log(JSON.stringify({ result: "pass", stages: 3, guideSteps: 4, guidePersisted: true, mobileGuideFits: true, mobilePerformanceAssets: mobileRuntimeAssets.length, towerBuilt: "pulseSentry", waveStarted: true, mobileBounds, errors }, null, 2));
+console.log(JSON.stringify({ result: "pass", stages: 3, battlefieldAssets: battlefieldAssets.length, guideSteps: 4, guidePersisted: true, mobileGuideFits: true, mobilePerformanceAssets: mobileRuntimeAssets.length, towerBuilt: "pulseSentry", waveStarted: true, mobileBounds, errors }, null, 2));
 await browser.close();
