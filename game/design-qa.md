@@ -1057,6 +1057,9 @@ final result: passed
   360×800 디펜스에서 타워 62px·웨이브 58px를 측정했습니다. 전투원 정보 콘솔은 482~836px로
   화면 안에 맞고 본문만 독립 스크롤합니다. 두 해상도 모두 문서 폭과 viewport 폭이 일치했으며
   console warning/error는 0건입니다.
+- Capture artifacts: `qa/mobile-native-ui-v4/01-haven-home-390x844.png`,
+  `02-character-info-390x844.png`, `03-research-lab-390x844.png`,
+  `04-defense-combat-360x800.png`에 실제 렌더 결과를 보관합니다.
 - Verification scope: TypeScript와 모바일·캠페인·디펜스 집중 테스트 18/18, 실제 390×844/360×800
   safe area, 글자 크기, 터치 영역, 내부 스크롤을 확인했습니다. 전체 테스트·production build·배포는
   사용자가 최종 검증을 요청하기 전까지 실행하지 않습니다.
