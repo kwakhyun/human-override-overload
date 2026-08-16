@@ -16,7 +16,12 @@ import {
   purchaseProgressionUpgrade,
   sanitizeBaseProgression,
 } from "../progression/baseProgression.js";
-import { DEFAULT_MAIN_WEAPON_ID, sanitizeMainWeaponId } from "../content/weapons.js";
+import {
+  DEFAULT_MAIN_WEAPON_ID,
+  isMainWeaponUnlocked,
+  sanitizeMainWeaponId,
+  sanitizeMainWeaponIdForProgression,
+} from "../content/weapons.js";
 import { DEFAULT_CHARACTER_ID, isCharacterUnlocked, sanitizeCharacterId } from "../content/characters.js";
 import { DEFENSE_STAGES, getDefenseStage, getUnlockedDefenseStageIds } from "../../defense/content.js";
 
@@ -155,6 +160,7 @@ function deriveStoryFlags(completedRegionIds, inputFlags = []) {
   const completedChapters = getCompletedChapterIds(completedRegionIds);
   if (completedRegionIds.includes(DEFAULT_REGION_ID)) flags.add("home-base-unlocked");
   if (completedRegionIds.includes(DEFAULT_REGION_ID)) flags.add("mika-unlocked");
+  if (completedRegionIds.includes("glass-dune")) flags.add("beam-sword-unlocked");
   for (const chapterId of completedChapters) flags.add(`${chapterId}-cleared`);
   return [...flags];
 }
@@ -190,7 +196,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
     combatOverlaySeen: Boolean(slot.combatOverlaySeen),
     defenseGuideSeen: Boolean(slot.defenseGuideSeen || uniqueStrings(slot.storyFlags).includes("defense-guide-complete")),
     loadout: {
-      mainWeaponId: sanitizeMainWeaponId(slot.loadout?.mainWeaponId ?? slot.mainWeaponId),
+      mainWeaponId: sanitizeMainWeaponIdForProgression(slot.loadout?.mainWeaponId ?? slot.mainWeaponId, completedRegionIds),
       characterId,
     },
     storyFlags: deriveStoryFlags(completedRegionIds, slot.storyFlags),
@@ -339,6 +345,7 @@ export function setCampaignMainWeapon(campaign, slotId, mainWeaponId, options = 
   const slot = index >= 0 ? sanitized.slots[index] : null;
   if (!slot) return sanitized;
   const nextWeaponId = sanitizeMainWeaponId(mainWeaponId);
+  if (!isMainWeaponUnlocked(nextWeaponId, slot.completedRegionIds)) return sanitized;
   if ((slot.loadout?.mainWeaponId || DEFAULT_MAIN_WEAPON_ID) === nextWeaponId) return sanitized;
   const nextSlot = sanitizeSlot({
     ...slot,
@@ -352,6 +359,22 @@ export function setCampaignMainWeapon(campaign, slotId, mainWeaponId, options = 
 
 export function getCampaignMainWeapon(campaign, slotId) {
   return getCampaignSlot(campaign, slotId)?.loadout?.mainWeaponId || DEFAULT_MAIN_WEAPON_ID;
+}
+
+export function completeSwordAbilityGuide(campaign, slotId, options = {}) {
+  const sanitized = sanitizeCampaign(campaign);
+  const index = normalizeSlotIndex(slotId);
+  const slot = index >= 0 ? sanitized.slots[index] : null;
+  if (!slot || !isMainWeaponUnlocked("beam-sword", slot.completedRegionIds)) return sanitized;
+  if (slot.storyFlags.includes("beam-sword-guide-complete")) return sanitized;
+  const nextSlot = sanitizeSlot({
+    ...slot,
+    updatedAt: resolveNow(options.now),
+    storyFlags: [...slot.storyFlags, "beam-sword-guide-complete"],
+  }, index);
+  const slots = sanitized.slots.slice();
+  slots[index] = nextSlot;
+  return { version: CAMPAIGN_SAVE_VERSION, slots };
 }
 
 export function setCampaignCharacter(campaign, slotId, characterId, options = {}) {

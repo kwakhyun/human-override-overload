@@ -8949,3 +8949,277 @@ kbd,
   .defense-result-rewards { font-size: 14px; line-height: 1.45; }
   .defense-result-screen footer button { min-height: 58px; font-size: 15px; }
 }
+
+/* Chapter 1 recruitment: full-stage character art and a visual-novel dialogue deck. */
+.mika-recruit-screen {
+  position: relative;
+  display: block;
+  min-height: 100dvh;
+  padding: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.mika-recruit-screen .campaign-background {
+  object-position: center 42%;
+  transform: scale(1.025);
+  filter: brightness(0.58) saturate(0.86);
+}
+
+.mika-recruit-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(49, 219, 239, 0.11), transparent 36%),
+    linear-gradient(180deg, rgba(1, 7, 11, 0.22) 0%, rgba(1, 7, 11, 0.04) 47%, rgba(1, 6, 10, 0.86) 100%);
+}
+
+.mika-recruit-heading {
+  position: absolute;
+  z-index: 3;
+  top: max(28px, env(safe-area-inset-top));
+  left: max(34px, env(safe-area-inset-left));
+  display: grid;
+  gap: 5px;
+  padding-left: 15px;
+  border-left: 3px solid #67e9f8;
+  text-shadow: 0 2px 12px #000;
+}
+
+.mika-recruit-heading small {
+  color: #84ecfa;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.mika-recruit-heading strong {
+  color: #f5feff;
+  font-size: clamp(30px, 4vw, 52px);
+  line-height: 1;
+}
+
+.mika-recruit-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.mika-recruit-character {
+  position: absolute;
+  z-index: 1;
+  top: 5.5%;
+  bottom: 18%;
+  left: 50%;
+  width: min(46vw, 690px);
+  margin: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: recruit-character-enter 380ms cubic-bezier(0.16, 0.82, 0.28, 1) both;
+}
+
+.mika-recruit-character img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(20px 18px 24px rgba(0, 0, 0, 0.7));
+}
+
+.mika-recruit-character.is-aegis { width: min(40vw, 610px); }
+.mika-recruit-character.is-rhea { width: min(43vw, 650px); }
+.mika-recruit-character.is-rhea img { object-position: center 14%; }
+
+.mika-recruit-progress {
+  position: absolute;
+  z-index: 3;
+  right: max(42px, env(safe-area-inset-right));
+  bottom: calc(208px + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 7px;
+}
+
+.mika-recruit-progress i {
+  width: 28px;
+  height: 3px;
+  background: rgba(163, 198, 205, 0.32);
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.mika-recruit-progress i.is-active {
+  background: #71efff;
+  box-shadow: 0 0 10px rgba(113, 239, 255, 0.64);
+}
+
+.mika-recruit-dialogue-box {
+  position: absolute;
+  z-index: 2;
+  right: max(28px, env(safe-area-inset-right));
+  bottom: max(22px, env(safe-area-inset-bottom));
+  left: max(28px, env(safe-area-inset-left));
+  display: grid;
+  min-height: 174px;
+  padding: 24px 26px;
+  grid-template-columns: minmax(170px, 0.24fr) minmax(320px, 1fr) minmax(190px, 0.24fr);
+  align-items: center;
+  gap: 24px;
+  border: 1px solid rgba(107, 234, 250, 0.55);
+  border-left: 4px solid #6cecff;
+  color: #f2fdff;
+  background: linear-gradient(100deg, rgba(2, 10, 15, 0.97), rgba(4, 17, 24, 0.93) 66%, rgba(11, 18, 27, 0.96));
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.58), inset 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.mika-recruit-dialogue-box > div { display: grid; align-content: center; gap: 5px; }
+.mika-recruit-dialogue-box > div small { color: #75dce9; font-size: 10px; font-weight: 800; letter-spacing: 0.06em; }
+.mika-recruit-dialogue-box > div strong { color: #fff; font-size: 29px; }
+.mika-recruit-dialogue-box > p { margin: 0; color: #dcecf0; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.6; word-break: keep-all; }
+
+.mika-recruit-dialogue-box > button {
+  display: flex;
+  min-height: 62px;
+  padding: 0 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid rgba(117, 235, 250, 0.7);
+  color: #eefdff;
+  background: linear-gradient(110deg, rgba(13, 99, 116, 0.78), rgba(7, 35, 45, 0.92));
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.mika-recruit-dialogue-box > button span { display: inline-flex; align-items: center; gap: 10px; }
+.mika-recruit-dialogue-box > button kbd { padding: 3px 6px; border: 1px solid rgba(210, 249, 255, 0.42); color: #dffbff; background: rgba(0, 0, 0, 0.24); font-size: 9px; }
+.mika-recruit-dialogue-box > button svg { flex: 0 0 auto; width: 21px; height: 21px; }
+.mika-recruit-dialogue-box > button:hover,
+.mika-recruit-dialogue-box > button:focus-visible { border-color: #fff; background: linear-gradient(110deg, rgba(19, 141, 160, 0.9), rgba(8, 53, 65, 0.96)); }
+
+@keyframes recruit-character-enter {
+  from { opacity: 0; transform: translate(-50%, 16px) scale(0.985); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+/* Beam-sword unlock state and dedicated manual-skill briefing. */
+.sortie-sword-guide-button {
+  display: inline-flex;
+  min-height: 36px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(246, 197, 101, 0.58);
+  color: #ffe6ae;
+  background: rgba(96, 58, 12, 0.32);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.sortie-sword-guide-button svg { width: 17px; height: 17px; }
+.sortie-sword-guide-button:hover,
+.sortie-sword-guide-button:focus-visible { border-color: #ffe1a0; background: rgba(145, 86, 14, 0.48); }
+.sortie-weapon-card.is-locked { opacity: 0.62; cursor: not-allowed; filter: grayscale(0.45); }
+.sortie-weapon-card.is-locked:hover { border-color: rgba(124, 167, 176, 0.28); transform: none; }
+.sortie-weapon-card mark.is-locked { color: #251500; background: #d9a64b; }
+
+.ability-guide-screen.is-sword-guide .ability-guide-shade {
+  background: linear-gradient(90deg, rgba(4, 7, 11, 0.9), rgba(13, 10, 5, 0.72));
+}
+.ability-guide-screen.is-sword-guide .ability-guide-console { border-color: rgba(245, 190, 86, 0.46); }
+.ability-guide-screen.is-sword-guide .ability-guide-console::before { background: linear-gradient(90deg, #f5bd56, #71ecff 58%, transparent); }
+.ability-guide-screen.is-sword-guide .ability-guide-tabs button.is-active { border-color: #f5c56b; box-shadow: inset 0 -3px #f5c56b; }
+
+.ability-guide-sword-demo {
+  position: relative;
+  display: grid;
+  height: 100%;
+  min-height: 260px;
+  place-items: center;
+  overflow: hidden;
+  color: #eafcff;
+  background:
+    radial-gradient(circle, rgba(117, 235, 255, 0.16) 0 8%, transparent 9%),
+    radial-gradient(circle, transparent 0 30%, rgba(246, 192, 91, 0.18) 31% 32%, transparent 33%),
+    linear-gradient(rgba(90, 205, 225, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90, 205, 225, 0.045) 1px, transparent 1px),
+    #020b10;
+  background-size: auto, auto, 28px 28px, 28px 28px, auto;
+}
+.ability-guide-sword-demo::before,
+.ability-guide-sword-demo::after,
+.ability-guide-sword-demo > i {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 42%;
+  border-radius: 999px;
+  transform-origin: 50% 0;
+  background: linear-gradient(#fff, #72f1ff 40%, rgba(67, 186, 234, 0));
+  box-shadow: 0 0 12px #69eafb;
+}
+.ability-guide-sword-demo::before { transform: rotate(20deg) translateY(-12%); }
+.ability-guide-sword-demo::after { transform: rotate(200deg) translateY(-12%); }
+.ability-guide-sword-demo > i:nth-of-type(1) { transform: rotate(65deg) translateY(-11%); }
+.ability-guide-sword-demo > i:nth-of-type(2) { transform: rotate(110deg) translateY(-11%); }
+.ability-guide-sword-demo > i:nth-of-type(3) { transform: rotate(245deg) translateY(-11%); }
+.ability-guide-sword-demo > i:nth-of-type(4) { transform: rotate(290deg) translateY(-11%); }
+.ability-guide-sword-demo.is-phantomRend::before { height: 64%; transform: rotate(90deg) translateY(-15%); }
+.ability-guide-sword-demo.is-phantomRend::after { opacity: 0; }
+.ability-guide-sword-demo.is-imperialSwordDomain { background-color: #061117; box-shadow: inset 0 0 70px rgba(245, 188, 77, 0.16); }
+.ability-guide-sword-demo.is-heavenfallExecution::before { width: 17px; height: 70%; transform: rotate(0deg) translateY(-36%); background: linear-gradient(#fff, #f7cc78 46%, rgba(245, 157, 58, 0)); box-shadow: 0 0 26px #f2c461; }
+.ability-guide-sword-demo.is-heavenfallExecution::after { opacity: 0; }
+.sword-demo-core { position: relative; z-index: 2; display: grid; width: 74px; height: 74px; place-items: center; border: 1px solid rgba(118, 239, 255, 0.74); border-radius: 50%; color: #efffff; background: rgba(4, 35, 46, 0.88); box-shadow: 0 0 30px rgba(92, 225, 247, 0.34); }
+.sword-demo-core svg { width: 40px; height: 40px; }
+.ability-guide-sword-demo > strong { position: absolute; z-index: 3; bottom: 24px; display: flex; align-items: center; gap: 10px; font-size: 19px; }
+.ability-guide-sword-demo > strong kbd { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid #f6cb77; color: #1d1102; background: #f6cb77; }
+
+@media (max-width: 760px) and (orientation: portrait) {
+  .mika-recruit-heading { top: max(16px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left)); }
+  .mika-recruit-heading small { font-size: 10px; }
+  .mika-recruit-heading strong { font-size: 31px; }
+  .mika-recruit-character,
+  .mika-recruit-character.is-aegis,
+  .mika-recruit-character.is-rhea { top: 8%; bottom: 27%; width: min(94vw, 600px); }
+  .mika-recruit-character.is-aegis { width: min(82vw, 520px); }
+  .mika-recruit-progress { right: 16px; bottom: calc(287px + env(safe-area-inset-bottom)); }
+  .mika-recruit-progress i { width: 22px; }
+  .mika-recruit-dialogue-box {
+    right: 6px;
+    bottom: max(6px, env(safe-area-inset-bottom));
+    left: 6px;
+    min-height: 266px;
+    padding: 18px;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .mika-recruit-dialogue-box > div { grid-template-columns: 1fr auto; align-items: end; }
+  .mika-recruit-dialogue-box > div small { grid-column: 1 / -1; font-size: 9px; }
+  .mika-recruit-dialogue-box > div strong { font-size: 25px; }
+  .mika-recruit-dialogue-box > p { font-size: 17px; line-height: 1.52; }
+  .mika-recruit-dialogue-box > button { width: 100%; min-height: 56px; }
+  .sortie-weapon-loadout > header { flex-wrap: wrap; }
+  .sortie-sword-guide-button { width: 100%; justify-content: center; }
+  .ability-guide-sword-demo { min-height: 210px; }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .mika-recruit-heading { top: 12px; left: 18px; }
+  .mika-recruit-heading small { font-size: 8px; }
+  .mika-recruit-heading strong { font-size: 26px; }
+  .mika-recruit-character,
+  .mika-recruit-character.is-aegis,
+  .mika-recruit-character.is-rhea { top: 2%; bottom: 25%; width: min(42vw, 460px); }
+  .mika-recruit-dialogue-box { right: 12px; bottom: 8px; left: 12px; min-height: 116px; padding: 12px 14px; grid-template-columns: 130px 1fr 170px; gap: 14px; }
+  .mika-recruit-dialogue-box > div small { font-size: 7px; }
+  .mika-recruit-dialogue-box > div strong { font-size: 20px; }
+  .mika-recruit-dialogue-box > p { font-size: 13px; line-height: 1.42; }
+  .mika-recruit-dialogue-box > button { min-height: 46px; padding: 0 12px; font-size: 11px; }
+  .mika-recruit-progress { right: 20px; bottom: 135px; }
+  .ability-guide-sword-demo { min-height: 142px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mika-recruit-character { animation: none; }
+}

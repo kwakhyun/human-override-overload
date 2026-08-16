@@ -42,13 +42,14 @@ import {
   getBaseFacility,
   getBaseUpgrades,
 } from "./game/content/baseUpgrades.js";
-import { getMainWeapons } from "./game/content/weapons.js";
+import { getMainWeapons, isMainWeaponUnlocked } from "./game/content/weapons.js";
 import { getPlayableCharacters, isCharacterUnlocked } from "./game/content/characters.js";
 import { DEFENSE_TOWER_DEFINITIONS, getDefenseStage, getDefenseStages } from "./defense/content.js";
 import {
   canLaunchRegion,
   canLaunchDefenseStage,
   completeAbilityGuide,
+  completeSwordAbilityGuide,
   completeCombatOverlay,
   completeDefenseGuide,
   completeOuterSectorBriefing,
@@ -567,10 +568,10 @@ const ABILITY_COOLDOWN_FALLBACK = Object.freeze({
   aegisWard: 28,
   stratosRun: 34,
   helixTempest: 72,
-  spectralSwordArray: 14,
-  phantomRend: 20,
-  imperialSwordDomain: 32,
-  heavenfallExecution: 85,
+  spectralSwordArray: 6,
+  phantomRend: 9,
+  imperialSwordDomain: 15,
+  heavenfallExecution: 45,
   chain: 4.8,
   nova: 9,
   airstrike: 18,
@@ -2483,6 +2484,7 @@ export function App() {
   const [npcLineIndex, setNpcLineIndex] = useState(0);
   const [activeFacilityId, setActiveFacilityId] = useState(null);
   const [guideReturnScreen, setGuideReturnScreen] = useState("sortie");
+  const [swordGuideReturnScreen, setSwordGuideReturnScreen] = useState("return");
   const [bgmPlaying, setBgmPlaying] = useState(false);
   const [transitionLabel, setTransitionLabel] = useState("다음 화면 준비 중");
   const [transitionProgress, setTransitionProgress] = useState(0);
@@ -2518,6 +2520,7 @@ export function App() {
     [playableCharacters],
   );
   const mikaUnlocked = isCharacterUnlocked("mika", activeSlot?.completedRegionIds || []);
+  const beamSwordUnlocked = isMainWeaponUnlocked("beam-sword", activeSlot?.completedRegionIds || []);
   const activeRegion = useMemo(() => getRegion(activeRegionId) || getRegion(DEFAULT_REGION_ID), [activeRegionId]);
   const activeBgmPath = useMemo(() => resolveMusicTrack(screen, activeRegionId), [screen, activeRegionId]);
   const slotIndex = activeSlotId ? Math.max(0, Number(activeSlotId.split("-")[1] || 1) - 1) : 0;
@@ -2790,6 +2793,7 @@ export function App() {
     if (status === "victory" && activeSlotId) {
       const slotBeforeVictory = getCampaignSlot(campaign, activeSlotId);
       const mikaWasUnlocked = isCharacterUnlocked("mika", slotBeforeVictory?.completedRegionIds || []);
+      const swordWasUnlocked = isMainWeaponUnlocked("beam-sword", slotBeforeVictory?.completedRegionIds || []);
       const completed = completeRegion(campaign, activeSlotId, regionId, {
         ...nextResult,
         status: "victory",
@@ -2812,6 +2816,14 @@ export function App() {
         );
         return;
       }
+      const swordJustUnlocked = regionId === "glass-dune"
+        && !swordWasUnlocked
+        && isMainWeaponUnlocked("beam-sword", completedSlot?.completedRegionIds || []);
+      if (swordJustUnlocked && !completedSlot?.storyFlags?.includes("beam-sword-guide-complete")) {
+        setSwordGuideReturnScreen("return");
+        setScreen("sword-guide");
+        return;
+      }
       prepareSurface("나이트자 귀환 항로 준비 중", [DOM_ASSET_REFS.returnToHaven?.src], () => setScreen("return"));
       return;
     }
@@ -2822,6 +2834,26 @@ export function App() {
   const finishMikaRecruitment = useCallback(() => {
     prepareSurface("나이트자 귀환 항로 준비 중", [DOM_ASSET_REFS.returnToHaven?.src], () => setScreen("return"));
   }, [prepareSurface]);
+
+  const finishSwordAbilityGuide = useCallback(() => {
+    let nextCampaign = campaign;
+    if (activeSlotId) {
+      nextCampaign = completeSwordAbilityGuide(campaign, activeSlotId);
+      setCampaign(nextCampaign);
+      saveCampaign(nextCampaign);
+    }
+    if (swordGuideReturnScreen === "return") {
+      prepareSurface("나이트자 귀환 항로 준비 중", [DOM_ASSET_REFS.returnToHaven?.src], () => setScreen("return"));
+      return;
+    }
+    setScreen(swordGuideReturnScreen);
+  }, [activeSlotId, campaign, prepareSurface, swordGuideReturnScreen]);
+
+  const openSwordAbilityGuide = useCallback(() => {
+    if (!beamSwordUnlocked) return;
+    setSwordGuideReturnScreen("regions");
+    setScreen("sword-guide");
+  }, [beamSwordUnlocked]);
 
   const talkToNpc = useCallback((npc) => {
     setActiveFacilityId(null);
@@ -2979,6 +3011,15 @@ export function App() {
         onBack={guideReturnScreen === "base" ? () => setScreen("base") : null}
       />
     );
+  } else if (screen === "sword-guide") {
+    content = (
+      <AbilityGuideScreen
+        assets={campaignAssets}
+        guideType="sword"
+        onComplete={finishSwordAbilityGuide}
+        onBack={swordGuideReturnScreen === "regions" ? () => setScreen("regions") : null}
+      />
+    );
   } else if (screen === "base" && campaignView) {
     content = (
       <HomeBaseScreen
@@ -3003,7 +3044,7 @@ export function App() {
       />
     );
   } else if (screen === "regions" && campaignView) {
-    content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={unlockedPlayableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onWeaponChange={selectMainWeapon} onSelect={launchCombat} onBack={() => setScreen("base")} />;
+    content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={unlockedPlayableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onWeaponChange={selectMainWeapon} onOpenSwordGuide={openSwordAbilityGuide} onSelect={launchCombat} onBack={() => setScreen("base")} />;
   } else if (screen === "defense-select" && campaignView) {
     content = <DefenseStageSelectScreen stages={defenseStages} campaign={campaignView} assets={campaignAssets} onSelect={launchDefense} onBack={() => setScreen("base")} />;
   } else if (screen === "defense") {

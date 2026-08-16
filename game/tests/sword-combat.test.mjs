@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  SWORD_MANUAL_ACTIVE_ABILITIES,
   chooseLevelReward,
   createSwarmInput,
   createSwarmState,
@@ -11,6 +12,18 @@ import {
 
 const SWORD_WEAPON_REWARDS = new Set(["crescentWave", "titanEdge", "flashRend", "bladeStorm"]);
 const RIFLE_WEAPON_REWARDS = new Set(["scatter", "rail", "rocket", "orbit"]);
+
+test("beam-sword manual skills use frequent combat cooldowns", () => {
+  assert.deepEqual(
+    Object.values(SWORD_MANUAL_ACTIVE_ABILITIES).map(({ id, baseCooldown }) => [id, baseCooldown]),
+    [
+      ["spectralSwordArray", 6],
+      ["phantomRend", 9],
+      ["imperialSwordDomain", 15],
+      ["heavenfallExecution", 45],
+    ],
+  );
+});
 
 function isolateTarget(state, distance = 110) {
   const target = state.enemies[0];

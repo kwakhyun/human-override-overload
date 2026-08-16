@@ -12,6 +12,7 @@ import {
   completeDefenseGuide,
   completeOuterSectorBriefing,
   completeRegion,
+  completeSwordAbilityGuide,
   createCampaignSlot,
   createEmptyCampaign,
   getCampaignSlot,
@@ -158,6 +159,20 @@ test("a Chapter 1 victory unlocks HAVEN-09 and both selectable Chapter 2 regions
     lastClearedAt: "2026-08-10T06:10:00.000Z",
     lastRunId: "run-001",
   });
+});
+
+test("the beam-sword guide can only be completed after the Glass Dune clear", () => {
+  const initial = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
+  assert.deepEqual(completeSwordAbilityGuide(initial, "slot-1", { now: NOW }), initial);
+
+  let campaign = completeRegion(initial, "slot-1", "wrong-engine-core", { status: "victory" }, { now: NOW });
+  campaign = completeRegion(campaign, "slot-1", "glass-dune", { status: "victory" }, { now: NOW });
+  const completed = completeSwordAbilityGuide(campaign, "slot-1", { now: "2026-08-10T07:30:00.000Z" });
+  const slot = getCampaignSlot(completed, "slot-1");
+  assert.ok(slot.storyFlags.includes("beam-sword-unlocked"));
+  assert.ok(slot.storyFlags.includes("beam-sword-guide-complete"));
+  assert.equal(slot.updatedAt, "2026-08-10T07:30:00.000Z");
+  assert.deepEqual(completeSwordAbilityGuide(completed, "slot-1", { now: "2026-08-10T08:00:00.000Z" }), completed);
 });
 
 test("locked regions and defeats do not advance progress", () => {

@@ -159,10 +159,11 @@ test("HAVEN lobby uses original character art, icon currencies, edge navigation,
 });
 
 test("MIKA unlocks on the first Wrong Engine victory and receives a one-time recruitment screen", async () => {
-  const [app, characters, screens] = await Promise.all([
+  const [app, characters, screens, styles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/game/content/characters.js", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
   ]);
   assert.match(characters, /unlockRegionId: "wrong-engine-core"/);
   assert.match(app, /const mikaJustUnlocked = regionId === DEFAULT_REGION_ID/);
@@ -170,8 +171,32 @@ test("MIKA unlocks on the first Wrong Engine victory and receives a one-time rec
   assert.match(app, /<MikaRecruitScreen/);
   assert.match(screens, /export const MIKA_RECRUIT_DIALOGUE/);
   assert.match(screens, /링블레이드 전투원 미카, 지금부터 팀에 합류합니다/);
+  assert.match(screens, /className="mika-recruit-stage"/);
+  assert.match(screens, /mika-recruit-character is-\$\{line\.portrait\}/);
+  assert.match(screens, /className="mika-recruit-dialogue-box"/);
+  assert.match(screens, /assets\?\.controlOfficer[\s\S]*assets\?\.playerPortrait[\s\S]*assets\?\.mikaPortrait/);
+  assert.match(screens, /event\.code !== "Space" && event\.code !== "Enter"/);
+  assert.match(styles, /\.mika-recruit-character \{[\s\S]*left: 50%;[\s\S]*transform: translateX\(-50%\)/);
+  assert.match(styles, /\.mika-recruit-dialogue-box \{[\s\S]*right: max\(28px[\s\S]*left: max\(28px/);
   assert.match(app, /scriptedLine\.speaker === "AEGIS" && characterId === "mika"/);
   assert.match(app, /MIKA: Object\.freeze\(\{ assetKey: "mikaPortrait"/);
+});
+
+test("Glass Dune unlocks the beam sword and opens its short-cooldown skill guide", async () => {
+  const [app, weapons, screens, styles] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/game/content/weapons.js", root), "utf8"),
+    readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
+  ]);
+  assert.match(weapons, /BEAM_SWORD_UNLOCK_REGION_ID = "glass-dune"/);
+  assert.match(app, /const swordJustUnlocked = regionId === "glass-dune"/);
+  assert.match(app, /<AbilityGuideScreen[\s\S]*guideType="sword"/);
+  assert.match(screens, /SWORD_ABILITY_GUIDE[\s\S]*cooldown: 6[\s\S]*cooldown: 9[\s\S]*cooldown: 15[\s\S]*cooldown: 45/);
+  assert.match(screens, /disabled=\{!weaponUnlocked\}/);
+  assert.match(screens, /2구역 보스 처치 필요/);
+  assert.match(styles, /\.ability-guide-sword-demo/);
+  assert.match(styles, /\.sortie-weapon-card\.is-locked/);
 });
 
 test("character information presents full-height art, live stats, abilities, and persistent augmentation", async () => {

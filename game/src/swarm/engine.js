@@ -209,10 +209,10 @@ export const MANUAL_ACTIVE_ABILITIES = Object.freeze({
   helixTempest: Object.freeze({ id: "helixTempest", key: "R", name: "HELIX TEMPEST", baseCooldown: 72 }),
 });
 export const SWORD_MANUAL_ACTIVE_ABILITIES = Object.freeze({
-  empPulse: Object.freeze({ id: "spectralSwordArray", key: "Q", name: "SPECTRAL SWORD ARRAY", nameKo: "환검진", baseCooldown: 14 }),
-  aegisWard: Object.freeze({ id: "phantomRend", key: "E", name: "PHANTOM REND", nameKo: "유령 참격", baseCooldown: 20 }),
-  stratosRun: Object.freeze({ id: "imperialSwordDomain", key: "F", name: "IMPERIAL SWORD DOMAIN", nameKo: "천검 영역", baseCooldown: 32 }),
-  helixTempest: Object.freeze({ id: "heavenfallExecution", key: "R", name: "HEAVENFALL EXECUTION", nameKo: "천검 낙하", baseCooldown: 85 }),
+  empPulse: Object.freeze({ id: "spectralSwordArray", key: "Q", name: "SPECTRAL SWORD ARRAY", nameKo: "환검진", baseCooldown: 6 }),
+  aegisWard: Object.freeze({ id: "phantomRend", key: "E", name: "PHANTOM REND", nameKo: "유령 참격", baseCooldown: 9 }),
+  stratosRun: Object.freeze({ id: "imperialSwordDomain", key: "F", name: "IMPERIAL SWORD DOMAIN", nameKo: "천검 영역", baseCooldown: 15 }),
+  helixTempest: Object.freeze({ id: "heavenfallExecution", key: "R", name: "HEAVENFALL EXECUTION", nameKo: "천검 낙하", baseCooldown: 45 }),
 });
 export const MIKA_MANUAL_ACTIVE_ABILITIES = Object.freeze({
   empPulse: Object.freeze({ id: "prismRicochet", key: "Q", name: "PRISM RICOCHET", nameKo: "프리즘 연무", baseCooldown: 12 }),

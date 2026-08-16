@@ -76,10 +76,10 @@ const PORTRAIT_REACTIONS = Object.freeze({
 });
 
 export const MIKA_RECRUIT_DIALOGUE = Object.freeze([
-  Object.freeze({ speaker: "레아", text: "오답 엔진 잔해에서 미확인 저항군 신호를 잡았어. 생존자가 헤이븐-09에 구조를 요청하고 있어." }),
-  Object.freeze({ speaker: "미카", text: "미카야! 네가 그 소문난 이지스지? 혼자 멋있는 건 불공평하니까, 다음 작전부터 나도 같이 갈게." }),
-  Object.freeze({ speaker: "이지스", text: "전투 기록은 확인했어. 명령을 따를 수 있다면 합류를 허가한다." }),
-  Object.freeze({ speaker: "미카", text: "차갑기는. 그래도 방금 나 받아 준 거 맞지? 링블레이드 전투원 미카, 지금부터 팀에 합류합니다!" }),
+  Object.freeze({ speaker: "레아", portrait: "rhea", text: "오답 엔진 잔해에서 저항군 신호를 잡았어. 생존자 한 명이 헤이븐-09에 구조를 요청하고 있어." }),
+  Object.freeze({ speaker: "미카", portrait: "mika", text: "미카야! 네가 그 소문난 이지스지? 혼자 멋있는 건 불공평하니까, 다음 작전부터 나도 같이 갈게." }),
+  Object.freeze({ speaker: "이지스", portrait: "aegis", text: "전투 기록은 확인했어. 명령을 따를 수 있다면 합류를 허가한다." }),
+  Object.freeze({ speaker: "미카", portrait: "mika", text: "차갑기는. 그래도 방금 나 받아 준 거 맞지? 링블레이드 전투원 미카, 지금부터 팀에 합류합니다!" }),
 ]);
 
 const ABILITY_CATEGORY_KO = Object.freeze({
@@ -87,6 +87,10 @@ const ABILITY_CATEGORY_KO = Object.freeze({
   "SURVIVAL SUPPORT": "생존 지원",
   "FIRE SUPPORT": "화력 지원",
   "ROTARY ULTIMATE": "회전형 필살기",
+  "SWORD CONTROL": "근접 기본기",
+  "DASH CUT": "돌진 참격",
+  "SWORD DOMAIN": "광역 검술",
+  "SWORD ULTIMATE": "검술 필살기",
 });
 
 const WORLD_TERM_KO = Object.freeze({
@@ -272,11 +276,43 @@ export const MANUAL_ABILITY_GUIDE = Object.freeze([
   }),
 ]);
 
+export const SWORD_ABILITY_GUIDE = Object.freeze([
+  Object.freeze({
+    key: "Q", id: "spectralSwordArray", name: "SPECTRAL SWORD ARRAY", koreanName: "환검진", category: "SWORD CONTROL", cooldown: 6, icon: "sword",
+    summary: "Q를 누르면 여러 자루의 환검이 주변을 즉시 베어 냅니다. 짧은 6초 주기로 적 무리에 계속 사용하세요.",
+    details: ["주변 350 범위를 한 번에 공격합니다.", "근접 적이 둘 이상 붙으면 아끼지 말고 바로 사용하세요."],
+    timing: "일반 전투의 기본기입니다. 재사용 알림이 켜질 때마다 적 무리 안에서 사용하세요.",
+    quote: "Q 환검진은 기본 호흡이야. 준비되는 대로 계속 베어.", callouts: Object.freeze([]),
+  }),
+  Object.freeze({
+    key: "E", id: "phantomRend", name: "PHANTOM REND", koreanName: "유령 참격", category: "DASH CUT", cooldown: 9, icon: "sword",
+    summary: "포인터 방향으로 빠르게 파고들며 경로의 적을 관통합니다. 이동과 공격을 동시에 해결하는 검술입니다.",
+    details: ["돌진하는 짧은 순간에는 피해를 받지 않습니다.", "적 뒤로 빠져나오거나 원거리 적에게 접근할 때 유용합니다."],
+    timing: "적의 공격선이 닫히기 직전, 안전한 방향을 가리키고 E를 누르세요.",
+    quote: "E는 도망이 아니라 관통이야. 위험한 선을 먼저 잘라.", callouts: Object.freeze([]),
+  }),
+  Object.freeze({
+    key: "F", id: "imperialSwordDomain", name: "IMPERIAL SWORD DOMAIN", koreanName: "천검 영역", category: "SWORD DOMAIN", cooldown: 15, icon: "sword",
+    summary: "거대한 검술 영역을 펼쳐 화면 가까이 몰린 적을 광범위하게 베어 냅니다.",
+    details: ["주변 520 범위를 강하게 타격합니다.", "후반 웨이브처럼 적이 겹겹이 접근할 때 가장 효율적입니다."],
+    timing: "적 무리가 충분히 모였을 때 F로 전장을 한 번에 정리하세요.",
+    quote: "F는 전장을 네 검집으로 만드는 기술. 충분히 모이면 펼쳐.", callouts: Object.freeze([]),
+  }),
+  Object.freeze({
+    key: "R", id: "heavenfallExecution", name: "HEAVENFALL EXECUTION", koreanName: "천검 낙하", category: "SWORD ULTIMATE", cooldown: 45, icon: "sword",
+    summary: "거대한 검이 지정 지점에 낙하한 뒤 충격파로 주변 일반 적을 섬멸합니다.",
+    details: ["낙하 경고 뒤 720 범위에 결정타가 발생합니다.", "45초 필살기이므로 후반 대공세나 보스 약점 노출에 맞추세요."],
+    timing: "가장 많은 적이 모인 순간 또는 보스 코어가 열린 순간 R을 사용하세요.",
+    quote: "R 천검 낙하는 끝내는 검이야. 가장 비싼 순간에 내려꽂아.", callouts: Object.freeze([]),
+  }),
+]);
+
 const ABILITY_ICON = Object.freeze({
   emp: Broadcast,
   ward: ShieldChevron,
   stratos: AirplaneTilt,
   tempest: Sparkle,
+  sword: Sword,
 });
 
 function NpcPortrait({ npc, assets }) {
@@ -544,20 +580,44 @@ export function MikaRecruitScreen({ assets, onComplete }) {
   const [lineIndex, setLineIndex] = useState(0);
   const line = MIKA_RECRUIT_DIALOGUE[Math.min(lineIndex, MIKA_RECRUIT_DIALOGUE.length - 1)];
   const finalLine = lineIndex >= MIKA_RECRUIT_DIALOGUE.length - 1;
-  const next = () => finalLine ? onComplete?.() : setLineIndex((index) => index + 1);
+  const next = useCallback(
+    () => finalLine ? onComplete?.() : setLineIndex((index) => index + 1),
+    [finalLine, onComplete],
+  );
+  const portraitSource = line.portrait === "rhea"
+    ? assets?.controlOfficer
+    : line.portrait === "aegis" ? assets?.playerPortrait : assets?.mikaPortrait;
+  useEffect(() => {
+    const advance = (event) => {
+      if ((event.code !== "Space" && event.code !== "Enter") || event.repeat) return;
+      event.preventDefault();
+      next();
+    };
+    window.addEventListener("keydown", advance);
+    return () => window.removeEventListener("keydown", advance);
+  }, [next]);
   return (
     <main className="campaign-shell mika-recruit-screen">
       {assets?.characterSyncChamber && <img className="campaign-background" src={assetSource(assets.characterSyncChamber)} alt="헤이븐-09 전투원 동기화실" />}
       <div className="mika-recruit-shade" aria-hidden="true" />
-      <section className="mika-recruit-card" role="dialog" aria-modal="true" aria-labelledby="mika-recruit-title">
-        <small>신규 전투원 합류 · FIRST CLEAR REWARD</small>
-        <h1 id="mika-recruit-title">미카 · MIKA</h1>
-        <p>프리즘 링블레이드 전투원이 헤이븐-09 편성에 등록되었습니다.</p>
-        <div className="mika-recruit-dialogue">
-          {assets?.mikaPortrait && <img src={assetSource(assets.mikaPortrait)} alt="새로 합류한 전투원 미카" />}
-          <div><small>{line.speaker}</small><strong>{line.text}</strong></div>
+      <header className="mika-recruit-heading">
+        <small>오답 엔진 중앙로 · 최초 클리어</small>
+        <strong id="mika-recruit-title">신규 전투원 조우</strong>
+      </header>
+      <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="mika-recruit-title">
+        <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
+          {portraitSource && <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} />}
+        </figure>
+        <div className="mika-recruit-progress" aria-label={`${lineIndex + 1}/${MIKA_RECRUIT_DIALOGUE.length} 대화`}>
+          {MIKA_RECRUIT_DIALOGUE.map((_, index) => <i className={index <= lineIndex ? "is-active" : ""} key={index} />)}
         </div>
-        <button type="button" data-ui-sound={finalLine ? "uiConfirm" : "click"} onClick={next}>{finalLine ? "팀 합류 확인" : "다음 대화"}<ArrowRight weight="bold" /></button>
+        <div className="mika-recruit-dialogue-box">
+          <div><small>{line.portrait === "mika" ? "PRISM RINGBLADE OPERATIVE" : line.portrait === "aegis" ? "AEGIS FIELD LEAD" : "HAVEN-09 CONTROL"}</small><strong>{line.speaker}</strong></div>
+          <p>{line.text}</p>
+          <button type="button" data-ui-sound={finalLine ? "uiConfirm" : "click"} onClick={next}>
+            <span>{finalLine ? "미카의 합류를 확인한다" : "다음 대화"}<kbd>SPACE</kbd></span><ArrowRight weight="bold" />
+          </button>
+        </div>
       </section>
     </main>
   );
@@ -691,17 +751,18 @@ export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, o
   );
 }
 
-export function AbilityGuideScreen({ assets, onComplete, onBack }) {
+export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, onBack }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const ability = MANUAL_ABILITY_GUIDE[activeIndex];
+  const guideEntries = guideType === "sword" ? SWORD_ABILITY_GUIDE : MANUAL_ABILITY_GUIDE;
+  const ability = guideEntries[activeIndex];
   const ActiveIcon = ABILITY_ICON[ability.icon] || Crosshair;
   const portrait = assetSource(assets?.controlOfficer);
   const background = assetSource(assets?.homeBase);
   const example = assetSource(assets?.[ability.exampleAssetKey]);
-  const final = activeIndex === MANUAL_ABILITY_GUIDE.length - 1;
+  const final = activeIndex === guideEntries.length - 1;
 
   return (
-    <main className="campaign-shell ability-guide-screen">
+    <main className={`campaign-shell ability-guide-screen${guideType === "sword" ? " is-sword-guide" : ""}`}>
       {background && <img className="campaign-background" src={background} alt="헤이븐-09 전술 관제실" />}
       <div className="ability-guide-shade" aria-hidden="true" />
       <aside className="ability-guide-rhea" aria-label="전술 관제관 레아">
@@ -712,19 +773,19 @@ export function AbilityGuideScreen({ assets, onComplete, onBack }) {
       <section className="ability-guide-console" aria-labelledby="ability-guide-title">
         <header>
           <div>
-            <small>헤이븐-09 · 실제 전투 화면으로 배우기</small>
-            <h1 id="ability-guide-title">Q · E · F · R, 이것만 기억하세요</h1>
+            <small>{guideType === "sword" ? "신규 장비 해금 · 공명 검술 실전 교본" : "헤이븐-09 · 실제 전투 화면으로 배우기"}</small>
+            <h1 id="ability-guide-title">{guideType === "sword" ? "빔 소드 전용 Q · E · F · R" : "Q · E · F · R, 이것만 기억하세요"}</h1>
           </div>
           {onBack && <button type="button" className="campaign-back" onClick={onBack}><ArrowLeft weight="bold" /> 기지로</button>}
         </header>
 
         <div className="ability-circuit-separation" role="note" aria-label="자동 스킬과 수동 스킬의 차이">
-          <span><i>자동</i><b>레벨업 기술</b><em>자동 발동</em></span>
-          <span className="is-manual"><i>직접</i><b>Q · E · F · R</b><em>직접 사용 · 레벨업 기술과 별도</em></span>
+          <span><i>{guideType === "sword" ? "기본" : "자동"}</i><b>{guideType === "sword" ? "자동 근접 베기" : "레벨업 기술"}</b><em>{guideType === "sword" ? "주변 적 자동 공격" : "자동 발동"}</em></span>
+          <span className="is-manual"><i>직접</i><b>Q · E · F · R</b><em>{guideType === "sword" ? "짧은 주기의 전용 검술" : "직접 사용 · 레벨업 기술과 별도"}</em></span>
         </div>
 
         <nav className="ability-guide-tabs" aria-label="사용 스킬 선택">
-          {MANUAL_ABILITY_GUIDE.map((entry, index) => {
+          {guideEntries.map((entry, index) => {
             const Icon = ABILITY_ICON[entry.icon] || Crosshair;
             return (
               <button
@@ -742,8 +803,14 @@ export function AbilityGuideScreen({ assets, onComplete, onBack }) {
 
         <div className={`ability-guide-detail ability-${ability.id}`}>
           <figure className="ability-guide-example">
-            {example ? <img src={example} alt={ability.exampleAlt} /> : <div className="ability-guide-example-missing">전투 예시 불러오는 중</div>}
-            <span className="ability-guide-live-badge">실제 전투 화면</span>
+            {example ? <img src={example} alt={ability.exampleAlt} /> : guideType === "sword" ? (
+              <div className={`ability-guide-sword-demo is-${ability.id}`} aria-label={`${ability.koreanName} 검술 범위 예시`}>
+                <span className="sword-demo-core"><Sword weight="fill" /></span>
+                <i /><i /><i /><i />
+                <strong><kbd>{ability.key}</kbd>{ability.koreanName}</strong>
+              </div>
+            ) : <div className="ability-guide-example-missing">전투 예시 불러오는 중</div>}
+            <span className="ability-guide-live-badge">{guideType === "sword" ? "검술 범위 예시" : "실제 전투 화면"}</span>
             {ability.callouts.map((callout) => (
               <span className="ability-example-callout" style={{ left: `${callout.x}%`, top: `${callout.y}%` }} key={callout.label}>
                 <i />{callout.label}
@@ -762,11 +829,11 @@ export function AbilityGuideScreen({ assets, onComplete, onBack }) {
         </div>
 
         <footer className="ability-guide-actions">
-          <span><i style={{ width: `${(activeIndex + 1) / MANUAL_ABILITY_GUIDE.length * 100}%` }} /></span>
-          <small>{activeIndex + 1} / {MANUAL_ABILITY_GUIDE.length}</small>
+          <span><i style={{ width: `${(activeIndex + 1) / guideEntries.length * 100}%` }} /></span>
+          <small>{activeIndex + 1} / {guideEntries.length}</small>
           <button type="button" disabled={activeIndex === 0} onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}><ArrowLeft weight="bold" /> 이전</button>
-          <button type="button" className="ability-guide-next" onClick={final ? onComplete : () => setActiveIndex((index) => Math.min(MANUAL_ABILITY_GUIDE.length - 1, index + 1))}>
-            {final ? "브리핑 완료 · 출격" : "다음 스킬"}<ArrowRight weight="bold" />
+          <button type="button" className="ability-guide-next" onClick={final ? onComplete : () => setActiveIndex((index) => Math.min(guideEntries.length - 1, index + 1))}>
+            {final ? guideType === "sword" ? "검술 교본 확인 완료" : "브리핑 완료 · 출격" : "다음 스킬"}<ArrowRight weight="bold" />
           </button>
         </footer>
       </section>
@@ -774,10 +841,11 @@ export function AbilityGuideScreen({ assets, onComplete, onBack }) {
   );
 }
 
-export function RegionSelectScreen({ regions, clusters = [], campaign, assets, weapons = [], equippedWeaponId = "pulse-rifle", characters = [], selectedCharacterId = "aegis", onCharacterChange, onWeaponChange, onSelect, onBack }) {
+export function RegionSelectScreen({ regions, clusters = [], campaign, assets, weapons = [], equippedWeaponId = "pulse-rifle", characters = [], selectedCharacterId = "aegis", onCharacterChange, onWeaponChange, onOpenSwordGuide, onSelect, onBack }) {
   const background = assetSource(assets?.regionMap);
   const unlocked = new Set(campaign?.unlockedRegionIds || ["wrong-engine-core"]);
   const completed = new Set(campaign?.completedRegionIds || []);
+  const swordUnlocked = completed.has("glass-dune");
   const storyFlags = new Set(campaign?.storyFlags || []);
   const [selectedClusterId, setSelectedClusterId] = useState(null);
   const [selectedRegionId, setSelectedRegionId] = useState(null);
@@ -970,27 +1038,31 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
               <header>
                 <div><small>메인 장비</small><h3 id="sortie-weapon-title">이번 출격 무기 선택</h3></div>
                 <span>무기에 따라 레벨업 증강 트리가 변경됩니다.</span>
+                {swordUnlocked && <button type="button" className="sortie-sword-guide-button" data-ui-sound="click" onClick={onOpenSwordGuide}><Sword weight="fill" /> 빔 소드 스킬 가이드</button>}
               </header>
               <div className="sortie-weapon-options">
                 {weapons.map((weapon) => {
                   const equipped = weapon.id === equippedWeaponId;
+                  const weaponUnlocked = !weapon.unlockRegionId || completed.has(weapon.unlockRegionId);
                   const rankKey = weapon.id === "beam-sword" ? "ilya-sword-resonator" : "ilya-rifle-emitter";
                   const upgradeRank = campaign?.progression?.equipmentRanks?.[rankKey] || 0;
                   const WeaponIcon = weapon.id === "beam-sword" ? Sword : Crosshair;
                   return (
                     <button
                       type="button"
-                      className={`sortie-weapon-card${equipped ? " is-equipped" : ""}`}
+                      className={`sortie-weapon-card${equipped ? " is-equipped" : ""}${weaponUnlocked ? "" : " is-locked"}`}
                       aria-pressed={equipped}
-                      data-ui-sound={equipped ? "click" : "uiConfirm"}
-                      onClick={() => onWeaponChange?.(weapon.id)}
+                      aria-label={weaponUnlocked ? `${weapon.koreanName} 선택` : `${weapon.koreanName} 잠김. 유리 사구 최초 클리어 필요`}
+                      data-ui-sound={weaponUnlocked ? equipped ? "click" : "uiConfirm" : "denied"}
+                      disabled={!weaponUnlocked}
+                      onClick={() => weaponUnlocked && onWeaponChange?.(weapon.id)}
                       key={weapon.id}
                     >
                       <span><WeaponIcon weight="fill" /></span>
                       <div><small>{weapon.role}</small><strong>{weapon.koreanName}</strong><em>{weapon.name}</em></div>
                       <p>{weapon.description}</p>
-                      <footer><b>{weapon.treeLabel}</b><i>기지 개조 {upgradeRank}단계</i></footer>
-                      {equipped && <mark><CheckCircle weight="fill" /> 장착 중</mark>}
+                      <footer><b>{weaponUnlocked ? weapon.treeLabel : weapon.unlockDescription}</b><i>{weaponUnlocked ? `기지 개조 ${upgradeRank}단계` : "2구역 보스 처치 필요"}</i></footer>
+                      {equipped ? <mark><CheckCircle weight="fill" /> 장착 중</mark> : !weaponUnlocked && <mark className="is-locked"><Lock weight="fill" /> 미해금</mark>}
                     </button>
                   );
                 })}

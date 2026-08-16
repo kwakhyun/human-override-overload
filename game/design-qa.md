@@ -1006,3 +1006,20 @@ final result: passed
   콘솔·페이지·HTTP 오류는 0건이었습니다. 전체 테스트·production build·배포는 실행하지 않았습니다.
 
 final result: passed
+
+### Iteration 46 — complete · MIKA 미연시 합류 장면과 빔 소드 해금 교본
+
+- Recruitment staging: `wrong-engine-core` 최초 승리 뒤 RHEA→MIKA→AEGIS→MIKA 순서로 화자별
+  실제 일러스트를 화면 중앙에 교체하고, 하단 전체 폭 대화창에서 한 줄씩 진행하도록 합류 장면을
+  재구성했습니다. Space/Enter와 큰 행동 버튼이 같은 진행 경로를 사용합니다.
+- Mobile framing: 412×915 세로 화면에서는 인물 일러스트를 대화창 뒤까지 크게 내리고, 266px
+  하단 대화창과 56px 버튼을 safe area 안에 유지합니다. 데스크톱 1280×720에서는 대화창·진행선·
+  중앙 인물이 겹치거나 잘리지 않는 것을 확인했습니다.
+- Sword progression: `beam-sword`는 2구역 `glass-dune` 보스 첫 승리 전까지 출격 카드와 저장 API에서
+  잠기며, 위조·구형 선택값도 펄스 소총으로 정리됩니다. 첫 해금 직후 전용 교본이 자동으로 열리고
+  이후 출격 화면에서 다시 볼 수 있습니다. Q/E/F/R 쿨타임은 6/9/15/45초로 단축했습니다.
+- Essential verification: TypeScript 검사와 캠페인 저장·캠페인 UI·무기 선택·검술 집중 테스트
+  32/32가 통과했습니다. 실제 브라우저에서 최초 1구역 승리 합류 장면, 모바일 세로 구도, 2구역
+  승리 직후 검술 교본을 확인했습니다. 전체 테스트·production build·배포는 실행하지 않았습니다.
+
+final result: passed
