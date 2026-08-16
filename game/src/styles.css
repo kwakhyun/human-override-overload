@@ -8804,3 +8804,148 @@ kbd,
   .base-primary-actions > .base-defense-action small { font-size: 9px !important; }
   .base-primary-actions > .base-defense-action b { font-size: 13px; }
 }
+
+/* Defense readability pass: combat data and actions remain legible without
+   turning the whole battlefield into permanent chrome. */
+.defense-load-chip { padding: 12px 18px; font-size: 14px; font-weight: 800; }
+.defense-rhea-chip small,
+.defense-core-status small,
+.defense-wave-status small { font-size: 12px; font-weight: 700; line-height: 1.2; }
+.defense-rhea-chip b { font-size: 18px; }
+.defense-core-status b { font-size: 24px; }
+.defense-wave-status b { font-size: 22px; }
+.defense-exit { font-size: 13px; font-weight: 800; white-space: nowrap; }
+.defense-command-dock { min-height: 124px; grid-template-columns: minmax(210px, 0.58fr) minmax(0, 1.62fr) minmax(220px, 0.62fr); }
+.defense-command-dock > header > div { display: flex; min-width: 0; flex-direction: column; }
+.defense-command-dock > header small { font-size: 11px; font-weight: 700; }
+.defense-command-dock > header strong { font-size: 18px; line-height: 1.2; }
+.defense-command-dock > header > span { font-size: 12px; font-weight: 700; }
+.defense-tower-palette button { min-height: 88px; padding-bottom: 18px; grid-template-columns: 26px 38px minmax(0, 1fr); }
+.defense-tower-palette button kbd { width: 24px; height: 24px; font-size: 11px; }
+.defense-tower-palette button > svg { width: 34px; height: 34px; }
+.defense-tower-palette button b { font-size: 14px; line-height: 1.2; }
+.defense-tower-palette button small { font-size: 11px; line-height: 1.25; }
+.defense-tower-palette button em { right: 8px; bottom: 5px; font-size: 11px; }
+.defense-upgrade-button small,
+.defense-wave-button small { font-size: 11px; font-weight: 700; }
+.defense-upgrade-button b,
+.defense-wave-button b { font-size: 16px; }
+.defense-stage-card-top span { font-size: 11px; }
+.defense-stage-card-top b { font-size: 11px; }
+.defense-stage-card > strong { font-size: 28px; }
+.defense-stage-card > small { font-size: 10px; }
+.defense-stage-card > p { font-size: 14px; }
+.defense-stage-card dt { font-size: 10px; }
+.defense-stage-card dd { font-size: 16px; }
+.defense-stage-card footer span { font-size: 14px; }
+.defense-stage-card footer b { font-size: 12px; }
+.defense-stage-card footer em { font-size: 14px; }
+.defense-guide-copy > small { font-size: 12px; }
+.defense-guide-copy h2 { font-size: 27px; }
+.defense-guide-copy p { font-size: 15px; }
+.defense-guide-card footer button { min-height: 44px; font-size: 13px; }
+.defense-guide-card footer .defense-guide-skip { font-size: 12px; }
+.defense-result-screen > section > small { font-size: 12px; }
+.defense-result-screen p { font-size: 16px; }
+.defense-result-stats small { font-size: 12px; }
+.defense-result-rewards { font-size: 14px; }
+.defense-result-screen footer button { font-size: 15px; font-weight: 800; }
+
+@media (max-width: 900px), (max-height: 600px) {
+  .defense-select-heading > small { font-size: 10px; }
+  .defense-select-heading h1 { font-size: 34px; }
+  .defense-select-heading p { font-size: 11px; line-height: 1.4; }
+  .defense-rhea-briefing small { font-size: 9px; }
+  .defense-rhea-briefing strong { font-size: 11px; }
+  .defense-stage-card-top span,
+  .defense-stage-card-top b { font-size: 9px; }
+  .defense-stage-card > strong { font-size: 19px; }
+  .defense-stage-card > small { font-size: 8px; }
+  .defense-stage-card > p { font-size: 11px; line-height: 1.35; }
+  .defense-stage-card dt { font-size: 8px; }
+  .defense-stage-card dd { font-size: 12px; }
+  .defense-stage-card footer span,
+  .defense-stage-card footer b,
+  .defense-stage-card footer em { font-size: 10px; }
+  .defense-rhea-chip small,
+  .defense-core-status small,
+  .defense-wave-status small { font-size: 10px; }
+  .defense-rhea-chip b,
+  .defense-core-status b,
+  .defense-wave-status b { font-size: 17px; }
+  .defense-exit { font-size: 11px; }
+  .defense-command-dock { min-height: 82px; grid-template-columns: 150px minmax(0, 1fr) 170px; }
+  .defense-command-dock > header small { font-size: 9px; }
+  .defense-command-dock > header strong { font-size: 12px; }
+  .defense-command-dock > header > span { font-size: 9px; }
+  .defense-tower-palette button { min-height: 66px; padding-bottom: 14px; grid-template-columns: 20px 25px 1fr; }
+  .defense-tower-palette button b { font-size: 11px; }
+  .defense-tower-palette button small { font-size: 9px; }
+  .defense-tower-palette button em { font-size: 9px; }
+  .defense-upgrade-button small,
+  .defense-wave-button small { font-size: 9px; }
+  .defense-upgrade-button b,
+  .defense-wave-button b { font-size: 12px; }
+  .defense-guide-copy > small { font-size: 9px; }
+  .defense-guide-copy h2 { font-size: 19px; }
+  .defense-guide-copy p { font-size: 11px; }
+  .defense-guide-card footer button { min-height: 34px; font-size: 10px; }
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .defense-select-heading > small { font-size: 12px; }
+  .defense-select-heading h1 { font-size: 40px; line-height: 1.05; }
+  .defense-select-heading p { font-size: 15px; line-height: 1.5; }
+  .defense-rhea-briefing { min-height: 156px; grid-template-columns: 126px 1fr; }
+  .defense-rhea-briefing img { width: 128px; height: 168px; }
+  .defense-rhea-briefing small { font-size: 11px; }
+  .defense-rhea-briefing strong { font-size: 14px; line-height: 1.5; }
+  .defense-stage-card { min-height: 270px; padding: 18px; }
+  .defense-stage-card-top span,
+  .defense-stage-card-top b { font-size: 11px; }
+  .defense-stage-card > strong { margin-top: 10px; font-size: 25px; }
+  .defense-stage-card > small { font-size: 10px; }
+  .defense-stage-card > p { min-height: 0; font-size: 14px; line-height: 1.5; }
+  .defense-stage-card dt { font-size: 11px; }
+  .defense-stage-card dd { font-size: 16px; }
+  .defense-stage-card footer span { font-size: 14px; }
+  .defense-stage-card footer b { font-size: 12px; }
+  .defense-stage-card footer em { min-height: 44px; font-size: 14px; }
+  .defense-core-status { min-height: 66px; padding: 9px 12px; }
+  .defense-core-status small { font-size: 13px; }
+  .defense-core-status b { font-size: 22px; }
+  .defense-wave-status { min-height: 58px; padding: 5px; }
+  .defense-wave-status small { font-size: 12px; }
+  .defense-wave-status b { margin-top: 3px; font-size: 20px; }
+  .defense-exit { min-height: 66px; font-size: 12px; }
+  .defense-command-dock { min-height: 184px; grid-template-columns: 1fr; grid-template-rows: minmax(96px, auto) 66px; }
+  .defense-tower-palette button { min-height: 96px; padding: 8px 3px 20px; grid-template-columns: 1fr; grid-template-rows: 34px minmax(30px, auto); }
+  .defense-tower-palette button kbd { width: 21px; height: 21px; font-size: 10px; }
+  .defense-tower-palette button > svg { width: 32px; height: 32px; }
+  .defense-tower-palette button b { overflow: visible; font-size: clamp(11px, 3vw, 13px); line-height: 1.2; text-overflow: clip; white-space: normal; word-break: keep-all; }
+  .defense-tower-palette button em { right: 5px; bottom: 4px; font-size: 10px; }
+  .defense-upgrade-button,
+  .defense-wave-button { min-height: 66px; }
+  .defense-upgrade-button small,
+  .defense-wave-button small { font-size: 12px; }
+  .defense-upgrade-button b,
+  .defense-wave-button b { font-size: 16px; }
+  .defense-guide-card,
+  .defense-guide-overlay.is-wave .defense-guide-card { bottom: calc(202px + env(safe-area-inset-bottom)); min-height: 226px; grid-template-columns: 104px 1fr; }
+  .defense-guide-card > img { width: 110px; height: 236px; }
+  .defense-guide-copy { padding: 16px 14px 13px 7px; }
+  .defense-guide-copy > small { font-size: 12px; }
+  .defense-guide-copy h2 { font-size: 25px; }
+  .defense-guide-copy p { font-size: 15px; line-height: 1.5; }
+  .defense-guide-card footer button { min-height: 48px; font-size: 13px; }
+  .defense-guide-card footer .defense-guide-skip { font-size: 12px; }
+  .defense-guide-spotlight.is-palette { bottom: calc(74px + env(safe-area-inset-bottom)); height: 112px; }
+  .defense-guide-spotlight.is-wave { height: 70px; }
+  .defense-result-screen > section { width: calc(100% - 20px); padding: 28px 18px; }
+  .defense-result-screen > section > small { font-size: 11px; }
+  .defense-result-screen p { font-size: 15px; line-height: 1.5; }
+  .defense-result-stats small { font-size: 12px; }
+  .defense-result-stats b { font-size: 25px; }
+  .defense-result-rewards { font-size: 14px; line-height: 1.45; }
+  .defense-result-screen footer button { min-height: 58px; font-size: 15px; }
+}

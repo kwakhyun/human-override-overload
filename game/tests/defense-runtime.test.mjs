@@ -86,3 +86,21 @@ test("defense art ships dedicated atlases plus three full and performance stage 
     assert.ok(portraitMap.size > portraitMapLow.size);
   }
 });
+
+test("defense HUD keeps Korean combat labels and actions readable on desktop and portrait mobile", async () => {
+  const [app, styles] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/styles.css", root), "utf8"),
+  ]);
+  assert.match(app, />방벽 내구도</);
+  assert.match(app, />남은 적</);
+  assert.match(app, />비용 \{tower\.cost\}</);
+  assert.match(app, /"웨이브 시작"/);
+  assert.match(styles, /Defense readability pass/);
+  assert.match(styles, /\.defense-tower-palette button b \{ font-size: 14px;/);
+  assert.match(styles, /\.defense-wave-button b \{ font-size: 16px;/);
+  assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\) \{[\s\S]*\.defense-core-status small \{ font-size: 13px; \}/);
+  assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\) \{[\s\S]*\.defense-wave-status b \{ margin-top: 3px; font-size: 20px; \}/);
+  assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\) \{[\s\S]*\.defense-guide-copy p \{ font-size: 15px;/);
+  assert.match(styles, /\.defense-command-dock \{ min-height: 184px; grid-template-columns: 1fr;/);
+});

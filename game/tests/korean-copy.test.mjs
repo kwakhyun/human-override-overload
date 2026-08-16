@@ -43,7 +43,7 @@ test("active Korean UI copy avoids literal-translation phrases and keeps concise
     "작전 기록을 기지에 저장합니다",
     "산탄·레일·로켓 중심의 증강이 등장합니다",
     "지역 추론핵을 파괴하면 획득",
-    "지금 공세 시작",
+    "웨이브 시작",
     "오답 엔진(THE WRONG ENGINE)",
   ]) {
     assert.ok(source.includes(natural), `keep natural Korean copy: ${natural}`);

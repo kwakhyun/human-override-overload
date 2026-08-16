@@ -2383,7 +2383,7 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
   }, [advanceTutorial, finishTutorial, onBase, tutorialActive]);
 
   const selectedTowerDefinition = hud?.selectedTower ? DEFENSE_TOWER_DEFINITIONS[hud.selectedTower.type] : null;
-  const selectedNodeLabel = hud?.selectedNodeId ? `방어 패드 ${String(hud.selectedNodeId).split("-").at(-1)}` : "전장의 원형 패드를 선택하세요";
+  const selectedNodeLabel = hud?.selectedNodeId ? `방어 패드 ${String(hud.selectedNodeId).split("-").at(-1)}` : "원형 패드를 선택하세요";
   const guideTarget = tutorialActive ? DEFENSE_GUIDE_STEPS[tutorialStep]?.target : null;
   return (
     <main
@@ -2397,26 +2397,26 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
       {loadProgress < 1 && <div className="defense-load-chip">방어 체계 동기화 {Math.round(loadProgress * 100)}%</div>}
       <header className="defense-combat-hud">
         <div className="defense-rhea-chip">{assets?.controlOfficer && <img src={assets.controlOfficer?.src || assets.controlOfficer} alt="" />}<span><small>{hud?.phase === "wave" ? "교전 관제 중" : "배치 준비"}</small><b>{stage?.name}</b></span></div>
-        <div className={`defense-core-status${guideTarget === "core" ? " is-guide-target" : ""}`}><span><small>헤이븐 방벽 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
-        <div className="defense-wave-status"><span><small>웨이브</small><b>{hud?.wave || 1}/{hud?.totalWaves || stage?.waveCounts.length}</b></span><span><small>현장 적</small><b>{hud?.liveEnemies || 0}</b></span><span><small>격파</small><b>{hud?.kills || 0}</b></span><span><small>배치 자원</small><b>{hud?.credits || 0}</b></span></div>
+        <div className={`defense-core-status${guideTarget === "core" ? " is-guide-target" : ""}`}><span><small>방벽 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
+        <div className="defense-wave-status"><span><small>웨이브</small><b>{hud?.wave || 1}/{hud?.totalWaves || stage?.waveCounts.length}</b></span><span><small>남은 적</small><b>{hud?.liveEnemies || 0}</b></span><span><small>격파</small><b>{hud?.kills || 0}</b></span><span><small>자원</small><b>{hud?.credits || 0}</b></span></div>
         <button type="button" className="defense-exit" data-ui-sound="uiClose" onClick={onBase}><HouseLine weight="bold" /> 기지로 <kbd>ESC</kbd></button>
       </header>
 
       <div className={`defense-guide-world-target${guideTarget === "field" ? " is-guide-target" : ""}`} aria-hidden="true" />
       <aside className="defense-command-dock">
-        <header><div><small>{hud?.selectedTower ? "선택 방어 체계" : "건설 위치"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>{hud?.selectedTower ? <span>강화 단계 {hud.selectedTower.rank} / 3</span> : <span>패드 선택 → 체계 배치 → 공세 개시</span>}</header>
+        <header><div><small>{hud?.selectedTower ? "선택한 타워" : "건설 위치"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>{hud?.selectedTower ? <span>강화 단계 {hud.selectedTower.rank} / 3</span> : <span>패드 선택 → 타워 배치 → 웨이브 시작</span>}</header>
         {!hud?.selectedTower ? (
           <div className={`defense-tower-palette${guideTarget === "palette" ? " is-guide-target" : ""}`} data-defense-tower-palette>
             {Object.values(DEFENSE_TOWER_DEFINITIONS).map((tower, index) => {
               const Icon = DEFENSE_TOWER_ICONS[tower.id] || Crosshair;
               const disabled = !hud?.selectedNodeId || (hud?.credits || 0) < tower.cost;
-              return <button type="button" data-defense-tower={tower.id} aria-label={`${tower.name}, ${tower.role}, 자원 ${tower.cost}`} title={tower.description} disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="fill" /><span><b>{tower.name}</b><small>{tower.role}</small></span><em>{tower.cost}</em></button>;
+              return <button type="button" data-defense-tower={tower.id} aria-label={`${tower.name}, ${tower.role}, 자원 ${tower.cost}`} title={tower.description} disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="fill" /><span><b>{tower.name}</b><small>{tower.role}</small></span><em>비용 {tower.cost}</em></button>;
             })}
           </div>
         ) : (
           <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="fill" /><span><small>{selectedTowerDefinition?.role}</small><b>{hud.selectedTower.rank >= 3 ? "최대 강화 완료" : `${selectedTowerDefinition?.name} 강화`}</b></span><ArrowRight weight="bold" /></button>
         )}
-        <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="fill" /><span><small>{hud?.wave === 1 ? "첫 공세 준비" : `다음 공세까지 ${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "지금 공세 시작" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
+        <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="fill" /><span><small>{hud?.wave === 1 ? "첫 웨이브 준비" : `다음 웨이브까지 ${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "웨이브 시작" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
       </aside>
       {tutorialActive && <DefenseSpotlightGuide stepIndex={tutorialStep} portrait={assets?.controlOfficer} onNext={advanceTutorial} onBack={() => setTutorialStep((step) => Math.max(0, step - 1))} onSkip={finishTutorial} />}
     </main>

@@ -46,7 +46,7 @@ assert.equal(await guide.getAttribute("data-defense-guide-step"), "1");
 await page.screenshot({ path: path.join(qaDir, "defense-guide-01-core.png"), fullPage: true });
 await page.keyboard.press("Space");
 assert.equal(await guide.getAttribute("data-defense-guide-step"), "2");
-assert.match(await page.locator(".defense-wave-status").innerText(), /현장 적\s*0/);
+assert.match(await page.locator(".defense-wave-status").innerText(), /남은 적\s*0/);
 await page.screenshot({ path: path.join(qaDir, "defense-guide-02-pads.png"), fullPage: true });
 await page.locator(".defense-guide-next").click();
 assert.equal(await guide.getAttribute("data-defense-guide-step"), "3");
@@ -73,8 +73,18 @@ assert.equal(await wave.isEnabled(), true);
 await wave.click();
 await page.waitForFunction(() => {
   const text = document.querySelector(".defense-wave-status")?.textContent || "";
-  return /현장 적\s*[1-9]/.test(text);
+  return /남은 적\s*[1-9]/.test(text);
 }, null, { timeout: 10_000 });
+const desktopTypography = await page.evaluate(() => Object.fromEntries([
+  ["coreLabel", ".defense-core-status small"],
+  ["coreValue", ".defense-core-status b"],
+  ["statusLabel", ".defense-wave-status small"],
+  ["actionName", ".defense-upgrade-button b"],
+].map(([key, selector]) => [key, parseFloat(getComputedStyle(document.querySelector(selector)).fontSize)])));
+assert.ok(desktopTypography.coreLabel >= 11);
+assert.ok(desktopTypography.coreValue >= 20);
+assert.ok(desktopTypography.statusLabel >= 11);
+assert.ok(desktopTypography.actionName >= 14);
 await page.screenshot({ path: path.join(qaDir, "defense-mode-smoke.png"), fullPage: true });
 
 await page.setViewportSize({ width: 390, height: 844 });
@@ -90,6 +100,18 @@ const mobileBounds = await page.evaluate(() => {
 for (const item of mobileBounds) {
   assert.ok(item.left >= -1 && item.top >= -1 && item.right <= item.viewport.width + 1 && item.bottom <= item.viewport.height + 1, `${item.selector} must remain inside the mobile portrait viewport`);
 }
+const mobileTypography = await page.evaluate(() => Object.fromEntries([
+  ["coreLabel", ".defense-core-status small"],
+  ["coreValue", ".defense-core-status b"],
+  ["statusLabel", ".defense-wave-status small"],
+  ["statusValue", ".defense-wave-status b"],
+  ["actionName", ".defense-upgrade-button b"],
+].map(([key, selector]) => [key, parseFloat(getComputedStyle(document.querySelector(selector)).fontSize)])));
+assert.ok(mobileTypography.coreLabel >= 13);
+assert.ok(mobileTypography.coreValue >= 22);
+assert.ok(mobileTypography.statusLabel >= 12);
+assert.ok(mobileTypography.statusValue >= 20);
+assert.ok(mobileTypography.actionName >= 16);
 await page.screenshot({ path: path.join(qaDir, "defense-mode-mobile-portrait.png"), fullPage: true });
 
 const mobileGuideContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -126,6 +148,14 @@ assert.equal(mobileRuntimeAssets.length, runtimeAssetNames.length, "portrait def
 assert.equal(mobileRuntimeAssets.every((url) => url.includes("/defense/performance/")), true, "portrait defense must use performance runtime atlases");
 const mobileGuideCard = await mobileGuidePage.locator(".defense-guide-card").boundingBox();
 assert.ok(mobileGuideCard && mobileGuideCard.x >= 0 && mobileGuideCard.y >= 0 && mobileGuideCard.x + mobileGuideCard.width <= 390 && mobileGuideCard.y + mobileGuideCard.height <= 844);
+const mobileGuideTypography = await mobileGuidePage.evaluate(() => ({
+  heading: parseFloat(getComputedStyle(document.querySelector(".defense-guide-copy h2")).fontSize),
+  body: parseFloat(getComputedStyle(document.querySelector(".defense-guide-copy p")).fontSize),
+  actionHeight: document.querySelector(".defense-guide-next").getBoundingClientRect().height,
+}));
+assert.ok(mobileGuideTypography.heading >= 25);
+assert.ok(mobileGuideTypography.body >= 15);
+assert.ok(mobileGuideTypography.actionHeight >= 48);
 await mobileGuidePage.screenshot({ path: path.join(qaDir, "defense-guide-mobile-portrait.png"), fullPage: true });
 await mobileGuideContext.close();
 
@@ -185,5 +215,5 @@ for (const stage of [
 await battlefieldContext.close();
 
 assert.deepEqual(errors, []);
-console.log(JSON.stringify({ result: "pass", stages: 3, battlefieldAssets: battlefieldAssets.length, guideSteps: 4, guidePersisted: true, mobileGuideFits: true, mobilePerformanceAssets: mobileRuntimeAssets.length, towerBuilt: "pulseSentry", waveStarted: true, mobileBounds, errors }, null, 2));
+console.log(JSON.stringify({ result: "pass", stages: 3, battlefieldAssets: battlefieldAssets.length, guideSteps: 4, guidePersisted: true, mobileGuideFits: true, mobilePerformanceAssets: mobileRuntimeAssets.length, towerBuilt: "pulseSentry", waveStarted: true, desktopTypography, mobileTypography, mobileGuideTypography, mobileBounds, errors }, null, 2));
 await browser.close();
