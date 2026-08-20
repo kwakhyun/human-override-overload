@@ -9441,6 +9441,276 @@ kbd,
   .ability-guide-actions > button { padding: 6px 5px; }
 }
 
+/* Mobile app UI v5 ------------------------------------------------------
+   The supplied commercial-game references establish a physical-size floor,
+   not a composition to copy. Phone UI keeps native-game scale and reveals
+   more information through scrolling or staged disclosure instead of
+   shrinking labels, cards, or controls to fit a desktop composition. */
+@media (max-width: 720px) and (orientation: portrait) {
+  :root {
+    --mobile-edge: max(12px, env(safe-area-inset-left));
+    --mobile-touch: 56px;
+  }
+
+  .campaign-shell .campaign-back,
+  .campaign-shell .facility-close,
+  .campaign-shell .region-sortie-close {
+    min-height: 52px;
+    padding: 10px 13px;
+    font-size: 14px;
+  }
+  .campaign-shell kbd { display: none; }
+
+  /* Entry and save data. */
+  .intro-minimal-content > p { font-size: 16px; line-height: 1.55; }
+  .intro-start { min-height: 64px; font-size: 18px; }
+  .intro-music-toggle { min-height: 52px; font-size: 14px; }
+  .intro-mobile-controls { gap: 8px; }
+  .intro-mobile-controls > span { min-height: 56px; padding: 10px 11px; }
+  .intro-mobile-controls b { font-size: 13px; }
+  .intro-mobile-controls small { font-size: 12px; line-height: 1.35; }
+  .intro-full-control { min-height: 52px; font-size: 14px; }
+
+  .save-slot-copy h1 { font-size: 40px; }
+  .save-slot-copy > p { font-size: 16px; line-height: 1.55; }
+  .save-slot-grid { gap: 12px; }
+  .save-slot-card { min-height: 204px; padding: 22px 20px; }
+  .save-slot-card strong { font-size: 22px; }
+  .save-slot-card p { font-size: 15px; line-height: 1.5; }
+  .save-slot-card small { font-size: 12px; }
+  .save-slot-card b { font-size: 16px; }
+
+  /* HAVEN uses large rails and commands like a phone game, never a desktop
+     dashboard squeezed into the viewport. */
+  .home-base-screen .base-identity { min-height: 68px; padding: 11px 14px; }
+  .home-base-screen .base-identity small { font-size: 12px; }
+  .home-base-screen .base-identity strong { font-size: 27px; }
+  .home-base-screen .base-identity span { font-size: 12px; }
+  .home-base-screen .base-currency-rail button { min-height: 64px; padding: 8px 9px; }
+  .home-base-screen .base-currency-rail button small { font-size: 12px; }
+  .home-base-screen .base-currency-rail button b { font-size: 20px; }
+  .home-base-screen .base-motion-portrait,
+  .home-base-screen .base-motion-portrait.is-mika { top: 146px; bottom: 252px; }
+  .home-base-screen .motion-portrait-caption { min-width: 174px; min-height: 64px; }
+  .home-base-screen .motion-portrait-caption small { font-size: 11px; }
+  .home-base-screen .motion-portrait-caption strong { font-size: 23px; }
+  .home-base-screen .motion-portrait-caption em { font-size: 12px; }
+  .home-base-screen .motion-portrait-speech strong,
+  .home-base-screen .motion-portrait-speech p { font-size: 15px; line-height: 1.5; }
+  .home-base-screen .base-lobby-navigation {
+    bottom: calc(max(179px, env(safe-area-inset-bottom) + 171px));
+    grid-template-columns: repeat(4, 160px);
+    gap: 8px;
+    padding-inline: 12px;
+  }
+  .home-base-screen .base-menu-button {
+    min-height: 76px;
+    padding: 10px 12px;
+    grid-template-columns: 31px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .home-base-screen .base-menu-button > svg { width: 29px; height: 29px; }
+  .home-base-screen .base-menu-button small { font-size: 12px !important; }
+  .home-base-screen .base-menu-button b { overflow: visible; font-size: 16px; white-space: normal; text-overflow: clip; }
+  .home-base-screen .base-primary-actions { right: 12px; bottom: max(10px, env(safe-area-inset-bottom)); left: 12px; gap: 8px; }
+  .home-base-screen .base-character-action,
+  .home-base-screen .base-sortie-action { min-height: 78px; padding: 10px 12px; }
+  .home-base-screen .base-primary-actions > .base-defense-action { min-height: 62px; padding: 9px 12px; }
+  .home-base-screen .base-primary-actions small,
+  .home-base-screen .base-primary-actions > .base-defense-action small { font-size: 12px !important; }
+  .home-base-screen .base-primary-actions b,
+  .home-base-screen .base-primary-actions > .base-defense-action b { font-size: 17px; white-space: normal; }
+  .home-base-screen .base-sortie-action b { font-size: 19px; }
+
+  /* Dialogue and facility sheets. */
+  .base-dialogue-copy h2 { font-size: 27px; }
+  .base-dialogue-copy p { font-size: 16px; line-height: 1.58; }
+  .base-dialogue-copy small { font-size: 12px; }
+  .base-dialogue-actions button { min-height: 56px; font-size: 15px; }
+  .campaign-shell .base-facility-panel:not(.facility-augmentation) { inset: max(6px, env(safe-area-inset-top)) 6px max(6px, env(safe-area-inset-bottom)); padding: 16px; gap: 14px; }
+  .campaign-shell .base-facility-panel:not(.facility-augmentation) > header h2 { font-size: 29px; }
+  .campaign-shell .base-facility-panel:not(.facility-augmentation) > header p { font-size: 15px; line-height: 1.55; }
+  .campaign-shell .facility-resource { min-height: 76px; padding: 12px 14px; }
+  .campaign-shell .facility-resource small,
+  .campaign-shell .facility-resource span { font-size: 13px; }
+  .campaign-shell .facility-resource strong { font-size: 29px; }
+  .campaign-shell .facility-upgrade-grid { gap: 12px; }
+  .campaign-shell .facility-upgrade { padding: 16px; }
+  .campaign-shell .facility-upgrade > header h3 { font-size: 19px; }
+  .campaign-shell .facility-upgrade > header b { font-size: 12px; }
+  .campaign-shell .facility-upgrade > p { font-size: 15px; line-height: 1.55; }
+  .campaign-shell .facility-upgrade dt,
+  .campaign-shell .facility-upgrade dd { font-size: 14px; }
+  .campaign-shell .facility-upgrade > button { min-height: 56px; font-size: 15px; }
+  .campaign-shell .facility-exchange-panel h3 { font-size: 21px; }
+  .campaign-shell .facility-exchange-panel p,
+  .campaign-shell .facility-exchange-panel span { font-size: 15px; line-height: 1.5; }
+  .campaign-shell .facility-exchange-panel button { min-height: 56px; font-size: 15px; }
+
+  /* Character information: art remains dominant; data console scrolls at
+     full reading size below the roster. */
+  .campaign-shell .character-information-panel {
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom));
+    grid-template-rows: 64px minmax(250px, 36dvh) 76px minmax(0, 1fr);
+  }
+  .campaign-shell .character-info-topbar small { font-size: 12px; }
+  .campaign-shell .character-info-topbar strong { font-size: 21px; }
+  .campaign-shell .character-core-balance { min-height: 52px; }
+  .campaign-shell .character-core-balance b { font-size: 19px; }
+  .campaign-shell .character-info-topbar .facility-close { min-height: 52px; font-size: 14px; }
+  .campaign-shell .character-art-stage figcaption small { font-size: 12px; }
+  .campaign-shell .character-art-stage figcaption h2 { font-size: 34px; }
+  .campaign-shell .character-art-stage figcaption strong { font-size: 15px; }
+  .campaign-shell .character-art-stage figcaption span { font-size: 12px; }
+  .campaign-shell .character-roster-rail button { width: 70px; min-width: 70px; min-height: 66px; }
+  .campaign-shell .character-roster-rail button img { width: 54px; height: 54px; }
+  .campaign-shell .character-info-tabs button { min-height: 56px; font-size: 15px; }
+  .campaign-shell .character-profile-content,
+  .campaign-shell .character-upgrade-content { padding: 15px; }
+  .campaign-shell .character-profile-content h3,
+  .campaign-shell .character-upgrade-content h3 { font-size: 23px; }
+  .campaign-shell .character-profile-content > header small,
+  .campaign-shell .character-upgrade-content > header small { font-size: 11px; }
+  .campaign-shell .character-profile-content > p { font-size: 15px; line-height: 1.55; }
+  .campaign-shell .character-stat-grid > div { min-height: 48px; }
+  .campaign-shell .character-stat-grid dt { font-size: 13px; }
+  .campaign-shell .character-stat-grid dd { font-size: 16px; }
+  .campaign-shell .character-active-kit > header small { font-size: 11px; }
+  .campaign-shell .character-active-kit > header strong { font-size: 17px; }
+  .campaign-shell .character-active-kit article { min-height: 84px; padding: 10px; }
+  .campaign-shell .character-active-kit article b { font-size: 14px; }
+  .campaign-shell .character-active-kit article small { font-size: 12px; }
+  .campaign-shell .character-open-upgrades { min-height: 56px; font-size: 15px; }
+  .campaign-shell .character-upgrade-row > p { font-size: 14px; line-height: 1.5; }
+  .campaign-shell .character-upgrade-row footer > span { font-size: 13px; }
+  .campaign-shell .character-upgrade-row footer button { min-height: 56px; font-size: 13px; }
+
+  /* Maps and sortie detail. */
+  .region-map-hotspot {
+    left: clamp(152px, var(--map-x), calc(100% - 152px));
+    width: min(292px, calc(100vw - 32px));
+    min-height: 100px;
+    padding: 15px 17px;
+  }
+  .region-map-hotspot span { font-size: 12px; }
+  .region-map-hotspot strong { font-size: 21px; }
+  .region-map-hotspot small { font-size: 13px; }
+  .region-mobile-swipe-hint { min-height: 48px; font-size: 14px; }
+  .region-card { min-width: min(330px, calc(100vw - 32px)); padding: 20px; }
+  .region-card strong { font-size: 30px; }
+  .region-card > p { font-size: 15px; line-height: 1.55; }
+  .region-card small,
+  .region-card span,
+  .region-card em { font-size: 13px; }
+  .region-sortie-briefing h2 { font-size: 40px; }
+  .region-sortie-briefing > p { font-size: 16px; line-height: 1.55; }
+  .region-sortie-intel dt,
+  .region-sortie-intel dd { font-size: 14px; }
+  .sortie-character-card,
+  .sortie-weapon-card { min-height: 116px; }
+  .sortie-character-card b,
+  .sortie-weapon-card b { font-size: 17px; }
+  .sortie-character-card small,
+  .sortie-weapon-card small { font-size: 12px; }
+  .region-sortie-command-footer > span { font-size: 13px; line-height: 1.45; }
+  .region-sortie-launch { min-height: 68px; font-size: 17px; }
+
+  /* Combat and overlays. */
+  .route-objective strong { font-size: 18px; }
+  .route-objective span { font-size: 12px; }
+  .expedition-sound-toggle,
+  .expedition-pause-toggle { width: 52px; min-width: 52px; height: 52px; }
+  .expedition-combat-dock { min-height: 176px; padding: 11px; }
+  .combat-vital-row span { font-size: 13px; }
+  .combat-vital-row strong { font-size: 28px; }
+  .combat-vital-row small { font-size: 11px; }
+  .combat-ability-button { min-width: 84px; min-height: 84px; padding: 7px 5px; }
+  .combat-ability-icon { width: 48px; height: 48px; }
+  .combat-ability-copy { display: block; overflow: visible; white-space: normal; text-overflow: clip; }
+  .combat-ability-copy strong { font-size: 13px; line-height: 1.2; }
+  .combat-tag-button { min-width: 84px; min-height: 84px; }
+  .combat-tag-button strong { font-size: 13px; }
+  .touch-gesture-hint { font-size: 14px; }
+  .narrative-panel h2 { font-size: 21px; }
+  .narrative-panel p { font-size: 16px; line-height: 1.58; }
+  .narrative-panel button { min-height: 56px; font-size: 15px; }
+  .combat-tutorial-card h2 { font-size: 27px; }
+  .combat-tutorial-card p,
+  .combat-tutorial-card li { font-size: 16px; line-height: 1.55; }
+  .combat-tutorial-card button { min-height: 56px; font-size: 15px; }
+  .expedition-pause-card h2 { font-size: 40px; }
+  .expedition-pause-card p { font-size: 15px; line-height: 1.55; }
+  .expedition-pause-card button { min-height: 60px; font-size: 15px; }
+  .reward-modal-card > p,
+  .reward-option p { font-size: 15px; line-height: 1.5; }
+  .reward-option strong { font-size: 21px; }
+  .reward-option button { min-height: 56px; font-size: 15px; }
+  .overload-result .result-card > p,
+  .overload-result .result-rewards,
+  .overload-result .result-evidence { font-size: 15px; line-height: 1.55; }
+  .overload-result .result-actions .primary-cta,
+  .overload-result .result-base-return { min-height: 60px; font-size: 15px; }
+
+  /* Defense command mode. */
+  .defense-core-status { min-height: 72px; }
+  .defense-core-status small { font-size: 13px; }
+  .defense-core-status b { font-size: 22px; }
+  .defense-wave-status { min-height: 72px; }
+  .defense-wave-status small { font-size: 13px; }
+  .defense-wave-status b { font-size: 22px; }
+  .defense-exit { min-height: 72px; font-size: 13px; }
+  .defense-command-dock {
+    min-height: 260px;
+    max-height: 280px;
+    grid-template-rows: 48px minmax(0, 1fr) 64px;
+  }
+  .defense-command-dock > header { min-height: 48px; }
+  .defense-command-dock > header small { font-size: 12px; }
+  .defense-command-dock > header strong { font-size: 16px; }
+  .defense-command-dock > header > span { font-size: 13px; }
+  .defense-tower-palette button { min-height: 72px; }
+  .defense-tower-palette button > svg { width: 31px; height: 31px; }
+  .defense-tower-palette button b { font-size: 14px; }
+  .defense-tower-palette button small,
+  .defense-tower-palette button em { font-size: 11px; }
+  .defense-upgrade-button,
+  .defense-wave-button { min-height: 64px; }
+  .defense-upgrade-button small,
+  .defense-wave-button small { font-size: 12px; }
+  .defense-upgrade-button b,
+  .defense-wave-button b { font-size: 16px; }
+  .defense-guide-card,
+  .defense-guide-overlay.is-wave .defense-guide-card { bottom: calc(276px + env(safe-area-inset-bottom)); min-height: 238px; }
+  .defense-guide-copy h2 { font-size: 26px; }
+  .defense-guide-copy p { font-size: 16px; line-height: 1.55; }
+  .defense-guide-card footer button { min-height: 52px; font-size: 14px; }
+  .defense-stage-select-screen { overflow-y: auto; }
+  .defense-select-heading h1 { font-size: 40px; }
+  .defense-select-heading p { font-size: 16px; line-height: 1.55; }
+  .defense-stage-grid { gap: 14px; }
+  .defense-stage-card { min-height: 280px; padding: 20px; }
+  .defense-stage-card > strong { font-size: 28px; }
+  .defense-stage-card > p { font-size: 15px; line-height: 1.55; }
+  .defense-stage-card dt { font-size: 13px; }
+  .defense-stage-card dd { font-size: 18px; }
+  .defense-stage-card footer span,
+  .defense-stage-card footer b,
+  .defense-stage-card footer em { font-size: 14px; }
+}
+
+@media (max-width: 360px) and (orientation: portrait) {
+  /* Keep the same physical reading scale on narrow phones; only geometry
+     compacts, and overflow stays intentionally scrollable. */
+  .home-base-screen .base-motion-portrait,
+  .home-base-screen .base-motion-portrait.is-mika { top: 144px; bottom: 248px; }
+  .home-base-screen .base-lobby-navigation { grid-template-columns: repeat(4, 152px); }
+  .campaign-shell .character-information-panel { grid-template-rows: 64px minmax(228px, 34dvh) 74px minmax(0, 1fr); }
+  .region-map-hotspot { left: clamp(174px, var(--map-x), calc(100% - 174px)); width: calc(100vw - 28px); }
+  .defense-command-dock { min-height: 252px; max-height: 272px; }
+  .defense-guide-card,
+  .defense-guide-overlay.is-wave .defense-guide-card { bottom: calc(268px + env(safe-area-inset-bottom)); }
+}
+
 /* Portfolio P0: explicit loadout confirmation, readable result evidence,
    and a compact surplus-resource sink in HANA's existing facility. */
 .region-sortie-command-footer > span.is-pending { color: #ffd28d; }
@@ -9982,4 +10252,231 @@ kbd,
   .defense-guide-card,
   .defense-guide-overlay.is-wave .defense-guide-card { grid-template-columns: 88px 1fr; }
   .defense-guide-card > img { width: 94px; }
+}
+/* v5 final scale: these contracts intentionally follow the late P0 feature
+   rules and the authored v4 structural layout above. */
+@media (max-width: 720px) and (orientation: portrait) {
+  :root {
+    --mobile-edge: max(12px, env(safe-area-inset-left));
+    --mobile-touch: 56px;
+  }
+
+  .campaign-shell .campaign-back,
+  .campaign-shell .facility-close,
+  .campaign-shell .region-sortie-close { min-height: 52px; padding: 10px 13px; font-size: 14px; }
+
+  .intro-mobile-controls > strong { min-height: 52px; font-size: 13px; }
+  .campaign-shell .save-slot-card { min-height: 204px; padding: 22px 20px; }
+  .campaign-shell .save-slot-card > strong { font-size: 22px; }
+  .campaign-shell .save-slot-card > p { font-size: 15px; line-height: 1.5; }
+  .campaign-shell .save-slot-card > small { font-size: 12px; }
+  .campaign-shell .save-slot-card > b { font-size: 16px; }
+
+  .home-base-screen .base-identity { min-height: 68px; padding: 11px 14px; }
+  .home-base-screen .base-identity small { font-size: 12px; }
+  .home-base-screen .base-identity strong { font-size: 27px; }
+  .home-base-screen .base-identity span { font-size: 12px; }
+  .home-base-screen .base-currency-rail button { min-height: 64px; padding: 8px 9px; }
+  .home-base-screen .base-currency-rail button small { font-size: 12px; }
+  .home-base-screen .base-currency-rail button b { font-size: 20px; }
+  .home-base-screen .base-motion-portrait,
+  .home-base-screen .base-motion-portrait.is-mika { top: 146px; bottom: 252px; }
+  .home-base-screen .motion-portrait-caption { min-width: 174px; min-height: 64px; }
+  .home-base-screen .motion-portrait-caption small { font-size: 11px; }
+  .home-base-screen .motion-portrait-caption strong { font-size: 23px; }
+  .home-base-screen .motion-portrait-caption em { font-size: 12px; }
+  .home-base-screen .motion-portrait-speech strong,
+  .home-base-screen .motion-portrait-speech p { font-size: 15px; line-height: 1.5; }
+  .home-base-screen .base-lobby-navigation {
+    bottom: calc(max(179px, env(safe-area-inset-bottom) + 171px));
+    grid-template-columns: repeat(4, 160px);
+    gap: 8px;
+    padding-inline: 12px;
+  }
+  .home-base-screen .base-menu-button {
+    min-height: 76px;
+    padding: 10px 12px;
+    grid-template-columns: 31px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .home-base-screen .base-menu-button > svg { width: 29px; height: 29px; }
+  .home-base-screen .base-menu-button small { font-size: 12px !important; }
+  .home-base-screen .base-menu-button b { overflow: visible; font-size: 16px; white-space: normal; text-overflow: clip; }
+  .home-base-screen .base-primary-actions { right: 12px; bottom: max(10px, env(safe-area-inset-bottom)); left: 12px; gap: 8px; }
+  .home-base-screen .base-character-action,
+  .home-base-screen .base-sortie-action { min-height: 78px; padding: 10px 12px; }
+  .home-base-screen .base-primary-actions > .base-defense-action { min-height: 62px; padding: 9px 12px; }
+  .home-base-screen .base-primary-actions small,
+  .home-base-screen .base-primary-actions > .base-defense-action small { font-size: 12px !important; }
+  .home-base-screen .base-primary-actions b,
+  .home-base-screen .base-primary-actions > .base-defense-action b { font-size: 17px; white-space: normal; }
+  .home-base-screen .base-sortie-action b { font-size: 19px; }
+
+  .campaign-shell .base-dialogue-copy h2 { font-size: 27px; }
+  .campaign-shell .base-dialogue-copy p { font-size: 16px; line-height: 1.58; }
+  .campaign-shell .base-dialogue-copy small { font-size: 12px; }
+  .campaign-shell .base-dialogue-actions button { min-height: 56px; font-size: 15px; }
+
+  .campaign-shell .base-facility-panel:not(.facility-augmentation) { padding: 16px; gap: 14px; }
+  .campaign-shell .base-facility-panel:not(.facility-augmentation) > header h2 { font-size: 29px; }
+  .campaign-shell .base-facility-panel:not(.facility-augmentation) > header p { font-size: 15px; line-height: 1.55; }
+  .campaign-shell .facility-resource { min-height: 76px; padding: 12px 14px; }
+  .campaign-shell .facility-resource small,
+  .campaign-shell .facility-resource span { font-size: 13px; }
+  .campaign-shell .facility-resource strong { font-size: 29px; }
+  .campaign-shell .facility-upgrade-grid { gap: 12px; }
+  .campaign-shell .facility-upgrade { padding: 16px; }
+  .campaign-shell .facility-upgrade > header h3 { font-size: 19px; }
+  .campaign-shell .facility-upgrade > header b { font-size: 12px; }
+  .campaign-shell .facility-upgrade > p { font-size: 15px; line-height: 1.55; }
+  .campaign-shell .facility-upgrade dt,
+  .campaign-shell .facility-upgrade dd { font-size: 14px; }
+  .campaign-shell .facility-upgrade > button { min-height: 56px; font-size: 15px; }
+
+  .campaign-shell .character-information-panel { grid-template-rows: 64px minmax(250px, 36dvh) 76px minmax(0, 1fr); }
+  .campaign-shell .character-info-topbar small { font-size: 12px; }
+  .campaign-shell .character-info-topbar strong { font-size: 21px; }
+  .campaign-shell .character-core-balance { min-height: 52px; }
+  .campaign-shell .character-core-balance b { font-size: 19px; }
+  .campaign-shell .character-info-topbar .facility-close { min-height: 52px; font-size: 14px; }
+  .campaign-shell .character-art-stage figcaption small { font-size: 12px; }
+  .campaign-shell .character-art-stage figcaption h2 { font-size: 34px; }
+  .campaign-shell .character-art-stage figcaption strong { font-size: 15px; }
+  .campaign-shell .character-art-stage figcaption span { font-size: 12px; }
+  .campaign-shell .character-roster-rail button { width: 70px; min-width: 70px; min-height: 66px; }
+  .campaign-shell .character-roster-rail button img { width: 54px; height: 54px; }
+  .campaign-shell .character-info-tabs button { min-height: 56px; font-size: 15px; }
+  .campaign-shell .character-profile-content,
+  .campaign-shell .character-upgrade-content { padding: 15px; }
+  .campaign-shell .character-profile-content h3,
+  .campaign-shell .character-upgrade-content h3 { font-size: 23px; }
+  .campaign-shell .character-profile-content > header small,
+  .campaign-shell .character-upgrade-content > header small { font-size: 11px; }
+  .campaign-shell .character-profile-content > p { font-size: 15px; line-height: 1.55; }
+  .campaign-shell .character-stat-grid > div { min-height: 48px; }
+  .campaign-shell .character-stat-grid dt { font-size: 13px; }
+  .campaign-shell .character-stat-grid dd { font-size: 16px; }
+  .campaign-shell .character-active-kit > header small { font-size: 11px; }
+  .campaign-shell .character-active-kit > header strong { font-size: 17px; }
+  .campaign-shell .character-active-kit article { min-height: 84px; padding: 10px; }
+  .campaign-shell .character-active-kit article b { font-size: 14px; }
+  .campaign-shell .character-active-kit article small { font-size: 12px; }
+  .campaign-shell .character-open-upgrades { min-height: 56px; font-size: 15px; }
+  .campaign-shell .character-upgrade-row > p { font-size: 14px; line-height: 1.5; }
+  .campaign-shell .character-upgrade-row footer > span { font-size: 13px; }
+  .campaign-shell .character-upgrade-row footer button { min-height: 56px; font-size: 13px; }
+
+  .ability-guide-console > header h1 { font-size: 28px; }
+  .ability-guide-tabs button { min-height: 72px; }
+  .ability-guide-tabs b { font-size: 13px; }
+  .ability-guide-tabs small { font-size: 11px; }
+  .ability-guide-copy h2 { font-size: 27px; }
+  .ability-guide-copy p { font-size: 16px; line-height: 1.55; }
+  .ability-guide-copy li { font-size: 14px; line-height: 1.48; }
+  .ability-guide-timing small { font-size: 11px; }
+  .ability-guide-timing strong { font-size: 14px; line-height: 1.42; }
+  .ability-guide-actions { min-height: 56px; }
+  .ability-guide-actions > button { min-height: 56px; font-size: 14px; }
+
+  .sortie-cinematic-heading h1 span { font-size: 42px; }
+  .sortie-cinematic-heading h1 em { font-size: 13px; }
+  .sortie-flight-status > span { font-size: 13px; }
+  .sortie-flight-status b { font-size: 12px; }
+  .sortie-flight-progress { height: 4px; }
+  .sortie-play-fallback.command-ui-button { min-height: 56px; font-size: 15px; }
+
+  .mika-recruit-dialogue-box > div small { font-size: 11px; }
+  .mika-recruit-dialogue-box > div strong { font-size: 27px; }
+  .mika-recruit-dialogue-box > p { font-size: 18px; line-height: 1.58; }
+  .mika-recruit-dialogue-box > button { min-height: 60px; font-size: 15px; }
+
+  .defense-core-status { min-height: 72px; }
+  .defense-core-status small { font-size: 13px; }
+  .defense-core-status b { font-size: 22px; }
+  .defense-wave-status { min-height: 72px; }
+  .defense-wave-status small { font-size: 13px; }
+  .defense-wave-status b { font-size: 22px; }
+  .defense-exit { min-height: 72px; font-size: 13px; }
+  .defense-command-dock { min-height: 260px; max-height: 280px; grid-template-rows: 48px minmax(0, 1fr) 64px; }
+  .defense-command-dock > header { min-height: 48px; }
+  .defense-command-dock > header small { font-size: 12px; }
+  .defense-command-dock > header strong { font-size: 16px; }
+  .defense-command-dock > header > span { font-size: 13px; }
+  .defense-tower-palette button { min-height: 72px; }
+  .defense-tower-palette button > svg { width: 31px; height: 31px; }
+  .defense-tower-palette button b { font-size: 14px; }
+  .defense-tower-palette button small,
+  .defense-tower-palette button em { font-size: 11px; }
+  .defense-upgrade-button,
+  .defense-wave-button { min-height: 64px; }
+  .defense-upgrade-button small,
+  .defense-wave-button small { font-size: 12px; }
+  .defense-upgrade-button b,
+  .defense-wave-button b { font-size: 16px; }
+  .defense-guide-card,
+  .defense-guide-overlay.is-wave .defense-guide-card { bottom: calc(276px + env(safe-area-inset-bottom)); min-height: 238px; }
+  .defense-guide-copy h2 { font-size: 26px; }
+  .defense-guide-copy p { font-size: 16px; line-height: 1.55; }
+  .defense-guide-card footer button { min-height: 52px; font-size: 14px; }
+  .defense-select-heading h1 { font-size: 40px; }
+  .defense-select-heading p { font-size: 16px; line-height: 1.55; }
+  .defense-stage-card { min-height: 280px; padding: 20px; }
+  .defense-stage-card > strong { font-size: 28px; }
+  .defense-stage-card > p { font-size: 15px; line-height: 1.55; }
+  .defense-stage-card dt { font-size: 13px; }
+  .defense-stage-card dd { font-size: 18px; }
+  .defense-stage-card footer span,
+  .defense-stage-card footer b,
+  .defense-stage-card footer em { font-size: 14px; }
+
+  .region-sortie-dialog { display: block; overflow-x: hidden; overflow-y: auto; }
+  .region-sortie-layout { min-height: auto; padding-bottom: 16px; }
+  .campaign-shell .region-sortie-briefing h2 { font-size: 40px; }
+  .campaign-shell .region-sortie-briefing > p { font-size: 16px; line-height: 1.55; }
+  .campaign-shell .region-sortie-intel dt,
+  .campaign-shell .region-sortie-intel dd { font-size: 14px; }
+  .region-sortie-layout .sortie-weapon-options { grid-template-columns: 1fr; }
+  .region-sortie-layout .sortie-weapon-card { min-height: 116px; }
+  .region-sortie-command-footer { position: static; padding: 10px 0 max(2px, env(safe-area-inset-bottom)); background: rgba(2, 10, 14, 0.97); }
+  .campaign-shell .region-sortie-command-footer .region-sortie-launch { min-height: 68px; font-size: 17px; }
+
+  .combat-ability-copy strong { max-width: 84px; font-size: 13px; }
+  .combat-tag-switch strong { font-size: 13px; }
+
+  .facility-exchange-panel > header h3 { font-size: 21px; }
+  .facility-exchange-panel > header small,
+  .facility-exchange-panel > header > span { font-size: 13px; }
+  .facility-exchange-panel article > div small { font-size: 12px; }
+  .facility-exchange-panel article > div strong { font-size: 17px; }
+  .facility-exchange-panel article > p,
+  .facility-exchange-panel article footer > span { font-size: 15px; line-height: 1.5; }
+  .facility-exchange-panel article footer button { min-height: 56px; font-size: 15px; }
+
+  .overload-result .result-card > p,
+  .overload-result .result-rewards,
+  .overload-result .result-evidence { font-size: 15px; line-height: 1.55; }
+  .overload-result .result-actions .primary-cta,
+  .overload-result .result-base-return { min-height: 60px; font-size: 15px; }
+}
+
+@media (max-width: 360px) and (orientation: portrait) {
+  .route-objective {
+    min-height: 94px;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    text-align: left;
+  }
+  .route-objective > span { grid-column: 1; grid-row: 1; }
+  .route-objective > b { grid-column: 2; grid-row: 1; text-align: right; }
+  .route-objective > strong {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    overflow: visible;
+    letter-spacing: 0;
+    line-height: 1.15;
+    white-space: normal;
+    text-overflow: clip;
+  }
+  .route-objective > div { grid-row: 3; }
+  .route-minimap { top: max(112px, calc(env(safe-area-inset-top) + 100px)); }
 }

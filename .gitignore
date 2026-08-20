@@ -8,6 +8,7 @@ qa/
 !game/qa/
 game/qa/*
 !game/qa/playtest-portfolio-p0.mjs
+!game/qa/playtest-mobile-onboarding.mjs
 audit/
 reference/
 HANDOFF/
