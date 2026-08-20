@@ -88,7 +88,7 @@ test("level-up focus starts on the dialog, not option one, until real keyboard n
   assert.match(styles, /\.reward-card:hover,[\s\S]*\.reward-card:focus-visible/);
 });
 
-test("Phaser DOM HUD consumes automatic clear-transition and two-dimensional minimap payloads without a boss gate", async () => {
+test("Phaser DOM HUD shows authored combat and transit cues without restoring a boss gate", async () => {
   const [app, styles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
@@ -105,8 +105,16 @@ test("Phaser DOM HUD consumes automatic clear-transition and two-dimensional min
   assert.match(app, /const minimap = expedition\.minimap \|\| hud\?\.minimap \|\| \{\}/);
   assert.match(app, /Array\.isArray\(minimap\.enemies\)/);
   assert.doesNotMatch(app, /minimap\.bossGate|route-minimap-engine/);
+  assert.match(app, /const nextWaveAnchor = Number\(expedition\.nextWaveAnchor\)/);
+  assert.match(app, /const playerRouteRatio = clampMapRatio\(player\?\.x, progress\)/);
+  assert.match(app, /const nextWaveRatio = !bossRoom[\s\S]*nextWaveAnchor > 0[\s\S]*nextWaveAnchor < routeLength[\s\S]*nextWaveAnchorRatio > playerRouteRatio/);
+  assert.match(app, /nextWaveRatio !== null[\s\S]*className="route-minimap-next-wave"[\s\S]*left: `\$\{nextWaveRatio \* 100\}%`/);
+  assert.match(app, /const gates = !bossRoom && Array\.isArray\(minimap\.gates\)[\s\S]*filter\(\(gate\) => gate\?\.active\)\.slice\(0, 5\)/);
+  assert.match(app, /gates\.map\(\(gate, index\)[\s\S]*className="route-minimap-transit-gate"[\s\S]*--gate-progress/);
   assert.match(app, /className=\{`route-minimap-enemy/);
   assert.match(styles, /\.route-minimap-field \{/);
+  assert.match(styles, /\.route-minimap-next-wave \{[\s\S]*top: 50%;[\s\S]*color: #ffd27a/);
+  assert.match(styles, /\.route-minimap-transit-gate \{[\s\S]*width: 9px;[\s\S]*rotate\(45deg\)/);
   assert.match(styles, /\.route-minimap-enemy \{/);
   assert.doesNotMatch(styles, /\.gate-locked-notice/);
   assert.match(styles, /\.route-clear-transition \{/);
@@ -154,7 +162,7 @@ test("Escape pause is guarded from modal states and supports resume, local resta
   assert.match(styles, /\.expedition-hud-actions \{[\s\S]*pointer-events: auto/);
   assert.match(styles, /\.expedition-pause-toggle \{[\s\S]*width: 38px;[\s\S]*height: 38px/);
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.expedition-pause-toggle \{ width: 48px; height: 48px; \}/);
-  assert.match(app, /\[characterId, combatBonuses, mainWeaponId, mikaUnlocked, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx\]/);
+  assert.match(app, /\[characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx\]/);
   assert.match(app, /<PauseOverlay onResume=\{resumeCombat\} onRestart=\{restartCombat\} onBase=\{onBase \? returnToBase : null\} \/>/);
   assert.match(app, /onBase=\{activeSlot\?\.homeBaseUnlocked \? \(\) => setScreen\("base"\) : null\}/);
 });

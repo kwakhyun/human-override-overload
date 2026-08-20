@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "artifact": {
+    "filename": "곽현_네오플_게임콘텐츠기획_포트폴리오.pdf",
+    "sha256": "7F5C9EBD8AD85E2B5968B9777DDB869B87A904C1993F6C689FBD3A72589C3EAD",
+    "bytes": 1921815,
+    "pages": 17,
+    "page_size": "A4 landscape"
+  },
+  "design_system": {
+    "direction": "neo-industrial editorial case study",
+    "palette": ["#090B0E", "#F3F0E9", "#6BE4E8", "#FF4A5C", "#F4C55C", "#DE6BC2", "#B5F05A"],
+    "layout": "17-page evidence-first case study with a five-person iteration narrative, asymmetric editorial grid, large gameplay windows, and flat evidence cards",
+    "typography": "embedded Malgun Gothic; 12 pt body, 10.8 pt supporting copy, 10.5 pt tables and captions, 10 pt labels, 9.5 pt minimum footer text",
+    "spacing": "18 mm page safety margin, 15 pt card padding, restrained guide lines, simplified header and footer chrome"
+  },
+  "source_preservation": {
+    "treatment": "deterministic crop, resize, vector overlay, typography, and layout only",
+    "generative_image_editing_during_redesign": false,
+    "rights_note": "Project-specific AI-assisted visual assets are disclosed in the PDF. This manifest is not commercial-rights proof."
+  },
+  "primary_visual_sources": [
+    "public/assets/overload/intro/start-screen-key-art.webp",
+    "qa/responsive-desktop-home-1440x810.png",
+    "qa/latest-reward-neutral-focus-desktop-1440x810.png",
+    "docs/project/media/route-combat.png",
+    "qa/latest-boss-pattern-prism-lattice-desktop-1440x810.png",
+    "qa/character-information-desktop.png",
+    "qa/character-information-mika.png",
+    "qa/haven-research-facility-1569x912.png",
+    "docs/project/media/combat-guide.png",
+    "qa/desktop-final-regions.png",
+    "qa/defense-mode-smoke.png"
+  ],
+  "content_contract": {
+    "public_url_inside_pdf": false,
+    "external_playtest_performed": true,
+    "actual_qualitative_playtest_participants": 5,
+    "qualitative_feedback_only": true,
+    "feedback_mapped_to_design_decisions": true,
+    "defense_mode_positioning": "independent shared-currency farming mode",
+    "external_quantitative_results_claimed": false,
+    "statistical_outcomes_claimed": false,
+    "hypotheses_labeled": true,
+    "implementation_evidence_labeled": true
+  },
+  "qa": {
+    "rendered_pages_inspected": 17,
+    "korean_fonts_embedded": true,
+    "encrypted": false,
+    "javascript": false,
+    "embedded_files": false,
+    "annotations": 0,
+    "text_characters_outside_page": 0,
+    "text_line_overlaps": 0,
+    "minimum_vector_font_pt": 9.5
+  }
+}

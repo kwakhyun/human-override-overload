@@ -1,9 +1,7 @@
-const BOSS_PATTERN_SET = Object.freeze(["radial", "sweep", "bombs", "rings", "charge", "multiCharge"]);
-const GLASS_DUNE_BOSS_PATTERN_SET = Object.freeze(["radial", "prismLattice", "sweep", "solarFlare", "bombs", "rings", "charge", "multiCharge"]);
-const ABYSSAL_BOSS_PATTERN_SET = Object.freeze(["radial", "memorySpiral", "sweep", "depthCollapse", "bombs", "rings", "charge", "multiCharge"]);
-const FOUNDRY_BOSS_PATTERN_SET = Object.freeze(["sweep", "solarFlare", "bombs", "charge", "multiCharge"]);
-const STORM_BOSS_PATTERN_SET = Object.freeze(["memorySpiral", "prismLattice", "rings", "charge", "multiCharge"]);
-const GENE_BOSS_PATTERN_SET = Object.freeze(["depthCollapse", "radial", "bombs", "sweep", "multiCharge"]);
+import {
+  REGION_BOSS_PATTERNS,
+  REGION_MID_BOSS_PROFILES,
+} from "./combatCatalog.js";
 
 export const OUTER_SECTOR_BRIEFING_FLAG = "outer-sector-briefed";
 
@@ -132,7 +130,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       name: "THE WRONG ENGINE",
       maxHp: 560000,
       phaseThresholds: [0.7, 0.38],
-      patterns: BOSS_PATTERN_SET,
+      patterns: REGION_BOSS_PATTERNS["wrong-engine-core"],
     },
     assets: {
       dom: {
@@ -186,7 +184,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       name: "MIRROR TYRANT",
       maxHp: 960000,
       phaseThresholds: [0.7, 0.38],
-      patterns: GLASS_DUNE_BOSS_PATTERN_SET,
+      patterns: REGION_BOSS_PATTERNS["glass-dune"],
     },
     assets: {
       dom: {
@@ -239,7 +237,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       name: "DROWNED ORACLE",
       maxHp: 1120000,
       phaseThresholds: [0.7, 0.38],
-      patterns: ABYSSAL_BOSS_PATTERN_SET,
+      patterns: REGION_BOSS_PATTERNS["abyssal-archive"],
     },
     assets: {
       dom: {
@@ -280,7 +278,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
     unlockRegionIds: [],
     enemyBudget: 1100,
     enemyVisualSet: "neon-foundry",
-    midBoss: { id: "press-warden", name: "PRESS WARDEN", koreanName: "프레스 감시관", maxHp: 52000, triggerProgress: 0.64 },
+    midBoss: { ...REGION_MID_BOSS_PROFILES["neon-foundry"], trigger: "route-budget-cleared" },
     threatProfile: {
       label: "중장갑 생산 병기 군단",
       composition: "WELDER 35% · ENFORCER 45% · RAIL WALKER 20%",
@@ -290,7 +288,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       firstClear: { researchData: 18, equipmentParts: 18, augmentationCores: 5 },
       repeatClear: { researchData: 6, equipmentParts: 6, augmentationCores: 3 },
     },
-    boss: { id: "forge-colossus", name: "FORGE COLOSSUS", maxHp: 1180000, phaseThresholds: [0.7, 0.38], patterns: FOUNDRY_BOSS_PATTERN_SET },
+    boss: { id: "forge-colossus", name: "FORGE COLOSSUS", maxHp: 1180000, phaseThresholds: [0.7, 0.38], patterns: REGION_BOSS_PATTERNS["neon-foundry"] },
     assets: {
       dom: {
         thumbnail: { key: "overload-neon-foundry-route", path: "./assets/overload/regions/neon-foundry/route.webp" },
@@ -325,7 +323,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
     unlockRegionIds: [],
     enemyBudget: 1150,
     enemyVisualSet: "storm-spire",
-    midBoss: { id: "thunder-manta", name: "THUNDER MANTA", koreanName: "천둥 가오리", maxHp: 56000, triggerProgress: 0.64 },
+    midBoss: { ...REGION_MID_BOSS_PROFILES["storm-spire"], trigger: "route-budget-cleared" },
     threatProfile: {
       label: "고속 비행·장거리 방전 군단",
       composition: "INTERCEPTOR 45% · GUN WING 25% · NEEDLE GLIDER 30%",
@@ -335,7 +333,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       firstClear: { researchData: 22, equipmentParts: 17, augmentationCores: 6 },
       repeatClear: { researchData: 7, equipmentParts: 6, augmentationCores: 4 },
     },
-    boss: { id: "tempest-wyrm", name: "TEMPEST WYRM", maxHp: 1260000, phaseThresholds: [0.7, 0.38], patterns: STORM_BOSS_PATTERN_SET },
+    boss: { id: "tempest-wyrm", name: "TEMPEST WYRM", maxHp: 1260000, phaseThresholds: [0.7, 0.38], patterns: REGION_BOSS_PATTERNS["storm-spire"] },
     assets: {
       dom: {
         thumbnail: { key: "overload-storm-spire-route", path: "./assets/overload/regions/storm-spire/route.webp" },
@@ -370,7 +368,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
     unlockRegionIds: [],
     enemyBudget: 1200,
     enemyVisualSet: "gene-vault",
-    midBoss: { id: "chimera-custodian", name: "CHIMERA CUSTODIAN", koreanName: "키메라 수문장", maxHp: 60000, triggerProgress: 0.64 },
+    midBoss: { ...REGION_MID_BOSS_PROFILES["gene-vault"], trigger: "route-budget-cleared" },
     threatProfile: {
       label: "생체기계 추적·포위 군단",
       composition: "SEED 30% · SYNTHETIC 45% · BIO RAIL 25%",
@@ -380,7 +378,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       firstClear: { researchData: 24, equipmentParts: 20, augmentationCores: 8 },
       repeatClear: { researchData: 8, equipmentParts: 7, augmentationCores: 5 },
     },
-    boss: { id: "pale-archon", name: "PALE ARCHON", maxHp: 1340000, phaseThresholds: [0.7, 0.38], patterns: GENE_BOSS_PATTERN_SET },
+    boss: { id: "pale-archon", name: "PALE ARCHON", maxHp: 1340000, phaseThresholds: [0.7, 0.38], patterns: REGION_BOSS_PATTERNS["gene-vault"] },
     assets: {
       dom: {
         thumbnail: { key: "overload-gene-vault-route", path: "./assets/overload/regions/gene-vault/route.webp" },

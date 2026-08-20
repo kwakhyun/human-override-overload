@@ -7,6 +7,7 @@ import {
   CAMPAIGN_SAVE_VERSION,
   canLaunchRegion,
   clearCampaignSlot,
+  consumeCampaignPostVictoryStep,
   completeAbilityGuide,
   completeCombatOverlay,
   completeDefenseGuide,
@@ -16,6 +17,7 @@ import {
   createCampaignSlot,
   createEmptyCampaign,
   getCampaignSlot,
+  getCampaignPostVictorySteps,
   loadCampaign,
   saveCampaign,
   sanitizeCampaign,
@@ -161,16 +163,53 @@ test("a Chapter 1 victory unlocks HAVEN-09 and both selectable Chapter 2 regions
   });
 });
 
+test("first-victory follow-up scenes survive reload and consume without duplicating rewards", () => {
+  const storage = new MemoryStorage();
+  const initial = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
+  const victory = completeRegion(initial, "slot-1", "wrong-engine-core", {
+    status: "victory",
+    runId: "reload-run-001",
+    time: 135,
+    level: 17,
+    kills: 1000,
+  }, { now: "2026-08-10T06:20:00.000Z" });
+  const awardedProgression = getCampaignSlot(victory, "slot-1").progression;
+
+  assert.deepEqual(getCampaignPostVictorySteps(victory, "slot-1"), ["recruit", "return"]);
+  assert.equal(saveCampaign(victory, storage), true);
+  const reloaded = loadCampaign(storage);
+  assert.deepEqual(getCampaignPostVictorySteps(reloaded, "slot-1"), ["recruit", "return"]);
+  assert.deepEqual(getCampaignSlot(reloaded, "slot-1").progression, awardedProgression);
+
+  const recruited = consumeCampaignPostVictoryStep(reloaded, "slot-1", "recruit", { now: "2026-08-10T06:21:00.000Z" });
+  assert.deepEqual(getCampaignPostVictorySteps(recruited, "slot-1"), ["return"]);
+  assert.ok(getCampaignSlot(recruited, "slot-1").storyFlags.includes("mika-recruit-seen"));
+  assert.deepEqual(getCampaignSlot(recruited, "slot-1").progression, awardedProgression);
+
+  const returned = consumeCampaignPostVictoryStep(recruited, "slot-1", "return", { now: "2026-08-10T06:22:00.000Z" });
+  assert.deepEqual(getCampaignPostVictorySteps(returned, "slot-1"), []);
+  const duplicateFinish = completeRegion(returned, "slot-1", "wrong-engine-core", {
+    status: "victory",
+    runId: "reload-run-001",
+    time: 135,
+    level: 17,
+    kills: 1000,
+  }, { now: "2026-08-10T06:23:00.000Z" });
+  assert.deepEqual(duplicateFinish, returned, "replaying the terminal callback must not restore steps or grant rewards twice");
+});
+
 test("the beam-sword guide can only be completed after the Glass Dune clear", () => {
   const initial = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
   assert.deepEqual(completeSwordAbilityGuide(initial, "slot-1", { now: NOW }), initial);
 
   let campaign = completeRegion(initial, "slot-1", "wrong-engine-core", { status: "victory" }, { now: NOW });
   campaign = completeRegion(campaign, "slot-1", "glass-dune", { status: "victory" }, { now: NOW });
+  assert.deepEqual(getCampaignPostVictorySteps(campaign, "slot-1"), ["sword-guide", "return"]);
   const completed = completeSwordAbilityGuide(campaign, "slot-1", { now: "2026-08-10T07:30:00.000Z" });
   const slot = getCampaignSlot(completed, "slot-1");
   assert.ok(slot.storyFlags.includes("beam-sword-unlocked"));
   assert.ok(slot.storyFlags.includes("beam-sword-guide-complete"));
+  assert.deepEqual(getCampaignPostVictorySteps(completed, "slot-1"), ["return"]);
   assert.equal(slot.updatedAt, "2026-08-10T07:30:00.000Z");
   assert.deepEqual(completeSwordAbilityGuide(completed, "slot-1", { now: "2026-08-10T08:00:00.000Z" }), completed);
 });

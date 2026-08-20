@@ -95,6 +95,7 @@ async function runDesktopRegion(page, spec, errors) {
   await openRegionDetail(page, spec.index);
   await installTransitionProbe(page);
   const clickedAt = await page.evaluate(() => performance.now());
+  await page.locator(".sortie-weapon-card.is-equipped").click();
   await page.locator(".region-sortie-launch").click();
   const cinematic = page.locator(".sortie-cinematic");
   await cinematic.waitFor({ state: "visible", timeout: 10_000 });
@@ -139,6 +140,7 @@ async function verifyFirstSortieGuide(browser) {
   await page.locator(".base-sortie-action").click();
   await page.locator(".region-map-hotspot").first().click();
   await page.locator(".region-card").first().click();
+  await page.locator(".sortie-weapon-card.is-equipped").click();
   await page.locator(".region-sortie-launch").click();
   await page.locator(".ability-guide-screen").waitFor({ state: "visible", timeout: 10_000 });
   const beforeBriefingComplete = {
@@ -206,6 +208,7 @@ try {
   });
   await seedUnlockedCampaign(mobilePage);
   await openRegionDetail(mobilePage, 0);
+  await mobilePage.locator(".sortie-weapon-card.is-equipped").tap();
   await mobilePage.locator(".region-sortie-launch").tap();
   await mobilePage.locator(".sortie-cinematic-video").waitFor({ state: "visible", timeout: 10_000 });
   if (await mobilePage.locator(".sortie-play-fallback:visible").count()) await mobilePage.locator(".sortie-play-fallback:visible").tap();

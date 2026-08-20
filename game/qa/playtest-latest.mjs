@@ -42,6 +42,7 @@ async function startFreshRun(page, scene = "", options = {}) {
   await page.locator(".region-map-hotspot").first().click();
   const regionIndex = options.region === "glass-dune" ? 1 : options.region === "abyssal-archive" ? 2 : 0;
   await page.locator(".region-card").nth(regionIndex).click();
+  await page.locator(".sortie-weapon-card.is-equipped").click();
   await page.locator(".region-sortie-launch").click();
   for (let step = 0; step < 5; step += 1) {
     const next = page.locator(".ability-guide-next:visible");
@@ -102,6 +103,7 @@ async function openFirstSortieGuide(page) {
   await page.locator(".base-sortie-action").click();
   await page.locator(".region-map-hotspot").first().click();
   await page.locator(".region-card").first().click();
+  await page.locator(".sortie-weapon-card.is-equipped").click();
   await page.locator(".region-sortie-launch").click();
   await page.locator(".ability-guide-screen").waitFor({ state: "visible", timeout: 15_000 });
 }

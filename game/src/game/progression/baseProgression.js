@@ -1,5 +1,6 @@
 import {
   BASE_UPGRADE_LINES,
+  getBaseResourceExchange,
   getBaseUpgrade,
 } from "../content/baseUpgrades.js";
 import { getRegion } from "../content/campaign.js";
@@ -170,6 +171,70 @@ export function purchaseProgressionUpgrade(progression, context, upgradeId) {
     cost: status.cost,
     currencyId: upgrade.currencyId,
     status: getUpgradeStatus(next, context, upgradeId),
+  };
+}
+
+function scaledCurrencyMap(values, quantity) {
+  return Object.fromEntries(Object.entries(values || {}).map(([currencyId, amount]) => [
+    currencyId,
+    finiteInteger(amount, 0) * quantity,
+  ]));
+}
+
+export function getResourceExchangeStatus(progression, context, exchangeId, quantity = 1) {
+  const exchange = getBaseResourceExchange(exchangeId);
+  const safeQuantity = Math.max(1, finiteInteger(quantity, 1));
+  if (!exchange) return {
+    exchangeId,
+    exists: false,
+    quantity: safeQuantity,
+    exchangeable: false,
+    reason: "unknown-exchange",
+  };
+
+  const safe = sanitizeBaseProgression(progression);
+  const completedRegions = Array.isArray(context?.completedRegionIds) ? context.completedRegionIds.length : 0;
+  const costs = scaledCurrencyMap(exchange.costs, safeQuantity);
+  const rewards = scaledCurrencyMap(exchange.rewards, safeQuantity);
+  let reason = null;
+  if (!Boolean(context?.homeBaseUnlocked ?? context?.baseUnlocked)) reason = "base-locked";
+  else if (completedRegions < exchange.requiresCompletedRegions) reason = "exchange-locked";
+  else if (Object.entries(costs).some(([currencyId, amount]) => safe[currencyId] < amount)) reason = "insufficient-funds";
+
+  return {
+    exchangeId,
+    exists: true,
+    quantity: safeQuantity,
+    costs,
+    rewards,
+    requiredCompletedRegions: exchange.requiresCompletedRegions,
+    exchangeable: reason === null,
+    reason,
+  };
+}
+
+export function exchangeProgressionResources(progression, context, exchangeId, quantity = 1) {
+  const safe = sanitizeBaseProgression(progression);
+  const status = getResourceExchangeStatus(safe, context, exchangeId, quantity);
+  if (!status.exchangeable) return {
+    ok: false,
+    reason: status.reason,
+    progression: safe,
+    status,
+  };
+
+  const next = { ...safe };
+  for (const [currencyId, amount] of Object.entries(status.costs)) next[currencyId] -= amount;
+  for (const [currencyId, amount] of Object.entries(status.rewards)) next[currencyId] += amount;
+  return {
+    ok: true,
+    reason: null,
+    progression: next,
+    exchangeId,
+    quantity: status.quantity,
+    costs: status.costs,
+    rewards: status.rewards,
+    status: getResourceExchangeStatus(next, context, exchangeId, quantity),
   };
 }
 

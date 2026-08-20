@@ -3,9 +3,12 @@ import test from "node:test";
 
 import {
   BASE_FACILITIES,
+  BASE_RESOURCE_EXCHANGES,
   BASE_UPGRADE_LINES,
   getBaseFacilities,
   getBaseFacility,
+  getBaseResourceExchange,
+  getBaseResourceExchanges,
   getBaseUpgrade,
   getBaseUpgrades,
 } from "../src/game/content/baseUpgrades.js";
@@ -15,7 +18,9 @@ import {
   PROGRESSION_CURRENCY_FIELDS,
   calculateCombatBonuses,
   createEmptyBaseProgression,
+  exchangeProgressionResources,
   getProgressionResources,
+  getResourceExchangeStatus,
   getRegionVictoryRewards,
   getUpgradeStatus,
   grantRegionVictoryRewards,
@@ -29,9 +34,11 @@ import {
   completeRegion,
   createCampaignSlot,
   createEmptyCampaign,
+  exchangeCampaignResources,
   getCampaignCombatBonuses,
   getCampaignCharacter,
   getCampaignProgression,
+  getCampaignResourceExchangeStatus,
   getCampaignSlot,
   getCampaignUpgradeStatus,
   loadCampaign,
@@ -103,6 +110,27 @@ test("base progression has explicit currencies and sanitized rank maps", () => {
   assert.equal(sanitized.researchRanks["hana-combat-forecast"], 3);
   assert.equal("forged" in sanitized.researchRanks, false);
   assert.equal(sanitized.equipmentRanks["ilya-reactive-plating"], 0);
+});
+
+test("resource exchanges consume surplus currencies behind authored progression gates", () => {
+  assert.equal(Object.keys(BASE_RESOURCE_EXCHANGES).length, 2);
+  assert.deepEqual(getBaseResourceExchanges("hana").map((exchange) => exchange.id), [
+    "research-to-parts",
+    "field-core-fabrication",
+  ]);
+  assert.equal(getBaseResourceExchange("missing"), null);
+
+  const stocked = sanitizeBaseProgression({ researchData: 30, equipmentParts: 10 });
+  assert.equal(getResourceExchangeStatus(stocked, { homeBaseUnlocked: false, completedRegionIds: [] }, "research-to-parts").reason, "base-locked");
+  assert.equal(getResourceExchangeStatus(stocked, { homeBaseUnlocked: true, completedRegionIds: ["wrong-engine-core"] }, "research-to-parts").reason, "exchange-locked");
+  const context = { homeBaseUnlocked: true, completedRegionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive", "glass-dune"] };
+  const synthesis = exchangeProgressionResources(stocked, context, "research-to-parts", 2);
+  assert.equal(synthesis.ok, true);
+  assert.deepEqual(getProgressionResources(synthesis.progression), { researchData: 18, equipmentParts: 16, augmentationCores: 0 });
+  const core = exchangeProgressionResources(synthesis.progression, context, "field-core-fabrication");
+  assert.equal(core.ok, true);
+  assert.deepEqual(getProgressionResources(core.progression), { researchData: 6, equipmentParts: 8, augmentationCores: 1 });
+  assert.equal(exchangeProgressionResources(core.progression, context, "field-core-fabrication").reason, "insufficient-funds");
 });
 
 test("first and repeat regional victories grant distinct research and equipment rewards", () => {
@@ -218,6 +246,21 @@ test("campaign purchase API deducts the correct currency and keeps slots isolate
   const storage = new MemoryStorage();
   assert.equal(saveCampaign(researchPurchase.campaign, storage), true);
   assert.deepEqual(getCampaignProgression(loadCampaign(storage), "slot-1"), firstProgression);
+});
+
+test("campaign resource exchange persists per slot without mutating another slot", () => {
+  let campaign = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
+  campaign = createCampaignSlot(campaign, "slot-2", { now: NOW });
+  for (const [index, regionId] of ["wrong-engine-core", "glass-dune", "abyssal-archive"].entries()) {
+    campaign = completeRegion(campaign, "slot-1", regionId, { status: "victory", runId: `exchange-${index}` }, { now: NOW });
+  }
+  assert.equal(getCampaignResourceExchangeStatus(campaign, "slot-1", "research-to-parts").exchangeable, true);
+  const beforeSecond = getCampaignProgression(campaign, "slot-2");
+  const result = exchangeCampaignResources(campaign, "slot-1", "research-to-parts", 2, { now: NOW });
+  assert.equal(result.ok, true);
+  assert.equal(getCampaignProgression(result.campaign, "slot-1").researchData, 20);
+  assert.deepEqual(getCampaignProgression(result.campaign, "slot-2"), beforeSecond);
+  assert.equal(getCampaignResourceExchangeStatus(result.campaign, "missing-slot", "research-to-parts").reason, "invalid-slot");
 });
 
 test("campaign loadout persists the selected lead character independently per slot", () => {

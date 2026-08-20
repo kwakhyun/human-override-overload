@@ -121,6 +121,8 @@ try {
   await page.locator(".region-sortie-dialog").waitFor({ state: "visible" });
   await page.screenshot({ path: path.join(qaDir, "mobile-portrait-sortie-390x844.png"), fullPage: false });
   const launch = page.locator(".region-sortie-launch");
+  assert.equal(await launch.isDisabled(), true, "sortie requires explicit equipment confirmation");
+  await page.locator(".sortie-weapon-card.is-equipped").tap();
   await launch.scrollIntoViewIfNeeded();
   await launch.tap();
   await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });

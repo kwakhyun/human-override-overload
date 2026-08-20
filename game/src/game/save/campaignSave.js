@@ -11,6 +11,8 @@ import {
 import {
   calculateCombatBonuses,
   createEmptyBaseProgression,
+  exchangeProgressionResources,
+  getResourceExchangeStatus,
   getUpgradeStatus,
   grantRegionVictoryRewards,
   purchaseProgressionUpgrade,
@@ -30,10 +32,16 @@ export const CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v2";
 export const LEGACY_CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v1";
 export const CAMPAIGN_SAVE_SLOT_COUNT = 3;
 export const CAMPAIGN_SLOT_PROGRESSION_FIELD = "progression";
+export const CAMPAIGN_POST_VICTORY_STEPS = Object.freeze(["recruit", "sword-guide", "return"]);
 
 const KNOWN_REGION_IDS = new Set(getCampaignRegions().map((region) => region.id));
 const KNOWN_CHAPTER_IDS = new Set(CAMPAIGN_CHAPTERS.map((chapter) => chapter.id));
 const KNOWN_DEFENSE_STAGE_IDS = new Set(DEFENSE_STAGES.map((stage) => stage.id));
+const KNOWN_POST_VICTORY_STEPS = new Set(CAMPAIGN_POST_VICTORY_STEPS);
+const POST_VICTORY_SEEN_FLAG = Object.freeze({
+  recruit: "mika-recruit-seen",
+  "sword-guide": "beam-sword-guide-complete",
+});
 
 function resolveBrowserStorage() {
   try {
@@ -62,6 +70,17 @@ function uniqueKnown(values, known) {
 function uniqueStrings(values) {
   if (!Array.isArray(values)) return [];
   return [...new Set(values.filter((value) => typeof value === "string" && value.length > 0))].slice(0, 64);
+}
+
+function sanitizePendingPostVictorySteps(values, completedRegionIds = [], storyFlags = []) {
+  if (!Array.isArray(values)) return [];
+  const requested = new Set(values.filter((value) => KNOWN_POST_VICTORY_STEPS.has(value)));
+  return CAMPAIGN_POST_VICTORY_STEPS.filter((step) => {
+    if (!requested.has(step)) return false;
+    if (step === "recruit") return isCharacterUnlocked("mika", completedRegionIds) && !storyFlags.includes("mika-recruit-seen");
+    if (step === "sword-guide") return isMainWeaponUnlocked("beam-sword", completedRegionIds) && !storyFlags.includes("beam-sword-guide-complete");
+    return completedRegionIds.length > 0;
+  });
 }
 
 function normalizeSlotIndex(slotId) {
@@ -182,6 +201,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
   const requestedCharacterId = sanitizeCharacterId(slot.loadout?.characterId ?? slot.characterId);
   const characterId = isCharacterUnlocked(requestedCharacterId, completedRegionIds) ? requestedCharacterId : DEFAULT_CHARACTER_ID;
   const completedDefenseStageIds = uniqueKnown(slot.completedDefenseStageIds, KNOWN_DEFENSE_STAGE_IDS);
+  const storyFlags = deriveStoryFlags(completedRegionIds, slot.storyFlags);
   return {
     id: slotIdForIndex(index),
     createdAt: typeof slot.createdAt === "string" ? slot.createdAt : fallbackDate,
@@ -199,7 +219,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
       mainWeaponId: sanitizeMainWeaponIdForProgression(slot.loadout?.mainWeaponId ?? slot.mainWeaponId, completedRegionIds),
       characterId,
     },
-    storyFlags: deriveStoryFlags(completedRegionIds, slot.storyFlags),
+    storyFlags,
     regionRecords: sanitizeRegionRecords(slot.regionRecords),
     completedDefenseStageIds,
     unlockedDefenseStageIds: getUnlockedDefenseStageIds(completedDefenseStageIds),
@@ -207,6 +227,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
     progression,
     lastRegionRewards: sanitizeLastRegionRewards(slot.lastRegionRewards),
     lastDefenseRewards: sanitizeLastDefenseRewards(slot.lastDefenseRewards),
+    pendingPostVictorySteps: sanitizePendingPostVictorySteps(slot.pendingPostVictorySteps, completedRegionIds, storyFlags),
     lastRegionId: KNOWN_REGION_IDS.has(slot.lastRegionId) ? slot.lastRegionId : null,
     lastCheckpoint: "home-base",
   };
@@ -255,6 +276,27 @@ export function getCampaignSlot(campaign, slotId) {
   const index = normalizeSlotIndex(slotId);
   if (index < 0) return null;
   return sanitizeCampaign(campaign).slots[index];
+}
+
+export function getCampaignPostVictorySteps(campaign, slotId) {
+  return getCampaignSlot(campaign, slotId)?.pendingPostVictorySteps || [];
+}
+
+export function consumeCampaignPostVictoryStep(campaign, slotId, expectedStep, options = {}) {
+  const sanitized = sanitizeCampaign(campaign);
+  const index = normalizeSlotIndex(slotId);
+  const slot = index >= 0 ? sanitized.slots[index] : null;
+  if (!slot || slot.pendingPostVictorySteps[0] !== expectedStep) return sanitized;
+  const seenFlag = POST_VICTORY_SEEN_FLAG[expectedStep];
+  const nextSlot = sanitizeSlot({
+    ...slot,
+    updatedAt: resolveNow(options.now),
+    storyFlags: seenFlag ? [...slot.storyFlags, seenFlag] : slot.storyFlags,
+    pendingPostVictorySteps: slot.pendingPostVictorySteps.slice(1),
+  }, index);
+  const slots = sanitized.slots.slice();
+  slots[index] = nextSlot;
+  return { version: CAMPAIGN_SAVE_VERSION, slots };
 }
 
 export function createCampaignSlot(campaign, slotId, options = {}) {
@@ -462,6 +504,17 @@ export function completeRegion(campaign, slotId, regionId, result = {}, options 
   const firstClear = !slot.completedRegionIds.includes(regionId);
   const rewardGrant = grantRegionVictoryRewards(slot.progression, regionId, { firstClear });
   const completedRegionIds = [...new Set([...slot.completedRegionIds, regionId])];
+  const mikaJustUnlocked = !isCharacterUnlocked("mika", slot.completedRegionIds)
+    && isCharacterUnlocked("mika", completedRegionIds)
+    && !slot.storyFlags.includes("mika-recruit-seen");
+  const swordJustUnlocked = !isMainWeaponUnlocked("beam-sword", slot.completedRegionIds)
+    && isMainWeaponUnlocked("beam-sword", completedRegionIds)
+    && !slot.storyFlags.includes("beam-sword-guide-complete");
+  const pendingPostVictorySteps = [
+    ...(mikaJustUnlocked ? ["recruit"] : []),
+    ...(swordJustUnlocked ? ["sword-guide"] : []),
+    "return",
+  ];
   const regionRecords = {
     ...slot.regionRecords,
     [regionId]: nextRegionRecord(slot.regionRecords[regionId], result, now),
@@ -482,6 +535,7 @@ export function completeRegion(campaign, slotId, regionId, result = {}, options 
       grantedAt: now,
       runId,
     },
+    pendingPostVictorySteps,
     lastRegionId: regionId,
     lastCheckpoint: "home-base",
   }, index);
@@ -596,6 +650,49 @@ export function purchaseCampaignUpgrade(campaign, slotId, upgradeId, options = {
 }
 
 export const purchaseUpgrade = purchaseCampaignUpgrade;
+
+export function getCampaignResourceExchangeStatus(campaign, slotId, exchangeId, quantity = 1) {
+  const slot = getCampaignSlot(campaign, slotId);
+  if (!slot) return {
+    exchangeId,
+    exists: false,
+    quantity: Math.max(1, Math.floor(Number(quantity) || 1)),
+    exchangeable: false,
+    reason: "invalid-slot",
+  };
+  return getResourceExchangeStatus(slot.progression, slot, exchangeId, quantity);
+}
+
+export function exchangeCampaignResources(campaign, slotId, exchangeId, quantity = 1, options = {}) {
+  const sanitized = sanitizeCampaign(campaign);
+  const index = normalizeSlotIndex(slotId);
+  const slot = index >= 0 ? sanitized.slots[index] : null;
+  if (!slot) return {
+    ok: false,
+    reason: "invalid-slot",
+    campaign: sanitized,
+    slot: null,
+  };
+  const exchange = exchangeProgressionResources(slot.progression, slot, exchangeId, quantity);
+  if (!exchange.ok) return {
+    ...exchange,
+    campaign: sanitized,
+    slot,
+  };
+  const now = resolveNow(options.now);
+  const nextSlot = sanitizeSlot({
+    ...slot,
+    updatedAt: now,
+    progression: exchange.progression,
+  }, index);
+  const slots = sanitized.slots.slice();
+  slots[index] = nextSlot;
+  return {
+    ...exchange,
+    campaign: { version: CAMPAIGN_SAVE_VERSION, slots },
+    slot: nextSlot,
+  };
+}
 
 export function getCampaignCombatBonuses(campaign, slotId) {
   return calculateCombatBonuses(getCampaignProgression(campaign, slotId));

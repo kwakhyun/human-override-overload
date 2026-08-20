@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Build the two Korean HUMAN OVERRIDE project PDFs from Markdown sources."""
+"""Build the Korean HUMAN OVERRIDE portfolio PDFs from Markdown sources."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import re
 from pathlib import Path
@@ -61,6 +62,18 @@ DOCS = (
         "output": OUTPUT_DIR / "HUMAN_OVERRIDE_OVERLOAD_AI_Technical_Report_KO.pdf",
         "kind": "AI TECHNICAL REPORT",
         "required": ("OpenAI Codex Desktop", "Grok", "Suno AI", "Google Gemini", "실제 프롬프트"),
+    },
+    {
+        "source": SOURCE_DIR / "content-design-baseline-ko.md",
+        "output": OUTPUT_DIR / "HUMAN_OVERRIDE_OVERLOAD_Content_Design_Baseline_KO.pdf",
+        "kind": "CONTENT DESIGN BASELINE",
+        "required": (
+            "전투 콘텐츠 기획 기준선",
+            "목표 경험 3가지",
+            "WRONG ENGINE CORE",
+            "외부 플레이테스트 계획",
+            "본인·AI 책임 구분",
+        ),
     },
 )
 
@@ -152,7 +165,9 @@ def inline_markup(text: str) -> str:
         lambda m: hold(f'<link href="{html.escape(m.group(2), quote=True)}" color="#08788D"><u>{html.escape(m.group(1))}</u></link>'),
         text,
     )
-    text = re.sub(r"`([^`]+)`", lambda m: hold(f'<font name="Courier">{html.escape(m.group(1))}</font>'), text)
+    # Malgun keeps Korean labels inside inline-code spans visible. Courier is
+    # reserved for fenced code blocks whose content is ASCII commands/source.
+    text = re.sub(r"`([^`]+)`", lambda m: hold(f'<font name="Malgun">{html.escape(m.group(1))}</font>'), text)
     escaped = html.escape(text)
     escaped = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", escaped)
     for index, token in enumerate(tokens):
@@ -165,7 +180,7 @@ def parse_cover(lines: list[str], sheet: dict[str, ParagraphStyle], kind: str) -
     subtitle = next((line[3:].strip() for line in lines if line.startswith("## ")), "")
     divider = lines.index("[PAGEBREAK]") if "[PAGEBREAK]" in lines else min(12, len(lines))
     meta_lines = [line.strip() for line in lines[:divider] if line.strip() and not line.startswith("#") and not line.startswith(">")]
-    quote = next((line[1:].strip() for line in lines[:divider] if line.startswith(">")), "")
+    quote = " ".join(line[1:].strip() for line in lines[:divider] if line.startswith(">"))
 
     cover_image = ROOT / "public" / "assets" / "overload" / "intro" / "start-screen-key-art.webp"
     flow: list = [Spacer(1, 3 * mm)]
@@ -184,11 +199,39 @@ def parse_cover(lines: list[str], sheet: dict[str, ParagraphStyle], kind: str) -
     return flow, divider + 1
 
 
-def scaled_image(path: Path, max_width: float, max_height: float) -> Image:
+def optimized_pdf_image(path: Path, max_width: float, max_height: float) -> tuple[Path, int, int]:
+    """Create a print-sized JPEG so screenshots do not bloat the portfolio PDFs."""
+
     with PILImage.open(path) as img:
         width, height = img.size
+        target_width = max(1, round(max_width / 72 * 150))
+        target_height = max(1, round(max_height / 72 * 150))
+        ratio = min(target_width / width, target_height / height, 1)
+        pixel_width = max(1, round(width * ratio))
+        pixel_height = max(1, round(height * ratio))
+        digest = hashlib.sha1(str(path.resolve()).encode("utf-8")).hexdigest()[:10]
+        optimized = TMP_DIR / f"{path.stem}-{digest}-{pixel_width}x{pixel_height}.jpg"
+        source_stamp = path.stat().st_mtime_ns
+        if not optimized.exists() or optimized.stat().st_mtime_ns < source_stamp:
+            rendered = img.convert("RGB")
+            if rendered.size != (pixel_width, pixel_height):
+                rendered = rendered.resize((pixel_width, pixel_height), PILImage.Resampling.LANCZOS)
+            rendered.save(
+                optimized,
+                format="JPEG",
+                quality=88,
+                subsampling=1,
+                optimize=True,
+                progressive=True,
+                dpi=(150, 150),
+            )
+    return optimized, width, height
+
+
+def scaled_image(path: Path, max_width: float, max_height: float) -> Image:
+    optimized, width, height = optimized_pdf_image(path, max_width, max_height)
     ratio = min(max_width / width, max_height / height)
-    return Image(str(path), width=width * ratio, height=height * ratio)
+    return Image(str(optimized), width=width * ratio, height=height * ratio)
 
 
 def table_flow(rows: list[list[str]], sheet: dict[str, ParagraphStyle]) -> Table:
@@ -364,7 +407,7 @@ def build_one(config: dict, sheet: dict[str, ParagraphStyle]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--only", choices=("game", "ai"), help="Build only one PDF")
+    parser.add_argument("--only", choices=("game", "ai", "content"), help="Build only one PDF")
     args = parser.parse_args()
     register_fonts()
     TMP_DIR.mkdir(parents=True, exist_ok=True)
@@ -374,6 +417,8 @@ def main() -> None:
         selected = (DOCS[0],)
     elif args.only == "ai":
         selected = (DOCS[1],)
+    elif args.only == "content":
+        selected = (DOCS[2],)
     for config in selected:
         build_one(config, sheet)
 

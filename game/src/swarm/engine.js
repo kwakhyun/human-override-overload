@@ -1,3 +1,11 @@
+import {
+  BOSS_PATTERNS,
+  REGION_BOSS_PATTERNS,
+  REGION_MID_BOSS_PROFILES,
+} from "../game/content/combatCatalog.js";
+
+export { BOSS_PATTERNS, REGION_BOSS_PATTERNS, REGION_MID_BOSS_PROFILES };
+
 export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const WORLD_WIDTH = 1920;
@@ -14,6 +22,7 @@ const DEFAULT_ENEMY_BUDGET = 1000;
 const FIRST_REGION_ENEMY_BUDGET = 300;
 const ENEMY_HEALTH_MULTIPLIER = 3;
 const MINIMAP_ENEMY_SAMPLE_CAP = 24;
+const MINIMAP_GATE_SAMPLE_CAP = 5;
 const MAX_LIVE_ENEMIES = 220;
 const MAX_PROJECTILES = 620;
 const MAX_ENEMY_PROJECTILES = 360;
@@ -29,6 +38,7 @@ const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
 const EXPEDITION_FLOOR_ELLIPSE = Object.freeze({ x: 960, y: 540, rx: 840, ry: 460 });
 const EXPEDITION_ROUTE_LENGTH = 25000;
 const EXPEDITION_ROUTE_ORIGIN_X = 580;
+const EXPEDITION_FINAL_COMBAT_BAND = 0.1;
 const EXPEDITION_CORRIDOR = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 150, bottom: 930 });
 const EXPEDITION_DEEP_PURSUIT_DISTANCE = 720;
 const EXPEDITION_PURSUIT_SPEED_MULTIPLIER = 1.12;
@@ -59,6 +69,16 @@ const SURGE_WAVES = Object.freeze([
   Object.freeze({ warnAt: 204, startAt: 205.12, warningLead: 1.12, count: 220, rate: 38, label: "최대 전력 투입 · WAVE VIII" }),
   Object.freeze({ warnAt: 248, startAt: 249.2, warningLead: 1.2, count: 400, rate: 44, label: "종말 공세 · FINAL WAVE" }),
 ]);
+
+export const REGION_WAVE_ROUTE_ANCHORS = Object.freeze({
+  // The shorter first operation still reaches all three authored trace beats
+  // before its sixth and terminal deployment finishes.
+  "wrong-engine-core": Object.freeze([0, 0.18, 0.36, 0.54, 0.7, 0.82]),
+  // Longer routes stage nine combat bands. The final army enters before the
+  // route endpoint, leaving a bounded moving battlefield instead of a long
+  // stationary cleanup at x=25,000.
+  default: Object.freeze([0, 0.08, 0.17, 0.27, 0.38, 0.49, 0.59, 0.67, 0.74]),
+});
 
 const OVERDRIVE_THRESHOLDS = Object.freeze([0.48, 0.72, 0.88]);
 const FIRST_REWARD_EARLIEST = 6.4;
@@ -126,33 +146,22 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     objective: "SHUT DOWN THE FOUNDRY", chamber: "FORGE COLOSSUS ASSEMBLY PIT",
     deploymentBeat: "deployment", encounterBeat: "neon-foundry-encounter", victoryBeat: "neon-foundry-destroyed",
     traces: false, enemyVisualSet: "neon-foundry", difficultyScalar: 2.15,
-    midBoss: Object.freeze({ id: "press-warden", name: "PRESS WARDEN", koreanName: "프레스 감시관", maxHp: 52000 }),
+    midBoss: REGION_MID_BOSS_PROFILES["neon-foundry"],
   }),
   "storm-spire": Object.freeze({
     id: "storm-spire", chapterId: "chapter-03", bossName: "TEMPEST WYRM", enemyBudget: 1150, bossHp: 1260000,
     objective: "BREAK THE STORM GRID", chamber: "TEMPEST EYE",
     deploymentBeat: "deployment", encounterBeat: "storm-spire-encounter", victoryBeat: "storm-spire-destroyed",
     traces: false, enemyVisualSet: "storm-spire", difficultyScalar: 2.7,
-    midBoss: Object.freeze({ id: "thunder-manta", name: "THUNDER MANTA", koreanName: "천둥 가오리", maxHp: 56000 }),
+    midBoss: REGION_MID_BOSS_PROFILES["storm-spire"],
   }),
   "gene-vault": Object.freeze({
     id: "gene-vault", chapterId: "chapter-03", bossName: "PALE ARCHON", enemyBudget: 1200, bossHp: 1340000,
     objective: "PURGE THE GENE VAULT", chamber: "ARCHON INCUBATION VAULT",
     deploymentBeat: "deployment", encounterBeat: "gene-vault-encounter", victoryBeat: "gene-vault-destroyed",
     traces: false, enemyVisualSet: "gene-vault", difficultyScalar: 3.35,
-    midBoss: Object.freeze({ id: "chimera-custodian", name: "CHIMERA CUSTODIAN", koreanName: "키메라 수문장", maxHp: 60000 }),
+    midBoss: REGION_MID_BOSS_PROFILES["gene-vault"],
   }),
-});
-
-export const BOSS_PATTERNS = Object.freeze(["radial", "sweep", "bombs", "rings", "charge", "multiCharge"]);
-
-export const REGION_BOSS_PATTERNS = Object.freeze({
-  "wrong-engine-core": BOSS_PATTERNS,
-  "glass-dune": Object.freeze(["prismLattice", "solarFlare", "refractionSweep", "mirrorShards"]),
-  "abyssal-archive": Object.freeze(["memorySpiral", "depthCollapse", "archiveEcho", "undertow"]),
-  "neon-foundry": Object.freeze(["solarFlare", "sweep", "bombs", "multiCharge"]),
-  "storm-spire": Object.freeze(["memorySpiral", "prismLattice", "rings", "multiCharge"]),
-  "gene-vault": Object.freeze(["depthCollapse", "radial", "bombs", "undertow"]),
 });
 
 const BOSS_PARRY_WINDOW = 1.5;
@@ -172,6 +181,14 @@ const BOSS_BOMB_SIREN_DURATION = 1.15;
 const BOSS_BOMB_ACTIVE_DURATIONS = Object.freeze([12, 16, 20]);
 const BOSS_BOMB_ARMOR_DURATION = 9;
 const BOSS_BOMB_ARMOR_DAMAGE_MULTIPLIER = 0.16;
+const PROJECTILE_DAMAGE_SOURCES = Object.freeze(new Set([
+  "pulse", "pulseOverdrive", "scatter", "scatterMaster", "rail", "rocket",
+  "crescentWave", "mikaHaloBlade", "mikaHaloCarnival",
+]));
+const MELEE_DAMAGE_SOURCES = Object.freeze(new Set(["swordSlash", "titanEdge", "flashRend", "bladeStorm"]));
+const ALLY_DAMAGE_SOURCES = Object.freeze(new Set([
+  "drone", "sentry", "suppressorAlly", "droneDeploy", "sentryDeploy", "suppressorDeploy",
+]));
 
 export const REGION_ENEMY_PROFILES = Object.freeze({
   "wrong-engine-core": Object.freeze({
@@ -223,6 +240,75 @@ export const MIKA_MANUAL_ACTIVE_ABILITIES = Object.freeze({
 const MANUAL_ABILITY_KEYS = Object.freeze(["empPulse", "aegisWard", "stratosRun", "helixTempest"]);
 const MANUAL_INPUT_FIELDS = Object.freeze(["empPulsePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]);
 
+function manualAbilityDefinitionsFor(characterId, aegisWeaponId = "pulse-rifle") {
+  if (characterId === "mika") return MIKA_MANUAL_ACTIVE_ABILITIES;
+  return aegisWeaponId === "beam-sword"
+    ? SWORD_MANUAL_ACTIVE_ABILITIES
+    : MANUAL_ACTIVE_ABILITIES;
+}
+
+function createManualAbilityBank(definitions) {
+  return Object.fromEntries(MANUAL_ABILITY_KEYS.map((ability) => [ability, {
+    cooldown: 0,
+    maxCooldown: definitions[ability].baseCooldown,
+  }]));
+}
+
+function createManualAbilityBanks(aegisWeaponId) {
+  return {
+    aegis: createManualAbilityBank(manualAbilityDefinitionsFor("aegis", aegisWeaponId)),
+    mika: createManualAbilityBank(manualAbilityDefinitionsFor("mika", aegisWeaponId)),
+  };
+}
+
+function normalizeManualAbilityBank(bank, definitions) {
+  const normalized = bank && typeof bank === "object" ? bank : {};
+  for (const ability of MANUAL_ABILITY_KEYS) {
+    const definition = definitions[ability];
+    const entry = normalized[ability];
+    if (!entry || typeof entry !== "object") {
+      normalized[ability] = { cooldown: 0, maxCooldown: definition.baseCooldown };
+      continue;
+    }
+    entry.cooldown = Math.max(0, finite(entry.cooldown));
+    entry.maxCooldown = Math.max(0, finite(entry.maxCooldown, definition.baseCooldown));
+    if (entry.maxCooldown <= 0) entry.maxCooldown = definition.baseCooldown;
+  }
+  return normalized;
+}
+
+function ensureManualAbilityBanks(state) {
+  const characterId = state.player?.characterId === "mika" ? "mika" : "aegis";
+  const aegisWeaponId = state.player?.aegisWeaponId ?? state.player?.mainWeaponId ?? "pulse-rifle";
+  if (!state.manualAbilityBanks || typeof state.manualAbilityBanks !== "object") {
+    const banks = createManualAbilityBanks(aegisWeaponId);
+    // Older runtime snapshots only contain the active `manualAbilities`
+    // object. Preserve that cooldown bank and initialize the reserve cleanly.
+    if (state.manualAbilities && typeof state.manualAbilities === "object") {
+      banks[characterId] = normalizeManualAbilityBank(
+        state.manualAbilities,
+        manualAbilityDefinitionsFor(characterId, aegisWeaponId),
+      );
+    }
+    state.manualAbilityBanks = banks;
+  }
+  for (const ownerId of ["aegis", "mika"]) {
+    state.manualAbilityBanks[ownerId] = normalizeManualAbilityBank(
+      state.manualAbilityBanks[ownerId],
+      manualAbilityDefinitionsFor(ownerId, aegisWeaponId),
+    );
+  }
+  // Keep the original field as a compatibility alias for renderers and
+  // probes that expect the active character's Q/E/F/R state at this path.
+  state.manualAbilities = state.manualAbilityBanks[characterId];
+  return state.manualAbilities;
+}
+
+function manualAbilityBankFor(state, characterId) {
+  ensureManualAbilityBanks(state);
+  return state.manualAbilityBanks[characterId === "mika" ? "mika" : "aegis"];
+}
+
 const ENEMY_DATA = Object.freeze({
   hunter: Object.freeze({ role: "suicideDrone", hp: 38, speed: 118, radius: 22, damage: 78, xp: 4, color: "#ff526d" }),
   suppressor: Object.freeze({ role: "rifleman", hp: 68, speed: 64, radius: 27, damage: 10, xp: 7, color: "#f3ab42" }),
@@ -248,6 +334,8 @@ export const REWARD_DEFINITIONS = Object.freeze({
   regen: Object.freeze({ id: "regen", category: "skill", name: "NANO REPAIR", description: "Continuously repairs lost hull integrity." }),
   edgeReach: Object.freeze({ id: "edgeReach", category: "skill", name: "EDGE RESONANCE", description: "Extends every sword arc and strengthens its impact." }),
   edgeGuard: Object.freeze({ id: "edgeGuard", category: "skill", name: "PARRY SHEATH", description: "Successful sword hits recharge a compact combat shield." }),
+  prismTempo: Object.freeze({ id: "prismTempo", category: "skill", name: "PRISM TEMPO", description: "MIKA halo hits accelerate her manual-skill cycle and sharpen each blade." }),
+  heartGuard: Object.freeze({ id: "heartGuard", category: "skill", name: "HEART GUARD", description: "MIKA manual hits restore a character-specific prismatic guard." }),
   chain: Object.freeze({ id: "chain", category: "skill", name: "ARC CASCADE", description: "Periodically chains lightning through packed targets. Rank 3 unlocks a full storm." }),
   nova: Object.freeze({ id: "nova", category: "skill", name: "ZERO-POINT NOVA", description: "Detonates a radial shockwave. Rank 3 repeats it across the visible combat zone." }),
   airstrike: Object.freeze({ id: "airstrike", category: "skill", name: "SKYFALL SUPPORT", description: "Calls a long-cooldown airstrike on dense enemy formations." }),
@@ -257,21 +345,21 @@ export const REWARD_DEFINITIONS = Object.freeze({
   suppressor: Object.freeze({ id: "suppressor", category: "ally", name: "SUPPRESSOR WISP", description: "Control escort: repeated EMP blooms slow and erase packed formations." }),
 });
 
-const RIFLE_REWARD_POOLS = Object.freeze({
+export const RIFLE_REWARD_POOLS = Object.freeze({
   weapon: Object.freeze(["scatter", "rail", "rocket", "orbit"]),
   skill: Object.freeze(["airstrike", "omegaLaser", "chain", "nova", "damage", "fireRate", "multishot", "shield", "dash", "regen"]),
   ally: Object.freeze(["drone", "sentry", "suppressor"]),
 });
 
-const SWORD_REWARD_POOLS = Object.freeze({
+export const SWORD_REWARD_POOLS = Object.freeze({
   weapon: Object.freeze(["crescentWave", "titanEdge", "flashRend", "bladeStorm"]),
   skill: Object.freeze(["edgeReach", "edgeGuard", "damage", "fireRate", "shield", "dash", "regen"]),
   ally: RIFLE_REWARD_POOLS.ally,
 });
 
-const MIKA_REWARD_POOLS = Object.freeze({
+export const MIKA_REWARD_POOLS = Object.freeze({
   weapon: Object.freeze(["haloMatrix", "orbit"]),
-  skill: RIFLE_REWARD_POOLS.skill,
+  skill: Object.freeze(["prismTempo", "heartGuard", "chain", "nova", "damage", "fireRate", "shield", "dash", "regen"]),
   ally: RIFLE_REWARD_POOLS.ally,
 });
 
@@ -281,6 +369,7 @@ const MAX_REWARD_RANK = Object.freeze({
   crescentWave: 5, titanEdge: 5, flashRend: 5, bladeStorm: 5,
   chain: 3, nova: 3, airstrike: 3, omegaLaser: 3,
   damage: 5, fireRate: 5, multishot: 4, shield: 4, dash: 4, regen: 4, edgeReach: 4, edgeGuard: 4,
+  prismTempo: 4, heartGuard: 4,
   drone: 4, sentry: 4, suppressor: 4,
 });
 
@@ -296,6 +385,51 @@ function normalize(x, y, fallbackX = 1, fallbackY = 0) {
   const length = Math.hypot(x, y);
   if (!Number.isFinite(length) || length < 0.00001) return { x: fallbackX, y: fallbackY };
   return { x: x / length, y: y / length };
+}
+
+function getWaveRouteAnchors(regionId) {
+  return REGION_WAVE_ROUTE_ANCHORS[regionId] ?? REGION_WAVE_ROUTE_ANCHORS.default;
+}
+
+function waveRouteAnchorDistance(state, waveIndex = state.surgeIndex) {
+  const anchors = state.expedition?.waveAnchors;
+  if (!anchors?.length) return 0;
+  return anchors[Math.min(Math.max(0, waveIndex), anchors.length - 1)];
+}
+
+function nextRequiredExpeditionDestination(state) {
+  const expedition = state.expedition;
+  if (!expedition) return null;
+  if (state.spawnedEnemies < state.enemyBudget) {
+    const waveAnchor = waveRouteAnchorDistance(state);
+    return waveAnchor > expedition.distance + 0.001 ? waveAnchor : null;
+  }
+  const nextTrace = expedition.traces.find((trace) => (
+    !trace.triggered && trace.distance > expedition.distance + 0.001
+  ));
+  return nextTrace?.distance ?? null;
+}
+
+function syncExpeditionForwardLimit(state) {
+  const expedition = state.expedition;
+  if (!expedition || state.phase !== "swarm") return;
+  const anchors = expedition.waveAnchors;
+  if (!anchors?.length || expedition.clearTransition) {
+    expedition.forwardLimitDistance = expedition.routeLength;
+    return;
+  }
+  if (state.spawnedEnemies >= state.enemyBudget) {
+    const finalAnchor = anchors[anchors.length - 1];
+    expedition.forwardLimitDistance = Math.min(
+      expedition.routeLength,
+      finalAnchor + expedition.routeLength * EXPEDITION_FINAL_COMBAT_BAND,
+    );
+    return;
+  }
+  // Wave I remains automatic at route origin. During the opening eight-unit
+  // skirmish the player may already advance toward the first authored band.
+  const nextIndex = state.surgeIndex === 0 ? 1 : state.surgeIndex;
+  expedition.forwardLimitDistance = waveRouteAnchorDistance(state, nextIndex);
 }
 
 function activeArena(state) {
@@ -583,7 +717,7 @@ function spawnRouteMidBoss(state) {
   const enemy = {
     id: ++state.nextEntityId,
     type: "midboss",
-    combatRole: "rifleman",
+    combatRole: definition.combatRole ?? "rifleman",
     visualSet: state.enemyVisualSet,
     isMidBoss: true,
     name: definition.name,
@@ -598,6 +732,9 @@ function spawnRouteMidBoss(state) {
     orbitHitCooldown: 0, animationState: "spawn", animationTimer: 0.6,
     attackState: "idle", attackTimer: 0, recoil: 0, hitStun: 0,
     deathTimer: 0, moveBlend: 0, spawnGateId: "midboss-lock", spawnDelay: 0.7, spawnDuration: 0.7,
+    signature: definition.signature ?? null,
+    specialState: "idle", specialTimer: 0, specialCooldown: 0.9,
+    specialDirectionX: -1, specialDirectionY: 0, strafeDirection: definition.id === "thunder-manta" ? 1 : 0,
   };
   state.enemies.push(enemy);
   state.expedition.midBoss.spawned = true;
@@ -786,6 +923,10 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
 export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
   const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
+  const waveAnchorFractions = getWaveRouteAnchors(regionConfig.id);
+  const waveAnchors = waveAnchorFractions.map((fraction) => Math.round(EXPEDITION_ROUTE_LENGTH * fraction));
+  const player = createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked);
+  const manualAbilityBanks = createManualAbilityBanks(player.aegisWeaponId);
   const state = {
     mode: "swarm",
     phase: "swarm",
@@ -807,7 +948,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       encounter: regionConfig.encounterBeat,
       victory: regionConfig.victoryBeat,
     },
-    player: createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked),
+    player,
     boss: createBoss(regionConfig),
     aim: { x: GAME_WIDTH * 0.82, y: GAME_HEIGHT * 0.5 },
     aimX: GAME_WIDTH * 0.82,
@@ -836,6 +977,11 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       autoBossEntry: false,
       bossEntryConfirmed: false,
       bossRoom: false,
+      waveAnchors,
+      waitingForAdvance: false,
+      atCombatBand: false,
+      nextWaveAnchor: null,
+      forwardLimitDistance: waveAnchors[1] ?? EXPEDITION_ROUTE_LENGTH,
       midBoss: regionConfig.midBoss ? { definition: { ...regionConfig.midBoss }, spawned: false, defeated: false, enemyId: null } : null,
       traces: regionConfig.traces ? EXPEDITION_TRACES.map((trace) => ({ ...trace, triggered: false })) : [],
     } : null,
@@ -883,7 +1029,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     },
     build: {
       weapons: { pulse: 1, haloMatrix: 0, scatter: 0, rail: 0, rocket: 0, orbit: 0, crescentWave: 0, titanEdge: 0, flashRend: 0, bladeStorm: 0 },
-      skills: { damage: 0, fireRate: 0, multishot: 0, shield: 0, dash: 0, regen: 0, edgeReach: 0, edgeGuard: 0, chain: 0, nova: 0, airstrike: 0, omegaLaser: 0 },
+      skills: { damage: 0, fireRate: 0, multishot: 0, shield: 0, dash: 0, regen: 0, edgeReach: 0, edgeGuard: 0, prismTempo: 0, heartGuard: 0, chain: 0, nova: 0, airstrike: 0, omegaLaser: 0 },
       allies: { drone: 0, sentry: 0, suppressor: 0 },
     },
     lastChosenByCategory: { weapon: null, skill: null, ally: null },
@@ -897,17 +1043,26 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       omegaLaserCooldown: 0,
       omegaLaserCooldownMax: 0,
     },
-    manualAbilities: {
-      empPulse: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.empPulse.baseCooldown },
-      aegisWard: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.aegisWard.baseCooldown },
-      stratosRun: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.stratosRun.baseCooldown },
-      helixTempest: { cooldown: 0, maxCooldown: MANUAL_ACTIVE_ABILITIES.helixTempest.baseCooldown },
-    },
+    manualAbilityBanks,
+    // Backward-compatible active-bank alias used by the renderer, HUD, and
+    // older runtime probes. Tagging repoints it without merging cooldowns.
+    manualAbilities: manualAbilityBanks[player.characterId],
     camera: { x: GAME_WIDTH * 0.5, y: GAME_HEIGHT * 0.5, zoom: 1.58 },
     stats: {
       kills: 0,
+      // `shots` / `hits` remain the result-screen aggregate, but are now
+      // bounded attempts: eligible projectiles plus sword arcs, each counted
+      // at most once even when they pierce or strike multiple targets.
       shots: 0,
       hits: 0,
+      projectileShots: 0,
+      projectileHits: 0,
+      meleeAttacks: 0,
+      meleeHits: 0,
+      projectileDamageEvents: 0,
+      meleeDamageEvents: 0,
+      abilityDamageEvents: 0,
+      allyDamageEvents: 0,
       damageDealt: 0,
       damageTaken: 0,
       levels: 1,
@@ -947,6 +1102,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     state.camera.x = state.player.x;
     state.camera.y = WORLD_HEIGHT * 0.5;
     state.camera.zoom = 1.08;
+    syncExpeditionForwardLimit(state);
     spawnRouteHealingKits(state);
   }
   spawnInitialSwarm(state);
@@ -1026,7 +1182,10 @@ function clampPlayerToFloor(player, expedition = null) {
   if (expedition) {
     const minX = EXPEDITION_CORRIDOR.left + player.radius;
     const routeLimit = finite(expedition.originX, EXPEDITION_ROUTE_ORIGIN_X)
-      + finite(expedition.routeLength, EXPEDITION_ROUTE_LENGTH);
+      + Math.min(
+        finite(expedition.routeLength, EXPEDITION_ROUTE_LENGTH),
+        finite(expedition.forwardLimitDistance, expedition.routeLength),
+      );
     const maxX = Math.min(EXPEDITION_CORRIDOR.right - player.radius, routeLimit);
     const minY = EXPEDITION_CORRIDOR.top + player.radius;
     const maxY = EXPEDITION_CORRIDOR.bottom - player.radius;
@@ -1056,6 +1215,7 @@ function clampPlayerToFloor(player, expedition = null) {
 function tagCharacter(state) {
   const player = state.player;
   if (!player.mikaUnlocked || !player.reserveCharacterId || player.dead || player.stunTimer > 0 || player.tagCooldown > 0) return false;
+  ensureManualAbilityBanks(state);
   const nextCharacterId = player.characterId === "mika" ? "aegis" : "mika";
   player.characterId = nextCharacterId;
   player.reserveCharacterId = nextCharacterId === "mika" ? "aegis" : "mika";
@@ -1070,6 +1230,7 @@ function tagCharacter(state) {
   player.invulnerability = Math.max(player.invulnerability, 0.52);
   player.attackTimer = 0;
   player.recoil = 0;
+  ensureManualAbilityBanks(state);
   state.shockwaves.push({ type: "characterTag", x: player.x, y: player.y, maxRadius: 130, life: 0.42, maxLife: 0.42, color: nextCharacterId === "mika" ? "#ff79d8" : "#79eeff", width: 8 });
   emit(state, "characterTagged", { characterId: nextCharacterId, reserveCharacterId: player.reserveCharacterId, cooldown: player.tagCooldownMax, x: player.x, y: player.y });
   return true;
@@ -1172,6 +1333,27 @@ function updateExpedition(state) {
   if (!expedition || state.phase !== "swarm") return;
   expedition.distance = clamp(state.player.x - expedition.originX, 0, expedition.routeLength);
   expedition.progress = clamp(expedition.distance / expedition.routeLength, 0, 1);
+  for (const trace of expedition.traces) {
+    if (trace.triggered || expedition.distance < trace.distance) continue;
+    trace.triggered = true;
+    expedition.checkpointIndex += 1;
+    emit(state, "scenario", { beat: trace.beat, trace: trace.kind, checkpoint: expedition.checkpointIndex });
+  }
+  const nextAnchor = nextRequiredExpeditionDestination(state);
+  const noLivingEnemies = !hasLivingEnemy(state.enemies);
+  const pendingRouteTrace = expedition.traces.some((trace) => !trace.triggered);
+  const awaitingAdvance = noLivingEnemies
+    && !state.surgeWarning
+    && !state.activeSurge
+    && state.surgeQueued <= 0
+    && ((state.spawnedEnemies < state.enemyBudget && nextAnchor !== null)
+      || (state.spawnedEnemies >= state.enemyBudget && pendingRouteTrace));
+  const atCombatBand = hasLivingEnemy(state.enemies)
+    && expedition.forwardLimitDistance < expedition.routeLength
+    && expedition.distance + 0.5 >= expedition.forwardLimitDistance;
+  expedition.waitingForAdvance = awaitingAdvance;
+  expedition.atCombatBand = atCombatBand;
+  expedition.nextWaveAnchor = nextAnchor;
   expedition.objective = expedition.clearTransition?.phase === "warning"
     ? "적 전멸 · 보스 구역 전환 준비"
     : expedition.clearTransition?.phase === "panic"
@@ -1180,14 +1362,11 @@ function updateExpedition(state) {
       ? `${state.bossChamber} · 자동 진입`
     : expedition.midBoss?.spawned && !expedition.midBoss?.defeated
       ? `중간보스 · ${expedition.midBoss.definition.koreanName} 격파`
+    : awaitingAdvance
+      ? "다음 전투 구간으로 전진"
+    : atCombatBand
+      ? "현재 전투 구역 소탕"
     : state.regionObjective;
-
-  for (const trace of expedition.traces) {
-    if (trace.triggered || expedition.distance < trace.distance) continue;
-    trace.triggered = true;
-    expedition.checkpointIndex += 1;
-    emit(state, "scenario", { beat: trace.beat, trace: trace.kind, checkpoint: expedition.checkpointIndex });
-  }
 }
 
 function pushPlayerProjectile(state, projectile) {
@@ -1198,9 +1377,39 @@ function pushPlayerProjectile(state, projectile) {
   projectile.age = 0;
   projectile.animationState = "flight";
   projectile.dead = false;
+  projectile.accuracyEligible = projectile.accuracyEligible !== false;
+  projectile.accuracyHit = false;
   state.projectiles.push(projectile);
-  state.stats.shots += 1;
+  if (projectile.accuracyEligible) {
+    state.stats.projectileShots += 1;
+    state.stats.shots += 1;
+  }
   return true;
+}
+
+function recordProjectileAccuracyHit(state, projectile) {
+  if (!projectile?.accuracyEligible || projectile.accuracyHit) return;
+  projectile.accuracyHit = true;
+  state.stats.projectileHits += 1;
+  state.stats.hits += 1;
+  if (String(projectile.kind).startsWith("mikaHalo")) {
+    const rank = state.build.skills.prismTempo || 0;
+    if (rank > 0) {
+      const reduction = 0.05 + rank * 0.035;
+      const mikaAbilities = manualAbilityBankFor(state, "mika");
+      for (const ability of MANUAL_ABILITY_KEYS) {
+        const entry = mikaAbilities[ability];
+        entry.cooldown = Math.max(0, entry.cooldown - reduction);
+      }
+    }
+  }
+}
+
+function recordDamageEvent(state, source) {
+  if (PROJECTILE_DAMAGE_SOURCES.has(source)) state.stats.projectileDamageEvents += 1;
+  else if (MELEE_DAMAGE_SOURCES.has(source)) state.stats.meleeDamageEvents += 1;
+  else if (ALLY_DAMAGE_SOURCES.has(source)) state.stats.allyDamageEvents += 1;
+  else state.stats.abilityDamageEvents += 1;
 }
 
 function fireBulletFan(state, kind, count, spread, speed, damage, radius, life, extra = {}) {
@@ -1313,6 +1522,8 @@ function performSwordArc(state, type, radius, arc, baseDamage, extra = {}) {
   const halfArc = arc >= TAU - 0.01 ? Math.PI : arc * 0.5;
   const damage = baseDamage * player.damageMultiplier * player.weaponDamageMultiplier;
   let hits = 0;
+  state.stats.meleeAttacks += 1;
+  state.stats.shots += 1;
   if (state.phase === "boss") {
     const boss = state.boss;
     const dx = boss.x - player.x;
@@ -1332,6 +1543,10 @@ function performSwordArc(state, type, radius, arc, baseDamage, extra = {}) {
       if (Math.abs(signedAngleDelta(Math.atan2(dy, dx), player.angle)) > halfArc) continue;
       if (damageEnemy(state, enemy, damage, type) > 0) hits += 1;
     }
+  }
+  if (hits > 0) {
+    state.stats.meleeHits += 1;
+    state.stats.hits += 1;
   }
   const guardRank = state.build.skills.edgeGuard;
   if (hits > 0 && guardRank > 0) {
@@ -1398,12 +1613,13 @@ function updateMikaWeapons(state, attackSpeed) {
   const timers = player.fireTimers;
   if (timers.halo > 0) return;
   const haloRank = clamp(state.build.weapons.haloMatrix || 0, 0, 5);
+  const prismTempoRank = clamp(state.build.skills.prismTempo || 0, 0, 4);
   const overdriveBonus = Math.max(0, player.overdriveTier - 1);
   const count = 1 + (haloRank >= 3 ? 1 : 0) + overdriveBonus;
   const spread = count > 1 ? 0.12 + haloRank * 0.02 + overdriveBonus * 0.07 : 0;
   const speed = 820 + haloRank * 22;
-  const damage = 34 + haloRank * 2.8 + player.level * (0.8 + haloRank * 0.09);
-  const pierce = (haloRank >= 5 ? 3 : Math.floor(haloRank / 2)) + player.overdriveTier;
+  const damage = (34 + haloRank * 2.8 + player.level * (0.8 + haloRank * 0.09)) * (1 + prismTempoRank * 0.08);
+  const pierce = (haloRank >= 5 ? 3 : Math.floor(haloRank / 2)) + player.overdriveTier + Math.floor(prismTempoRank / 2);
   fireBulletFan(state, "mikaHaloBlade", count, spread, speed, damage, 8 + haloRank, 1.3 + haloRank * 0.05, {
     color: "#ff8ada",
     pierce,
@@ -1818,7 +2034,7 @@ function damageEnemy(state, enemy, amount, source = "weapon") {
   enemy.hitStun = Math.max(enemy.hitStun, 0.075);
   enemy.animationState = "hit";
   enemy.animationTimer = Math.max(enemy.animationTimer, 0.1);
-  state.stats.hits += 1;
+  recordDamageEvent(state, source);
   state.stats.damageDealt += dealt;
   if (enemy.hp <= 0) killEnemy(state, enemy, source);
   return dealt;
@@ -1912,7 +2128,7 @@ function damageBoss(state, amount, source = "weapon") {
     boss.animationState = "hit";
     boss.animationTimer = Math.max(boss.animationTimer, 0.08);
   }
-  state.stats.hits += 1;
+  recordDamageEvent(state, source);
   state.stats.damageDealt += dealt;
   if (boss.hp <= boss.maxHp * 0.7 && boss.stage === 1) triggerBossStage(state, 2);
   else if (boss.hp <= boss.maxHp * 0.38 && boss.stage === 2) triggerBossStage(state, 3);
@@ -1967,7 +2183,8 @@ function collidePlayerProjectile(state, projectile, enemy) {
   const dy = projectile.y - enemy.y;
   const collisionRadius = projectile.radius + enemy.radius;
   if (dx * dx + dy * dy > collisionRadius * collisionRadius) return false;
-  damageEnemy(state, enemy, projectile.damage, projectile.kind);
+  const dealt = damageEnemy(state, enemy, projectile.damage, projectile.kind);
+  if (dealt > 0) recordProjectileAccuracyHit(state, projectile);
   if (projectile.kind === "rocket") {
     projectile.dead = true;
     return true;
@@ -2027,7 +2244,8 @@ function updateProjectiles(state, dt) {
     if (state.phase === "boss") {
       const boss = state.boss;
       if (boss.active && !boss.dead && Math.hypot(projectile.x - boss.x, projectile.y - boss.y) <= projectile.radius + boss.radius) {
-        damageBoss(state, projectile.damage, projectile.kind);
+        const dealt = damageBoss(state, projectile.damage, projectile.kind);
+        if (dealt > 0) recordProjectileAccuracyHit(state, projectile);
         if (projectile.kind === "rocket") explodeRocket(state, projectile);
         projectile.dead = true;
       }
@@ -2157,6 +2375,166 @@ function updateEnemyProjectiles(state, dt) {
   compact(state.enemyProjectiles, keepAliveEntity);
 }
 
+function updateAuthoredMidBossCombat(state, enemy, player, role, distance, towardX, towardY, dt, arena, moveBlendRate) {
+  if (!enemy.isMidBoss
+    || (role !== "pressWarden" && role !== "thunderManta" && role !== "chimeraCustodian")) return false;
+  const previousSpecialTimer = Math.max(0, finite(enemy.specialTimer));
+  enemy.specialTimer = Math.max(0, previousSpecialTimer - dt);
+  enemy.specialCooldown = Math.max(0, finite(enemy.specialCooldown) - dt);
+  const slowScale = enemy.slow > 0 ? 0.48 : 1;
+  const move = (vx, vy) => {
+    enemy.vx = vx * slowScale;
+    enemy.vy = vy * slowScale;
+    enemy.x = clamp(enemy.x + enemy.vx * dt, arena.left, arena.right);
+    enemy.y = clamp(enemy.y + enemy.vy * dt, arena.top, arena.bottom);
+    enemy.angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+    enemy.moveBlend += (Math.min(1, Math.hypot(enemy.vx, enemy.vy) / Math.max(1, enemy.speed)) - enemy.moveBlend) * moveBlendRate;
+  };
+
+  if (role === "pressWarden") {
+    if (enemy.specialState === "windup") {
+      move(0, 0);
+      enemy.attackState = "pressWindup";
+      enemy.animationState = "attack";
+      enemy.attackTimer = Math.max(enemy.attackTimer, enemy.specialTimer);
+      if (previousSpecialTimer > 0 && enemy.specialTimer <= 0) {
+        const radius = 238;
+        const hit = distance <= radius + player.radius
+          ? damagePlayer(state, enemy.damage * 1.35, "pressSlam", { critical: true, invulnerability: 0.62, hitStun: 0.34 })
+          : false;
+        state.shockwaves.push({
+          type: "pressSlam", enemy: true, x: enemy.x, y: enemy.y, radius,
+          maxRadius: radius, life: 0.58, maxLife: 0.58, color: "#ff8f42", width: 15,
+        });
+        burst(state, enemy.x, enemy.y, "#ff9f57", 24, 330, 0.66, 7);
+        state.shake = Math.max(state.shake, 15);
+        emit(state, "midBossAttack", { id: "press-warden", signature: "PRESS SLAM", hit, radius, x: enemy.x, y: enemy.y });
+        enemy.specialState = "idle";
+        enemy.specialCooldown = 2.7;
+        enemy.attackState = "pressSlam";
+        enemy.attackTimer = 0.34;
+      }
+      return true;
+    }
+    const movement = distance < 250 ? -0.38 : distance > 365 ? 1 : 0;
+    move(towardX * enemy.speed * movement, towardY * enemy.speed * movement);
+    if (distance < 540 && enemy.specialCooldown <= 0) {
+      enemy.specialState = "windup";
+      enemy.specialTimer = 0.68;
+      enemy.attackState = "pressWindup";
+      enemy.attackTimer = enemy.specialTimer;
+      state.telegraphs.push({
+        id: ++state.nextEntityId,
+        type: "midBossPressSlam",
+        enemy: true,
+        x: enemy.x,
+        y: enemy.y,
+        radius: 238,
+        life: enemy.specialTimer,
+        maxLife: enemy.specialTimer,
+        geometry: { kind: "circle", centerX: enemy.x, centerY: enemy.y, radius: 238 },
+      });
+      emit(state, "midBossTelegraph", { id: "press-warden", signature: "PRESS SLAM", duration: enemy.specialTimer, radius: 238 });
+    }
+    enemy.animationState = enemy.moveBlend > 0.08 ? "move" : "idle";
+    return true;
+  }
+
+  if (role === "thunderManta") {
+    const desiredRange = 610;
+    const radial = clamp((distance - desiredRange) / 180, -0.72, 1);
+    const strafe = finite(enemy.strafeDirection, 1) || 1;
+    const tangentX = -towardY * strafe;
+    const tangentY = towardX * strafe;
+    move(
+      (towardX * radial + tangentX * 0.82) * enemy.speed * 1.28,
+      (towardY * radial + tangentY * 0.82) * enemy.speed * 1.28,
+    );
+    if (distance < 1040 && enemy.specialCooldown <= 0) {
+      const aimAngle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+      for (const spread of [-0.34, -0.17, 0, 0.17, 0.34]) {
+        pushEnemyProjectile(state, enemy.x, enemy.y, aimAngle + spread, 690, enemy.damage * 0.68, "thunderArc", 7, 2.25);
+      }
+      enemy.strafeDirection = -strafe;
+      enemy.specialCooldown = 1.75;
+      enemy.attackState = "arcVolley";
+      enemy.attackTimer = 0.42;
+      enemy.animationState = "attack";
+      enemy.animationTimer = 0.42;
+      enemy.recoil = 1.15;
+      state.shockwaves.push({
+        type: "arcVolley", enemy: true, x: enemy.x, y: enemy.y, radius: 92,
+        maxRadius: 92, life: 0.42, maxLife: 0.42, color: "#8adfff", width: 11,
+      });
+      emit(state, "midBossAttack", { id: "thunder-manta", signature: "ARC VOLLEY", projectiles: 5, x: enemy.x, y: enemy.y });
+    } else if (enemy.attackTimer <= 0) {
+      enemy.animationState = "move";
+    }
+    return true;
+  }
+
+  if (enemy.specialState === "windup") {
+    move(0, 0);
+    enemy.attackState = "rushWindup";
+    enemy.animationState = "attack";
+    enemy.attackTimer = Math.max(enemy.attackTimer, enemy.specialTimer);
+    if (previousSpecialTimer > 0 && enemy.specialTimer <= 0) {
+      enemy.specialState = "rush";
+      enemy.specialTimer = 0.62;
+      enemy.specialHit = false;
+      enemy.attackState = "chimeraRush";
+      enemy.attackTimer = enemy.specialTimer;
+      emit(state, "midBossAttack", { id: "chimera-custodian", signature: "CHIMERA RUSH", phase: "rush", x: enemy.x, y: enemy.y });
+    }
+    return true;
+  }
+  if (enemy.specialState === "rush") {
+    move(enemy.specialDirectionX * 640, enemy.specialDirectionY * 640);
+    enemy.attackState = "chimeraRush";
+    enemy.animationState = "attack";
+    enemy.attackTimer = Math.max(enemy.attackTimer, enemy.specialTimer);
+    const hitRadius = enemy.radius + player.radius + 18;
+    if (!enemy.specialHit && Math.hypot(player.x - enemy.x, player.y - enemy.y) <= hitRadius) {
+      enemy.specialHit = damagePlayer(state, enemy.damage * 1.18, "chimeraRush", { critical: true, invulnerability: 0.68, hitStun: 0.28 });
+    }
+    if (previousSpecialTimer > 0 && enemy.specialTimer <= 0) {
+      enemy.specialState = "idle";
+      enemy.specialCooldown = 2.25;
+      enemy.specialHit = false;
+    }
+    return true;
+  }
+  move(towardX * enemy.speed * 1.22, towardY * enemy.speed * 1.22);
+  if (distance < 920 && enemy.specialCooldown <= 0) {
+    enemy.specialDirectionX = towardX;
+    enemy.specialDirectionY = towardY;
+    enemy.specialState = "windup";
+    enemy.specialTimer = 0.44;
+    enemy.attackState = "rushWindup";
+    enemy.attackTimer = enemy.specialTimer;
+    state.telegraphs.push({
+      id: ++state.nextEntityId,
+      type: "midBossChimeraRush",
+      enemy: true,
+      x: enemy.x,
+      y: enemy.y,
+      life: enemy.specialTimer,
+      maxLife: enemy.specialTimer,
+      geometry: {
+        kind: "capsule",
+        startX: enemy.x,
+        startY: enemy.y,
+        endX: enemy.x + towardX * 520,
+        endY: enemy.y + towardY * 520,
+        collisionHalfWidth: enemy.radius + 16,
+      },
+    });
+    emit(state, "midBossTelegraph", { id: "chimera-custodian", signature: "CHIMERA RUSH", duration: enemy.specialTimer });
+  }
+  enemy.animationState = enemy.moveBlend > 0.08 ? "move" : "idle";
+  return true;
+}
+
 function updateEnemies(state, dt) {
   const player = state.player;
   const arena = activeArena(state);
@@ -2222,6 +2600,11 @@ function updateEnemies(state, dt) {
       enemy.animationState = "hit";
       enemy.attackState = "disabled";
       enemy.attackTimer = Math.max(enemy.attackTimer, enemy.disabledTimer);
+      continue;
+    }
+    if (updateAuthoredMidBossCombat(state, enemy, player, role, distance, towardX, towardY, dt, arena, moveBlendRate)) {
+      if (enemy.hitStun > 0) enemy.animationState = "hit";
+      if (enemy.attackTimer <= 0 && enemy.specialState === "idle") enemy.attackState = "idle";
       continue;
     }
     if (role === "suicideDrone" && enemy.selfDestructArmed) {
@@ -2668,11 +3051,13 @@ function supportCooldownDuration(state, skill) {
   return (rank >= 3 ? 20 : 34 - Math.max(1, rank) * 4) * overdriveCooldownScale;
 }
 
+function manualAbilityDefinitionFor(state, characterId, ability) {
+  const aegisWeaponId = state.player.aegisWeaponId ?? state.player.mainWeaponId;
+  return manualAbilityDefinitionsFor(characterId, aegisWeaponId)[ability];
+}
+
 function manualAbilityDefinition(state, ability) {
-  if (state.player.characterId === "mika") return MIKA_MANUAL_ACTIVE_ABILITIES[ability];
-  return state.player.mainWeaponId === "beam-sword"
-    ? SWORD_MANUAL_ACTIVE_ABILITIES[ability]
-    : MANUAL_ACTIVE_ABILITIES[ability];
+  return manualAbilityDefinitionFor(state, state.player.characterId, ability);
 }
 
 function manualAbilityCooldownDuration(state, ability) {
@@ -2685,14 +3070,14 @@ function hasManualCombatTarget(state) {
 }
 
 function manualAbilityAvailable(state, ability) {
-  const entry = state.manualAbilities[ability];
+  const entry = ensureManualAbilityBanks(state)[ability];
   if (!entry || state.player.dead || state.player.stunTimer > 0 || entry.cooldown > 0) return false;
   return ability === "helixTempest" ? hasManualCombatTarget(state) : true;
 }
 
 function rejectManualAbility(state, ability, reason) {
   const definition = manualAbilityDefinition(state, ability);
-  const entry = state.manualAbilities[ability];
+  const entry = ensureManualAbilityBanks(state)[ability];
   emit(state, "manualAbilityRejected", {
     ability: definition.id,
     key: definition.key,
@@ -2704,7 +3089,7 @@ function rejectManualAbility(state, ability, reason) {
 
 function commitManualAbility(state, ability, payload = {}) {
   const definition = manualAbilityDefinition(state, ability);
-  const entry = state.manualAbilities[ability];
+  const entry = ensureManualAbilityBanks(state)[ability];
   const cooldown = manualAbilityCooldownDuration(state, ability);
   entry.cooldown = cooldown;
   entry.maxCooldown = cooldown;
@@ -2752,6 +3137,20 @@ function pushSwordManualEffect(state, type, x, y, radius, life, extra = {}) {
   };
   state.swordManualAbilities.push(effect);
   return effect;
+}
+
+function applyMikaHeartGuard(state, hits) {
+  const rank = state.build.skills.heartGuard || 0;
+  if (rank <= 0 || hits <= 0) return 0;
+  const guardMax = 18 + rank * 14;
+  const restored = 6 + rank * 5 + Math.min(6, hits) * 2;
+  state.player.shieldMax = Math.max(state.player.shieldMax, guardMax);
+  const before = state.player.shield;
+  state.player.shield = Math.min(state.player.shieldMax, state.player.shield + restored);
+  state.player.shieldDelay = Math.min(state.player.shieldDelay, 0.35);
+  const applied = state.player.shield - before;
+  emit(state, "mikaHeartGuard", { rank, hits, restored: applied, shield: state.player.shield, shieldMax: state.player.shieldMax });
+  return applied;
 }
 
 function triggerSpectralSwordArray(state) {
@@ -2851,6 +3250,7 @@ function triggerPrismRicochet(state) {
     for (const enemy of targets) if (damageEnemy(state, enemy, damage, "prismRicochet") > 0) hits += 1;
   }
   pushSwordManualEffect(state, "prismRicochet", player.x, player.y, radius, 0.9, { atlas: "mika", hits });
+  applyMikaHeartGuard(state, hits);
   state.shake = Math.max(state.shake, 8);
   emit(state, "mikaManualAbility", { ability: "prismRicochet", x: player.x, y: player.y, radius, hits });
   return commitManualAbility(state, "empPulse", { hits, radius });
@@ -2869,6 +3269,7 @@ function triggerRibbonVortex(state) {
     }
   }
   pushSwordManualEffect(state, "ribbonVortex", player.x, player.y, radius, 1.05, { atlas: "mika", hits });
+  applyMikaHeartGuard(state, hits);
   state.shake = Math.max(state.shake, 12);
   emit(state, "mikaManualAbility", { ability: "ribbonVortex", x: player.x, y: player.y, radius, hits });
   return commitManualAbility(state, "aegisWard", { hits, radius });
@@ -2899,6 +3300,7 @@ function triggerCometDuet(state) {
   pushSwordManualEffect(state, "cometDuet", (startX + player.x) * 0.5, (startY + player.y) * 0.5, 390, 0.82, {
     atlas: "mika", startX, startY, endX: player.x, endY: player.y, angle: Math.atan2(direction.y, direction.x), hits,
   });
+  applyMikaHeartGuard(state, hits);
   state.shake = Math.max(state.shake, 17);
   emit(state, "mikaManualAbility", { ability: "cometDuet", startX, startY, endX: player.x, endY: player.y, hits });
   return commitManualAbility(state, "stratosRun", { hits });
@@ -2910,6 +3312,7 @@ function triggerHeartbeatCarnival(state) {
   const damage = 1550 * player.damageMultiplier * player.weaponDamageMultiplier;
   const hits = applySwordAbilityArea(state, player.x, player.y, radius, damage, "heartbeatCarnival", true);
   pushSwordManualEffect(state, "heartbeatCarnival", player.x, player.y, radius, 1.5, { atlas: "mika", hits });
+  applyMikaHeartGuard(state, hits);
   state.shake = Math.max(state.shake, 25);
   state.shockwaves.push({ type: "heartbeatCarnival", x: player.x, y: player.y, maxRadius: radius, life: 0.8, maxLife: 0.8, color: "#ff75d5", width: 18 });
   emit(state, "mikaManualAbility", { ability: "heartbeatCarnival", x: player.x, y: player.y, radius, hits });
@@ -3248,17 +3651,22 @@ function updateManualAbilityEntities(state, dt) {
 }
 
 function updateManualAbilities(state, input, dt) {
-  for (let index = 0; index < MANUAL_ABILITY_KEYS.length; index += 1) {
-    const ability = MANUAL_ABILITY_KEYS[index];
-    const entry = state.manualAbilities[ability];
-    entry.cooldown = Math.max(0, finite(entry.cooldown) - dt);
-    if (entry.cooldown <= 0) entry.maxCooldown = manualAbilityCooldownDuration(state, ability);
+  const activeAbilities = ensureManualAbilityBanks(state);
+  // Both squad members recover while tagged out, but their clocks never
+  // merge. This preserves the old continuously-ticking cooldown behavior.
+  for (const characterId of ["aegis", "mika"]) {
+    const bank = state.manualAbilityBanks[characterId];
+    for (const ability of MANUAL_ABILITY_KEYS) {
+      const entry = bank[ability];
+      entry.cooldown = Math.max(0, finite(entry.cooldown) - dt);
+      if (entry.cooldown <= 0) entry.maxCooldown = manualAbilityDefinitionFor(state, characterId, ability).baseCooldown;
+    }
   }
   for (let index = 0; index < MANUAL_ABILITY_KEYS.length; index += 1) {
     const ability = MANUAL_ABILITY_KEYS[index];
     const active = input?.[MANUAL_INPUT_FIELDS[index]];
     if (!active) continue;
-    const entry = state.manualAbilities[ability];
+    const entry = activeAbilities[ability];
     if (state.player.dead) {
       rejectManualAbility(state, ability, "dead");
       continue;
@@ -3409,6 +3817,7 @@ function updateAllies(state, dt) {
           pierce: droneRank >= 3 ? 1 : 0,
           splash: 0,
           hitIds: droneRank >= 3 ? [] : null,
+          accuracyEligible: false,
         });
         ally.fireCooldown = Math.max(0.16, 0.4 - droneRank * 0.05);
         ally.attackState = "shoot";
@@ -3440,6 +3849,7 @@ function updateAllies(state, dt) {
             pierce,
             splash: 0,
             hitIds: pierce > 0 ? [] : null,
+            accuracyEligible: false,
           });
         }
         ally.fireCooldown = Math.max(0.2, 0.42 - sentryRank * 0.05);
@@ -3498,7 +3908,11 @@ function buildRewardOffer(state, batchLevels = 1) {
     if (state.player.characterId === "mika" && category === "weapon" && (state.build.weapons.haloMatrix || 0) === 0) {
       pool = ["haloMatrix"];
     }
-    if (state.player.mainWeaponId === "pulse-rifle" && category === "skill" && state.rewardCycle === 0) {
+    if (state.player.characterId === "mika" && category === "skill" && state.rewardCycle < 2) {
+      const identitySkills = pool.filter((candidate) => candidate === "prismTempo" || candidate === "heartGuard");
+      if (identitySkills.length) pool = identitySkills;
+    }
+    if (state.player.characterId !== "mika" && state.player.mainWeaponId === "pulse-rifle" && category === "skill" && state.rewardCycle === 0) {
       const openingCombatSkills = pool.filter((candidate) => ["airstrike", "omegaLaser", "chain", "nova"].includes(candidate));
       if (openingCombatSkills.length) pool = openingCombatSkills;
     }
@@ -3702,6 +4116,7 @@ function beginRouteClearTransition(state) {
     duration: ROUTE_CLEAR_WARNING_DURATION,
     progress: 0,
   };
+  syncExpeditionForwardLimit(state);
   emit(state, "swarmCleared", { kills: state.killedEnemies });
   emit(state, "routeClearWarning", {
     duration: ROUTE_CLEAR_WARNING_DURATION,
@@ -3760,8 +4175,9 @@ function updateRouteClearTransition(state, dt) {
 
 function updateSwarmSpawning(state, dt) {
   const wave = SURGE_WAVES[state.surgeIndex];
+  const routeAnchor = state.expedition ? waveRouteAnchorDistance(state) : 0;
   const triggerReached = state.expedition
-    ? !hasLivingEnemy(state.enemies)
+    ? !hasLivingEnemy(state.enemies) && state.expedition.distance + 0.001 >= routeAnchor
     : state.time >= finite(wave?.warnAt, Infinity);
   if (wave
     && state.spawnedEnemies < state.enemyBudget
@@ -3784,6 +4200,7 @@ function updateSwarmSpawning(state, dt) {
       count: deploymentCount,
       startAt,
       startsIn: Math.max(0, startAt - state.time),
+      routeAnchor,
     };
     emit(state, "surgeWarning", {
       wave: state.surgeIndex + 1,
@@ -3793,6 +4210,7 @@ function updateSwarmSpawning(state, dt) {
       clearProgress: state.expedition
         ? clamp(state.killedEnemies / Math.max(1, state.enemyBudget), 0, 1)
         : null,
+      routeAnchor: state.expedition ? routeAnchor : null,
     });
   }
   if (wave && state.surgeWarning?.index === state.surgeIndex) {
@@ -3804,6 +4222,7 @@ function updateSwarmSpawning(state, dt) {
       state.activeSurge = { index: state.surgeIndex, label: wave.label, count: deploymentCount, remaining: state.surgeQueued, rate: wave.rate };
       state.surgeWarning = null;
       state.surgeIndex += 1;
+      syncExpeditionForwardLimit(state);
       emit(state, "surgeStart", { wave: state.surgeIndex, label: wave.label, count: deploymentCount });
       state.shake = Math.max(state.shake, 7);
     }
@@ -3824,6 +4243,7 @@ function updateSwarmSpawning(state, dt) {
       state.surgeQueued -= 1;
       spawnedThisStep += 1;
     }
+    if (state.expedition && state.spawnedEnemies >= state.enemyBudget) syncExpeditionForwardLimit(state);
     if (state.activeSurge) state.activeSurge.remaining = state.surgeQueued;
     if (state.surgeQueued <= 0 && state.activeSurge) {
       emit(state, "surgeDeployed", { wave: state.activeSurge.index + 1, label: state.activeSurge.label });
@@ -3833,6 +4253,10 @@ function updateSwarmSpawning(state, dt) {
   state.stats.peakEnemies = Math.max(state.stats.peakEnemies, state.enemies.length);
   if (state.spawnedEnemies >= state.enemyBudget && state.killedEnemies >= state.enemyBudget && state.enemies.length === 0) {
     if (state.expedition) {
+      // Narrative traces are authored route beats, not optional pickups. The
+      // first route's 23,000-unit final combat band lets a cleared squad reach
+      // MOSS at 21,800 before the automatic boss transition can begin.
+      if (state.expedition.traces.some((trace) => !trace.triggered)) return;
       if (state.expedition.midBoss && !state.expedition.midBoss.spawned) {
         spawnRouteMidBoss(state);
         return;
@@ -5032,6 +5456,7 @@ export function stepSwarm(state, input, dt) {
     return state;
   }
 
+  syncExpeditionForwardLimit(state);
   updatePlayer(state, input, worldDelta);
   updateExpedition(state, input, worldDelta);
   updateManualAbilities(state, input, worldDelta);
@@ -5105,18 +5530,46 @@ function buildExpeditionMinimap(state) {
     liveIndex += 1;
   }
 
+  let activeGateCount = 0;
+  for (const portal of state.spawnPortals) {
+    if (portal.type === "spawnGate" && portal.active !== false && finite(portal.life) > 0) activeGateCount += 1;
+  }
+  // Prefer the newest materializing portals when more than five overlap at
+  // extreme deployment rates. The payload remains deterministic and bounded.
+  const gates = [];
+  for (let index = state.spawnPortals.length - 1; index >= 0 && gates.length < MINIMAP_GATE_SAMPLE_CAP; index -= 1) {
+    const portal = state.spawnPortals[index];
+    if (portal.type !== "spawnGate" || portal.active === false || finite(portal.life) <= 0) continue;
+    const point = normalizeExpeditionMinimapPoint(state, portal.x, portal.y);
+    const maxLife = Math.max(0.001, finite(portal.maxLife, portal.life));
+    gates.push({
+      id: portal.id,
+      gateId: portal.gateId,
+      x: point.x,
+      y: point.y,
+      active: true,
+      materializing: true,
+      progress: clamp(1 - portal.life / maxLife, 0, 1),
+    });
+  }
+  gates.reverse();
+
   const player = state.phase === "boss"
     ? { x: 1, y: 0.5 }
     : normalizeExpeditionMinimapPoint(state, state.player.x, state.player.y);
   return {
     player,
     enemies,
+    gates,
     liveEnemyCount,
+    activeGateCount,
     sampleCap: MINIMAP_ENEMY_SAMPLE_CAP,
+    gateSampleCap: MINIMAP_GATE_SAMPLE_CAP,
   };
 }
 
 export function getSwarmHud(state) {
+  ensureManualAbilityBanks(state);
   const player = state.player;
   const remaining = Math.max(0, state.enemyBudget - state.killedEnemies);
   const cooldownMax = (skill, current, stored) => (current > 0 && stored > 0 ? stored : supportCooldownDuration(state, skill));
@@ -5161,6 +5614,10 @@ export function getSwarmHud(state) {
       progress: state.expedition.progress,
       checkpoint: state.expedition.checkpointIndex,
       objective: state.expedition.objective,
+      waitingForAdvance: state.expedition.waitingForAdvance,
+      atCombatBand: state.expedition.atCombatBand,
+      nextWaveAnchor: state.expedition.nextWaveAnchor,
+      forwardLimitDistance: state.expedition.forwardLimitDistance,
       reachedGate: state.expedition.reachedGate,
       clearTransition: state.expedition.clearTransition
         ? { ...state.expedition.clearTransition }

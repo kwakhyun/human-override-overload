@@ -1,6 +1,7 @@
 {
-  "name": "game",
-  "version": "0.0.0",
+  "name": "human-override-overload",
+  "version": "1.0.0",
+  "description": "Korean-first 2D action survivor campaign portfolio for HUMAN OVERRIDE: OVERLOAD",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,6 +11,7 @@
     "test": "node --test tests/*.test.mjs",
     "test:sites": "node --test tests/sites-worker.test.mjs",
     "typecheck": "tsc --noEmit",
+    "analyze:content": "node scripts/report-content-balance.mjs",
     "generate:agent-voice": "node scripts/generate-google-agent-voice.mjs"
   },
   "dependencies": {

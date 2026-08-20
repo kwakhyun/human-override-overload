@@ -12,8 +12,9 @@ test("App connects save slots to the base, hierarchical airship selection, retur
   assert.match(app, /createCampaignSlot\(campaign, slotId\)/);
   assert.match(app, /completeRegion\(campaign, activeSlotId, regionId/);
   assert.match(app, /saveCampaign\(completed\)/);
-  assert.match(app, /createOverloadGame\(host,[\s\S]*\}, \{ regionId, combatBonuses, mainWeaponId, characterId, mikaUnlocked, startSuspended: preparingRef\.current \}\)/);
-  assert.match(app, /status === "victory"[\s\S]*setScreen\("return"\)/);
+  assert.match(app, /createOverloadGame\(host,[\s\S]*combatBonuses: runtimeCombatBonusesRef\.current\.value[\s\S]*startSuspended: preparingRef\.current/);
+  assert.match(app, /status === "victory"[\s\S]*setScreen\("result"\)/);
+  assert.match(app, /nextStep === "return"[\s\S]*setScreen\("return"\)/);
   assert.match(app, /getRegionClusters\(\)/);
   assert.match(app, /completeOuterSectorBriefing\(campaign, activeSlotId\)/);
   assert.match(app, /larkAlert=\{larkAlert\}/);
@@ -53,7 +54,8 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(styles, /\.region-sortie-briefing \.region-sortie-intel \{ margin-top: 15px; grid-template-columns: 1fr; \}/);
   assert.match(screens, /전투 중 <kbd>T<\/kbd>로 두 캐릭터를 교대합니다/);
   assert.match(app, /setCampaignCharacter\(campaign, activeSlotId, characterId\)/);
-  assert.match(screens, /onClick=\{\(\) => onSelect\(selectedRegion\.id\)\}/);
+  assert.match(screens, /disabled=\{!formationConfirmed\}/);
+  assert.match(screens, /onClick=\{\(\) => formationConfirmed && onSelect\(selectedRegion\.id\)\}/);
   assert.match(screens, /event\.key !== "Escape"/);
   assert.match(app, /document\.addEventListener\("pointerdown", handleButtonPointer, true\)/);
   for (const cue of ["uiHover", "uiConfirm", "uiClose"]) assert.match(sounds, new RegExp(`case "${cue}"`));
@@ -166,7 +168,8 @@ test("MIKA unlocks on the first Wrong Engine victory and receives a one-time rec
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
   assert.match(characters, /unlockRegionId: "wrong-engine-core"/);
-  assert.match(app, /const mikaJustUnlocked = regionId === DEFAULT_REGION_ID/);
+  assert.match(app, /consumePostVictoryScene\("recruit"\)/);
+  assert.match(app, /getCampaignPostVictorySteps\(nextCampaign, slotId\)\[0\]/);
   assert.match(app, /setScreen\("recruit"\)/);
   assert.match(app, /<MikaRecruitScreen/);
   assert.match(screens, /export const MIKA_RECRUIT_DIALOGUE/);
@@ -190,7 +193,7 @@ test("Glass Dune unlocks the beam sword and opens its short-cooldown skill guide
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
   assert.match(weapons, /BEAM_SWORD_UNLOCK_REGION_ID = "glass-dune"/);
-  assert.match(app, /const swordJustUnlocked = regionId === "glass-dune"/);
+  assert.match(app, /consumePostVictoryScene\("sword-guide"\)/);
   assert.match(app, /<AbilityGuideScreen[\s\S]*guideType="sword"/);
   assert.match(screens, /SWORD_ABILITY_GUIDE[\s\S]*cooldown: 6[\s\S]*cooldown: 9[\s\S]*cooldown: 15[\s\S]*cooldown: 45/);
   assert.match(screens, /disabled=\{!weaponUnlocked\}/);
@@ -257,7 +260,7 @@ test("first-sortie briefing separates automatic build skills from four new manua
   assert.doesNotMatch(app, /!nextSlot\?\.abilityGuideSeen && !debugGuideBypass/);
   assert.match(app, /new URLSearchParams\(window\.location\.search\)\.get\("debug"\) === "1"/);
   assert.match(app, /completeAbilityGuide\(campaign, activeSlotId\)/);
-  assert.match(app, /completeCombatOverlay\(campaign, activeSlotId\)/);
+  assert.match(app, /completeCombatOverlay\(currentCampaign, activeSlotId\)/);
   assert.match(app, /!activeSlot\.combatOverlaySeen && !debugGuideBypass/);
   assert.match(app, /showCombatTutorial=\{Boolean/);
   assert.match(app, /function CombatAbilityTutorialOverlay/);

@@ -3,6 +3,11 @@ import { access } from "node:fs/promises";
 import test from "node:test";
 
 import {
+  REGION_BOSS_PATTERNS,
+  REGION_MID_BOSS_PROFILES,
+} from "../src/game/content/combatCatalog.js";
+
+import {
   BASE_NPCS,
   CAMPAIGN_CHAPTERS,
   CAMPAIGN_REGIONS,
@@ -58,6 +63,20 @@ test("campaign content defines six sectors across the inner network and outer fr
     assert.ok(region.midBoss.maxHp >= 52_000);
   }
   assert.equal(getRegion("missing-region"), null);
+});
+
+test("campaign boss rotations and outer midboss identities share the runtime combat catalog", () => {
+  for (const [regionId, patterns] of Object.entries(REGION_BOSS_PATTERNS)) {
+    assert.equal(getRegion(regionId).boss.patterns, patterns);
+  }
+  for (const [regionId, profile] of Object.entries(REGION_MID_BOSS_PROFILES)) {
+    const midBoss = getRegion(regionId).midBoss;
+    assert.equal(midBoss.id, profile.id);
+    assert.equal(midBoss.combatRole, profile.combatRole);
+    assert.equal(midBoss.signature, profile.signature);
+    assert.equal(midBoss.trigger, "route-budget-cleared");
+    assert.equal("triggerProgress" in midBoss, false);
+  }
 });
 
 test("region clusters expose a two-step 1—3, 4—6, and future 7—9 hierarchy", () => {

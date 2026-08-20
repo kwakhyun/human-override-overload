@@ -83,6 +83,8 @@ export const MIKA_RECRUIT_DIALOGUE = Object.freeze([
 ]);
 
 const ABILITY_CATEGORY_KO = Object.freeze({
+  "BASIC CONTROL": "필수 조작",
+  "SURVIVAL CONTROL": "생존 조작",
   "TACTICAL UTILITY": "전술 유틸리티",
   "SURVIVAL SUPPORT": "생존 지원",
   "FIRE SUPPORT": "화력 지원",
@@ -107,10 +109,13 @@ const WORLD_TERM_KO = Object.freeze({
 });
 
 function localizeWorldText(value = "") {
-  return Object.entries(WORLD_TERM_KO).reduce(
+  const protectedWrongEngine = "__THE_WRONG_ENGINE_PROPER_NAME__";
+  const source = String(value).replaceAll("THE WRONG ENGINE", protectedWrongEngine);
+  const localized = Object.entries(WORLD_TERM_KO).reduce(
     (copy, [term, korean]) => copy.replaceAll(term, korean),
-    String(value),
+    source,
   );
+  return localized.replaceAll(protectedWrongEngine, "THE WRONG ENGINE");
 }
 
 function localizeThreatText(value = "") {
@@ -276,6 +281,47 @@ export const MANUAL_ABILITY_GUIDE = Object.freeze([
   }),
 ]);
 
+export const STARTER_BRIEFING_GUIDE = Object.freeze([
+  Object.freeze({
+    key: "WASD",
+    id: "starterMovement",
+    name: "MOVE & AUTO ATTACK",
+    koreanName: "이동과 자동 공격",
+    category: "BASIC CONTROL",
+    cooldownLabel: "상시",
+    icon: "emp",
+    summary: "WASD 또는 방향키로 위험 범위를 벗어나세요. 기본 공격은 포인터 방향으로 자동 발사됩니다.",
+    details: ["공격 버튼을 연타할 필요가 없습니다.", "모바일에서는 빈 곳을 드래그해 이동하며 가까운 적을 자동 조준합니다."],
+    timing: "적을 화면 한쪽에 두고 이동하면 조준과 회피를 함께 관리하기 쉽습니다.",
+    quote: "먼저 움직여. 기본 사격은 기체가 맡을 테니 넌 안전한 길을 골라.",
+    exampleAssetKey: "tutorialEmpPulse",
+    exampleAlt: "실제 전투에서 이동하며 자동 공격하는 이지스",
+    callouts: Object.freeze([
+      Object.freeze({ label: "이동 경로", x: 36, y: 64 }),
+      Object.freeze({ label: "포인터 조준", x: 61, y: 36 }),
+    ]),
+  }),
+  Object.freeze({
+    key: "SPACE",
+    id: "starterSurvival",
+    name: "PHASE DASH & ACTIVE SKILLS",
+    koreanName: "대시와 위기 대응",
+    category: "SURVIVAL CONTROL",
+    cooldownLabel: "충전식",
+    icon: "ward",
+    summary: "붉은 경고선을 넘을 때 Space로 대시하세요. Q · E · F · R은 필요한 순간에 직접 쓰는 전술 스킬입니다.",
+    details: ["대시 중에는 짧게 피해를 받지 않습니다.", "각 전술 스킬은 실제 교전에서 필요한 순간에 한 번씩 안내합니다."],
+    timing: "첫 출격에서는 이동과 대시만 기억하고, 스킬은 화면의 강조 안내를 따라 사용하세요.",
+    quote: "전부 외울 필요 없어. 위험하면 Space, 스킬은 내가 필요한 순간에 짚어 줄게.",
+    exampleAssetKey: "tutorialAegisWard",
+    exampleAlt: "실제 전투에서 대시와 방어 스킬로 위험을 넘기는 이지스",
+    callouts: Object.freeze([
+      Object.freeze({ label: "붉은 위험 경고", x: 63, y: 35 }),
+      Object.freeze({ label: "대시로 통과", x: 46, y: 60 }),
+    ]),
+  }),
+]);
+
 export const SWORD_ABILITY_GUIDE = Object.freeze([
   Object.freeze({
     key: "Q", id: "spectralSwordArray", name: "SPECTRAL SWORD ARRAY", koreanName: "환검진", category: "SWORD CONTROL", cooldown: 6, icon: "sword",
@@ -377,7 +423,7 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
   );
 }
 
-export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
+export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose }) {
   if (!facility) return null;
   if (facility.id === "augmentation") {
     return <CharacterInformationPanel facility={facility} onPurchase={onPurchase} onClose={onClose} onCharacterChange={facility.onCharacterChange} />;
@@ -428,6 +474,28 @@ export function BaseFacilityPanel({ facility, onPurchase, onClose }) {
           );
         })}
       </div>
+      {(facility.exchanges || []).length > 0 && (
+        <section className="facility-exchange-panel" aria-labelledby="facility-exchange-title">
+          <header>
+            <div><small>남는 자원 활용</small><h3 id="facility-exchange-title">응용 자원 제작</h3></div>
+            <span>한 번씩 즉시 제작합니다.</span>
+          </header>
+          <div>
+            {facility.exchanges.map((exchange) => (
+              <article className={exchange.canExchange ? "is-ready" : ""} key={exchange.id}>
+                <div><small>{exchange.name}</small><strong>{exchange.koreanName}</strong></div>
+                <p>{exchange.description}</p>
+                <footer>
+                  <span><b>{exchange.costLabel}</b><ArrowRight weight="bold" /><em>{exchange.rewardLabel}</em></span>
+                  <button type="button" className="command-ui-button" data-ui-sound={exchange.canExchange ? "uiConfirm" : "denied"} disabled={!exchange.canExchange} onClick={() => onExchange?.(exchange.id)}>
+                    {exchange.lockedReason ? <><Lock weight="fill" /> {exchange.lockedReason}</> : <><Brain weight="fill" /> 1회 제작</>}
+                  </button>
+                </footer>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
     </section>
   );
 }
@@ -623,7 +691,7 @@ export function MikaRecruitScreen({ assets, onComplete }) {
   );
 }
 
-export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onCharacterChange, onCloseFacility, onBoard, onDefense, onTitle }) {
+export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onExchangeResources, onCharacterChange, onCloseFacility, onBoard, onDefense, onTitle }) {
   const background = assetSource(assets?.homeBase);
   const completed = campaign?.completedRegionIds?.length || 0;
   const activeCharacterId = campaign?.loadout?.characterId || "aegis";
@@ -694,7 +762,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
       </aside>
 
       <NpcDialoguePanel npc={activeNpc} assets={assets} lineIndex={lineIndex} onAdvance={onAdvanceNpc} onClose={onCloseNpc} onFacility={onOpenFacility} onInteraction={onNpcInteraction} />
-      <BaseFacilityPanel facility={activeFacility ? { ...activeFacility, onCharacterChange } : null} onPurchase={onPurchaseUpgrade} onClose={onCloseFacility} />
+      <BaseFacilityPanel facility={activeFacility ? { ...activeFacility, onCharacterChange } : null} onPurchase={onPurchaseUpgrade} onExchange={onExchangeResources} onClose={onCloseFacility} />
     </main>
   );
 }
@@ -753,7 +821,7 @@ export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, o
 
 export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, onBack }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const guideEntries = guideType === "sword" ? SWORD_ABILITY_GUIDE : MANUAL_ABILITY_GUIDE;
+  const guideEntries = guideType === "sword" ? SWORD_ABILITY_GUIDE : guideType === "starter" ? STARTER_BRIEFING_GUIDE : MANUAL_ABILITY_GUIDE;
   const ability = guideEntries[activeIndex];
   const ActiveIcon = ABILITY_ICON[ability.icon] || Crosshair;
   const portrait = assetSource(assets?.controlOfficer);
@@ -762,7 +830,7 @@ export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, on
   const final = activeIndex === guideEntries.length - 1;
 
   return (
-    <main className={`campaign-shell ability-guide-screen${guideType === "sword" ? " is-sword-guide" : ""}`}>
+    <main className={`campaign-shell ability-guide-screen${guideType === "sword" ? " is-sword-guide" : guideType === "starter" ? " is-starter-guide" : ""}`}>
       {background && <img className="campaign-background" src={background} alt="헤이븐-09 전술 관제실" />}
       <div className="ability-guide-shade" aria-hidden="true" />
       <aside className="ability-guide-rhea" aria-label="전술 관제관 레아">
@@ -773,15 +841,15 @@ export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, on
       <section className="ability-guide-console" aria-labelledby="ability-guide-title">
         <header>
           <div>
-            <small>{guideType === "sword" ? "신규 장비 해금 · 공명 검술 실전 교본" : "헤이븐-09 · 실제 전투 화면으로 배우기"}</small>
-            <h1 id="ability-guide-title">{guideType === "sword" ? "빔 소드 전용 Q · E · F · R" : "Q · E · F · R, 이것만 기억하세요"}</h1>
+            <small>{guideType === "sword" ? "신규 장비 해금 · 공명 검술 실전 교본" : guideType === "starter" ? "첫 출격 · 필수 조작 2단계" : "헤이븐-09 · 실제 전투 화면으로 배우기"}</small>
+            <h1 id="ability-guide-title">{guideType === "sword" ? "빔 소드 전용 Q · E · F · R" : guideType === "starter" ? "이동과 생존, 두 가지만 먼저" : "Q · E · F · R, 이것만 기억하세요"}</h1>
           </div>
           {onBack && <button type="button" className="campaign-back" onClick={onBack}><ArrowLeft weight="bold" /> 기지로</button>}
         </header>
 
         <div className="ability-circuit-separation" role="note" aria-label="자동 스킬과 수동 스킬의 차이">
-          <span><i>{guideType === "sword" ? "기본" : "자동"}</i><b>{guideType === "sword" ? "자동 근접 베기" : "레벨업 기술"}</b><em>{guideType === "sword" ? "주변 적 자동 공격" : "자동 발동"}</em></span>
-          <span className="is-manual"><i>직접</i><b>Q · E · F · R</b><em>{guideType === "sword" ? "짧은 주기의 전용 검술" : "직접 사용 · 레벨업 기술과 별도"}</em></span>
+          <span><i>{guideType === "sword" ? "기본" : "자동"}</i><b>{guideType === "sword" ? "자동 근접 베기" : guideType === "starter" ? "기본 공격" : "레벨업 기술"}</b><em>{guideType === "sword" ? "주변 적 자동 공격" : guideType === "starter" ? "포인터 방향 자동 발사" : "자동 발동"}</em></span>
+          <span className="is-manual"><i>직접</i><b>{guideType === "starter" ? "이동 · 대시" : "Q · E · F · R"}</b><em>{guideType === "sword" ? "짧은 주기의 전용 검술" : guideType === "starter" ? "스킬은 전투 중 안내" : "직접 사용 · 레벨업 기술과 별도"}</em></span>
         </div>
 
         <nav className="ability-guide-tabs" aria-label="사용 스킬 선택">
@@ -795,7 +863,7 @@ export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, on
                 onClick={() => setActiveIndex(index)}
                 key={entry.id}
               >
-                <kbd>{entry.key}</kbd><Icon weight="fill" /><span><b>{entry.koreanName}</b><small>{entry.cooldown}초</small></span>
+                <kbd>{entry.key}</kbd><Icon weight="fill" /><span><b>{entry.koreanName}</b><small>{entry.cooldownLabel || `${entry.cooldown}초`}</small></span>
               </button>
             );
           })}
@@ -820,7 +888,7 @@ export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, on
           <article className="ability-guide-copy">
             <header>
               <div className="ability-guide-emblem"><ActiveIcon weight="fill" /><kbd>{ability.key}</kbd></div>
-              <div><small>{ABILITY_CATEGORY_KO[ability.category] || ability.category} · {ability.cooldown}초</small><h2>{ability.koreanName}</h2><span>{ability.name}</span></div>
+              <div><small>{ABILITY_CATEGORY_KO[ability.category] || ability.category} · {ability.cooldownLabel || `${ability.cooldown}초`}</small><h2>{ability.koreanName}</h2><span>{ability.name}</span></div>
             </header>
             <p>{ability.summary}</p>
             <ul>{ability.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>
@@ -833,7 +901,7 @@ export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, on
           <small>{activeIndex + 1} / {guideEntries.length}</small>
           <button type="button" disabled={activeIndex === 0} onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}><ArrowLeft weight="bold" /> 이전</button>
           <button type="button" className="ability-guide-next" onClick={final ? onComplete : () => setActiveIndex((index) => Math.min(guideEntries.length - 1, index + 1))}>
-            {final ? guideType === "sword" ? "검술 교본 확인 완료" : "브리핑 완료 · 출격" : "다음 스킬"}<ArrowRight weight="bold" />
+            {final ? guideType === "sword" ? "검술 교본 확인 완료" : guideType === "starter" ? "필수 조작 확인 · 출격" : "브리핑 완료 · 출격" : guideType === "starter" ? "다음 조작" : "다음 스킬"}<ArrowRight weight="bold" />
           </button>
         </footer>
       </section>
@@ -850,6 +918,11 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
   const [selectedClusterId, setSelectedClusterId] = useState(null);
   const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [hoveredRegionId, setHoveredRegionId] = useState(null);
+  const [confirmedWeaponId, setConfirmedWeaponId] = useState(null);
+  const availableCharacters = useMemo(
+    () => (characters || []).filter((character) => character?.unlocked !== false),
+    [characters],
+  );
   const selectedCluster = useMemo(
     () => (clusters || []).find((cluster) => cluster.id === selectedClusterId) || null,
     [clusters, selectedClusterId],
@@ -867,12 +940,25 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
     () => (regions || []).find((region) => region.id === selectedRegionId) || null,
     [selectedRegionId, regions],
   );
+  const selectedCharacter = availableCharacters.find((character) => character.id === selectedCharacterId) || availableCharacters[0] || null;
+  const equippedWeapon = weapons.find((weapon) => weapon.id === equippedWeaponId) || null;
+  const equippedWeaponUnlocked = Boolean(equippedWeapon && (!equippedWeapon.unlockRegionId || completed.has(equippedWeapon.unlockRegionId)));
+  const formationConfirmed = Boolean(selectedCharacter && equippedWeaponUnlocked && confirmedWeaponId === equippedWeaponId);
+
+  useEffect(() => {
+    setConfirmedWeaponId(null);
+  }, [selectedRegionId]);
+
+  useEffect(() => {
+    if (confirmedWeaponId && confirmedWeaponId !== equippedWeaponId) setConfirmedWeaponId(null);
+  }, [confirmedWeaponId, equippedWeaponId]);
 
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
       if (selectedRegionId) {
+        setConfirmedWeaponId(null);
         setSelectedRegionId(null);
         return;
       }
@@ -961,7 +1047,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
               onMouseLeave={() => setHoveredRegionId(null)}
               onFocus={() => isUnlocked && setHoveredRegionId(region.id)}
               onBlur={() => setHoveredRegionId(null)}
-              onClick={() => setSelectedRegionId(region.id)}
+              onClick={() => { setConfirmedWeaponId(null); setSelectedRegionId(region.id); }}
               key={region.id}
             >
               <span>작전 {String(region.order).padStart(2, "0")}</span>
@@ -984,7 +1070,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
       {selectedRegion && (
         <section className="region-sortie-dialog" role="dialog" aria-modal="true" aria-labelledby="region-sortie-title">
           <header className="region-sortie-command-header">
-            <button type="button" className="region-sortie-close" data-ui-sound="uiClose" onClick={() => setSelectedRegionId(null)} aria-label="작전 상세 닫기">
+            <button type="button" className="region-sortie-close" data-ui-sound="uiClose" onClick={() => { setConfirmedWeaponId(null); setSelectedRegionId(null); }} aria-label="작전 상세 닫기">
               <ArrowLeft weight="bold" /> 구역 목록 <kbd>ESC</kbd>
             </button>
             <div className="region-sortie-kicker"><span>{selectedRegion.chapterLabel}</span><i>{completed.has(selectedRegion.id) ? "해방 완료" : "첫 공략"}</i></div>
@@ -1013,7 +1099,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
                 <span>전투 중 <kbd>T</kbd>로 두 캐릭터를 교대합니다.</span>
               </header>
               <div className="sortie-character-options">
-                {characters.map((character) => {
+                {availableCharacters.map((character) => {
                   const selected = character.id === selectedCharacterId;
                   const portrait = assetSource(assets?.[character.id === "mika" ? "mikaPortrait" : "playerPortrait"]);
                   return (
@@ -1022,7 +1108,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
                       className={`sortie-character-card is-${character.accent}${selected ? " is-selected" : ""}`}
                       aria-pressed={selected}
                       data-ui-sound={selected ? "click" : "uiConfirm"}
-                      onClick={() => onCharacterChange?.(character.id)}
+                      onClick={() => character.unlocked !== false && onCharacterChange?.(character.id)}
                       key={character.id}
                     >
                       {portrait && <img src={portrait} alt={`${character.koreanName} 출격 초상화`} />}
@@ -1055,7 +1141,11 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
                       aria-label={weaponUnlocked ? `${weapon.koreanName} 선택` : `${weapon.koreanName} 잠김. 유리 사구 최초 클리어 필요`}
                       data-ui-sound={weaponUnlocked ? equipped ? "click" : "uiConfirm" : "denied"}
                       disabled={!weaponUnlocked}
-                      onClick={() => weaponUnlocked && onWeaponChange?.(weapon.id)}
+                      onClick={() => {
+                        if (!weaponUnlocked) return;
+                        onWeaponChange?.(weapon.id);
+                        setConfirmedWeaponId(weapon.id);
+                      }}
                       key={weapon.id}
                     >
                       <span><WeaponIcon weight="fill" /></span>
@@ -1070,9 +1160,9 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
             </section>
           </div>
           <footer className="region-sortie-command-footer">
-            <span><CheckCircle weight="fill" /> 시작 캐릭터와 메인 장비를 모두 선택했습니다.</span>
-            <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound="uiConfirm" onClick={() => onSelect(selectedRegion.id)}>
-              <AirplaneTilt weight="fill" /><span><small>{characters.find((character) => character.id === selectedCharacterId)?.koreanName || "이지스"} 선봉 · {weapons.find((weapon) => weapon.id === equippedWeaponId)?.koreanName || "펄스 소총"}</small><strong>이 편성으로 출격</strong></span><ArrowRight weight="bold" />
+            <span className={formationConfirmed ? "is-confirmed" : "is-pending"}>{formationConfirmed ? <CheckCircle weight="fill" /> : <Crosshair weight="bold" />} {formationConfirmed ? "현재 장비를 확인했습니다. 출격할 수 있습니다." : "위 장비 카드를 눌러 현재 장비를 확인하세요."}</span>
+            <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound={formationConfirmed ? "uiConfirm" : "denied"} disabled={!formationConfirmed} onClick={() => formationConfirmed && onSelect(selectedRegion.id)}>
+              <AirplaneTilt weight="fill" /><span><small>{selectedCharacter?.koreanName || "이지스"} 선봉 · {equippedWeapon?.koreanName || "펄스 소총"}</small><strong>{formationConfirmed ? "이 편성으로 출격" : "장비 확인 필요"}</strong></span><ArrowRight weight="bold" />
             </button>
           </footer>
         </section>

@@ -65,5 +65,6 @@ test("region confirmation exposes the sword unlock gate and its dedicated guide"
   assert.match(campaignScreens, /guideType === "sword" \? SWORD_ABILITY_GUIDE/);
   assert.match(app, /setCampaignMainWeapon\(campaign, activeSlotId, mainWeaponId\)/);
   assert.match(app, /mainWeaponId=\{activeMainWeaponId\}/);
-  assert.match(app, /regionId === "glass-dune"[\s\S]*setScreen\("sword-guide"\)/);
+  assert.match(app, /nextStep === "sword-guide"[\s\S]*setScreen\("sword-guide"\)/);
+  assert.match(app, /consumePostVictoryScene\("sword-guide"\)/);
 });

@@ -40,6 +40,7 @@ import {
 import {
   BASE_CURRENCIES,
   getBaseFacility,
+  getBaseResourceExchanges,
   getBaseUpgrades,
 } from "./game/content/baseUpgrades.js";
 import { getMainWeapons, isMainWeaponUnlocked } from "./game/content/weapons.js";
@@ -48,6 +49,7 @@ import { DEFENSE_TOWER_DEFINITIONS, getDefenseStage, getDefenseStages } from "./
 import {
   canLaunchRegion,
   canLaunchDefenseStage,
+  consumeCampaignPostVictoryStep,
   completeAbilityGuide,
   completeSwordAbilityGuide,
   completeCombatOverlay,
@@ -58,9 +60,12 @@ import {
   createCampaignSlot,
   getCampaignCombatBonuses,
   getCampaignMainWeapon,
+  getCampaignPostVictorySteps,
   getCampaignCharacter,
   getCampaignSlot,
+  getCampaignResourceExchangeStatus,
   getCampaignUpgradeStatus,
+  exchangeCampaignResources,
   loadCampaign,
   purchaseCampaignUpgrade,
   saveCampaign,
@@ -265,6 +270,31 @@ function formatBaseBonusEntries(entries = []) {
     const [label, type] = BASE_BONUS_LABELS[key] || [key, "flat"];
     return `${label} +${type === "percent" ? Math.round(value * 100) + "%" : Math.round(value)}`;
   }).join(" · ");
+}
+
+function formatCurrencyMap(values = {}) {
+  return Object.entries(values).map(([currencyId, amount]) => {
+    const label = BASE_CURRENCIES[currencyId]?.koreanName || currencyId;
+    return `${label} ${Math.max(0, Number(amount) || 0)}`;
+  }).join(" + ");
+}
+
+function primeCombatAim(host) {
+  if (!host || typeof window === "undefined") return;
+  const canvas = host.querySelector?.("canvas");
+  if (!canvas) return;
+  const bounds = canvas.getBoundingClientRect();
+  if (!(bounds.width > 0 && bounds.height > 0)) return;
+  const options = {
+    bubbles: true,
+    clientX: bounds.left + bounds.width * 0.78,
+    clientY: bounds.top + bounds.height * 0.5,
+    pointerId: 1,
+    pointerType: "mouse",
+    isPrimary: true,
+  };
+  const PointerEventClass = window.PointerEvent || window.MouseEvent;
+  canvas.dispatchEvent(new PointerEventClass("pointermove", options));
 }
 
 const EVENT_SOUNDS = Object.freeze({
@@ -1823,14 +1853,32 @@ function RouteMinimap({ hud }) {
   const traces = Array.isArray(expedition.traces) ? expedition.traces : [];
   const minimap = expedition.minimap || hud?.minimap || {};
   const player = minimap.player || { x: progress, y: 0.5 };
+  const playerRouteRatio = clampMapRatio(player?.x, progress);
   const enemies = Array.isArray(minimap.enemies) ? minimap.enemies.slice(0, 32) : [];
+  const gates = !bossRoom && Array.isArray(minimap.gates)
+    ? minimap.gates.filter((gate) => gate?.active).slice(0, 5)
+    : [];
   const hostiles = Math.max(0, Number(minimap.liveEnemyCount ?? hud?.enemiesRemaining) || 0);
+  const nextWaveAnchor = Number(expedition.nextWaveAnchor);
+  const nextWaveAnchorRatio = nextWaveAnchor / routeLength;
+  const nextWaveRatio = !bossRoom
+    && Number.isFinite(nextWaveAnchor)
+    && nextWaveAnchor > 0
+    && nextWaveAnchor < routeLength
+    && nextWaveAnchorRatio > playerRouteRatio
+    ? clampMapRatio(nextWaveAnchorRatio, 0)
+    : null;
 
   return (
     <aside className={bossRoom ? "route-minimap is-boss" : "route-minimap"} aria-label={`전술 미니맵. 현재 위치 ${Math.round(progress * 100)}%, 남은 적 ${hostiles}기`}>
       <header><MapTrifold weight="fill" /><span>전술 지도</span><b>적 {hostiles}</b></header>
       <div className="route-minimap-field" aria-hidden="true">
-        <i className="route-minimap-path"><i style={{ width: `${clampMapRatio(player.x, progress) * 100}%` }} /></i>
+        <i className="route-minimap-path"><i style={{ width: `${playerRouteRatio * 100}%` }} /></i>
+        {nextWaveRatio !== null && (
+          <i className="route-minimap-next-wave" style={{ left: `${nextWaveRatio * 100}%` }}>
+            <Target weight="bold" />
+          </i>
+        )}
         {traces.map((trace) => (
           <span
             className={trace.triggered ? "route-minimap-node is-cleared" : "route-minimap-node"}
@@ -1845,9 +1893,20 @@ function RouteMinimap({ hud }) {
             key={enemy?.id ?? `${index}-${enemy?.x}-${enemy?.y}`}
           />
         ))}
+        {gates.map((gate, index) => (
+          <i
+            className="route-minimap-transit-gate"
+            style={{
+              left: `${clampMapRatio(gate?.x) * 100}%`,
+              top: `${clampMapRatio(gate?.y) * 100}%`,
+              "--gate-progress": clampMapRatio(gate?.progress, 1),
+            }}
+            key={gate?.id ?? `${gate?.gateId || "gate"}-${index}`}
+          />
+        ))}
         <span
           className="route-minimap-player"
-          style={{ left: `${clampMapRatio(player?.x, progress) * 100}%`, top: `${clampMapRatio(player?.y) * 100}%` }}
+          style={{ left: `${playerRouteRatio * 100}%`, top: `${clampMapRatio(player?.y) * 100}%` }}
         ><NavigationArrow weight="fill" /></span>
       </div>
     </aside>
@@ -1865,13 +1924,28 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   const [dialogue, setDialogue] = useState(null);
   const [paused, setPaused] = useState(false);
   const [combatTutorialStep, setCombatTutorialStep] = useState(-1);
+  const [openingNarrativeComplete, setOpeningNarrativeComplete] = useState(!showCombatTutorial);
   const [runRevision, setRunRevision] = useState(0);
   const airstrikeBannerShownRef = useRef(false);
   const autoBossEntryHandledRef = useRef(false);
   const combatTutorialActiveRef = useRef(false);
   const combatTutorialHandledRef = useRef(false);
+  const openingNarrativeBeatRef = useRef(null);
   const agentVoiceRef = useRef(null);
   const preparingRef = useRef(preparing);
+  const onFinishRef = useRef(onFinish);
+  const onRuntimeProgressRef = useRef(onRuntimeProgress);
+  const onRuntimeReadyRef = useRef(onRuntimeReady);
+  const showCombatTutorialRef = useRef(showCombatTutorial);
+  const combatBonusesSignature = JSON.stringify(combatBonuses || {});
+  const runtimeCombatBonusesRef = useRef({ signature: combatBonusesSignature, value: combatBonuses });
+  if (runtimeCombatBonusesRef.current.signature !== combatBonusesSignature) {
+    runtimeCombatBonusesRef.current = { signature: combatBonusesSignature, value: combatBonuses };
+  }
+  onFinishRef.current = onFinish;
+  onRuntimeProgressRef.current = onRuntimeProgress;
+  onRuntimeReadyRef.current = onRuntimeReady;
+  showCombatTutorialRef.current = showCombatTutorial;
 
   useEffect(() => {
     const voice = createAgentVoice();
@@ -1890,11 +1964,17 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
 
   useEffect(() => {
     preparingRef.current = preparing;
+    if (!preparing) primeCombatAim(hostRef.current);
     controllerRef.current?.setSuspended(preparing || pausedRef.current || combatTutorialActiveRef.current);
     if (!preparing && !pausedRef.current && !combatTutorialActiveRef.current) {
       controllerRef.current?.focus();
     }
   }, [preparing]);
+
+  useEffect(() => {
+    openingNarrativeBeatRef.current = null;
+    setOpeningNarrativeComplete(!showCombatTutorial);
+  }, [runRevision, showCombatTutorial]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -1910,7 +1990,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
       if (runtimeReadyReported) return;
       runtimeReadyReported = true;
       void combatDomReady.then(() => {
-        if (!stopped) onRuntimeReady?.();
+        if (!stopped) onRuntimeReadyRef.current?.();
       });
     };
 
@@ -1957,6 +2037,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
           const sound = resolveEventSound(event);
           if (sound) sfx.play(sound);
           if (event.type === "scenario" && SCENARIO_SCRIPT[event.beat]) {
+            if (showCombatTutorialRef.current && !openingNarrativeBeatRef.current) openingNarrativeBeatRef.current = event.beat;
             setDialogue({ beat: event.beat, index: 0, key: `${event.beat}-${event.time}` });
           }
           if (event.type === "bossAutoTransition" && !autoBossEntryHandledRef.current) {
@@ -1968,17 +2049,18 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
         onFinish: (result) => {
           if (stopped || finishReportedRef.current) return;
           finishReportedRef.current = true;
-          onFinish(result);
+          onFinishRef.current(result);
         },
         onLoadProgress: (progress) => {
-          if (!stopped) onRuntimeProgress?.(progress);
+          if (!stopped) onRuntimeProgressRef.current?.(progress);
         },
         onReady: () => {
+          primeCombatAim(host);
           controllerRef.current?.setSuspended(preparingRef.current || pausedRef.current || combatTutorialActiveRef.current);
           if (!preparingRef.current && !pausedRef.current && !combatTutorialActiveRef.current) controllerRef.current?.focus();
           reportRuntimeReady();
         },
-      }, { regionId, combatBonuses, mainWeaponId, characterId, mikaUnlocked, startSuspended: preparingRef.current });
+      }, { regionId, combatBonuses: runtimeCombatBonusesRef.current.value, mainWeaponId, characterId, mikaUnlocked, startSuspended: preparingRef.current });
       controllerRef.current = controller;
       controller.setSuspended(preparingRef.current || pausedRef.current || combatTutorialActiveRef.current);
     }).catch(() => {
@@ -1993,7 +2075,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [characterId, combatBonuses, mainWeaponId, mikaUnlocked, onFinish, onRuntimeProgress, onRuntimeReady, regionId, runRevision, sfx]);
+  }, [characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx]);
 
   const selectReward = useCallback((id) => {
     controllerRef.current?.chooseReward(id);
@@ -2026,6 +2108,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
       setDialogue({ ...dialogue, index: dialogue.index + 1 });
       return;
     }
+    if (dialogue.beat === openingNarrativeBeatRef.current) setOpeningNarrativeComplete(true);
     setDialogue(null);
     controllerRef.current?.continueStory();
   }, [dialogue]);
@@ -2052,12 +2135,12 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   }, [dialogue, preparing, rewardOpen]);
 
   useEffect(() => {
-    if (!showCombatTutorial || combatTutorialHandledRef.current || combatTutorialStep >= 0) return;
+    if (!showCombatTutorial || !openingNarrativeComplete || combatTutorialHandledRef.current || combatTutorialStep >= 0) return;
     if (!hud || dialogue || rewardOpen) return;
     combatTutorialActiveRef.current = true;
     setCombatTutorialStep(0);
     controllerRef.current?.setSuspended(true);
-  }, [combatTutorialStep, dialogue, hud, rewardOpen, showCombatTutorial]);
+  }, [combatTutorialStep, dialogue, hud, openingNarrativeComplete, rewardOpen, showCombatTutorial]);
 
   const finishCombatTutorial = useCallback(() => {
     if (combatTutorialHandledRef.current) return;
@@ -2440,11 +2523,27 @@ function DefenseResultScreen({ result, stage, rewards, onRetry, onBase }) {
   );
 }
 
-function ResultScreen({ result, assets, region, onRestart, onBase }) {
+function ResultScreen({ result, assets, region, onRestart, onBase, onContinue }) {
   const victory = result?.status === "victory" || result?.phase === "victory";
-  const accuracy = result?.stats?.shots ? Math.round((result.stats.hits || 0) / result.stats.shots * 100) : 0;
-  const bossName = region?.boss?.name || "SOVEREIGN CORE";
+  const stats = result?.stats || {};
+  const directAccuracy = Number(stats.projectileAccuracy);
+  const projectileShots = Number(stats.projectileShots ?? stats.shots);
+  const projectileHits = Number(stats.projectileHits ?? stats.hits);
+  const accuracy = Number.isFinite(directAccuracy)
+    ? Math.round(directAccuracy <= 1 ? directAccuracy * 100 : directAccuracy)
+    : projectileShots > 0 ? Math.round(projectileHits / projectileShots * 100) : null;
+  const bossName = region?.bossName || region?.boss?.name || "SOVEREIGN CORE";
   const bossDisplayName = localizeBossName(bossName);
+  const campaignRewards = result?.campaignRewards;
+  const previousBestTime = Number(result?.previousBestTime) || 0;
+  const runTime = Number(result?.time) || 0;
+  const pbImprovement = previousBestTime > 0 && runTime > 0 && runTime < previousBestTime
+    ? previousBestTime - runTime
+    : 0;
+  const rankTotal = (category) => Object.values(result?.build?.[category] || {}).reduce(
+    (total, rank) => total + Math.max(0, Number(rank) || 0),
+    0,
+  );
   return (
     <main className={victory ? "overload-result is-victory" : "overload-result is-defeat"}>
       <div className="ambient-grid" aria-hidden="true" />
@@ -2458,12 +2557,33 @@ function ResultScreen({ result, assets, region, onRestart, onBase }) {
         <div className="result-stats">
           <span><small>처치한 적</small><b>{result?.kills || result?.stats?.kills || 0}</b></span>
           <span><small>최종 레벨</small><b>LV.{result?.level || 1}</b></span>
-          <span><small>명중률</small><b>{accuracy}%</b></span>
+          <span><small>투사체 명중률</small><b>{accuracy === null ? "—" : `${accuracy}%`}</b></span>
           <span><small>작전 시간</small><b>{formatTime(result?.time || 0)}</b></span>
         </div>
+        {victory && (
+          <div className="result-evidence" aria-label="작전 분석 결과">
+            <span><small>개인 기록</small><b>{!previousBestTime ? "첫 기록" : pbImprovement > 0 ? `${formatTime(pbImprovement)} 단축` : `PB ${formatTime(result?.bestTime || previousBestTime)}`}</b></span>
+            <span><small>완성 빌드</small><b>무기 {rankTotal("weapons")} · 스킬 {rankTotal("skills")} · 동료 {rankTotal("allies")}</b></span>
+            <span><small>보스 대응</small><b>패링 {stats.bossParries || 0} · 폭탄 {stats.bossBombsDefused || 0}</b><em>실패 {Number(stats.bossParryFailures || 0) + Number(stats.bossBombFailures || 0)}회</em></span>
+          </div>
+        )}
+        {victory && campaignRewards && (
+          <div className="result-rewards" aria-label="이번 작전 획득 자원">
+            <small>{campaignRewards.firstClear ? "첫 승리 보상" : "반복 공략 보상"}</small>
+            <span>연구 자료 +{campaignRewards.researchData || 0}</span>
+            <span>장비 부품 +{campaignRewards.equipmentParts || 0}</span>
+            <span>동기화 코어 +{campaignRewards.augmentationCores || 0}</span>
+          </div>
+        )}
         <div className="result-actions">
-          <button className="primary-cta" type="button" onClick={onRestart}><span>같은 구역 재도전</span><ArrowCounterClockwise weight="bold" /></button>
-          {onBase && <button className="result-base-return" type="button" onClick={onBase}><span>헤이븐-09로 귀환</span><HouseLine weight="bold" /></button>}
+          {victory ? (
+            <button className="primary-cta result-continue" type="button" onClick={onContinue || onBase}><span>작전 기록 저장 · 계속</span><ArrowRight weight="bold" /></button>
+          ) : (
+            <>
+              <button className="primary-cta" type="button" onClick={onRestart}><span>같은 구역 재도전</span><ArrowCounterClockwise weight="bold" /></button>
+              {onBase && <button className="result-base-return" type="button" onClick={onBase}><span>헤이븐-09로 귀환</span><HouseLine weight="bold" /></button>}
+            </>
+          )}
         </div>
       </section>
     </main>
@@ -2572,6 +2692,20 @@ export function App() {
         lockedReason,
       };
     });
+    const exchanges = facility.id === "research" ? getBaseResourceExchanges(facility.npcId).map((exchange) => {
+      const status = getCampaignResourceExchangeStatus(campaign, activeSlotId, exchange.id);
+      const lockedReason = status.reason === "exchange-locked"
+        ? `${status.requiredCompletedRegions}개 지역 해방 필요`
+        : status.reason === "insufficient-funds" ? "재료 부족"
+          : status.reason === "base-locked" ? "헤이븐-09 잠김" : null;
+      return {
+        ...exchange,
+        canExchange: Boolean(status.exchangeable),
+        lockedReason,
+        costLabel: formatCurrencyMap(status.costs || exchange.costs),
+        rewardLabel: formatCurrencyMap(status.rewards || exchange.rewards),
+      };
+    }) : [];
     return {
       ...facility,
       ...copy,
@@ -2586,7 +2720,7 @@ export function App() {
           : facility.id === "augmentation" ? assets?.characterSyncChamber : null,
       selectedCharacterId: activeCharacterId,
       mainWeaponId: activeMainWeaponId,
-      characters: facility.id === "augmentation" ? playableCharacters.map((character) => ({
+      characters: facility.id === "augmentation" ? unlockedPlayableCharacters.map((character) => ({
         ...character,
         weaponName: character.id === "mika"
           ? character.weaponName
@@ -2602,8 +2736,9 @@ export function App() {
         completedRegions: activeSlot.completedRegionIds?.length || 0,
       } : null,
       upgrades,
+      exchanges,
     };
-  }, [activeFacilityId, activeSlotId, activeSlot, campaign, assets, activeCharacterId, activeMainWeaponId, playableCharacters, mainWeapons, combatBonuses]);
+  }, [activeFacilityId, activeSlotId, activeSlot, campaign, assets, activeCharacterId, activeMainWeaponId, unlockedPlayableCharacters, mainWeapons, combatBonuses]);
   const campaignAssets = useMemo(() => ({
     homeBase: assets?.havenLobby || assets?.havenBase,
     researchLab: assets?.hanaResearchLab,
@@ -2728,6 +2863,27 @@ export function App() {
     });
   }, []);
 
+  const openPostVictoryStep = useCallback((nextStep) => {
+    if (nextStep === "recruit") {
+      prepareSurface(
+        "신규 전투원 미카 불러오는 중",
+        [DOM_ASSET_REFS.mikaPortrait?.src, DOM_ASSET_REFS.characterSyncChamber?.src],
+        () => setScreen("recruit"),
+      );
+      return;
+    }
+    if (nextStep === "sword-guide") {
+      setSwordGuideReturnScreen("post-victory");
+      setScreen("sword-guide");
+      return;
+    }
+    if (nextStep === "return") {
+      prepareSurface("나이트자 귀환 항로 준비 중", [DOM_ASSET_REFS.returnToHaven?.src], () => setScreen("return"));
+      return;
+    }
+    setScreen("base");
+  }, [prepareSurface]);
+
   const openSaveSlots = useCallback(() => {
     sfx.start();
     sfx.play("start");
@@ -2784,16 +2940,36 @@ export function App() {
     setActiveFacilityId(null);
     setResult(null);
     setGuideReturnScreen("base");
+    const pendingStep = getCampaignPostVictorySteps(nextCampaign, slotId)[0];
+    if (pendingStep) {
+      openPostVictoryStep(pendingStep);
+      return;
+    }
     prepareSurface("헤이븐-09 기지 불러오는 중", domAssetSources(BASE_DOM_ASSET_KEYS), () => setScreen("base"));
-  }, [campaign, prepareSurface]);
+  }, [campaign, openPostVictoryStep, prepareSurface]);
+
+  const continuePostVictory = useCallback(() => {
+    const nextStep = activeSlotId ? getCampaignPostVictorySteps(campaign, activeSlotId)[0] : null;
+    openPostVictoryStep(nextStep || "return");
+  }, [activeSlotId, campaign, openPostVictoryStep]);
+
+  const consumePostVictoryScene = useCallback((step, sourceCampaign = campaign) => {
+    if (!activeSlotId) {
+      setScreen("base");
+      return sourceCampaign;
+    }
+    const completed = consumeCampaignPostVictoryStep(sourceCampaign, activeSlotId, step);
+    setCampaign(completed);
+    saveCampaign(completed);
+    openPostVictoryStep(getCampaignPostVictorySteps(completed, activeSlotId)[0]);
+    return completed;
+  }, [activeSlotId, campaign, openPostVictoryStep]);
 
   const finish = useCallback((nextResult) => {
     const status = nextResult?.status || nextResult?.phase;
     const regionId = nextResult?.regionId || activeRegionId;
     if (status === "victory" && activeSlotId) {
       const slotBeforeVictory = getCampaignSlot(campaign, activeSlotId);
-      const mikaWasUnlocked = isCharacterUnlocked("mika", slotBeforeVictory?.completedRegionIds || []);
-      const swordWasUnlocked = isMainWeaponUnlocked("beam-sword", slotBeforeVictory?.completedRegionIds || []);
       const completed = completeRegion(campaign, activeSlotId, regionId, {
         ...nextResult,
         status: "victory",
@@ -2801,41 +2977,34 @@ export function App() {
       });
       saveCampaign(completed);
       setCampaign(completed);
-      setResult({ ...nextResult, regionId });
       setActiveNpc(null);
       setActiveFacilityId(null);
       const completedSlot = getCampaignSlot(completed, activeSlotId);
-      const mikaJustUnlocked = regionId === DEFAULT_REGION_ID
-        && !mikaWasUnlocked
-        && isCharacterUnlocked("mika", completedSlot?.completedRegionIds || []);
-      if (mikaJustUnlocked) {
-        prepareSurface(
-          "신규 전투원 미카 불러오는 중",
-          [DOM_ASSET_REFS.mikaPortrait?.src, DOM_ASSET_REFS.characterSyncChamber?.src],
-          () => setScreen("recruit"),
-        );
-        return;
-      }
-      const swordJustUnlocked = regionId === "glass-dune"
-        && !swordWasUnlocked
-        && isMainWeaponUnlocked("beam-sword", completedSlot?.completedRegionIds || []);
-      if (swordJustUnlocked && !completedSlot?.storyFlags?.includes("beam-sword-guide-complete")) {
-        setSwordGuideReturnScreen("return");
-        setScreen("sword-guide");
-        return;
-      }
-      prepareSurface("나이트자 귀환 항로 준비 중", [DOM_ASSET_REFS.returnToHaven?.src], () => setScreen("return"));
+      const previousBestTime = slotBeforeVictory?.regionRecords?.[regionId]?.bestTime || null;
+      const completedRecord = completedSlot?.regionRecords?.[regionId] || null;
+      setResult({
+        ...nextResult,
+        regionId,
+        previousBestTime,
+        bestTime: completedRecord?.bestTime || null,
+        campaignRewards: completedSlot?.lastRegionRewards || null,
+      });
+      setScreen("result");
       return;
     }
     setResult({ ...nextResult, regionId });
     setScreen("result");
-  }, [activeRegionId, activeSlotId, campaign, prepareSurface]);
+  }, [activeRegionId, activeSlotId, campaign]);
 
   const finishMikaRecruitment = useCallback(() => {
-    prepareSurface("나이트자 귀환 항로 준비 중", [DOM_ASSET_REFS.returnToHaven?.src], () => setScreen("return"));
-  }, [prepareSurface]);
+    consumePostVictoryScene("recruit");
+  }, [consumePostVictoryScene]);
 
   const finishSwordAbilityGuide = useCallback(() => {
+    if (swordGuideReturnScreen === "post-victory") {
+      consumePostVictoryScene("sword-guide");
+      return;
+    }
     let nextCampaign = campaign;
     if (activeSlotId) {
       nextCampaign = completeSwordAbilityGuide(campaign, activeSlotId);
@@ -2847,7 +3016,7 @@ export function App() {
       return;
     }
     setScreen(swordGuideReturnScreen);
-  }, [activeSlotId, campaign, prepareSurface, swordGuideReturnScreen]);
+  }, [activeSlotId, campaign, consumePostVictoryScene, prepareSurface, swordGuideReturnScreen]);
 
   const openSwordAbilityGuide = useCallback(() => {
     if (!beamSwordUnlocked) return;
@@ -2951,10 +3120,12 @@ export function App() {
 
   const finishCombatOverlay = useCallback(() => {
     if (!activeSlotId) return;
-    const nextCampaign = completeCombatOverlay(campaign, activeSlotId);
-    setCampaign(nextCampaign);
-    saveCampaign(nextCampaign);
-  }, [activeSlotId, campaign]);
+    setCampaign((currentCampaign) => {
+      const nextCampaign = completeCombatOverlay(currentCampaign, activeSlotId);
+      saveCampaign(nextCampaign);
+      return nextCampaign;
+    });
+  }, [activeSlotId]);
 
   const finishDefenseGuide = useCallback(() => {
     if (!activeSlotId) return;
@@ -2972,6 +3143,18 @@ export function App() {
     }
     setCampaign(purchase.campaign);
     saveCampaign(purchase.campaign);
+    sfx.play("upgrade");
+  }, [activeSlotId, campaign, sfx]);
+
+  const exchangeBaseResources = useCallback((exchangeId) => {
+    if (!activeSlotId) return;
+    const exchange = exchangeCampaignResources(campaign, activeSlotId, exchangeId);
+    if (!exchange.ok) {
+      sfx.play("alert");
+      return;
+    }
+    setCampaign(exchange.campaign);
+    saveCampaign(exchange.campaign);
     sfx.play("upgrade");
   }, [activeSlotId, campaign, sfx]);
 
@@ -3007,6 +3190,7 @@ export function App() {
     content = (
       <AbilityGuideScreen
         assets={campaignAssets}
+        guideType="starter"
         onComplete={finishAbilityGuide}
         onBack={guideReturnScreen === "base" ? () => setScreen("base") : null}
       />
@@ -3036,6 +3220,7 @@ export function App() {
         onOpenFacility={openFacility}
         onNpcInteraction={handleNpcInteraction}
         onPurchaseUpgrade={purchaseBaseUpgrade}
+        onExchangeResources={exchangeBaseResources}
         onCharacterChange={selectCharacter}
         onCloseFacility={closeFacility}
         onBoard={openRegionSelect}
@@ -3090,9 +3275,9 @@ export function App() {
       </div>
     );
   } else if (screen === "return") {
-    content = <ReturnCinematicScreen region={activeRegion} backgroundSource={campaignAssets.returnToHaven} onComplete={() => setScreen("base")} />;
+    content = <ReturnCinematicScreen region={activeRegion} backgroundSource={campaignAssets.returnToHaven} onComplete={() => consumePostVictoryScene("return")} />;
   } else if (screen === "result") {
-    content = <ResultScreen result={result} assets={assets} region={activeRegion} onRestart={() => launchCombat(activeRegionId)} onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null} />;
+    content = <ResultScreen result={result} assets={assets} region={activeRegion} onRestart={() => launchCombat(activeRegionId)} onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null} onContinue={continuePostVictory} />;
   } else {
     content = (
       <IntroScreen

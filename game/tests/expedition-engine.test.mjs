@@ -41,6 +41,9 @@ test("moving right advances the route and discovers the first squad trace", () =
   const input = createSwarmInput();
   input.right = true;
   state.player.invulnerability = 99;
+  state.enemies.length = 0;
+  state.spawnedEnemies = state.enemyBudget;
+  state.killedEnemies = 0;
   state.levelFlow.firstDeadline = 999;
   state.levelFlow.nextOfferAt = 999;
   drainSwarmEvents(state);
@@ -95,6 +98,10 @@ test("hostiles passed on the route remain authoritative and accelerate into pers
   const enemy = state.enemies.find((candidate) => candidate.combatRole === "rifleman") ?? state.enemies[0];
   state.enemies.length = 1;
   state.enemies[0] = enemy;
+  enemy.type = "suppressor";
+  enemy.combatRole = "rifleman";
+  enemy.selfDestructArmed = false;
+  enemy.selfDestructTriggerRadius = 0;
   state.player.x = 5000;
   state.player.y = 540;
   state.camera.x = state.player.x;
@@ -121,7 +128,7 @@ test("hostiles passed on the route remain authoritative and accelerate into pers
   assert.ok(finalGap < initialGap, `expected pursuit to close the gap, got ${initialGap} -> ${finalGap}`);
 });
 
-test("the route has no boss-door lock and never requires rightward travel to unlock spawning", () => {
+test("the final combat band prevents endpoint cleanup without restoring a boss-door prompt", () => {
   const state = createSwarmState({ random: seededRandom(23), duration: 360, expedition: true });
   const input = createSwarmInput();
   input.right = true;
@@ -137,7 +144,9 @@ test("the route has no boss-door lock and never requires rightward travel to unl
   for (let index = 0; index < 180; index += 1) stepSwarm(state, input, 1 / 60);
   const routeEvents = drainSwarmEvents(state);
 
-  assert.equal(state.expedition.distance, state.expedition.routeLength);
+  const finalAnchor = state.expedition.waveAnchors.at(-1);
+  assert.equal(state.expedition.distance, finalAnchor + state.expedition.routeLength * 0.1);
+  assert.ok(state.expedition.distance < state.expedition.routeLength);
   assert.equal(state.expedition.reachedGate, false);
   assert.equal(state.phase, "swarm");
   assert.equal(state.boss.active, false);
@@ -146,7 +155,7 @@ test("the route has no boss-door lock and never requires rightward travel to unl
   assert.equal("gateNotice" in getSwarmHud(state).expedition, false);
 });
 
-test("clearing all 300 enemies runs warning and panic beats before automatic boss-room entry", () => {
+test("clearing all 300 enemies reaches MOSS inside the 23,000 final band before automatic boss entry", () => {
   const state = createSwarmState({ random: seededRandom(3), duration: 360, expedition: true });
   const input = createSwarmInput();
   state.enemies.length = 0;
@@ -159,10 +168,21 @@ test("clearing all 300 enemies runs warning and panic beats before automatic bos
 
   stepSwarm(state, input, 1 / 60);
   assert.equal(state.phase, "swarm");
+  assert.equal(state.expedition.clearTransition, null);
+  assert.equal(state.expedition.waitingForAdvance, true);
+  assert.equal(state.expedition.forwardLimitDistance, 23_000);
+  assert.equal(state.expedition.traces.find((trace) => trace.id === "moss").triggered, false);
+
+  state.player.x = state.expedition.originX + 21_800;
+  stepSwarm(state, input, 1 / 60);
+  const clearEvents = drainSwarmEvents(state);
   assert.equal(state.expedition.clearTransition.phase, "warning");
   assert.equal(state.expedition.clearTransition.duration, 1.2);
   assert.equal(state.expedition.reachedGate, false);
-  assert.ok(drainSwarmEvents(state).some((event) => event.type === "routeClearWarning"));
+  assert.equal(state.expedition.traces.find((trace) => trace.id === "moss").triggered, true);
+  const mossIndex = clearEvents.findIndex((event) => event.type === "scenario" && event.beat === "moss-trace");
+  const warningIndex = clearEvents.findIndex((event) => event.type === "routeClearWarning");
+  assert.ok(mossIndex >= 0 && warningIndex > mossIndex, "MOSS must resolve before the route-clear transition begins");
 
   for (let index = 0; index < 76; index += 1) stepSwarm(state, input, 1 / 60);
   assert.equal(state.expedition.clearTransition.phase, "panic");
@@ -263,6 +283,55 @@ test("outer-frontier routes deploy every budgeted enemy, defeat a midboss, and e
   }
 });
 
+test("outer midbosses execute three deterministic signature combat roles", () => {
+  const spawnMidBoss = (regionId) => {
+    const state = createSwarmState({ random: seededRandom(83), duration: 999, expedition: true, regionId });
+    state.enemies.length = 0;
+    state.spawnedEnemies = state.enemyBudget;
+    state.killedEnemies = state.enemyBudget;
+    state.stats.kills = state.enemyBudget;
+    state.levelFlow.firstDeadline = 999;
+    state.levelFlow.nextOfferAt = 999;
+    state.player.invulnerability = 999;
+    for (const key of Object.keys(state.player.fireTimers)) state.player.fireTimers[key] = 999;
+    stepSwarm(state, createSwarmInput(), 1 / 60);
+    const enemy = state.enemies.find((candidate) => candidate.isMidBoss);
+    assert.ok(enemy);
+    enemy.spawnDelay = 0;
+    enemy.hp = 99_999_999;
+    enemy.maxHp = enemy.hp;
+    enemy.x = state.player.x + 340;
+    enemy.y = state.player.y;
+    enemy.specialCooldown = 0;
+    drainSwarmEvents(state);
+    return { state, enemy };
+  };
+
+  const press = spawnMidBoss("neon-foundry");
+  assert.equal(press.enemy.combatRole, "pressWarden");
+  stepSwarm(press.state, createSwarmInput(), 1 / 60);
+  assert.ok(drainSwarmEvents(press.state).some((event) => event.type === "midBossTelegraph" && event.signature === "PRESS SLAM"));
+  for (let frame = 0; frame < 50; frame += 1) stepSwarm(press.state, createSwarmInput(), 1 / 60);
+  assert.ok(drainSwarmEvents(press.state).some((event) => event.type === "midBossAttack" && event.signature === "PRESS SLAM"));
+
+  const manta = spawnMidBoss("storm-spire");
+  assert.equal(manta.enemy.combatRole, "thunderManta");
+  stepSwarm(manta.state, createSwarmInput(), 1 / 60);
+  assert.equal(manta.state.enemyProjectiles.filter((projectile) => projectile.kind === "thunderArc").length, 5);
+  assert.ok(drainSwarmEvents(manta.state).some((event) => event.type === "midBossAttack" && event.signature === "ARC VOLLEY"));
+
+  const chimera = spawnMidBoss("gene-vault");
+  assert.equal(chimera.enemy.combatRole, "chimeraCustodian");
+  stepSwarm(chimera.state, createSwarmInput(), 1 / 60);
+  assert.ok(drainSwarmEvents(chimera.state).some((event) => event.type === "midBossTelegraph" && event.signature === "CHIMERA RUSH"));
+  for (let frame = 0; frame < 30; frame += 1) stepSwarm(chimera.state, createSwarmInput(), 1 / 60);
+  assert.ok(drainSwarmEvents(chimera.state).some((event) => event.type === "midBossAttack" && event.signature === "CHIMERA RUSH"));
+  assert.deepEqual(
+    [press.enemy.combatRole, manta.enemy.combatRole, chimera.enemy.combatRole],
+    ["pressWarden", "thunderManta", "chimeraCustodian"],
+  );
+});
+
 test("the route minimap exposes capped deterministic normalized player and live-enemy samples", () => {
   const create = () => {
     const state = createSwarmState({ random: seededRandom(47), duration: 360, expedition: true });
@@ -282,6 +351,51 @@ test("the route minimap exposes capped deterministic normalized player and live-
   assert.deepEqual(first, second);
   assert.ok(first.enemies.every((enemy) => enemy.x >= 0 && enemy.x <= 1 && enemy.y >= 0 && enemy.y <= 1));
   assert.equal("bossGate" in first, false);
+});
+
+test("the route minimap exposes only bounded active materializing transit gates", () => {
+  const state = createSwarmState({ random: seededRandom(59), duration: 360, expedition: true });
+  const { originX, routeLength } = state.expedition;
+  const portal = (id, routeRatio, y, overrides = {}) => ({
+    id,
+    type: "spawnGate",
+    gateId: `test-gate-${id}`,
+    x: originX + routeLength * routeRatio,
+    y,
+    life: 1,
+    maxLife: 2,
+    ...overrides,
+  });
+  state.spawnPortals = [
+    portal(200, 0.1, 240),
+    portal(201, 0.2, 300),
+    portal(190, 0.3, 360, { life: 0 }),
+    portal(191, 0.4, 420, { active: false }),
+    portal(192, 0.5, 480, { type: "cosmeticPortal" }),
+    portal(202, -0.2, 40),
+    portal(203, 0.5, 540),
+    portal(204, 1.2, 1_040),
+    portal(205, 0.75, 345),
+    portal(206, 0.9, 774),
+  ];
+
+  const minimap = getSwarmHud(state).expedition.minimap;
+  assert.equal(minimap.gateSampleCap, 5);
+  assert.equal(minimap.activeGateCount, 7);
+  assert.equal(minimap.gates.length, 5);
+  assert.deepEqual(minimap.gates.map((gate) => gate.id), [202, 203, 204, 205, 206]);
+  assert.deepEqual(
+    minimap.gates.slice(0, 3).map(({ x, y }) => ({ x, y })),
+    [{ x: 0, y: 0 }, { x: 0.5, y: 0.5 }, { x: 1, y: 1 }],
+  );
+  assert.ok(minimap.gates.every((gate) => (
+    gate.active === true
+    && gate.materializing === true
+    && gate.progress === 0.5
+    && gate.x >= 0 && gate.x <= 1
+    && gate.y >= 0 && gate.y <= 1
+  )));
+  assert.equal(minimap.gates.some((gate) => [190, 191, 192].includes(gate.id)), false);
 });
 
 test("expedition navigation blocks the lower cliff outside the authored route floor", () => {

@@ -5,7 +5,16 @@
 아래 이미지는 모두 이 프로젝트 전용으로 OpenAI 내장 이미지 생성 도구를 사용해 제작했습니다.
 외부 게임 에셋 팩이나 타인의 게임 이미지는 사용하지 않았습니다.
 
-### Active unified overhead production set
+`imagegen-job/<작업 ID>/<산출물 ID>` 표기는 로컬 사용자 경로를 공개하지 않으면서 생성 작업을
+재식별하기 위한 provenance 식별자입니다. 저장소 안에서 열 수 있는 파일은 별도의 `reference/` 또는
+`public/` 상대 경로로 함께 기록합니다.
+
+### Initial unified overhead production set (비활성 제작 이력)
+
+> **현재 플레이어 런타임:** 아래 초기 제작 기록의 `survivor-motion-atlas-v2.png`는 퇴역했습니다.
+> 현재 AEGIS는 무기에 따라 `public/assets/overload/hero/survivor-directional-aim-atlas.png` 또는
+> `public/assets/overload/hero/survivor-sword-directional-aim-atlas.png`만 선택적으로 로드합니다.
+> 이 절의 프롬프트와 초기 경로는 제작 provenance이며 현재 로딩 목록으로 해석하지 않습니다.
 
 - 생성일: 2026-08-10
 - 생성 도구: OpenAI 내장 ImageGen
@@ -15,7 +24,7 @@
 - 후처리: ImageGen `remove_chroma_key.py`, Pillow 기반 `scripts/prepare-overload-art.py`
 - 공통 카메라 규칙: 인게임 배우와 장비는 천장 카메라의 엄격한 90° 정사영 탑다운,
   중앙 회전 피벗, 화면 오른쪽 기본 전방. 정면 상반신 대사 포트레이트만 예외입니다.
-- 런타임 경로:
+- 당시 런타임 경로:
   - `public/assets/overload/hero/survivor-motion-atlas-v2.png`
   - `public/assets/overload/enemies/enemy-motion-atlas.png`
   - `public/assets/overload/allies/*.png`
@@ -105,7 +114,7 @@
 - ImageGen 제작 원본:
   - `reference/source-assets/overload/hero/silver-aegis-true-nadir-seed-chroma.png`
   - `reference/source-assets/overload/hero/silver-aegis-true-nadir-motion-atlas-chroma.png`
-- 인게임 런타임 경로:
+- 당시 인게임 런타임 경로:
   - `public/assets/overload/hero/survivor-motion-atlas-v2.png`
 - 생성·후처리 도구: OpenAI 내장 ImageGen, ImageGen `remove_chroma_key.py`, 프로젝트
   `scripts/normalize-motion-atlas.py`
@@ -367,11 +376,11 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
   > Scene/backdrop: perfectly flat solid #00ff00 chroma-key background for local removal.
   > Constraints: uniform green background without shadow, gradient, floor, texture, water, smoke, reflection, haze, or lighting variation; no green in boss; no text, labels, grid lines, UI, watermark, scenery, player, extra enemies, detached projectiles, poster composition, oblique camera, visible horizon, or cropped limbs.
 
-### AEGIS aim-relative 72-frame motion atlas v2
+### AEGIS aim-relative 72-frame motion atlas v2 (비활성 제작 이력)
 
 - 생성일: 2026-08-10
 - 생성 도구: OpenAI 내장 ImageGen
-- 활성 런타임 경로: `public/assets/overload/hero/survivor-motion-atlas-v2.png`
+- 당시 런타임 경로: `public/assets/overload/hero/survivor-motion-atlas-v2.png`
 - 런타임 규격: 8열 × 9행, 192×192 셀, 투명 PNG, 총 72프레임
 - 행 계약: 전진 / 후진 / 조준축 기준 상향 스트레이프 / 하향 스트레이프 / 대기 / 정지 사격 /
   대시 / 피격·스턴 / 전투불능
@@ -384,13 +393,13 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
   - `reference/source-assets/overload/animation-v2/hero/hero-locomotion-7x4-chroma-v2.png`
   - 같은 폴더의 `*-alpha.png`, `*-normalized*.png`, edit-canvas 및 seed 파일
 - ImageGen 원본 경로:
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d86d9558-2fee-4ab0-a553-73e320d4878f.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d86d9558-2fee-4ab0-a553-73e320d4878f.png`
     (정지 사격)
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-8169474a-f7fd-4428-8af6-800feebac54c.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-8169474a-f7fd-4428-8af6-800feebac54c.png`
     (대기·대시·피격·전투불능 수정본)
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5dd388f0-9c8b-4440-9380-f77284bd6cca.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5dd388f0-9c8b-4440-9380-f77284bd6cca.png`
     (조준 상대 이동)
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-ddef8066-4fd2-4832-b747-47c1952a0da9.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-ddef8066-4fd2-4832-b747-47c1952a0da9.png`
     (셀 안전 여백 수정 참조본)
 - 후처리: ImageGen의 균일한 `#ff00ff` 배경을
   `remove_chroma_key.py`의 border auto-key, soft matte, despill로 투명화했습니다. 생성기가 조준 상대
@@ -427,7 +436,7 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
   - `public/assets/overload/hero/performance/survivor-directional-aim-atlas.png` (8×3, 96px 셀)
 - 크로마키 원본: `reference/source-assets/overload/hero/silver-aegis-directional-aim-atlas-chroma.png`
 - ImageGen 원본 경로:
-  `C:/Users/82105/.codex/generated_images/019feaad-b25d-7603-9a36-51ea149f536c/exec-2b28696a-0165-4456-b4e0-4229098f4831.png`
+  `imagegen-job/019feaad-b25d-7603-9a36-51ea149f536c/exec-2b28696a-0165-4456-b4e0-4229098f4831.png`
 - 후처리: `remove_chroma_key.py`의 border auto-key, soft matte, despill로 `#00ff00`을 제거한 뒤
   `scripts/normalize-motion-atlas.py`가 24개 셀을 공유 스케일·중앙 피벗·투명 안전 여백으로 정규화했습니다.
   검증 시트는 `qa/survivor-directional-aim-preview.png`입니다.
@@ -480,14 +489,14 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
   - `public/assets/overload/regions/abyssal-archive/boss-forms-atlas.png`
 - 보존 원본·중간 결과: `reference/source-assets/overload/animation-v3/`
 - ImageGen 선택 원본:
-  - 자폭 드론: `C:/Users/82105/.codex/generated_images/019fe9ec-02f3-7e00-abab-60a877f9d538/exec-c60f2d41-9dbb-48e2-bd8c-b5abf5b50366.png`
+  - 자폭 드론: `imagegen-job/019fe9ec-02f3-7e00-abab-60a877f9d538/exec-c60f2d41-9dbb-48e2-bd8c-b5abf5b50366.png`
   - 소총수: 같은 폴더의 `exec-546518e0-e3ab-49d0-8471-2cd9e2997ed4.png`
     (`exec-f726ec44-0103-4146-b8b1-cb1c799e398e.png` 7열 반려본도 보존)
   - 저격수: 같은 폴더의 `exec-b2b70e88-251e-4cc0-b0e5-51310d324aa3.png`
   - 헌터 드론: 같은 폴더의 `exec-65577cc6-7c6c-4237-809d-77fab74bcc77.png`
   - 펄스 센트리: 같은 폴더의 `exec-540ff7a2-1711-45ae-99c5-6bc39fb5d2ef.png`
   - 억제 드론: 같은 폴더의 `exec-66862e54-66da-4bb0-a860-bd49309868c3.png`
-  - THE WRONG ENGINE: `C:/Users/82105/.codex/generated_images/019fe9ec-3c94-75e3-a563-a957de5623e9/exec-be5db030-734d-4837-b8f6-5116ab45766c.png`
+  - THE WRONG ENGINE: `imagegen-job/019fe9ec-3c94-75e3-a563-a957de5623e9/exec-be5db030-734d-4837-b8f6-5116ab45766c.png`
   - MIRROR TYRANT: 같은 폴더의 `exec-5a5d9a1d-6666-4bc0-bf68-4d85425037f6.png`
   - DROWNED ORACLE: 같은 폴더의 `exec-7732ee0e-7f22-4bff-ac5b-b36c908bbb58.png`
 
@@ -560,7 +569,7 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
   - `reference/source-assets/overload/vfx/skill-motion-atlas-alpha.png`
   - `public/assets/overload/vfx/combat-fx-atlas.png`
 - ImageGen 원본:
-  - 1차: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-20a02c7e-0e06-4561-8fda-737d5932a8ff.png`
+  - 1차: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-20a02c7e-0e06-4561-8fda-737d5932a8ff.png`
   - 수량 교정 최종본: 같은 폴더의 `exec-da07c643-7edd-4eac-94fd-f260f6a0ef50.png`
 - 프로젝트 보존 원본:
   - `reference/source-assets/overload/active-abilities/manual-ability-motion-imagegen-source.png`
@@ -593,8 +602,8 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
   - 자동 SKYFALL/ARC/NOVA/OMEGA: 384×256, 6×4, 64×64 셀
   - SOVEREIGN 게이트: 기존 고품질 시트 4번째 행을 보존한 1152×192, 6×1
 - ImageGen 선택 원본:
-  - 수동: `C:/Users/82105/.codex/generated_images/019fea33-753f-7a60-a8fd-ada52c2f858a/exec-2427d437-131f-404c-b0d7-f6beff26f786.png`
-  - 자동: `C:/Users/82105/.codex/generated_images/019fea33-753f-7a60-a8fd-ada52c2f858a/exec-064bb9ed-9c59-4d96-893a-ee7e2d331e60.png`
+  - 수동: `imagegen-job/019fea33-753f-7a60-a8fd-ada52c2f858a/exec-2427d437-131f-404c-b0d7-f6beff26f786.png`
+  - 자동: `imagegen-job/019fea33-753f-7a60-a8fd-ada52c2f858a/exec-064bb9ed-9c59-4d96-893a-ee7e2d331e60.png`
 - 프로젝트 보존 원본:
   - `reference/source-assets/overload/vfx/pixel/manual-ability-pixel-imagegen-source.png`
   - `reference/source-assets/overload/vfx/pixel/manual-ability-pixel-alpha.png`
@@ -658,7 +667,7 @@ OMEGA의 광선 길이, Q/E의 원형 범위와 실제 피해·보호 타이밍�
     현재 렌더 미사용)
   - `public/assets/overload/vfx/pixel/enemy-death-pixel-atlas.png`(6×1, 64×64 셀)
 - ImageGen 원본:
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-0ea1ca97-5d3f-4686-a3bd-c1cd7234c384.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-0ea1ca97-5d3f-4686-a3bd-c1cd7234c384.png`
 - 프로젝트 원본과 정규화 중간본:
   - `reference/source-assets/overload/vfx/pixel-emp-explosion-v1/emp-explosion-chroma.png`
   - `reference/source-assets/overload/vfx/pixel-emp-explosion-v1/emp-explosion-alpha.png`
@@ -692,7 +701,7 @@ OMEGA의 광선 길이, Q/E의 원형 범위와 실제 피해·보호 타이밍�
   - `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`
   - `reference/source-assets/overload/campaign/haven-09-base-imagegen-source.png`
 - ImageGen 선택 원본:
-  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-eb7bcb94-7ac1-49f1-b209-19186fcd0db7.png`
+  `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-eb7bcb94-7ac1-49f1-b209-19186fcd0db7.png`
 - 프로젝트 보존 원본:
   - `reference/source-assets/overload/campaign/rhea-control-officer-imagegen-source.png`
   - `reference/source-assets/overload/campaign/rhea-control-officer-alpha.png`
@@ -874,8 +883,8 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
   - `reference/source-assets/overload/ui/button-states-v1/command-button-states-chroma.png`
   - `reference/source-assets/overload/ui/button-states-v1/command-button-states-alpha.png`
 - ImageGen 원본 경로:
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-cda2b2fa-cb64-47e8-ba2c-52eeb9a27463.png`
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d99ea63f-c855-4a82-96b7-9155f2982cad.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-cda2b2fa-cb64-47e8-ba2c-52eeb9a27463.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d99ea63f-c855-4a82-96b7-9155f2982cad.png`
 - 후처리:
   - 지도는 `scripts/prepare-campaign-map.py`로 1920×1080 WebP quality 86으로 정규화했습니다.
   - 버튼은 설치된 `remove_chroma_key.py`의 border auto-key, soft-matte, despill로 투명화한 뒤
@@ -920,8 +929,8 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
   - `reference/source-assets/overload/vfx/boss-pattern-pixel-v1/regional-boss-patterns-imagegen.png`
   - `reference/source-assets/overload/vfx/boss-pattern-pixel-v1/regional-boss-patterns-alpha.png`
 - ImageGen 원본 경로:
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-71424306-6085-4a83-bd85-4b2d5442b77a.png`
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-11bb8e5f-f771-497a-8e05-643dc850b802.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-71424306-6085-4a83-bd85-4b2d5442b77a.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-11bb8e5f-f771-497a-8e05-643dc850b802.png`
 - QA 미리보기:
   - `qa/boss-pattern-common-pixel-preview.png`
   - `qa/boss-pattern-regional-pixel-preview.png`
@@ -990,22 +999,27 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
   재인코딩 또는 프레임 편집을 사용하지 않았습니다.
 - 공통 메타데이터: 1264×720, 24fps, 브라우저 보고 재생 시간 6.041667초.
 - 원본 → 런타임 경로:
-  - `C:/Users/82105/Downloads/1구역 비행선 출격 연출.mp4` →
+  - 사용자 제공 원본 `1구역 비행선 출격 연출.mp4` →
     `public/assets/overload/campaign/sortie/wrong-engine-sortie.mp4`
-  - `C:/Users/82105/Downloads/2구역 비행선 출격 연출.mp4` →
+  - 사용자 제공 원본 `2구역 비행선 출격 연출.mp4` →
     `public/assets/overload/campaign/sortie/glass-dune-sortie.mp4`
-  - `C:/Users/82105/Downloads/3구역 비행선 출격 연출.mp4` →
+  - 사용자 제공 원본 `3구역 비행선 출격 연출.mp4` →
     `public/assets/overload/campaign/sortie/abyssal-archive-sortie.mp4`
 - SHA-256:
   - WRONG ENGINE: `86A4720037F2ABD510665D2761E03350891382DA25E9429EBEDF4FDF10AB4952`
   - GLASS DUNE: `CBB610F27D332938B910341CB3BD4055580203D1F125F6C6E6017B437BCC610F`
   - ABYSSAL ARCHIVE: `3C20BFB5DB6E941A03CA0CED7CF54F9B35514F424CEC6468B3A0BE1E2D7D3716`
 - 세 런타임 파일은 원본과 byte-identical한 이름 변경 사본입니다. 지역 선택 전에는 내려받지 않고,
-  선택한 한 편만 `preload="metadata"`로 마운트합니다. 기지 BGM은 재생 중 일시 정지하며 영상의
-  `ended` 이벤트 직후 선택 지역 Phaser 전투와 메인 BGM을 시작합니다. 전체 사운드 토글이 꺼져
-  있으면 영상도 음소거됩니다.
+  선택한 한 편만 `preload="auto"`로 마운트합니다. 영상이 재생되는 동안 선택 지역 Phaser 전투를
+  숨김·일시정지 상태로 준비하고, 미디어와 런타임이 모두 준비되면 같은 인스턴스를 공개합니다.
+  기지 BGM은 재생 중 일시 정지하며 전체 사운드 토글이 꺼져 있으면 영상도 음소거됩니다.
 
 ## Main background music
+
+> **아래 BGM 5곡 공통 · 제출 전 권리 증빙 필요:** 제작 브리프와 파일 해시는 기록됐지만,
+> 현재 저장소에는 Suno 제작 계정·이용 플랜, 제작일 당시 약관, 상업적 공개 허용 범위를
+> 증명하는 자료가 없습니다. 채용 포트폴리오 외부 제출 전 해당 증빙을 첨부하거나 증빙할 수 없는
+> BGM을 제거·교체해야 합니다.
 
 - 파일: `public/assets/audio/overload-main-theme.mp3`
 - 원본 파일명: `300 드론 생존전.mp3`
@@ -1013,12 +1027,10 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 - 출처: 프로젝트 사용자가 직접 제공한 외부 제작 음원
 - 적용: 1구역 출격 영상 종료 뒤 재생하고 다른 지역·기지·타이틀에서는 사용하지 않으며 전체 사운드
   토글과 연동
-- 생성 프롬프트, 사용 도구의 이용 플랜 및 세부 라이선스 정보는 최종 AI 활용 기술 문서 작성
-  전에 사용자 제공 정보로 보완합니다.
 
 ## User-provided title background music
 
-- 원본: `C:/Users/82105/Downloads/잿빛 하늘 아래.mp3`
+- 원본: 사용자 제공 `잿빛 하늘 아래.mp3`
 - 런타임: `public/assets/audio/under-ashen-skies-title.mp3`
 - 메타데이터: 약 59초, 199kbps, 1,510,724 bytes
 - SHA-256: `D6CECF9EEBC1A0061D843E6A446CFE0EDA728CB7D9678FCC5A499FE81F4A27BB`
@@ -1077,7 +1089,7 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
   충격 흡수 → 소멸 순서이며 Phaser의 엔진 소유 132-unit 원형 판정을 따라옵니다.
 - 도구: OpenAI built-in ImageGen → `remove_chroma_key.py` border auto-key, soft matte,
   threshold 12/220, despill → `scripts/normalize-motion-atlas.py` 6×1/192px 공유 스케일 정규화.
-- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-f0df133a-4be0-4d04-839f-a5b0a8b4be7d.png`
+- 선택 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-f0df133a-4be0-4d04-839f-a5b0a8b4be7d.png`
 - 보존 원본: `reference/source-assets/overload/vfx/manual/aegis-ward-hd-chroma.png`
 - 알파 원본: `reference/source-assets/overload/vfx/manual/aegis-ward-hd-alpha.png`
 - QA 미리보기: `qa/aegis-ward-hd-preview.png`
@@ -1100,7 +1112,7 @@ Constraints: exact 6 columns and 1 row, exactly 6 frames, strict overhead/nadir 
   최대 교란장 → 신호 분해 → 소멸 순서이며 Phaser의 엔진 소유 EMP 중심·반경을 따라옵니다.
 - 도구: OpenAI built-in ImageGen → `remove_chroma_key.py` border auto-key, soft matte,
   threshold 12/220, despill → `scripts/normalize-motion-atlas.py` 6×1/192px 공유 스케일 정규화.
-- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3c60a78e-91f5-42ee-b9c1-acc4da122f54.png`
+- 선택 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3c60a78e-91f5-42ee-b9c1-acc4da122f54.png`
 - 보존 원본: `reference/source-assets/overload/vfx/manual/emp-pulse-hd-chroma.png`
 - 알파 원본: `reference/source-assets/overload/vfx/manual/emp-pulse-hd-alpha.png`
 - QA 미리보기: `qa/emp-pulse-hd-preview.png`
@@ -1139,7 +1151,7 @@ Constraints: exact 6 columns, exact 1 row, exact 6 isolated square cells, seamle
   soft matte, threshold 12/220, despill → 프로젝트 `normalize-motion-atlas.py` 6×2 공유 스케일 정규화 →
   `normalize-pixel-vfx-atlas.py` 64px/32색/2px 안전 여백. 외부 게임 이미지나 외부 미술은 사용하지
   않았습니다.
-- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-4b361e8a-950c-4ddb-a7da-594965ede2a3.png`
+- 선택 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-4b361e8a-950c-4ddb-a7da-594965ede2a3.png`
 - 보존 원본: `reference/source-assets/overload/vfx/pixel/timed-bomb-pixel-imagegen-source.png`
 - 알파 원본: `reference/source-assets/overload/vfx/pixel/timed-bomb-pixel-alpha.png`
 - QA 미리보기: `qa/timed-bomb-pixel-atlas-preview.png`
@@ -1167,7 +1179,7 @@ Constraints: exact 6 columns, exact 2 rows, exact 12 square cells; native pixel-
 - 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 캐릭터 이미지는 사용하지
   않았습니다.
 - 원본 생성 경로:
-  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a345bd90-8519-4f2b-9ce1-2b14243845cf.png`.
+  `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a345bd90-8519-4f2b-9ce1-2b14243845cf.png`.
 - 정확한 ImageGen 프롬프트:
 
 ```text
@@ -1198,11 +1210,11 @@ Constraints: single character only; preserve face shape, hairstyle, hair ornamen
   않았습니다.
 - 선택 ImageGen 원본:
   - 첫 빔 소드 포즈 시트:
-    `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-219fb4eb-c483-4457-baed-f730687d4b2b.png`
+    `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-219fb4eb-c483-4457-baed-f730687d4b2b.png`
   - 균일 크로마 교정 시트:
-    `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-af37a5df-8b6b-4450-88b1-916aa6ae17e4.png`
+    `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-af37a5df-8b6b-4450-88b1-916aa6ae17e4.png`
   - 검기 도트 시트:
-    `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-c6588731-a9da-463e-91bb-353b4a72d219.png`
+    `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-c6588731-a9da-463e-91bb-353b4a72d219.png`
 - 로컬 보존 원본:
   - `reference/source-assets/overload/hero/survivor-sword-directional-aim-chroma.png`
   - `reference/source-assets/overload/hero/survivor-sword-directional-aim-alpha.png`
@@ -1257,10 +1269,10 @@ Backdrop: perfectly flat solid #ff00ff chroma-key background. No gradient, check
   SOUTH·하단 대각은 얼굴/전면, NORTH·상단 대각은 뒤통수/후면, EAST/WEST는 측면을 직접 묘사합니다.
   런타임 회전과 좌우 반전은 사용하지 않습니다. 열 0–3은 준비/이동, 열 4–7은 공격입니다.
 - ImageGen 원본:
-  - 소총 1차: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-ae076dd5-c375-4a00-a036-b8c2fd3a2973.png`
-  - 소총 방향 교정 최종: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-658f9ee4-0b68-46a4-9839-a4ac5417bb33.png`
-  - 빔 소드 1차(과대 검기 때문에 런타임 미사용): `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d4f92e2d-02dc-4c65-9f22-bd43e63b6e01.png`
-  - 빔 소드 교정 최종: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3295df39-59c2-4341-8145-bfdbd62a1b8b.png`
+  - 소총 1차: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-ae076dd5-c375-4a00-a036-b8c2fd3a2973.png`
+  - 소총 방향 교정 최종: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-658f9ee4-0b68-46a4-9839-a4ac5417bb33.png`
+  - 빔 소드 1차(과대 검기 때문에 런타임 미사용): `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d4f92e2d-02dc-4c65-9f22-bd43e63b6e01.png`
+  - 빔 소드 교정 최종: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3295df39-59c2-4341-8145-bfdbd62a1b8b.png`
 - 프로젝트 보존 원본/알파:
   - `reference/source-assets/overload/hero/aegis-eight-direction-rifle-{chroma,alpha}.png`
   - `reference/source-assets/overload/hero/aegis-eight-direction-sword-{chroma,alpha}.png`
@@ -1336,13 +1348,13 @@ Scene/backdrop: perfectly flat uniform solid #ff00ff. No grid, text, labels, sha
   `public/assets/overload/enemies/hunter.png`, `public/assets/overload/boss/wrong-engine-forms-atlas.png`,
   `public/assets/overload/campaign/haven-09-base.webp`.
 - 선택 ImageGen 원본:
-  - 네온 주조구 전장: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-69ddb20a-50b9-4b95-8ad4-f6e45941cf92.png`
-  - 폭풍 첨탑 전장: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-438d2557-f85b-43fa-a1ec-aa656b489ffd.png`
-  - 생체 금고 전장: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5a333d5d-8fde-4396-9503-57f33b1c2931.png`
-  - 네온 주조구 유닛: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-052e17ea-78ff-4e92-a4ca-fd15fb1190eb.png`
-  - 폭풍 첨탑 유닛: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3564c293-3e82-45d5-96b7-31e550df4442.png`
-  - 생체 금고 유닛: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-68ed5aed-53b0-498f-9b39-f073de7af9d3.png`
-  - 귀환 시네마틱: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-dcdf0832-f90e-4f2f-885c-26b0ddbd5dc8.png`
+  - 네온 주조구 전장: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-69ddb20a-50b9-4b95-8ad4-f6e45941cf92.png`
+  - 폭풍 첨탑 전장: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-438d2557-f85b-43fa-a1ec-aa656b489ffd.png`
+  - 생체 금고 전장: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5a333d5d-8fde-4396-9503-57f33b1c2931.png`
+  - 네온 주조구 유닛: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-052e17ea-78ff-4e92-a4ca-fd15fb1190eb.png`
+  - 폭풍 첨탑 유닛: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3564c293-3e82-45d5-96b7-31e550df4442.png`
+  - 생체 금고 유닛: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-68ed5aed-53b0-498f-9b39-f073de7af9d3.png`
+  - 귀환 시네마틱: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-dcdf0832-f90e-4f2f-885c-26b0ddbd5dc8.png`
 - 프로젝트 보존 원본: `reference/source-assets/overload/outer-regions/{neon-foundry,storm-spire,gene-vault}/`
   아래 `route-imagegen.png`, `units-chroma.png`, `units-alpha.png`와
   `reference/source-assets/overload/campaign/return-to-haven-imagegen.png`.
@@ -1436,8 +1448,8 @@ No characters, portraits, enemies, bosses, text, logos, UI, watermark, retro bli
 - 참조: 프로젝트 원본 `public/assets/overload/campaign/airship-region-map-v2.webp`,
   `public/assets/overload/regions/neon-foundry/route.webp`.
 - ImageGen 원본:
-  - 전략 월드맵: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3c8344da-42d7-4012-9e88-e4b4bc008514.png`
-  - 외곽 생산권역: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-9088a701-2723-434e-bf04-b0aad3b22fab.png`
+  - 전략 월드맵: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-3c8344da-42d7-4012-9e88-e4b4bc008514.png`
+  - 외곽 생산권역: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-9088a701-2723-434e-bf04-b0aad3b22fab.png`
 - 프로젝트 보존 원본:
   - `reference/source-assets/overload/campaign/strategic-maps/strategic-world-map-imagegen.png`
   - `reference/source-assets/overload/campaign/strategic-maps/outer-frontier-region-map-imagegen.png`
@@ -1476,7 +1488,7 @@ Constraints: no UI, no cards, no labels, no text, no numbers, no logos, no water
 
 - 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
 - 스타일/시트 참조: 프로젝트 원본 적 모션 아틀라스 `public/assets/overload/enemies/motion-v2/`.
-- 선택 ImageGen 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-34b888f1-5c6b-46ad-ae2b-849668811297.png`.
+- 선택 ImageGen 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-34b888f1-5c6b-46ad-ae2b-849668811297.png`.
 - 프로젝트 보존 원본: `reference/source-assets/overload/enemies/siege-walker-motion-atlas-{chroma,alpha}.png`.
 - 활성 런타임: `public/assets/overload/enemies/motion-v3/siege-walker-motion-atlas.png` 및
   `public/assets/overload/enemies/motion-v3/performance/siege-walker-motion-atlas.png`.
@@ -1501,7 +1513,7 @@ Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background. No t
 
 - 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
 - 기능/팔레트 참조: 프로젝트 원본 `public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png`.
-- 선택 ImageGen 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-52ca4c3b-b71b-4cdf-aaf6-0d385346a3bc.png`.
+- 선택 ImageGen 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-52ca4c3b-b71b-4cdf-aaf6-0d385346a3bc.png`.
 - 프로젝트 보존 원본: `reference/source-assets/overload/vfx/sword-manual-ability-atlas-{chroma,alpha}.png`.
 - 활성 런타임: `public/assets/overload/vfx/pixel/sword-manual-ability-atlas.png` (6×4, 64px 셀).
 - 후처리: `remove_chroma_key.py`와 `normalize-pixel-vfx-atlas.py`로 배경 제거, 제한 팔레트,
@@ -1528,7 +1540,7 @@ Scene/backdrop: perfectly flat uniform solid #ff00ff chroma-key background. No g
 - 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
 - 정체성 참조: 프로젝트 원본 `public/assets/overload/hero/survivor-portrait.png`,
   `public/assets/overload/hero/mika-portrait.png`.
-- 선택 ImageGen 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-e4fb9a86-7022-43eb-b291-9978b58eb43e.png`.
+- 선택 ImageGen 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-e4fb9a86-7022-43eb-b291-9978b58eb43e.png`.
 - 프로젝트 보존 원본: `reference/source-assets/overload/campaign/character-enhancement-imagegen.png`.
 - 활성 런타임: `public/assets/overload/campaign/character-enhancement.webp`.
 - 후처리: 선택 원본을 3:2 WebP로 최적화했으며 인물과 배경의 구도·내용은 변경하지 않았습니다.
@@ -1551,9 +1563,9 @@ Constraints: exactly two characters, no duplicates, no logos, no words, no UI la
 - 생성 도구: Codex Desktop 내장 OpenAI ImageGen. 외부 게임 이미지나 제3자 에셋은 사용하지 않았습니다.
 - 스타일 참조: 프로젝트 원본 이지스 초상화·8방향 아틀라스와 수동 스킬 픽셀 아틀라스.
 - 선택 ImageGen 원본:
-  - 초상화: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a98e8787-e559-4585-ba41-f652b38cedbf.png`
-  - 8방향 모션: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-99f02fed-1da9-4b93-b890-0a13bc39c897.png`
-  - 전용 스킬: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-20e97ac9-2295-4176-9a7d-2391eb24865f.png`
+  - 초상화: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a98e8787-e559-4585-ba41-f652b38cedbf.png`
+  - 8방향 모션: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-99f02fed-1da9-4b93-b890-0a13bc39c897.png`
+  - 전용 스킬: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-20e97ac9-2295-4176-9a7d-2391eb24865f.png`
 - 프로젝트 보존 원본:
   - `reference/source-assets/overload/hero/mika-portrait-chroma.png`
   - `reference/source-assets/overload/hero/mika-directional-aim-atlas-{chroma,alpha,normalized}.png`
@@ -1613,10 +1625,10 @@ Scene/backdrop: perfectly flat uniform #ff00ff chroma-key background. No text, n
   `public/assets/overload/campaign/lobby/haven-command-atrium.webp`,
   `public/assets/overload/campaign/character-enhancement.webp`.
 - 선택 ImageGen 원본:
-  - 로비: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-e780a601-5a1e-4dd0-a795-1bd3e7db8f1a.png`
-  - 연구실: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a874cd6f-0518-4102-8072-de627f63aca2.png`
-  - 정비소: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a565edd5-9b22-4a3c-bfbe-c34116a4b240.png`
-  - 동기화실: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5d5f27df-2592-4bac-991e-3789c83d62ee.png`
+  - 로비: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-e780a601-5a1e-4dd0-a795-1bd3e7db8f1a.png`
+  - 연구실: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a874cd6f-0518-4102-8072-de627f63aca2.png`
+  - 정비소: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a565edd5-9b22-4a3c-bfbe-c34116a4b240.png`
+  - 동기화실: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5d5f27df-2592-4bac-991e-3789c83d62ee.png`
 - 프로젝트 보존 원본:
   - `reference/source-assets/overload/campaign/lobby/haven-command-atrium-imagegen.png`
   - `reference/source-assets/overload/campaign/lobby/hana-research-lab-imagegen.png`
@@ -1694,7 +1706,7 @@ Constraints: empty environment only; absolutely no people, no human figures, no 
   `public/assets/overload/hero/mika-portrait.png`.
 - MIKA 전신 확장 원본: 기존 MIKA의 얼굴·핑크 양갈래·흑백 마젠타 전투복·쌍환 장비를
   정체성 참조로 사용해 OpenAI 내장 ImageGen에서 잘린 하체와 부츠를 완성했습니다. 선택 원본은
-  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-50635e01-96a3-4deb-a42f-0e34a40e4322.png`,
+  `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-50635e01-96a3-4deb-a42f-0e34a40e4322.png`,
   보존 원본은 `reference/source-assets/overload/live2d/mika-fullbody-chroma.png`, 비활성 투명
   검수본은 `public/assets/overload/hero/mika-live2d-fullbody.png`입니다. 외부 게임 캐릭터 이미지는
   ImageGen 참조나 런타임 에셋으로 사용하지 않았습니다.
@@ -1743,9 +1755,9 @@ Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background cover
   캐릭터 원화·모델·모션 데이터는 사용하지 않았습니다.
 - 도구: OpenAI 내장 ImageGen과 사용자가 설치·승인한 Live2D Cubism Editor 5.3.03.
 - AEGIS 선택 ImageGen 원본:
-  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-ae464a1e-9e91-4658-821a-996f34bcfe35.png`.
+  `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-ae464a1e-9e91-4658-821a-996f34bcfe35.png`.
 - MIKA 선택 ImageGen 원본:
-  `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-51d11449-6278-4b1b-81f3-938adbdeeefa.png`.
+  `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-51d11449-6278-4b1b-81f3-938adbdeeefa.png`.
 - 편집 소스 경로:
   `reference/source-assets/overload/cubism-v2/aegis/`와
   `reference/source-assets/overload/cubism-v2/mika/`. `scripts/build-premium-cubism-source.py`가
@@ -1793,28 +1805,28 @@ Scene/backdrop: perfectly flat uniform solid #00ff00 chroma-key background, no s
   `scripts/build-performance-assets.py`가 0.5배 PIL LANCZOS로 생성했으며 ImageGen을 다시
   사용하거나 수작업으로 고치지 않았습니다.
 - WRONG ENGINE: 기존 참조 `public/assets/overload/environment/sector-03-engine-causeway.webp`;
-  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a1ebd9b8-7b30-4a7d-9ddf-2e1dfc2ba218.png`;
+  ImageGen 원본 `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a1ebd9b8-7b30-4a7d-9ddf-2e1dfc2ba218.png`;
   보존 원본 `reference/source-assets/overload/environment/sector-04-reactor-vault-expanded.png`;
   런타임 `public/assets/overload/environment/sector-04-reactor-vault-expanded.webp` 및
   `public/assets/overload/environment/performance/sector-04-reactor-vault-expanded.webp`.
 - GLASS DUNE: 기존 참조 `public/assets/overload/regions/glass-dune/route.webp`;
-  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-9bb9ca64-8083-4af7-af1a-376b98a9868b.png`;
+  ImageGen 원본 `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-9bb9ca64-8083-4af7-af1a-376b98a9868b.png`;
   보존 원본 `reference/source-assets/overload/regions/glass-dune/route-expanded-v2.png`;
   런타임 `public/assets/overload/regions/glass-dune/route-expanded-v2.webp` 및 performance 동명 경로.
 - ABYSSAL ARCHIVE: 기존 참조 `public/assets/overload/regions/abyssal-archive/route.webp`;
-  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5a3993bc-c979-4021-a54d-2155b4112a6c.png`;
+  ImageGen 원본 `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-5a3993bc-c979-4021-a54d-2155b4112a6c.png`;
   보존 원본 `reference/source-assets/overload/regions/abyssal-archive/route-expanded-v2.png`;
   런타임 `public/assets/overload/regions/abyssal-archive/route-expanded-v2.webp` 및 performance 동명 경로.
 - NEON FOUNDRY: 기존 참조 `public/assets/overload/regions/neon-foundry/route.webp`;
-  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-4fbdf489-471d-4b92-8ef5-a1f83687fc6a.png`;
+  ImageGen 원본 `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-4fbdf489-471d-4b92-8ef5-a1f83687fc6a.png`;
   보존 원본 `reference/source-assets/overload/regions/neon-foundry/route-expanded-v2.png`;
   런타임 `public/assets/overload/regions/neon-foundry/route-expanded-v2.webp` 및 performance 동명 경로.
 - STORM SPIRE: 기존 참조 `public/assets/overload/regions/storm-spire/route.webp`;
-  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-8781ec3b-3ca2-4893-af69-b5cb23da9e83.png`;
+  ImageGen 원본 `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-8781ec3b-3ca2-4893-af69-b5cb23da9e83.png`;
   보존 원본 `reference/source-assets/overload/regions/storm-spire/route-expanded-v2.png`;
   런타임 `public/assets/overload/regions/storm-spire/route-expanded-v2.webp` 및 performance 동명 경로.
 - GENE VAULT: 기존 참조 `public/assets/overload/regions/gene-vault/route.webp`;
-  ImageGen 원본 `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-f8b32bfd-0321-4055-97f4-7c343044b755.png`;
+  ImageGen 원본 `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-f8b32bfd-0321-4055-97f4-7c343044b755.png`;
   보존 원본 `reference/source-assets/overload/regions/gene-vault/route-expanded-v2.png`;
   런타임 `public/assets/overload/regions/gene-vault/route-expanded-v2.webp` 및 performance 동명 경로.
 
@@ -1893,10 +1905,10 @@ Make left and right edges compatible in deck tone and seam rhythm for unobtrusiv
 - Phosphor Icons — MIT License
 - Rajdhani — SIL Open Font License 1.1
 - IBM Plex Mono — SIL Open Font License 1.1
-- @greenmansk/react-live2d 0.1.1 — MIT License
+- @greenmansk/react-live2d 0.1.1 — MIT License · 과거 검증용, 현재 의존성·번들에서 제거
 
 Live2D Cubism Core는 오픈소스 항목이 아니라 위 Live2D Proprietary Software License의
-Redistributable Code입니다.
+Redistributable Code이며, 현재 의존성·번들에는 포함되지 않는 과거 검증 자료입니다.
 
 Rajdhani와 IBM Plex Mono는 번들 크기와 한국어 가독성을 위해 Latin 서브셋만 로드합니다.
 Rajdhani는 영문 브랜드·표제 장식, IBM Plex Mono는 영문 텔레메트리·코드·키·숫자에만
@@ -1911,7 +1923,7 @@ Pretendard, `Noto Sans KR`, `Apple SD Gothic Neo`, `Malgun Gothic`/`맑은 고�
 ### 방어 체계 6×4 모션 아틀라스
 
 - 도구: OpenAI 내장 ImageGen (`image_gen`), 프로젝트 결합형 생성
-- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-1e4ea91b-ab87-42e2-8611-e81cf3ad1c51.png`
+- 선택 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-1e4ea91b-ab87-42e2-8611-e81cf3ad1c51.png`
 - 프로젝트 보존 원본: `reference/source-assets/overload/defense/defense-systems-motion-atlas-chroma.png`
 - 런타임: `public/assets/overload/defense/defense-systems-motion-atlas.png` (1536×1024, 6×4, 256px 셀)
 - 저사양 파생: `public/assets/overload/defense/performance/defense-systems-motion-atlas.png` (768×512, 6×4, 128px 셀)
@@ -1935,7 +1947,7 @@ Scene/backdrop: perfectly flat solid #ff00ff chroma-key background across every 
 ### HAVEN-09 외곽 방어 전장
 
 - 도구: OpenAI 내장 ImageGen (`image_gen`), 프로젝트 결합형 생성
-- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-1a21b6ee-7352-4d0e-a43d-966b0b2e193a.png`
+- 선택 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-1a21b6ee-7352-4d0e-a43d-966b0b2e193a.png`
 - 프로젝트 보존 원본: `reference/source-assets/overload/defense/haven-defense-grid-source.png`
 - 런타임: `public/assets/overload/defense/haven-defense-grid.webp` (1920×1080)
 - 저사양 파생: `public/assets/overload/defense/performance/haven-defense-grid.webp` (960×540)
@@ -1956,7 +1968,7 @@ Constraints: environment only. No characters, enemies, towers on pads, projectil
 ### 디펜스 적군 6×4 고프레임 아틀라스 v2
 
 - 도구: OpenAI 내장 ImageGen (`image_gen`) + 프로젝트 로컬 결정론 후처리
-- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-125115ba-24bf-41a9-a814-53057d63bbb9.png`
+- 선택 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-125115ba-24bf-41a9-a814-53057d63bbb9.png`
 - 중간 산출: `exec-dab8fc68-c0f0-4e98-858c-c75be9bd1bda.png`, `exec-99337b30-15f1-401e-90aa-aeaee37f05cf.png`
 - 프로젝트 보존 원본: `reference/source-assets/overload/defense/defense-enemy-motion-v2-{chroma,alpha,sanitized}.png`
 - 런타임: `public/assets/overload/defense/defense-enemy-motion-atlas-v2.png` (1152×768, 6×4, 192px 셀)
@@ -1999,7 +2011,7 @@ Constraints: exact 6 columns, exact 4 rows, exact 24 cells; same viewing angle a
 ### 디펜스 전투 VFX 6×4 아틀라스 v2
 
 - 도구: OpenAI 내장 ImageGen (`image_gen`) + 프로젝트 로컬 결정론 후처리
-- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d73425ba-1ada-4706-8193-2ead8b4377f7.png`
+- 선택 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-d73425ba-1ada-4706-8193-2ead8b4377f7.png`
 - 프로젝트 보존 원본: `reference/source-assets/overload/defense/defense-combat-vfx-v2-{chroma,alpha}.png`
 - 런타임: `public/assets/overload/defense/defense-combat-vfx-atlas-v2.png` (768×512, 6×4, 128px 셀)
 - 저사양 파생: `public/assets/overload/defense/performance/defense-combat-vfx-atlas-v2.png` (576×384, 96px 셀)
@@ -2023,7 +2035,7 @@ Constraints: exact 6 columns, exact 4 rows, exact 24 cells; obvious animation pr
 ### HAVEN-09 세로 디펜스 전장
 
 - 도구: OpenAI 내장 ImageGen (`image_gen`)
-- 선택 원본: `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a292d2ba-b8d7-4cb5-ae4a-0cbbca67b9a9.png`
+- 선택 원본: `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-a292d2ba-b8d7-4cb5-ae4a-0cbbca67b9a9.png`
 - 프로젝트 보존 원본: `reference/source-assets/overload/defense/haven-defense-grid-portrait-source.png`
 - 런타임: `public/assets/overload/defense/haven-defense-grid-portrait.webp` (720×1280)
 - 저사양 파생: `public/assets/overload/defense/performance/haven-defense-grid-portrait.webp` (360×640)
@@ -2044,9 +2056,9 @@ Constraints: no black empty margins; background must fill the entire canvas; lan
 
 - 도구: OpenAI 내장 ImageGen (`image_gen`) + Pillow 결정론적 합성
 - 선택 원본:
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-4d614010-7e02-42bc-b031-d8dd81ad3ac8.png`
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-de1e45da-59ba-4da9-a9d1-c95874175db3.png`
-  - `C:/Users/82105/.codex/generated_images/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-12c3395f-fbe9-4b4c-8869-aa0d91feec1c.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-4d614010-7e02-42bc-b031-d8dd81ad3ac8.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-de1e45da-59ba-4da9-a9d1-c95874175db3.png`
+  - `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-12c3395f-fbe9-4b4c-8869-aa0d91feec1c.png`
 - 프로젝트 보존 원본: `reference/source-assets/overload/defense/battlefields-v2/{haven-perimeter,relay-blackout,sovereign-night-siege}-base.png`
 - 런타임: `public/assets/overload/defense/battlefields-v2/<stage>/battlefield.webp` (1920×1080), `battlefield-portrait.webp` (720×1280)
 - 저사양 파생: `public/assets/overload/defense/battlefields-v2/performance/<stage>/battlefield.webp` (960×540), `battlefield-portrait.webp` (360×640)

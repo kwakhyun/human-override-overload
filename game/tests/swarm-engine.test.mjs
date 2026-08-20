@@ -5,8 +5,11 @@ import {
   EXPEDITION_WORLD_WIDTH,
   GAME_HEIGHT,
   GAME_WIDTH,
+  MIKA_REWARD_POOLS,
   REGION_BOSS_PATTERNS,
   REGION_ENEMY_PROFILES,
+  REGION_WAVE_ROUTE_ANCHORS,
+  RIFLE_REWARD_POOLS,
   WORLD_HEIGHT,
   WORLD_WIDTH,
   chooseLevelReward,
@@ -164,7 +167,7 @@ test("expedition enemies resolve authored sprite footprints without stacking", (
   }
 });
 
-test("expedition pressure rises with wave clears even when AEGIS does not move right", () => {
+test("expedition pressure cap rises with authored wave and clear progress", () => {
   const state = createSwarmState({ random: () => 0.37, expedition: true, regionId: "glass-dune" });
   state.player.level = 1;
   state.killedEnemies = 0;
@@ -410,7 +413,7 @@ test("beam sword replaces rifle actives with four offensive flying-sword techniq
   stepSwarm(qState, qInput, 1 / 60);
   assert.equal(qState.empPulses.length, 0);
   assert.ok(qState.swordManualAbilities.some((effect) => effect.type === "spectralSwordArray"));
-  assert.ok(qState.manualAbilities.empPulse.cooldown > 13.9);
+  assert.ok(qState.manualAbilities.empPulse.cooldown > 5.9);
   assert.ok(drainSwarmEvents(qState).some((event) => event.type === "manualAbilityActivated" && event.ability === "spectralSwordArray"));
 
   const eState = createSwordAbilityState();
@@ -429,7 +432,7 @@ test("beam sword replaces rifle actives with four offensive flying-sword techniq
   stepSwarm(fState, fInput, 1 / 60);
   assert.equal(fState.stratosRuns.length, 0);
   assert.ok(fState.swordManualAbilities.some((effect) => effect.type === "imperialSwordDomain"));
-  assert.ok(fState.manualAbilities.stratosRun.cooldown > 31.9);
+  assert.ok(fState.manualAbilities.stratosRun.cooldown > 14.9);
 
   const rState = createSwordAbilityState();
   const rInput = createSwarmInput();
@@ -437,7 +440,7 @@ test("beam sword replaces rifle actives with four offensive flying-sword techniq
   stepSwarm(rState, rInput, 1 / 60);
   assert.equal(rState.helixTempests.length, 0);
   assert.ok(rState.swordManualAbilities.some((effect) => effect.type === "heavenfallExecution" && !effect.detonated));
-  assert.ok(rState.manualAbilities.helixTempest.cooldown > 84.9);
+  assert.ok(rState.manualAbilities.helixTempest.cooldown > 44.9);
   delayPlayerWeapons(rState);
   stepFor(rState, createSwarmInput(), 0.82);
   assert.equal(rState.killedEnemies, 4, "the heavenfall shockwave should execute every ordinary nearby enemy");
@@ -448,7 +451,10 @@ test("beam sword replaces rifle actives with four offensive flying-sword techniq
     [hud.abilities.empPulse.id, hud.abilities.aegisWard.id, hud.abilities.stratosRun.id, hud.abilities.helixTempest.id],
     ["spectralSwordArray", "phantomRend", "imperialSwordDomain", "heavenfallExecution"],
   );
-  assert.equal(hud.abilities.helixTempest.maxCooldown, 85);
+  assert.deepEqual(
+    [hud.abilities.empPulse.maxCooldown, hud.abilities.aegisWard.maxCooldown, hud.abilities.stratosRun.maxCooldown, hud.abilities.helixTempest.maxCooldown],
+    [6, 9, 15, 45],
+  );
 });
 
 test("MIKA fields ring blades, four exclusive actives, and a cooldown-limited battlefield tag", () => {
@@ -484,6 +490,63 @@ test("MIKA fields ring blades, four exclusive actives, and a cooldown-limited ba
   const hud = getSwarmHud(state);
   assert.equal(hud.player.reserveCharacterId, "mika");
   assert.equal(hud.player.tagReady, false);
+});
+
+test("tagging keeps AEGIS and MIKA manual cooldown banks independent", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "aegis", duration: 999 });
+  state.levelFlow.firstDeadline = 999;
+  state.levelFlow.nextOfferAt = 999;
+  state.player.invulnerability = 999;
+  delayPlayerWeapons(state);
+  drainSwarmEvents(state);
+
+  const empInput = createSwarmInput();
+  empInput.empPulsePressed = true;
+  stepSwarm(state, empInput, 1 / 60);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "manualAbilityActivated" && event.ability === "empPulse"));
+  assert.equal(state.manualAbilities, state.manualAbilityBanks.aegis);
+  assert.ok(state.manualAbilityBanks.aegis.empPulse.cooldown > 17.9);
+
+  const tagToMika = createSwarmInput();
+  tagToMika.tagPressed = true;
+  stepSwarm(state, tagToMika, 1 / 60);
+  assert.equal(state.player.characterId, "mika");
+  assert.equal(state.manualAbilities, state.manualAbilityBanks.mika);
+  assert.equal(state.manualAbilityBanks.mika.empPulse.cooldown, 0);
+  assert.equal(getSwarmHud(state).abilities.empPulse.ready, true);
+
+  const prismInput = createSwarmInput();
+  prismInput.empPulsePressed = true;
+  stepSwarm(state, prismInput, 1 / 60);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "manualAbilityActivated" && event.ability === "prismRicochet"));
+  assert.ok(state.manualAbilityBanks.mika.empPulse.cooldown > 11.9);
+  assert.ok(state.manualAbilityBanks.aegis.empPulse.cooldown > 17.8);
+  assert.notEqual(state.manualAbilityBanks.aegis.empPulse.cooldown, state.manualAbilityBanks.mika.empPulse.cooldown);
+
+  state.player.tagCooldown = 0;
+  const tagToAegis = createSwarmInput();
+  tagToAegis.tagPressed = true;
+  stepSwarm(state, tagToAegis, 1 / 60);
+  const aegisHud = getSwarmHud(state);
+  assert.equal(state.player.characterId, "aegis");
+  assert.equal(state.manualAbilities, state.manualAbilityBanks.aegis);
+  assert.equal(aegisHud.abilities.empPulse.id, "empPulse");
+  assert.equal(aegisHud.abilities.empPulse.ready, false);
+  assert.ok(state.manualAbilityBanks.mika.empPulse.cooldown > 11.8);
+
+  const legacy = createSwarmState({ random: () => 0.5, expedition: true, characterId: "aegis", duration: 999 });
+  legacy.levelFlow.firstDeadline = 999;
+  legacy.levelFlow.nextOfferAt = 999;
+  delayPlayerWeapons(legacy);
+  legacy.manualAbilities.empPulse.cooldown = 7;
+  delete legacy.manualAbilityBanks;
+  const legacyTag = createSwarmInput();
+  legacyTag.tagPressed = true;
+  stepSwarm(legacy, legacyTag, 1 / 60);
+  assert.equal(legacy.player.characterId, "mika");
+  assert.equal(legacy.manualAbilities, legacy.manualAbilityBanks.mika);
+  assert.ok(legacy.manualAbilityBanks.aegis.empPulse.cooldown > 6.9);
+  assert.equal(legacy.manualAbilityBanks.mika.empPulse.cooldown, 0);
 });
 
 test("MIKA basic fire starts finite and reaches the former twin-piercing profile only through halo augmentation", () => {
@@ -522,6 +585,97 @@ test("MIKA basic fire starts finite and reaches the former twin-piercing profile
   assert.ok(masteredShots.every((projectile) => projectile.radius === 13));
   assert.ok(masteredShots.every((projectile) => Math.abs(projectile.damage - 49.25) < 0.0001));
   assert.ok(masteredShots.every((projectile) => Math.abs(Math.hypot(projectile.vx, projectile.vy) - 930) < 0.0001));
+});
+
+test("MIKA owns two exclusive growth synergies instead of inheriting the rifle skill pool", () => {
+  assert.ok(MIKA_REWARD_POOLS.skill.includes("prismTempo"));
+  assert.ok(MIKA_REWARD_POOLS.skill.includes("heartGuard"));
+  assert.equal(RIFLE_REWARD_POOLS.skill.includes("prismTempo"), false);
+  assert.equal(RIFLE_REWARD_POOLS.skill.includes("heartGuard"), false);
+  for (const rifleOnly of ["multishot", "airstrike", "omegaLaser"]) {
+    assert.equal(MIKA_REWARD_POOLS.skill.includes(rifleOnly), false);
+    assert.ok(RIFLE_REWARD_POOLS.skill.includes(rifleOnly));
+  }
+
+  const mikaOffer = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika" });
+  mikaOffer.levelFlow.queuedLevels = 1;
+  mikaOffer.levelFlow.nextOfferAt = 0;
+  mikaOffer.time = 6.5;
+  stepSwarm(mikaOffer, createSwarmInput(), 1 / 60);
+  assert.ok(["prismTempo", "heartGuard"].includes(mikaOffer.rewardOptions.find((option) => option.category === "skill")?.id));
+  const aegisOffer = createSwarmState({ random: () => 0.5, expedition: true, characterId: "aegis" });
+  aegisOffer.levelFlow.queuedLevels = 1;
+  aegisOffer.levelFlow.nextOfferAt = 0;
+  aegisOffer.time = 6.5;
+  stepSwarm(aegisOffer, createSwarmInput(), 1 / 60);
+  assert.equal(["prismTempo", "heartGuard"].includes(aegisOffer.rewardOptions.find((option) => option.category === "skill")?.id), false);
+
+  const tempo = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika", duration: 999 });
+  tempo.build.skills.prismTempo = 4;
+  tempo.player.invulnerability = 999;
+  for (const bank of Object.values(tempo.manualAbilityBanks)) {
+    for (const entry of Object.values(bank)) entry.cooldown = 10;
+  }
+  const tempoTarget = tempo.enemies[0];
+  tempo.enemies.length = 1;
+  tempo.enemies[0] = tempoTarget;
+  tempoTarget.x = tempo.player.x + 86;
+  tempoTarget.y = tempo.player.y;
+  tempoTarget.hp = 99_999;
+  tempoTarget.maxHp = tempoTarget.hp;
+  tempoTarget.speed = 0;
+  tempoTarget.spawnDelay = 0;
+  stepFor(tempo, createSwarmInput(), 0.25);
+  assert.ok(tempo.stats.projectileHits > 0);
+  assert.ok(tempo.manualAbilityBanks.mika.empPulse.cooldown < 9.7, "halo contact should accelerate MIKA's manual cycle beyond elapsed time");
+  assert.ok(
+    tempo.manualAbilityBanks.mika.empPulse.cooldown < tempo.manualAbilityBanks.aegis.empPulse.cooldown,
+    "PRISM TEMPO must never accelerate AEGIS's reserve cooldown bank",
+  );
+
+  const guard = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika" });
+  guard.build.skills.heartGuard = 2;
+  const guardTarget = guard.enemies[0];
+  guard.enemies.length = 1;
+  guard.enemies[0] = guardTarget;
+  guardTarget.x = guard.player.x + 70;
+  guardTarget.y = guard.player.y;
+  guardTarget.spawnDelay = 0;
+  guardTarget.hp = 99_999;
+  guardTarget.maxHp = guardTarget.hp;
+  delayPlayerWeapons(guard);
+  const guardInput = createSwarmInput();
+  guardInput.empPulsePressed = true;
+  stepSwarm(guard, guardInput, 1 / 60);
+  assert.ok(guard.player.shield > 0 && guard.player.shieldMax >= 46);
+  assert.equal(guard.stats.shots, 0, "manual ability damage must not inflate weapon accuracy attempts");
+  assert.ok(guard.stats.abilityDamageEvents > 0);
+  assert.ok(drainSwarmEvents(guard).some((event) => event.type === "mikaHeartGuard" && event.hits > 0));
+});
+
+test("result accuracy counts sword arcs while projectile, melee, and ability damage stay separated", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true, mainWeaponId: "beam-sword" });
+  const target = state.enemies[0];
+  state.enemies.length = 1;
+  state.enemies[0] = target;
+  target.x = state.player.x + 90;
+  target.y = state.player.y;
+  target.spawnDelay = 0;
+  target.hp = 99_999;
+  target.maxHp = target.hp;
+  target.speed = 0;
+  delayPlayerWeapons(state);
+  state.player.fireTimers.sword = 0;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+
+  assert.equal(state.stats.projectileShots, 0);
+  assert.equal(state.stats.projectileHits, 0);
+  assert.equal(state.stats.meleeAttacks, 1);
+  assert.equal(state.stats.meleeHits, 1);
+  assert.equal(state.stats.shots, 1);
+  assert.equal(state.stats.hits, 1);
+  assert.equal(state.stats.meleeDamageEvents, 1);
+  assert.equal(state.stats.abilityDamageEvents, 0);
 });
 
 test("MIKA and the tag action stay unavailable before the first-region unlock", () => {
@@ -1014,7 +1168,7 @@ test("skill cooldown HUD exposes the exact reset duration used by combat", () =>
   assert.equal("squadRecall" in manual, false);
 });
 
-test("clearing a wave triggers the next larger gate wave without rightward movement", () => {
+test("the opening clear still triggers WAVE I without rightward movement", () => {
   const state = createSwarmState({ random: () => 0.5, expedition: true });
   state.player.invulnerability = 99;
   state.levelFlow.firstDeadline = 999;
@@ -1037,6 +1191,99 @@ test("clearing a wave triggers the next larger gate wave without rightward movem
   assert.ok(state.enemies.every((enemy) => enemy.type === "hunter"));
   assert.ok(state.enemies.length <= getEnemyPressureCap(state));
   assert.ok(getSwarmHud(state).surge.active || state.surgeQueued === 0);
+});
+
+test("later waves require both the preceding clear and their authored route anchor", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true, duration: 999 });
+  state.player.invulnerability = 999;
+  state.levelFlow.firstDeadline = 999;
+  state.levelFlow.nextOfferAt = 999;
+  delayPlayerWeapons(state);
+  state.killedEnemies = state.spawnedEnemies;
+  state.stats.kills = state.killedEnemies;
+  state.enemies.length = 0;
+  drainSwarmEvents(state);
+
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  stepFor(state, createSwarmInput(), 2.1);
+  assert.equal(state.surgeIndex, 1);
+  assert.equal(state.spawnedEnemies, 22);
+
+  state.killedEnemies = state.spawnedEnemies;
+  state.stats.kills = state.killedEnemies;
+  state.enemies.length = 0;
+  state.surgeQueued = 0;
+  state.activeSurge = null;
+  drainSwarmEvents(state);
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.surgeWarning, null);
+  assert.equal(state.expedition.waitingForAdvance, true);
+  const secondAnchor = state.expedition.waveAnchors[1];
+  assert.equal(secondAnchor, REGION_WAVE_ROUTE_ANCHORS["wrong-engine-core"][1] * state.expedition.routeLength);
+  assert.equal(state.expedition.nextWaveAnchor, secondAnchor);
+
+  state.player.x = state.expedition.originX + secondAnchor;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.surgeWarning?.index, 1);
+  assert.equal(state.surgeWarning?.routeAnchor, secondAnchor);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "surgeWarning" && event.wave === 2 && event.routeAnchor === secondAnchor));
+
+  const band = createSwarmState({ random: () => 0.5, expedition: true, duration: 999 });
+  band.player.invulnerability = 999;
+  band.levelFlow.firstDeadline = 999;
+  band.levelFlow.nextOfferAt = 999;
+  delayPlayerWeapons(band);
+  for (const enemy of band.enemies) {
+    enemy.hp = 99_999;
+    enemy.maxHp = enemy.hp;
+    enemy.speed = 0;
+    enemy.damage = 0;
+    enemy.spawnDelay = 0;
+    enemy.selfDestructTriggerRadius = 0;
+  }
+  const move = createSwarmInput();
+  move.right = true;
+  stepFor(band, move, 30);
+  assert.equal(band.expedition.distance, band.expedition.waveAnchors[1]);
+  assert.equal(band.expedition.atCombatBand, true);
+  assert.equal(getSwarmHud(band).expedition.objective, "현재 전투 구역 소탕");
+  assert.ok(band.expedition.distance < band.expedition.routeLength);
+});
+
+test("terminal navigation cues advance to the pending MOSS trace and never point behind the player", () => {
+  const wrongEngine = createSwarmState({ random: () => 0.5, expedition: true, duration: 999 });
+  wrongEngine.spawnedEnemies = wrongEngine.enemyBudget;
+  wrongEngine.killedEnemies = wrongEngine.enemyBudget - 1;
+  wrongEngine.stats.kills = wrongEngine.killedEnemies;
+  wrongEngine.enemies.length = 0;
+  wrongEngine.surgeIndex = wrongEngine.expedition.waveAnchors.length;
+  wrongEngine.levelFlow.firstDeadline = 999;
+  wrongEngine.levelFlow.nextOfferAt = 999;
+  const finalWaveAnchor = wrongEngine.expedition.waveAnchors.at(-1);
+  wrongEngine.player.x = wrongEngine.expedition.originX + finalWaveAnchor;
+  stepSwarm(wrongEngine, createSwarmInput(), 1 / 60);
+
+  assert.equal(wrongEngine.expedition.distance, finalWaveAnchor);
+  assert.equal(wrongEngine.expedition.nextWaveAnchor, 21_800);
+  assert.ok(wrongEngine.expedition.nextWaveAnchor > wrongEngine.expedition.distance);
+  assert.equal(getSwarmHud(wrongEngine).expedition.nextWaveAnchor, 21_800);
+
+  wrongEngine.player.x = wrongEngine.expedition.originX + 21_800;
+  stepSwarm(wrongEngine, createSwarmInput(), 1 / 60);
+  assert.equal(wrongEngine.expedition.traces.find((trace) => trace.id === "moss").triggered, true);
+  assert.equal(wrongEngine.expedition.nextWaveAnchor, null);
+
+  const defaultRoute = createSwarmState({ random: () => 0.5, expedition: true, regionId: "glass-dune", duration: 999 });
+  defaultRoute.spawnedEnemies = defaultRoute.enemyBudget;
+  defaultRoute.killedEnemies = defaultRoute.enemyBudget - 1;
+  defaultRoute.stats.kills = defaultRoute.killedEnemies;
+  defaultRoute.enemies.length = 0;
+  defaultRoute.surgeIndex = defaultRoute.expedition.waveAnchors.length;
+  defaultRoute.levelFlow.firstDeadline = 999;
+  defaultRoute.levelFlow.nextOfferAt = 999;
+  defaultRoute.player.x = defaultRoute.expedition.originX + defaultRoute.expedition.waveAnchors.at(-1);
+  stepSwarm(defaultRoute, createSwarmInput(), 1 / 60);
+  assert.equal(defaultRoute.expedition.nextWaveAnchor, null, "a trace-free terminal route must not retain the stale 74% anchor");
 });
 
 test("level-up airstrike and omega laser remain automatic and separate from manual Q/E/F/R state", () => {
@@ -2034,7 +2281,7 @@ test("seeded simulations remain deterministic and finite under the live entity c
     phase: "swarm",
     nextEntityId: 295,
     shots: 69,
-    hits: 67,
+    hits: 66,
     projectiles: 2,
     enemyProjectiles: 23,
     rewards: 1,

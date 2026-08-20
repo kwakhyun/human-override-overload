@@ -1,7 +1,12 @@
 # Design QA — HUMAN OVERRIDE: OVERLOAD
 
 - 최초 검증일: 2026-08-10
-- 최신 전체 검증일: 2026-08-15
+- 마지막 전체 검증 체크포인트: 2026-08-15 · 269/269, TypeScript, production build, Sites 4/4
+- 현재 계약 정합성 기준일: 2026-08-20 · 이후 변경은 범위별 집중 테스트만 수행
+- 현재 런타임 계약: 빔 소드 Q/E/F/R 6/9/15/45초, `현재 웨이브 전멸 + 다음 authored
+  전투 구간 도달` 이중 게이트와 `14→22→34→52→79→120→180→220`기 공세,
+  외곽 중간 보스는 지역 적 예산 전멸 뒤 출현,
+  01—03 선택 출격 영상은 `preload="auto"`, Cubism/Live2D는 비활성 제작 이력
 - 브라우저: Codex 인앱 브라우저·Edge WebGL
 - 데스크톱 뷰포트: 1440×810, DPR 1
 - 모바일 기준 뷰포트: 320×700, 360×800, 390×844 세로 · 812×375 보조 가로
@@ -348,6 +353,8 @@
   복사했습니다. 선택하지 않은 지역 영상은 마운트하지 않고 선택 영상도 `preload="metadata"`만 사용해
   초기 화면과 기지의 전송·메모리 비용을 늘리지 않습니다. 출격 영상 중 전투 BGM은 멈추고, 사용자가
   켠 사운드 설정은 영상 음소거 상태에도 그대로 반영됩니다.
+- 현재 상태: 이 Iteration의 `preload="metadata"` 기록은 이후 백그라운드 전투 준비 방식과 함께
+  `preload="auto"`로 교체됐습니다. 위 문단은 당시 구현 이력이며 현재 계약이 아닙니다.
 - Edge 1440×810에서 세 지역 영상을 실제 종료까지 각각 재생해 영상 중 canvas 0개, 종료 뒤 canvas
   생성, 잘못된 지역 영상 0개를 확인했습니다. 브라우저가 보고한 실제 재생 구간은 6.102~6.119초였고
   console/page/HTTP 실패는 모두 0개였습니다. 812×375 모바일 가로에서도 영상과 최소 작전 표기가
@@ -387,6 +394,9 @@
 - 원정 압력은 초반 36기를 유지하면서 실제 전진율 10/34/60/82%에서 124/180/260/400기 증원
   큐가 순차 해금되도록 변경했습니다. 전진율이 주 압력 신호이고 레벨·처치·시간은 보조합니다.
   AEGIS보다 720 월드 단위 이상 뒤처진 적은 제거되지 않고 원거리 대기를 해제한 뒤 가속 추격합니다.
+- 현재 상태: 이 전진율만으로 열리는 증원은 폐기됐습니다. 현재는 근접형 8기 뒤 현재 웨이브를
+  전멸하고 다음 authored 전투 구간에 도달해야 `14→22→34→52→79→120→180→220`기 순서로
+  다음 공세가 열립니다. 월드 X만으로 살아 있는 적을 건너뛸 수 없습니다.
 - 다수 처치 때 6프레임 도트 폭발 위에 중복되던 절차적 원·광선 묘사를 제거했습니다. 화면 안 적,
   적 투사체, 저격 경고, 보스 위험 기하와 다섯 게이트는 그대로 두고 아군 탄도 비행과 그림자만
   밀도에 따라 샘플링합니다. 220적/620투사체에서 render-submit CPU P95는 데스크톱 4.1ms,
@@ -440,7 +450,10 @@
   캔버스로 확인했습니다. TypeScript와 관련 회귀 34/34가 통과했고 전체 테스트는 사용자 지침에
   따라 생략했습니다. 4174 서버는 HTTP 200으로 계속 실행 중입니다.
 
-## 현재 판단 — Iteration 20 complete
+## 당시 판단 스냅샷 — Iteration 20 complete
+
+> 이 절은 Iteration 20 시점의 결론을 보존한 변경 이력입니다. 현재 계약은 문서 맨 위의
+> `현재 런타임 계약`과 가장 마지막 Iteration을 기준으로 합니다.
 
 - Iteration 11까지의 저사양 PERFORMANCE 기준선과 회귀 결과는 유효합니다.
 - 시작 화면은 제공된 원본을 충실히 보존하며 필요한 정보만 표시함.
@@ -469,8 +482,8 @@ final result: pass — 01—03/04—06/07—09 상위 권역 지도, LARK 신규
 ### Iteration 21 — complete · 캐릭터 정보 및 영구 강화 화면
 
 - Source visual truth:
-  `C:/Users/82105/Downloads/Screenshot_이환_20260531_160540.jpg` (576×500)와
-  `C:/Users/82105/Downloads/img (1).jpg` (1110×625). 두 레퍼런스의 공통 구성인 좌측 대형
+  사용자 제공 레퍼런스 `Screenshot_이환_20260531_160540.jpg` (576×500)와
+  `img (1).jpg` (1110×625). 두 레퍼런스의 공통 구성인 좌측 대형
   캐릭터 일러스트, 우측 정보 콘솔, 상단 분류 탭, 외곽 캐릭터 선택 레일을 현재 프로젝트의
   SOVEREIGN 청록/마젠타 시각 언어로 옮겼습니다.
 - Implementation evidence:
@@ -514,7 +527,7 @@ final result: passed
 ### Iteration 22 — complete · 모션 포트레이트 중심 헤이븐 로비
 
 - Source visual truth:
-  `C:/Users/82105/Downloads/KakaoTalk_20211112_103053137.jpg` (1024×576)를 주 레이아웃
+  사용자 제공 레퍼런스 `KakaoTalk_20211112_103053137.jpg` (1024×576)를 주 레이아웃
   기준으로 삼고, `gj_gallery_file_06143005_1.jpg`, `Portfolio_img_29182423_1.png`,
   `RCLzrXEAuT7InkwJsS6JZorjCk1hxxe4etiyQ2dzJ3XQ7qLSNQmFQBDdzxIHQnqfZMmWdl3Q4CNJ6u8mOFUh5w.webp`의
   중앙 캐릭터·가장자리 메뉴·우상단 재화 구조를 보조 기준으로 사용했습니다. 제3자 이미지는
@@ -946,8 +959,9 @@ final result: passed
   모든 PDF 페이지를 PNG로 렌더해 표·문단·이미지·페이지 번호의 잘림과 겹침을 확인했습니다.
   Google Play API 36 일정과 Apple 최소 기능 기준은 각 플랫폼의 공식 문서로 다시 확인했습니다.
 - Verification scope: 이번 변경은 문서와 생성 PDF만 대상으로 했습니다. 사용자의 빠른 반복 지침에
-  따라 전체 게임 테스트·production build·Sites 검증은 다시 실행하지 않았으며, 최신 전체 기준은
-  Iteration 40의 269/269와 build/Sites 통과 상태입니다.
+  따라 전체 게임 테스트·production build·Sites 검증은 다시 실행하지 않았으며, 마지막 전체 검증
+  체크포인트는 Iteration 40의 269/269와 build/Sites 통과 상태입니다. 이후 변경에 대한 현재 전체
+  suite 통과 선언으로 해석하지 않습니다.
 
 final result: passed
 
@@ -1063,5 +1077,51 @@ final result: passed
 - Verification scope: TypeScript와 모바일·캠페인·디펜스 집중 테스트 18/18, 실제 390×844/360×800
   safe area, 글자 크기, 터치 영역, 내부 스크롤을 확인했습니다. 전체 테스트·production build·배포는
   사용자가 최종 검증을 요청하기 전까지 실행하지 않습니다.
+
+final result: passed
+
+### P0 제출 정합성 및 콘텐츠 기획 기준선 — 2026-08-20
+
+- Runtime contract audit: 빔 소드 Q/E/F/R 6/9/15/45초, 첫 8기, `현재 웨이브 전멸 + 다음
+  authored 전투 구간 도달` 이중 게이트, `14→22→34→52→79→120→180→220` 성장 상한 할당,
+  종점 전 최종 잔여 공세와 자동 전환을 현재 문서·집중 테스트에 맞췄습니다.
+- Content identity: MIKA의 4랭크 PRISM TEMPO/HEART GUARD 전용 성장과 소총 전용 보상 제외,
+  외곽 예산 전멸 뒤 중간 보스의 PRESS SLAM/ARC VOLLEY/CHIMERA RUSH 시그니처를 계약으로
+  고정했습니다.
+- Portfolio hygiene: 공개 문서의 개인 절대 경로를 상대 저장소 경로 또는
+  `imagegen-job/<작업 ID>/<산출물 ID>`로 교체했습니다. CREDITS의 역사적 프롬프트는 수정하지
+  않고 퇴역 AEGIS 아틀라스와 Cubism/Live2D를 비활성 제작 이력으로 분리했습니다. 선택 출격
+  영상의 현재 `preload="auto"` 계약과 Suno BGM 5곡의 제출 전 권리 증빙 게이트를 명시했습니다.
+- Planning artifact: `docs/project/content-design-baseline-ko.md`에 대상 플레이어, 목표 경험 3개,
+  순간·런·메타 루프, WRONG ENGINE encounter beats, KPI 정의, 빈 플레이테스트 원자료 표와
+  본인/AI 책임 구분을 작성했습니다. 외부 테스트 전 시간·성공률은 결과가 아니라 가설로 표시했고,
+  `npm run analyze:content`는 플레이 로그가 아닌 정적 데이터 검사로 구분했습니다.
+- Focused verification: sword, swarm, expedition, campaign content, content balance 계약 106/106 통과.
+  `npm run analyze:content`가 6개 지역·3개 방어전·11개 영구 강화선과 현재 경제 기준선을 다시
+  산출했습니다. 전체 `npm test`, TypeScript, production build, 배포, PDF 재생성은 이번 집중
+  범위에서 실행하지 않았으며 269/269는 2026-08-15의 역사적 전체 체크포인트로만 유지합니다.
+
+final result: passed
+
+### P0 최종 통합 검증 — 2026-08-20
+
+- Critical flow: 첫 출격 2단계 안내 뒤 상황별 Q/E/F/R 가이드가 이어져도 Phaser 런 인스턴스가
+  재생성되지 않습니다. 승리 결과를 먼저 보여 준 뒤 저장 슬롯의 후속 큐가 MIKA 합류 → 빔 소드
+  교본 → 귀환을 복구하며, 새로고침과 동일 runId 재처리에서도 장면·보상이 중복되지 않습니다.
+- Combat/content contract: AEGIS와 MIKA의 Q/E/F/R 쿨다운 은행을 독립 유지하고, PRISM TEMPO는
+  MIKA 은행만 가속합니다. 웨이브 전멸과 전방 앵커 도달을 함께 요구하며, 종반 미발견 MOSS를
+  87.2% 목적지로 안내한 뒤 자동 전환합니다. 미니맵은 플레이어 앞의 다음 목적지와 활성 SOVEREIGN
+  전송 게이트 최대 5개만 표시하고 보스방·지난 앵커 표식은 숨깁니다.
+- Result/mobile evidence: 모든 승리는 결과·재화·개인 최고 기록·빌드·보스 기믹·투사체/검술 명중
+  근거를 먼저 표시합니다. 320×700 격리 Edge에서 결과 카드 내부 스크롤, 보상과 CTA 도달을
+  실측했고, 390×844 세로 전투·출격과 1440×810 출격에서 가로 넘침과 콘솔 오류가 없었습니다.
+- Integrated verification: 캠페인·저장·진행·콘텐츠·HUD·무기·expedition·swarm·검술 집중 테스트
+  165/165, `npm run typecheck`, `npm run analyze:content`가 통과했습니다. 브라우저에서는 첫 출격,
+  장비 명시 확인, 컨텍스트 튜토리얼 뒤 런 유지, HANA 재화 교환을 재현했습니다.
+- Submission artifacts: 최신 소스로 게임 가이드 10쪽, AI 기술 문서 16쪽, 콘텐츠 기획 기준선 8쪽을
+  재생성하고 전 페이지 PNG 렌더를 확인했습니다. 잘림·빈 페이지·한글 글리프 누락은 발견되지
+  않았습니다. 전체 `npm test`, production build, 배포는 시간 제한 폴리시에 따라 실행하지 않았습니다.
+- External gates: KPI 시간값은 외부 5명 플레이테스트 전 설계 가설입니다. Suno BGM은 제작 계정·
+  플랜·제작일 당시 상업 공개 권리 증빙을 첨부하거나 제출본에서 제거·교체해야 합니다.
 
 final result: passed

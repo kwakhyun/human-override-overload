@@ -25,6 +25,29 @@ export const BASE_CURRENCIES = deepFreeze({
   },
 });
 
+export const BASE_RESOURCE_EXCHANGES = deepFreeze({
+  "research-to-parts": {
+    id: "research-to-parts",
+    ownerId: "hana",
+    name: "APPLIED MATERIAL SYNTHESIS",
+    koreanName: "응용 재료 합성",
+    description: "남는 전투 연구 자료를 장비 제작에 쓸 수 있는 규격 부품으로 전환합니다.",
+    requiresCompletedRegions: 2,
+    costs: { researchData: 6 },
+    rewards: { equipmentParts: 3 },
+  },
+  "field-core-fabrication": {
+    id: "field-core-fabrication",
+    ownerId: "hana",
+    name: "FIELD CORE FABRICATION",
+    koreanName: "현장 코어 제작",
+    description: "연구 자료와 장비 부품을 소모해 고난도 동기화에 필요한 코어를 제작합니다.",
+    requiresCompletedRegions: 4,
+    costs: { researchData: 12, equipmentParts: 8 },
+    rewards: { augmentationCores: 1 },
+  },
+});
+
 const HANA_RESEARCH_LINES = {
   "hana-combat-forecast": {
     id: "hana-combat-forecast",
@@ -211,6 +234,7 @@ export const BASE_FACILITIES = deepFreeze({
 
 const ORDERED_UPGRADES = Object.freeze(Object.values(BASE_UPGRADE_LINES));
 const ORDERED_FACILITIES = Object.freeze(Object.values(BASE_FACILITIES));
+const ORDERED_EXCHANGES = Object.freeze(Object.values(BASE_RESOURCE_EXCHANGES));
 
 export function getBaseUpgrade(upgradeId) {
   return BASE_UPGRADE_LINES[upgradeId] ?? null;
@@ -227,4 +251,13 @@ export function getBaseFacility(facilityId) {
 
 export function getBaseFacilities() {
   return ORDERED_FACILITIES;
+}
+
+export function getBaseResourceExchange(exchangeId) {
+  return BASE_RESOURCE_EXCHANGES[exchangeId] ?? null;
+}
+
+export function getBaseResourceExchanges(ownerId = null) {
+  if (!ownerId) return ORDERED_EXCHANGES;
+  return Object.freeze(ORDERED_EXCHANGES.filter((exchange) => exchange.ownerId === ownerId));
 }
