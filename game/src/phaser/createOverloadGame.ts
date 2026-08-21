@@ -56,12 +56,18 @@ export function createOverloadGame(
     : "full";
   const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, callbacks.onLoadProgress);
   const portraitPresentation = mobileRuntime.portrait && mobileRuntime.touchOptimized;
+  const presentationWidth = portraitPresentation
+    ? Math.max(1, Math.round(window.visualViewport?.width || window.innerWidth || parent.clientWidth))
+    : 1280;
+  const presentationHeight = portraitPresentation
+    ? Math.max(1, Math.round(window.visualViewport?.height || window.innerHeight || parent.clientHeight))
+    : 720;
   const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
-    width: 1280,
-    height: 720,
+    width: presentationWidth,
+    height: presentationHeight,
     backgroundColor: "#020608",
     transparent: false,
     antialias: initialQuality !== "performance",
@@ -90,10 +96,13 @@ export function createOverloadGame(
       skipUnreadyShaders: true,
     },
     scale: {
-      mode: mobileRuntime.portrait && mobileRuntime.touchOptimized ? Phaser.Scale.ENVELOP : Phaser.Scale.FIT,
+      // Portrait combat needs the phone's real aspect ratio. ENVELOP crops the
+      // 16:9 canvas down to a narrow center strip before the battle camera is
+      // applied, which hides nearby enemies even at a low world zoom.
+      mode: portraitPresentation ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 1280,
-      height: 720,
+      width: presentationWidth,
+      height: presentationHeight,
       expandParent: true,
     },
     input: {
@@ -105,10 +114,40 @@ export function createOverloadGame(
     audio: { noAudio: true },
   });
 
+  let removePortraitResizeListener: (() => void) | null = null;
+  if (portraitPresentation) {
+    const resizePortraitRenderer = () => {
+      const width = Math.max(1, Math.round(window.visualViewport?.width || window.innerWidth));
+      const height = Math.max(1, Math.round(window.visualViewport?.height || window.innerHeight));
+      game.scale.resize(width, height);
+      game.renderer.resize(width, height);
+    };
+    resizePortraitRenderer();
+    window.addEventListener("resize", resizePortraitRenderer, { passive: true });
+    window.visualViewport?.addEventListener("resize", resizePortraitRenderer, { passive: true });
+    removePortraitResizeListener = () => {
+      window.removeEventListener("resize", resizePortraitRenderer);
+      window.visualViewport?.removeEventListener("resize", resizePortraitRenderer);
+    };
+  }
+
   const qaProfiler = import.meta.env.DEV
     ? installDevRuntimeProfiler(game, battleScene, () => {
       const runtime = battleScene as unknown as {
         state?: any;
+        view?: {
+          getPresentationSnapshot?: () => {
+            zoom: number;
+            viewportWidth: number;
+            viewportHeight: number;
+            visibleWorldWidth: number;
+            visibleWorldHeight: number;
+            worldLeft: number;
+            worldRight: number;
+            worldTop: number;
+            worldBottom: number;
+          };
+        };
         governor?: {
           preset?: { id?: string; renderFps?: number };
           snapshot?: {
@@ -121,6 +160,12 @@ export function createOverloadGame(
       };
       const state = runtime.state;
       const qualitySnapshot = runtime.governor?.snapshot;
+      const presentation = runtime.view?.getPresentationSnapshot?.();
+      const visibleEnemyCount = presentation
+        ? (state?.enemies ?? []).filter((enemy: any) => enemy?.spawnDelay <= 0
+          && enemy?.x >= presentation.worldLeft && enemy?.x <= presentation.worldRight
+          && enemy?.y >= presentation.worldTop && enemy?.y <= presentation.worldBottom).length
+        : undefined;
       return {
         scene: "OverloadBattle",
         debugScene: bridge.debugScene,
@@ -143,6 +188,12 @@ export function createOverloadGame(
         bossPattern: state?.boss?.activePattern?.type ?? null,
         mobileAutoAim: mobileRuntime.autoAim,
         portraitPresentation,
+        cameraZoom: presentation?.zoom,
+        cameraViewportWidth: presentation?.viewportWidth,
+        cameraViewportHeight: presentation?.viewportHeight,
+        visibleWorldWidth: presentation?.visibleWorldWidth,
+        visibleWorldHeight: presentation?.visibleWorldHeight,
+        visibleEnemyCount,
       };
     }, () => primeDeterministicArsenal(battleScene as unknown as Parameters<typeof primeDeterministicArsenal>[0]))
     : null;
@@ -164,6 +215,7 @@ export function createOverloadGame(
     destroy: () => {
       if (destroyed) return;
       destroyed = true;
+      removePortraitResizeListener?.();
       qaProfiler?.destroy();
       game.destroy(true);
       parent.replaceChildren();

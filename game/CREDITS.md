@@ -2101,3 +2101,157 @@ Composition/framing: exact nadir orthographic camera, asymmetrical ruined machin
 Lighting/mood: desperate final night siege, black gunmetal, deep crimson emergency light, hot amber sparks, restrained cyan resistance lights around the core; clear silhouettes, not too dark.
 Constraints: no characters, no enemies, no towers, no text, no letters, no numbers, no UI, no grid, no painted route lines, no circular build pads, no watermark, no logo, no cropped core. Production background, not concept art.
 ```
+
+### Active mobile menu and augmentation UI art
+
+- Generated: 2026-08-21
+- Tool: OpenAI built-in ImageGen (`image_gen`)
+- Runtime assets:
+  - `public/assets/overload/ui/campaign/mobile-menu-icons-v1.webp`
+  - `public/assets/overload/ui/campaign/augmentation-core-visual-v1.webp`
+- Preserved ImageGen sources:
+  - `reference/source-assets/overload/ui/campaign/mobile-menu-icons-v1.png`
+  - `reference/source-assets/overload/ui/campaign/augmentation-core-visual-v1.png`
+- Processing: the first generations requested transparency, but the returned RGB files contained a visible checker pattern. A second ImageGen edit replaced that pattern with the exact runtime panel color. The approved sources were encoded to WebP quality 88 for the active mobile runtime; no external asset was introduced.
+- Usage: the 3×3 atlas supplies the HAVEN currency, NPC facility, operative, sortie, and defense menu symbols through CSS background positioning. The reactor appears in the permanent-augmentation console; orbit, idle pulse, purchase-charge, and reduced-motion behavior are authored in CSS and do not alter the generated pixels.
+
+Initial mobile menu atlas prompt:
+
+```text
+Use case: stylized-concept
+Asset type: production-ready 3 by 3 mobile game UI icon atlas for a dark anime science-fiction strategy action game.
+Primary request: Create one exact 3-column by 3-row grid containing nine isolated, centered square menu icons, with equal cell dimensions and generous transparent padding.
+Cell mapping, left to right:
+Row 1: research laboratory brain made of circuit traces; equipment workshop crossed wrench and precision gear; navigation command holographic route map with small aircraft.
+Row 2: base defense shield with compact turret; operative management female agent bust silhouette with tactical badge; combat sortie sleek strike aircraft with forward motion chevrons.
+Row 3: research currency data chip with neural spark; equipment currency mechanical component and hex bolt; augmentation currency faceted crystalline synchronization core with orbital sparks.
+Style: premium dark anime sci-fi game UI, crisp readable silhouettes at small mobile size, polished gunmetal and white materials, luminous cyan as the shared accent, restrained violet-magenta only for augmentation, restrained amber only for equipment, subtle inner glow, high contrast, consistent visual weight and viewing angle.
+Composition: exact uniform 3x3 layout, each icon occupies about 68 percent of its cell, all icons aligned and optically centered; transparent gutters between cells.
+Scene/backdrop: genuinely transparent alpha background.
+Constraints: no text, no letters, no numbers, no labels, no borders, no cell frames, no grid lines, no logos, no watermark, no scenery, no characters beyond the simple agent bust pictogram, no gradients extending outside each icon silhouette.
+```
+
+Menu atlas background-correction prompt:
+
+```text
+Edit this exact 3x3 icon atlas. Preserve all nine icons, their exact order, equal 3x3 cell layout, scale, lighting, and crisp details. Replace every checkerboard square and all background pixels with one perfectly uniform, flat very-dark navy color #020b10. The background must contain no checker pattern, no texture, no grid, no border, no vignette, no glow bands, and no visible separators between cells. Keep the icons isolated and centered with the existing empty gutters. No text, labels, numbers, logo, or watermark. Production game UI atlas, square canvas.
+```
+
+Initial augmentation reactor prompt:
+
+```text
+Use case: stylized-concept
+Asset type: production-ready transparent augmentation reactor artwork for a premium dark anime science-fiction mobile game UI.
+Primary request: A single centered cybernetic synchronization core: a luminous faceted violet-magenta crystal suspended inside a compact gunmetal cradle, surrounded by three concentric segmented cyan energy rings and three short mechanical connector arms. The core should communicate character enhancement, permanent upgrade, and power synchronization.
+Style: polished premium sci-fi game interface asset, sharp hard-surface metal, crystalline refraction, restrained cyan and violet-magenta emission, subtle white-hot center, crisp silhouette, high contrast and readable at 160 pixels, sophisticated rather than cartoonish.
+Composition: exact square canvas, object centered, roughly 78 percent of canvas, frontal three-quarter HUD emblem view, symmetrical overall silhouette, clear negative space between the crystal, rings, and connector arms so separate CSS ring animations feel visually plausible.
+Lighting: internal magenta core light plus cyan rim lights, controlled bloom confined to the object.
+Scene/backdrop: genuinely transparent alpha background.
+Constraints: no text, no letters, no numbers, no labels, no frame, no panel, no character, no hands, no scenery, no logo, no watermark, no checkerboard pattern baked into the image.
+```
+
+Augmentation reactor background-correction prompt:
+
+```text
+Edit this exact cybernetic augmentation reactor artwork. Preserve the crystal, all concentric ring segments, three connector assemblies, symmetry, lighting, scale, and crisp details. Replace every checkerboard square and all background pixels with one perfectly uniform, flat near-black blue color #02080d. The background must have no checker pattern, no texture, no panel, no border, no vignette, no scenery, and no glow beyond a tight halo around the object. Keep the object centered on the square canvas with clean negative space. No text, labels, numbers, character, logo, or watermark. Production game UI asset.
+```
+
+### Active square expedition arenas v1
+
+- Generated: 2026-08-22
+- Tool: OpenAI built-in ImageGen (`image_gen`), precise-object-edit mode using the approved route art as the visual reference for each region.
+- Preserved production sources: `reference/source-assets/overload/regions/<region>/arena-square-v1.png` for `wrong-engine-core`, `glass-dune`, `abyssal-archive`, `neon-foundry`, `storm-spire`, and `gene-vault`.
+- Runtime: `public/assets/overload/regions/<region>/arena-square-v1.webp` (1254×1254, WebP quality 88).
+- Performance runtime: `public/assets/overload/regions/<region>/performance/arena-square-v1.webp` (768×768, WebP quality 82).
+- Processing: `scripts/build-expedition-arenas.py` validates the square sources and performs deterministic Pillow LANCZOS resizing and WebP encoding. No external asset was introduced.
+- ImageGen outputs:
+  - `C:/Users/82105/.codex/generated_images/01a020a9-e862-7e91-9f77-b464d020f8d9/exec-287d1a58-be31-4531-9aab-7661de3c2fec.png`
+  - `C:/Users/82105/.codex/generated_images/01a020a9-e862-7e91-9f77-b464d020f8d9/exec-0ca978de-325b-4649-99d0-4b190919c075.png`
+  - `C:/Users/82105/.codex/generated_images/01a020a9-e862-7e91-9f77-b464d020f8d9/exec-70f1476b-8c70-4205-b97b-ce1c2827aac9.png`
+  - `C:/Users/82105/.codex/generated_images/01a020a9-e862-7e91-9f77-b464d020f8d9/exec-7a0ffdc1-46c2-40a5-9508-215a008e5bcf.png`
+  - `C:/Users/82105/.codex/generated_images/01a020a9-e862-7e91-9f77-b464d020f8d9/exec-68a72f13-de79-4824-81c9-ebdf999e3d31.png`
+  - `C:/Users/82105/.codex/generated_images/01a020a9-e862-7e91-9f77-b464d020f8d9/exec-e30f6039-a0fa-4b65-a72d-755e1358bf49.png`
+
+WRONG ENGINE prompt:
+
+```text
+Use case: precise-object-edit
+Asset type: square top-down 2D action-game battlefield texture
+Primary request: Recompose the supplied WRONG ENGINE industrial causeway environment into a large square combat arena for free 360-degree movement.
+Scene/backdrop: rain-darkened black steel megastructure floor, cyan utility lights, damaged machinery and restrained red warning lights matching the source.
+Style/medium: cinematic realistic sci-fi game environment, orthographic top-down view.
+Composition/framing: exact square; broad traversable floor across the center and all four directions; environmental machinery forms readable boundaries only around the outer edges; subtle radial and cross-floor paneling, no single horizontal corridor.
+Lighting/mood: dark, wet, oppressive, readable floor silhouettes.
+Constraints: preserve the source palette, materials, lighting language, and top-down camera; clean playable center covering roughly 78% of the image; no characters, enemies, vehicles, UI, text, logos, watermark, perspective horizon, or black void; all four edges fully painted.
+Avoid: narrow lane, side-scrolling road, strong left-to-right direction, central obstacle, tiny repeated props.
+```
+
+GLASS DUNE prompt:
+
+```text
+Use case: precise-object-edit
+Asset type: square top-down 2D action-game battlefield texture
+Primary request: Recompose the supplied GLASS DUNE environment into a large square arena for unrestricted 360-degree combat movement.
+Scene/backdrop: fractured obsidian glass desert fused with dark SOVEREIGN machinery, pale broken glass plates, amber-gold circuitry and crystal shards matching the source.
+Style/medium: cinematic realistic sci-fi game environment, orthographic top-down view.
+Composition/framing: exact square; wide unobstructed central basin with playable space extending north, south, east, and west; crystalline machinery only near the outer perimeter; subtle circular fracture patterns that do not block movement.
+Lighting/mood: dry, hostile, dark charcoal with restrained amber gleam and readable ground.
+Constraints: preserve source palette, materials, and texture density; open playable floor roughly 78% of image; no characters, enemies, vehicles, UI, text, logos, watermark, horizon, black void; fully painted square edges.
+Avoid: horizontal corridor, directional road, central wall, large impassable crystal in the center, decorative clutter that hides units.
+```
+
+ABYSSAL ARCHIVE prompt:
+
+```text
+Use case: precise-object-edit
+Asset type: square top-down 2D action-game battlefield texture
+Primary request: Recompose the supplied ABYSSAL ARCHIVE environment into a large square arena supporting free 360-degree movement.
+Scene/backdrop: submerged archive deck of black metal plates, cyan-blue glass reservoirs, violet memory conduits, condensation and faint water reflections matching the source.
+Style/medium: cinematic realistic sci-fi game environment, orthographic top-down view.
+Composition/framing: exact square; broad open archive floor in the center and in all four directions; biomechanical archive equipment and glass chambers form only the outer perimeter; subtle concentric floor seals.
+Lighting/mood: deep oceanic darkness, cyan bioluminescence, restrained violet accents, strong unit readability.
+Constraints: preserve source palette, materials, lighting language, and top-down camera; open playable floor roughly 78% of image; no characters, enemies, UI, text, logos, watermark, horizon, or black void; all four edges fully painted.
+Avoid: narrow hallway, left-right lane, central obstacle, bright bloom across the playable floor, excessive visual noise.
+```
+
+NEON FOUNDRY prompt:
+
+```text
+Use case: precise-object-edit
+Asset type: square top-down 2D action-game battlefield texture
+Primary request: Recompose the supplied NEON FOUNDRY environment into a large square arena supporting unrestricted 360-degree movement.
+Scene/backdrop: black iron foundry floor, industrial presses, furnace windows, molten orange channels and cold blue coolant columns matching the source.
+Style/medium: cinematic realistic sci-fi game environment, orthographic top-down view.
+Composition/framing: exact square; broad open forge floor across the center and all four directions; heavy machinery and molten channels safely confined to the outer perimeter; subtle radial forging marks and floor seams.
+Lighting/mood: hot amber furnace glow balanced by cool cyan accents, dark but readable combat floor.
+Constraints: preserve source palette, materials, and detail language; open playable floor roughly 78% of image; no characters, enemies, UI, text, logos, watermark, horizon, black void, or impassable central machinery; fully painted edges.
+Avoid: horizontal production lane, left-right corridor, excessive sparks over the play area, high-contrast clutter under units.
+```
+
+STORM SPIRE prompt:
+
+```text
+Use case: precise-object-edit
+Asset type: square top-down 2D action-game battlefield texture
+Primary request: Recompose the supplied STORM SPIRE environment into a large square arena for free 360-degree aerial-platform combat.
+Scene/backdrop: armored hexagonal storm deck suspended over thunderclouds, cyan energy pylons, violet conductor rails and lightning glimpses matching the source.
+Style/medium: cinematic realistic sci-fi game environment, orthographic top-down view.
+Composition/framing: exact square; expansive navigable hex-grid deck in the center and all four directions; storm machinery and rails form a secure outer rim; subtle concentric conductor rings in the floor.
+Lighting/mood: cold electric blue, restrained violet arcs, storm-dark atmosphere, clear unit silhouettes.
+Constraints: preserve source palette, materials, and top-down camera; open playable deck roughly 78% of image; no characters, enemies, UI, text, logos, watermark, horizon, black void, holes, or central obstacles; all edges fully painted.
+Avoid: narrow bridge, horizontal lane, bright lightning covering the playable floor, large turbines in the center.
+```
+
+GENE VAULT prompt:
+
+```text
+Use case: precise-object-edit
+Asset type: square top-down 2D action-game battlefield texture
+Primary request: Recompose the supplied GENE VAULT environment into a large square arena supporting unrestricted 360-degree movement.
+Scene/backdrop: dark biotech vault floor, ivory biomechanical ribs, teal gene fluid chambers, helix conduits and subtle organic growth matching the source.
+Style/medium: cinematic realistic biomechanical sci-fi game environment, orthographic top-down view.
+Composition/framing: exact square; large open slate-metal floor extending in every direction; ivory frames, teal tanks and DNA conduits form only the outer perimeter; subtle circular genomic inlay in the floor.
+Lighting/mood: clinical teal glow, bone-white machinery, dark restrained atmosphere, readable combat floor.
+Constraints: preserve source palette, materials, and texture language; open playable floor roughly 78% of image; no characters, creatures, enemies, UI, text, logos, watermark, horizon, black void, or central obstacle; all edges fully painted.
+Avoid: left-right corridor, huge biological specimen in center, excessive organic clutter, bright reflections under units.
+```

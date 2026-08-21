@@ -113,6 +113,8 @@ const BASE_DOM_ASSET_KEYS = Object.freeze([
   "hanaResearchLab",
   "ilyaEquipmentWorkshop",
   "characterSyncChamber",
+  "mobileMenuIconAtlas",
+  "augmentationCoreVisual",
   "havenNpcPortraits",
   "rheaControlOfficer",
   "returnToHaven",
@@ -198,6 +200,7 @@ const SPEAKER_NAME_KO = Object.freeze({
 });
 
 const OBJECTIVE_NAME_KO = Object.freeze({
+  "ELIMINATE CURRENT WAVE": "현재 웨이브 적 섬멸",
   "ADVANCE TO THE ENGINE": "오답 엔진으로 전진",
   "CROSS THE GLASS DUNE": "유리 사구 횡단",
   "DESCEND INTO THE ARCHIVE": "심해 기록고 진입",
@@ -1853,36 +1856,25 @@ function RouteMinimap({ hud }) {
   const traces = Array.isArray(expedition.traces) ? expedition.traces : [];
   const minimap = expedition.minimap || hud?.minimap || {};
   const player = minimap.player || { x: progress, y: 0.5 };
-  const playerRouteRatio = clampMapRatio(player?.x, progress);
+  const playerX = clampMapRatio(player?.x, 0.5);
+  const playerY = clampMapRatio(player?.y, 0.5);
   const enemies = Array.isArray(minimap.enemies) ? minimap.enemies.slice(0, 32) : [];
   const gates = !bossRoom && Array.isArray(minimap.gates)
-    ? minimap.gates.filter((gate) => gate?.active).slice(0, 5)
+    ? minimap.gates.filter((gate) => gate?.active).slice(0, 8)
     : [];
   const hostiles = Math.max(0, Number(minimap.liveEnemyCount ?? hud?.enemiesRemaining) || 0);
-  const nextWaveAnchor = Number(expedition.nextWaveAnchor);
-  const nextWaveAnchorRatio = nextWaveAnchor / routeLength;
-  const nextWaveRatio = !bossRoom
-    && Number.isFinite(nextWaveAnchor)
-    && nextWaveAnchor > 0
-    && nextWaveAnchor < routeLength
-    && nextWaveAnchorRatio > playerRouteRatio
-    ? clampMapRatio(nextWaveAnchorRatio, 0)
-    : null;
 
   return (
-    <aside className={bossRoom ? "route-minimap is-boss" : "route-minimap"} aria-label={`전술 미니맵. 현재 위치 ${Math.round(progress * 100)}%, 남은 적 ${hostiles}기`}>
+    <aside className={bossRoom ? "route-minimap is-boss" : "route-minimap is-arena"} aria-label={`전술 미니맵. 작전 진행 ${Math.round(progress * 100)}%, 남은 적 ${hostiles}기`}>
       <header><MapTrifold weight="fill" /><span>전술 지도</span><b>적 {hostiles}</b></header>
-      <div className="route-minimap-field" aria-hidden="true">
-        <i className="route-minimap-path"><i style={{ width: `${playerRouteRatio * 100}%` }} /></i>
-        {nextWaveRatio !== null && (
-          <i className="route-minimap-next-wave" style={{ left: `${nextWaveRatio * 100}%` }}>
-            <Target weight="bold" />
-          </i>
-        )}
+      <div className="route-minimap-field is-arena" aria-hidden="true">
         {traces.map((trace) => (
           <span
             className={trace.triggered ? "route-minimap-node is-cleared" : "route-minimap-node"}
-            style={{ left: `${clampMapRatio(Number(trace.distance) / routeLength, 0) * 100}%`, top: "50%" }}
+            style={{
+              left: `${clampMapRatio(trace?.x, Number(trace.distance) / routeLength) * 100}%`,
+              top: `${clampMapRatio(trace?.y, 0.5) * 100}%`,
+            }}
             key={trace.id}
           ><MapPin weight={trace.triggered ? "fill" : "bold"} /></span>
         ))}
@@ -1906,7 +1898,7 @@ function RouteMinimap({ hud }) {
         ))}
         <span
           className="route-minimap-player"
-          style={{ left: `${playerRouteRatio * 100}%`, top: `${clampMapRatio(player?.y) * 100}%` }}
+          style={{ left: `${playerX * 100}%`, top: `${playerY * 100}%` }}
         ><NavigationArrow weight="fill" /></span>
       </div>
     </aside>
@@ -2718,6 +2710,8 @@ export function App() {
         : facility.id === "equipment"
           ? assets?.ilyaEquipmentWorkshop
           : facility.id === "augmentation" ? assets?.characterSyncChamber : null,
+      menuIconAtlas: assets?.mobileMenuIconAtlas,
+      augmentationCoreVisual: facility.id === "augmentation" ? assets?.augmentationCoreVisual : null,
       selectedCharacterId: activeCharacterId,
       mainWeaponId: activeMainWeaponId,
       characters: facility.id === "augmentation" ? unlockedPlayableCharacters.map((character) => ({
@@ -2744,6 +2738,8 @@ export function App() {
     researchLab: assets?.hanaResearchLab,
     equipmentWorkshop: assets?.ilyaEquipmentWorkshop,
     characterSyncChamber: assets?.characterSyncChamber,
+    menuIconAtlas: assets?.mobileMenuIconAtlas,
+    augmentationCoreVisual: assets?.augmentationCoreVisual,
     npcPortraits: assets?.havenNpcPortraits,
     controlOfficer: assets?.rheaControlOfficer,
     regionMap: assets?.airshipRegionMap,

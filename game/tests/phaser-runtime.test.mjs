@@ -105,12 +105,12 @@ test("adaptive low-end pacing lowers only presentation work and recovers cleanly
   assert.match(performance, /slowPressure >= 18/);
   assert.match(performance, /fastFrames >= 600/);
   assert.match(policy, /canvas\.width = backingWidth/);
-  assert.match(policy, /drawingContext\.width = LOGICAL_WIDTH/);
+  assert.match(policy, /drawingContext\.width = logicalWidth/);
   assert.match(policy, /drawingContext\.state\.viewport = \[0, 0, backingWidth, backingHeight\]/);
   assert.match(policy, /loop\.targetFps = nextFps/);
   assert.match(policy, /queueMicrotask/);
   assert.match(scene, /const FIXED_STEP = 1 \/ 60/);
-  assert.match(scene, /applyAdaptiveRenderPolicy\(this\.game, this\.governor\.preset\)/);
+  assert.match(scene, /applyAdaptiveRenderPolicy\(this\.game, this\.governor\.preset, logicalWidth, logicalHeight\)/);
   assert.match(scene, /Phaser\.Core\.Events\.PAUSE/);
   assert.match(scene, /Phaser\.Core\.Events\.RESUME/);
   assert.match(scene, /Phaser\.Renderer\.Events\.LOSE_WEBGL/);
@@ -127,15 +127,18 @@ test("the gameplay camera keeps AEGIS centered in both route and boss stages", a
   assert.doesNotMatch(engine, /bossFocus/);
 });
 
-test("the Phaser view crossfades authored sectors and keeps engine-owned boss collision geometry", async () => {
+test("the Phaser view renders one authored square arena and keeps engine-owned boss collision geometry", async () => {
   const view = await read("src/phaser/view/BattleView.ts");
-  assert.match(view, /add\.tileSprite/);
-  assert.match(view, /ASSET_KEYS\.sector1/);
-  assert.match(view, /ASSET_KEYS\.sector2/);
-  assert.match(view, /ASSET_KEYS\.sector3/);
-  assert.match(view, /ASSET_KEYS\.sector4Expanded/);
+  assert.doesNotMatch(view, /add\.tileSprite/);
+  assert.match(view, /scene\.add\.image\([\s\S]*EXPEDITION_WORLD_WIDTH \* 0\.5[\s\S]*EXPEDITION_WORLD_HEIGHT \* 0\.5/);
+  assert.match(view, /ASSET_KEYS\.wrongEngineArena/);
+  assert.match(view, /ASSET_KEYS\.glassDuneArena/);
+  assert.match(view, /ASSET_KEYS\.abyssalArchiveArena/);
+  assert.match(view, /ASSET_KEYS\.neonFoundryArena/);
+  assert.match(view, /ASSET_KEYS\.stormSpireArena/);
+  assert.match(view, /ASSET_KEYS\.geneVaultArena/);
   assert.match(view, /ASSET_KEYS\.bossRoom/);
-  assert.match(view, /setTilePosition/);
+  assert.match(view, /setDisplaySize\(EXPEDITION_WORLD_WIDTH, EXPEDITION_WORLD_HEIGHT\)/);
   assert.doesNotMatch(view, /overload-minimap|drawMinimap/);
   assert.match(view, /overload-overlay/);
   assert.match(view, /geometry\.collisionHalfWidth/);
@@ -146,7 +149,7 @@ test("the Phaser view crossfades authored sectors and keeps engine-owned boss co
   assert.match(view, /this\.bossMap\.setTexture\(bossRoom\)/);
   assert.match(view, /\.setDisplaySize\(WORLD_WIDTH, WORLD_HEIGHT\)/);
   const cameraSync = view.slice(view.indexOf("syncCamera(state"), view.indexOf("private syncPlayer"));
-  assert.doesNotMatch(cameraSync, /setTilePosition/, "static TileSprite offsets must not be reassigned every frame");
+  assert.doesNotMatch(cameraSync, /setTilePosition/, "the square arena is spatially stable");
 });
 
 test("unified art and renderer-local impact effects replace legacy combat sprites", async () => {
@@ -227,17 +230,18 @@ test("authored trace props and campaign region art are registered without restor
   assert.match(manifest, /outerFrontierRegionMap: "\.\/assets\/overload\/campaign\/outer-frontier-region-map\.webp"/);
   assert.doesNotMatch(manifest, /commandButtonStates|command-button-states-atlas/);
   for (const path of [
-    "regions/glass-dune/route.webp",
+    "regions/glass-dune/arena-square-v1.webp",
     "regions/glass-dune/boss-room.webp",
     "regions/glass-dune/boss-forms-atlas.png",
-    "regions/abyssal-archive/route.webp",
+    "regions/abyssal-archive/arena-square-v1.webp",
     "regions/abyssal-archive/boss-room.webp",
     "regions/abyssal-archive/boss-forms-atlas.png",
   ]) assert.match(manifest, new RegExp(path.replaceAll(".", "\\.")));
   assert.match(view, /traceSprites = new Map<string, Phaser\.GameObjects\.Image>/);
   assert.match(view, /scene\.textures\.exists\(ASSET_KEYS\.squadTraces\)/);
   assert.match(view, /\["rook", "nyx", "moss"\]\.forEach/);
-  assert.match(view, /const x = originX \+ finite\(trace\.distance\)/);
+  assert.match(view, /const x = finite\(trace\.x, EXPEDITION_WORLD_WIDTH \* 0\.5\)/);
+  assert.match(view, /const y = finite\(trace\.y, EXPEDITION_WORLD_HEIGHT \* 0\.5\)/);
   assert.match(view, /this\.worldBack\.add\(image\)/);
   assert.doesNotMatch(view, /trace\.kind === "body"|trace\.kind === "weapon"/);
 });
@@ -260,19 +264,18 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(scene, /new BattleView\(this, this\.state\.regionId, this\.portraitPresentation\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);
   for (const key of [
-    "glassDuneRoute",
-    "glassDuneRouteExpanded",
+    "glassDuneArena",
     "glassDuneBossRoom",
     "glassDuneBossForms",
     "glassDuneBossMotion",
-    "abyssalArchiveRoute",
-    "abyssalArchiveRouteExpanded",
+    "abyssalArchiveArena",
     "abyssalArchiveBossRoom",
     "abyssalArchiveBossForms",
     "abyssalArchiveBossMotion",
-    "neonFoundryRouteExpanded",
-    "stormSpireRouteExpanded",
-    "geneVaultRouteExpanded",
+    "wrongEngineArena",
+    "neonFoundryArena",
+    "stormSpireArena",
+    "geneVaultArena",
   ]) assert.match(view, new RegExp(`ASSET_KEYS\\.${key}`));
   assert.match(view, /activateBossAssets\(\)/);
   assert.match(view, /this\.bossMap\.setTexture\(bossRoom\)/);
@@ -290,12 +293,11 @@ test("BootScene registers common assets plus only the selected region with a saf
   const paths = (regionId) => manifest.getGameAssetsForRegion(regionId).map((asset) => asset.path);
   const glass = paths("glass-dune");
   assert.ok(glass.includes("./assets/overload/hero/survivor-directional-aim-atlas.png"));
-  assert.ok(glass.includes("./assets/overload/regions/glass-dune/route.webp"));
-  assert.ok(glass.includes("./assets/overload/regions/glass-dune/route-expanded-v2.webp"));
+  assert.ok(glass.includes("./assets/overload/regions/glass-dune/arena-square-v1.webp"));
   assert.ok(!glass.includes("./assets/overload/regions/glass-dune/boss-room.webp"));
   assert.ok(!glass.includes("./assets/overload/regions/glass-dune/boss-forms-atlas.png"));
   const glassPerformance = manifest.getGameAssetsForRegion("glass-dune", "performance").map((asset) => asset.path);
-  assert.ok(glassPerformance.includes("./assets/overload/regions/glass-dune/performance/route-expanded-v2.webp"));
+  assert.ok(glassPerformance.includes("./assets/overload/regions/glass-dune/performance/arena-square-v1.webp"));
   const glassBoss = manifest.getBossGameAssetsForRegion("glass-dune").map((asset) => asset.path);
   assert.deepEqual(glassBoss, [
     "./assets/overload/regions/glass-dune/boss-room.webp",
@@ -309,7 +311,7 @@ test("BootScene registers common assets plus only the selected region with a saf
   assert.ok(!glass.some((path) => path.includes("sector-01-shattered-approach")));
   assert.ok(!glass.some((path) => path.includes("squad-traces-atlas")));
   const fallback = paths("not-a-region");
-  assert.ok(fallback.some((path) => path.includes("sector-01-shattered-approach")));
+  assert.ok(fallback.some((path) => path.includes("wrong-engine-core/arena-square-v1.webp")));
   assert.ok(!fallback.some((path) => path.includes("wrong-engine-forms-atlas")));
   assert.ok(!fallback.some((path) => path.includes("glass-dune")));
   assert.equal(manifest.resolveRegionId("not-a-region"), "wrong-engine-core");
@@ -554,7 +556,8 @@ test("expanded expedition framing makes every hostile larger than AEGIS and stab
   assert.match(engine, /export const WORLD_WIDTH = 1920/);
   assert.match(engine, /export const WORLD_HEIGHT = 1080/);
   assert.match(engine, /const EXPEDITION_ROUTE_LENGTH = 25000/);
-  assert.match(engine, /export const EXPEDITION_WORLD_WIDTH = 26400/);
+  assert.match(engine, /export const EXPEDITION_WORLD_WIDTH = 4096/);
+  assert.match(engine, /export const EXPEDITION_WORLD_HEIGHT = 4096/);
   assert.match(view, /const size = state\?\.phase === "boss" \? 64 : 74/);
   assert.match(view, /const baseSize = entity\?\.isMidBoss \? 248 : role === 3 \? 196 : role === 2 \? 138 : role === 1 \? 108 : 92/);
   assert.match(view, /const recoil = rifleEquipped && animation\.clipId === "attack" \?/);
@@ -584,7 +587,7 @@ test("directional hero art, rifle-origin projectiles, reticle cue, and wheel zoo
   assert.match(foreground, /drawPixelDottedLine\([\s\S]*?COLORS\.cyan[\s\S]*?0\.32/);
   assert.match(foreground, /graphics\.strokeCircle\(aimX, aimY, 4\)/);
   assert.match(camera, /this\.userZoomFactor = clamp/);
-  assert.match(camera, /const portraitZoom = this\.portraitPresentation \? \(bossStageActive \? 1\.06 : 1\.12\) : 1/);
+  assert.match(camera, /clamp\(0\.34 \* this\.userZoomFactor, 0\.3, 0\.48\)/);
   assert.match(camera, /bossStageActive[\s\S]*?0\.68, 0\.98[\s\S]*?0\.84, 1\.42/);
   assert.match(scene, /Phaser\.Input\.Events\.POINTER_WHEEL/);
   assert.match(scene, /addEventListener\("wheel", blockCanvasWheel, \{ passive: false \}\)/);
@@ -600,10 +603,10 @@ test("route-clear warning phases render together without exposing the boss map o
   assert.match(view, /type === "bossAutoTransition"/);
   assert.match(view, /clearTransition\?\.phase/);
   assert.match(overlay, /\["warning", "panic", "swap"\]\.includes\(clearPhase\)/);
-  assert.match(overlay, /strokeCircle\(WIDTH \* 0\.5, HEIGHT \* 0\.5, ringRadius\)/);
+  assert.match(overlay, /strokeCircle\(viewportWidth \* 0\.5, viewportHeight \* 0\.5, ringRadius\)/);
   assert.match(camera, /const bossStageActive = Boolean\(expedition\?\.bossRoom \|\| state\?\.phase === "boss"\)/);
   assert.doesNotMatch(camera, /distance >= bossGate && gateUnlocked/);
-  assert.match(camera, /nextSector = lastRouteIndex/);
+  assert.match(camera, /const alpha = bossStageActive \? Number\(index === bossMapIndex\) : Number\(index === 0\)/);
 });
 
 test("repeating player skills use local VFX without whole-screen white flashes", async () => {

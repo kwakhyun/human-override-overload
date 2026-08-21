@@ -37,10 +37,18 @@ function isTerminal(state: any) {
 function applyDebugScene(game: any, debugScene: string | null) {
   const sectorIndex = ["sector1", "sector2", "sector3"].indexOf(debugScene ?? "");
   if (sectorIndex >= 0 && game.expedition) {
-    const distances = [1000, 5200, 9000];
-    game.expedition.distance = distances[sectorIndex];
-    game.player.x = game.expedition.originX + game.expedition.distance;
-    game.expedition.progress = game.expedition.distance / game.expedition.routeLength;
+    const progress = [0.19, 0.53, 0.88][sectorIndex];
+    const positions = [
+      { x: 1_420, y: 1_420 },
+      { x: 2_760, y: 1_540 },
+      { x: 2_048, y: 2_820 },
+    ];
+    game.killedEnemies = Math.round(game.enemyBudget * progress);
+    game.stats.kills = game.killedEnemies;
+    game.expedition.distance = game.expedition.routeLength * progress;
+    game.expedition.progress = progress;
+    game.player.x = positions[sectorIndex].x;
+    game.player.y = positions[sectorIndex].y;
     game.expedition.checkpointIndex = sectorIndex;
     for (let index = 0; index < game.expedition.traces.length; index += 1) {
       game.expedition.traces[index].triggered = index <= sectorIndex;
@@ -52,9 +60,13 @@ function applyDebugScene(game: any, debugScene: string | null) {
   const traceIndex = ["trace1", "trace2", "trace3"].indexOf(debugScene ?? "");
   if (traceIndex >= 0 && game.expedition) {
     const trace = game.expedition.traces[traceIndex];
+    const progress = trace.distance / game.expedition.routeLength;
+    game.killedEnemies = Math.ceil(game.enemyBudget * progress);
+    game.stats.kills = game.killedEnemies;
     game.expedition.distance = trace.distance;
-    game.player.x = game.expedition.originX + trace.distance;
-    game.expedition.progress = trace.distance / game.expedition.routeLength;
+    game.expedition.progress = progress;
+    game.player.x = trace.x;
+    game.player.y = trace.y;
     game.player.invulnerability = 30;
     return;
   }
@@ -527,7 +539,10 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
       this.applyQualityLimit();
       this.resumeFromRuntimeInterruption();
     };
-    const onScaleResize = () => this.applyQualityLimit();
+    const onScaleResize = () => {
+      this.applyQualityLimit();
+      this.view?.syncPresentationViewport();
+    };
 
     gameEvents.on(Phaser.Core.Events.BLUR, onBlur);
     gameEvents.on(Phaser.Core.Events.FOCUS, onFocus);
@@ -779,7 +794,13 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   private applyQualityLimit() {
-    this.renderPolicy = applyAdaptiveRenderPolicy(this.game, this.governor.preset);
+    const logicalWidth = this.portraitPresentation
+      ? Math.max(1, Math.round(Number(this.scale.gameSize.width) || 1280))
+      : 1280;
+    const logicalHeight = this.portraitPresentation
+      ? Math.max(1, Math.round(Number(this.scale.gameSize.height) || 720))
+      : 720;
+    this.renderPolicy = applyAdaptiveRenderPolicy(this.game, this.governor.preset, logicalWidth, logicalHeight);
   }
 
   private snapshot() {

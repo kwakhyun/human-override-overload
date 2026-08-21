@@ -104,16 +104,14 @@ test("Phaser DOM HUD shows authored combat and transit cues without restoring a 
 
   assert.match(app, /const minimap = expedition\.minimap \|\| hud\?\.minimap \|\| \{\}/);
   assert.match(app, /Array\.isArray\(minimap\.enemies\)/);
-  assert.doesNotMatch(app, /minimap\.bossGate|route-minimap-engine/);
-  assert.match(app, /const nextWaveAnchor = Number\(expedition\.nextWaveAnchor\)/);
-  assert.match(app, /const playerRouteRatio = clampMapRatio\(player\?\.x, progress\)/);
-  assert.match(app, /const nextWaveRatio = !bossRoom[\s\S]*nextWaveAnchor > 0[\s\S]*nextWaveAnchor < routeLength[\s\S]*nextWaveAnchorRatio > playerRouteRatio/);
-  assert.match(app, /nextWaveRatio !== null[\s\S]*className="route-minimap-next-wave"[\s\S]*left: `\$\{nextWaveRatio \* 100\}%`/);
-  assert.match(app, /const gates = !bossRoom && Array\.isArray\(minimap\.gates\)[\s\S]*filter\(\(gate\) => gate\?\.active\)\.slice\(0, 5\)/);
+  assert.doesNotMatch(app, /minimap\.bossGate|route-minimap-engine|route-minimap-next-wave/);
+  assert.match(app, /const playerX = clampMapRatio\(player\?\.x, 0\.5\)/);
+  assert.match(app, /const playerY = clampMapRatio\(player\?\.y, 0\.5\)/);
+  assert.match(app, /const gates = !bossRoom && Array\.isArray\(minimap\.gates\)[\s\S]*filter\(\(gate\) => gate\?\.active\)\.slice\(0, 8\)/);
   assert.match(app, /gates\.map\(\(gate, index\)[\s\S]*className="route-minimap-transit-gate"[\s\S]*--gate-progress/);
   assert.match(app, /className=\{`route-minimap-enemy/);
-  assert.match(styles, /\.route-minimap-field \{/);
-  assert.match(styles, /\.route-minimap-next-wave \{[\s\S]*top: 50%;[\s\S]*color: #ffd27a/);
+  assert.match(styles, /\.route-minimap-field\.is-arena \{/);
+  assert.doesNotMatch(styles, /\.route-minimap-next-wave \{/);
   assert.match(styles, /\.route-minimap-transit-gate \{[\s\S]*width: 9px;[\s\S]*rotate\(45deg\)/);
   assert.match(styles, /\.route-minimap-enemy \{/);
   assert.doesNotMatch(styles, /\.gate-locked-notice/);

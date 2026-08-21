@@ -18,12 +18,12 @@ function seededRandom(seed = 91) {
   };
 }
 
-test("expedition mode starts with a forward objective and opening scenario", () => {
+test("expedition mode starts with a wave-clear objective and opening scenario", () => {
   const state = createSwarmState({ random: seededRandom(), duration: 360, expedition: true });
   const hud = getSwarmHud(state);
   const events = drainSwarmEvents(state);
 
-  assert.equal(hud.expedition.objective, "ADVANCE TO THE ENGINE");
+  assert.equal(hud.expedition.objective, "ELIMINATE CURRENT WAVE");
   assert.equal(hud.expedition.progress, 0);
   assert.equal(hud.totalEnemies, 300);
   assert.deepEqual(hud.expedition.traces.map(({ id, distance, triggered }) => ({ id, distance, triggered })), [
@@ -36,65 +36,85 @@ test("expedition mode starts with a forward objective and opening scenario", () 
   assert.ok(state.enemies.filter((enemy) => enemy.x > state.player.x).length > state.enemies.length * 0.7);
 });
 
-test("moving right advances the route and discovers the first squad trace", () => {
+test("kill progress discovers the first squad trace without moving the player", () => {
   const state = createSwarmState({ random: seededRandom(17), duration: 360, expedition: true });
-  const input = createSwarmInput();
-  input.right = true;
   state.player.invulnerability = 99;
-  state.enemies.length = 0;
-  state.spawnedEnemies = state.enemyBudget;
-  state.killedEnemies = 0;
+  state.killedEnemies = 60;
+  state.stats.kills = 60;
   state.levelFlow.firstDeadline = 999;
   state.levelFlow.nextOfferAt = 999;
+  for (const enemy of state.enemies) {
+    enemy.damage = 0;
+    enemy.hp = 999_999;
+    enemy.maxHp = enemy.hp;
+  }
   drainSwarmEvents(state);
 
-  for (let index = 0; index < 1_200; index += 1) stepSwarm(state, input, 1 / 60);
+  const start = { x: state.player.x, y: state.player.y };
+  stepSwarm(state, createSwarmInput(), 1 / 60);
   const events = drainSwarmEvents(state);
 
-  assert.ok(state.expedition.distance >= 4800);
-  assert.ok(state.expedition.progress > 0);
+  assert.equal(state.expedition.distance, 5000);
+  assert.equal(state.expedition.progress, 0.2);
   assert.equal(state.expedition.checkpointIndex, 1);
   assert.ok(events.some((event) => event.type === "scenario" && event.beat === "rook-trace"));
-  assert.ok(state.player.y >= 140 && state.player.y <= 940);
+  assert.deepEqual({ x: state.player.x, y: state.player.y }, start);
 });
 
-test("route-space movement is symmetric and long-range rifle fire is not clipped by the old room bounds", () => {
+test("square-arena movement is symmetric in all four directions and long-range fire stays in world bounds", () => {
   const right = createSwarmState({ random: seededRandom(41), duration: 360, expedition: true });
   const left = createSwarmState({ random: seededRandom(41), duration: 360, expedition: true });
-  for (const state of [right, left]) {
-    state.enemies.length = 0;
+  const up = createSwarmState({ random: seededRandom(41), duration: 360, expedition: true });
+  const down = createSwarmState({ random: seededRandom(41), duration: 360, expedition: true });
+  for (const state of [right, left, up, down]) {
     state.player.invulnerability = 99;
     state.levelFlow.firstDeadline = 999;
     state.levelFlow.nextOfferAt = 999;
+    for (const key of Object.keys(state.player.fireTimers)) state.player.fireTimers[key] = 999;
+    for (const enemy of state.enemies) {
+      enemy.damage = 0;
+      enemy.speed = 0;
+    }
   }
   const rightInput = createSwarmInput();
   const leftInput = createSwarmInput();
+  const upInput = createSwarmInput();
+  const downInput = createSwarmInput();
   rightInput.right = true;
   leftInput.left = true;
+  upInput.up = true;
+  downInput.down = true;
   const startX = right.player.x;
+  const startY = right.player.y;
   for (let index = 0; index < 120; index += 1) {
     stepSwarm(right, rightInput, 1 / 60);
     stepSwarm(left, leftInput, 1 / 60);
+    stepSwarm(up, upInput, 1 / 60);
+    stepSwarm(down, downInput, 1 / 60);
   }
   assert.ok(Math.abs((right.player.x - startX) - (startX - left.player.x)) < 0.001);
-  assert.ok(right.expedition.distance > 470);
+  assert.ok(Math.abs((down.player.y - startY) - (startY - up.player.y)) < 0.001);
+  assert.ok(right.player.x - startX > 470);
+  assert.ok(down.player.y - startY > 470);
+  assert.equal(right.expedition.progress, 0);
 
-  right.player.x = 5000;
+  right.player.x = 2600;
   right.camera.x = right.player.x;
-  right.aim.x = 6200;
+  right.aim.x = 3800;
   right.aim.y = right.player.y;
   right.projectiles.length = 0;
   right.player.fireTimers.pulse = 0;
   rightInput.right = false;
   stepSwarm(right, rightInput, 1 / 60);
   for (let index = 0; index < 30; index += 1) stepSwarm(right, rightInput, 1 / 60);
-  assert.ok(right.projectiles.some((projectile) => projectile.x > 5200 && !projectile.dead));
+  assert.ok(right.projectiles.some((projectile) => projectile.x > 2800 && !projectile.dead));
 });
 
-test("hostiles passed on the route remain authoritative and accelerate into persistent pursuit", () => {
+test("distant hostiles remain authoritative and accelerate into 360-degree pursuit", () => {
   const state = createSwarmState({ random: seededRandom(49), duration: 360, expedition: true });
   const input = createSwarmInput();
   input.right = true;
+  input.down = true;
   const enemy = state.enemies.find((candidate) => candidate.combatRole === "rifleman") ?? state.enemies[0];
   state.enemies.length = 1;
   state.enemies[0] = enemy;
@@ -102,11 +122,11 @@ test("hostiles passed on the route remain authoritative and accelerate into pers
   enemy.combatRole = "rifleman";
   enemy.selfDestructArmed = false;
   enemy.selfDestructTriggerRadius = 0;
-  state.player.x = 5000;
-  state.player.y = 540;
+  state.player.x = 3000;
+  state.player.y = 3000;
   state.camera.x = state.player.x;
   enemy.x = state.player.x - 1200;
-  enemy.y = state.player.y;
+  enemy.y = state.player.y - 1200;
   enemy.spawnDelay = 0;
   enemy.damage = 0;
   enemy.shootCooldown = 999;
@@ -117,18 +137,18 @@ test("hostiles passed on the route remain authoritative and accelerate into pers
   state.player.fireTimers.pulse = 999;
   state.levelFlow.firstDeadline = 999;
   state.levelFlow.nextOfferAt = 999;
-  const initialGap = state.player.x - enemy.x;
+  const initialGap = Math.hypot(state.player.x - enemy.x, state.player.y - enemy.y);
 
   for (let frame = 0; frame < 600; frame += 1) stepSwarm(state, input, 1 / 60);
 
-  const finalGap = state.player.x - enemy.x;
+  const finalGap = Math.hypot(state.player.x - enemy.x, state.player.y - enemy.y);
   assert.equal(state.enemies.includes(enemy), true);
   assert.equal(enemy.dead, false);
-  assert.ok(enemy.x > 6400, `expected the passed hostile to keep advancing, got x=${enemy.x}`);
+  assert.ok(enemy.x > 2400 && enemy.y > 2400, `expected diagonal pursuit, got ${enemy.x},${enemy.y}`);
   assert.ok(finalGap < initialGap, `expected pursuit to close the gap, got ${initialGap} -> ${finalGap}`);
 });
 
-test("the final combat band prevents endpoint cleanup without restoring a boss-door prompt", () => {
+test("arena movement never substitutes for the final hostile or restores a boss-door prompt", () => {
   const state = createSwarmState({ random: seededRandom(23), duration: 360, expedition: true });
   const input = createSwarmInput();
   input.right = true;
@@ -136,7 +156,6 @@ test("the final combat band prevents endpoint cleanup without restoring a boss-d
   state.spawnedEnemies = state.enemyBudget;
   state.killedEnemies = state.enemyBudget - 1;
   state.stats.kills = state.killedEnemies;
-  state.player.x = state.expedition.originX + state.expedition.routeLength;
   state.levelFlow.nextOfferAt = 999;
   state.levelFlow.firstDeadline = 999;
   drainSwarmEvents(state);
@@ -144,9 +163,9 @@ test("the final combat band prevents endpoint cleanup without restoring a boss-d
   for (let index = 0; index < 180; index += 1) stepSwarm(state, input, 1 / 60);
   const routeEvents = drainSwarmEvents(state);
 
-  const finalAnchor = state.expedition.waveAnchors.at(-1);
-  assert.equal(state.expedition.distance, finalAnchor + state.expedition.routeLength * 0.1);
-  assert.ok(state.expedition.distance < state.expedition.routeLength);
+  assert.ok(state.player.x > 2_048);
+  assert.equal(state.expedition.distance, state.expedition.routeLength * (299 / 300));
+  assert.equal(state.expedition.progress, 299 / 300);
   assert.equal(state.expedition.reachedGate, false);
   assert.equal(state.phase, "swarm");
   assert.equal(state.boss.active, false);
@@ -155,7 +174,7 @@ test("the final combat band prevents endpoint cleanup without restoring a boss-d
   assert.equal("gateNotice" in getSwarmHud(state).expedition, false);
 });
 
-test("clearing all 300 enemies reaches MOSS inside the 23,000 final band before automatic boss entry", () => {
+test("clearing all 300 enemies resolves MOSS by kill progress before automatic boss entry", () => {
   const state = createSwarmState({ random: seededRandom(3), duration: 360, expedition: true });
   const input = createSwarmInput();
   state.enemies.length = 0;
@@ -168,16 +187,11 @@ test("clearing all 300 enemies reaches MOSS inside the 23,000 final band before 
 
   stepSwarm(state, input, 1 / 60);
   assert.equal(state.phase, "swarm");
-  assert.equal(state.expedition.clearTransition, null);
-  assert.equal(state.expedition.waitingForAdvance, true);
-  assert.equal(state.expedition.forwardLimitDistance, 23_000);
-  assert.equal(state.expedition.traces.find((trace) => trace.id === "moss").triggered, false);
-
-  state.player.x = state.expedition.originX + 21_800;
-  stepSwarm(state, input, 1 / 60);
   const clearEvents = drainSwarmEvents(state);
   assert.equal(state.expedition.clearTransition.phase, "warning");
   assert.equal(state.expedition.clearTransition.duration, 1.2);
+  assert.equal("waitingForAdvance" in state.expedition, false);
+  assert.equal("forwardLimitDistance" in state.expedition, false);
   assert.equal(state.expedition.reachedGate, false);
   assert.equal(state.expedition.traces.find((trace) => trace.id === "moss").triggered, true);
   const mossIndex = clearEvents.findIndex((event) => event.type === "scenario" && event.beat === "moss-trace");
@@ -240,7 +254,6 @@ test("outer-frontier routes deploy every budgeted enemy, defeat a midboss, and e
     state.surgeWarning = null;
     state.surgeQueued = 0;
     state.activeSurge = null;
-    state.player.x = state.expedition.originX + state.expedition.routeLength * 0.82;
     state.levelFlow.firstDeadline = 999;
     state.levelFlow.nextOfferAt = 999;
     drainSwarmEvents(state);
@@ -332,12 +345,12 @@ test("outer midbosses execute three deterministic signature combat roles", () =>
   );
 });
 
-test("the route minimap exposes capped deterministic normalized player and live-enemy samples", () => {
+test("the arena minimap exposes capped deterministic normalized player and live-enemy samples", () => {
   const create = () => {
     const state = createSwarmState({ random: seededRandom(47), duration: 360, expedition: true });
     for (const enemy of state.enemies) enemy.spawnDelay = 0;
-    state.player.x = state.expedition.originX + state.expedition.routeLength * 0.25;
-    state.player.y = 540;
+    state.player.x = 144 + (4096 - 288) * 0.25;
+    state.player.y = 2048;
     return getSwarmHud(state).expedition.minimap;
   };
   const first = create();
@@ -345,6 +358,7 @@ test("the route minimap exposes capped deterministic normalized player and live-
 
   assert.equal(first.player.x, 0.25);
   assert.equal(first.player.y, 0.5);
+  assert.equal(first.mode, "arena");
   assert.equal(first.sampleCap, 24);
   assert.equal(first.liveEnemyCount, 8);
   assert.equal(first.enemies.length, 8);
@@ -353,39 +367,42 @@ test("the route minimap exposes capped deterministic normalized player and live-
   assert.equal("bossGate" in first, false);
 });
 
-test("the route minimap exposes only bounded active materializing transit gates", () => {
+test("the arena minimap exposes only bounded active materializing transit gates", () => {
   const state = createSwarmState({ random: seededRandom(59), duration: 360, expedition: true });
-  const { originX, routeLength } = state.expedition;
-  const portal = (id, routeRatio, y, overrides = {}) => ({
+  const arenaPoint = (ratio) => 144 + (4096 - 288) * ratio;
+  const portal = (id, xRatio, yRatio, overrides = {}) => ({
     id,
     type: "spawnGate",
     gateId: `test-gate-${id}`,
-    x: originX + routeLength * routeRatio,
-    y,
+    x: arenaPoint(xRatio),
+    y: arenaPoint(yRatio),
     life: 1,
     maxLife: 2,
     ...overrides,
   });
   state.spawnPortals = [
-    portal(200, 0.1, 240),
-    portal(201, 0.2, 300),
-    portal(190, 0.3, 360, { life: 0 }),
-    portal(191, 0.4, 420, { active: false }),
-    portal(192, 0.5, 480, { type: "cosmeticPortal" }),
-    portal(202, -0.2, 40),
-    portal(203, 0.5, 540),
-    portal(204, 1.2, 1_040),
-    portal(205, 0.75, 345),
-    portal(206, 0.9, 774),
+    portal(200, 0.1, 0.1),
+    portal(201, 0.2, 0.2),
+    portal(190, 0.3, 0.3, { life: 0 }),
+    portal(191, 0.4, 0.4, { active: false }),
+    portal(192, 0.5, 0.5, { type: "cosmeticPortal" }),
+    portal(202, -0.2, -0.2),
+    portal(203, 0.5, 0.5),
+    portal(204, 1.2, 1.2),
+    portal(205, 0.75, 0.25),
+    portal(206, 0.9, 0.9),
   ];
 
   const minimap = getSwarmHud(state).expedition.minimap;
-  assert.equal(minimap.gateSampleCap, 5);
+  assert.equal(minimap.gateSampleCap, 8);
   assert.equal(minimap.activeGateCount, 7);
-  assert.equal(minimap.gates.length, 5);
-  assert.deepEqual(minimap.gates.map((gate) => gate.id), [202, 203, 204, 205, 206]);
+  assert.equal(minimap.gates.length, 7);
+  assert.deepEqual(minimap.gates.map((gate) => gate.id), [200, 201, 202, 203, 204, 205, 206]);
   assert.deepEqual(
-    minimap.gates.slice(0, 3).map(({ x, y }) => ({ x, y })),
+    [202, 203, 204].map((id) => {
+      const { x, y } = minimap.gates.find((gate) => gate.id === id);
+      return { x, y };
+    }),
     [{ x: 0, y: 0 }, { x: 0.5, y: 0.5 }, { x: 1, y: 1 }],
   );
   assert.ok(minimap.gates.every((gate) => (
@@ -398,7 +415,7 @@ test("the route minimap exposes only bounded active materializing transit gates"
   assert.equal(minimap.gates.some((gate) => [190, 191, 192].includes(gate.id)), false);
 });
 
-test("expedition navigation blocks the lower cliff outside the authored route floor", () => {
+test("expedition navigation clamps only at the square arena perimeter", () => {
   const state = createSwarmState({ random: seededRandom(12), duration: 360, expedition: true });
   const input = createSwarmInput();
   input.down = true;
@@ -408,8 +425,8 @@ test("expedition navigation blocks the lower cliff outside the authored route fl
   state.player.invulnerability = 99;
   state.levelFlow.firstDeadline = 999;
   state.levelFlow.nextOfferAt = 999;
-  for (let index = 0; index < 360; index += 1) stepSwarm(state, input, 1 / 60);
+  for (let index = 0; index < 600; index += 1) stepSwarm(state, input, 1 / 60);
 
-  assert.equal(state.player.y, 930 - state.player.radius);
+  assert.equal(state.player.y, 4096 - 144 - state.player.radius);
   assert.equal(state.player.vy, 0);
 });

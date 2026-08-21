@@ -145,10 +145,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       },
       battle: {
         sectors: [
-          { key: "overload-sector-01", path: "./assets/overload/environment/sector-01-shattered-approach.webp" },
-          { key: "overload-sector-02", path: "./assets/overload/environment/sector-02-flooded-memorial.webp" },
-          { key: "overload-sector-03", path: "./assets/overload/environment/sector-03-engine-causeway.webp" },
-          { key: "overload-sector-04-expanded", path: "./assets/overload/environment/sector-04-reactor-vault-expanded.webp" },
+          { key: "overload-wrong-engine-arena-square-v1", path: "./assets/overload/regions/wrong-engine-core/arena-square-v1.webp" },
         ],
         bossRoom: { key: "overload-boss-chamber", path: "./assets/overload/environment/boss-chamber.webp" },
         bossForms: { key: "overload-wrong-engine-forms", path: "./assets/overload/boss/wrong-engine-forms-atlas.png", columns: 3, rows: 1 },
@@ -199,9 +196,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       },
       battle: {
         sectors: [
-          { key: "overload-glass-dune-route", path: "./assets/overload/regions/glass-dune/route.webp" },
-          { key: "overload-glass-dune-route", path: "./assets/overload/regions/glass-dune/route.webp" },
-          { key: "overload-glass-dune-route-expanded-v2", path: "./assets/overload/regions/glass-dune/route-expanded-v2.webp" },
+          { key: "overload-glass-dune-arena-square-v1", path: "./assets/overload/regions/glass-dune/arena-square-v1.webp" },
         ],
         bossRoom: { key: "overload-glass-dune-boss-room", path: "./assets/overload/regions/glass-dune/boss-room.webp" },
         bossForms: { key: "overload-glass-dune-boss-forms", path: "./assets/overload/regions/glass-dune/boss-forms-atlas.png", columns: 3, rows: 1 },
@@ -252,9 +247,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       },
       battle: {
         sectors: [
-          { key: "overload-abyssal-archive-route", path: "./assets/overload/regions/abyssal-archive/route.webp" },
-          { key: "overload-abyssal-archive-route", path: "./assets/overload/regions/abyssal-archive/route.webp" },
-          { key: "overload-abyssal-archive-route-expanded-v2", path: "./assets/overload/regions/abyssal-archive/route-expanded-v2.webp" },
+          { key: "overload-abyssal-archive-arena-square-v1", path: "./assets/overload/regions/abyssal-archive/arena-square-v1.webp" },
         ],
         bossRoom: { key: "overload-abyssal-archive-boss-room", path: "./assets/overload/regions/abyssal-archive/boss-room.webp" },
         bossForms: { key: "overload-abyssal-archive-boss-forms", path: "./assets/overload/regions/abyssal-archive/boss-forms-atlas.png", columns: 3, rows: 1 },
@@ -296,9 +289,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       },
       battle: {
         sectors: [
-          { key: "overload-neon-foundry-route", path: "./assets/overload/regions/neon-foundry/route.webp" },
-          { key: "overload-neon-foundry-route", path: "./assets/overload/regions/neon-foundry/route.webp" },
-          { key: "overload-neon-foundry-route-expanded-v2", path: "./assets/overload/regions/neon-foundry/route-expanded-v2.webp" },
+          { key: "overload-neon-foundry-arena-square-v1", path: "./assets/overload/regions/neon-foundry/arena-square-v1.webp" },
         ],
         bossRoom: { key: "overload-neon-foundry-route", path: "./assets/overload/regions/neon-foundry/route.webp" },
         enemyForms: { key: "overload-neon-foundry-enemy-forms", path: "./assets/overload/regions/neon-foundry/enemy-forms-atlas.png", columns: 4, rows: 1 },
@@ -341,9 +332,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       },
       battle: {
         sectors: [
-          { key: "overload-storm-spire-route", path: "./assets/overload/regions/storm-spire/route.webp" },
-          { key: "overload-storm-spire-route", path: "./assets/overload/regions/storm-spire/route.webp" },
-          { key: "overload-storm-spire-route-expanded-v2", path: "./assets/overload/regions/storm-spire/route-expanded-v2.webp" },
+          { key: "overload-storm-spire-arena-square-v1", path: "./assets/overload/regions/storm-spire/arena-square-v1.webp" },
         ],
         bossRoom: { key: "overload-storm-spire-route", path: "./assets/overload/regions/storm-spire/route.webp" },
         enemyForms: { key: "overload-storm-spire-enemy-forms", path: "./assets/overload/regions/storm-spire/enemy-forms-atlas.png", columns: 4, rows: 1 },
@@ -386,9 +375,7 @@ export const CAMPAIGN_REGIONS = deepFreeze({
       },
       battle: {
         sectors: [
-          { key: "overload-gene-vault-route", path: "./assets/overload/regions/gene-vault/route.webp" },
-          { key: "overload-gene-vault-route", path: "./assets/overload/regions/gene-vault/route.webp" },
-          { key: "overload-gene-vault-route-expanded-v2", path: "./assets/overload/regions/gene-vault/route-expanded-v2.webp" },
+          { key: "overload-gene-vault-arena-square-v1", path: "./assets/overload/regions/gene-vault/arena-square-v1.webp" },
         ],
         bossRoom: { key: "overload-gene-vault-route", path: "./assets/overload/regions/gene-vault/route.webp" },
         enemyForms: { key: "overload-gene-vault-enemy-forms", path: "./assets/overload/regions/gene-vault/enemy-forms-atlas.png", columns: 4, rows: 1 },

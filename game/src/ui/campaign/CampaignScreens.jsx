@@ -193,6 +193,34 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
 
 const NPC_ICON = Object.freeze({ hana: Broadcast, ilya: Wrench, lark: User, rhea: Crosshair });
 
+const MENU_ICON_CELLS = Object.freeze({
+  research: Object.freeze([0, 0]),
+  equipment: Object.freeze([1, 0]),
+  navigation: Object.freeze([2, 0]),
+  defense: Object.freeze([0, 1]),
+  operative: Object.freeze([1, 1]),
+  sortie: Object.freeze([2, 1]),
+  researchCurrency: Object.freeze([0, 2]),
+  equipmentCurrency: Object.freeze([1, 2]),
+  augmentation: Object.freeze([2, 2]),
+});
+
+const NPC_MENU_ICON = Object.freeze({ hana: "research", ilya: "equipment", lark: "navigation", rhea: "defense" });
+
+function MenuAtlasIcon({ atlas, icon, fallback: FallbackIcon = Sparkle, className = "" }) {
+  const cell = MENU_ICON_CELLS[icon];
+  const source = assetSource(atlas);
+  if (!source || !cell) return <FallbackIcon weight="fill" />;
+  const position = ["0%", "50%", "100%"];
+  return (
+    <span
+      className={`generated-menu-icon${className ? ` ${className}` : ""}`}
+      style={{ backgroundImage: `url("${source}")`, backgroundPosition: `${position[cell[0]]} ${position[cell[1]]}` }}
+      aria-hidden="true"
+    />
+  );
+}
+
 export const MANUAL_ABILITY_GUIDE = Object.freeze([
   Object.freeze({
     key: "Q",
@@ -503,6 +531,7 @@ export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose })
 function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterChange }) {
   const [activeTab, setActiveTab] = useState("profile");
   const [profileId, setProfileId] = useState(facility.selectedCharacterId || facility.characters?.[0]?.id || "aegis");
+  const [upgradePulse, setUpgradePulse] = useState(0);
   useEffect(() => {
     setProfileId(facility.selectedCharacterId || facility.characters?.[0]?.id || "aegis");
   }, [facility.selectedCharacterId, facility.characters]);
@@ -518,6 +547,10 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
     setProfileId(characterId);
     onCharacterChange?.(characterId);
   };
+  const purchaseUpgrade = (upgradeId) => {
+    setUpgradePulse((value) => value + 1);
+    onPurchase?.(upgradeId);
+  };
   return (
     <section className={`character-information-panel is-${profile?.accent || "cyan"}`} role="dialog" aria-modal="true" aria-labelledby="character-information-name">
       {facility.artSource && <img className="character-info-environment" src={assetSource(facility.artSource)} alt="" aria-hidden="true" />}
@@ -527,7 +560,7 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
           <strong>전투원 정보</strong>
         </div>
         <div className="character-core-balance" aria-label={`보유 ${facility.currencyLabel} ${facility.currency}`}>
-          <Sparkle weight="fill" /><span>{facility.currencyLabel}</span><b>{facility.currency}</b>
+          <MenuAtlasIcon atlas={facility.menuIconAtlas} icon="augmentation" fallback={Sparkle} /><span>{facility.currencyLabel}</span><b>{facility.currency}</b>
         </div>
         <button type="button" className="facility-close" data-ui-sound="uiClose" onClick={onClose} aria-label="전투원 정보 닫기"><ArrowLeft weight="bold" /> 기지로 <kbd>ESC</kbd></button>
       </header>
@@ -544,8 +577,8 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
 
       <section className="character-data-console">
         <nav className="character-info-tabs" aria-label="전투원 정보 분류">
-          <button type="button" className={activeTab === "profile" ? "is-active" : ""} onClick={() => setActiveTab("profile")}><User weight="fill" /> 기본 정보</button>
-          <button type="button" className={activeTab === "upgrade" ? "is-active" : ""} onClick={() => setActiveTab("upgrade")}><Sparkle weight="fill" /> 영구 강화</button>
+          <button type="button" className={activeTab === "profile" ? "is-active" : ""} onClick={() => setActiveTab("profile")}><MenuAtlasIcon atlas={facility.menuIconAtlas} icon="operative" fallback={User} /> 기본 정보</button>
+          <button type="button" className={activeTab === "upgrade" ? "is-active" : ""} onClick={() => setActiveTab("upgrade")}><MenuAtlasIcon atlas={facility.menuIconAtlas} icon="augmentation" fallback={Sparkle} /> 영구 강화</button>
         </nav>
 
         {activeTab === "profile" ? (
@@ -577,6 +610,23 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
         ) : (
           <div className="character-upgrade-content">
             <header><div><small>PERMANENT AUGMENTATION</small><h3>동기화 프로토콜</h3></div><span>{facility.currencyHint}</span></header>
+            {facility.augmentationCoreVisual && (
+              <section className={`augmentation-core-module${upgradePulse > 0 ? " is-charged" : ""}`} key={`augmentation-core-${upgradePulse}`} aria-label="동기화 코어 강화 장치">
+                <div className="augmentation-core-art" aria-hidden="true">
+                  <i className="augmentation-orbit orbit-outer" />
+                  <i className="augmentation-orbit orbit-inner" />
+                  <img src={assetSource(facility.augmentationCoreVisual)} alt="" />
+                  <span className="augmentation-core-flare" />
+                </div>
+                <div className="augmentation-core-copy">
+                  <small>HAVEN-09 // SYNC REACTOR</small>
+                  <strong>영구 강화 동기화 코어</strong>
+                  <span>코어를 소모해 전투원의 기본 성능을 영구적으로 증폭합니다.</span>
+                  <div><i style={{ width: `${maxRank > 0 ? Math.round(totalRank / maxRank * 100) : 0}%` }} /></div>
+                  <b>동기화 랭크 {totalRank} / {maxRank}</b>
+                </div>
+              </section>
+            )}
             <div className="character-upgrade-list">
               {(facility.upgrades || []).map((upgrade) => {
                 const maxed = upgrade.rank >= upgrade.maxRank;
@@ -586,7 +636,7 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
                     <header><span>{String(upgrade.order || 1).padStart(2, "0")}</span><div><small>{upgrade.category}</small><h4>{upgrade.name}</h4></div><b>{upgrade.rank} / {upgrade.maxRank}</b></header>
                     <p>{upgrade.description}</p>
                     <div className="upgrade-ranks" aria-label={`${upgrade.maxRank}랭크 중 ${upgrade.rank}랭크`}>{Array.from({ length: upgrade.maxRank }, (_, index) => <i className={index < upgrade.rank ? "is-active" : ""} key={index} />)}</div>
-                    <footer><span>{maxed ? "최고 단계" : upgrade.nextEffect}</span><button type="button" className="command-ui-button" data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => onPurchase(upgrade.id)}>{maxed ? <><CheckCircle weight="fill" /> 완료</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><Sparkle weight="fill" /> 코어 {upgrade.nextCost}개로 강화</>}</button></footer>
+                    <footer><span>{maxed ? "최고 단계" : upgrade.nextEffect}</span><button type="button" className="command-ui-button" data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => purchaseUpgrade(upgrade.id)}>{maxed ? <><CheckCircle weight="fill" /> 완료</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><Sparkle weight="fill" /> 코어 {upgrade.nextCost}개로 강화</>}</button></footer>
                   </article>
                 );
               })}
@@ -707,9 +757,9 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
           <span><FloppyDisk weight="fill" /> 슬롯 {(campaign?.slotIndex ?? 0) + 1} · 자동 저장</span>
         </div>
         <nav className="base-currency-rail" aria-label="기지 보유 재화">
-          <button type="button" onClick={() => onOpenFacility("research")} aria-label="연구 자료로 연구실 열기"><Brain weight="fill" /><span><small>연구 자료</small><b>{campaign?.progression?.researchData || 0}</b></span></button>
-          <button type="button" onClick={() => onOpenFacility("equipment")} aria-label="장비 부품으로 정비소 열기"><Wrench weight="fill" /><span><small>장비 부품</small><b>{campaign?.progression?.equipmentParts || 0}</b></span></button>
-          <button type="button" onClick={() => onOpenFacility("augmentation")} aria-label="동기화 코어로 전투원 정보 열기"><Sparkle weight="fill" /><span><small>동기화 코어</small><b>{campaign?.progression?.augmentationCores || 0}</b></span></button>
+          <button type="button" onClick={() => onOpenFacility("research")} aria-label="연구 자료로 연구실 열기"><MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="researchCurrency" fallback={Brain} /><span><small>연구 자료</small><b>{campaign?.progression?.researchData || 0}</b></span></button>
+          <button type="button" onClick={() => onOpenFacility("equipment")} aria-label="장비 부품으로 정비소 열기"><MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="equipmentCurrency" fallback={Wrench} /><span><small>장비 부품</small><b>{campaign?.progression?.equipmentParts || 0}</b></span></button>
+          <button type="button" onClick={() => onOpenFacility("augmentation")} aria-label="동기화 코어로 전투원 정보 열기"><MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="augmentation" fallback={Sparkle} /><span><small>동기화 코어</small><b>{campaign?.progression?.augmentationCores || 0}</b></span></button>
         </nav>
       </header>
 
@@ -728,7 +778,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
             key={npc.id}
           >
             {npc.id === "lark" && larkAlert && <span className="npc-mission-alert" aria-label="신규 권역 브리핑"><Sparkle weight="fill" /><b>!</b></span>}
-            <Icon weight="fill" /><span><small>{display.role}</small><b>{display.name}</b></span>
+            <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon={NPC_MENU_ICON[npc.id]} fallback={Icon} /><span><small>{display.role}</small><b>{display.name}</b></span>
           </button>
         );
         })}
@@ -736,13 +786,13 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
 
       <aside className="base-primary-actions">
         <button type="button" className="base-character-action" onClick={() => onOpenFacility("augmentation")}>
-          <User weight="fill" /><span><small>전투원 관리</small><b>전투원 · 강화</b></span><ArrowRight weight="bold" />
+          <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="operative" fallback={User} /><span><small>전투원 관리</small><b>전투원 · 강화</b></span><ArrowRight weight="bold" />
         </button>
         <button type="button" className="base-sortie-action command-ui-button" data-ui-sound="uiConfirm" onClick={onBoard}>
-          <AirplaneTilt weight="fill" /><span><small>스텔스 비행선 나이트자</small><b>작전 권역 · 출격</b></span><Play weight="fill" />
+          <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="sortie" fallback={AirplaneTilt} /><span><small>스텔스 비행선 나이트자</small><b>작전 권역 · 출격</b></span><Play weight="fill" />
         </button>
         <button type="button" className="base-defense-action command-ui-button" data-ui-sound="uiConfirm" onClick={onDefense}>
-          <ShieldChevron weight="fill" /><span><small>서브 콘텐츠 · 레아 관제</small><b>기지 방어</b></span><Crosshair weight="bold" />
+          <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="defense" fallback={ShieldChevron} /><span><small>서브 콘텐츠 · 레아 관제</small><b>기지 방어</b></span><Crosshair weight="bold" />
         </button>
       </aside>
 

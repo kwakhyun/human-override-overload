@@ -4,7 +4,7 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("portrait touch runtime uses ENVELOP presentation, a closer camera, and deterministic nearest-target auto aim", async () => {
+test("portrait touch runtime uses the native viewport, a tactical camera, and deterministic nearest-target auto aim", async () => {
   const [platform, createGame, scene, view] = await Promise.all([
     read("src/platform/mobileRuntime.ts"),
     read("src/phaser/createOverloadGame.ts"),
@@ -16,13 +16,13 @@ test("portrait touch runtime uses ENVELOP presentation, a closer camera, and det
   assert.match(platform, /autoAim: touchOptimized && portrait/);
   assert.match(createGame, /detectMobileRuntime\(window\)/);
   assert.match(createGame, /initialQuality === "performance" \|\| mobileRuntime\.touchOptimized/);
-  assert.match(createGame, /Phaser\.Scale\.ENVELOP : Phaser\.Scale\.FIT/);
+  assert.match(createGame, /Phaser\.Scale\.RESIZE : Phaser\.Scale\.FIT/);
   assert.match(createGame, /const portraitPresentation = mobileRuntime\.portrait && mobileRuntime\.touchOptimized/);
   assert.match(createGame, /new OverloadScene\([\s\S]*mobileRuntime\.autoAim, portraitPresentation\)/);
   assert.match(scene, /private readonly mobileAutoAim: boolean/);
   assert.match(scene, /private readonly portraitPresentation: boolean/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId, this\.portraitPresentation\)/);
-  assert.match(view, /const portraitZoom = this\.portraitPresentation \? \(bossStageActive \? 1\.06 : 1\.12\) : 1/);
+  assert.match(view, /bossStageActive[\s\S]*clamp\(0\.66 \* this\.userZoomFactor, 0\.6, 0\.78\)[\s\S]*clamp\(0\.34 \* this\.userZoomFactor, 0\.3, 0\.48\)/);
   assert.match(scene, /enemy\.dead \|\| enemy\.hp <= 0 \|\| enemy\.spawnDelay > 0/);
   assert.match(scene, /distanceSq = \(enemy\.x - player\.x\) \*\* 2 \+ \(enemy\.y - player\.y\) \*\* 2/);
   assert.match(scene, /if \(target\) setSwarmAim\(this\.state, target\.x, target\.y\)/);

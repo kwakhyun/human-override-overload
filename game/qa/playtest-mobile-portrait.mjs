@@ -177,6 +177,23 @@ try {
   assert.ok(characterMetrics.tabs.every((tab) => tab.height >= 56 && tab.font >= 15), JSON.stringify(characterMetrics));
   assert.ok(characterMetrics.kitHeight >= 84 && characterMetrics.kitName >= 14, JSON.stringify(characterMetrics));
   await page.screenshot({ path: path.join(qaDir, `mobile-portrait-character-${screenshotSuffix}.png`), fullPage: false });
+  await page.locator(".character-info-tabs button").nth(1).tap();
+  await page.locator(".augmentation-core-module").waitFor({ state: "visible" });
+  const augmentationMetrics = await page.evaluate(() => {
+    const module = document.querySelector(".augmentation-core-module");
+    const art = document.querySelector(".augmentation-core-art");
+    const image = document.querySelector(".augmentation-core-art img");
+    return {
+      moduleHeight: module?.getBoundingClientRect().height || 0,
+      artWidth: art?.getBoundingClientRect().width || 0,
+      imageLoaded: Boolean(image?.complete && image?.naturalWidth > 0),
+      animation: image ? getComputedStyle(image).animationName : "none",
+    };
+  });
+  assert.ok(augmentationMetrics.moduleHeight >= 150 && augmentationMetrics.artWidth >= 96, JSON.stringify(augmentationMetrics));
+  assert.equal(augmentationMetrics.imageLoaded, true, JSON.stringify(augmentationMetrics));
+  assert.notEqual(augmentationMetrics.animation, "none", JSON.stringify(augmentationMetrics));
+  await page.screenshot({ path: path.join(qaDir, `mobile-portrait-augmentation-${screenshotSuffix}.png`), fullPage: false });
   await page.locator(".character-information-panel .facility-close").tap();
   await page.locator(".character-information-panel").waitFor({ state: "detached" });
 
@@ -257,6 +274,12 @@ try {
   assert.equal(before.mobileAutoAim, true);
   assert.equal(before.portraitPresentation, true);
   assert.ok(before.liveEnemies > 0);
+  assert.ok(before.cameraZoom >= 0.3 && before.cameraZoom <= 0.4, JSON.stringify(before));
+  assert.ok(before.visibleWorldWidth >= viewport.width / 0.36, JSON.stringify(before));
+  assert.ok(before.visibleWorldHeight >= viewport.height / 0.36, JSON.stringify(before));
+  assert.ok(before.visibleEnemyCount >= 2, JSON.stringify(before));
+  assert.ok(Math.abs(before.cameraViewportWidth - viewport.width) <= 2, JSON.stringify(before));
+  assert.ok(Math.abs(before.cameraViewportHeight - viewport.height) <= 2, JSON.stringify(before));
   assert.equal(await page.locator(".landscape-guard").count(), 0);
 
   const frame = await page.locator(".expedition-canvas-frame").boundingBox();
@@ -302,9 +325,20 @@ try {
   await page.screenshot({ path: path.join(qaDir, `mobile-portrait-joystick-${screenshotSuffix}.png`), fullPage: false });
   await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   await page.waitForTimeout(180);
-  const after = await page.evaluate(() => window.__OVERLOAD_QA__.getSnapshot().context);
-  assert.ok(after.playerX > before.playerX + 8, `player should move right: ${before.playerX} -> ${after.playerX}`);
+  const afterRight = await page.evaluate(() => window.__OVERLOAD_QA__.getSnapshot().context);
+  assert.ok(afterRight.playerX > before.playerX + 8, `player should move right: ${before.playerX} -> ${afterRight.playerX}`);
   assert.equal(await page.locator(".floating-touch-joystick.is-active").count(), 0);
+
+  await session.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: start.x, y: start.y, id: 8, radiusX: 1, radiusY: 1, force: 1 }] });
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: start.x, y: start.y + 82, id: 8, radiusX: 1, radiusY: 1, force: 1 }],
+  });
+  await page.waitForTimeout(750);
+  await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await page.waitForTimeout(180);
+  const after = await page.evaluate(() => window.__OVERLOAD_QA__.getSnapshot().context);
+  assert.ok(after.playerY > afterRight.playerY + 8, `player should move down: ${afterRight.playerY} -> ${after.playerY}`);
 
   const layout = await page.evaluate(() => {
     const rect = (selector) => {
@@ -318,6 +352,13 @@ try {
       dock: rect(".expedition-combat-dock"),
       minimap: rect(".route-minimap"),
       objective: rect(".route-objective"),
+      actions: rect(".expedition-hud-actions"),
+      xp: rect(".expedition-xp"),
+      canvas: (() => {
+        const node = document.querySelector(".phaser-host canvas");
+        const box = node?.getBoundingClientRect();
+        return node && box ? { width: box.width, height: box.height, bufferWidth: node.width, bufferHeight: node.height } : null;
+      })(),
       objectiveFont: Number.parseFloat(getComputedStyle(document.querySelector(".route-objective strong")).fontSize),
       abilityLabelFont: Number.parseFloat(getComputedStyle(document.querySelector(".combat-ability-copy strong")).fontSize),
       abilityLabelDisplay: getComputedStyle(document.querySelector(".combat-ability-copy")).display,
@@ -327,11 +368,17 @@ try {
   for (const [name, box] of Object.entries({ dock: layout.dock, minimap: layout.minimap, objective: layout.objective })) {
     assert.ok(box && box.left >= -1 && box.top >= -1 && box.right <= layout.viewport.width + 1 && box.bottom <= layout.viewport.height + 1, `${name}: ${JSON.stringify(box)}`);
   }
+  const intersects = (a, b) => Boolean(a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top);
+  assert.equal(intersects(layout.objective, layout.actions), false, JSON.stringify(layout));
+  assert.equal(intersects(layout.objective, layout.minimap), false, JSON.stringify(layout));
+  assert.equal(intersects(layout.minimap, layout.dock), false, JSON.stringify(layout));
+  assert.ok(layout.canvas && Math.abs(layout.canvas.width - viewport.width) <= 1 && Math.abs(layout.canvas.height - viewport.height) <= 1, JSON.stringify(layout));
+  assert.ok(layout.canvas && Math.abs(layout.canvas.bufferWidth / layout.canvas.bufferHeight - viewport.width / viewport.height) <= 0.02, JSON.stringify(layout));
   assert.ok(layout.objectiveFont >= 18 && layout.abilityLabelFont >= 13 && layout.abilityLabelDisplay !== "none", JSON.stringify(layout));
   assert.ok(layout.horizontalOverflow <= 1, JSON.stringify(layout));
   assert.deepEqual(errors, []);
 
-  console.log(JSON.stringify({ result: "pass", introMetrics, slotMetrics, homeMetrics, dialogueMetrics, facilityMetrics, characterMetrics, defenseSelectMetrics, hotspotMetrics, sortieMetrics, pauseButtonMetrics, pauseMetrics, runtime: after, layout, errors }, null, 2));
+  console.log(JSON.stringify({ result: "pass", introMetrics, slotMetrics, homeMetrics, dialogueMetrics, facilityMetrics, characterMetrics, augmentationMetrics, defenseSelectMetrics, hotspotMetrics, sortieMetrics, pauseButtonMetrics, pauseMetrics, runtime: after, layout, errors }, null, 2));
 } finally {
   await browser.close();
 }

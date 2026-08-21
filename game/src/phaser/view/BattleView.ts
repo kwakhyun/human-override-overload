@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { ASSET_KEYS } from "../../game/assets/manifest";
-import { EXPEDITION_WORLD_WIDTH, WORLD_HEIGHT, WORLD_WIDTH } from "../../swarm/engine.js";
+import { EXPEDITION_WORLD_HEIGHT, EXPEDITION_WORLD_WIDTH, WORLD_HEIGHT, WORLD_WIDTH } from "../../swarm/engine.js";
 import {
   ACTOR_ANIMATION_PROFILES,
   getActorAnimationProfile,
@@ -105,50 +105,50 @@ type RegionVisualAssets = Readonly<{
 
 const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Object.freeze({
   "wrong-engine-core": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.sector1, ASSET_KEYS.sector2, ASSET_KEYS.sector3, ASSET_KEYS.sector4Expanded]),
-    routeSourceWidth: 1600,
-    routeSourceHeight: 900,
+    route: Object.freeze([ASSET_KEYS.wrongEngineArena]),
+    routeSourceWidth: 1254,
+    routeSourceHeight: 1254,
     bossRoom: ASSET_KEYS.bossRoom,
     bossForms: ASSET_KEYS.bossForms,
     bossMotion: ASSET_KEYS.bossMotion,
   }),
   "glass-dune": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.glassDuneRoute, ASSET_KEYS.glassDuneRouteExpanded]),
-    routeSourceWidth: 1920,
-    routeSourceHeight: 1080,
+    route: Object.freeze([ASSET_KEYS.glassDuneArena]),
+    routeSourceWidth: 1254,
+    routeSourceHeight: 1254,
     bossRoom: ASSET_KEYS.glassDuneBossRoom,
     bossForms: ASSET_KEYS.glassDuneBossForms,
     bossMotion: ASSET_KEYS.glassDuneBossMotion,
   }),
   "abyssal-archive": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.abyssalArchiveRoute, ASSET_KEYS.abyssalArchiveRouteExpanded]),
-    routeSourceWidth: 1920,
-    routeSourceHeight: 1080,
+    route: Object.freeze([ASSET_KEYS.abyssalArchiveArena]),
+    routeSourceWidth: 1254,
+    routeSourceHeight: 1254,
     bossRoom: ASSET_KEYS.abyssalArchiveBossRoom,
     bossForms: ASSET_KEYS.abyssalArchiveBossForms,
     bossMotion: ASSET_KEYS.abyssalArchiveBossMotion,
   }),
   "neon-foundry": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.neonFoundryRoute, ASSET_KEYS.neonFoundryRouteExpanded]),
-    routeSourceWidth: 1920,
-    routeSourceHeight: 1080,
-    bossRoom: ASSET_KEYS.neonFoundryRoute,
+    route: Object.freeze([ASSET_KEYS.neonFoundryArena]),
+    routeSourceWidth: 1254,
+    routeSourceHeight: 1254,
+    bossRoom: ASSET_KEYS.neonFoundryArena,
     bossForms: ASSET_KEYS.neonFoundryBossForms,
     enemyForms: ASSET_KEYS.neonFoundryEnemyForms,
   }),
   "storm-spire": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.stormSpireRoute, ASSET_KEYS.stormSpireRouteExpanded]),
-    routeSourceWidth: 1920,
-    routeSourceHeight: 1080,
-    bossRoom: ASSET_KEYS.stormSpireRoute,
+    route: Object.freeze([ASSET_KEYS.stormSpireArena]),
+    routeSourceWidth: 1254,
+    routeSourceHeight: 1254,
+    bossRoom: ASSET_KEYS.stormSpireArena,
     bossForms: ASSET_KEYS.stormSpireBossForms,
     enemyForms: ASSET_KEYS.stormSpireEnemyForms,
   }),
   "gene-vault": Object.freeze({
-    route: Object.freeze([ASSET_KEYS.geneVaultRoute, ASSET_KEYS.geneVaultRouteExpanded]),
-    routeSourceWidth: 1920,
-    routeSourceHeight: 1080,
-    bossRoom: ASSET_KEYS.geneVaultRoute,
+    route: Object.freeze([ASSET_KEYS.geneVaultArena]),
+    routeSourceWidth: 1254,
+    routeSourceHeight: 1254,
+    bossRoom: ASSET_KEYS.geneVaultArena,
     bossForms: ASSET_KEYS.geneVaultBossForms,
     enemyForms: ASSET_KEYS.geneVaultEnemyForms,
   }),
@@ -459,32 +459,19 @@ export class BattleView {
     this.portraitPresentation = portraitPresentation;
     this.mainCamera.setBackgroundColor("#020608");
 
-    const routeBackdropHeight = WORLD_HEIGHT + 360;
-    const routeMaps = regionAssets.route.map((key, index) => {
-      const source = scene.textures.get(key).getSourceImage() as { width?: number; height?: number };
-      const sourceWidth = Math.max(1, finite(source?.width, regionAssets.routeSourceWidth));
-      const sourceHeight = Math.max(1, finite(source?.height, regionAssets.routeSourceHeight));
-      return scene.add.tileSprite(
-        EXPEDITION_WORLD_WIDTH / 2,
-        WORLD_HEIGHT / 2,
-        EXPEDITION_WORLD_WIDTH + WIDTH * 2,
-        routeBackdropHeight,
-        key,
-      )
-        // PERFORMANCE paths keep the authored world pattern size while using
-        // half-resolution source pixels; full-resolution assets remain 1:1.
-        .setTileScale(
-          regionAssets.routeSourceWidth / sourceWidth,
-          routeBackdropHeight / WORLD_HEIGHT * regionAssets.routeSourceHeight / sourceHeight,
-        )
-        .setTilePosition(-WIDTH + index * 83, 0)
-        .setAlpha(index === 0 ? 1 : 0);
-    });
+    const routeMaps = regionAssets.route.map((key, index) => scene.add.image(
+      EXPEDITION_WORLD_WIDTH * 0.5,
+      EXPEDITION_WORLD_HEIGHT * 0.5,
+      key,
+    )
+      .setDisplaySize(EXPEDITION_WORLD_WIDTH, EXPEDITION_WORLD_HEIGHT)
+      .setAlpha(index === 0 ? 1 : 0));
     this.routeMapCount = routeMaps.length;
     const bossFallbackTexture = regionAssets.route[0];
     const bossMapTexture = scene.textures.exists(regionAssets.bossRoom) ? regionAssets.bossRoom : bossFallbackTexture;
+    const bossBackdropHeight = this.portraitPresentation ? WORLD_HEIGHT + 360 : WORLD_HEIGHT;
     const bossMap = scene.add.image(WORLD_WIDTH / 2, WORLD_HEIGHT / 2, bossMapTexture)
-      .setDisplaySize(WORLD_WIDTH, WORLD_HEIGHT)
+      .setDisplaySize(this.portraitPresentation ? bossBackdropHeight * (16 / 9) : WORLD_WIDTH, bossBackdropHeight)
       .setAlpha(0);
     this.bossMap = bossMap;
     this.maps = [...routeMaps, bossMap];
@@ -550,6 +537,7 @@ export class BattleView {
     this.hudCamera = scene.cameras.add(0, 0, WIDTH, HEIGHT, false, "overload-overlay");
     this.hudCamera.ignore([...this.maps, this.worldBack, this.actors, this.worldFront]);
     this.mainCamera.ignore([this.hudLayer]);
+    this.syncPresentationViewport();
   }
 
   private prepareAtlas(key: string, columns: number, rows: number) {
@@ -746,14 +734,12 @@ export class BattleView {
     const expedition = state?.expedition;
     if (!expedition || expedition?.bossRoom || state?.phase === "boss") return;
     const view = this.mainCamera.worldView;
-    const distance = finite(expedition.distance);
-    const originX = finite(expedition.originX);
     for (const trace of expedition.traces ?? []) {
       const image = this.traceSprites.get(String(trace?.id ?? ""));
       if (!image) continue;
-      const x = originX + finite(trace.distance);
-      const y = finite(trace.y, HEIGHT * 0.5);
-      if (x < view.left - 180 || x > view.right + 180 || distance > finite(trace.distance) + 430) continue;
+      const x = finite(trace.x, EXPEDITION_WORLD_WIDTH * 0.5);
+      const y = finite(trace.y, EXPEDITION_WORLD_HEIGHT * 0.5);
+      if (trace.triggered || x < view.left - 180 || x > view.right + 180 || y < view.top - 180 || y > view.bottom + 180) continue;
       const size = trace.id === "moss" ? 62 : trace.id === "rook" ? 54 : 58;
       image
         .setVisible(true)
@@ -771,46 +757,60 @@ export class BattleView {
     return this.userZoomFactor;
   }
 
+  syncPresentationViewport() {
+    const width = Math.max(1, finite(this.scene.scale.gameSize.width, WIDTH));
+    const height = Math.max(1, finite(this.scene.scale.gameSize.height, HEIGHT));
+    this.hudCamera.setSize(width, height);
+  }
+
+  getPresentationSnapshot() {
+    const zoom = Math.max(0.001, finite(this.mainCamera.zoom, 1));
+    const worldView = this.mainCamera.worldView;
+    return {
+      zoom,
+      viewportWidth: this.mainCamera.width,
+      viewportHeight: this.mainCamera.height,
+      visibleWorldWidth: this.mainCamera.width / zoom,
+      visibleWorldHeight: this.mainCamera.height / zoom,
+      worldLeft: worldView.left,
+      worldRight: worldView.right,
+      worldTop: worldView.top,
+      worldBottom: worldView.bottom,
+    };
+  }
+
   syncCamera(state: any) {
     const camera = state?.camera ?? { x: WIDTH / 2, y: HEIGHT / 2, zoom: 1.46 };
     const expedition = state?.expedition;
-    const distance = Math.max(0, finite(expedition?.distance));
-    const routeLength = Math.max(1, finite(expedition?.routeLength, 12000));
     const bossMapIndex = this.routeMapCount;
-    const lastRouteIndex = Math.max(0, this.routeMapCount - 1);
-    const segmentLength = routeLength / Math.max(1, this.routeMapCount);
-    let sector = clamp(Math.floor(distance / segmentLength), 0, lastRouteIndex);
-    let nextSector = sector;
-    let blend = 0;
     const bossStageActive = Boolean(expedition?.bossRoom || state?.phase === "boss");
-    if (bossStageActive) {
-      sector = bossMapIndex;
-    } else if (sector < lastRouteIndex) {
-      const localProgress = (distance - sector * segmentLength) / segmentLength;
-      nextSector = sector + 1;
-      const linear = clamp01((localProgress - 0.82) / 0.18);
-      blend = linear * linear * (3 - 2 * linear);
-    } else {
-      // Keep the authored final route texture visible through the clear and
-      // entry decision. Crossfading the 1,920px boss room while the camera is
-      // still near x=10,680 exposes the camera background as a black void.
-      nextSector = lastRouteIndex;
-      blend = 0;
-    }
+    this.mainCamera.setBounds(
+      0,
+      0,
+      bossStageActive ? WORLD_WIDTH : EXPEDITION_WORLD_WIDTH,
+      bossStageActive ? WORLD_HEIGHT : EXPEDITION_WORLD_HEIGHT,
+    );
     for (let index = 0; index < this.maps.length; index += 1) {
-      const alpha = index === sector ? 1 - blend : index === nextSector ? blend : 0;
+      const alpha = bossStageActive ? Number(index === bossMapIndex) : Number(index === 0);
       const map = this.maps[index];
       map
         .setVisible(alpha > 0.001)
         .setAlpha(alpha);
     }
     const engineZoom = finite(camera.zoom, 1.08);
-    const portraitZoom = this.portraitPresentation ? (bossStageActive ? 1.06 : 1.12) : 1;
-    const targetZoom = bossStageActive
-      ? clamp(engineZoom * this.userZoomFactor * portraitZoom, 0.68, 0.98)
-      : clamp(engineZoom * this.userZoomFactor * portraitZoom, 0.84, 1.42);
-    const targetX = finite(camera.x, WORLD_WIDTH / 2);
-    const targetY = finite(camera.y, WORLD_HEIGHT / 2);
+    // The simulation still owns the camera target, but portrait phones use a
+    // presentation-only tactical lens. With a native portrait viewport these
+    // values reveal roughly 1,060x2,480 world units in a 360×844 arena view
+    // and 590x1,280 in boss rooms instead of magnifying the center 16:9 crop.
+    const targetZoom = this.portraitPresentation
+      ? bossStageActive
+        ? clamp(0.66 * this.userZoomFactor, 0.6, 0.78)
+        : clamp(0.34 * this.userZoomFactor, 0.3, 0.48)
+      : bossStageActive
+        ? clamp(engineZoom * this.userZoomFactor, 0.68, 0.98)
+        : clamp(engineZoom * this.userZoomFactor, 0.84, 1.42);
+    const targetX = finite(camera.x, bossStageActive ? WORLD_WIDTH / 2 : EXPEDITION_WORLD_WIDTH / 2);
+    const targetY = finite(camera.y, bossStageActive ? WORLD_HEIGHT / 2 : EXPEDITION_WORLD_HEIGHT / 2);
     if (this.bossRevealStartedAt >= 0) {
       const linear = clamp01((this.scene.time.now - this.bossRevealStartedAt) / 1100);
       const eased = linear * linear * (3 - 2 * linear);
@@ -2890,12 +2890,12 @@ export class BattleView {
   private drawExpeditionMarkers(state: any, time: number, graphics: Phaser.GameObjects.Graphics) {
     const expedition = state?.expedition;
     if (!expedition) return;
-    const originX = finite(expedition.originX);
     const view = this.mainCamera.worldView;
     for (const trace of expedition.traces ?? []) {
-      const x = originX + finite(trace.distance);
-      const y = finite(trace.y, HEIGHT * 0.5);
-      if (x < view.left - 160 || x > view.right + 160 || finite(expedition.distance) > finite(trace.distance) + 430) continue;
+      if (trace.triggered) continue;
+      const x = finite(trace.x, EXPEDITION_WORLD_WIDTH * 0.5);
+      const y = finite(trace.y, EXPEDITION_WORLD_HEIGHT * 0.5);
+      if (x < view.left - 160 || x > view.right + 160 || y < view.top - 160 || y > view.bottom + 160) continue;
       const pulse = 0.46 + Math.sin(time * 5 + finite(trace.distance) * 0.01) * 0.14;
       graphics.lineStyle(2, COLORS.cyan, pulse);
       graphics.strokeCircle(x, y - 12, 18 + pulse * 5);
@@ -2931,6 +2931,8 @@ export class BattleView {
 
   private drawHudOverlay(state: any, time: number) {
     const graphics = this.hudGraphics;
+    const viewportWidth = this.hudCamera.width;
+    const viewportHeight = this.hudCamera.height;
     graphics.clear();
     const clearTransition = state?.expedition?.clearTransition;
     const clearPhase = String(clearTransition?.phase ?? "");
@@ -2943,52 +2945,52 @@ export class BattleView {
       const color = panic ? COLORS.red : clearPhase === "swap" ? COLORS.cyan : COLORS.amber;
       const pulse = 0.52 + Math.sin(wallTime * (panic ? 18 : 11)) * 0.16;
       graphics.fillStyle(color, panic ? 0.055 + pulse * 0.035 : 0.025);
-      graphics.fillRect(0, 0, WIDTH, HEIGHT);
+      graphics.fillRect(0, 0, viewportWidth, viewportHeight);
       graphics.lineStyle(panic ? 12 : 7, COLORS.black, 0.72);
-      graphics.strokeRect(8, 8, WIDTH - 16, HEIGHT - 16);
+      graphics.strokeRect(8, 8, viewportWidth - 16, viewportHeight - 16);
       graphics.lineStyle(panic ? 7 : 4, color, pulse);
-      graphics.strokeRect(11, 11, WIDTH - 22, HEIGHT - 22);
+      graphics.strokeRect(11, 11, viewportWidth - 22, viewportHeight - 22);
       const ringRadius = 42 + progress * 78 + Math.sin(wallTime * 14) * 4;
       graphics.lineStyle(8, COLORS.black, 0.64);
-      graphics.strokeCircle(WIDTH * 0.5, HEIGHT * 0.5, ringRadius);
+      graphics.strokeCircle(viewportWidth * 0.5, viewportHeight * 0.5, ringRadius);
       graphics.lineStyle(panic ? 4 : 3, color, 0.86 - progress * 0.34);
-      graphics.strokeCircle(WIDTH * 0.5, HEIGHT * 0.5, ringRadius);
+      graphics.strokeCircle(viewportWidth * 0.5, viewportHeight * 0.5, ringRadius);
       for (let index = 0; index < 4; index += 1) {
         const angle = index * Math.PI * 0.5 + Math.PI * 0.25;
         const inner = 58 + Math.sin(wallTime * 10 + index) * 4;
         const outer = inner + (panic ? 34 : 22);
         graphics.lineStyle(panic ? 7 : 4, COLORS.black, 0.76);
         graphics.lineBetween(
-          WIDTH * 0.5 + Math.cos(angle) * inner,
-          HEIGHT * 0.5 + Math.sin(angle) * inner,
-          WIDTH * 0.5 + Math.cos(angle) * outer,
-          HEIGHT * 0.5 + Math.sin(angle) * outer,
+          viewportWidth * 0.5 + Math.cos(angle) * inner,
+          viewportHeight * 0.5 + Math.sin(angle) * inner,
+          viewportWidth * 0.5 + Math.cos(angle) * outer,
+          viewportHeight * 0.5 + Math.sin(angle) * outer,
         );
         graphics.lineStyle(panic ? 3 : 2, color, 0.96);
         graphics.lineBetween(
-          WIDTH * 0.5 + Math.cos(angle) * inner,
-          HEIGHT * 0.5 + Math.sin(angle) * inner,
-          WIDTH * 0.5 + Math.cos(angle) * outer,
-          HEIGHT * 0.5 + Math.sin(angle) * outer,
+          viewportWidth * 0.5 + Math.cos(angle) * inner,
+          viewportHeight * 0.5 + Math.sin(angle) * inner,
+          viewportWidth * 0.5 + Math.cos(angle) * outer,
+          viewportHeight * 0.5 + Math.sin(angle) * outer,
         );
       }
     }
     if (state?.surgeWarning || state?.activeSurge) {
       const pulse = 0.38 + Math.sin(time * 14) * 0.16;
       graphics.lineStyle(state?.surgeWarning ? 12 : 6, COLORS.red, pulse);
-      graphics.strokeRect(5, 5, WIDTH - 10, HEIGHT - 10);
+      graphics.strokeRect(5, 5, viewportWidth - 10, viewportHeight - 10);
     }
     const flash = clamp01(finite(state?.flash));
     if (flash > 0) {
       graphics.fillStyle(COLORS.white, flash * 0.12);
-      graphics.fillRect(0, 0, WIDTH, HEIGHT);
+      graphics.fillRect(0, 0, viewportWidth, viewportHeight);
     }
     const phaseFlash = clamp01(finite(state?.boss?.phaseFlash));
     if (phaseFlash > 0) {
       graphics.fillStyle(COLORS.red, phaseFlash * 0.12);
-      graphics.fillRect(0, 0, WIDTH, HEIGHT);
+      graphics.fillRect(0, 0, viewportWidth, viewportHeight);
       graphics.lineStyle(6, COLORS.white, phaseFlash);
-      graphics.strokeRect(12, 12, WIDTH - 24, HEIGHT - 24);
+      graphics.strokeRect(12, 12, viewportWidth - 24, viewportHeight - 24);
     }
   }
 }

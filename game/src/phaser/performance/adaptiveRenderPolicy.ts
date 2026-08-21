@@ -80,7 +80,12 @@ function applyFramePacing(game: Phaser.Game, fps: number) {
   return true;
 }
 
-function applyWebGLBackingScale(game: Phaser.Game, requested: ReturnType<typeof getRenderBackingSize>) {
+function applyWebGLBackingScale(
+  game: Phaser.Game,
+  requested: ReturnType<typeof getRenderBackingSize>,
+  logicalWidth: number,
+  logicalHeight: number,
+) {
   const canvas = game.canvas;
   const renderer = game.renderer as unknown as AdaptiveWebGLRenderer;
   const drawingContext = renderer?.baseDrawingContext;
@@ -89,8 +94,8 @@ function applyWebGLBackingScale(game: Phaser.Game, requested: ReturnType<typeof 
     return {
       changed: false,
       webgl: false,
-      backingWidth: LOGICAL_WIDTH,
-      backingHeight: LOGICAL_HEIGHT,
+      backingWidth: logicalWidth,
+      backingHeight: logicalHeight,
       renderScale: 1,
     };
   }
@@ -99,8 +104,8 @@ function applyWebGLBackingScale(game: Phaser.Game, requested: ReturnType<typeof 
   const backingHeight = requested.backingHeight;
   const changed = canvas.width !== backingWidth || canvas.height !== backingHeight;
   if (changed) {
-    // CSS remains 100% of the fixed 16:9 host. Only the WebGL drawing buffer is
-    // reduced, while the camera and pointer coordinate system stay 1280x720.
+    // CSS remains 100% of the host. Only the WebGL drawing buffer is reduced,
+    // while the camera and pointer coordinate system keep their logical size.
     canvas.width = backingWidth;
     canvas.height = backingHeight;
   }
@@ -108,8 +113,8 @@ function applyWebGLBackingScale(game: Phaser.Game, requested: ReturnType<typeof 
   // Phaser's base DrawingContext supplies the shader projection as well as the
   // GL viewport. Preserve logical projection dimensions, but rasterize into the
   // smaller physical viewport. Camera clones inherit this separation.
-  drawingContext.width = LOGICAL_WIDTH;
-  drawingContext.height = LOGICAL_HEIGHT;
+  drawingContext.width = logicalWidth;
+  drawingContext.height = logicalHeight;
   drawingContext.state.viewport = [0, 0, backingWidth, backingHeight];
   drawingContext.state.scissor.box = [0, 0, backingWidth, backingHeight];
   renderer.drawingBufferHeight = gl.drawingBufferHeight;
@@ -130,19 +135,24 @@ function applyWebGLBackingScale(game: Phaser.Game, requested: ReturnType<typeof 
  * Applies presentation-only pacing and backing-buffer changes. Simulation
  * authority stays in OverloadScene's 60 Hz fixed-step accumulator.
  */
-export function applyAdaptiveRenderPolicy(game: Phaser.Game, preset: AdaptivePreset): AppliedRenderPolicy {
+export function applyAdaptiveRenderPolicy(
+  game: Phaser.Game,
+  preset: AdaptivePreset,
+  logicalWidth = LOGICAL_WIDTH,
+  logicalHeight = LOGICAL_HEIGHT,
+): AppliedRenderPolicy {
   const renderFps = Math.max(30, Math.min(60, Math.round(Number(preset?.renderFps) || 60)));
-  const requested = getRenderBackingSize(preset, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  const requested = getRenderBackingSize(preset, logicalWidth, logicalHeight);
   const pacingChanged = applyFramePacing(game, renderFps);
-  const backing = applyWebGLBackingScale(game, requested);
+  const backing = applyWebGLBackingScale(game, requested, logicalWidth, logicalHeight);
   return Object.freeze({
     changed: pacingChanged || backing.changed,
     webgl: backing.webgl,
     renderFps,
     requestedRenderScale: requested.renderScale,
     renderScale: backing.renderScale,
-    logicalWidth: LOGICAL_WIDTH,
-    logicalHeight: LOGICAL_HEIGHT,
+    logicalWidth,
+    logicalHeight,
     backingWidth: backing.backingWidth,
     backingHeight: backing.backingHeight,
   });

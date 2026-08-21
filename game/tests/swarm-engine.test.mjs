@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   BOSS_PATTERNS,
+  EXPEDITION_WORLD_HEIGHT,
   EXPEDITION_WORLD_WIDTH,
   GAME_HEIGHT,
   GAME_WIDTH,
   MIKA_REWARD_POOLS,
   REGION_BOSS_PATTERNS,
   REGION_ENEMY_PROFILES,
-  REGION_WAVE_ROUTE_ANCHORS,
   RIFLE_REWARD_POOLS,
   WORLD_HEIGHT,
   WORLD_WIDTH,
@@ -113,11 +113,12 @@ test("the renewed mode has one hero, no regions, and a fixed 1000-unit assault",
   assert.equal("heroes" in state, false);
 });
 
-test("the expedition opens with eight durable melee units and scales pressure by cleared waves", () => {
+test("the expedition opens in a square arena with eight durable melee units and scales pressure by cleared waves", () => {
   const state = createSwarmState({ random: () => 0.37, expedition: true });
-  assert.equal(EXPEDITION_WORLD_WIDTH, 26400);
+  assert.equal(EXPEDITION_WORLD_WIDTH, 4096);
+  assert.equal(EXPEDITION_WORLD_HEIGHT, 4096);
   assert.equal(state.expedition.routeLength, 25000);
-  assert.ok(state.expedition.routeLength < EXPEDITION_WORLD_WIDTH);
+  assert.deepEqual({ x: state.player.x, y: state.player.y }, { x: 2048, y: 2048 });
   assert.equal(state.enemies.length, 8);
   assert.equal(getEnemyPressureCap(state), 8);
   assert.deepEqual(new Set(state.enemies.map((enemy) => enemy.type)), new Set(["hunter"]));
@@ -259,16 +260,16 @@ test("late-wave siege walkers are durable giants with a dedicated heavy cannon",
   assert.ok(drainSwarmEvents(state).some((event) => event.type === "enemyShot" && event.kind === "siegeCannon"));
 });
 
-test("every expedition attacker materializes through one of five authored SOVEREIGN gates", () => {
+test("every expedition attacker materializes through one of eight compass SOVEREIGN gates", () => {
   const state = createSwarmState({ expedition: true, random: (() => {
     let value = 0;
     return () => ((value = (value + 0.137) % 1));
   })() });
   assert.equal(state.enemies.length, 8);
-  assert.ok(state.enemies.every((enemy) => ["east-upper", "east-lower", "north-rail", "south-rail", "rear-breach"].includes(enemy.spawnGateId)));
+  assert.ok(state.enemies.every((enemy) => ["east", "south-east", "south", "south-west", "west", "north-west", "north", "north-east"].includes(enemy.spawnGateId)));
   assert.equal(state.spawnPortals.length, 1);
   assert.ok(state.enemies.every((enemy) => enemy.spawnDelay > 0));
-  assert.ok(state.enemies.every((enemy) => Math.hypot(enemy.x - state.player.x, enemy.y - state.player.y) > 430));
+  assert.ok(state.enemies.every((enemy) => Math.hypot(enemy.x - state.player.x, enemy.y - state.player.y) > 400));
   const halfWidth = GAME_WIDTH / (2 * state.camera.zoom);
   const halfHeight = GAME_HEIGHT / (2 * state.camera.zoom);
   const inOpeningView = (enemy) => enemy.x >= state.camera.x - halfWidth && enemy.x <= state.camera.x + halfWidth
@@ -1182,7 +1183,7 @@ test("the opening clear still triggers WAVE I without rightward movement", () =>
   assert.equal(warning.wave, 1);
   assert.equal(warning.count, 14);
   assert.equal(warning.clearProgress, 8 / 300);
-  assert.equal(state.expedition.progress, 0);
+  assert.equal(state.expedition.progress, 8 / 300);
   assert.ok(getSwarmHud(state).surge.warning.startsIn > 0);
   stepFor(state, createSwarmInput(), 2.1);
   const surgeEvents = drainSwarmEvents(state);
@@ -1193,7 +1194,7 @@ test("the opening clear still triggers WAVE I without rightward movement", () =>
   assert.ok(getSwarmHud(state).surge.active || state.surgeQueued === 0);
 });
 
-test("later waves require both the preceding clear and their authored route anchor", () => {
+test("later waves start after the preceding clear without any route-anchor movement", () => {
   const state = createSwarmState({ random: () => 0.5, expedition: true, duration: 999 });
   state.player.invulnerability = 999;
   state.levelFlow.firstDeadline = 999;
@@ -1215,18 +1216,14 @@ test("later waves require both the preceding clear and their authored route anch
   state.surgeQueued = 0;
   state.activeSurge = null;
   drainSwarmEvents(state);
-  stepSwarm(state, createSwarmInput(), 1 / 60);
-  assert.equal(state.surgeWarning, null);
-  assert.equal(state.expedition.waitingForAdvance, true);
-  const secondAnchor = state.expedition.waveAnchors[1];
-  assert.equal(secondAnchor, REGION_WAVE_ROUTE_ANCHORS["wrong-engine-core"][1] * state.expedition.routeLength);
-  assert.equal(state.expedition.nextWaveAnchor, secondAnchor);
-
-  state.player.x = state.expedition.originX + secondAnchor;
+  const playerPosition = { x: state.player.x, y: state.player.y };
   stepSwarm(state, createSwarmInput(), 1 / 60);
   assert.equal(state.surgeWarning?.index, 1);
-  assert.equal(state.surgeWarning?.routeAnchor, secondAnchor);
-  assert.ok(drainSwarmEvents(state).some((event) => event.type === "surgeWarning" && event.wave === 2 && event.routeAnchor === secondAnchor));
+  assert.equal(state.surgeWarning?.routeAnchor, null);
+  assert.equal("waitingForAdvance" in state.expedition, false);
+  assert.equal("nextWaveAnchor" in state.expedition, false);
+  assert.deepEqual({ x: state.player.x, y: state.player.y }, playerPosition);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "surgeWarning" && event.wave === 2 && event.routeAnchor === null));
 
   const band = createSwarmState({ random: () => 0.5, expedition: true, duration: 999 });
   band.player.invulnerability = 999;
@@ -1243,47 +1240,37 @@ test("later waves require both the preceding clear and their authored route anch
   }
   const move = createSwarmInput();
   move.right = true;
+  move.down = true;
   stepFor(band, move, 30);
-  assert.equal(band.expedition.distance, band.expedition.waveAnchors[1]);
-  assert.equal(band.expedition.atCombatBand, true);
-  assert.equal(getSwarmHud(band).expedition.objective, "현재 전투 구역 소탕");
-  assert.ok(band.expedition.distance < band.expedition.routeLength);
+  assert.equal(band.expedition.distance, 0);
+  assert.equal("atCombatBand" in band.expedition, false);
+  assert.equal(getSwarmHud(band).expedition.objective, "현재 웨이브 적 섬멸");
+  assert.equal(band.surgeWarning, null, "movement cannot bypass a living hostile wave");
 });
 
-test("terminal navigation cues advance to the pending MOSS trace and never point behind the player", () => {
+test("terminal traces resolve from kill progress and never expose navigation anchors", () => {
   const wrongEngine = createSwarmState({ random: () => 0.5, expedition: true, duration: 999 });
-  wrongEngine.spawnedEnemies = wrongEngine.enemyBudget;
-  wrongEngine.killedEnemies = wrongEngine.enemyBudget - 1;
+  wrongEngine.killedEnemies = Math.ceil(wrongEngine.enemyBudget * (21_800 / 25_000));
   wrongEngine.stats.kills = wrongEngine.killedEnemies;
-  wrongEngine.enemies.length = 0;
-  wrongEngine.surgeIndex = wrongEngine.expedition.waveAnchors.length;
   wrongEngine.levelFlow.firstDeadline = 999;
   wrongEngine.levelFlow.nextOfferAt = 999;
-  const finalWaveAnchor = wrongEngine.expedition.waveAnchors.at(-1);
-  wrongEngine.player.x = wrongEngine.expedition.originX + finalWaveAnchor;
+  const playerPosition = { x: wrongEngine.player.x, y: wrongEngine.player.y };
   stepSwarm(wrongEngine, createSwarmInput(), 1 / 60);
 
-  assert.equal(wrongEngine.expedition.distance, finalWaveAnchor);
-  assert.equal(wrongEngine.expedition.nextWaveAnchor, 21_800);
-  assert.ok(wrongEngine.expedition.nextWaveAnchor > wrongEngine.expedition.distance);
-  assert.equal(getSwarmHud(wrongEngine).expedition.nextWaveAnchor, 21_800);
-
-  wrongEngine.player.x = wrongEngine.expedition.originX + 21_800;
-  stepSwarm(wrongEngine, createSwarmInput(), 1 / 60);
+  assert.ok(wrongEngine.expedition.distance >= 21_800);
   assert.equal(wrongEngine.expedition.traces.find((trace) => trace.id === "moss").triggered, true);
-  assert.equal(wrongEngine.expedition.nextWaveAnchor, null);
+  assert.equal("nextWaveAnchor" in wrongEngine.expedition, false);
+  assert.equal("nextWaveAnchor" in getSwarmHud(wrongEngine).expedition, false);
+  assert.deepEqual({ x: wrongEngine.player.x, y: wrongEngine.player.y }, playerPosition);
 
   const defaultRoute = createSwarmState({ random: () => 0.5, expedition: true, regionId: "glass-dune", duration: 999 });
-  defaultRoute.spawnedEnemies = defaultRoute.enemyBudget;
   defaultRoute.killedEnemies = defaultRoute.enemyBudget - 1;
   defaultRoute.stats.kills = defaultRoute.killedEnemies;
-  defaultRoute.enemies.length = 0;
-  defaultRoute.surgeIndex = defaultRoute.expedition.waveAnchors.length;
   defaultRoute.levelFlow.firstDeadline = 999;
   defaultRoute.levelFlow.nextOfferAt = 999;
-  defaultRoute.player.x = defaultRoute.expedition.originX + defaultRoute.expedition.waveAnchors.at(-1);
   stepSwarm(defaultRoute, createSwarmInput(), 1 / 60);
-  assert.equal(defaultRoute.expedition.nextWaveAnchor, null, "a trace-free terminal route must not retain the stale 74% anchor");
+  assert.equal("nextWaveAnchor" in defaultRoute.expedition, false, "a trace-free arena must never expose a stale route anchor");
+  assert.equal(defaultRoute.expedition.traces.length, 0);
 });
 
 test("level-up airstrike and omega laser remain automatic and separate from manual Q/E/F/R state", () => {

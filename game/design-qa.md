@@ -524,6 +524,16 @@ final result: pass — 01—03/04—06/07—09 상위 권역 지도, LARK 신규
 
 final result: passed
 
+### Current mobile override (2026-08-21) — portrait tactical camera, generated menu icons, and augmentation reactor
+
+- Superseding mobile camera rule: earlier Iteration 27/35 references to Phaser `ENVELOP` and route 1.12 / boss 1.06 are historical. Portrait touch combat now uses Phaser `RESIZE`, a phone-native logical projection, route zoom 0.46 with an 80-world-unit forward lead, and boss zoom 0.66. Adaptive WebGL backing size preserves the portrait aspect ratio at every quality tier.
+- Combat visibility: at 390×844 the measured world view is 848×1,835 with five materialized enemies in-frame; at 360×800 it is 783×1,739 with five enemies in-frame. The route backdrop was extended vertically and the portrait boss-room art covers its taller view, eliminating black side and edge areas.
+- Non-overlap zones: the objective and 52px sound/pause controls occupy separate top-grid columns. The 148px tactical map starts below that row, XP sits below the map, and the 176px combat dock stays above the bottom safe area. Automated rectangle-intersection checks pass at both target sizes with zero horizontal overflow.
+- Generated UI art: the active 3×3 atlas supplies distinct research, equipment, navigation, defense, operative, sortie, and currency icons. The permanent-upgrade tab uses a dedicated synchronization-reactor image, rotating CSS orbit rings, an idle core pulse, a purchase-triggered charge flash, and a reduced-motion fallback.
+- Focused verification: TypeScript, 12 performance/render-asset checks, and both 390×844 and 360×800 full mobile flows passed with no console, page, or network errors.
+
+final result: passed
+
 ### Iteration 22 — complete · 모션 포트레이트 중심 헤이븐 로비
 
 - Source visual truth:
@@ -1123,5 +1133,17 @@ final result: passed
   않았습니다. 전체 `npm test`, production build, 배포는 시간 제한 폴리시에 따라 실행하지 않았습니다.
 - External gates: KPI 시간값은 외부 5명 플레이테스트 전 설계 가설입니다. Suno BGM은 제작 계정·
   플랜·제작일 당시 상업 공개 권리 증빙을 첨부하거나 제출본에서 제거·교체해야 합니다.
+
+final result: passed
+
+### Iteration 49 — square expedition arenas and kill-gated waves — 2026-08-22
+
+- Wave authority: removed every player-position and route-anchor prerequisite. The next warning is created only when the current hostile set is empty, so walking to any coordinate cannot delay or skip a wave.
+- Arena simulation: replaced the 26,400×1,080 horizontal route with one 4,096×4,096 square world and a 144-unit safe perimeter. Player movement, aim projection, enemy pursuit, camera bounds, long-range shots, pickups, and the tactical minimap now operate on both axes.
+- Spawn topology: eight compass gates cycle around the player and rotate their two-column deployment formation. The outer-region midboss also materializes from a compass direction instead of at a fixed right-side point.
+- Art: generated six region-specific square top-down arenas, preserved the 1254×1254 PNG sources, and registered full/performance WebP variants through the sole runtime manifest.
+- Portrait framing: the arena lens uses presentation-only 0.34 base zoom, exposing roughly 1,060×2,480 world units on a 360×844 phone while keeping simulation and collision unchanged.
+- HUD: converted the route strip into a two-dimensional arena minimap and removed the obsolete next-wave anchor marker and payload.
+- Focused verification: expedition, swarm, Phaser runtime, and HUD suites pass 132/132; TypeScript passes; live browser QA passes at both 390x844 and 360x800 with zero page errors, no horizontal overflow, no HUD overlap, and verified right-then-down touch movement.
 
 final result: passed

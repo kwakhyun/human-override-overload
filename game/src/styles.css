@@ -3752,47 +3752,38 @@ kbd {
   background-size: 16px 16px;
 }
 
-.route-minimap-path {
+.route-minimap-field.is-arena {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(99, 229, 244, 0.09), transparent 34%),
+    linear-gradient(rgba(99, 214, 232, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 214, 232, 0.055) 1px, transparent 1px),
+    rgba(1, 7, 9, 0.72);
+  background-size: auto, 16px 16px, 16px 16px, auto;
+}
+
+.route-minimap-field.is-arena::before,
+.route-minimap-field.is-arena::after {
   position: absolute;
-  top: 50%;
-  right: 6px;
-  left: 6px;
-  height: 2px;
-  background: rgba(92, 128, 135, 0.42);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.62);
-  transform: translateY(-50%);
-}
-
-.route-minimap-path > i {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #176a76, #64eafb, #d9fdff);
-  box-shadow: 0 0 8px rgba(80, 230, 247, 0.56);
-  transition: width 160ms linear;
-}
-
-.route-minimap-next-wave {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  display: grid;
-  width: 18px;
-  height: 28px;
-  color: #ffd27a;
-  filter: drop-shadow(0 0 5px rgba(255, 181, 69, 0.72));
-  place-items: start center;
-  transform: translate(-50%, -50%);
-}
-
-.route-minimap-next-wave::after {
-  width: 1px;
-  height: 12px;
-  margin-top: -2px;
-  background: linear-gradient(rgba(255, 210, 122, 0.9), transparent);
+  z-index: 0;
+  background: linear-gradient(90deg, transparent, rgba(91, 215, 233, 0.16), transparent);
   content: "";
+  pointer-events: none;
 }
 
-.route-minimap-next-wave svg { width: 12px; height: 12px; }
+.route-minimap-field.is-arena::before {
+  top: 50%;
+  right: 5px;
+  left: 5px;
+  height: 1px;
+}
+
+.route-minimap-field.is-arena::after {
+  top: 5px;
+  bottom: 5px;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(transparent, rgba(91, 215, 233, 0.16), transparent);
+}
 
 .route-minimap-node,
 .route-minimap-player {
@@ -3853,7 +3844,6 @@ kbd {
 
 .route-minimap.is-boss { border-color: rgba(255, 82, 108, 0.28); }
 .route-minimap.is-boss::before { background: linear-gradient(90deg, transparent, rgba(255, 88, 113, 0.9), transparent); }
-.route-minimap.is-boss .route-minimap-path > i { background: linear-gradient(90deg, #6d1425, #ff506d, #ffd7dd); }
 .route-minimap.is-boss .route-minimap-player { color: #ffe9ed; filter: drop-shadow(0 0 5px #ff506d); }
 
 .quick-actions {
@@ -10479,4 +10469,239 @@ kbd,
   }
   .route-objective > div { grid-row: 3; }
   .route-minimap { top: max(112px, calc(env(safe-area-inset-top) + 100px)); }
+}
+
+/* Mobile tactical presentation v6 --------------------------------------
+   Generated menu imagery, an animated augmentation reactor, and explicit
+   portrait-safe combat zones. The Phaser canvas is RESIZE-driven in code;
+   object-fit must never reintroduce a 16:9 crop here. */
+.generated-menu-icon {
+  display: block;
+  width: 34px;
+  min-width: 34px;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background-color: #020b10;
+  background-repeat: no-repeat;
+  background-size: 300% 300%;
+  box-shadow: inset 0 0 0 1px rgba(115, 232, 250, 0.16), 0 0 14px rgba(72, 213, 239, 0.08);
+}
+
+.base-currency-rail .generated-menu-icon { width: 38px; min-width: 38px; }
+.base-menu-button .generated-menu-icon { width: 44px; min-width: 44px; }
+.base-primary-actions .generated-menu-icon { width: 48px; min-width: 48px; }
+.character-core-balance .generated-menu-icon { width: 34px; min-width: 34px; }
+.character-info-tabs .generated-menu-icon { width: 30px; min-width: 30px; }
+
+.augmentation-core-module {
+  position: relative;
+  display: grid;
+  min-height: 172px;
+  margin: 14px 0;
+  padding: 12px 16px 12px 12px;
+  overflow: hidden;
+  grid-template-columns: 148px minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  border: 1px solid rgba(110, 226, 245, 0.28);
+  border-radius: 12px;
+  background:
+    linear-gradient(105deg, rgba(5, 22, 29, 0.98), rgba(19, 8, 31, 0.94)),
+    #02080d;
+  box-shadow: inset 0 0 32px rgba(87, 222, 246, 0.06), 0 0 28px rgba(173, 77, 255, 0.06);
+}
+
+.augmentation-core-module::after {
+  position: absolute;
+  right: -11%;
+  bottom: -74%;
+  width: 60%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(204, 90, 255, 0.12);
+  border-radius: 50%;
+  box-shadow: 0 0 60px rgba(182, 68, 255, 0.1);
+  content: "";
+}
+
+.augmentation-core-art {
+  position: relative;
+  display: grid;
+  width: 148px;
+  aspect-ratio: 1;
+  place-items: center;
+  isolation: isolate;
+}
+
+.augmentation-core-art img {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  border-radius: 50%;
+  animation: augmentation-core-hover 4.2s ease-in-out infinite;
+}
+
+.augmentation-orbit {
+  position: absolute;
+  z-index: 3;
+  inset: 4px;
+  border: 1px dashed rgba(110, 235, 255, 0.72);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(77, 224, 255, 0.25);
+  pointer-events: none;
+  animation: augmentation-orbit-spin 8s linear infinite;
+}
+
+.augmentation-orbit.orbit-inner {
+  inset: 23px;
+  border-color: rgba(225, 101, 255, 0.76);
+  animation-direction: reverse;
+  animation-duration: 5.2s;
+}
+
+.augmentation-core-flare {
+  position: absolute;
+  z-index: 4;
+  width: 30%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.94), rgba(218, 92, 255, 0.42) 34%, transparent 72%);
+  opacity: 0.54;
+  mix-blend-mode: screen;
+  animation: augmentation-flare-pulse 1.9s ease-in-out infinite;
+}
+
+.augmentation-core-copy { position: relative; z-index: 2; display: flex; min-width: 0; flex-direction: column; }
+.augmentation-core-copy small { color: #74e9fb; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; }
+.augmentation-core-copy strong { margin-top: 5px; color: #f7fbff; font-size: 21px; }
+.augmentation-core-copy > span { margin-top: 7px; color: #9bb8be; font-size: 11px; line-height: 1.5; }
+.augmentation-core-copy > div { height: 7px; margin-top: 14px; overflow: hidden; border: 1px solid rgba(119, 224, 243, 0.28); background: rgba(1, 7, 11, 0.84); }
+.augmentation-core-copy > div i { display: block; height: 100%; background: linear-gradient(90deg, #36ddec, #cc62ff); box-shadow: 0 0 12px #ae58ff; transition: width 280ms ease-out; }
+.augmentation-core-copy > b { margin-top: 7px; color: #ddc3ed; font-family: var(--font-mono); font-size: 10px; }
+
+.augmentation-core-module.is-charged .augmentation-core-art img {
+  animation: augmentation-core-charge 820ms cubic-bezier(0.2, 0.82, 0.2, 1), augmentation-core-hover 4.2s ease-in-out 820ms infinite;
+}
+.augmentation-core-module.is-charged .augmentation-core-flare { animation: augmentation-charge-flare 820ms ease-out, augmentation-flare-pulse 1.9s ease-in-out 820ms infinite; }
+.augmentation-core-module.is-charged { animation: augmentation-panel-charge 820ms ease-out; }
+
+@keyframes augmentation-orbit-spin { to { transform: rotate(360deg); } }
+@keyframes augmentation-core-hover { 0%, 100% { transform: translateY(0) scale(0.98); } 50% { transform: translateY(-3px) scale(1.015); } }
+@keyframes augmentation-flare-pulse { 0%, 100% { opacity: 0.38; transform: scale(0.82); } 50% { opacity: 0.74; transform: scale(1.16); } }
+@keyframes augmentation-core-charge { 0% { filter: brightness(1); transform: scale(0.92); } 42% { filter: brightness(1.8) saturate(1.35); transform: scale(1.09); } 100% { filter: brightness(1); transform: scale(0.98); } }
+@keyframes augmentation-charge-flare { 0% { opacity: 0.3; transform: scale(0.4); } 45% { opacity: 1; transform: scale(2.7); } 100% { opacity: 0.5; transform: scale(1); } }
+@keyframes augmentation-panel-charge { 0%, 100% { border-color: rgba(110, 226, 245, 0.28); } 45% { border-color: rgba(227, 126, 255, 0.88); box-shadow: inset 0 0 48px rgba(118, 225, 255, 0.16), 0 0 36px rgba(194, 79, 255, 0.3); } }
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .expedition-game {
+    --combat-safe-top: max(12px, env(safe-area-inset-top));
+    --combat-safe-right: max(10px, env(safe-area-inset-right));
+    --combat-safe-bottom: max(10px, env(safe-area-inset-bottom));
+    --combat-safe-left: max(10px, env(safe-area-inset-left));
+  }
+
+  .expedition-canvas-frame .phaser-host canvas {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: fill;
+  }
+
+  .expedition-hud {
+    z-index: 24;
+    top: var(--combat-safe-top);
+    right: var(--combat-safe-right);
+    left: var(--combat-safe-left);
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .route-objective {
+    min-width: 0;
+    min-height: 74px;
+    margin: 0;
+    padding: 10px 12px;
+    align-self: start;
+    box-sizing: border-box;
+  }
+
+  .route-objective strong { max-width: 100%; font-size: 18px; line-height: 1.2; }
+  .route-objective span,
+  .route-objective b { font-size: 12px; }
+
+  .expedition-hud-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    pointer-events: auto;
+  }
+
+  .expedition-hud-actions .expedition-sound,
+  .expedition-pause-toggle { width: 52px; min-width: 52px; height: 52px; }
+
+  .route-minimap {
+    z-index: 22;
+    top: calc(var(--combat-safe-top) + 82px);
+    right: var(--combat-safe-right);
+    bottom: auto;
+    width: 148px;
+    min-height: 92px;
+    box-sizing: border-box;
+  }
+
+  .expedition-xp {
+    top: calc(var(--combat-safe-top) + 181px);
+    right: var(--combat-safe-right);
+    bottom: auto;
+    width: 148px;
+  }
+
+  .expedition-combat-dock {
+    z-index: 25;
+    top: auto;
+    right: var(--combat-safe-right);
+    bottom: var(--combat-safe-bottom);
+    left: var(--combat-safe-left);
+    width: auto;
+    max-width: none;
+    min-height: 176px;
+    box-sizing: border-box;
+    transform: none;
+  }
+
+  .base-currency-rail .generated-menu-icon { width: 40px; min-width: 40px; }
+  .home-base-screen .base-menu-button { grid-template-columns: 52px minmax(0, 1fr); }
+  .home-base-screen .base-menu-button .generated-menu-icon { width: 48px; min-width: 48px; }
+  .home-base-screen .base-primary-actions .generated-menu-icon { width: 52px; min-width: 52px; }
+  .campaign-shell .character-core-balance .generated-menu-icon { width: 38px; min-width: 38px; }
+  .campaign-shell .character-info-tabs .generated-menu-icon { width: 34px; min-width: 34px; }
+
+  .campaign-shell .augmentation-core-module {
+    min-height: 150px;
+    padding: 10px;
+    grid-template-columns: 118px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .campaign-shell .augmentation-core-art { width: 118px; }
+  .campaign-shell .augmentation-core-copy small { font-size: 10px; }
+  .campaign-shell .augmentation-core-copy strong { font-size: 19px; line-height: 1.25; }
+  .campaign-shell .augmentation-core-copy > span { font-size: 13px; line-height: 1.45; }
+  .campaign-shell .augmentation-core-copy > b { font-size: 11px; }
+}
+
+@media (max-width: 360px) and (orientation: portrait) {
+  .route-objective { min-height: 96px; }
+  .route-minimap { top: calc(var(--combat-safe-top) + 104px); }
+  .expedition-xp { top: calc(var(--combat-safe-top) + 203px); }
+  .campaign-shell .augmentation-core-module { grid-template-columns: 96px minmax(0, 1fr); }
+  .campaign-shell .augmentation-core-art { width: 96px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .augmentation-core-art img,
+  .augmentation-orbit,
+  .augmentation-core-flare,
+  .augmentation-core-module.is-charged { animation: none !important; }
 }

@@ -10,19 +10,25 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const WORLD_WIDTH = 1920;
 export const WORLD_HEIGHT = 1080;
-export const EXPEDITION_WORLD_WIDTH = 26400;
+export const EXPEDITION_WORLD_WIDTH = 4096;
+export const EXPEDITION_WORLD_HEIGHT = 4096;
 
 const TAU = Math.PI * 2;
 const ARENA = Object.freeze({ left: 34, right: 1246, top: 34, bottom: 686 });
 const BOSS_ARENA = Object.freeze({ left: 54, right: WORLD_WIDTH - 54, top: 54, bottom: WORLD_HEIGHT - 54 });
-const EXPEDITION_ARENA = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 54, bottom: 1026 });
+const EXPEDITION_ARENA = Object.freeze({
+  left: 144,
+  right: EXPEDITION_WORLD_WIDTH - 144,
+  top: 144,
+  bottom: EXPEDITION_WORLD_HEIGHT - 144,
+});
 const LEGACY_INITIAL_SWARM = 36;
 const EXPEDITION_INITIAL_SWARM = 8;
 const DEFAULT_ENEMY_BUDGET = 1000;
 const FIRST_REGION_ENEMY_BUDGET = 300;
 const ENEMY_HEALTH_MULTIPLIER = 3;
 const MINIMAP_ENEMY_SAMPLE_CAP = 24;
-const MINIMAP_GATE_SAMPLE_CAP = 5;
+const MINIMAP_GATE_SAMPLE_CAP = 8;
 const MAX_LIVE_ENEMIES = 220;
 const MAX_PROJECTILES = 620;
 const MAX_ENEMY_PROJECTILES = 360;
@@ -32,14 +38,12 @@ const ROUTE_HEALING_KITS = 14;
 const GRID_SIZE = 96;
 const LEGACY_WORLD_SIZE = Object.freeze({ width: GAME_WIDTH, height: GAME_HEIGHT });
 const BOSS_WORLD_SIZE = Object.freeze({ width: WORLD_WIDTH, height: WORLD_HEIGHT });
-const EXPEDITION_WORLD_SIZE = Object.freeze({ width: EXPEDITION_WORLD_WIDTH, height: WORLD_HEIGHT });
+const EXPEDITION_WORLD_SIZE = Object.freeze({ width: EXPEDITION_WORLD_WIDTH, height: EXPEDITION_WORLD_HEIGHT });
 const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sword", "wave", "titan", "flash", "storm", "halo"]);
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
 const EXPEDITION_FLOOR_ELLIPSE = Object.freeze({ x: 960, y: 540, rx: 840, ry: 460 });
 const EXPEDITION_ROUTE_LENGTH = 25000;
-const EXPEDITION_ROUTE_ORIGIN_X = 580;
-const EXPEDITION_FINAL_COMBAT_BAND = 0.1;
-const EXPEDITION_CORRIDOR = Object.freeze({ left: 54, right: EXPEDITION_WORLD_WIDTH - 54, top: 150, bottom: 930 });
+const EXPEDITION_CORRIDOR = EXPEDITION_ARENA;
 const EXPEDITION_DEEP_PURSUIT_DISTANCE = 720;
 const EXPEDITION_PURSUIT_SPEED_MULTIPLIER = 1.12;
 const ENEMY_SEPARATION_GAP = 6;
@@ -47,16 +51,19 @@ const ENEMY_SEPARATION_PASSES = 18;
 const ENEMY_SEPARATION_DIRECTIONS_X = Object.freeze([1, 0.70710678, 0, -0.70710678, -1, -0.70710678, 0, 0.70710678]);
 const ENEMY_SEPARATION_DIRECTIONS_Y = Object.freeze([0, 0.70710678, 1, 0.70710678, 0, -0.70710678, -1, -0.70710678]);
 const EXPEDITION_SPAWN_GATES = Object.freeze([
-  Object.freeze({ id: "east-upper", offsetX: 520, y: 400 }),
-  Object.freeze({ id: "east-lower", offsetX: 520, y: 680 }),
-  Object.freeze({ id: "north-rail", offsetX: 400, y: 235 }),
-  Object.freeze({ id: "south-rail", offsetX: 400, y: 845 }),
-  Object.freeze({ id: "rear-breach", offsetX: -500, y: 540 }),
+  Object.freeze({ id: "east", offsetX: 480, offsetY: 0 }),
+  Object.freeze({ id: "south-east", offsetX: 340, offsetY: 340 }),
+  Object.freeze({ id: "south", offsetX: 0, offsetY: 480 }),
+  Object.freeze({ id: "south-west", offsetX: -340, offsetY: 340 }),
+  Object.freeze({ id: "west", offsetX: -480, offsetY: 0 }),
+  Object.freeze({ id: "north-west", offsetX: -340, offsetY: -340 }),
+  Object.freeze({ id: "north", offsetX: 0, offsetY: -480 }),
+  Object.freeze({ id: "north-east", offsetX: 340, offsetY: -340 }),
 ]);
 const EXPEDITION_TRACES = Object.freeze([
-  Object.freeze({ id: "rook", distance: 4800, y: 360, kind: "helmet", beat: "rook-trace" }),
-  Object.freeze({ id: "nyx", distance: 13200, y: 760, kind: "weapon", beat: "nyx-trace" }),
-  Object.freeze({ id: "moss", distance: 21800, y: 510, kind: "body", beat: "moss-trace" }),
+  Object.freeze({ id: "rook", distance: 4800, x: 1220, y: 1180, kind: "helmet", beat: "rook-trace" }),
+  Object.freeze({ id: "nyx", distance: 13200, x: 2920, y: 1380, kind: "weapon", beat: "nyx-trace" }),
+  Object.freeze({ id: "moss", distance: 21800, x: 2048, y: 2980, kind: "body", beat: "moss-trace" }),
 ]);
 const SURGE_WAVES = Object.freeze([
   Object.freeze({ warnAt: 8, startAt: 8.72, warningLead: 0.72, count: 14, rate: 12, label: "근접 추격대 · WAVE I" }),
@@ -69,16 +76,6 @@ const SURGE_WAVES = Object.freeze([
   Object.freeze({ warnAt: 204, startAt: 205.12, warningLead: 1.12, count: 220, rate: 38, label: "최대 전력 투입 · WAVE VIII" }),
   Object.freeze({ warnAt: 248, startAt: 249.2, warningLead: 1.2, count: 400, rate: 44, label: "종말 공세 · FINAL WAVE" }),
 ]);
-
-export const REGION_WAVE_ROUTE_ANCHORS = Object.freeze({
-  // The shorter first operation still reaches all three authored trace beats
-  // before its sixth and terminal deployment finishes.
-  "wrong-engine-core": Object.freeze([0, 0.18, 0.36, 0.54, 0.7, 0.82]),
-  // Longer routes stage nine combat bands. The final army enters before the
-  // route endpoint, leaving a bounded moving battlefield instead of a long
-  // stationary cleanup at x=25,000.
-  default: Object.freeze([0, 0.08, 0.17, 0.27, 0.38, 0.49, 0.59, 0.67, 0.74]),
-});
 
 const OVERDRIVE_THRESHOLDS = Object.freeze([0.48, 0.72, 0.88]);
 const FIRST_REWARD_EARLIEST = 6.4;
@@ -105,7 +102,7 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     bossName: "THE WRONG ENGINE",
     enemyBudget: FIRST_REGION_ENEMY_BUDGET,
     bossHp: 560000,
-    objective: "ADVANCE TO THE ENGINE",
+    objective: "ELIMINATE CURRENT WAVE",
     chamber: "THE ENGINE CHAMBER",
     deploymentBeat: "deployment",
     encounterBeat: "engine-encounter",
@@ -119,7 +116,7 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     bossName: "MIRROR TYRANT",
     enemyBudget: DEFAULT_ENEMY_BUDGET,
     bossHp: 960000,
-    objective: "CROSS THE GLASS DUNE",
+    objective: "ELIMINATE CURRENT WAVE",
     chamber: "BURIED SOLAR OBSERVATORY",
     deploymentBeat: "glass-dune-deployment",
     encounterBeat: "glass-dune-encounter",
@@ -133,7 +130,7 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
     bossName: "DROWNED ORACLE",
     enemyBudget: DEFAULT_ENEMY_BUDGET,
     bossHp: 1120000,
-    objective: "DESCEND INTO THE ARCHIVE",
+    objective: "ELIMINATE CURRENT WAVE",
     chamber: "ABYSSAL MEMORY VAULT",
     deploymentBeat: "abyssal-archive-deployment",
     encounterBeat: "abyssal-archive-encounter",
@@ -143,21 +140,21 @@ export const REGION_COMBAT_CONFIGS = Object.freeze({
   }),
   "neon-foundry": Object.freeze({
     id: "neon-foundry", chapterId: "chapter-03", bossName: "FORGE COLOSSUS", enemyBudget: 1100, bossHp: 1180000,
-    objective: "SHUT DOWN THE FOUNDRY", chamber: "FORGE COLOSSUS ASSEMBLY PIT",
+    objective: "ELIMINATE CURRENT WAVE", chamber: "FORGE COLOSSUS ASSEMBLY PIT",
     deploymentBeat: "deployment", encounterBeat: "neon-foundry-encounter", victoryBeat: "neon-foundry-destroyed",
     traces: false, enemyVisualSet: "neon-foundry", difficultyScalar: 2.15,
     midBoss: REGION_MID_BOSS_PROFILES["neon-foundry"],
   }),
   "storm-spire": Object.freeze({
     id: "storm-spire", chapterId: "chapter-03", bossName: "TEMPEST WYRM", enemyBudget: 1150, bossHp: 1260000,
-    objective: "BREAK THE STORM GRID", chamber: "TEMPEST EYE",
+    objective: "ELIMINATE CURRENT WAVE", chamber: "TEMPEST EYE",
     deploymentBeat: "deployment", encounterBeat: "storm-spire-encounter", victoryBeat: "storm-spire-destroyed",
     traces: false, enemyVisualSet: "storm-spire", difficultyScalar: 2.7,
     midBoss: REGION_MID_BOSS_PROFILES["storm-spire"],
   }),
   "gene-vault": Object.freeze({
     id: "gene-vault", chapterId: "chapter-03", bossName: "PALE ARCHON", enemyBudget: 1200, bossHp: 1340000,
-    objective: "PURGE THE GENE VAULT", chamber: "ARCHON INCUBATION VAULT",
+    objective: "ELIMINATE CURRENT WAVE", chamber: "ARCHON INCUBATION VAULT",
     deploymentBeat: "deployment", encounterBeat: "gene-vault-encounter", victoryBeat: "gene-vault-destroyed",
     traces: false, enemyVisualSet: "gene-vault", difficultyScalar: 3.35,
     midBoss: REGION_MID_BOSS_PROFILES["gene-vault"],
@@ -387,51 +384,6 @@ function normalize(x, y, fallbackX = 1, fallbackY = 0) {
   return { x: x / length, y: y / length };
 }
 
-function getWaveRouteAnchors(regionId) {
-  return REGION_WAVE_ROUTE_ANCHORS[regionId] ?? REGION_WAVE_ROUTE_ANCHORS.default;
-}
-
-function waveRouteAnchorDistance(state, waveIndex = state.surgeIndex) {
-  const anchors = state.expedition?.waveAnchors;
-  if (!anchors?.length) return 0;
-  return anchors[Math.min(Math.max(0, waveIndex), anchors.length - 1)];
-}
-
-function nextRequiredExpeditionDestination(state) {
-  const expedition = state.expedition;
-  if (!expedition) return null;
-  if (state.spawnedEnemies < state.enemyBudget) {
-    const waveAnchor = waveRouteAnchorDistance(state);
-    return waveAnchor > expedition.distance + 0.001 ? waveAnchor : null;
-  }
-  const nextTrace = expedition.traces.find((trace) => (
-    !trace.triggered && trace.distance > expedition.distance + 0.001
-  ));
-  return nextTrace?.distance ?? null;
-}
-
-function syncExpeditionForwardLimit(state) {
-  const expedition = state.expedition;
-  if (!expedition || state.phase !== "swarm") return;
-  const anchors = expedition.waveAnchors;
-  if (!anchors?.length || expedition.clearTransition) {
-    expedition.forwardLimitDistance = expedition.routeLength;
-    return;
-  }
-  if (state.spawnedEnemies >= state.enemyBudget) {
-    const finalAnchor = anchors[anchors.length - 1];
-    expedition.forwardLimitDistance = Math.min(
-      expedition.routeLength,
-      finalAnchor + expedition.routeLength * EXPEDITION_FINAL_COMBAT_BAND,
-    );
-    return;
-  }
-  // Wave I remains automatic at route origin. During the opening eight-unit
-  // skirmish the player may already advance toward the first authored band.
-  const nextIndex = state.surgeIndex === 0 ? 1 : state.surgeIndex;
-  expedition.forwardLimitDistance = waveRouteAnchorDistance(state, nextIndex);
-}
-
 function activeArena(state) {
   if (!state?.expedition) return ARENA;
   return state.phase === "boss" ? BOSS_ARENA : EXPEDITION_ARENA;
@@ -554,27 +506,32 @@ function edgeSpawn(state, index) {
     const streamIndex = Math.floor(index / 8);
     const gate = EXPEDITION_SPAWN_GATES[streamIndex % EXPEDITION_SPAWN_GATES.length];
     const slot = index % 8;
-    // Eight-unit reinforcements now materialize as a spacious two-column formation.
-    // The previous 8px slot offset was much smaller than the 92px+ authored
-    // sprites, so an entire wave appeared to be a single stacked unit.
+    // Each eight-unit gate burst uses a rotated two-column formation. The
+    // gate itself cycles around all eight compass directions so pressure can
+    // enter the square arena from any side instead of only from the right.
     const slotColumn = slot % 2;
     const slotRow = Math.floor(slot / 2);
-    const formationX = (slotColumn - 0.5) * 104;
-    const formationY = (slotRow - 1.5) * 112;
-    const x = clamp(state.player.x + gate.offsetX + formationX, EXPEDITION_CORRIDOR.left + 54, EXPEDITION_CORRIDOR.right - 54);
-    const y = clamp(gate.y + formationY, EXPEDITION_CORRIDOR.top + 54, EXPEDITION_CORRIDOR.bottom - 54);
+    const outward = normalize(gate.offsetX, gate.offsetY);
+    const tangentX = -outward.y;
+    const tangentY = outward.x;
+    const depth = (slotColumn - 0.5) * 104;
+    const spread = (slotRow - 1.5) * 112;
+    const gateX = clamp(state.player.x + gate.offsetX, EXPEDITION_CORRIDOR.left + 90, EXPEDITION_CORRIDOR.right - 90);
+    const gateY = clamp(state.player.y + gate.offsetY, EXPEDITION_CORRIDOR.top + 90, EXPEDITION_CORRIDOR.bottom - 90);
+    const x = clamp(gateX + outward.x * depth + tangentX * spread, EXPEDITION_CORRIDOR.left + 54, EXPEDITION_CORRIDOR.right - 54);
+    const y = clamp(gateY + outward.y * depth + tangentY * spread, EXPEDITION_CORRIDOR.top + 54, EXPEDITION_CORRIDOR.bottom - 54);
     const gateActive = state.spawnPortals.some((portal) => portal.gateId === gate.id && portal.life > 0.32);
     if (slot === 0 || !gateActive) {
       state.spawnPortals.push({
         id: ++state.nextEntityId,
         type: "spawnGate",
         gateId: gate.id,
-        x,
-        y: gate.y,
+        x: gateX,
+        y: gateY,
         life: 1.35,
         maxLife: 1.35,
       });
-      emit(state, "spawnGate", { gate: gate.id, x, y: gate.y });
+      emit(state, "spawnGate", { gate: gate.id, x: gateX, y: gateY });
     }
     return {
       x,
@@ -710,8 +667,10 @@ function spawnEnemy(state) {
 function spawnRouteMidBoss(state) {
   const definition = state.expedition?.midBoss?.definition;
   if (!definition || state.expedition.midBoss.spawned) return false;
-  const x = clamp(state.player.x + 520, state.expedition.originX + 800, state.expedition.originX + state.expedition.routeLength - 160);
-  const y = WORLD_HEIGHT * 0.5;
+  const gate = EXPEDITION_SPAWN_GATES[(state.surgeIndex + 2) % EXPEDITION_SPAWN_GATES.length];
+  const direction = normalize(gate.offsetX, gate.offsetY);
+  const x = clamp(state.player.x + direction.x * 520, EXPEDITION_ARENA.left + 110, EXPEDITION_ARENA.right - 110);
+  const y = clamp(state.player.y + direction.y * 520, EXPEDITION_ARENA.top + 110, EXPEDITION_ARENA.bottom - 110);
   const difficultyScalar = Math.max(1, finite(state.difficultyScalar, 1));
   const hp = Math.max(1, finite(definition.maxHp, 52000) * difficultyScalar);
   const enemy = {
@@ -753,16 +712,16 @@ function spawnInitialSwarm(state) {
 
 function spawnRouteHealingKits(state) {
   if (!state.expedition) return;
-  const routeStart = finite(state.expedition.originX, EXPEDITION_ROUTE_ORIGIN_X);
-  const routeEnd = routeStart + finite(state.expedition.routeLength, EXPEDITION_ROUTE_LENGTH) - 260;
-  const span = Math.max(1, routeEnd - routeStart - 760);
+  const centerX = EXPEDITION_WORLD_WIDTH * 0.5;
+  const centerY = EXPEDITION_WORLD_HEIGHT * 0.5;
   for (let index = 0; index < ROUTE_HEALING_KITS; index += 1) {
-    const laneProgress = (index + 0.55 + (state.random() - 0.5) * 0.36) / ROUTE_HEALING_KITS;
+    const angle = TAU * ((index + 0.35 + (state.random() - 0.5) * 0.18) / ROUTE_HEALING_KITS);
+    const radius = 720 + (index % 3) * 360 + state.random() * 120;
     state.healthKits.push({
       id: ++state.nextEntityId,
       type: "healthKit",
-      x: clamp(routeStart + 520 + span * laneProgress, routeStart + 420, routeEnd),
-      y: clamp(150 + state.random() * 780, EXPEDITION_CORRIDOR.top + 50, EXPEDITION_CORRIDOR.bottom - 50),
+      x: clamp(centerX + Math.cos(angle) * radius, EXPEDITION_CORRIDOR.left + 50, EXPEDITION_CORRIDOR.right - 50),
+      y: clamp(centerY + Math.sin(angle) * radius, EXPEDITION_CORRIDOR.top + 50, EXPEDITION_CORRIDOR.bottom - 50),
       radius: 25,
       heal: 92,
       age: state.random() * 2,
@@ -923,8 +882,6 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
 export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
   const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
-  const waveAnchorFractions = getWaveRouteAnchors(regionConfig.id);
-  const waveAnchors = waveAnchorFractions.map((fraction) => Math.round(EXPEDITION_ROUTE_LENGTH * fraction));
   const player = createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked);
   const manualAbilityBanks = createManualAbilityBanks(player.aegisWeaponId);
   const state = {
@@ -965,7 +922,6 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     phaseTransition: 0,
     expedition: expedition ? {
       distance: 0,
-      originX: EXPEDITION_ROUTE_ORIGIN_X,
       routeLength: EXPEDITION_ROUTE_LENGTH,
       progress: 0,
       checkpointIndex: 0,
@@ -977,11 +933,6 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       autoBossEntry: false,
       bossEntryConfirmed: false,
       bossRoom: false,
-      waveAnchors,
-      waitingForAdvance: false,
-      atCombatBand: false,
-      nextWaveAnchor: null,
-      forwardLimitDistance: waveAnchors[1] ?? EXPEDITION_ROUTE_LENGTH,
       midBoss: regionConfig.midBoss ? { definition: { ...regionConfig.midBoss }, spawned: false, defeated: false, enemyId: null } : null,
       traces: regionConfig.traces ? EXPEDITION_TRACES.map((trace) => ({ ...trace, triggered: false })) : [],
     } : null,
@@ -1090,19 +1041,18 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
   };
   if (state.expedition) {
     state.player.name = state.player.characterId === "mika" ? "MIKA" : "AEGIS";
-    state.player.x = 580;
-    state.player.y = WORLD_HEIGHT * 0.5;
+    state.player.x = EXPEDITION_WORLD_WIDTH * 0.5;
+    state.player.y = EXPEDITION_WORLD_HEIGHT * 0.5;
     state.boss.x = WORLD_WIDTH * 0.8;
     state.boss.y = WORLD_HEIGHT * 0.5;
     state.boss.radius = 110;
-    state.aim.x = 1180;
-    state.aim.y = WORLD_HEIGHT * 0.5;
+    state.aim.x = state.player.x + 600;
+    state.aim.y = state.player.y;
     state.aimX = state.aim.x;
     state.aimY = state.aim.y;
     state.camera.x = state.player.x;
-    state.camera.y = WORLD_HEIGHT * 0.5;
+    state.camera.y = state.player.y;
     state.camera.zoom = 1.08;
-    syncExpeditionForwardLimit(state);
     spawnRouteHealingKits(state);
   }
   spawnInitialSwarm(state);
@@ -1148,8 +1098,9 @@ export function clearPressedInput(input) {
 
 export function setSwarmAim(state, x, y) {
   if (!state || !Number.isFinite(x) || !Number.isFinite(y)) return false;
-  const worldWidth = state.expedition ? WORLD_WIDTH : GAME_WIDTH;
-  const worldHeight = state.expedition ? WORLD_HEIGHT : GAME_HEIGHT;
+  const worldSize = activeWorldSize(state);
+  const worldWidth = worldSize.width;
+  const worldHeight = worldSize.height;
   state.aim.x = state.expedition ? x : clamp(x, 0, worldWidth);
   state.aim.y = state.expedition ? y : clamp(y, 0, worldHeight);
   state.aimX = state.aim.x;
@@ -1159,8 +1110,9 @@ export function setSwarmAim(state, x, y) {
 
 export function setSwarmScreenAim(state, screenX, screenY) {
   if (!state || !Number.isFinite(screenX) || !Number.isFinite(screenY)) return false;
-  const worldWidth = state.expedition ? WORLD_WIDTH : GAME_WIDTH;
-  const worldHeight = state.expedition ? WORLD_HEIGHT : GAME_HEIGHT;
+  const worldSize = activeWorldSize(state);
+  const worldWidth = worldSize.width;
+  const worldHeight = worldSize.height;
   const camera = state.camera || { x: worldWidth * 0.5, y: worldHeight * 0.5, zoom: 1 };
   const zoom = Math.max(0.1, finite(camera.zoom, 1));
   const halfWidth = GAME_WIDTH / (2 * zoom);
@@ -1181,12 +1133,7 @@ export function setSwarmScreenAim(state, screenX, screenY) {
 function clampPlayerToFloor(player, expedition = null) {
   if (expedition) {
     const minX = EXPEDITION_CORRIDOR.left + player.radius;
-    const routeLimit = finite(expedition.originX, EXPEDITION_ROUTE_ORIGIN_X)
-      + Math.min(
-        finite(expedition.routeLength, EXPEDITION_ROUTE_LENGTH),
-        finite(expedition.forwardLimitDistance, expedition.routeLength),
-      );
-    const maxX = Math.min(EXPEDITION_CORRIDOR.right - player.radius, routeLimit);
+    const maxX = EXPEDITION_CORRIDOR.right - player.radius;
     const minY = EXPEDITION_CORRIDOR.top + player.radius;
     const maxY = EXPEDITION_CORRIDOR.bottom - player.radius;
     player.x = clamp(player.x, minX, maxX);
@@ -1331,29 +1278,22 @@ function updatePlayer(state, input, dt) {
 function updateExpedition(state) {
   const expedition = state.expedition;
   if (!expedition || state.phase !== "swarm") return;
-  expedition.distance = clamp(state.player.x - expedition.originX, 0, expedition.routeLength);
-  expedition.progress = clamp(expedition.distance / expedition.routeLength, 0, 1);
+  // The arena has no forward route gate. Preserve the normalized expedition
+  // progress contract for story/HUD consumers by deriving it from confirmed
+  // kills rather than the player's x coordinate.
+  expedition.progress = clamp(state.killedEnemies / Math.max(1, state.enemyBudget), 0, 1);
+  expedition.distance = expedition.progress * expedition.routeLength;
   for (const trace of expedition.traces) {
     if (trace.triggered || expedition.distance < trace.distance) continue;
     trace.triggered = true;
     expedition.checkpointIndex += 1;
     emit(state, "scenario", { beat: trace.beat, trace: trace.kind, checkpoint: expedition.checkpointIndex });
   }
-  const nextAnchor = nextRequiredExpeditionDestination(state);
   const noLivingEnemies = !hasLivingEnemy(state.enemies);
-  const pendingRouteTrace = expedition.traces.some((trace) => !trace.triggered);
-  const awaitingAdvance = noLivingEnemies
-    && !state.surgeWarning
+  const preparingNextWave = noLivingEnemies
+    && state.spawnedEnemies < state.enemyBudget
     && !state.activeSurge
-    && state.surgeQueued <= 0
-    && ((state.spawnedEnemies < state.enemyBudget && nextAnchor !== null)
-      || (state.spawnedEnemies >= state.enemyBudget && pendingRouteTrace));
-  const atCombatBand = hasLivingEnemy(state.enemies)
-    && expedition.forwardLimitDistance < expedition.routeLength
-    && expedition.distance + 0.5 >= expedition.forwardLimitDistance;
-  expedition.waitingForAdvance = awaitingAdvance;
-  expedition.atCombatBand = atCombatBand;
-  expedition.nextWaveAnchor = nextAnchor;
+    && state.surgeQueued <= 0;
   expedition.objective = expedition.clearTransition?.phase === "warning"
     ? "적 전멸 · 보스 구역 전환 준비"
     : expedition.clearTransition?.phase === "panic"
@@ -1362,10 +1302,10 @@ function updateExpedition(state) {
       ? `${state.bossChamber} · 자동 진입`
     : expedition.midBoss?.spawned && !expedition.midBoss?.defeated
       ? `중간보스 · ${expedition.midBoss.definition.koreanName} 격파`
-    : awaitingAdvance
-      ? "다음 전투 구간으로 전진"
-    : atCombatBand
-      ? "현재 전투 구역 소탕"
+    : preparingNextWave
+      ? "다음 웨이브 전개 준비"
+    : !noLivingEnemies
+      ? "현재 웨이브 적 섬멸"
     : state.regionObjective;
 }
 
@@ -2545,7 +2485,8 @@ function updateEnemies(state, dt) {
   for (const enemy of state.enemies) {
     if (enemy.dead || finite(enemy.aimTimer) <= 0 || finite(enemy.disabledTimer) > 0) continue;
     const role = enemy.combatRole ?? ENEMY_DATA[enemy.type]?.role;
-    const deepPursuit = Boolean(state.expedition && player.x - enemy.x > EXPEDITION_DEEP_PURSUIT_DISTANCE);
+    const deepPursuit = Boolean(state.expedition
+      && Math.hypot(player.x - enemy.x, player.y - enemy.y) > EXPEDITION_DEEP_PURSUIT_DISTANCE);
     if (role === "sniper" && !deepPursuit) activeSniperLocks += 1;
   }
   for (const enemy of state.enemies) {
@@ -2585,7 +2526,7 @@ function updateEnemies(state, dt) {
     const distance = Math.max(0.001, Math.hypot(dx, dy));
     const towardX = dx / distance;
     const towardY = dy / distance;
-    const deepPursuit = Boolean(state.expedition && dx > EXPEDITION_DEEP_PURSUIT_DISTANCE);
+    const deepPursuit = Boolean(state.expedition && distance > EXPEDITION_DEEP_PURSUIT_DISTANCE);
     if (deepPursuit && wasAiming) {
       cancelSniperAim(state, enemy);
       activeSniperLocks = Math.max(0, activeSniperLocks - 1);
@@ -4116,7 +4057,6 @@ function beginRouteClearTransition(state) {
     duration: ROUTE_CLEAR_WARNING_DURATION,
     progress: 0,
   };
-  syncExpeditionForwardLimit(state);
   emit(state, "swarmCleared", { kills: state.killedEnemies });
   emit(state, "routeClearWarning", {
     duration: ROUTE_CLEAR_WARNING_DURATION,
@@ -4175,9 +4115,9 @@ function updateRouteClearTransition(state, dt) {
 
 function updateSwarmSpawning(state, dt) {
   const wave = SURGE_WAVES[state.surgeIndex];
-  const routeAnchor = state.expedition ? waveRouteAnchorDistance(state) : 0;
+  const routeAnchor = null;
   const triggerReached = state.expedition
-    ? !hasLivingEnemy(state.enemies) && state.expedition.distance + 0.001 >= routeAnchor
+    ? !hasLivingEnemy(state.enemies)
     : state.time >= finite(wave?.warnAt, Infinity);
   if (wave
     && state.spawnedEnemies < state.enemyBudget
@@ -4200,7 +4140,7 @@ function updateSwarmSpawning(state, dt) {
       count: deploymentCount,
       startAt,
       startsIn: Math.max(0, startAt - state.time),
-      routeAnchor,
+      routeAnchor: null,
     };
     emit(state, "surgeWarning", {
       wave: state.surgeIndex + 1,
@@ -4210,7 +4150,7 @@ function updateSwarmSpawning(state, dt) {
       clearProgress: state.expedition
         ? clamp(state.killedEnemies / Math.max(1, state.enemyBudget), 0, 1)
         : null,
-      routeAnchor: state.expedition ? routeAnchor : null,
+      routeAnchor: null,
     });
   }
   if (wave && state.surgeWarning?.index === state.surgeIndex) {
@@ -4222,7 +4162,6 @@ function updateSwarmSpawning(state, dt) {
       state.activeSurge = { index: state.surgeIndex, label: wave.label, count: deploymentCount, remaining: state.surgeQueued, rate: wave.rate };
       state.surgeWarning = null;
       state.surgeIndex += 1;
-      syncExpeditionForwardLimit(state);
       emit(state, "surgeStart", { wave: state.surgeIndex, label: wave.label, count: deploymentCount });
       state.shake = Math.max(state.shake, 7);
     }
@@ -4243,7 +4182,6 @@ function updateSwarmSpawning(state, dt) {
       state.surgeQueued -= 1;
       spawnedThisStep += 1;
     }
-    if (state.expedition && state.spawnedEnemies >= state.enemyBudget) syncExpeditionForwardLimit(state);
     if (state.activeSurge) state.activeSurge.remaining = state.surgeQueued;
     if (state.surgeQueued <= 0 && state.activeSurge) {
       emit(state, "surgeDeployed", { wave: state.activeSurge.index + 1, label: state.activeSurge.label });
@@ -5456,7 +5394,6 @@ export function stepSwarm(state, input, dt) {
     return state;
   }
 
-  syncExpeditionForwardLimit(state);
   updatePlayer(state, input, worldDelta);
   updateExpedition(state, input, worldDelta);
   updateManualAbilities(state, input, worldDelta);
@@ -5496,10 +5433,10 @@ export function drainSwarmEvents(state) {
 }
 
 function normalizeExpeditionMinimapPoint(state, x, y) {
-  const expedition = state.expedition;
   return {
-    x: clamp((finite(x) - expedition.originX) / Math.max(1, expedition.routeLength), 0, 1),
-    y: clamp((finite(y, WORLD_HEIGHT * 0.5) - EXPEDITION_CORRIDOR.top)
+    x: clamp((finite(x) - EXPEDITION_CORRIDOR.left)
+      / Math.max(1, EXPEDITION_CORRIDOR.right - EXPEDITION_CORRIDOR.left), 0, 1),
+    y: clamp((finite(y, EXPEDITION_WORLD_HEIGHT * 0.5) - EXPEDITION_CORRIDOR.top)
       / Math.max(1, EXPEDITION_CORRIDOR.bottom - EXPEDITION_CORRIDOR.top), 0, 1),
   };
 }
@@ -5534,7 +5471,7 @@ function buildExpeditionMinimap(state) {
   for (const portal of state.spawnPortals) {
     if (portal.type === "spawnGate" && portal.active !== false && finite(portal.life) > 0) activeGateCount += 1;
   }
-  // Prefer the newest materializing portals when more than five overlap at
+  // Prefer the newest materializing portals when more than eight overlap at
   // extreme deployment rates. The payload remains deterministic and bounded.
   const gates = [];
   for (let index = state.spawnPortals.length - 1; index >= 0 && gates.length < MINIMAP_GATE_SAMPLE_CAP; index -= 1) {
@@ -5558,6 +5495,7 @@ function buildExpeditionMinimap(state) {
     ? { x: 1, y: 0.5 }
     : normalizeExpeditionMinimapPoint(state, state.player.x, state.player.y);
   return {
+    mode: "arena",
     player,
     enemies,
     gates,
@@ -5614,10 +5552,6 @@ export function getSwarmHud(state) {
       progress: state.expedition.progress,
       checkpoint: state.expedition.checkpointIndex,
       objective: state.expedition.objective,
-      waitingForAdvance: state.expedition.waitingForAdvance,
-      atCombatBand: state.expedition.atCombatBand,
-      nextWaveAnchor: state.expedition.nextWaveAnchor,
-      forwardLimitDistance: state.expedition.forwardLimitDistance,
       reachedGate: state.expedition.reachedGate,
       clearTransition: state.expedition.clearTransition
         ? { ...state.expedition.clearTransition }
@@ -5631,6 +5565,7 @@ export function getSwarmHud(state) {
         id: trace.id,
         kind: trace.kind,
         distance: trace.distance,
+        ...normalizeExpeditionMinimapPoint(state, trace.x, trace.y),
         triggered: trace.triggered,
       })),
       midBoss: state.expedition.midBoss ? {
