@@ -501,21 +501,31 @@ test("Phaser DEV scene shortcuts require an explicit debug opt-in", async () => 
   assert.doesNotMatch(createGame, /import\.meta\.env\.DEV \? new URLSearchParams/);
 });
 
-test("the compact 2D tactical minimap plots AEGIS and live enemies without restoring the old telemetry rail", async () => {
+test("the compact region-aware tactical minimap plots the square arena, AEGIS, and live enemies", async () => {
   const app = await read("src/App.jsx");
   const styles = await read("src/styles.css");
+  const manifest = await read("src/game/assets/manifest.ts");
   const activeRuntime = app.slice(app.indexOf("function PhaserArenaScreen"), app.indexOf("function ResultScreen"));
   assert.match(app, /function RouteMinimap/);
   assert.match(app, /expedition\.minimap \|\| hud\?\.minimap/);
   assert.match(app, /minimap\.player/);
   assert.match(app, /minimap\.enemies/);
   assert.match(app, /route-minimap-enemy/);
+  assert.match(app, /getRegionArenaAsset\(hud\?\.regionId \|\| region\?\.id, "performance"\)/);
+  assert.match(app, /className="route-minimap-backdrop"/);
+  assert.match(app, /<RouteMinimap hud=\{hud\} region=\{region\} \/>/);
+  assert.match(app, /현재 출현 적 \$\{hostiles\}기/);
+  assert.match(app, /<b>출현 \{hostiles\}<\/b>/);
   assert.match(app, /전술 지도/);
   assert.doesNotMatch(app, /ROUTE NAV|KEEP EAST/);
   assert.match(app, /expedition\.traces/);
   assert.match(styles, /\.route-minimap\s*\{/);
   assert.match(styles, /\.route-minimap-player\s*\{/);
   assert.match(styles, /\.route-minimap-enemy\s*\{/);
+  assert.match(styles, /\.route-minimap-field\.is-arena \{[\s\S]*aspect-ratio: 1/);
+  assert.match(styles, /\.route-minimap-backdrop\s*\{/);
+  assert.match(manifest, /export function getRegionArenaAsset/);
+  assert.match(manifest, /REGION_ROUTE_ASSETS\[resolveRegionId\(regionId\)\]\[0\]/);
   assert.doesNotMatch(activeRuntime, /overload-command-rail/);
 });
 
@@ -524,6 +534,11 @@ test("level-up cards load authored reward illustrations for every active option"
   const manifest = await read("src/game/assets/manifest.ts");
   const overlay = app.slice(app.indexOf("function LevelUpOverlay"), app.indexOf("function ArenaScreen"));
   assert.match(app, /const REWARD_ART_KEYS/);
+  assert.match(app, /haloMatrix: "rewardPulse"/);
+  assert.match(app, /prismTempo: "rewardFireRate"/);
+  assert.match(app, /heartGuard: "rewardShield"/);
+  assert.match(app, /heartGuard: "하트 가드"/);
+  assert.match(app, /현재 전투원을 따라 이동하며/);
   assert.match(app, /assets\?\.\[REWARD_ART_KEYS\[id\]\]/);
   assert.match(overlay, /modalRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(overlay, /className=\{`reward-card is-\$\{meta\.color\}`\}/);
@@ -531,6 +546,16 @@ test("level-up cards load authored reward illustrations for every active option"
   for (const id of ["scatter", "rail", "rocket", "orbit", "damage", "fireRate", "multishot", "shield", "dash", "regen", "chain", "nova", "airstrike", "omegaLaser", "drone", "sentry", "suppressor"]) {
     assert.match(manifest, new RegExp(`rewards/${id}\\.webp`));
   }
+});
+
+test("narrative dismissal grants a short combat grace window", async () => {
+  const [app, scene] = await Promise.all([
+    read("src/App.jsx"),
+    read("src/phaser/scenes/OverloadScene.ts"),
+  ]);
+  assert.match(scene, /continueNarrative\(\)[\s\S]*player\.invulnerability = Math\.max\([\s\S]*1\.4\)/);
+  assert.match(app, /skipOpeningNarrativeRef\.current && openingScenario/);
+  assert.match(app, /controller\?\.continueStory\(\)/);
 });
 
 test("AEGIS selects eight authored views while other strict-overhead actors retain world-heading rotation", async () => {

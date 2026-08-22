@@ -7,6 +7,7 @@ import "@fontsource/ibm-plex-mono/latin-400.css";
 import "@fontsource/ibm-plex-mono/latin-600.css";
 import { App } from "./App.jsx";
 import "./styles.css";
+import "./styles/p1-p2.css";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -10,6 +10,7 @@ export type DefenseGameController = Readonly<{
   upgradeTower: () => boolean;
   startWave: () => boolean;
   selectNode: (nodeId: string) => boolean;
+  cycleNode: (direction: number) => boolean;
   setSuspended: (suspended: boolean) => void;
   destroy: () => void;
 }>;
@@ -56,6 +57,7 @@ export function createDefenseGame(parent: HTMLElement, callbacks: DefenseSceneCa
     upgradeTower: () => battle.upgradeTower(),
     startWave: () => battle.startWave(),
     selectNode: (nodeId: string) => battle.selectNode(nodeId),
+    cycleNode: (direction: number) => battle.cycleNode(direction),
     setSuspended: (suspended: boolean) => battle.setSuspended(suspended),
     destroy: () => {
       if (destroyed) return;

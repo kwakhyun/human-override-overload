@@ -74,15 +74,19 @@ test("sortie cinematic warms the selected suspended Phaser runtime in the backgr
   assert.match(app, /className=\{`combat-runtime-shell/);
   assert.match(app, /<PhaserArenaScreen[\s\S]*?preparing=\{screen === "sortie"\}/);
   assert.match(app, /<SortieCinematicScreen[\s\S]*?combatLoadProgress=\{combatLoadProgress\}/);
+  assert.match(app, /repeatSortie=\{repeatSortie\}/);
+  assert.match(app, /activeSlot\?\.completedRegionIds\?\.includes\(regionId\)/);
+  assert.match(app, /skipOpeningNarrative=\{repeatSortie\}/);
   assert.match(app, /onComplete=\{enterCombat\}/);
-  assert.match(screens, /<video[\s\S]*?poster=\{assetSource\(posterSource\)\}[\s\S]*?autoPlay[\s\S]*?playsInline[\s\S]*?preload="auto"/);
+  assert.match(screens, /<video[\s\S]*?poster=\{assetSource\(posterSource\)\}[\s\S]*?autoPlay[\s\S]*?playsInline[\s\S]*?preload="metadata"/);
   assert.match(screens, /전장 불러오는 중/);
   assert.match(screens, /onEnded=\{complete\}/);
   assert.match(
     screens,
-    /if \(assetSource\(videoSource\)\) return undefined;[\s\S]*?window\.setTimeout\(complete, 2400\)/,
-    "only the no-video poster fallback may use a timeout; supplied sortie videos must enter combat from onEnded",
+    /if \(repeatSortie \|\| assetSource\(videoSource\)\) return undefined;[\s\S]*?window\.setTimeout\(complete, 2400\)/,
+    "only a first-run no-video poster fallback may use a timeout; supplied or repeat sorties complete directly",
   );
+  assert.match(screens, /if \(repeatSortie\) \{[\s\S]*complete\(\);/);
   assert.match(styles, /\.combat-runtime-shell\.is-preparing > \.expedition-game/);
   assert.match(styles, /\.combat-runtime-shell > \.sortie-cinematic/);
   assert.match(createGame, /startSuspended\?: boolean/);

@@ -662,7 +662,7 @@ test("result accuracy counts sword arcs while projectile, melee, and ability dam
   target.x = state.player.x + 90;
   target.y = state.player.y;
   target.spawnDelay = 0;
-  target.hp = 99_999;
+  target.hp = 1;
   target.maxHp = target.hp;
   target.speed = 0;
   delayPlayerWeapons(state);
@@ -677,6 +677,8 @@ test("result accuracy counts sword arcs while projectile, melee, and ability dam
   assert.equal(state.stats.hits, 1);
   assert.equal(state.stats.meleeDamageEvents, 1);
   assert.equal(state.stats.abilityDamageEvents, 0);
+  assert.equal(state.stats.directKills, 1);
+  assert.equal(state.stats.environmentKills, 0);
 });
 
 test("MIKA and the tag action stay unavailable before the first-region unlock", () => {
@@ -780,9 +782,12 @@ test("AEGIS WARD follows the player and owns heal, temporary shield, reduction, 
   assert.ok(events.some((event) => event.type === "manualAbilityActivated" && event.ability === "aegisWard" && event.key === "E"));
 });
 
-test("the opening grace window prevents damage for 2.4 seconds, then enemies can hurt the player", () => {
-  const state = createSwarmState({ random: () => 0.5 });
-  const enemy = state.enemies.find((candidate) => candidate.type === "suppressor" && !candidate.elite);
+test("the expedition opening grace and damage ramp protect the first ten seconds without removing pressure", () => {
+  const attackerPool = createSwarmState({ random: () => 0.5 });
+  const enemy = attackerPool.enemies.find((candidate) => candidate.type === "suppressor" && !candidate.elite);
+  const state = createSwarmState({ random: () => 0.5, expedition: true });
+  state.levelFlow.firstDeadline = 999;
+  state.levelFlow.nextOfferAt = 999;
   state.enemies = [enemy];
   state.spawnedEnemies = state.enemyBudget;
   enemy.x = state.player.x;
@@ -793,13 +798,63 @@ test("the opening grace window prevents damage for 2.4 seconds, then enemies can
   enemy.damage = 25;
   enemy.attackCooldown = 0;
   enemy.shootCooldown = 0;
+  state.player.maxHp = 10_000;
+  state.player.hp = state.player.maxHp;
   const initialHp = state.player.hp;
   assert.equal(initialHp, state.player.maxHp);
-  assert.equal(state.player.invulnerability, 2.5);
-  stepFor(state, createSwarmInput(), 2.4);
+  assert.equal(state.player.invulnerability, 4.5);
+  const input = createSwarmInput();
+  input.right = true;
+  stepSwarm(state, input, 1 / 60);
+  input.right = false;
+  stepFor(state, input, 4.4);
   assert.equal(state.player.hp, initialHp);
-  stepFor(state, createSwarmInput(), 0.8);
+  assert.ok(getSwarmHud(state).openingProtection.graceRemaining > 0);
+  stepFor(state, input, 0.8);
   assert.ok(state.player.hp < initialHp);
+  const rampHit = drainSwarmEvents(state).find((event) => event.type === "playerHit");
+  assert.ok(rampHit?.openingDamageScale >= 0.35 && rampHit.openingDamageScale < 1);
+  assert.ok(getSwarmHud(state).openingProtection.active);
+  stepFor(state, input, 5.1);
+  assert.equal(getSwarmHud(state).openingProtection.active, false);
+  assert.equal(getSwarmHud(state).openingProtection.damageScale, 1);
+});
+
+test("the expedition opening protection adapts to delayed first input without weakening active-player pacing", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true });
+  state.levelFlow.firstDeadline = 999;
+  state.levelFlow.nextOfferAt = 999;
+  state.enemies.length = 0;
+  state.spawnedEnemies = state.enemyBudget;
+  const input = createSwarmInput();
+
+  stepFor(state, input, 10.2);
+  const delayed = getSwarmHud(state).openingProtection;
+  assert.equal(delayed.active, true);
+  assert.equal(delayed.adaptive, true);
+  assert.equal(delayed.engaged, false);
+  assert.ok(delayed.remaining > 3.7 && delayed.remaining < 3.9);
+
+  stepFor(state, input, 4);
+  assert.equal(getSwarmHud(state).openingProtection.active, false);
+  assert.equal(getSwarmHud(state).openingProtection.damageScale, 1);
+});
+
+test("Glass Dune cold-start pressure stays survivable through the ten-second onboarding window", () => {
+  const state = createSwarmState({ random: () => 0.5, expedition: true, regionId: "glass-dune" });
+  const input = createSwarmInput();
+  for (let frame = 0; frame < 600 && state.status === "running"; frame += 1) {
+    if (state.levelupPending) {
+      const rewardId = state.rewardOptions[0]?.id;
+      if (rewardId) chooseLevelReward(state, rewardId);
+    }
+    stepSwarm(state, input, 1 / 60);
+    clearPressedInput(input);
+  }
+  assert.equal(state.status, "running");
+  assert.ok(state.time >= 9.99);
+  assert.ok(state.player.hp > 0);
+  assert.equal(state.stats.kills, 8);
 });
 
 test("SOVEREIGN fields suicide drones, burst riflemen, and warned long-range snipers", () => {
@@ -824,6 +879,8 @@ test("SOVEREIGN fields suicide drones, burst riflemen, and warned long-range sni
   stepFor(droneState, createSwarmInput(), 1.05);
   assert.equal(drone.dead, true);
   assert.ok(droneState.player.hp <= hpBeforeDrone - 70);
+  assert.equal(droneState.stats.environmentKills, 1);
+  assert.equal(droneState.stats.directKills, 0);
   const droneEvents = drainSwarmEvents(droneState);
   assert.ok(droneEvents.some((event) => event.type === "enemySelfDestructArmed"));
   assert.ok(droneEvents.some((event) => event.type === "enemySelfDestruct" && event.hitPlayer === true));

@@ -27,13 +27,14 @@ export function createAgentVoice({
   let disposed = false;
   let current = null;
   let currentPriority = 0;
+  let outputVolume = Math.max(0, Math.min(1, Number(volume) || 0));
 
   const ensureClip = (ability) => {
     if (disposed || typeof AudioCtor !== "function" || !paths[ability]) return null;
     if (clips.has(ability)) return clips.get(ability);
     const audio = new AudioCtor(paths[ability]);
     audio.preload = "auto";
-    audio.volume = volume;
+    audio.volume = outputVolume;
     // Request the media pipeline immediately when combat mounts. Creating an
     // Audio element alone does not guarantee that Chromium starts fetching or
     // decoding it before the first key press.
@@ -61,6 +62,10 @@ export function createAgentVoice({
     setEnabled(nextEnabled) {
       enabled = Boolean(nextEnabled);
       if (!enabled) stop();
+    },
+    setVolume(nextVolume) {
+      outputVolume = Math.max(0, Math.min(1, Number(nextVolume) || 0));
+      for (const audio of clips.values()) audio.volume = outputVolume;
     },
     play(ability) {
       if (!enabled || disposed) return false;

@@ -478,6 +478,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   continueNarrative() {
     this.narrativePaused = false;
     this.accumulator = 0;
+    this.state.player.invulnerability = Math.max(Number(this.state.player.invulnerability) || 0, 1.4);
     this.queuedDash = false;
     this.queuedParry = false;
     this.queuedBossMechanicClick = undefined;

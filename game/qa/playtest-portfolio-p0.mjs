@@ -58,10 +58,8 @@ await freshPage.locator(".base-sortie-action").click();
 await freshPage.locator(".region-map-hotspot").first().click();
 await freshPage.locator(".region-card").first().click();
 const launch = freshPage.locator(".region-sortie-launch");
-assert.equal(await launch.isDisabled(), true, "launch must wait for current-equipment confirmation");
-await freshPage.screenshot({ path: path.join(outputDir, "desktop-sortie-confirmation-required.png"), fullPage: false });
-await freshPage.locator(".sortie-weapon-card.is-equipped").click();
-assert.equal(await launch.isEnabled(), true);
+assert.equal(await launch.isEnabled(), true, "the saved valid loadout should launch without a redundant confirmation tap");
+await freshPage.screenshot({ path: path.join(outputDir, "desktop-sortie-ready.png"), fullPage: false });
 await launch.click();
 
 await freshPage.locator(".ability-guide-screen").waitFor({ state: "visible", timeout: 20_000 });
@@ -123,5 +121,39 @@ await exchangePage.screenshot({ path: path.join(outputDir, "desktop-resource-exc
 assert.deepEqual(exchangeErrors, []);
 await exchangeContext.close();
 
+const repeatContext = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+const repeatPage = await repeatContext.newPage();
+const repeatErrors = captureErrors(repeatPage);
+await enterFreshBase(repeatPage);
+await repeatPage.evaluate(({ key }) => {
+  const campaign = JSON.parse(localStorage.getItem(key));
+  const slot = campaign.slots[0];
+  slot.completedRegionIds = ["wrong-engine-core"];
+  slot.storyFlags = [...new Set([...(slot.storyFlags || []), "home-base-unlocked", "ability-guide-complete", "combat-overlay-complete", "mika-unlocked"] )];
+  slot.homeBaseUnlocked = true;
+  slot.abilityGuideSeen = true;
+  slot.combatOverlaySeen = true;
+  slot.pendingPostVictorySteps = [];
+  localStorage.setItem(key, JSON.stringify(campaign));
+}, { key: campaignKey });
+await repeatPage.reload({ waitUntil: "domcontentloaded" });
+await repeatPage.locator(".initial-asset-loading").waitFor({ state: "detached", timeout: 30_000 });
+await repeatPage.locator(".intro-start:not([disabled])").click();
+await repeatPage.locator(".save-slot-card").first().click();
+await repeatPage.locator(".home-base-screen").waitFor({ state: "visible", timeout: 20_000 });
+if (await repeatPage.locator(".base-dialogue:visible").count()) await repeatPage.keyboard.press("Escape");
+await repeatPage.locator(".base-sortie-action").click();
+await repeatPage.locator(".region-map-hotspot").first().click();
+await repeatPage.locator(".region-card").first().click();
+assert.equal(await repeatPage.locator(".region-sortie-repeat-intel").getAttribute("open"), null, "repeat intel should start collapsed");
+await repeatPage.locator(".region-sortie-launch").click();
+await repeatPage.locator(".sortie-cinematic.is-repeat-sortie").waitFor({ state: "visible", timeout: 20_000 });
+assert.equal(await repeatPage.locator(".sortie-cinematic.is-repeat-sortie video").count(), 0, "repeat sortie should use the poster instead of replaying video");
+await repeatPage.locator(".combat-runtime-shell.is-live").waitFor({ state: "visible", timeout: 30_000 });
+await repeatPage.waitForTimeout(500);
+assert.equal(await repeatPage.locator(".narrative-panel:visible").count(), 0, "repeat sortie should skip only the opening deployment panel");
+assert.deepEqual(repeatErrors, []);
+await repeatContext.close();
+
 await browser.close();
-process.stdout.write(`${JSON.stringify({ result: "pass", freshFlow: true, narrativeBeforeContextualTutorial: true, controllerPreservedAfterTutorial: true, exchange: { researchData: 34, equipmentParts: 23 }, errors: [] }, null, 2)}\n`);
+process.stdout.write(`${JSON.stringify({ result: "pass", freshFlow: true, narrativeBeforeContextualTutorial: true, controllerPreservedAfterTutorial: true, repeatSortieSkipsOpeningMediaAndDialogue: true, exchange: { researchData: 34, equipmentParts: 23 }, errors: [] }, null, 2)}\n`);

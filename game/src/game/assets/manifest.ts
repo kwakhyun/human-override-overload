@@ -302,6 +302,10 @@ export const REGION_GAME_ASSETS: Readonly<Record<RegionId, readonly AssetDefinit
   REGION_IDS.map((regionId) => [regionId, freezeAssets([...REGION_ROUTE_ASSETS[regionId], ...REGION_BOSS_ASSETS[regionId]])]),
 ) as Record<RegionId, readonly AssetDefinition[]>);
 
+export function getRegionArenaAsset(regionId?: string, profile: AssetProfile = "full"): AssetDefinition {
+  return selectAssetProfile(REGION_ROUTE_ASSETS[resolveRegionId(regionId)][0], profile);
+}
+
 export function getGameAssetsForRegion(regionId?: string, profile: AssetProfile = "full", mainWeaponId: MainWeaponId = "pulse-rifle"): readonly AssetDefinition[] {
   const resolved = resolveRegionId(regionId);
   const weapon = resolveMainWeaponId(mainWeaponId);

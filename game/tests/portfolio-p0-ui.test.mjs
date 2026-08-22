@@ -40,17 +40,18 @@ test("completing the combat tutorial keeps the active Phaser run alive", async (
   assert.doesNotMatch(app, /\[characterId, combatBonuses, mainWeaponId/);
 });
 
-test("locked MIKA is absent and sortie requires an explicit current-weapon confirmation", async () => {
+test("locked MIKA is absent and a valid saved loadout is immediately launchable", async () => {
   const [app, screens, styles] = await sources();
   assert.match(app, /characters: facility\.id === "augmentation" \? unlockedPlayableCharacters\.map/);
   assert.match(screens, /const availableCharacters = useMemo\([\s\S]*character\?\.unlocked !== false/);
   assert.match(screens, /\{availableCharacters\.map\(\(character\) =>/);
-  assert.match(screens, /const \[confirmedWeaponId, setConfirmedWeaponId\] = useState\(null\)/);
-  assert.match(screens, /setConfirmedWeaponId\(weapon\.id\)/);
+  assert.doesNotMatch(screens, /confirmedWeaponId/);
+  assert.match(screens, /const formationConfirmed = Boolean\(selectedCharacter && equippedWeaponUnlocked\)/);
+  assert.match(screens, /현재 편성으로 즉시 출격할 수 있습니다/);
   assert.match(screens, /disabled=\{!formationConfirmed\}/);
   assert.match(screens, /formationConfirmed && onSelect\(selectedRegion\.id\)/);
-  const portrait = styles.slice(styles.indexOf("/* Portfolio P0"));
-  assert.match(portrait, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.region-sortie-command-footer \{ position: static;/);
+  assert.match(styles, /\.region-sortie-dialog \.region-sortie-command-footer \{[\s\S]*position: sticky;/);
+  assert.match(screens, /region-sortie-repeat-intel/);
 });
 
 test("combat aim is primed away from the previous menu click before unsuspending", async () => {
@@ -108,7 +109,8 @@ test("portfolio-critical campaign and portrait combat copy remains readable", as
   assert.match(p0, /@media \(pointer: fine\) and \(min-width: 761px\)[\s\S]*\.region-sortie-briefing > p,[\s\S]*font-size: 13px/);
   assert.match(shortHeight, /\.region-sortie-close,[\s\S]*\.region-sortie-launch strong \{ font-size: 13px; \}/);
   assert.doesNotMatch(shortHeight, /\.campaign-shell\.campaign-shell button/);
-  assert.match(p0, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.combat-ability-copy strong \{ max-width: 62px; font-size: 12px; \}/);
+  assert.match(p0, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.combat-dock-abilities \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(p0, /\.combat-ability-copy strong \{[\s\S]*font-size: 11px;[\s\S]*-webkit-line-clamp: 2/);
 });
 
 test("bilingual Wrong Engine proper name is not partially re-localized", async () => {

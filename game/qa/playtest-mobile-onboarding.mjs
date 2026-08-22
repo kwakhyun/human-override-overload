@@ -44,7 +44,7 @@ try {
   await page.locator(".base-sortie-action").tap();
   await page.locator(".region-map-hotspot").first().tap();
   await page.locator(".region-card").first().tap();
-  await page.locator(".sortie-weapon-card.is-equipped").tap();
+  assert.equal(await page.locator(".region-sortie-launch").isEnabled(), true, "saved loadout should already be confirmed");
   await page.locator(".region-sortie-launch").tap();
   await page.locator(".ability-guide-screen").waitFor({ state: "visible", timeout: 20_000 });
 

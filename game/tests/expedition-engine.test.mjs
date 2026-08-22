@@ -349,7 +349,7 @@ test("the arena minimap exposes capped deterministic normalized player and live-
   const create = () => {
     const state = createSwarmState({ random: seededRandom(47), duration: 360, expedition: true });
     for (const enemy of state.enemies) enemy.spawnDelay = 0;
-    state.player.x = 144 + (4096 - 288) * 0.25;
+    state.player.x = 4096 * 0.25;
     state.player.y = 2048;
     return getSwarmHud(state).expedition.minimap;
   };
@@ -359,6 +359,10 @@ test("the arena minimap exposes capped deterministic normalized player and live-
   assert.equal(first.player.x, 0.25);
   assert.equal(first.player.y, 0.5);
   assert.equal(first.mode, "arena");
+  assert.equal(first.mapId, "wrong-engine-core");
+  assert.equal(first.worldWidth, 4096);
+  assert.equal(first.worldHeight, 4096);
+  assert.equal(first.playableInset, 144);
   assert.equal(first.sampleCap, 24);
   assert.equal(first.liveEnemyCount, 8);
   assert.equal(first.enemies.length, 8);
@@ -369,7 +373,7 @@ test("the arena minimap exposes capped deterministic normalized player and live-
 
 test("the arena minimap exposes only bounded active materializing transit gates", () => {
   const state = createSwarmState({ random: seededRandom(59), duration: 360, expedition: true });
-  const arenaPoint = (ratio) => 144 + (4096 - 288) * ratio;
+  const arenaPoint = (ratio) => 4096 * ratio;
   const portal = (id, xRatio, yRatio, overrides = {}) => ({
     id,
     type: "spawnGate",

@@ -38,7 +38,7 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /setSelectedClusterId\(cluster\.id\)/);
   assert.match(screens, /cluster\.rangeLabel/);
   assert.match(screens, /cluster\.comingSoon/);
-  assert.match(screens, /className="region-sortie-dialog"/);
+  assert.match(screens, /region-sortie-dialog\$\{repeatOperation \? " is-repeat-operation" : ""\}/);
   assert.match(screens, /className="region-sortie-layout"/);
   assert.match(screens, /className="region-sortie-command-footer"/);
   assert.match(screens, /className="region-mobile-swipe-hint"/);
@@ -56,6 +56,9 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(app, /setCampaignCharacter\(campaign, activeSlotId, characterId\)/);
   assert.match(screens, /disabled=\{!formationConfirmed\}/);
   assert.match(screens, /onClick=\{\(\) => formationConfirmed && onSelect\(selectedRegion\.id\)\}/);
+  assert.match(screens, /const formationConfirmed = Boolean\(selectedCharacter && equippedWeaponUnlocked\)/);
+  assert.doesNotMatch(screens, /confirmedWeaponId/);
+  assert.match(screens, /현재 편성으로 즉시 출격할 수 있습니다/);
   assert.match(screens, /event\.key !== "Escape"/);
   assert.match(app, /document\.addEventListener\("pointerdown", handleButtonPointer, true\)/);
   for (const cue of ["uiHover", "uiConfirm", "uiClose"]) assert.match(sounds, new RegExp(`case "${cue}"`));

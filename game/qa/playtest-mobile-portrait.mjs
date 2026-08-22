@@ -102,6 +102,19 @@ try {
       scrollWidth: document.documentElement.scrollWidth,
       currency: currency && { left: currency.left, right: currency.right, top: currency.top, bottom: currency.bottom },
       actions: actions && { left: actions.left, right: actions.right, top: actions.top, bottom: actions.bottom },
+      facilityPosition: (() => {
+        const box = document.querySelector(".base-facility-position")?.getBoundingClientRect();
+        return box ? { left: box.left, top: box.top, right: box.right, bottom: box.bottom, height: box.height } : null;
+      })(),
+      facilityPositionButtons: [...document.querySelectorAll(".base-facility-position button")].map((button) => button.getBoundingClientRect().height),
+      portraitCaption: (() => {
+        const box = document.querySelector(".motion-portrait-caption")?.getBoundingClientRect();
+        return box ? { left: box.left, top: box.top, right: box.right, bottom: box.bottom } : null;
+      })(),
+      facilityRail: (() => {
+        const box = document.querySelector(".base-lobby-navigation")?.getBoundingClientRect();
+        return box ? { left: box.left, top: box.top, right: box.right, bottom: box.bottom } : null;
+      })(),
       identityFont: number(document.querySelector(".base-identity strong")),
       currencyButtons: [...document.querySelectorAll(".base-currency-rail button")].map((button) => ({
         height: button.getBoundingClientRect().height,
@@ -111,6 +124,12 @@ try {
       menuButtons: [...document.querySelectorAll(".base-menu-button")].map((button) => ({
         height: button.getBoundingClientRect().height,
         name: number(button.querySelector("b")),
+        nameText: button.querySelector("b")?.textContent?.trim() || "",
+        roleText: button.querySelector("small")?.textContent?.trim() || "",
+        roleClipped: (() => {
+          const role = button.querySelector("small");
+          return role ? role.scrollWidth > role.clientWidth + 1 || role.scrollHeight > role.clientHeight + 1 : true;
+        })(),
       })),
       actionButtons: [...document.querySelectorAll(".base-primary-actions > button")].map((button) => ({
         height: button.getBoundingClientRect().height,
@@ -121,13 +140,24 @@ try {
   assert.ok(homeMetrics.scrollWidth <= homeMetrics.width + 1, JSON.stringify(homeMetrics));
   assert.ok(homeMetrics.currency && homeMetrics.currency.left >= 0 && homeMetrics.currency.right <= viewport.width);
   assert.ok(homeMetrics.actions && homeMetrics.actions.left >= 0 && homeMetrics.actions.right <= viewport.width && homeMetrics.actions.bottom <= viewport.height);
+  assert.ok(homeMetrics.facilityPosition && homeMetrics.facilityPosition.left >= 0 && homeMetrics.facilityPosition.right <= viewport.width && homeMetrics.facilityPosition.height >= 48, JSON.stringify(homeMetrics));
+  assert.ok(homeMetrics.facilityPositionButtons.every((height) => height >= 48), JSON.stringify(homeMetrics));
   assert.ok(homeMetrics.identityFont >= 27, JSON.stringify(homeMetrics));
   assert.ok(homeMetrics.currencyButtons.every((button) => button.height >= 64 && button.label >= 12 && button.value >= 20), JSON.stringify(homeMetrics));
   assert.ok(homeMetrics.menuButtons.every((button) => button.height >= 76 && button.name >= 16), JSON.stringify(homeMetrics));
+  assert.ok(homeMetrics.menuButtons.every((button) => button.nameText.length > 0 && button.roleText.length > 0 && !button.roleClipped), JSON.stringify(homeMetrics));
   assert.ok(homeMetrics.actionButtons.every((button) => button.height >= 62 && button.name >= 17), JSON.stringify(homeMetrics));
+  assert.ok(homeMetrics.portraitCaption?.bottom <= homeMetrics.facilityRail?.top - 6, JSON.stringify(homeMetrics));
+  assert.ok(homeMetrics.facilityRail?.bottom <= homeMetrics.facilityPosition?.top - 6, JSON.stringify(homeMetrics));
+  assert.ok(homeMetrics.facilityPosition?.bottom <= homeMetrics.actions?.top - 6, JSON.stringify(homeMetrics));
 
   await page.locator(".base-menu-button").first().tap();
   await page.locator(".base-dialogue").waitFor({ state: "visible" });
+  const dialogueFocus = await page.evaluate(() => ({
+    focusInside: document.querySelector(".base-dialogue")?.contains(document.activeElement),
+    backgroundInert: document.querySelector(".home-base-surface")?.hasAttribute("inert"),
+  }));
+  assert.deepEqual(dialogueFocus, { focusInside: true, backgroundInert: true });
   const dialogueMetrics = await page.evaluate(() => ({
     heading: Number.parseFloat(getComputedStyle(document.querySelector(".base-dialogue-copy h2")).fontSize),
     body: Number.parseFloat(getComputedStyle(document.querySelector(".base-dialogue-copy p")).fontSize),
@@ -165,19 +195,32 @@ try {
   await page.locator(".character-information-panel").waitFor({ state: "visible" });
   const characterMetrics = await page.evaluate(() => {
     const kit = document.querySelector(".character-active-kit article");
+    const panel = document.querySelector(".character-information-panel");
+    const consolePanel = document.querySelector(".character-data-console");
+    const profile = document.querySelector(".character-profile-content");
+    const roster = document.querySelector(".character-roster-rail");
     return {
       title: Number.parseFloat(getComputedStyle(document.querySelector(".character-profile-content h3")).fontSize),
       body: Number.parseFloat(getComputedStyle(document.querySelector(".character-profile-content > p")).fontSize),
       tabs: [...document.querySelectorAll(".character-info-tabs button")].map((button) => ({ height: button.getBoundingClientRect().height, font: Number.parseFloat(getComputedStyle(button).fontSize) })),
       kitHeight: kit?.getBoundingClientRect().height || 0,
       kitName: Number.parseFloat(getComputedStyle(kit.querySelector("b")).fontSize),
+      panelOverflowY: panel ? getComputedStyle(panel).overflowY : "missing",
+      consoleOverflowY: consolePanel ? getComputedStyle(consolePanel).overflowY : "missing",
+      profileOverflowY: profile ? getComputedStyle(profile).overflowY : "missing",
+      rosterOverflowX: roster ? getComputedStyle(roster).overflowX : "missing",
     };
   });
   assert.ok(characterMetrics.title >= 23 && characterMetrics.body >= 15, JSON.stringify(characterMetrics));
   assert.ok(characterMetrics.tabs.every((tab) => tab.height >= 56 && tab.font >= 15), JSON.stringify(characterMetrics));
   assert.ok(characterMetrics.kitHeight >= 84 && characterMetrics.kitName >= 14, JSON.stringify(characterMetrics));
+  assert.equal(characterMetrics.panelOverflowY, "auto", JSON.stringify(characterMetrics));
+  assert.equal(characterMetrics.consoleOverflowY, "visible", JSON.stringify(characterMetrics));
+  assert.equal(characterMetrics.profileOverflowY, "visible", JSON.stringify(characterMetrics));
+  assert.equal(characterMetrics.rosterOverflowX, "visible", JSON.stringify(characterMetrics));
   await page.screenshot({ path: path.join(qaDir, `mobile-portrait-character-${screenshotSuffix}.png`), fullPage: false });
   await page.locator(".character-info-tabs button").nth(1).tap();
+  await page.waitForFunction(() => document.querySelector(".character-information-panel")?.classList.contains("is-portrait-compact"));
   await page.locator(".augmentation-core-module").waitFor({ state: "visible" });
   const augmentationMetrics = await page.evaluate(() => {
     const module = document.querySelector(".augmentation-core-module");
@@ -187,13 +230,28 @@ try {
       moduleHeight: module?.getBoundingClientRect().height || 0,
       artWidth: art?.getBoundingClientRect().width || 0,
       imageLoaded: Boolean(image?.complete && image?.naturalWidth > 0),
+      compact: document.querySelector(".character-information-panel")?.classList.contains("is-portrait-compact"),
+      portraitDisplay: getComputedStyle(document.querySelector(".character-art-stage")).display,
+      toggleHeight: document.querySelector(".character-portrait-toggle")?.getBoundingClientRect().height || 0,
       animation: image ? getComputedStyle(image).animationName : "none",
+      summaryCount: document.querySelectorAll(".character-upgrade-summary > span").length,
+      filterHeight: document.querySelector(".character-upgrade-filter")?.getBoundingClientRect().height || 0,
+      filterFont: Number.parseFloat(getComputedStyle(document.querySelector(".character-upgrade-filter")).fontSize),
     };
   });
   assert.ok(augmentationMetrics.moduleHeight >= 150 && augmentationMetrics.artWidth >= 96, JSON.stringify(augmentationMetrics));
   assert.equal(augmentationMetrics.imageLoaded, true, JSON.stringify(augmentationMetrics));
+  assert.equal(augmentationMetrics.compact, true, JSON.stringify(augmentationMetrics));
+  assert.equal(augmentationMetrics.portraitDisplay, "none", JSON.stringify(augmentationMetrics));
+  assert.ok(augmentationMetrics.toggleHeight >= 48, JSON.stringify(augmentationMetrics));
   assert.notEqual(augmentationMetrics.animation, "none", JSON.stringify(augmentationMetrics));
+  assert.equal(augmentationMetrics.summaryCount, 3, JSON.stringify(augmentationMetrics));
+  assert.ok(augmentationMetrics.filterHeight >= 52 && augmentationMetrics.filterFont >= 13, JSON.stringify(augmentationMetrics));
   await page.screenshot({ path: path.join(qaDir, `mobile-portrait-augmentation-${screenshotSuffix}.png`), fullPage: false });
+  await page.locator(".character-upgrade-filter").tap();
+  assert.equal(await page.locator(".character-upgrade-filter").getAttribute("aria-pressed"), "true");
+  await page.locator(".character-upgrade-empty").waitFor({ state: "visible" });
+  await page.screenshot({ path: path.join(qaDir, `mobile-portrait-augmentation-filtered-${screenshotSuffix}.png`), fullPage: false });
   await page.locator(".character-information-panel .facility-close").tap();
   await page.locator(".character-information-panel").waitFor({ state: "detached" });
 
@@ -212,7 +270,46 @@ try {
   assert.ok(defenseSelectMetrics.heading >= 40 && defenseSelectMetrics.body >= 16, JSON.stringify(defenseSelectMetrics));
   assert.ok(defenseSelectMetrics.cardHeight >= 280 && defenseSelectMetrics.cardTitle >= 28 && defenseSelectMetrics.cardBody >= 15, JSON.stringify(defenseSelectMetrics));
   await page.screenshot({ path: path.join(qaDir, `mobile-portrait-defense-select-${screenshotSuffix}.png`), fullPage: false });
-  await page.locator(".defense-stage-select-screen .campaign-back").tap();
+  await page.locator(".defense-stage-card").first().tap();
+  await page.locator(".defense-runtime-screen").waitFor({ state: "visible", timeout: 30_000 });
+  await page.locator(".defense-command-dock").waitFor({ state: "visible", timeout: 20_000 });
+  if (await page.locator(".defense-guide-skip:visible").count()) {
+    await page.locator(".defense-guide-skip:visible").tap();
+    await page.locator(".defense-guide-overlay").waitFor({ state: "detached", timeout: 10_000 });
+  }
+  const defenseDockMetrics = await page.evaluate(() => {
+    const rect = (selector) => {
+      const box = document.querySelector(selector)?.getBoundingClientRect();
+      return box ? { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height } : null;
+    };
+    return {
+      dock: rect(".defense-command-dock"),
+      header: rect(".defense-command-dock > header"),
+      title: rect(".defense-command-dock > header strong"),
+      prompt: rect(".defense-command-dock > header > span"),
+      padStepper: rect(".defense-pad-stepper"),
+      padButtons: [...document.querySelectorAll(".defense-pad-stepper button")].map((button) => {
+        const box = button.getBoundingClientRect();
+        return { width: box.width, height: box.height };
+      }),
+      needsPad: document.querySelector(".defense-command-dock")?.classList.contains("needs-pad"),
+    };
+  });
+  assert.ok(defenseDockMetrics.dock && defenseDockMetrics.dock.left >= 0 && defenseDockMetrics.dock.right <= viewport.width && defenseDockMetrics.dock.bottom <= viewport.height, JSON.stringify(defenseDockMetrics));
+  assert.ok(defenseDockMetrics.header && defenseDockMetrics.header.height >= 52, JSON.stringify(defenseDockMetrics));
+  const defenseHeaderSeparated = defenseDockMetrics.title && defenseDockMetrics.prompt && (
+    defenseDockMetrics.title.right <= defenseDockMetrics.prompt.left + 1
+    || defenseDockMetrics.prompt.right <= defenseDockMetrics.title.left + 1
+    || defenseDockMetrics.title.bottom <= defenseDockMetrics.prompt.top + 1
+    || defenseDockMetrics.prompt.bottom <= defenseDockMetrics.title.top + 1
+  );
+  assert.ok(defenseHeaderSeparated, JSON.stringify(defenseDockMetrics));
+  assert.ok(defenseDockMetrics.padStepper && defenseDockMetrics.padButtons.every((button) => button.width >= 44 && button.height >= 44), JSON.stringify(defenseDockMetrics));
+  assert.ok(defenseDockMetrics.padStepper.top >= Math.max(defenseDockMetrics.title.bottom, defenseDockMetrics.prompt.bottom) - 1, JSON.stringify(defenseDockMetrics));
+  assert.ok(defenseDockMetrics.padStepper.bottom <= defenseDockMetrics.header.bottom + 1, JSON.stringify(defenseDockMetrics));
+  assert.equal(defenseDockMetrics.needsPad, true, JSON.stringify(defenseDockMetrics));
+  await page.screenshot({ path: path.join(qaDir, `mobile-portrait-defense-runtime-${screenshotSuffix}.png`), fullPage: false });
+  await page.locator(".defense-exit").click({ force: true });
   await page.locator(".home-base-screen").waitFor({ state: "visible" });
 
   await page.locator(".base-sortie-action").tap();
@@ -229,6 +326,8 @@ try {
   assert.ok(regionCard && regionCard.width >= 300, JSON.stringify(regionCard));
   const swipeHint = await page.locator(".region-mobile-swipe-hint").boundingBox();
   assert.ok(swipeHint && swipeHint.height >= 40 && swipeHint.x >= 0 && swipeHint.x + swipeHint.width <= viewport.width, JSON.stringify(swipeHint));
+  const regionPosition = await page.locator(".region-card-position").boundingBox();
+  assert.ok(regionPosition && regionPosition.height >= 48 && regionPosition.x >= 0 && regionPosition.x + regionPosition.width <= viewport.width, JSON.stringify(regionPosition));
   await page.screenshot({ path: path.join(qaDir, `mobile-portrait-region-list-${screenshotSuffix}.png`), fullPage: false });
   await page.locator(".region-card").first().tap();
   await page.locator(".region-sortie-dialog").waitFor({ state: "visible" });
@@ -253,8 +352,8 @@ try {
   assert.ok(sortieMetrics.launchHeight >= 68 && sortieMetrics.launchFont >= 17, JSON.stringify(sortieMetrics));
   await page.screenshot({ path: path.join(qaDir, `mobile-portrait-sortie-${screenshotSuffix}.png`), fullPage: false });
   const launch = page.locator(".region-sortie-launch");
-  assert.equal(await launch.isDisabled(), true, "sortie requires explicit equipment confirmation");
-  await page.locator(".sortie-weapon-card.is-equipped").tap();
+  assert.equal(await launch.isEnabled(), true, "the saved valid loadout should be immediately launchable");
+  assert.match(await page.locator(".region-sortie-command-footer").innerText(), /즉시 출격|이 편성으로 출격/);
   await launch.scrollIntoViewIfNeeded();
   await launch.tap();
   await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
@@ -285,6 +384,16 @@ try {
   const frame = await page.locator(".expedition-canvas-frame").boundingBox();
   assert.ok(frame && frame.width >= viewport.width - 1 && frame.height >= viewport.height - 1, JSON.stringify(frame));
   const pauseButton = page.locator(".expedition-pause-toggle");
+  const focusButton = page.locator(".expedition-focus-toggle");
+  const focusButtonBox = await focusButton.boundingBox();
+  assert.ok(focusButtonBox && focusButtonBox.width >= 52 && focusButtonBox.height >= 52, JSON.stringify(focusButtonBox));
+  assert.equal(await page.locator(".expedition-game").evaluate((node) => node.classList.contains("is-hud-focus")), true);
+  assert.equal(await focusButton.getAttribute("aria-expanded"), "false");
+  await focusButton.tap();
+  assert.equal(await page.locator(".expedition-game").evaluate((node) => node.classList.contains("is-hud-focus")), false);
+  assert.equal(await focusButton.getAttribute("aria-expanded"), "true");
+  await focusButton.tap();
+  assert.equal(await page.locator(".expedition-game").evaluate((node) => node.classList.contains("is-hud-focus")), true);
   const pauseButtonMetrics = await pauseButton.evaluate((node) => {
     const box = node.getBoundingClientRect();
     return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
@@ -307,6 +416,24 @@ try {
   assert.ok(pauseMetrics.titleFont >= 40, JSON.stringify(pauseMetrics));
   assert.ok(pauseMetrics.buttons.every((button) => button.height >= 60 && button.font >= 15), JSON.stringify(pauseMetrics));
   await page.screenshot({ path: path.join(qaDir, `mobile-portrait-pause-${screenshotSuffix}.png`), fullPage: false });
+  await page.locator(".expedition-pause-card button").nth(1).tap();
+  await page.locator(".pause-settings-panel").waitFor({ state: "visible" });
+  const settingsMetrics = await page.evaluate(() => ({
+    labels: [...document.querySelectorAll(".pause-settings-panel > label")].map((label) => ({
+      height: label.getBoundingClientRect().height,
+      font: Number.parseFloat(getComputedStyle(label.querySelector("span")).fontSize),
+      rangeHeight: label.querySelector('input[type="range"]')?.getBoundingClientRect().height || 0,
+    })),
+    buttons: [...document.querySelectorAll(".pause-settings-panel > button")].map((button) => ({
+      height: button.getBoundingClientRect().height,
+      font: Number.parseFloat(getComputedStyle(button).fontSize),
+    })),
+  }));
+  assert.equal(settingsMetrics.labels.length, 3, JSON.stringify(settingsMetrics));
+  assert.ok(settingsMetrics.labels.every((label) => label.height >= 70 && label.font >= 14 && label.rangeHeight >= 28), JSON.stringify(settingsMetrics));
+  assert.ok(settingsMetrics.buttons.every((button) => button.height >= 56 && button.font >= 15), JSON.stringify(settingsMetrics));
+  await page.screenshot({ path: path.join(qaDir, `mobile-portrait-settings-${screenshotSuffix}.png`), fullPage: false });
+  await page.locator(".pause-settings-back").tap();
   await page.locator(".pause-resume").tap();
   await page.locator(".expedition-pause").waitFor({ state: "detached" });
   const start = { x: frame.x + 105, y: frame.y + 430 };
@@ -351,6 +478,7 @@ try {
       viewport: { width: innerWidth, height: innerHeight },
       dock: rect(".expedition-combat-dock"),
       minimap: rect(".route-minimap"),
+      minimapField: rect(".route-minimap-field.is-arena"),
       objective: rect(".route-objective"),
       actions: rect(".expedition-hud-actions"),
       xp: rect(".expedition-xp"),
@@ -361,8 +489,31 @@ try {
       })(),
       objectiveFont: Number.parseFloat(getComputedStyle(document.querySelector(".route-objective strong")).fontSize),
       abilityLabelFont: Number.parseFloat(getComputedStyle(document.querySelector(".combat-ability-copy strong")).fontSize),
+      abilityStatusFont: Number.parseFloat(getComputedStyle(document.querySelector(".combat-ability-copy > b")).fontSize),
       abilityLabelDisplay: getComputedStyle(document.querySelector(".combat-ability-copy")).display,
+      objectiveText: document.querySelector(".route-objective strong")?.textContent?.trim(),
+      objectiveTextBox: (() => {
+        const node = document.querySelector(".route-objective strong");
+        return node ? {
+          clientWidth: node.clientWidth,
+          clientHeight: node.clientHeight,
+          scrollWidth: node.scrollWidth,
+          scrollHeight: node.scrollHeight,
+        } : null;
+      })(),
+      objectiveClipped: (() => {
+        const node = document.querySelector(".route-objective strong");
+        return node ? node.scrollWidth > node.clientWidth + 1 || node.scrollHeight > node.clientHeight + 1 : true;
+      })(),
+      abilityButtons: [...document.querySelectorAll(".combat-dock-abilities > button")].map((button) => {
+        const box = button.getBoundingClientRect();
+        return { left: box.left, top: box.top, width: box.width, height: box.height, tag: button.classList.contains("combat-tag-switch") };
+      }),
       horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      minimapBackdrop: (() => {
+        const node = document.querySelector(".route-minimap-backdrop");
+        return node ? { complete: node.complete, width: node.naturalWidth, height: node.naturalHeight, src: node.getAttribute("src") } : null;
+      })(),
     };
   });
   for (const [name, box] of Object.entries({ dock: layout.dock, minimap: layout.minimap, objective: layout.objective })) {
@@ -371,14 +522,27 @@ try {
   const intersects = (a, b) => Boolean(a && b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top);
   assert.equal(intersects(layout.objective, layout.actions), false, JSON.stringify(layout));
   assert.equal(intersects(layout.objective, layout.minimap), false, JSON.stringify(layout));
+  assert.equal(intersects(layout.minimap, layout.xp), false, JSON.stringify(layout));
   assert.equal(intersects(layout.minimap, layout.dock), false, JSON.stringify(layout));
+  assert.ok(layout.minimapField && Math.abs(layout.minimapField.width - layout.minimapField.height) <= 1, JSON.stringify(layout));
+  assert.ok(layout.minimapBackdrop?.complete && layout.minimapBackdrop.width > 0 && layout.minimapBackdrop.width === layout.minimapBackdrop.height, JSON.stringify(layout));
+  assert.match(layout.minimapBackdrop?.src || "", /\/regions\/wrong-engine-core\/performance\/arena-square-v1\.webp$/);
   assert.ok(layout.canvas && Math.abs(layout.canvas.width - viewport.width) <= 1 && Math.abs(layout.canvas.height - viewport.height) <= 1, JSON.stringify(layout));
   assert.ok(layout.canvas && Math.abs(layout.canvas.bufferWidth / layout.canvas.bufferHeight - viewport.width / viewport.height) <= 0.02, JSON.stringify(layout));
-  assert.ok(layout.objectiveFont >= 18 && layout.abilityLabelFont >= 13 && layout.abilityLabelDisplay !== "none", JSON.stringify(layout));
+  assert.ok(layout.objectiveFont >= 18 && layout.abilityLabelFont >= 13 && layout.abilityStatusFont >= 12 && layout.abilityLabelDisplay !== "none", JSON.stringify(layout));
+  assert.match(layout.objectiveText || "", /적 섬멸$/, JSON.stringify(layout));
+  assert.equal(layout.objectiveClipped, false, JSON.stringify(layout));
+  const coreAbilityButtons = layout.abilityButtons.filter((button) => !button.tag);
+  const tagButtons = layout.abilityButtons.filter((button) => button.tag);
+  assert.equal(coreAbilityButtons.length, 5, JSON.stringify(layout));
+  assert.ok(coreAbilityButtons.every((button) => button.height >= 84 && button.width >= 60), JSON.stringify(layout));
+  assert.ok(tagButtons.every((button) => button.height >= 56 && button.width >= 68), JSON.stringify(layout));
+  assert.equal(new Set(coreAbilityButtons.map((button) => Math.round(button.top))).size, 1, JSON.stringify(layout));
+  assert.ok(layout.dock.height <= viewport.height * 0.24, JSON.stringify(layout));
   assert.ok(layout.horizontalOverflow <= 1, JSON.stringify(layout));
   assert.deepEqual(errors, []);
 
-  console.log(JSON.stringify({ result: "pass", introMetrics, slotMetrics, homeMetrics, dialogueMetrics, facilityMetrics, characterMetrics, augmentationMetrics, defenseSelectMetrics, hotspotMetrics, sortieMetrics, pauseButtonMetrics, pauseMetrics, runtime: after, layout, errors }, null, 2));
+  console.log(JSON.stringify({ result: "pass", introMetrics, slotMetrics, homeMetrics, dialogueMetrics, facilityMetrics, characterMetrics, augmentationMetrics, defenseSelectMetrics, defenseDockMetrics, hotspotMetrics, sortieMetrics, pauseButtonMetrics, pauseMetrics, settingsMetrics, runtime: after, layout, errors }, null, 2));
 } finally {
   await browser.close();
 }

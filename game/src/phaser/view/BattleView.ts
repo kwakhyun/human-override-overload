@@ -845,6 +845,8 @@ export class BattleView {
     if (this.player.texture.key !== playerTexture) this.player.setTexture(playerTexture);
     setAtlasFrame(this.player, directionalFrame.column, directionalFrame.row);
     const size = state?.phase === "boss" ? 64 : 74;
+    const portraitActorScale = this.portraitPresentation && state?.phase !== "boss" ? 1.34 : 1;
+    const displaySize = size * portraitActorScale;
     const rifleEquipped = entity?.characterId !== "mika" && entity?.mainWeaponId !== "beam-sword";
     const recoil = rifleEquipped && animation.clipId === "attack" ? clamp(finite(entity?.recoil) * 0.55, 0, 2) : 0;
     const angle = actorAngle(entity);
@@ -861,7 +863,7 @@ export class BattleView {
       )
       .setRotation(0)
       .setFlipX(false)
-      .setDisplaySize(size, size)
+      .setDisplaySize(displaySize, displaySize)
       .setAlpha(entity?.dead ? clamp01(finite(entity?.deathTimer) / 0.9) : 1)
       .setVisible(true)
       .setTint(
@@ -878,7 +880,7 @@ export class BattleView {
       .setVisible(muzzleVisible)
       .setPosition(finite(entity?.x) + muzzle.x, finite(entity?.y) + muzzle.y)
       .setRotation(muzzle.angle)
-      .setDisplaySize(42 + muzzlePulse * 8, 24 + muzzlePulse * 5)
+      .setDisplaySize((42 + muzzlePulse * 8) * portraitActorScale, (24 + muzzlePulse * 5) * portraitActorScale)
       .setAlpha(clamp(0.7 + finite(entity?.attackTimer) * 2.8, 0.7, 1))
       .setTint(muzzlePulse > 0.62 ? COLORS.white : COLORS.cyan);
 
@@ -901,7 +903,7 @@ export class BattleView {
         .setPosition(entity.x - Math.cos(motionAngle) * distance, entity.y - Math.sin(motionAngle) * distance)
         .setRotation(0)
         .setFlipX(false)
-        .setDisplaySize(size * (0.94 - index * 0.08), size * (0.94 - index * 0.08))
+        .setDisplaySize(displaySize * (0.94 - index * 0.08), displaySize * (0.94 - index * 0.08))
         .setAlpha(0.2 - index * 0.045)
         .setTint(COLORS.cyan);
     }
@@ -1012,6 +1014,7 @@ export class BattleView {
     const enemies = Array.isArray(state?.enemies) ? state.enemies : [];
     const view = this.mainCamera.worldView;
     const margin = 120;
+    const portraitActorScale = this.portraitPresentation && state?.phase !== "boss" ? 1.34 : 1;
     const animationHz = quality.id === "performance" ? 10 : quality.id === "cinematic" ? 24 : 16;
     let visibleEnemyCount = 0;
     for (let index = 0; index < enemies.length; index += 1) {
@@ -1119,7 +1122,7 @@ export class BattleView {
       const armedScale = selfDestructArmed
         ? 1 + selfDestructProgress * 0.08 + Math.max(0, Math.sin(time * 26 + id)) * 0.035
         : 1;
-      const size = baseSize * (entity?.elite ? 1.16 : 1) * (0.72 + materialize * 0.28) * armedScale;
+      const size = baseSize * (entity?.elite ? 1.16 : 1) * (0.72 + materialize * 0.28) * armedScale * portraitActorScale;
       const alpha = (entity?.dead ? clamp01(finite(entity?.deathTimer) / (entity?.elite ? 0.46 : 0.32)) : 1)
         * clamp01((materialize - 0.08) / 0.72);
       const tint = selfDestructFlash
@@ -1385,6 +1388,42 @@ export class BattleView {
   private drawShadows(state: any, quality: QualityPreset) {
     const graphics = this.shadowGraphics;
     graphics.clear();
+    const player = state?.player;
+    if (this.portraitPresentation && state?.phase !== "boss" && !player?.dead) {
+      const playerX = finite(player?.x);
+      const playerY = finite(player?.y);
+      const pulse = (Math.sin(this.scene.time.now * 0.008) + 1) * 0.5;
+      const ringRadius = 35 + pulse * 3;
+      graphics.fillStyle(COLORS.cyan, 0.08 + pulse * 0.03);
+      graphics.fillCircle(playerX, playerY, ringRadius + 9);
+      graphics.lineStyle(7, COLORS.black, 0.78);
+      graphics.strokeCircle(playerX, playerY, ringRadius);
+      graphics.lineStyle(3, COLORS.cyan, 0.9);
+      graphics.strokeCircle(playerX, playerY, ringRadius);
+
+      const aimX = finite(state?.aim?.x, finite(state?.aimX, playerX + 1));
+      const aimY = finite(state?.aim?.y, finite(state?.aimY, playerY));
+      const aimAngle = Math.atan2(aimY - playerY, aimX - playerX);
+      const directionX = Math.cos(aimAngle);
+      const directionY = Math.sin(aimAngle);
+      const tipX = playerX + directionX * (ringRadius + 13);
+      const tipY = playerY + directionY * (ringRadius + 13);
+      const baseX = playerX + directionX * (ringRadius + 2);
+      const baseY = playerY + directionY * (ringRadius + 2);
+      const perpendicularX = -directionY * 6;
+      const perpendicularY = directionX * 6;
+      graphics.fillStyle(COLORS.black, 0.86);
+      graphics.fillTriangle(
+        tipX + directionX * 3,
+        tipY + directionY * 3,
+        baseX + perpendicularX,
+        baseY + perpendicularY,
+        baseX - perpendicularX,
+        baseY - perpendicularY,
+      );
+      graphics.fillStyle(COLORS.cyan, 0.96);
+      graphics.fillTriangle(tipX, tipY, baseX + perpendicularX * 0.72, baseY + perpendicularY * 0.72, baseX - perpendicularX * 0.72, baseY - perpendicularY * 0.72);
+    }
     if (quality.shadows === false) return;
     graphics.fillStyle(0x000000, 0.34);
     const enemies = state?.enemies ?? [];
@@ -1398,7 +1437,6 @@ export class BattleView {
       if (!this.isCircleVisible(x, y, radius * 1.4, 48)) continue;
       graphics.fillEllipse(x + 4, y + 10, radius * 2.6, radius * 0.85);
     }
-    const player = state?.player;
     graphics.fillEllipse(finite(player?.x) + 4, finite(player?.y) + 13, 66, 20);
     if (state?.boss?.active) graphics.fillEllipse(finite(state.boss.x) + 8, finite(state.boss.y) + 34, 238, 72);
   }
@@ -2929,12 +2967,76 @@ export class BattleView {
     for (; slot < this.damageTexts.length; slot += 1) this.damageTexts[slot].setVisible(false);
   }
 
+  private drawPortraitThreatIndicators(state: any, graphics: Phaser.GameObjects.Graphics, viewportWidth: number, viewportHeight: number) {
+    if (!this.portraitPresentation || state?.phase === "boss") return;
+    const playerX = finite(state?.player?.x);
+    const playerY = finite(state?.player?.y);
+    const view = this.mainCamera.worldView;
+    const centerX = viewportWidth * 0.5;
+    const centerY = viewportHeight * 0.5;
+    const horizontalReach = Math.max(32, centerX - 24);
+    const verticalReach = Math.max(32, centerY - 28);
+    let rendered = 0;
+    for (const enemy of state?.enemies ?? []) {
+      if (rendered >= 5 || enemy?.dead || finite(enemy?.spawnDelay) > 0) continue;
+      const enemyX = finite(enemy?.x);
+      const enemyY = finite(enemy?.y);
+      const visible = enemyX >= view.left && enemyX <= view.right && enemyY >= view.top && enemyY <= view.bottom;
+      if (visible) continue;
+      const deltaX = enemyX - playerX;
+      const deltaY = enemyY - playerY;
+      const distance = Math.hypot(deltaX, deltaY);
+      if (distance < 1) continue;
+      const directionX = deltaX / distance;
+      const directionY = deltaY / distance;
+      const edgeScale = Math.min(
+        horizontalReach / Math.max(0.001, Math.abs(directionX)),
+        verticalReach / Math.max(0.001, Math.abs(directionY)),
+      );
+      const tipX = centerX + directionX * edgeScale;
+      const tipY = centerY + directionY * edgeScale;
+      const baseX = tipX - directionX * 18;
+      const baseY = tipY - directionY * 18;
+      const perpendicularX = -directionY * 8;
+      const perpendicularY = directionX * 8;
+      const color = enemy?.elite || enemy?.isMidBoss ? COLORS.amber : COLORS.red;
+      graphics.fillStyle(COLORS.black, 0.78);
+      graphics.fillTriangle(
+        tipX + directionX * 3,
+        tipY + directionY * 3,
+        baseX + perpendicularX * 1.3,
+        baseY + perpendicularY * 1.3,
+        baseX - perpendicularX * 1.3,
+        baseY - perpendicularY * 1.3,
+      );
+      graphics.fillStyle(color, 0.72 + Math.sin(this.scene.time.now * 0.012 + rendered) * 0.16);
+      graphics.fillTriangle(
+        tipX,
+        tipY,
+        baseX + perpendicularX,
+        baseY + perpendicularY,
+        baseX - perpendicularX,
+        baseY - perpendicularY,
+      );
+      if (enemy?.elite || enemy?.isMidBoss) {
+        graphics.lineStyle(5, COLORS.black, 0.84);
+        graphics.strokeCircle(tipX, tipY, 13);
+        graphics.lineStyle(2, COLORS.amber, 0.96);
+        graphics.strokeCircle(tipX, tipY, 13);
+        graphics.fillStyle(COLORS.amber, 0.96);
+        graphics.fillCircle(tipX, tipY, 3);
+      }
+      rendered += 1;
+    }
+  }
+
   private drawHudOverlay(state: any, time: number) {
     const graphics = this.hudGraphics;
     const viewportWidth = this.hudCamera.width;
     const viewportHeight = this.hudCamera.height;
     graphics.clear();
     const clearTransition = state?.expedition?.clearTransition;
+    this.drawPortraitThreatIndicators(state, graphics, viewportWidth, viewportHeight);
     const clearPhase = String(clearTransition?.phase ?? "");
     if (["warning", "panic", "swap"].includes(clearPhase)) {
       const wallTime = this.scene.time.now / 1000;

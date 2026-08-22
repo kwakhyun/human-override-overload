@@ -18,9 +18,49 @@ import {
   User,
   Wrench,
 } from "@phosphor-icons/react";
+import { useDialogFocusTrap } from "../useDialogFocusTrap.js";
 
 function assetSource(asset, fallback = "") {
   return asset?.src || asset || fallback;
+}
+
+function getRailIndex(container) {
+  const children = Array.from(container?.children || []);
+  if (!children.length) return 0;
+  const center = container.scrollLeft + container.clientWidth * 0.5;
+  let closestIndex = 0;
+  let closestDistance = Number.POSITIVE_INFINITY;
+  for (let index = 0; index < children.length; index += 1) {
+    const child = children[index];
+    const childCenter = child.offsetLeft + child.offsetWidth * 0.5;
+    const distance = Math.abs(childCenter - center);
+    if (distance >= closestDistance) continue;
+    closestDistance = distance;
+    closestIndex = index;
+  }
+  return closestIndex;
+}
+
+function scrollRailTo(ref, index) {
+  const container = ref.current;
+  const target = container?.children?.[index];
+  if (!target) return;
+  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  target.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "nearest", inline: "center" });
+}
+
+function CarouselPosition({ className, label, index, count, onPrevious, onNext }) {
+  if (count < 2) return null;
+  return (
+    <div className={className} aria-label={`${label} ${index + 1}/${count}`}>
+      <button type="button" onClick={onPrevious} disabled={index <= 0} aria-label={`${label} 이전 항목`}><ArrowLeft weight="bold" /></button>
+      <span aria-hidden="true">
+        {Array.from({ length: count }, (_, dotIndex) => <i className={dotIndex === index ? "is-active" : ""} key={dotIndex} />)}
+      </span>
+      <b>{index + 1} / {count}</b>
+      <button type="button" onClick={onNext} disabled={index >= count - 1} aria-label={`${label} 다음 항목`}><ArrowRight weight="bold" /></button>
+    </div>
+  );
 }
 
 const NPC_DISPLAY = Object.freeze({
@@ -406,6 +446,8 @@ function NpcPortrait({ npc, assets }) {
 }
 
 export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, onFacility, onInteraction }) {
+  const dialogRef = useRef(null);
+  useDialogFocusTrap(dialogRef, Boolean(npc));
   const lines = npc?.dialogue || [];
   const line = localizeWorldText(lines[Math.min(lineIndex, Math.max(0, lines.length - 1))] || "통신 기록이 없습니다.");
   const final = lineIndex >= lines.length - 1;
@@ -424,7 +466,7 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
   if (!npc) return null;
   const display = NPC_DISPLAY[npc.id] || { name: npc.name, role: npc.role };
   return (
-    <section className="base-dialogue" role="dialog" aria-modal="true" aria-labelledby="base-dialogue-name">
+    <section className="base-dialogue" role="dialog" aria-modal="true" aria-labelledby="base-dialogue-name" ref={dialogRef} tabIndex={-1}>
       <NpcPortrait npc={npc} assets={assets} />
       <div className="base-dialogue-copy">
         <small>{display.role}</small>
@@ -441,7 +483,7 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
               {npc.interactionLabel || "상호작용"}{npc.interaction === "open-region-select" ? <AirplaneTilt weight="fill" /> : <Crosshair weight="bold" />}
             </button>
           )}
-          <button className="base-dialogue-next" type="button" data-ui-sound={final ? "uiClose" : "click"} onClick={final ? onClose : onAdvance}>
+          <button className="base-dialogue-next" type="button" data-dialog-initial-focus data-ui-sound={final ? "uiClose" : "click"} onClick={final ? onClose : onAdvance}>
             {final ? "대화 종료" : "다음"}<ChatText weight="bold" />
           </button>
           <small className="dialogue-escape-hint"><kbd>SPACE</kbd> {final ? "대화 종료" : "다음 대사"} · <kbd>ESC</kbd> 닫기</small>
@@ -452,13 +494,15 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
 }
 
 export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose }) {
+  const dialogRef = useRef(null);
+  useDialogFocusTrap(dialogRef, Boolean(facility && facility.id !== "augmentation"));
   if (!facility) return null;
   if (facility.id === "augmentation") {
     return <CharacterInformationPanel facility={facility} onPurchase={onPurchase} onClose={onClose} onCharacterChange={facility.onCharacterChange} />;
   }
   const FacilityIcon = facility.id === "research" ? Brain : facility.id === "augmentation" ? Sparkle : Wrench;
   return (
-    <section className={`base-facility-panel facility-${facility.id}${facility.artSource ? " has-key-art" : ""}`} role="dialog" aria-modal="true" aria-labelledby="base-facility-name">
+    <section className={`base-facility-panel facility-${facility.id}${facility.artSource ? " has-key-art" : ""}`} role="dialog" aria-modal="true" aria-labelledby="base-facility-name" ref={dialogRef} tabIndex={-1}>
       {facility.artSource && <img className="facility-key-art" src={assetSource(facility.artSource)} alt="이지스와 미카의 전투 프레임을 강화하는 동기화실" />}
       <header>
         <span><FacilityIcon weight="fill" /></span>
@@ -529,15 +573,25 @@ export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose })
 }
 
 function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterChange }) {
+  const dialogRef = useRef(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [profileId, setProfileId] = useState(facility.selectedCharacterId || facility.characters?.[0]?.id || "aegis");
   const [upgradePulse, setUpgradePulse] = useState(0);
+  const [portraitCompact, setPortraitCompact] = useState(false);
+  const [upgradeFilter, setUpgradeFilter] = useState("all");
+  useDialogFocusTrap(dialogRef, true);
   useEffect(() => {
     setProfileId(facility.selectedCharacterId || facility.characters?.[0]?.id || "aegis");
   }, [facility.selectedCharacterId, facility.characters]);
   const profile = facility.characters?.find((character) => character.id === profileId) || facility.characters?.[0];
-  const totalRank = (facility.upgrades || []).reduce((sum, upgrade) => sum + upgrade.rank, 0);
-  const maxRank = (facility.upgrades || []).reduce((sum, upgrade) => sum + upgrade.maxRank, 0);
+  const upgrades = facility.upgrades || [];
+  const totalRank = upgrades.reduce((sum, upgrade) => sum + upgrade.rank, 0);
+  const maxRank = upgrades.reduce((sum, upgrade) => sum + upgrade.maxRank, 0);
+  const affordableUpgradeCount = upgrades.filter((upgrade) => upgrade.rank < upgrade.maxRank && upgrade.canPurchase).length;
+  const maxedUpgradeCount = upgrades.filter((upgrade) => upgrade.rank >= upgrade.maxRank).length;
+  const visibleUpgrades = upgradeFilter === "available"
+    ? upgrades.filter((upgrade) => upgrade.rank < upgrade.maxRank && upgrade.canPurchase)
+    : upgrades;
   const activeLoadout = profile?.id === "mika"
     ? CHARACTER_ACTIVE_LOADOUTS.mika
     : facility.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
@@ -552,7 +606,7 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
     onPurchase?.(upgradeId);
   };
   return (
-    <section className={`character-information-panel is-${profile?.accent || "cyan"}`} role="dialog" aria-modal="true" aria-labelledby="character-information-name">
+    <section className={`character-information-panel is-${profile?.accent || "cyan"}${portraitCompact ? " is-portrait-compact" : ""}`} role="dialog" aria-modal="true" aria-labelledby="character-information-name" ref={dialogRef} tabIndex={-1}>
       {facility.artSource && <img className="character-info-environment" src={assetSource(facility.artSource)} alt="" aria-hidden="true" />}
       <header className="character-info-topbar">
         <div>
@@ -565,7 +619,17 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
         <button type="button" className="facility-close" data-ui-sound="uiClose" onClick={onClose} aria-label="전투원 정보 닫기"><ArrowLeft weight="bold" /> 기지로 <kbd>ESC</kbd></button>
       </header>
 
-      <figure className="character-art-stage">
+      <button
+        type="button"
+        className="character-portrait-toggle"
+        aria-expanded={!portraitCompact}
+        aria-controls="character-art-stage"
+        onClick={() => setPortraitCompact((compact) => !compact)}
+      >
+        {portraitCompact ? "초상화 펼치기" : "초상화 접고 정보 보기"}
+      </button>
+
+      <figure className="character-art-stage" id="character-art-stage">
         {profile?.portraitSource && <img src={assetSource(profile.portraitSource)} alt={`${profile.koreanName} 전신 일러스트`} />}
         <figcaption>
           <small>{profile?.role}</small>
@@ -578,7 +642,7 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
       <section className="character-data-console">
         <nav className="character-info-tabs" aria-label="전투원 정보 분류">
           <button type="button" className={activeTab === "profile" ? "is-active" : ""} onClick={() => setActiveTab("profile")}><MenuAtlasIcon atlas={facility.menuIconAtlas} icon="operative" fallback={User} /> 기본 정보</button>
-          <button type="button" className={activeTab === "upgrade" ? "is-active" : ""} onClick={() => setActiveTab("upgrade")}><MenuAtlasIcon atlas={facility.menuIconAtlas} icon="augmentation" fallback={Sparkle} /> 영구 강화</button>
+          <button type="button" className={activeTab === "upgrade" ? "is-active" : ""} onClick={() => { setActiveTab("upgrade"); setPortraitCompact(true); }}><MenuAtlasIcon atlas={facility.menuIconAtlas} icon="augmentation" fallback={Sparkle} /> 영구 강화</button>
         </nav>
 
         {activeTab === "profile" ? (
@@ -605,7 +669,7 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
                 })}
               </div>
             </section>
-            <button type="button" className="character-open-upgrades command-ui-button" data-ui-sound="click" onClick={() => setActiveTab("upgrade")}><Sparkle weight="fill" /> 동기화 코어로 영구 강화</button>
+            <button type="button" className="character-open-upgrades command-ui-button" data-ui-sound="click" onClick={() => { setActiveTab("upgrade"); setPortraitCompact(true); }}><Sparkle weight="fill" /> 동기화 코어로 영구 강화</button>
           </div>
         ) : (
           <div className="character-upgrade-content">
@@ -627,8 +691,22 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
                 </div>
               </section>
             )}
+            <section className="character-upgrade-summary" aria-label="강화 진행 요약">
+              <span><small>전체 진행</small><b>{totalRank} / {maxRank}</b></span>
+              <span><small>지금 강화 가능</small><b>{affordableUpgradeCount}</b></span>
+              <span><small>최대 강화</small><b>{maxedUpgradeCount} / {upgrades.length}</b></span>
+              <button
+                type="button"
+                className="character-upgrade-filter"
+                aria-pressed={upgradeFilter === "available"}
+                onClick={() => setUpgradeFilter((filter) => filter === "available" ? "all" : "available")}
+              >
+                <CheckCircle weight={upgradeFilter === "available" ? "fill" : "regular"} />
+                강화 가능만 보기
+              </button>
+            </section>
             <div className="character-upgrade-list">
-              {(facility.upgrades || []).map((upgrade) => {
+              {visibleUpgrades.map((upgrade) => {
                 const maxed = upgrade.rank >= upgrade.maxRank;
                 const disabled = maxed || !upgrade.canPurchase;
                 return (
@@ -640,6 +718,9 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
                   </article>
                 );
               })}
+              {visibleUpgrades.length === 0 && (
+                <p className="character-upgrade-empty" role="status">현재 바로 강화할 수 있는 항목이 없습니다.</p>
+              )}
             </div>
           </div>
         )}
@@ -695,6 +776,7 @@ function MotionPortraitStage({ source, characterId, name, onOpen }) {
 }
 
 export function MikaRecruitScreen({ assets, onComplete }) {
+  const dialogRef = useRef(null);
   const [lineIndex, setLineIndex] = useState(0);
   const line = MIKA_RECRUIT_DIALOGUE[Math.min(lineIndex, MIKA_RECRUIT_DIALOGUE.length - 1)];
   const finalLine = lineIndex >= MIKA_RECRUIT_DIALOGUE.length - 1;
@@ -705,6 +787,7 @@ export function MikaRecruitScreen({ assets, onComplete }) {
   const portraitSource = line.portrait === "rhea"
     ? assets?.controlOfficer
     : line.portrait === "aegis" ? assets?.playerPortrait : assets?.mikaPortrait;
+  useDialogFocusTrap(dialogRef, true);
   useEffect(() => {
     const advance = (event) => {
       if ((event.code !== "Space" && event.code !== "Enter") || event.repeat) return;
@@ -722,7 +805,7 @@ export function MikaRecruitScreen({ assets, onComplete }) {
         <small>오답 엔진 중앙로 · 최초 클리어</small>
         <strong id="mika-recruit-title">신규 전투원 조우</strong>
       </header>
-      <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="mika-recruit-title">
+      <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="mika-recruit-title" ref={dialogRef} tabIndex={-1}>
         <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
           {portraitSource && <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} />}
         </figure>
@@ -742,13 +825,22 @@ export function MikaRecruitScreen({ assets, onComplete }) {
 }
 
 export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onExchangeResources, onCharacterChange, onCloseFacility, onBoard, onDefense, onTitle }) {
+  const facilityRailRef = useRef(null);
+  const [facilityRailIndex, setFacilityRailIndex] = useState(0);
   const background = assetSource(assets?.homeBase);
   const completed = campaign?.completedRegionIds?.length || 0;
   const activeCharacterId = campaign?.loadout?.characterId || "aegis";
   const activeCharacterName = activeCharacterId === "mika" ? "미카" : "이지스";
   const activePortrait = activeCharacterId === "mika" ? assets?.mikaPortrait : assets?.playerPortrait;
+  const modalOpen = Boolean(activeNpc || activeFacility);
+  const moveFacilityRail = useCallback((delta) => {
+    const nextIndex = Math.max(0, Math.min((npcs?.length || 1) - 1, facilityRailIndex + delta));
+    setFacilityRailIndex(nextIndex);
+    scrollRailTo(facilityRailRef, nextIndex);
+  }, [facilityRailIndex, npcs?.length]);
   return (
-    <main className="campaign-shell home-base-screen">
+    <main className={`campaign-shell home-base-screen${modalOpen ? " has-modal" : ""}`}>
+      <div className="home-base-surface" inert={modalOpen} aria-hidden={modalOpen}>
       {background && <img className="campaign-background" src={background} alt="인류 저항군의 이동 기지 헤이븐-09" />}
       <div className="base-vignette" aria-hidden="true" />
       <header className="base-lobby-topbar">
@@ -765,7 +857,12 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
 
       <MotionPortraitStage source={activePortrait} characterId={activeCharacterId} name={activeCharacterName} onOpen={() => onOpenFacility("augmentation")} />
 
-      <nav className="base-lobby-navigation" aria-label="헤이븐-09 시설 메뉴">
+      <nav
+        className="base-lobby-navigation"
+        aria-label="헤이븐-09 시설 메뉴"
+        ref={facilityRailRef}
+        onScroll={(event) => setFacilityRailIndex(getRailIndex(event.currentTarget))}
+      >
         {(npcs || []).map((npc) => {
         const Icon = NPC_ICON[npc.id] || User;
         const display = NPC_DISPLAY[npc.id] || { name: npc.name, role: npc.role };
@@ -783,6 +880,15 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
         );
         })}
       </nav>
+
+      <CarouselPosition
+        className="base-facility-position"
+        label="기지 시설"
+        index={facilityRailIndex}
+        count={npcs?.length || 0}
+        onPrevious={() => moveFacilityRail(-1)}
+        onNext={() => moveFacilityRail(1)}
+      />
 
       <aside className="base-primary-actions">
         <button type="button" className="base-character-action" onClick={() => onOpenFacility("augmentation")}>
@@ -811,6 +917,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
         <button type="button" onClick={onTitle}>저장 슬롯 화면</button>
       </aside>
 
+      </div>
       <NpcDialoguePanel npc={activeNpc} assets={assets} lineIndex={lineIndex} onAdvance={onAdvanceNpc} onClose={onCloseNpc} onFacility={onOpenFacility} onInteraction={onNpcInteraction} />
       <BaseFacilityPanel facility={activeFacility ? { ...activeFacility, onCharacterChange } : null} onPurchase={onPurchaseUpgrade} onExchange={onExchangeResources} onClose={onCloseFacility} />
     </main>
@@ -960,6 +1067,8 @@ export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, on
 }
 
 export function RegionSelectScreen({ regions, clusters = [], campaign, assets, weapons = [], equippedWeaponId = "pulse-rifle", characters = [], selectedCharacterId = "aegis", onCharacterChange, onWeaponChange, onOpenSwordGuide, onSelect, onBack }) {
+  const regionRailRef = useRef(null);
+  const sortieDialogRef = useRef(null);
   const background = assetSource(assets?.regionMap);
   const unlocked = new Set(campaign?.unlockedRegionIds || ["wrong-engine-core"]);
   const completed = new Set(campaign?.completedRegionIds || []);
@@ -968,7 +1077,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
   const [selectedClusterId, setSelectedClusterId] = useState(null);
   const [selectedRegionId, setSelectedRegionId] = useState(null);
   const [hoveredRegionId, setHoveredRegionId] = useState(null);
-  const [confirmedWeaponId, setConfirmedWeaponId] = useState(null);
+  const [regionRailIndex, setRegionRailIndex] = useState(0);
   const availableCharacters = useMemo(
     () => (characters || []).filter((character) => character?.unlocked !== false),
     [characters],
@@ -993,22 +1102,25 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
   const selectedCharacter = availableCharacters.find((character) => character.id === selectedCharacterId) || availableCharacters[0] || null;
   const equippedWeapon = weapons.find((weapon) => weapon.id === equippedWeaponId) || null;
   const equippedWeaponUnlocked = Boolean(equippedWeapon && (!equippedWeapon.unlockRegionId || completed.has(equippedWeapon.unlockRegionId)));
-  const formationConfirmed = Boolean(selectedCharacter && equippedWeaponUnlocked && confirmedWeaponId === equippedWeaponId);
+  const formationConfirmed = Boolean(selectedCharacter && equippedWeaponUnlocked);
+  const repeatOperation = Boolean(selectedRegion && completed.has(selectedRegion.id));
+  useDialogFocusTrap(sortieDialogRef, Boolean(selectedRegion));
 
   useEffect(() => {
-    setConfirmedWeaponId(null);
-  }, [selectedRegionId]);
+    setRegionRailIndex(0);
+  }, [selectedClusterId]);
 
-  useEffect(() => {
-    if (confirmedWeaponId && confirmedWeaponId !== equippedWeaponId) setConfirmedWeaponId(null);
-  }, [confirmedWeaponId, equippedWeaponId]);
+  const moveRegionRail = useCallback((delta) => {
+    const nextIndex = Math.max(0, Math.min(clusterRegions.length - 1, regionRailIndex + delta));
+    setRegionRailIndex(nextIndex);
+    scrollRailTo(regionRailRef, nextIndex);
+  }, [clusterRegions.length, regionRailIndex]);
 
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
       if (selectedRegionId) {
-        setConfirmedWeaponId(null);
         setSelectedRegionId(null);
         return;
       }
@@ -1044,19 +1156,19 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
         />
       )}
       <div className="region-map-shade" aria-hidden="true" />
-      <header className="region-select-heading">
+      <header className="region-select-heading" inert={Boolean(selectedRegion)} aria-hidden={Boolean(selectedRegion)}>
         <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={selectedCluster ? () => setSelectedClusterId(null) : onBack}><ArrowLeft weight="bold" /> {selectedCluster ? "권역 지도" : "기지"} <kbd>ESC</kbd></button>
         <small>나이트자 · 광역 항로 관제</small>
         <h1>{selectedCluster ? <>{selectedCluster.koreanName}<span> · 구역 선택</span></> : "작전 권역 선택"}</h1>
         <p>{selectedCluster ? "이 권역에서 출격할 구역을 선택하세요." : "먼저 출격할 작전 권역을 선택하세요."}</p>
       </header>
       {selectedCluster && !selectedRegion && (
-        <div className="region-mobile-swipe-hint" role="status">
+        <div className="region-mobile-swipe-hint" role="status" aria-hidden={Boolean(selectedRegion)}>
           <ArrowLeft weight="bold" /><span>좌우로 밀어 출격 구역 선택</span><ArrowRight weight="bold" />
         </div>
       )}
       {!selectedCluster ? (
-        <section className="region-world-map" aria-label="작전 권역 월드맵">
+        <section className="region-world-map" aria-label="작전 권역 월드맵" inert={Boolean(selectedRegion)} aria-hidden={Boolean(selectedRegion)}>
           {(clusters || []).map((cluster) => {
             const available = canEnterCluster(cluster);
             const clearedCount = cluster.regionIds.filter((regionId) => completed.has(regionId)).length;
@@ -1083,7 +1195,14 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
           })}
         </section>
       ) : (
-      <section className="region-card-grid" aria-label={`${selectedCluster.koreanName} 출격 구역`}>
+      <section
+        className="region-card-grid"
+        aria-label={`${selectedCluster.koreanName} 출격 구역`}
+        ref={regionRailRef}
+        onScroll={(event) => setRegionRailIndex(getRailIndex(event.currentTarget))}
+        inert={Boolean(selectedRegion)}
+        aria-hidden={Boolean(selectedRegion)}
+      >
         {clusterRegions.map((region) => {
           const isUnlocked = unlocked.has(region.id);
           const isCompleted = completed.has(region.id);
@@ -1097,7 +1216,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
               onMouseLeave={() => setHoveredRegionId(null)}
               onFocus={() => isUnlocked && setHoveredRegionId(region.id)}
               onBlur={() => setHoveredRegionId(null)}
-              onClick={() => { setConfirmedWeaponId(null); setSelectedRegionId(region.id); }}
+              onClick={() => setSelectedRegionId(region.id)}
               key={region.id}
             >
               <span>작전 {String(region.order).padStart(2, "0")}</span>
@@ -1117,10 +1236,20 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
         })}
       </section>
       )}
+      {selectedCluster && !selectedRegion && (
+        <CarouselPosition
+          className="region-card-position"
+          label="출격 구역"
+          index={regionRailIndex}
+          count={clusterRegions.length}
+          onPrevious={() => moveRegionRail(-1)}
+          onNext={() => moveRegionRail(1)}
+        />
+      )}
       {selectedRegion && (
-        <section className="region-sortie-dialog" role="dialog" aria-modal="true" aria-labelledby="region-sortie-title">
+        <section className={`region-sortie-dialog${repeatOperation ? " is-repeat-operation" : ""}`} role="dialog" aria-modal="true" aria-labelledby="region-sortie-title" ref={sortieDialogRef} tabIndex={-1}>
           <header className="region-sortie-command-header">
-            <button type="button" className="region-sortie-close" data-ui-sound="uiClose" onClick={() => { setConfirmedWeaponId(null); setSelectedRegionId(null); }} aria-label="작전 상세 닫기">
+            <button type="button" className="region-sortie-close" data-ui-sound="uiClose" onClick={() => setSelectedRegionId(null)} aria-label="작전 상세 닫기">
               <ArrowLeft weight="bold" /> 구역 목록 <kbd>ESC</kbd>
             </button>
             <div className="region-sortie-kicker"><span>{selectedRegion.chapterLabel}</span><i>{completed.has(selectedRegion.id) ? "해방 완료" : "첫 공략"}</i></div>
@@ -1129,13 +1258,16 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
             <section className="region-sortie-briefing">
               <h2 className="region-mixed-name" id="region-sortie-title"><span>{selectedRegion.koreanName || selectedRegion.name}</span><em>{selectedRegion.name}</em></h2>
               <p>{localizeWorldText(selectedRegion.description)}</p>
-              <dl className="region-sortie-intel">
+              <details className={`region-sortie-repeat-intel${repeatOperation ? "" : " is-first-operation"}`} open={!repeatOperation}>
+                <summary>{repeatOperation ? "작전 정보 다시 보기" : "작전 정보"}</summary>
+                <dl className="region-sortie-intel">
                 <div><dt>주요 적 조합</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.composition)}</dd></div>
                 <div><dt>보스 패턴</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.bossSignatures)}</dd></div>
                 {selectedRegion.midBoss && <div><dt>중간 방어체</dt><dd>{selectedRegion.midBoss.koreanName} · {selectedRegion.midBoss.name}</dd></div>}
                 <div><dt>최종 목표</dt><dd>{BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName} 파괴</dd></div>
                 <div><dt>예상 교전</dt><dd>기계 군단 {selectedRegion.enemyBudget}기</dd></div>
-              </dl>
+                </dl>
+              </details>
               <div className="region-sortie-rewards">
                 <small>첫 승리 회수 자원</small>
                 <span>연구 자료 +{selectedRegion.victoryRewards?.firstClear?.researchData || 0}</span>
@@ -1194,7 +1326,6 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
                       onClick={() => {
                         if (!weaponUnlocked) return;
                         onWeaponChange?.(weapon.id);
-                        setConfirmedWeaponId(weapon.id);
                       }}
                       key={weapon.id}
                     >
@@ -1210,9 +1341,9 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
             </section>
           </div>
           <footer className="region-sortie-command-footer">
-            <span className={formationConfirmed ? "is-confirmed" : "is-pending"}>{formationConfirmed ? <CheckCircle weight="fill" /> : <Crosshair weight="bold" />} {formationConfirmed ? "현재 장비를 확인했습니다. 출격할 수 있습니다." : "위 장비 카드를 눌러 현재 장비를 확인하세요."}</span>
+            <span className={formationConfirmed ? "is-confirmed" : "is-pending"}>{formationConfirmed ? <CheckCircle weight="fill" /> : <Crosshair weight="bold" />} {formationConfirmed ? "현재 편성으로 즉시 출격할 수 있습니다." : "사용 가능한 전투원과 장비를 선택하세요."}</span>
             <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound={formationConfirmed ? "uiConfirm" : "denied"} disabled={!formationConfirmed} onClick={() => formationConfirmed && onSelect(selectedRegion.id)}>
-              <AirplaneTilt weight="fill" /><span><small>{selectedCharacter?.koreanName || "이지스"} 선봉 · {equippedWeapon?.koreanName || "펄스 소총"}</small><strong>{formationConfirmed ? "이 편성으로 출격" : "장비 확인 필요"}</strong></span><ArrowRight weight="bold" />
+              <AirplaneTilt weight="fill" /><span><small>{selectedCharacter?.koreanName || "이지스"} 선봉 · {equippedWeapon?.koreanName || "펄스 소총"}</small><strong>{formationConfirmed ? (repeatOperation ? "즉시 재출격" : "이 편성으로 출격") : "편성 확인 필요"}</strong></span><ArrowRight weight="bold" />
             </button>
           </footer>
         </section>
@@ -1221,7 +1352,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
   );
 }
 
-export function SortieCinematicScreen({ region, videoSource, posterSource, soundEnabled = true, combatLoadProgress = 0, combatReady = false, videoComplete = false, onComplete }) {
+export function SortieCinematicScreen({ region, videoSource, posterSource, soundEnabled = true, combatLoadProgress = 0, combatReady = false, videoComplete = false, repeatSortie = false, onComplete }) {
   const videoRef = useRef(null);
   const completedRef = useRef(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
@@ -1234,10 +1365,15 @@ export function SortieCinematicScreen({ region, videoSource, posterSource, sound
   }, [onComplete]);
 
   const startPlayback = useCallback(() => {
+    if (repeatSortie) {
+      setPlaying(true);
+      complete();
+      return;
+    }
     const video = videoRef.current;
     if (!video) return;
     video.play().then(() => setAutoplayBlocked(false)).catch(() => setAutoplayBlocked(true));
-  }, []);
+  }, [complete, repeatSortie]);
 
   useEffect(() => {
     completedRef.current = false;
@@ -1250,11 +1386,11 @@ export function SortieCinematicScreen({ region, videoSource, posterSource, sound
   }, [startPlayback, videoSource]);
 
   useEffect(() => {
-    if (assetSource(videoSource)) return undefined;
+    if (repeatSortie || assetSource(videoSource)) return undefined;
     setPlaying(true);
     const timer = window.setTimeout(complete, 2400);
     return () => window.clearTimeout(timer);
-  }, [complete, videoSource]);
+  }, [complete, repeatSortie, videoSource]);
 
   const handlePlaying = () => {
     setPlaying(true);
@@ -1265,18 +1401,18 @@ export function SortieCinematicScreen({ region, videoSource, posterSource, sound
   const englishName = region?.name || "SORTIE";
   const loadPercent = Math.round(Math.max(0, Math.min(1, Number(combatLoadProgress) || 0)) * 100);
   const loadStatus = combatReady
-    ? (videoComplete ? "전장 진입 중" : "전장 준비 완료")
-    : `전장 불러오는 중 ${loadPercent}%`;
+    ? (videoComplete ? (repeatSortie ? "전장 재진입 중" : "전장 진입 중") : "전장 준비 완료")
+    : `${repeatSortie ? "재출격 전장 동기화 중" : "전장 불러오는 중"} ${loadPercent}%`;
   return (
-    <main className={`sortie-cinematic sortie-${region?.id || "unknown"}${playing ? " is-playing" : ""}`} aria-label={`${koreanName} 출격 영상`}>
-      {assetSource(videoSource) ? <video
+    <main className={`sortie-cinematic sortie-${region?.id || "unknown"}${playing ? " is-playing" : ""}${repeatSortie ? " is-repeat-sortie" : ""}`} aria-label={`${koreanName} 출격 영상`}>
+      {!repeatSortie && assetSource(videoSource) ? <video
         ref={videoRef}
         className="sortie-cinematic-video"
         src={assetSource(videoSource)}
         poster={assetSource(posterSource)}
         autoPlay
         playsInline
-        preload="auto"
+        preload="metadata"
         muted={!soundEnabled}
         controls={false}
         disablePictureInPicture
@@ -1287,11 +1423,11 @@ export function SortieCinematicScreen({ region, videoSource, posterSource, sound
       /> : <img className="sortie-cinematic-video" src={assetSource(posterSource)} alt={`${koreanName} 출격 항로`} />}
       <div className="sortie-cinematic-grade" aria-hidden="true" />
       <header className="sortie-cinematic-heading">
-        <small>NIGHTJAR // 출격 항로 확보</small>
+        <small>{repeatSortie ? "NIGHTJAR // 재출격 항로 단축" : "NIGHTJAR // 출격 항로 확보"}</small>
         <h1><span>{koreanName}</span><em>{englishName}</em></h1>
       </header>
       <footer className="sortie-flight-status" aria-live="polite">
-        <span><AirplaneTilt weight="fill" /> 나이트자 이륙</span>
+        <span><AirplaneTilt weight="fill" /> {repeatSortie ? "작전 구역 재진입" : "나이트자 이륙"}</span>
         <div className="sortie-flight-progress" aria-hidden="true"><i style={{ width: `${loadPercent}%` }} /></div>
         <b className={combatReady ? "is-ready" : ""}>{playing ? loadStatus : "출격 영상 준비 중"}</b>
       </footer>

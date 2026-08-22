@@ -94,6 +94,7 @@ const PRIORITY_EVENTS = new Set([
 export function createSfxEngine() {
   let context = null;
   let enabled = true;
+  let volume = 0.78;
   let master = null;
   let reverb = null;
   let whiteNoise = null;
@@ -112,7 +113,7 @@ export function createSfxEngine() {
         compressor.attack.value = 0.002;
         compressor.release.value = 0.16;
         master = context.createGain();
-        master.gain.value = 0.78;
+        master.gain.value = volume;
         master.connect(compressor).connect(context.destination);
 
         whiteNoise = context.createBuffer(1, Math.ceil(context.sampleRate * WHITE_NOISE_SECONDS), context.sampleRate);
@@ -467,6 +468,10 @@ export function createSfxEngine() {
     },
     setEnabled(value) {
       enabled = value;
+    },
+    setVolume(value) {
+      volume = Math.max(0, Math.min(1, Number(value) || 0));
+      if (master) master.gain.setTargetAtTime(volume, context?.currentTime || 0, 0.018);
     },
     play,
     dispose() {

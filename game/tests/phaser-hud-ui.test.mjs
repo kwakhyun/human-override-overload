@@ -33,12 +33,13 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   assert.match(app, /const targetAvailable = ability\?\.available !== false/);
   assert.match(app, /remaining > 0\.05 \? `\$\{remaining\.toFixed\(1\)\}초`[\s\S]*!targetAvailable \? "대상 없음"/);
   assert.match(app, /ability\?\.remaining \?\? ability\?\.cooldownRemaining \?\? ability\?\.cooldown/);
-  assert.match(app, /function ExpeditionCombatDock\(\{ hud, onDash, onTag, onActivateAbility, tutorialAbilityId = null, onTutorialTarget \}\)/);
+  assert.match(app, /function ExpeditionCombatDock\(\{ hud, compact = false, onDash, onTag, onActivateAbility, tutorialAbilityId = null, onTutorialTarget \}\)/);
   assert.match(app, /className="vital-bar"[\s\S]*aria-valuenow=\{Math\.ceil\(hp\)\}/);
   assert.match(app, /<button[\s\S]*className=\{`combat-ability-chip[\s\S]*aria-label=\{`\$\{slot\.key\} \$\{slot\.label\}\. \$\{slot\.status\}`\}/);
   assert.match(app, /if \(slot\.action === "dash"\) onDash\?\.\(\);\s*else onActivateAbility\?\.\(slot\.action\)/);
   assert.match(app, /controllerRef\.current\?\.activateAbility\?\.\(slot\)/);
   assert.match(app, /<ExpeditionCombatDock[\s\S]*hud=\{hud\}[\s\S]*onDash=\{activateDash\}[\s\S]*onActivateAbility=\{activateAbility\}[\s\S]*tutorialAbilityId=/);
+  assert.match(app, /!dialogue && !rewardOpen \? \([\s\S]*<ExpeditionCombatDock/);
   assert.match(app, /data-combat-ability=\{slot\.id\}/);
   assert.match(app, /is-tutorial-target/);
   assert.match(app, /className="combat-ability-cooldown"/);
@@ -72,6 +73,9 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   assert.match(app, /controllerRef\.current\?\.setMovement\?\.\(x, y\)/);
   assert.doesNotMatch(app, /function TouchDirectionButton|<TouchDirectionButton/);
   assert.match(mobile, /\.route-minimap \{[\s\S]*top: 51px;[\s\S]*right: 12px;[\s\S]*width: 156px/);
+  const p0Mobile = styles.slice(styles.lastIndexOf("/* P0/P1 legibility and interaction pass"));
+  assert.match(p0Mobile, /\.combat-dock-abilities \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(p0Mobile, /\.combat-ability-copy strong \{[\s\S]*-webkit-line-clamp: 2/);
 });
 
 test("level-up focus starts on the dialog, not option one, until real keyboard navigation", async () => {
@@ -110,7 +114,11 @@ test("Phaser DOM HUD shows authored combat and transit cues without restoring a 
   assert.match(app, /const gates = !bossRoom && Array\.isArray\(minimap\.gates\)[\s\S]*filter\(\(gate\) => gate\?\.active\)\.slice\(0, 8\)/);
   assert.match(app, /gates\.map\(\(gate, index\)[\s\S]*className="route-minimap-transit-gate"[\s\S]*--gate-progress/);
   assert.match(app, /className=\{`route-minimap-enemy/);
+  assert.match(app, /getRegionArenaAsset\(hud\?\.regionId \|\| region\?\.id, "performance"\)/);
+  assert.match(app, /className="route-minimap-backdrop"/);
   assert.match(styles, /\.route-minimap-field\.is-arena \{/);
+  assert.match(styles, /\.route-minimap-field\.is-arena \{[\s\S]*aspect-ratio: 1/);
+  assert.match(styles, /\.route-minimap-backdrop \{/);
   assert.doesNotMatch(styles, /\.route-minimap-next-wave \{/);
   assert.match(styles, /\.route-minimap-transit-gate \{[\s\S]*width: 9px;[\s\S]*rotate\(45deg\)/);
   assert.match(styles, /\.route-minimap-enemy \{/);
@@ -156,12 +164,12 @@ test("Escape pause is guarded from modal states and supports resume, local resta
   assert.match(app, /setRunRevision\(\(revision\) => revision \+ 1\)/);
   assert.match(app, /const pauseCombat = useCallback\(\(\) => \{[\s\S]*pausedRef\.current = true;[\s\S]*controllerRef\.current\?\.setSuspended\(true\)/);
   assert.match(app, /className="expedition-hud-actions"[\s\S]*className="expedition-pause-toggle"[\s\S]*onClick=\{pauseCombat\}/);
-  assert.match(app, /function triggerTouchFeedback\(pattern = 12\)/);
+  assert.match(app, /function triggerTouchFeedback\(pattern = 12, enabled = true\)/);
   assert.match(styles, /\.expedition-hud-actions \{[\s\S]*pointer-events: auto/);
   assert.match(styles, /\.expedition-pause-toggle \{[\s\S]*width: 38px;[\s\S]*height: 38px/);
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.expedition-pause-toggle \{ width: 48px; height: 48px; \}/);
   assert.match(app, /\[characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx\]/);
-  assert.match(app, /<PauseOverlay onResume=\{resumeCombat\} onRestart=\{restartCombat\} onBase=\{onBase \? returnToBase : null\} \/>/);
+  assert.match(app, /<PauseOverlay[\s\S]*onResume=\{resumeCombat\}[\s\S]*onRestart=\{restartCombat\}[\s\S]*onBase=\{onBase \? returnToBase : null\} \/>/);
   assert.match(app, /onBase=\{activeSlot\?\.homeBaseUnlocked \? \(\) => setScreen\("base"\) : null\}/);
 });
 

@@ -49,6 +49,10 @@ export class DefenseScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-THREE", () => this.buildTower("skyfireBattery"));
     this.input.keyboard?.on("keydown-FOUR", () => this.buildTower("aegisBastion"));
     this.input.keyboard?.on("keydown-U", () => this.upgradeTower());
+    this.input.keyboard?.on("keydown-LEFT", () => this.cycleNode(-1));
+    this.input.keyboard?.on("keydown-UP", () => this.cycleNode(-1));
+    this.input.keyboard?.on("keydown-RIGHT", () => this.cycleNode(1));
+    this.input.keyboard?.on("keydown-DOWN", () => this.cycleNode(1));
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.view?.destroy());
     this.publishHud();
     this.callbacks.onReady?.();
@@ -90,6 +94,15 @@ export class DefenseScene extends Phaser.Scene {
     const changed = selectDefenseNode(this.state, nodeId);
     if (changed) this.publishHud();
     return changed;
+  }
+
+  cycleNode(direction = 1) {
+    if (this.suspended || !this.state.nodes.length) return false;
+    const step = direction < 0 ? -1 : 1;
+    const currentIndex = this.state.nodes.findIndex((node: { id: string }) => node.id === this.state.selectedNodeId);
+    const startIndex = currentIndex < 0 ? (step < 0 ? 0 : -1) : currentIndex;
+    const nextIndex = (startIndex + step + this.state.nodes.length) % this.state.nodes.length;
+    return this.selectNode(this.state.nodes[nextIndex].id);
   }
 
   buildTower(towerType: string) {

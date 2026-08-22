@@ -3753,6 +3753,8 @@ kbd {
 }
 
 .route-minimap-field.is-arena {
+  height: auto;
+  aspect-ratio: 1;
   background:
     radial-gradient(circle at 50% 50%, rgba(99, 229, 244, 0.09), transparent 34%),
     linear-gradient(rgba(99, 214, 232, 0.055) 1px, transparent 1px),
@@ -3764,7 +3766,7 @@ kbd {
 .route-minimap-field.is-arena::before,
 .route-minimap-field.is-arena::after {
   position: absolute;
-  z-index: 0;
+  z-index: 2;
   background: linear-gradient(90deg, transparent, rgba(91, 215, 233, 0.16), transparent);
   content: "";
   pointer-events: none;
@@ -3785,9 +3787,34 @@ kbd {
   background: linear-gradient(transparent, rgba(91, 215, 233, 0.16), transparent);
 }
 
+.route-minimap-backdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.74) contrast(1.16) brightness(0.52);
+  opacity: 0.88;
+  user-select: none;
+  pointer-events: none;
+}
+
+.route-minimap-scan {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 40%, rgba(0, 5, 7, 0.46) 100%),
+    repeating-linear-gradient(0deg, rgba(120, 238, 249, 0.025) 0 1px, transparent 1px 5px);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.58);
+  pointer-events: none;
+}
+
 .route-minimap-node,
 .route-minimap-player {
   position: absolute;
+  z-index: 4;
   display: grid;
   width: 17px;
   height: 17px;
@@ -3807,6 +3834,7 @@ kbd {
 
 .route-minimap-enemy {
   position: absolute;
+  z-index: 4;
   width: 4px;
   height: 4px;
   border-radius: 50%;
@@ -3824,7 +3852,7 @@ kbd {
 
 .route-minimap-transit-gate {
   position: absolute;
-  z-index: 2;
+  z-index: 4;
   width: 9px;
   height: 9px;
   border: 1px solid rgba(118, 236, 255, 0.9);
@@ -10652,7 +10680,7 @@ kbd,
   }
 
   .expedition-xp {
-    top: calc(var(--combat-safe-top) + 181px);
+    top: calc(var(--combat-safe-top) + 258px);
     right: var(--combat-safe-right);
     bottom: auto;
     width: 148px;
@@ -10694,7 +10722,7 @@ kbd,
 @media (max-width: 360px) and (orientation: portrait) {
   .route-objective { min-height: 96px; }
   .route-minimap { top: calc(var(--combat-safe-top) + 104px); }
-  .expedition-xp { top: calc(var(--combat-safe-top) + 203px); }
+  .expedition-xp { top: calc(var(--combat-safe-top) + 279px); }
   .campaign-shell .augmentation-core-module { grid-template-columns: 96px minmax(0, 1fr); }
   .campaign-shell .augmentation-core-art { width: 96px; }
 }
@@ -10704,4 +10732,197 @@ kbd,
   .augmentation-orbit,
   .augmentation-core-flare,
   .augmentation-core-module.is-charged { animation: none !important; }
+}
+
+/* P0/P1 legibility and interaction pass ---------------------------------- */
+.region-sortie-repeat-intel { margin-top: 15px; }
+.region-sortie-repeat-intel > summary {
+  min-height: 44px;
+  padding: 11px 13px;
+  border: 1px solid rgba(103, 231, 249, 0.26);
+  color: #9cebf7;
+  background: rgba(11, 42, 49, 0.72);
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.region-sortie-repeat-intel.is-first-operation > summary { display: none; }
+.region-sortie-repeat-intel .region-sortie-intel { margin-top: 8px; }
+.sortie-cinematic.is-repeat-sortie .sortie-cinematic-video { filter: brightness(0.72) saturate(0.86); }
+
+@media (min-width: 901px) and (min-height: 601px) {
+  .home-base-screen .base-identity small,
+  .home-base-screen .base-currency-rail button small,
+  .home-base-screen .base-menu-button small,
+  .home-base-screen .base-primary-actions small { font-size: 11px !important; }
+  .home-base-screen .base-identity strong { font-size: 28px; }
+  .home-base-screen .base-currency-rail button b { font-size: 18px; }
+  .home-base-screen .base-menu-button {
+    min-height: 64px;
+    padding: 9px 12px;
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .home-base-screen .base-menu-button b { font-size: 15px; }
+  .home-base-screen .base-character-action,
+  .home-base-screen .base-sortie-action { min-height: 68px; }
+  .home-base-screen .base-primary-actions b { font-size: 17px; }
+  .home-base-screen .base-sortie-action b { font-size: 20px; }
+  .home-base-screen .base-objective strong { font-size: 17px; }
+  .home-base-screen .base-objective p { font-size: 13px; }
+
+  .expedition-combat-dock {
+    width: min(860px, calc(100% - 360px));
+    min-height: 110px;
+    padding: 10px 12px;
+  }
+  .expedition-combat-dock .vital-cluster span { font-size: 12px; }
+  .expedition-combat-dock .vital-cluster b { font-size: 24px; }
+  .expedition-combat-dock .vital-cluster small { font-size: 10px; }
+  .combat-ability-chip,
+  .combat-tag-switch { min-height: 64px; }
+  .combat-ability-copy strong,
+  .combat-tag-switch strong { font-size: 13px; }
+  .combat-ability-copy > b,
+  .combat-tag-switch small { font-size: 10px; }
+  .route-objective strong { font-size: 18px; }
+  .route-objective span,
+  .route-objective b { font-size: 12px; }
+  .route-minimap { width: 250px; }
+  .route-minimap header span { font-size: 11px; }
+  .route-minimap header b { font-size: 10px; }
+  .expedition-pause-card > small { font-size: 11px; }
+  .expedition-pause-card p { font-size: 14px; }
+  .expedition-pause-card button { min-height: 48px; font-size: 14px; }
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .region-sortie-dialog .region-sortie-command-footer {
+    position: sticky;
+    z-index: 8;
+    bottom: max(0px, env(safe-area-inset-bottom));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(2, 10, 14, 0.96), rgba(2, 8, 12, 0.995));
+    box-shadow: 0 -16px 30px rgba(0, 0, 0, 0.42);
+  }
+  .region-sortie-repeat-intel { margin-top: 10px; }
+  .region-sortie-repeat-intel > summary { min-height: 50px; padding: 13px 14px; font-size: 14px; }
+  .region-sortie-dialog.is-repeat-operation .region-sortie-briefing > p { margin-bottom: 0; }
+
+  .campaign-shell .character-information-panel {
+    overflow-x: hidden;
+    overflow-y: auto;
+    grid-template-rows: 56px minmax(250px, 39dvh) auto auto;
+    overscroll-behavior: contain;
+  }
+  .campaign-shell .character-info-topbar {
+    position: sticky;
+    z-index: 9;
+    top: 0;
+    background: rgba(2, 10, 14, 0.96);
+    backdrop-filter: blur(12px);
+  }
+  .campaign-shell .character-roster-rail {
+    overflow: visible;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .campaign-shell .character-data-console,
+  .campaign-shell .character-profile-content,
+  .campaign-shell .character-upgrade-content {
+    min-height: 0;
+    overflow: visible;
+  }
+  .campaign-shell .character-data-console { align-self: start; }
+
+  .expedition-combat-dock {
+    min-height: 0;
+    padding: 7px 8px 8px;
+    gap: 6px;
+  }
+  .expedition-combat-dock .vital-cluster {
+    min-height: 42px;
+    padding: 1px 4px 7px;
+    gap: 3px 8px;
+  }
+  .expedition-combat-dock .vital-cluster span { font-size: 10px; }
+  .expedition-combat-dock .vital-cluster b { font-size: 20px; }
+  .expedition-combat-dock .vital-cluster small { font-size: 8px; }
+  .combat-dock-abilities {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .combat-ability-chip,
+  .combat-tag-switch {
+    min-height: 58px;
+    padding: 5px 6px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    place-items: center start;
+  }
+  .combat-ability-icon { width: 36px; height: 36px; }
+  .combat-ability-icon > svg { width: 18px; height: 18px; }
+  .combat-ability-copy { display: flex; align-items: flex-start; gap: 2px; }
+  .combat-ability-copy strong {
+    display: -webkit-box;
+    max-width: none;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.1;
+    text-overflow: clip;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .combat-ability-copy > b { display: block; font-size: 9px; }
+  .combat-tag-switch > span { width: 100%; flex-direction: row; justify-content: flex-start; }
+  .combat-tag-switch strong { font-size: 11px; white-space: normal; }
+  .combat-tag-switch small { display: block; font-size: 9px; }
+
+  .defense-command-dock {
+    min-height: 224px;
+    max-height: none;
+    grid-template-rows: 52px minmax(0, 1fr) 58px;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+  .defense-command-dock > header {
+    display: grid;
+    min-height: 52px;
+    padding: 6px 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(112px, 42%);
+    align-items: center;
+    gap: 8px;
+  }
+  .defense-command-dock > header > div { min-width: 0; }
+  .defense-command-dock > header strong {
+    display: block;
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .defense-command-dock > header > span {
+    margin: 0;
+    color: #a6dbe3;
+    font-size: 10px;
+    line-height: 1.25;
+    text-align: right;
+  }
+  .defense-command-dock.has-selected-pad {
+    border-color: rgba(108, 244, 255, 0.86);
+    box-shadow: 0 -12px 38px rgba(0, 0, 0, 0.48), 0 0 24px rgba(75, 225, 247, 0.16), inset 0 1px rgba(255, 255, 255, 0.08);
+  }
+  .defense-command-dock.needs-pad .defense-tower-palette { opacity: 0.72; }
+  .defense-command-dock.needs-pad .defense-tower-palette button { filter: saturate(0.72); }
+}
+
+@media (max-width: 360px) and (orientation: portrait) {
+  .campaign-shell .character-information-panel { grid-template-rows: 54px minmax(230px, 36dvh) auto auto; }
+  .combat-ability-chip,
+  .combat-tag-switch { min-height: 54px; padding-inline: 4px; grid-template-columns: 34px minmax(0, 1fr); gap: 4px; }
+  .combat-ability-icon { width: 33px; height: 33px; }
+  .combat-ability-copy strong,
+  .combat-tag-switch strong { font-size: 10px; }
+  .defense-command-dock { min-height: 232px; grid-template-rows: 60px minmax(0, 1fr) 56px; }
+  .defense-command-dock > header { min-height: 60px; grid-template-columns: 1fr; align-content: center; gap: 2px; }
+  .defense-command-dock > header > span { text-align: left; }
 }

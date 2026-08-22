@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Brain,
   Crosshair,
+  GearSix,
   Lightning,
   MapPin,
   MapTrifold,
@@ -27,8 +28,9 @@ import {
 import { createSfxEngine } from "./audio/sfx.js";
 import { resolveMusicTrack } from "./audio/music.js";
 import { createAgentVoice } from "./audio/agentVoice.js";
-import { DOM_PREVIEW_ASSET_PATHS } from "./game/assets/manifest.ts";
+import { DOM_PREVIEW_ASSET_PATHS, getRegionArenaAsset } from "./game/assets/manifest.ts";
 import { preloadDomImages, scheduleDomImagePreload } from "./game/assets/domPreloader.js";
+import { useDialogFocusTrap } from "./ui/useDialogFocusTrap.js";
 import {
   BASE_NPCS,
   DEFAULT_REGION_ID,
@@ -200,7 +202,7 @@ const SPEAKER_NAME_KO = Object.freeze({
 });
 
 const OBJECTIVE_NAME_KO = Object.freeze({
-  "ELIMINATE CURRENT WAVE": "현재 웨이브 적 섬멸",
+  "ELIMINATE CURRENT WAVE": "웨이브 적 섬멸",
   "ADVANCE TO THE ENGINE": "오답 엔진으로 전진",
   "CROSS THE GLASS DUNE": "유리 사구 횡단",
   "DESCEND INTO THE ARCHIVE": "심해 기록고 진입",
@@ -628,6 +630,8 @@ const COMBAT_DOCK_SLOTS = Object.freeze([
 
 const REWARD_NAMES_KO = Object.freeze({
   haloMatrix: "프리즘 링 동기화",
+  prismTempo: "프리즘 템포",
+  heartGuard: "하트 가드",
   scatter: "산탄 배열",
   rail: "관통 레일탄",
   rocket: "유도 폭발탄",
@@ -657,6 +661,8 @@ const PAUSED_GAMEPLAY_KEYS = new Set(["Space", "KeyW", "KeyA", "KeyS", "KeyD", "
 
 const REWARD_COPY = Object.freeze({
   haloMatrix: "미카의 기본 링 블레이드를 단발 무관통 상태에서 쌍발·고속·다중 관통 공격으로 단계적으로 동기화합니다.",
+  prismTempo: "헤일로 적중 시 미카의 수동 스킬 재사용 대기시간을 줄이고 칼날의 관통력을 강화합니다.",
+  heartGuard: "미카의 수동 스킬이 적중하면 전용 프리즘 방벽을 회복합니다.",
   scatter: "근거리 부채꼴 탄막으로 밀집한 적을 한 번에 찢습니다.",
   rail: "한 줄의 적을 끝까지 관통하는 고출력 레일 탄을 발사합니다.",
   rocket: "밀집 지점에 광역 폭발을 일으키는 유도 로켓을 추가합니다.",
@@ -678,11 +684,14 @@ const REWARD_COPY = Object.freeze({
   airstrike: "긴 재사용 시간 뒤 적 밀집 지역을 연속 폭격합니다. 마스터 시 15발 포화 폭격을 호출합니다.",
   omegaLaser: "조준 방향으로 거대 레이저포를 호출합니다. 마스터 시 광폭 빔이 전장을 관통합니다.",
   drone: "장거리에서 적을 추적하는 기동 편대입니다. 고랭크에서 장갑을 관통합니다.",
-  sentry: "이지스를 따라 이동하며 좌우 한 쌍의 관통탄을 발사합니다. 고랭크에서 고속 관통 편대로 진화합니다.",
+  sentry: "현재 전투원을 따라 이동하며 좌우 한 쌍의 관통탄을 발사합니다. 고랭크에서 고속 관통 편대로 진화합니다.",
   suppressor: "EMP를 반복 방출해 밀집한 적의 속도를 늦추고 피해를 주는 광역 제어 동료입니다.",
 });
 
 const REWARD_ART_KEYS = Object.freeze({
+  haloMatrix: "rewardPulse",
+  prismTempo: "rewardFireRate",
+  heartGuard: "rewardShield",
   scatter: "rewardScatter",
   rail: "rewardRail",
   rocket: "rewardRocket",
@@ -772,7 +781,31 @@ function InitialAssetLoadingScreen({ progress = 0, label = "초기 작전 자료
   );
 }
 
-function triggerTouchFeedback(pattern = 12) {
+const SETTINGS_STORAGE_KEY = "human-override.overload.settings.v1";
+const DEFAULT_GAME_SETTINGS = Object.freeze({
+  musicVolume: 1,
+  sfxVolume: 0.78,
+  voiceVolume: 0.78,
+  hapticsEnabled: true,
+});
+
+function loadGameSettings() {
+  if (typeof window === "undefined") return { ...DEFAULT_GAME_SETTINGS };
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) || "null");
+    return {
+      musicVolume: Math.max(0, Math.min(1, Number(stored?.musicVolume ?? DEFAULT_GAME_SETTINGS.musicVolume))),
+      sfxVolume: Math.max(0, Math.min(1, Number(stored?.sfxVolume ?? DEFAULT_GAME_SETTINGS.sfxVolume))),
+      voiceVolume: Math.max(0, Math.min(1, Number(stored?.voiceVolume ?? DEFAULT_GAME_SETTINGS.voiceVolume))),
+      hapticsEnabled: stored?.hapticsEnabled !== false,
+    };
+  } catch {
+    return { ...DEFAULT_GAME_SETTINGS };
+  }
+}
+
+function triggerTouchFeedback(pattern = 12, enabled = true) {
+  if (!enabled) return;
   if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
   if (typeof window !== "undefined" && !window.matchMedia?.("(pointer: coarse)").matches) return;
   navigator.vibrate(pattern);
@@ -978,7 +1011,7 @@ function resolveCombatDockSlot(hud, slot) {
   };
 }
 
-function ExpeditionCombatDock({ hud, onDash, onTag, onActivateAbility, tutorialAbilityId = null, onTutorialTarget }) {
+function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateAbility, tutorialAbilityId = null, onTutorialTarget }) {
   const player = hud?.player || { hp: 0, maxHp: 1 };
   const hp = Math.max(0, Number(player.hp) || 0);
   const maxHp = Math.max(1, Number(player.maxHp) || 1);
@@ -1002,7 +1035,7 @@ function ExpeditionCombatDock({ hud, onDash, onTag, onActivateAbility, tutorialA
   useEffect(() => () => window.clearTimeout(damageTimerRef.current), []);
 
   return (
-    <aside className={`expedition-combat-dock${tutorialAbilityId ? " is-tutorial-active" : ""}`} aria-label="생존 및 액티브 능력 상태">
+    <aside className={`expedition-combat-dock${compact ? " is-commercial-compact" : ""}${player.reserveCharacterId ? " has-tag" : ""}${tutorialAbilityId ? " is-tutorial-active" : ""}`} aria-label="생존 및 액티브 능력 상태">
       <div className={`vital-cluster${healthRatio <= 0.3 ? " is-critical" : ""}`}>
         {damageWarning && <i className="vital-damage-flash" key={`damage-${damagePulse}`} aria-hidden="true" />}
         <span>{player.characterId === "mika" ? "미카" : "이지스"} 내구도 <small>레벨 {hud?.level || 1}</small></span>
@@ -1036,6 +1069,7 @@ function ExpeditionCombatDock({ hud, onDash, onTag, onActivateAbility, tutorialA
               className={`combat-ability-chip${slot.ready ? " is-ready" : " is-cooling"}${slot.locked && !tutorialTarget ? " is-locked" : ""}${slot.ultimate ? " is-ultimate" : ""}${tutorialTarget ? " is-tutorial-target" : ""}${tutorialDimmed ? " is-tutorial-dimmed" : ""}`}
               onClick={activate}
               aria-label={`${slot.key} ${slot.label}. ${slot.status}`}
+              aria-keyshortcuts={slot.key === "SPACE" ? "Space" : slot.key}
               aria-disabled={(slot.locked && !tutorialTarget) || tutorialDimmed}
               data-combat-ability={slot.id}
               key={slot.id}
@@ -1067,6 +1101,7 @@ function ExpeditionCombatDock({ hud, onDash, onTag, onActivateAbility, tutorialA
             onClick={() => onTag?.()}
             disabled={!player.tagReady}
             aria-label={`T 캐릭터 교대. 대기 ${Math.ceil(player.tagCooldown || 0)}초`}
+            aria-keyshortcuts="T"
           >
             <span><kbd>T</kbd><strong>{player.reserveCharacterId === "mika" ? "미카" : "이지스"}</strong></span>
             <small>{player.tagReady ? "교대 가능" : `${(player.tagCooldown || 0).toFixed(1)}초`}</small>
@@ -1078,7 +1113,9 @@ function ExpeditionCombatDock({ hud, onDash, onTag, onActivateAbility, tutorialA
 }
 
 function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onSkip }) {
+  const modalRef = useRef(null);
   const ability = MANUAL_ABILITY_GUIDE[stepIndex];
+  useDialogFocusTrap(modalRef, Boolean(ability));
 
   useEffect(() => {
     if (!ability) return undefined;
@@ -1104,7 +1141,7 @@ function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onS
   return (
     <div className="combat-tutorial-layer" role="dialog" aria-modal="true" aria-labelledby="combat-tutorial-title">
       <div className="combat-tutorial-scrim" aria-hidden="true" />
-      <section className={`combat-tutorial-card tutorial-${ability.id}`}>
+      <section className={`combat-tutorial-card tutorial-${ability.id}`} ref={modalRef} tabIndex={-1}>
         {portraitSource && <img src={portraitSource} alt="전술 관제관 레아" />}
         <div className="combat-tutorial-copy">
           <small>레아 · 실전 인터페이스 {stepIndex + 1} / {MANUAL_ABILITY_GUIDE.length}</small>
@@ -1122,18 +1159,36 @@ function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onS
   );
 }
 
-function PauseOverlay({ onResume, onRestart, onBase }) {
+function PauseOverlay({ soundEnabled, audioSettings, onToggleSound, onAudioSettingsChange, onResume, onRestart, onBase }) {
+  const modalRef = useRef(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  useDialogFocusTrap(modalRef, true);
+  const updateVolume = (key, event) => onAudioSettingsChange?.({ [key]: Number(event.target.value) / 100 });
   return (
     <div className="expedition-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title">
-      <section className="expedition-pause-card">
-        <small>전투 연결 일시 중지</small>
-        <h2 id="pause-title">일시 정지</h2>
-        <p>전투 시뮬레이션과 입력이 정지되었습니다.</p>
-        <div>
-          <button type="button" className="pause-resume" onClick={onResume} autoFocus><Play weight="fill" /><span>계속</span><kbd>ESC</kbd></button>
-          <button type="button" onClick={onRestart}><ArrowCounterClockwise weight="bold" /><span>처음부터</span></button>
-          <button type="button" onClick={onBase} disabled={!onBase}><MapTrifold weight="fill" /><span>{onBase ? "헤이븐-09 기지로" : "기지 잠김"}</span></button>
-        </div>
+      <section className="expedition-pause-card" ref={modalRef} tabIndex={-1}>
+        <small>{settingsOpen ? "모바일 플레이 환경" : "전투 연결 일시 중지"}</small>
+        <h2 id="pause-title">{settingsOpen ? "게임 설정" : "일시 정지"}</h2>
+        {settingsOpen ? (
+          <div className="pause-settings-panel">
+            <label><span>BGM <b>{Math.round((audioSettings?.musicVolume ?? 1) * 100)}</b></span><input type="range" min="0" max="100" step="5" value={Math.round((audioSettings?.musicVolume ?? 1) * 100)} onChange={(event) => updateVolume("musicVolume", event)} /></label>
+            <label><span>효과음 <b>{Math.round((audioSettings?.sfxVolume ?? 0.78) * 100)}</b></span><input type="range" min="0" max="100" step="5" value={Math.round((audioSettings?.sfxVolume ?? 0.78) * 100)} onChange={(event) => updateVolume("sfxVolume", event)} /></label>
+            <label><span>전술 음성 <b>{Math.round((audioSettings?.voiceVolume ?? 0.78) * 100)}</b></span><input type="range" min="0" max="100" step="5" value={Math.round((audioSettings?.voiceVolume ?? 0.78) * 100)} onChange={(event) => updateVolume("voiceVolume", event)} /></label>
+            <button type="button" className="pause-setting-toggle" aria-pressed={audioSettings?.hapticsEnabled !== false} onClick={() => onAudioSettingsChange?.({ hapticsEnabled: audioSettings?.hapticsEnabled === false })}><Pulse weight="fill" /><span>진동 피드백</span><b>{audioSettings?.hapticsEnabled === false ? "끔" : "켬"}</b></button>
+            <button type="button" className="pause-setting-toggle" aria-pressed={soundEnabled} onClick={onToggleSound}>{soundEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}<span>전체 사운드</span><b>{soundEnabled ? "켬" : "끔"}</b></button>
+            <button type="button" className="pause-settings-back" onClick={() => setSettingsOpen(false)} autoFocus><ArrowLeft weight="bold" /><span>전투 메뉴로</span></button>
+          </div>
+        ) : (
+          <>
+            <p>전투 시뮬레이션과 입력이 정지되었습니다.</p>
+            <div>
+              <button type="button" className="pause-resume" onClick={onResume} autoFocus><Play weight="fill" /><span>계속</span><kbd>ESC</kbd></button>
+              <button type="button" onClick={() => setSettingsOpen(true)}><GearSix weight="fill" /><span>게임 설정</span></button>
+              <button type="button" onClick={onRestart}><ArrowCounterClockwise weight="bold" /><span>처음부터</span></button>
+              <button type="button" onClick={onBase} disabled={!onBase}><MapTrifold weight="fill" /><span>{onBase ? "헤이븐-09 기지로" : "기지 잠김"}</span></button>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
@@ -1847,7 +1902,7 @@ function clampMapRatio(value, fallback = 0.5) {
   return Number.isFinite(number) ? Math.max(0, Math.min(1, number)) : fallback;
 }
 
-function RouteMinimap({ hud }) {
+function RouteMinimap({ hud, region }) {
   const expedition = hud?.expedition;
   if (!expedition) return null;
   const bossRoom = Boolean(hud?.boss || expedition.bossRoom);
@@ -1863,11 +1918,14 @@ function RouteMinimap({ hud }) {
     ? minimap.gates.filter((gate) => gate?.active).slice(0, 8)
     : [];
   const hostiles = Math.max(0, Number(minimap.liveEnemyCount ?? hud?.enemiesRemaining) || 0);
+  const arenaAsset = bossRoom ? null : getRegionArenaAsset(hud?.regionId || region?.id, "performance");
 
   return (
-    <aside className={bossRoom ? "route-minimap is-boss" : "route-minimap is-arena"} aria-label={`전술 미니맵. 작전 진행 ${Math.round(progress * 100)}%, 남은 적 ${hostiles}기`}>
-      <header><MapTrifold weight="fill" /><span>전술 지도</span><b>적 {hostiles}</b></header>
-      <div className="route-minimap-field is-arena" aria-hidden="true">
+    <aside className={bossRoom ? "route-minimap is-boss" : "route-minimap is-arena"} aria-label={`전술 미니맵. 작전 진행 ${Math.round(progress * 100)}%, 현재 출현 적 ${hostiles}기`}>
+      <header><MapTrifold weight="fill" /><span>전술 지도</span><b>출현 {hostiles}</b></header>
+      <div className={bossRoom ? "route-minimap-field is-boss" : "route-minimap-field is-arena"} aria-hidden="true">
+        {arenaAsset?.path && <img className="route-minimap-backdrop" src={arenaAsset.path} alt="" draggable="false" />}
+        {!bossRoom && <i className="route-minimap-scan" />}
         {traces.map((trace) => (
           <span
             className={trace.triggered ? "route-minimap-node is-cleared" : "route-minimap-node"}
@@ -1905,7 +1963,7 @@ function RouteMinimap({ hud }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, characterId, mikaUnlocked = false, soundEnabled, sfx, onToggleSound, onFinish, onBase, showCombatTutorial = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, characterId, mikaUnlocked = false, soundEnabled, audioSettings, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const frameRef = useRef(null);
   const controllerRef = useRef(null);
@@ -1918,17 +1976,20 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   const [combatTutorialStep, setCombatTutorialStep] = useState(-1);
   const [openingNarrativeComplete, setOpeningNarrativeComplete] = useState(!showCombatTutorial);
   const [runRevision, setRunRevision] = useState(0);
+  const [hudDensityPreference, setHudDensityPreference] = useState("auto");
   const airstrikeBannerShownRef = useRef(false);
   const autoBossEntryHandledRef = useRef(false);
   const combatTutorialActiveRef = useRef(false);
   const combatTutorialHandledRef = useRef(false);
   const openingNarrativeBeatRef = useRef(null);
+  const openingScenarioHandledRef = useRef(false);
   const agentVoiceRef = useRef(null);
   const preparingRef = useRef(preparing);
   const onFinishRef = useRef(onFinish);
   const onRuntimeProgressRef = useRef(onRuntimeProgress);
   const onRuntimeReadyRef = useRef(onRuntimeReady);
   const showCombatTutorialRef = useRef(showCombatTutorial);
+  const skipOpeningNarrativeRef = useRef(skipOpeningNarrative);
   const combatBonusesSignature = JSON.stringify(combatBonuses || {});
   const runtimeCombatBonusesRef = useRef({ signature: combatBonusesSignature, value: combatBonuses });
   if (runtimeCombatBonusesRef.current.signature !== combatBonusesSignature) {
@@ -1938,6 +1999,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   onRuntimeProgressRef.current = onRuntimeProgress;
   onRuntimeReadyRef.current = onRuntimeReady;
   showCombatTutorialRef.current = showCombatTutorial;
+  skipOpeningNarrativeRef.current = skipOpeningNarrative;
 
   useEffect(() => {
     const voice = createAgentVoice();
@@ -1951,8 +2013,9 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   useEffect(() => {
     const voice = agentVoiceRef.current;
     voice?.setEnabled(soundEnabled);
+    voice?.setVolume(audioSettings?.voiceVolume ?? DEFAULT_GAME_SETTINGS.voiceVolume);
     if (soundEnabled) voice?.preload();
-  }, [soundEnabled]);
+  }, [audioSettings?.voiceVolume, soundEnabled]);
 
   useEffect(() => {
     preparingRef.current = preparing;
@@ -1965,8 +2028,10 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
 
   useEffect(() => {
     openingNarrativeBeatRef.current = null;
+    openingScenarioHandledRef.current = false;
     setOpeningNarrativeComplete(!showCombatTutorial);
-  }, [runRevision, showCombatTutorial]);
+    setHudDensityPreference("auto");
+  }, [regionId, runRevision, showCombatTutorial]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -2025,12 +2090,21 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
         },
         onEvent: (event) => {
           if (stopped) return;
+          if (event.type === "playerHit") triggerTouchFeedback(event.critical ? [26, 18, 34] : 18, audioSettings?.hapticsEnabled !== false);
           if (event.type === "manualAbilityActivated") agentVoiceRef.current?.play(event.ability);
           const sound = resolveEventSound(event);
           if (sound) sfx.play(sound);
           if (event.type === "scenario" && SCENARIO_SCRIPT[event.beat]) {
-            if (showCombatTutorialRef.current && !openingNarrativeBeatRef.current) openingNarrativeBeatRef.current = event.beat;
-            setDialogue({ beat: event.beat, index: 0, key: `${event.beat}-${event.time}` });
+            const openingScenario = !openingScenarioHandledRef.current;
+            openingScenarioHandledRef.current = true;
+            if (skipOpeningNarrativeRef.current && openingScenario) {
+              window.queueMicrotask(() => {
+                if (!stopped) controller?.continueStory();
+              });
+            } else {
+              if (showCombatTutorialRef.current && !openingNarrativeBeatRef.current) openingNarrativeBeatRef.current = event.beat;
+              setDialogue({ beat: event.beat, index: 0, key: `${event.beat}-${event.time}` });
+            }
           }
           if (event.type === "bossAutoTransition" && !autoBossEntryHandledRef.current) {
             autoBossEntryHandledRef.current = true;
@@ -2079,17 +2153,17 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   }, []);
 
   const activateDash = useCallback(() => {
-    triggerTouchFeedback(12);
+    triggerTouchFeedback(12, audioSettings?.hapticsEnabled !== false);
     controllerRef.current?.dash();
   }, []);
 
   const activateAbility = useCallback((slot) => {
-    triggerTouchFeedback(14);
+    triggerTouchFeedback(14, audioSettings?.hapticsEnabled !== false);
     controllerRef.current?.activateAbility?.(slot);
   }, []);
 
   const activateTag = useCallback(() => {
-    triggerTouchFeedback([10, 20, 10]);
+    triggerTouchFeedback([10, 20, 10], audioSettings?.hapticsEnabled !== false);
     controllerRef.current?.tag?.();
   }, []);
 
@@ -2120,7 +2194,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
 
   const pauseCombat = useCallback(() => {
     if (preparing || pausedRef.current || combatTutorialActiveRef.current || dialogue || rewardOpen) return;
-    triggerTouchFeedback(10);
+    triggerTouchFeedback(10, audioSettings?.hapticsEnabled !== false);
     pausedRef.current = true;
     setPaused(true);
     controllerRef.current?.setSuspended(true);
@@ -2160,7 +2234,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
 
   const resumeCombat = useCallback(() => {
     if (combatTutorialActiveRef.current) return;
-    triggerTouchFeedback(8);
+    triggerTouchFeedback(8, audioSettings?.hapticsEnabled !== false);
     pausedRef.current = false;
     setPaused(false);
     controllerRef.current?.setSuspended(false);
@@ -2227,10 +2301,32 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   const bossSiren = Boolean(hud?.boss?.siren?.active);
   const bombSequence = hud?.boss?.bombSequence;
   const bombArmorActive = Boolean(hud?.boss?.bombArmor?.active);
+  const hudAutoFocusEligible = Number(hud?.time || 0) >= 6 || Number(hud?.kills || 0) > 0;
+  const hudFocusMode = Boolean(
+    !hud?.boss
+    && !dialogue
+    && !rewardOpen
+    && combatTutorialStep < 0
+    && (hudDensityPreference === "compact" || (hudDensityPreference === "auto" && hudAutoFocusEligible)),
+  );
+  const toggleHudFocus = () => {
+    triggerTouchFeedback(8, audioSettings?.hapticsEnabled !== false);
+    setHudDensityPreference(hudFocusMode ? "expanded" : "compact");
+  };
+  const openingProtection = hud?.openingProtection;
+  const combatAccessibilityNotice = playerStunned
+    ? `기체 행동 불가 ${Math.ceil(playerStunTime)}초`
+    : hud?.surge?.warning
+      ? `${hud.surge.warning.label} ${Math.ceil(Number(hud.surge.warning.startsIn || 0))}초 후 시작`
+      : openingProtection?.active
+        ? openingProtection.graceRemaining > 0
+          ? `전투 진입 보호 ${Math.ceil(openingProtection.graceRemaining)}초`
+          : `전투 진입 피해 완화 ${Math.ceil(openingProtection.remaining)}초`
+        : "";
 
   return (
     <main
-      className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}`}
+      className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}${hudFocusMode ? " is-hud-focus" : ""}`}
       aria-hidden={preparing ? "true" : undefined}
       inert={preparing}
     >
@@ -2249,11 +2345,35 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
                 <span>{hud?.boss ? `${hud.boss.stage || 1}단계` : `${hud?.expedition?.bossRoom ? 4 : Math.min(3, (hud?.expedition?.checkpoint || 0) + 1)} / 4 구간`}</span>
                 <strong>{hud?.boss ? localizeBossName(hud.boss.name) : localizeObjective(hud?.expedition?.objective, hud)}</strong>
                 <div><i style={{ width: `${routeRatio * 100}%` }} /></div>
+                {openingProtection?.active && (
+                  <em className="combat-entry-shield" aria-hidden="true">
+                    <ShieldChevron weight="fill" />
+                    {openingProtection.graceRemaining > 0
+                      ? `진입 보호 ${Math.ceil(openingProtection.graceRemaining)}초`
+                      : `피해 완화 ${Math.ceil(openingProtection.remaining)}초`}
+                  </em>
+                )}
                 <b>{hud?.boss ? `체력 ${Math.ceil(hud.boss.hp || 0)}` : `남은 적 ${hud?.enemiesRemaining ?? 0}기`}</b>
               </div>
               <div className="expedition-hud-actions" aria-label="전투 편의 기능">
-                <button type="button" className="expedition-sound" onClick={onToggleSound} aria-label={soundEnabled ? "전체 사운드 끄기" : "전체 사운드 켜기"}>
+                <button
+                  type="button"
+                  className="expedition-sound"
+                  onClick={onToggleSound}
+                  aria-label={soundEnabled ? "전체 사운드 끄기" : "전체 사운드 켜기"}
+                  data-tooltip={soundEnabled ? "사운드 끄기" : "사운드 켜기"}
+                >
                   {soundEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}
+                </button>
+                <button
+                  type="button"
+                  className="expedition-focus-toggle"
+                  onClick={toggleHudFocus}
+                  aria-expanded={!hudFocusMode}
+                  aria-label={hudFocusMode ? "전술 정보 펼치기" : "전투 HUD 간소화"}
+                  data-tooltip={hudFocusMode ? "전술 정보 펼치기" : "전투 HUD 간소화"}
+                >
+                  <MapTrifold weight={hudFocusMode ? "fill" : "regular"} />
                 </button>
                 <button
                   type="button"
@@ -2261,19 +2381,25 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
                   onClick={pauseCombat}
                   disabled={Boolean(dialogue || rewardOpen || combatTutorialStep >= 0)}
                   aria-label="전투 일시정지"
+                  aria-keyshortcuts="Escape"
+                  data-tooltip="일시정지 · ESC"
                 >
                   <Pause weight="fill" />
                 </button>
               </div>
             </div>
-            <ExpeditionCombatDock
-              hud={hud}
-              onDash={activateDash}
-              onTag={activateTag}
-              onActivateAbility={activateAbility}
-              tutorialAbilityId={combatTutorialStep >= 0 ? MANUAL_ABILITY_GUIDE[combatTutorialStep]?.id : null}
-              onTutorialTarget={advanceCombatTutorial}
-            />
+            <p className="visually-hidden" role="status" aria-live="polite" aria-atomic="true">{combatAccessibilityNotice}</p>
+            {!dialogue && !rewardOpen ? (
+              <ExpeditionCombatDock
+                hud={hud}
+                compact={hudFocusMode}
+                onDash={activateDash}
+                onTag={activateTag}
+                onActivateAbility={activateAbility}
+                tutorialAbilityId={combatTutorialStep >= 0 ? MANUAL_ABILITY_GUIDE[combatTutorialStep]?.id : null}
+                onTutorialTarget={advanceCombatTutorial}
+              />
+            ) : null}
             {combatTutorialStep >= 0 && (
               <CombatAbilityTutorialOverlay
                 stepIndex={combatTutorialStep}
@@ -2319,7 +2445,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
             )}
             {(parryActive || bossSiren) && <div className="boss-crisis-screen" aria-hidden="true"><i /><i /></div>}
             {playerStunned && <div className="stun-screen-effect" aria-hidden="true"><i /><i /><i /><i /></div>}
-            {!dialogue && <RouteMinimap hud={hud} />}
+            {!dialogue && <RouteMinimap hud={hud} region={region} />}
             {!dialogue && <RouteClearTransition transition={hud?.expedition?.clearTransition} />}
             <div className="expedition-xp"><i style={{ width: `${xpRatio * 100}%` }} /></div>
             <div className="transient-controls">
@@ -2331,7 +2457,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
               <span className="portrait-touch-hint">빈 곳을 누른 채 드래그해 이동 · 가까운 적 자동 조준</span>
             </div>
             <NarrativePanel dialogue={dialogue} assets={assets} region={region} bossStage={hud?.boss?.stage} characterId={hud?.player?.characterId || characterId} onAdvance={advanceDialogue} />
-            {paused && <PauseOverlay onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}
+            {paused && <PauseOverlay soundEnabled={soundEnabled} audioSettings={audioSettings} onToggleSound={onToggleSound} onAudioSettingsChange={onAudioSettingsChange} onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}
           </div>
       </section>
 
@@ -2355,13 +2481,15 @@ const DEFENSE_GUIDE_STEPS = Object.freeze([
 ]);
 
 function DefenseSpotlightGuide({ stepIndex, portrait, onNext, onBack, onSkip }) {
+  const modalRef = useRef(null);
   const step = DEFENSE_GUIDE_STEPS[stepIndex];
+  useDialogFocusTrap(modalRef, Boolean(step));
   if (!step) return null;
   const final = stepIndex === DEFENSE_GUIDE_STEPS.length - 1;
   return (
     <section className={`defense-guide-overlay is-${step.target}`} data-defense-guide-step={stepIndex + 1} aria-label={`디펜스 첫 도전 가이드 ${stepIndex + 1}단계`}>
       <div className={`defense-guide-spotlight is-${step.target}`} aria-hidden="true" />
-      <article className="defense-guide-card" role="dialog" aria-modal="true" aria-labelledby="defense-guide-title">
+      <article className="defense-guide-card" role="dialog" aria-modal="true" aria-labelledby="defense-guide-title" ref={modalRef} tabIndex={-1}>
         {portrait && <img src={portrait?.src || portrait} alt="전술 관제관 레아" />}
         <div className="defense-guide-copy">
           <small>{step.kicker} · 레아 전술 교신</small>
@@ -2479,8 +2607,16 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
       </header>
 
       <div className={`defense-guide-world-target${guideTarget === "field" ? " is-guide-target" : ""}`} aria-hidden="true" />
-      <aside className="defense-command-dock">
-        <header><div><small>{hud?.selectedTower ? "선택한 타워" : "건설 위치"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>{hud?.selectedTower ? <span>강화 단계 {hud.selectedTower.rank} / 3</span> : <span>패드 선택 → 타워 배치 → 웨이브 시작</span>}</header>
+      <aside className={`defense-command-dock${hud?.selectedNodeId ? " has-selected-pad" : " needs-pad"}`}>
+        <header>
+          <div><small>{hud?.selectedTower ? "선택한 타워" : "건설 위치"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>
+          <div className="defense-pad-stepper" aria-label="건설 패드 순환 선택">
+            <button type="button" onClick={() => controllerRef.current?.cycleNode(-1)} aria-label="이전 건설 패드"><ArrowLeft weight="bold" /></button>
+            <span><kbd>←</kbd><kbd>→</kbd><b>패드 선택</b></span>
+            <button type="button" onClick={() => controllerRef.current?.cycleNode(1)} aria-label="다음 건설 패드"><ArrowRight weight="bold" /></button>
+          </div>
+          {hud?.selectedTower ? <span>강화 단계 {hud.selectedTower.rank} / 3</span> : <span>{hud?.selectedNodeId ? "타워를 선택하세요" : "빛나는 패드를 먼저 선택하세요"}</span>}
+        </header>
         {!hud?.selectedTower ? (
           <div className={`defense-tower-palette${guideTarget === "palette" ? " is-guide-target" : ""}`} data-defense-tower-palette>
             {Object.values(DEFENSE_TOWER_DEFINITIONS).map((tower, index) => {
@@ -2518,12 +2654,14 @@ function DefenseResultScreen({ result, stage, rewards, onRetry, onBase }) {
 function ResultScreen({ result, assets, region, onRestart, onBase, onContinue }) {
   const victory = result?.status === "victory" || result?.phase === "victory";
   const stats = result?.stats || {};
-  const directAccuracy = Number(stats.projectileAccuracy);
-  const projectileShots = Number(stats.projectileShots ?? stats.shots);
-  const projectileHits = Number(stats.projectileHits ?? stats.hits);
-  const accuracy = Number.isFinite(directAccuracy)
-    ? Math.round(directAccuracy <= 1 ? directAccuracy * 100 : directAccuracy)
-    : projectileShots > 0 ? Math.round(projectileHits / projectileShots * 100) : null;
+  const directAttempts = Math.max(0, Number(stats.shots || 0));
+  const directHits = Math.max(0, Number(stats.hits || 0));
+  const suppliedDirectAccuracy = Number(stats.directAccuracy ?? stats.projectileAccuracy);
+  const accuracy = directAttempts > 0
+    ? Number.isFinite(suppliedDirectAccuracy)
+      ? Math.round(suppliedDirectAccuracy <= 1 ? suppliedDirectAccuracy * 100 : suppliedDirectAccuracy)
+      : Math.round(directHits / directAttempts * 100)
+    : null;
   const bossName = region?.bossName || region?.boss?.name || "SOVEREIGN CORE";
   const bossDisplayName = localizeBossName(bossName);
   const campaignRewards = result?.campaignRewards;
@@ -2549,7 +2687,7 @@ function ResultScreen({ result, assets, region, onRestart, onBase, onContinue })
         <div className="result-stats">
           <span><small>처치한 적</small><b>{result?.kills || result?.stats?.kills || 0}</b></span>
           <span><small>최종 레벨</small><b>LV.{result?.level || 1}</b></span>
-          <span><small>투사체 명중률</small><b>{accuracy === null ? "—" : `${accuracy}%`}</b></span>
+          <span><small>직접 공격 명중률</small><b>{accuracy === null ? "공격 없음" : `${accuracy}%`}</b></span>
           <span><small>작전 시간</small><b>{formatTime(result?.time || 0)}</b></span>
         </div>
         {victory && (
@@ -2559,6 +2697,12 @@ function ResultScreen({ result, assets, region, onRestart, onBase, onContinue })
             <span><small>보스 대응</small><b>패링 {stats.bossParries || 0} · 폭탄 {stats.bossBombsDefused || 0}</b><em>실패 {Number(stats.bossParryFailures || 0) + Number(stats.bossBombFailures || 0)}회</em></span>
           </div>
         )}
+        <p className="result-kill-breakdown" aria-label="처치 기여 분석">
+          <span>직접 {stats.directKills || 0}</span>
+          <span>스킬 {stats.abilityKills || 0}</span>
+          <span>지원 {stats.supportKills || 0}</span>
+          <span>자폭·환경 {stats.environmentKills || 0}</span>
+        </p>
         {victory && campaignRewards && (
           <div className="result-rewards" aria-label="이번 작전 획득 자원">
             <small>{campaignRewards.firstClear ? "첫 승리 보상" : "반복 공략 보상"}</small>
@@ -2586,6 +2730,7 @@ export function App() {
   const { assets, error: assetError, progress: assetProgress } = useGameAssets();
   const [screen, setScreen] = useState("intro");
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [audioSettings, setAudioSettings] = useState(loadGameSettings);
   const [result, setResult] = useState(null);
   const [campaign, setCampaign] = useState(() => loadCampaign());
   const [activeSlotId, setActiveSlotId] = useState(null);
@@ -2601,6 +2746,7 @@ export function App() {
   const [transitionLabel, setTransitionLabel] = useState("다음 화면 준비 중");
   const [transitionProgress, setTransitionProgress] = useState(0);
   const [sortieVideoComplete, setSortieVideoComplete] = useState(false);
+  const [repeatSortie, setRepeatSortie] = useState(false);
   const [combatRuntimeReady, setCombatRuntimeReady] = useState(false);
   const [combatLoadProgress, setCombatLoadProgress] = useState(0);
   const bgmRef = useRef(null);
@@ -2780,6 +2926,14 @@ export function App() {
     sfx.dispose();
   }, [sfx]);
   useEffect(() => sfx.setEnabled(soundEnabled), [sfx, soundEnabled]);
+  useEffect(() => sfx.setVolume(audioSettings.sfxVolume), [audioSettings.sfxVolume, sfx]);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(audioSettings));
+    } catch {
+      // Private browsing and storage denial keep settings session-local.
+    }
+  }, [audioSettings]);
   useEffect(() => {
     const bgm = bgmRef.current;
     if (!bgm) return;
@@ -2789,9 +2943,9 @@ export function App() {
       setBgmPlaying(false);
       return;
     }
-    bgm.volume = screen === "intro" ? 0.34 : 0.38;
+    bgm.volume = (screen === "intro" ? 0.34 : 0.38) * audioSettings.musicVolume;
     bgm.play().then(() => setBgmPlaying(true)).catch(() => setBgmPlaying(false));
-  }, [activeBgmPath, screen, soundEnabled]);
+  }, [activeBgmPath, audioSettings.musicVolume, screen, soundEnabled]);
 
   useEffect(() => {
     const handleButtonPointer = (event) => {
@@ -2887,15 +3041,17 @@ export function App() {
   }, [sfx]);
 
   const beginSortieCinematic = useCallback((regionId) => {
+    const isRepeatSortie = Boolean(activeSlot?.completedRegionIds?.includes(regionId));
     setActiveRegionId(regionId);
-    setSortieVideoComplete(false);
+    setRepeatSortie(isRepeatSortie);
+    setSortieVideoComplete(isRepeatSortie);
     setCombatRuntimeReady(false);
     setCombatLoadProgress(0);
     const bgm = bgmRef.current;
     if (bgm) bgm.pause();
     const region = getRegion(regionId) || getRegion(DEFAULT_REGION_ID);
     prepareSurface("출격 영상과 작전 표식 준비 중", [region?.assets?.dom?.thumbnail?.path], () => setScreen("sortie"));
-  }, [prepareSurface]);
+  }, [activeSlot, prepareSurface]);
 
   const enterCombat = useCallback(() => {
     setSortieVideoComplete(true);
@@ -3175,6 +3331,10 @@ export function App() {
     setSoundEnabled(nextEnabled);
   }, [soundEnabled]);
 
+  const updateAudioSettings = useCallback((patch) => {
+    setAudioSettings((current) => ({ ...current, ...patch }));
+  }, []);
+
   let content;
   if (!assets) {
     content = <InitialAssetLoadingScreen progress={assetProgress} />;
@@ -3246,11 +3406,14 @@ export function App() {
           characterId={activeCharacterId}
           mikaUnlocked={mikaUnlocked}
           soundEnabled={soundEnabled}
+          audioSettings={audioSettings}
           sfx={sfx}
           onToggleSound={toggleSound}
+          onAudioSettingsChange={updateAudioSettings}
           onFinish={finish}
           onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null}
           showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass)}
+          skipOpeningNarrative={repeatSortie}
           onCombatTutorialComplete={finishCombatOverlay}
           preparing={screen === "sortie"}
           onRuntimeProgress={handleCombatRuntimeProgress}
@@ -3265,6 +3428,7 @@ export function App() {
             combatLoadProgress={combatLoadProgress}
             combatReady={combatRuntimeReady}
             videoComplete={sortieVideoComplete}
+            repeatSortie={repeatSortie}
             onComplete={enterCombat}
           />
         )}

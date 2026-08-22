@@ -24,6 +24,11 @@ const EXPEDITION_ARENA = Object.freeze({
 });
 const LEGACY_INITIAL_SWARM = 36;
 const EXPEDITION_INITIAL_SWARM = 8;
+const EXPEDITION_ENTRY_GRACE_DURATION = 4.5;
+const EXPEDITION_ENTRY_RAMP_END = 10;
+const EXPEDITION_ENTRY_ADAPTIVE_CAP = 14;
+const EXPEDITION_ENTRY_POST_ENGAGEMENT = 3;
+const EXPEDITION_ENTRY_DAMAGE_FLOOR = 0.35;
 const DEFAULT_ENEMY_BUDGET = 1000;
 const FIRST_REGION_ENEMY_BUDGET = 300;
 const ENEMY_HEALTH_MULTIPLIER = 3;
@@ -314,7 +319,7 @@ const ENEMY_DATA = Object.freeze({
 });
 
 export const REWARD_DEFINITIONS = Object.freeze({
-  haloMatrix: Object.freeze({ id: "haloMatrix", category: "weapon", name: "PRISM HALO MATRIX", description: "Synchronizes MIKA's basic ring blades from a single unpiercing shot into the full twin-blade attack." }),
+  haloMatrix: Object.freeze({ id: "haloMatrix", category: "weapon", name: "PRISM HALO MATRIX", description: "미카의 기본 링 블레이드를 쌍발·고속·다중 관통 공격으로 동기화합니다." }),
   scatter: Object.freeze({ id: "scatter", category: "weapon", name: "SCATTER ARRAY", description: "Fires a close-range five-shot cone." }),
   rail: Object.freeze({ id: "rail", category: "weapon", name: "RAIL LANCE", description: "Pierces an entire lane with a heavy slug." }),
   rocket: Object.freeze({ id: "rocket", category: "weapon", name: "ROCKET POD", description: "Launches a missile with a wide blast radius." }),
@@ -331,8 +336,8 @@ export const REWARD_DEFINITIONS = Object.freeze({
   regen: Object.freeze({ id: "regen", category: "skill", name: "NANO REPAIR", description: "Continuously repairs lost hull integrity." }),
   edgeReach: Object.freeze({ id: "edgeReach", category: "skill", name: "EDGE RESONANCE", description: "Extends every sword arc and strengthens its impact." }),
   edgeGuard: Object.freeze({ id: "edgeGuard", category: "skill", name: "PARRY SHEATH", description: "Successful sword hits recharge a compact combat shield." }),
-  prismTempo: Object.freeze({ id: "prismTempo", category: "skill", name: "PRISM TEMPO", description: "MIKA halo hits accelerate her manual-skill cycle and sharpen each blade." }),
-  heartGuard: Object.freeze({ id: "heartGuard", category: "skill", name: "HEART GUARD", description: "MIKA manual hits restore a character-specific prismatic guard." }),
+  prismTempo: Object.freeze({ id: "prismTempo", category: "skill", name: "PRISM TEMPO", description: "헤일로 적중 시 미카의 수동 스킬 재사용 대기시간을 줄이고 칼날의 관통력을 강화합니다." }),
+  heartGuard: Object.freeze({ id: "heartGuard", category: "skill", name: "HEART GUARD", description: "미카의 수동 스킬이 적중하면 전용 프리즘 방벽을 회복합니다." }),
   chain: Object.freeze({ id: "chain", category: "skill", name: "ARC CASCADE", description: "Periodically chains lightning through packed targets. Rank 3 unlocks a full storm." }),
   nova: Object.freeze({ id: "nova", category: "skill", name: "ZERO-POINT NOVA", description: "Detonates a radial shockwave. Rank 3 repeats it across the visible combat zone." }),
   airstrike: Object.freeze({ id: "airstrike", category: "skill", name: "SKYFALL SUPPORT", description: "Calls a long-cooldown airstrike on dense enemy formations." }),
@@ -392,6 +397,53 @@ function activeArena(state) {
 function activeWorldSize(state) {
   if (state?.expedition) return state.phase === "swarm" ? EXPEDITION_WORLD_SIZE : BOSS_WORLD_SIZE;
   return LEGACY_WORLD_SIZE;
+}
+
+function hasMeaningfulExpeditionInput(input) {
+  if (!input) return false;
+  const movement = Math.hypot(finite(input.moveX), finite(input.moveY)) >= 0.18
+    || input.up || input.down || input.left || input.right;
+  const action = input.dashPressed || input.tagPressed || input.parryPressed
+    || MANUAL_INPUT_FIELDS.some((field) => input[field]);
+  return Boolean(movement || action);
+}
+
+function expeditionEntryRampEnd(state) {
+  if (!state?.expedition) return EXPEDITION_ENTRY_RAMP_END;
+  if (state.expedition.entryEngagedAt === null) return EXPEDITION_ENTRY_ADAPTIVE_CAP;
+  const engagedAt = Number(state.expedition.entryEngagedAt);
+  if (!Number.isFinite(engagedAt)) return EXPEDITION_ENTRY_ADAPTIVE_CAP;
+  return Math.min(
+    EXPEDITION_ENTRY_ADAPTIVE_CAP,
+    Math.max(EXPEDITION_ENTRY_RAMP_END, engagedAt + EXPEDITION_ENTRY_POST_ENGAGEMENT),
+  );
+}
+
+function expeditionEntryDamageScale(state) {
+  const rampEnd = expeditionEntryRampEnd(state);
+  if (!state?.expedition || state.phase !== "swarm" || finite(state.time) >= rampEnd) return 1;
+  const rampDuration = rampEnd - EXPEDITION_ENTRY_GRACE_DURATION;
+  const rampProgress = clamp(
+    (finite(state.time) - EXPEDITION_ENTRY_GRACE_DURATION) / Math.max(0.001, rampDuration),
+    0,
+    1,
+  );
+  return EXPEDITION_ENTRY_DAMAGE_FLOOR + (1 - EXPEDITION_ENTRY_DAMAGE_FLOOR) * rampProgress;
+}
+
+function getOpeningProtection(state) {
+  const rampEnd = expeditionEntryRampEnd(state);
+  const engagedAt = state?.expedition?.entryEngagedAt;
+  const engaged = engagedAt !== null && engagedAt !== undefined && Number.isFinite(Number(engagedAt));
+  const active = Boolean(state?.expedition && state.phase === "swarm" && finite(state.time) < rampEnd);
+  return {
+    active,
+    adaptive: active && rampEnd > EXPEDITION_ENTRY_RAMP_END,
+    engaged,
+    graceRemaining: active ? Math.max(0, EXPEDITION_ENTRY_GRACE_DURATION - finite(state.time)) : 0,
+    remaining: active ? Math.max(0, rampEnd - finite(state.time)) : 0,
+    damageScale: active ? expeditionEntryDamageScale(state) : 1,
+  };
 }
 
 export function getEnemyPressureCap(state) {
@@ -929,6 +981,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       reachedGate: false,
       clearTransition: null,
       entryPrompted: false,
+      entryEngagedAt: null,
       awaitingBossEntry: false,
       autoBossEntry: false,
       bossEntryConfirmed: false,
@@ -1001,6 +1054,10 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     camera: { x: GAME_WIDTH * 0.5, y: GAME_HEIGHT * 0.5, zoom: 1.58 },
     stats: {
       kills: 0,
+      directKills: 0,
+      supportKills: 0,
+      abilityKills: 0,
+      environmentKills: 0,
       // `shots` / `hits` remain the result-screen aggregate, but are now
       // bounded attempts: eligible projectiles plus sword arcs, each counted
       // at most once even when they pierce or strike multiple targets.
@@ -1040,6 +1097,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     lastShotEvent: -10,
   };
   if (state.expedition) {
+    state.player.invulnerability = Math.max(state.player.invulnerability, EXPEDITION_ENTRY_GRACE_DURATION);
     state.player.name = state.player.characterId === "mika" ? "MIKA" : "AEGIS";
     state.player.x = EXPEDITION_WORLD_WIDTH * 0.5;
     state.player.y = EXPEDITION_WORLD_HEIGHT * 0.5;
@@ -1943,6 +2001,10 @@ function killEnemy(state, enemy, source = "weapon") {
     state.killedEnemies += 1;
   }
   state.stats.kills += 1;
+  if (source === "selfDestruct") state.stats.environmentKills += 1;
+  else if (PROJECTILE_DAMAGE_SOURCES.has(source) || MELEE_DAMAGE_SOURCES.has(source)) state.stats.directKills += 1;
+  else if (ALLY_DAMAGE_SOURCES.has(source)) state.stats.supportKills += 1;
+  else state.stats.abilityKills += 1;
   if (state.stats.kills % 25 === 0) {
     state.player.hp = Math.min(state.player.maxHp, state.player.hp + 6 * state.player.healingMultiplier);
     if (state.stats.kills % 100 === 0) {
@@ -2232,6 +2294,8 @@ function damagePlayer(state, amount, source, options = {}) {
     || state.phase === "victory"
     || state.phase === "defeat") return false;
   const rawAmount = amount;
+  const openingDamageScale = expeditionEntryDamageScale(state);
+  amount *= openingDamageScale;
   const wardActive = player.aegisWardTimer > 0;
   const damageReduction = wardActive ? clamp(finite(player.aegisWardDamageReduction), 0, 0.75) : 0;
   amount *= 1 - damageReduction;
@@ -2267,6 +2331,7 @@ function damagePlayer(state, amount, source, options = {}) {
     damage: amount,
     rawDamage: rawAmount,
     reducedBy: rawAmount - amount,
+    openingDamageScale,
     source,
     critical: Boolean(options.critical),
     stun: wardActive ? 0 : options.stun || 0,
@@ -5380,6 +5445,10 @@ export function stepSwarm(state, input, dt) {
   if (state.levelupPending) return state;
   if (state.expedition?.awaitingBossEntry) return state;
 
+  if (state.phase === "swarm" && state.expedition?.entryEngagedAt === null && hasMeaningfulExpeditionInput(input)) {
+    state.expedition.entryEngagedAt = state.time;
+  }
+
   const timeScale = state.phase === "boss" ? updateBossParryWindow(state, input, delta) : 1;
   const worldDelta = delta * timeScale;
 
@@ -5432,12 +5501,10 @@ export function drainSwarmEvents(state) {
   return events;
 }
 
-function normalizeExpeditionMinimapPoint(state, x, y) {
+function normalizeExpeditionMinimapPoint(x, y) {
   return {
-    x: clamp((finite(x) - EXPEDITION_CORRIDOR.left)
-      / Math.max(1, EXPEDITION_CORRIDOR.right - EXPEDITION_CORRIDOR.left), 0, 1),
-    y: clamp((finite(y, EXPEDITION_WORLD_HEIGHT * 0.5) - EXPEDITION_CORRIDOR.top)
-      / Math.max(1, EXPEDITION_CORRIDOR.bottom - EXPEDITION_CORRIDOR.top), 0, 1),
+    x: clamp(finite(x) / EXPEDITION_WORLD_WIDTH, 0, 1),
+    y: clamp(finite(y, EXPEDITION_WORLD_HEIGHT * 0.5) / EXPEDITION_WORLD_HEIGHT, 0, 1),
   };
 }
 
@@ -5457,7 +5524,7 @@ function buildExpeditionMinimap(state) {
     const enemy = state.enemies[index];
     if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
     if (liveIndex === nextSample) {
-      const point = normalizeExpeditionMinimapPoint(state, enemy.x, enemy.y);
+      const point = normalizeExpeditionMinimapPoint(enemy.x, enemy.y);
       enemies.push({ id: enemy.id, type: enemy.type, x: point.x, y: point.y, elite: Boolean(enemy.elite) });
       sampleIndex += 1;
       nextSample = sampleIndex < sampleCount
@@ -5477,7 +5544,7 @@ function buildExpeditionMinimap(state) {
   for (let index = state.spawnPortals.length - 1; index >= 0 && gates.length < MINIMAP_GATE_SAMPLE_CAP; index -= 1) {
     const portal = state.spawnPortals[index];
     if (portal.type !== "spawnGate" || portal.active === false || finite(portal.life) <= 0) continue;
-    const point = normalizeExpeditionMinimapPoint(state, portal.x, portal.y);
+    const point = normalizeExpeditionMinimapPoint(portal.x, portal.y);
     const maxLife = Math.max(0.001, finite(portal.maxLife, portal.life));
     gates.push({
       id: portal.id,
@@ -5493,9 +5560,13 @@ function buildExpeditionMinimap(state) {
 
   const player = state.phase === "boss"
     ? { x: 1, y: 0.5 }
-    : normalizeExpeditionMinimapPoint(state, state.player.x, state.player.y);
+    : normalizeExpeditionMinimapPoint(state.player.x, state.player.y);
   return {
     mode: "arena",
+    mapId: state.regionId,
+    worldWidth: EXPEDITION_WORLD_WIDTH,
+    worldHeight: EXPEDITION_WORLD_HEIGHT,
+    playableInset: EXPEDITION_ARENA.left,
     player,
     enemies,
     gates,
@@ -5565,7 +5636,7 @@ export function getSwarmHud(state) {
         id: trace.id,
         kind: trace.kind,
         distance: trace.distance,
-        ...normalizeExpeditionMinimapPoint(state, trace.x, trace.y),
+        ...normalizeExpeditionMinimapPoint(trace.x, trace.y),
         triggered: trace.triggered,
       })),
       midBoss: state.expedition.midBoss ? {
@@ -5592,6 +5663,7 @@ export function getSwarmHud(state) {
       active: state.activeSurge ? { ...state.activeSurge } : null,
       nextWave: state.surgeIndex < SURGE_WAVES.length ? state.surgeIndex + 1 : null,
     },
+    openingProtection: getOpeningProtection(state),
     kills: state.stats.kills,
     level: player.level,
     xp: player.xp,
