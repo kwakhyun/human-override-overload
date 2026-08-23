@@ -2102,18 +2102,57 @@ Lighting/mood: desperate final night siege, black gunmetal, deep crimson emergen
 Constraints: no characters, no enemies, no towers, no text, no letters, no numbers, no UI, no grid, no painted route lines, no circular build pads, no watermark, no logo, no cropped core. Production background, not concept art.
 ```
 
-### Active mobile menu and augmentation UI art
+### Active simplified command-menu icon atlas v2
+
+- Generated: 2026-08-23
+- Tool: OpenAI built-in ImageGen (`image_gen`)
+- Runtime asset: `public/assets/overload/ui/campaign/command-menu-icons-v2.webp`
+- Preserved ImageGen source: `reference/source-assets/overload/ui/campaign/command-menu-icons-v2.png`
+- Processing: the approved solid-background source was encoded to WebP quality 88. The 68,768-byte runtime atlas is about 73% smaller than the retired v1 runtime atlas. An intermediate transparency edit was rejected because it still contained a baked checker pattern.
+- Usage: the exact 3-by-3 semantic grid supplies research, equipment, navigation, defense, operative, sortie, research-data, equipment-parts, and synchronization-core symbols through CSS background positioning. Each cell uses a bold flat silhouette with restrained cyan, amber, or violet semantics and remains legible across the active 32-52px range.
+- ImageGen outputs:
+  - Initial simplified atlas: `C:/Users/82105/.codex/generated_images/01a020a9-e862-7e91-9f77-b464d020f8d9/exec-0b597817-d4b5-4a2a-9cfe-744bfc7f7b80.png`
+  - Rejected checker-background edit: `C:/Users/82105/.codex/generated_images/01a020a9-e862-7e91-9f77-b464d020f8d9/exec-a6fe1999-f3e3-462d-af7f-d79737290739.png`
+  - Approved uniform-background edit: `C:/Users/82105/.codex/generated_images/01a020a9-e862-7e91-9f77-b464d020f8d9/exec-382c91f3-0eb5-423a-a6ef-dee2eb5ed453.png`
+
+Initial simplified command-menu atlas prompt:
+
+```text
+Use case: logo-brand
+Asset type: production 3x3 raster icon atlas for a dark science-fiction browser game menu, viewed at 32-48 px per icon
+Primary request: Redesign the attached 3x3 atlas into a much simpler, cleaner, more readable icon set while preserving the exact semantic position of every cell.
+Input image: Image 1 is the edit target and semantic-position reference only; replace its over-detailed illustration style.
+Grid mapping, preserve exactly: row 1 = research facility (three connected neural nodes), equipment workshop (single wrench crossing a hex nut), navigation/flight control (three route nodes with one forward arrow); row 2 = base defense (shield with one compact turret), operative management (minimal helmeted bust silhouette), sortie (small delta aircraft with one forward chevron); row 3 = research currency (square data chip with one pulse line), equipment-parts currency (hex bolt plus small gear), synchronization-core currency (simple faceted diamond core with one orbit ring).
+Style/medium: bold flat vector-like glyphs rendered as a clean raster sprite sheet; simple geometric silhouettes; uniform heavy line weight; one symbol per cell; restrained two-tone shading only; strong negative space; no miniature illustration details.
+Color palette: cyan-white for research/navigation, warm amber-white for equipment, muted magenta-white only for synchronization core; dark transparent background.
+Composition: exact 3x3 equal square cells, each icon centered and scaled consistently with generous padding; no dividers, no borders, no cell backgrounds.
+Constraints: genuinely transparent canvas; no text, numbers, letters, characters, faces, scenery, glow clouds, sparks, complex machinery, photorealism, anime rendering, thin circuitry, decorative fragments, watermark, or gradients that reduce small-size readability. Every icon must remain immediately recognizable at 36 px.
+```
+
+Approved uniform-background correction prompt:
+
+```text
+Use case: precise-object-edit
+Asset type: production 3x3 dark-game UI icon atlas
+Primary request: Replace only the checkerboard background with one perfectly uniform solid near-black navy background matching #020B10. Preserve all nine simple icons exactly: same shapes, colors, scale, positions, heavy outlines, spacing, and square canvas.
+Input image: Image 1 is the precise edit target.
+Constraints: change only the background; absolutely no checker pattern, texture, vignette, glow cloud, stars, noise, panel borders, cell dividers, text, or watermark. The background must be a single flat color edge to edge. Keep the exact 3x3 semantic grid.
+```
+
+### Legacy mobile menu atlas and active augmentation UI art
+
+The former 3-by-3 menu atlas below is retained for generation provenance only after replacement by command-menu v2. The augmentation reactor remains active.
 
 - Generated: 2026-08-21
 - Tool: OpenAI built-in ImageGen (`image_gen`)
 - Runtime assets:
-  - `public/assets/overload/ui/campaign/mobile-menu-icons-v1.webp`
+  - Legacy provenance only: `public/assets/overload/ui/campaign/mobile-menu-icons-v1.webp`
   - `public/assets/overload/ui/campaign/augmentation-core-visual-v1.webp`
 - Preserved ImageGen sources:
   - `reference/source-assets/overload/ui/campaign/mobile-menu-icons-v1.png`
   - `reference/source-assets/overload/ui/campaign/augmentation-core-visual-v1.png`
-- Processing: the first generations requested transparency, but the returned RGB files contained a visible checker pattern. A second ImageGen edit replaced that pattern with the exact runtime panel color. The approved sources were encoded to WebP quality 88 for the active mobile runtime; no external asset was introduced.
-- Usage: the 3×3 atlas supplies the HAVEN currency, NPC facility, operative, sortie, and defense menu symbols through CSS background positioning. The reactor appears in the permanent-augmentation console; orbit, idle pulse, purchase-charge, and reduced-motion behavior are authored in CSS and do not alter the generated pixels.
+- Processing: the first generations requested transparency, but the returned RGB files contained a visible checker pattern. A second ImageGen edit replaced that pattern with the exact runtime panel color. The approved sources were encoded to WebP quality 88; no external asset was introduced.
+- Usage: the former 3-by-3 menu atlas is provenance only. The reactor remains active in the permanent-augmentation console; orbit, idle pulse, purchase-charge, and reduced-motion behavior are authored in CSS and do not alter the generated pixels.
 
 Initial mobile menu atlas prompt:
 

@@ -337,7 +337,7 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
   hanaResearchLab: "./assets/overload/campaign/lobby/hana-research-lab.webp",
   ilyaEquipmentWorkshop: "./assets/overload/campaign/lobby/ilya-equipment-workshop.webp",
   characterSyncChamber: "./assets/overload/campaign/lobby/character-sync-chamber.webp",
-  mobileMenuIconAtlas: "./assets/overload/ui/campaign/mobile-menu-icons-v1.webp",
+  mobileMenuIconAtlas: "./assets/overload/ui/campaign/command-menu-icons-v2.webp",
   augmentationCoreVisual: "./assets/overload/ui/campaign/augmentation-core-visual-v1.webp",
   havenNpcPortraits: "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png",
   rheaControlOfficer: "./assets/overload/ui/npcs/rhea-control-officer.png",

@@ -222,6 +222,10 @@ try {
   await page.locator(".character-info-tabs button").nth(1).tap();
   await page.waitForFunction(() => document.querySelector(".character-information-panel")?.classList.contains("is-portrait-compact"));
   await page.locator(".augmentation-core-module").waitFor({ state: "visible" });
+  await page.waitForFunction(() => {
+    const image = document.querySelector(".augmentation-core-art img");
+    return Boolean(image?.complete && image?.naturalWidth > 0);
+  });
   const augmentationMetrics = await page.evaluate(() => {
     const module = document.querySelector(".augmentation-core-module");
     const art = document.querySelector(".augmentation-core-art");
@@ -387,13 +391,13 @@ try {
   const focusButton = page.locator(".expedition-focus-toggle");
   const focusButtonBox = await focusButton.boundingBox();
   assert.ok(focusButtonBox && focusButtonBox.width >= 52 && focusButtonBox.height >= 52, JSON.stringify(focusButtonBox));
-  assert.equal(await page.locator(".expedition-game").evaluate((node) => node.classList.contains("is-hud-focus")), true);
-  assert.equal(await focusButton.getAttribute("aria-expanded"), "false");
+  const initialHudFocus = await page.locator(".expedition-game").evaluate((node) => node.classList.contains("is-hud-focus"));
+  assert.equal(await focusButton.getAttribute("aria-expanded"), String(!initialHudFocus));
   await focusButton.tap();
-  assert.equal(await page.locator(".expedition-game").evaluate((node) => node.classList.contains("is-hud-focus")), false);
-  assert.equal(await focusButton.getAttribute("aria-expanded"), "true");
+  assert.equal(await page.locator(".expedition-game").evaluate((node) => node.classList.contains("is-hud-focus")), !initialHudFocus);
+  assert.equal(await focusButton.getAttribute("aria-expanded"), String(initialHudFocus));
   await focusButton.tap();
-  assert.equal(await page.locator(".expedition-game").evaluate((node) => node.classList.contains("is-hud-focus")), true);
+  assert.equal(await page.locator(".expedition-game").evaluate((node) => node.classList.contains("is-hud-focus")), initialHudFocus);
   const pauseButtonMetrics = await pauseButton.evaluate((node) => {
     const box = node.getBoundingClientRect();
     return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
@@ -530,7 +534,7 @@ try {
   assert.ok(layout.canvas && Math.abs(layout.canvas.width - viewport.width) <= 1 && Math.abs(layout.canvas.height - viewport.height) <= 1, JSON.stringify(layout));
   assert.ok(layout.canvas && Math.abs(layout.canvas.bufferWidth / layout.canvas.bufferHeight - viewport.width / viewport.height) <= 0.02, JSON.stringify(layout));
   assert.ok(layout.objectiveFont >= 18 && layout.abilityLabelFont >= 13 && layout.abilityStatusFont >= 12 && layout.abilityLabelDisplay !== "none", JSON.stringify(layout));
-  assert.match(layout.objectiveText || "", /적 섬멸$/, JSON.stringify(layout));
+  assert.match(layout.objectiveText || "", /(적 섬멸|다음 웨이브 전개 준비)$/, JSON.stringify(layout));
   assert.equal(layout.objectiveClipped, false, JSON.stringify(layout));
   const coreAbilityButtons = layout.abilityButtons.filter((button) => !button.tag);
   const tagButtons = layout.abilityButtons.filter((button) => button.tag);

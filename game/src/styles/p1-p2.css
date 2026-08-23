@@ -8,6 +8,248 @@
   transition: filter 180ms ease, transform 180ms ease;
 }
 
+/* COMMAND SURFACE SYSTEM V2
+   Flat military-console surfaces keep the authored scene dominant while the
+   simplified atlas carries menu meaning at a glance. */
+.campaign-shell {
+  --command-surface: rgba(2, 11, 16, 0.92);
+  --command-surface-raised: rgba(5, 18, 24, 0.95);
+  --command-line: rgba(102, 219, 236, 0.22);
+  --command-line-strong: rgba(112, 232, 248, 0.58);
+  --command-cyan: #78e9f7;
+  --command-muted: #8ba7ad;
+  --command-amber: #e6b96c;
+  --command-magenta: #da78b7;
+}
+
+.campaign-shell .generated-menu-icon {
+  overflow: hidden;
+  border-radius: 4px;
+  background-color: #020b10;
+  box-shadow: inset 0 0 0 1px rgba(118, 229, 245, 0.14);
+  filter: saturate(0.92) contrast(1.04);
+  transition: filter 140ms ease, box-shadow 140ms ease;
+}
+
+.campaign-shell :is(
+  .save-slot-card,
+  .base-menu-button,
+  .base-currency-rail button,
+  .base-primary-actions > button,
+  .facility-upgrade,
+  .character-data-console,
+  .character-info-tabs button,
+  .character-upgrade-row,
+  .region-card,
+  .region-sortie-dialog,
+  .sortie-character-loadout,
+  .sortie-weapon-loadout,
+  .sortie-character-card,
+  .sortie-weapon-card,
+  .defense-stage-card,
+  .ability-guide-console
+) {
+  border-radius: 4px;
+  border-color: var(--command-line);
+  background-color: var(--command-surface);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.campaign-shell :is(
+  .save-slot-card,
+  .base-menu-button,
+  .base-currency-rail button,
+  .base-primary-actions > button,
+  .facility-upgrade,
+  .character-upgrade-row,
+  .region-card,
+  .sortie-character-card,
+  .sortie-weapon-card,
+  .defense-stage-card
+) {
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.campaign-shell :is(.base-menu-button, .base-currency-rail button, .base-primary-actions > button):hover .generated-menu-icon,
+.campaign-shell :is(.base-menu-button, .base-currency-rail button, .base-primary-actions > button):focus-visible .generated-menu-icon {
+  box-shadow: inset 0 0 0 1px rgba(135, 240, 253, 0.42);
+  filter: saturate(1) contrast(1.08) brightness(1.08);
+}
+
+.campaign-shell .save-slot-card::after { opacity: 0.08; }
+.campaign-shell .save-slot-card:hover,
+.campaign-shell .save-slot-card:focus-visible {
+  border-color: var(--command-line-strong);
+  background-color: var(--command-surface-raised);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.34), inset 0 2px 0 var(--command-cyan);
+  transform: translateY(-3px);
+}
+
+.campaign-shell.home-base-screen .base-identity {
+  border: 0;
+  border-left: 3px solid var(--command-cyan);
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, rgba(2, 13, 18, 0.96), rgba(2, 13, 18, 0.76));
+  box-shadow: none;
+  backdrop-filter: blur(5px);
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button {
+  border: 1px solid var(--command-line);
+  background: rgba(2, 12, 17, 0.9);
+  backdrop-filter: blur(5px);
+}
+
+.campaign-shell.home-base-screen .base-menu-button {
+  border: 1px solid var(--command-line);
+  border-left: 2px solid rgba(120, 233, 247, 0.62);
+  background: linear-gradient(90deg, rgba(2, 13, 18, 0.96), rgba(2, 13, 18, 0.8));
+  backdrop-filter: blur(5px);
+}
+
+.campaign-shell.home-base-screen .base-menu-button:hover,
+.campaign-shell.home-base-screen .base-menu-button:focus-visible {
+  border-color: var(--command-line-strong);
+  border-left-color: var(--command-cyan);
+  background: rgba(5, 21, 27, 0.96);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.36);
+  transform: translateX(3px);
+}
+
+.campaign-shell.home-base-screen .base-primary-actions > button {
+  border: 1px solid var(--command-line);
+  background: rgba(2, 12, 17, 0.92);
+  backdrop-filter: blur(5px);
+}
+
+.campaign-shell.home-base-screen .base-primary-actions > .base-sortie-action {
+  border-color: rgba(110, 234, 249, 0.7);
+  background: linear-gradient(105deg, rgba(8, 67, 79, 0.96), rgba(5, 41, 51, 0.96));
+  box-shadow: inset 3px 0 0 var(--command-cyan), 0 12px 28px rgba(0, 0, 0, 0.32);
+}
+
+.campaign-shell.home-base-screen .base-primary-actions > .base-defense-action {
+  border-color: rgba(226, 92, 124, 0.48);
+  background: rgba(42, 9, 20, 0.91);
+}
+
+.campaign-shell .facility-upgrade,
+.campaign-shell .character-upgrade-row {
+  background: linear-gradient(180deg, rgba(5, 20, 26, 0.96), rgba(2, 11, 16, 0.96));
+}
+
+.campaign-shell .facility-upgrade:hover,
+.campaign-shell .facility-upgrade:focus-within,
+.campaign-shell .character-upgrade-row:hover,
+.campaign-shell .character-upgrade-row:focus-within {
+  border-color: var(--command-line-strong);
+  background-color: var(--command-surface-raised);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.34), inset 0 2px 0 rgba(120, 233, 247, 0.45);
+  transform: translateY(-2px);
+}
+
+.campaign-shell .character-data-console,
+.campaign-shell .ability-guide-console,
+.campaign-shell .region-sortie-dialog {
+  border: 1px solid var(--command-line-strong);
+  background: rgba(2, 10, 14, 0.97);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.48);
+}
+
+.campaign-shell .character-info-tabs {
+  border-bottom-color: var(--command-line);
+  background: #020b10;
+}
+
+.campaign-shell .character-info-tabs button {
+  border: 0;
+  border-right: 1px solid var(--command-line);
+  background: #020b10;
+  box-shadow: none;
+}
+
+.campaign-shell .character-info-tabs button.is-active {
+  color: #f1fdff;
+  background: rgba(13, 58, 68, 0.62);
+  box-shadow: inset 0 -3px 0 var(--character-accent, var(--command-cyan));
+}
+
+.campaign-shell .region-card,
+.campaign-shell .defense-stage-card {
+  border-color: var(--command-line);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), inset 0 2px 0 rgba(120, 233, 247, 0.28);
+}
+
+.campaign-shell .region-card::after,
+.campaign-shell .defense-stage-card::after { transition: opacity 150ms ease, transform 150ms ease; }
+
+.campaign-shell .region-card:hover:not(:disabled),
+.campaign-shell .region-card:focus-visible:not(:disabled),
+.campaign-shell .defense-stage-card:hover:not(:disabled),
+.campaign-shell .defense-stage-card:focus-visible:not(:disabled) {
+  border-color: var(--command-line-strong);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.38), inset 0 2px 0 var(--command-cyan);
+  transform: translateY(-3px);
+}
+
+.campaign-shell .region-card:hover:not(:disabled)::after,
+.campaign-shell .region-card:focus-visible:not(:disabled)::after,
+.campaign-shell .defense-stage-card:hover:not(:disabled)::after,
+.campaign-shell .defense-stage-card:focus-visible:not(:disabled)::after {
+  opacity: 0.82;
+  transform: scale(1.015);
+}
+
+.campaign-shell .sortie-character-loadout,
+.campaign-shell .sortie-weapon-loadout {
+  border: 1px solid var(--command-line);
+  background: rgba(3, 14, 19, 0.92);
+}
+
+.campaign-shell .sortie-character-card.is-selected,
+.campaign-shell .sortie-weapon-card.is-equipped {
+  border-color: var(--command-cyan);
+  background-color: rgba(7, 37, 45, 0.96);
+  box-shadow: inset 3px 0 0 var(--command-cyan), 0 10px 22px rgba(0, 0, 0, 0.28);
+}
+
+@media (min-width: 901px) {
+  .campaign-shell.home-base-screen .base-currency-rail .generated-menu-icon { width: 34px; min-width: 34px; }
+  .campaign-shell.home-base-screen .base-menu-button .generated-menu-icon { width: 38px; min-width: 38px; }
+  .campaign-shell.home-base-screen .base-primary-actions .generated-menu-icon { width: 42px; min-width: 42px; }
+}
+
+@media (max-width: 720px) {
+  .campaign-shell.home-base-screen .base-currency-rail .generated-menu-icon { width: 42px; min-width: 42px; }
+  .campaign-shell.home-base-screen .base-menu-button .generated-menu-icon { width: 48px; min-width: 48px; }
+  .campaign-shell.home-base-screen .base-primary-actions .generated-menu-icon { width: 52px; min-width: 52px; }
+  .campaign-shell.home-base-screen .base-currency-rail button {
+    min-height: 64px;
+    padding: 6px;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 5px;
+  }
+  .campaign-shell.home-base-screen .base-currency-rail button small { line-height: 1.1; white-space: normal; word-break: keep-all; }
+  .campaign-shell.home-base-screen .base-menu-button {
+    min-height: 76px;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .campaign-shell.home-base-screen :is(.base-character-action, .base-sortie-action, .base-defense-action) {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 7px;
+  }
+  .campaign-shell.home-base-screen .base-primary-actions span { min-width: 0; }
+  .campaign-shell.home-base-screen .base-primary-actions :is(small, b) { overflow: visible; white-space: normal; word-break: keep-all; }
+  .campaign-shell .character-info-tabs button { min-height: 56px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campaign-shell :is(.generated-menu-icon, .save-slot-card, .base-menu-button, .base-currency-rail button, .base-primary-actions > button, .facility-upgrade, .character-upgrade-row, .region-card, .sortie-character-card, .sortie-weapon-card, .defense-stage-card) {
+    transition: none;
+  }
+}
+
 .home-base-screen.has-modal::after,
 .region-select-screen.has-selection::after {
   position: fixed;
@@ -739,54 +981,93 @@
 }
 
 /* Desktop command surfaces ------------------------------------------------
-   Keep the battlefield center clear while restoring commercial-game text
-   sizes and explicit keyboard affordances on fine-pointer displays. */
+   Keep the battlefield center clear with a flush, low-profile command dock.
+   Keyboard labels sit directly over their ability glyphs so the cards do not
+   need a separate key-caption row. */
 @media (min-width: 901px) {
   .expedition-hud {
-    top: max(20px, env(safe-area-inset-top));
-    right: 24px;
-    left: 24px;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 560px) auto;
-    gap: 20px;
+    top: 0;
+    right: 0;
+    left: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 480px) minmax(0, 1fr);
+    gap: 0;
   }
 
   .route-objective {
-    min-height: 62px;
-    padding: 10px 14px 11px;
+    position: relative;
+    width: min(480px, 100%);
+    min-height: 0;
+    padding: 5px 10px 6px;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 3px 8px;
     align-self: start;
     border: 1px solid rgba(101, 225, 243, 0.18);
+    border-top: 0;
     background: linear-gradient(180deg, rgba(3, 15, 20, 0.84), rgba(1, 7, 10, 0.7));
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28), inset 0 1px rgba(199, 250, 255, 0.04);
     backdrop-filter: blur(8px);
   }
 
-  .route-objective strong { font-size: clamp(18px, 1.45vw, 22px); line-height: 1.2; }
+  .route-objective > span { grid-column: 1; grid-row: 1; }
+  .route-objective > strong {
+    min-width: 0;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: center;
+    overflow: hidden;
+    font-size: 16px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .route-objective > b { grid-column: 4; grid-row: 1; }
+  .route-objective > div {
+    height: 3px;
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
   .route-objective span,
-  .route-objective b { font-size: 12px; }
+  .route-objective b { font-size: 10px; }
+  .route-objective .combat-entry-shield {
+    min-width: 0;
+    padding: 2px 5px;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: start;
+    gap: 3px;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+  .route-objective .combat-entry-shield svg { width: 11px; height: 11px; }
 
   .expedition-hud-actions {
     grid-column: 3;
     flex-direction: row;
     align-items: flex-start;
-    gap: 8px;
+    justify-self: end;
+    margin: 5px 8px 0 0;
+    gap: 6px;
   }
 
   .expedition-hud-actions .expedition-sound,
   .expedition-hud-actions .expedition-focus-toggle,
   .expedition-hud-actions .expedition-pause-toggle {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
   }
 
-  .expedition-hud-actions svg { width: 20px; height: 20px; }
+  .expedition-hud-actions svg { width: 18px; height: 18px; }
 
   .expedition-combat-dock {
-    width: min(860px, calc(100% - 600px));
+    bottom: 0;
+    width: min(680px, calc(100% - 420px));
     min-width: 410px;
-    min-height: 110px;
-    padding: 10px 12px 11px;
-    gap: 8px;
+    min-height: 0;
+    padding: 5px 7px 6px;
+    gap: 4px;
+    border-bottom: 0;
   }
 
   .expedition-combat-dock:not(.has-tag) .combat-dock-abilities {
@@ -797,32 +1078,76 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .expedition-combat-dock .vital-cluster { padding: 2px 4px 9px; }
-  .expedition-combat-dock .vital-cluster span { font-size: 12px; }
-  .expedition-combat-dock .vital-cluster b { font-size: 24px; }
-  .expedition-combat-dock .vital-cluster small { font-size: 10px; }
-  .expedition-combat-dock .vital-bar { height: 10px; }
+  .expedition-combat-dock .vital-cluster {
+    min-height: 24px;
+    padding: 0 2px 4px;
+    grid-template-columns: auto auto minmax(120px, 1fr);
+    gap: 5px 10px;
+  }
+  .expedition-combat-dock .vital-cluster span { font-size: 10px; }
+  .expedition-combat-dock .vital-cluster b { font-size: 18px; }
+  .expedition-combat-dock .vital-cluster small { font-size: 8px; }
+  .expedition-combat-dock .vital-bar {
+    height: 7px;
+    grid-column: 3;
+    grid-row: 1;
+  }
 
   .combat-ability-chip,
-  .combat-tag-switch { min-height: 64px; }
+  .combat-tag-switch { min-height: 50px; }
+  .expedition-combat-dock .combat-ability-chip {
+    min-height: 50px;
+    padding: 3px 6px 3px 4px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 6px;
+  }
+  .expedition-combat-dock .combat-ability-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .expedition-combat-dock .combat-ability-icon > svg {
+    width: 18px;
+    height: 18px;
+    opacity: 0.58;
+  }
+  .expedition-combat-dock .combat-ability-icon kbd {
+    inset: 0;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #ffffff;
+    background: rgba(0, 8, 11, 0.28);
+    box-shadow: inset 0 0 0 1px rgba(143, 241, 255, 0.18);
+    font-size: 15px;
+    letter-spacing: 0;
+    text-shadow: 0 1px 4px #000, 0 0 5px rgba(114, 234, 250, 0.74);
+  }
+  .expedition-combat-dock [data-combat-ability="dash"] .combat-ability-icon kbd {
+    font-size: 9px;
+    letter-spacing: -0.04em;
+  }
   .combat-ability-copy strong,
   .combat-tag-switch strong { font-size: 12px; }
   .combat-ability-copy > b,
   .combat-tag-switch small { font-size: 10px; }
-  .combat-ability-icon kbd,
   .combat-tag-switch kbd { font-size: 9px; }
 
   .route-minimap {
     top: auto;
-    right: 24px;
-    bottom: 54px;
-    width: 250px;
-    padding: 10px 12px 11px;
+    right: 0;
+    bottom: 0;
+    width: 196px;
+    padding: 7px 8px 8px;
+    border-right: 0;
+    border-bottom: 0;
   }
 
   .route-minimap header,
-  .route-minimap header span { font-size: 11px; }
-  .route-minimap header b { font-size: 10px; }
+  .route-minimap header span { font-size: 10px; }
+  .route-minimap header b { font-size: 9px; }
 
   .home-base-screen .base-identity { min-width: 280px; padding: 12px 16px 12px 18px; }
   .home-base-screen .base-identity small { font-size: 11px; }
@@ -907,30 +1232,7 @@
 }
 
 @media (min-width: 901px) and (max-width: 1199px) {
-  .route-minimap { width: 220px; }
-
-  .expedition-combat-dock .combat-ability-chip,
-  .expedition-combat-dock .combat-tag-switch {
-    min-height: 82px;
-    padding: 6px 4px;
-    grid-template-columns: 1fr;
-    grid-template-rows: 38px auto;
-    place-items: center;
-    gap: 4px;
-    text-align: center;
-  }
-  .expedition-combat-dock .combat-ability-icon { width: 38px; height: 38px; }
-  .expedition-combat-dock .combat-ability-copy { align-items: center; gap: 2px; }
-  .expedition-combat-dock .combat-ability-copy strong {
-    display: -webkit-box;
-    overflow: hidden;
-    line-height: 1.15;
-    text-align: center;
-    white-space: normal;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-  .expedition-combat-dock .combat-tag-switch > span { justify-content: center; gap: 5px; }
+  .route-minimap { width: 184px; }
 
   .home-base-screen .base-currency-rail button { min-width: 132px; }
   .home-base-screen .base-primary-actions { width: 318px; }
@@ -1097,4 +1399,176 @@
   .region-sortie-command-footer .region-sortie-launch { min-height: 52px; }
   .region-sortie-launch small { font-size: 10px; }
   .region-sortie-launch strong { font-size: 14px; }
+}
+
+/* Late precedence for the command-surface system. Responsive geometry above
+   remains authoritative; these rules unify finish, state, and icon scale. */
+.campaign-shell .generated-menu-icon {
+  border-radius: 4px;
+  background-color: #020b10;
+  box-shadow: inset 0 0 0 1px rgba(118, 229, 245, 0.14);
+  filter: saturate(0.92) contrast(1.04);
+}
+
+.campaign-shell :is(
+  .save-slot-card,
+  .base-menu-button,
+  .base-currency-rail button,
+  .base-primary-actions > button,
+  .facility-upgrade,
+  .character-data-console,
+  .character-info-tabs button,
+  .character-upgrade-row,
+  .region-card,
+  .region-sortie-dialog,
+  .sortie-character-loadout,
+  .sortie-weapon-loadout,
+  .sortie-character-card,
+  .sortie-weapon-card,
+  .defense-stage-card,
+  .ability-guide-console
+) {
+  border-radius: 4px;
+  border-color: var(--command-line);
+  background-color: var(--command-surface);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.campaign-shell.home-base-screen .base-identity {
+  border: 0;
+  border-left: 3px solid var(--command-cyan);
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(90deg, rgba(2, 13, 18, 0.96), rgba(2, 13, 18, 0.76));
+  box-shadow: none;
+  backdrop-filter: blur(5px);
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button {
+  border: 1px solid var(--command-line);
+  background: rgba(2, 12, 17, 0.9);
+  backdrop-filter: blur(5px);
+}
+
+.campaign-shell.home-base-screen .base-menu-button {
+  border: 1px solid var(--command-line);
+  border-left: 2px solid rgba(120, 233, 247, 0.62);
+  background: linear-gradient(90deg, rgba(2, 13, 18, 0.96), rgba(2, 13, 18, 0.8));
+  backdrop-filter: blur(5px);
+}
+
+.campaign-shell.home-base-screen .base-menu-button:hover,
+.campaign-shell.home-base-screen .base-menu-button:focus-visible {
+  border-color: var(--command-line-strong);
+  border-left-color: var(--command-cyan);
+  background: rgba(5, 21, 27, 0.96);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.36);
+  transform: translateX(3px);
+}
+
+.campaign-shell.home-base-screen .base-primary-actions > button {
+  border: 1px solid var(--command-line);
+  background: rgba(2, 12, 17, 0.92);
+  backdrop-filter: blur(5px);
+}
+
+.campaign-shell.home-base-screen .base-primary-actions > .base-sortie-action {
+  border-color: rgba(110, 234, 249, 0.7);
+  background: linear-gradient(105deg, rgba(8, 67, 79, 0.96), rgba(5, 41, 51, 0.96));
+  box-shadow: inset 3px 0 0 var(--command-cyan), 0 12px 28px rgba(0, 0, 0, 0.32);
+}
+
+.campaign-shell.home-base-screen .base-primary-actions > .base-defense-action {
+  border-color: rgba(226, 92, 124, 0.48);
+  background: rgba(42, 9, 20, 0.91);
+}
+
+.campaign-shell .facility-upgrade,
+.campaign-shell .character-upgrade-row {
+  background: linear-gradient(180deg, rgba(5, 20, 26, 0.96), rgba(2, 11, 16, 0.96));
+}
+
+.campaign-shell .facility-upgrade:hover,
+.campaign-shell .facility-upgrade:focus-within,
+.campaign-shell .character-upgrade-row:hover,
+.campaign-shell .character-upgrade-row:focus-within {
+  border-color: var(--command-line-strong);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.34), inset 0 2px 0 rgba(120, 233, 247, 0.45);
+  transform: translateY(-2px);
+}
+
+.campaign-shell .character-data-console,
+.campaign-shell .ability-guide-console,
+.campaign-shell .region-sortie-dialog {
+  border: 1px solid var(--command-line-strong);
+  background: rgba(2, 10, 14, 0.97);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.48);
+}
+
+.campaign-shell .character-info-tabs { border-bottom-color: var(--command-line); background: #020b10; }
+.campaign-shell .character-info-tabs button { border: 0; border-right: 1px solid var(--command-line); background: #020b10; box-shadow: none; }
+.campaign-shell .character-info-tabs button.is-active {
+  color: #f1fdff;
+  background: rgba(13, 58, 68, 0.62);
+  box-shadow: inset 0 -3px 0 var(--character-accent, var(--command-cyan));
+}
+
+.campaign-shell .region-card,
+.campaign-shell .defense-stage-card {
+  border-color: var(--command-line);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), inset 0 2px 0 rgba(120, 233, 247, 0.28);
+}
+
+.campaign-shell .region-card:hover:not(:disabled),
+.campaign-shell .region-card:focus-visible:not(:disabled),
+.campaign-shell .defense-stage-card:hover:not(:disabled),
+.campaign-shell .defense-stage-card:focus-visible:not(:disabled) {
+  border-color: var(--command-line-strong);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.38), inset 0 2px 0 var(--command-cyan);
+  transform: translateY(-3px);
+}
+
+.campaign-shell .region-card:hover:not(:disabled)::after,
+.campaign-shell .region-card:focus-visible:not(:disabled)::after,
+.campaign-shell .defense-stage-card:hover:not(:disabled)::after,
+.campaign-shell .defense-stage-card:focus-visible:not(:disabled)::after { opacity: 0.82; transform: scale(1.015); }
+
+.campaign-shell .sortie-character-loadout,
+.campaign-shell .sortie-weapon-loadout { border: 1px solid var(--command-line); background: rgba(3, 14, 19, 0.92); }
+
+.campaign-shell .sortie-character-card.is-selected,
+.campaign-shell .sortie-weapon-card.is-equipped {
+  border-color: var(--command-cyan);
+  background-color: rgba(7, 37, 45, 0.96);
+  box-shadow: inset 3px 0 0 var(--command-cyan), 0 10px 22px rgba(0, 0, 0, 0.28);
+}
+
+@media (min-width: 901px) {
+  .campaign-shell.home-base-screen .base-currency-rail .generated-menu-icon { width: 34px; min-width: 34px; }
+  .campaign-shell.home-base-screen .base-menu-button .generated-menu-icon { width: 38px; min-width: 38px; }
+  .campaign-shell.home-base-screen .base-primary-actions .generated-menu-icon { width: 42px; min-width: 42px; }
+}
+
+@media (max-width: 720px) {
+  .campaign-shell.home-base-screen .base-currency-rail .generated-menu-icon { width: 42px; min-width: 42px; }
+  .campaign-shell.home-base-screen .base-menu-button .generated-menu-icon { width: 48px; min-width: 48px; }
+  .campaign-shell.home-base-screen .base-primary-actions .generated-menu-icon { width: 52px; min-width: 52px; }
+  .campaign-shell.home-base-screen .base-currency-rail button {
+    min-height: 64px;
+    padding: 6px;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 5px;
+  }
+  .campaign-shell.home-base-screen .base-currency-rail button small { line-height: 1.1; white-space: normal; word-break: keep-all; }
+  .campaign-shell.home-base-screen .base-menu-button {
+    min-height: 76px;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .campaign-shell.home-base-screen :is(.base-character-action, .base-sortie-action, .base-defense-action) {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 7px;
+  }
+  .campaign-shell.home-base-screen .base-primary-actions span { min-width: 0; }
+  .campaign-shell.home-base-screen .base-primary-actions :is(small, b) { overflow: visible; white-space: normal; word-break: keep-all; }
+  .campaign-shell .character-info-tabs button { min-height: 56px; }
 }

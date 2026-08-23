@@ -136,14 +136,43 @@ test("desktop command UI preserves readable hierarchy, clear keyboard affordance
   assert.match(app, /data-tooltip="일시정지 · ESC"/);
 
   assert.match(responsiveStyles, /@media \(min-width: 901px\) \{/);
-  assert.match(responsiveStyles, /\.expedition-combat-dock \{[\s\S]*width: min\(860px, calc\(100% - 600px\)\);[\s\S]*min-width: 410px/);
+  assert.match(responsiveStyles, /\.expedition-hud \{[\s\S]*top: 0;[\s\S]*minmax\(360px, 480px\)/);
+  assert.match(responsiveStyles, /\.route-objective \{[\s\S]*width: min\(480px, 100%\);[\s\S]*min-height: 0/);
+  assert.match(responsiveStyles, /\.route-objective \.combat-entry-shield \{[\s\S]*grid-column: 2;[\s\S]*font-size: 9px/);
+  assert.match(responsiveStyles, /\.expedition-combat-dock \{[\s\S]*bottom: 0;[\s\S]*width: min\(680px, calc\(100% - 420px\)\);[\s\S]*min-width: 410px/);
   assert.match(responsiveStyles, /\.expedition-combat-dock:not\(\.has-tag\) \.combat-dock-abilities \{[\s\S]*repeat\(5, minmax\(0, 1fr\)\)/);
-  assert.match(responsiveStyles, /\.route-minimap \{[\s\S]*top: auto;[\s\S]*bottom: 54px/);
+  assert.match(responsiveStyles, /\.expedition-combat-dock \.combat-ability-icon kbd \{[\s\S]*inset: 0;[\s\S]*font-size: 15px/);
+  assert.match(responsiveStyles, /\.route-minimap \{[\s\S]*top: auto;[\s\S]*right: 0;[\s\S]*bottom: 0/);
   assert.match(responsiveStyles, /\.home-base-screen \.base-menu-button \{[\s\S]*min-height: 68px/);
-  assert.match(responsiveStyles, /@media \(min-width: 901px\) and \(max-width: 1199px\) \{[\s\S]*\.route-minimap \{ width: 220px; \}/);
+  assert.match(responsiveStyles, /@media \(min-width: 901px\) and \(max-width: 1199px\) \{[\s\S]*\.route-minimap \{ width: 184px; \}/);
   assert.match(responsiveStyles, /\.region-sortie-command-footer \.region-sortie-launch \{ min-height: 62px; \}/);
   assert.match(responsiveStyles, /\.region-select-screen:not\(\.is-cluster-map\) \.region-card > p \{ font-size: 13px/);
   assert.match(responsiveStyles, /@media \(min-width: 901px\) and \(max-height: 700px\)/);
   assert.match(responsiveStyles, /\.region-select-screen:not\(\.is-cluster-map\) \.region-threat em \{ display: none; \}/);
   assert.match(responsiveStyles, /content: attr\(data-tooltip\)/);
+});
+
+test("command menus use the simplified v2 atlas and one restrained visual language", async () => {
+  const [manifest, screens, responsiveStyles, credits] = await Promise.all([
+    read("src/game/assets/manifest.ts"),
+    read("src/ui/campaign/CampaignScreens.jsx"),
+    read("src/styles/p1-p2.css"),
+    read("CREDITS.md"),
+  ]);
+
+  assert.match(manifest, /mobileMenuIconAtlas: "\.\/assets\/overload\/ui\/campaign\/command-menu-icons-v2\.webp"/);
+  for (const icon of [
+    "research", "equipment", "navigation", "defense", "operative",
+    "sortie", "researchCurrency", "equipmentCurrency", "augmentation",
+  ]) {
+    assert.match(screens, new RegExp(`${icon}: Object\\.freeze\\(\\[\\d, \\d\\]\\)`));
+  }
+  assert.match(responsiveStyles, /COMMAND SURFACE SYSTEM V2/);
+  assert.match(responsiveStyles, /--command-surface: rgba\(2, 11, 16, 0\.92\)/);
+  assert.match(responsiveStyles, /\.campaign-shell \.generated-menu-icon \{[\s\S]*border-radius: 4px;[\s\S]*box-shadow: inset 0 0 0 1px/);
+  assert.match(responsiveStyles, /\.campaign-shell :is\([\s\S]*\.save-slot-card,[\s\S]*\.base-menu-button,[\s\S]*\.facility-upgrade,[\s\S]*\.region-card,[\s\S]*\.defense-stage-card/);
+  assert.match(responsiveStyles, /\.campaign-shell \.region-card:hover:not\(:disabled\)[\s\S]*translateY\(-3px\)/);
+  assert.match(credits, /Active simplified command-menu icon atlas v2/);
+  assert.match(credits, /command-menu-icons-v2\.webp/);
+  assert.match(credits, /uniform solid near-black navy background matching #020B10/);
 });
