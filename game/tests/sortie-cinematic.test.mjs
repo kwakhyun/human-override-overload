@@ -56,7 +56,7 @@ test("all three region sortie videos are valid six-second MP4 assets", async () 
   }
 });
 
-test("sortie cinematic warms the selected suspended Phaser runtime in the background", async () => {
+test("sortie cinematic defers Phaser texture upload until video decode completes", async () => {
   const [app, screens, styles, createGame, bootScene, bridge] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
@@ -72,7 +72,7 @@ test("sortie cinematic warms the selected suspended Phaser runtime in the backgr
   assert.match(app, /beginSortieCinematic\(regionId\)/);
   assert.match(app, /screen === "sortie" \|\| screen === "game"/);
   assert.match(app, /className=\{`combat-runtime-shell/);
-  assert.match(app, /<PhaserArenaScreen[\s\S]*?preparing=\{screen === "sortie"\}/);
+  assert.match(app, /\{\(screen === "game" \|\| sortieVideoComplete\) && \([\s\S]*?<PhaserArenaScreen[\s\S]*?preparing=\{screen === "sortie"\}/);
   assert.match(app, /<SortieCinematicScreen[\s\S]*?combatLoadProgress=\{combatLoadProgress\}/);
   assert.match(app, /repeatSortie=\{repeatSortie\}/);
   assert.match(app, /activeSlot\?\.completedRegionIds\?\.includes\(regionId\)/);
@@ -81,6 +81,9 @@ test("sortie cinematic warms the selected suspended Phaser runtime in the backgr
   assert.match(screens, /<video[\s\S]*?poster=\{assetSource\(posterSource\)\}[\s\S]*?autoPlay[\s\S]*?playsInline[\s\S]*?preload="metadata"/);
   assert.match(screens, /전장 불러오는 중/);
   assert.match(screens, /onEnded=\{complete\}/);
+  assert.match(screens, /video\.duration - video\.currentTime <= 0\.08/);
+  assert.match(screens, /onTimeUpdate=\{handleTimeUpdate\}/);
+  assert.match(screens, /window\.setInterval\(\(\) => \{[\s\S]*?videoRef\.current[\s\S]*?complete\(\);[\s\S]*?\}, 100\)/);
   assert.match(
     screens,
     /if \(repeatSortie \|\| assetSource\(videoSource\)\) return undefined;[\s\S]*?window\.setTimeout\(complete, 2400\)/,

@@ -49,7 +49,9 @@ test("region selection previews and confirms a sortie instead of launching on ca
     assert.match(screens, new RegExp(mixedBoss));
   }
   assert.match(screens, /이 편성으로 출격/);
-  assert.match(screens, /className="sortie-weapon-loadout"/);
+  assert.doesNotMatch(screens, /className="sortie-equipment-summary"/);
+  assert.match(screens, /<details className="region-sortie-repeat-intel">/);
+  assert.match(screens, /className="character-weapon-management"/);
   assert.match(screens, /className="sortie-character-loadout"/);
   assert.match(styles, /\.region-sortie-briefing \.region-sortie-intel \{ margin-top: 15px; grid-template-columns: 1fr; \}/);
   assert.match(screens, /전투 중 <kbd>T<\/kbd>로 두 캐릭터를 교대합니다/);
@@ -163,10 +165,11 @@ test("HAVEN lobby uses original character art, icon currencies, edge navigation,
   }
 });
 
-test("MIKA unlocks on the first Wrong Engine victory and receives a one-time recruitment screen", async () => {
-  const [app, characters, screens, styles] = await Promise.all([
+test("MIKA unlocks on the first Wrong Engine victory and keeps independent dialogue", async () => {
+  const [app, characters, dialogueContent, screens, styles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/game/content/characters.js", root), "utf8"),
+    readFile(new URL("src/game/content/characterDialogue.js", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
@@ -175,8 +178,9 @@ test("MIKA unlocks on the first Wrong Engine victory and receives a one-time rec
   assert.match(app, /getCampaignPostVictorySteps\(nextCampaign, slotId\)\[0\]/);
   assert.match(app, /setScreen\("recruit"\)/);
   assert.match(app, /<MikaRecruitScreen/);
-  assert.match(screens, /export const MIKA_RECRUIT_DIALOGUE/);
-  assert.match(screens, /링블레이드 전투원 미카, 지금부터 팀에 합류합니다/);
+  assert.match(screens, /export \{ MIKA_RECRUIT_DIALOGUE \}/);
+  assert.match(dialogueContent, /링블레이드 전투원 미카, 지금부터 팀에 합류합니다/);
+  assert.match(dialogueContent, /CHARACTER_DIALOGUE_OVERRIDES/);
   assert.match(screens, /className="mika-recruit-stage"/);
   assert.match(screens, /mika-recruit-character is-\$\{line\.portrait\}/);
   assert.match(screens, /className="mika-recruit-dialogue-box"/);
@@ -184,7 +188,7 @@ test("MIKA unlocks on the first Wrong Engine victory and receives a one-time rec
   assert.match(screens, /event\.code !== "Space" && event\.code !== "Enter"/);
   assert.match(styles, /\.mika-recruit-character \{[\s\S]*left: 50%;[\s\S]*transform: translateX\(-50%\)/);
   assert.match(styles, /\.mika-recruit-dialogue-box \{[\s\S]*right: max\(28px[\s\S]*left: max\(28px/);
-  assert.match(app, /scriptedLine\.speaker === "AEGIS" && characterId === "mika"/);
+  assert.match(app, /resolveCharacterDialogueLine\(scriptedLine, dialogue\.beat, dialogue\.index, characterId\)/);
   assert.match(app, /MIKA: Object\.freeze\(\{ assetKey: "mikaPortrait"/);
 });
 
@@ -199,10 +203,10 @@ test("Glass Dune unlocks the beam sword and opens its short-cooldown skill guide
   assert.match(app, /consumePostVictoryScene\("sword-guide"\)/);
   assert.match(app, /<AbilityGuideScreen[\s\S]*guideType="sword"/);
   assert.match(screens, /SWORD_ABILITY_GUIDE[\s\S]*cooldown: 6[\s\S]*cooldown: 9[\s\S]*cooldown: 15[\s\S]*cooldown: 45/);
-  assert.match(screens, /disabled=\{!weaponUnlocked\}/);
-  assert.match(screens, /2구역 보스 처치 필요/);
+  assert.match(screens, /disabled=\{!unlocked\}/);
+  assert.match(screens, /유리 사구 최초 클리어 필요/);
   assert.match(styles, /\.ability-guide-sword-demo/);
-  assert.match(styles, /\.sortie-weapon-card\.is-locked/);
+  assert.match(styles, /\.character-weapon-card\.is-locked/);
 });
 
 test("character information presents full-height art, live stats, abilities, and persistent augmentation", async () => {

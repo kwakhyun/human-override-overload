@@ -1,10 +1,8 @@
 import { AGENT_VOICE_PATHS } from "../game/assets/manifest.ts";
 
 const ABILITY_PRIORITY = Object.freeze({
-  empPulse: 1,
-  aegisWard: 2,
-  stratosRun: 3,
-  helixTempest: 4,
+  stratosRun: 1,
+  helixTempest: 2,
 });
 
 function stopAudio(audio) {
@@ -71,10 +69,9 @@ export function createAgentVoice({
       if (!enabled || disposed) return false;
       const priority = ABILITY_PRIORITY[ability] || 0;
       const audio = ensureClip(ability);
-      // Only the ultimate owns an interruption lock. Q/E/F are short tactical
-      // acknowledgements and a fresh key press must answer immediately rather
-      // than waiting behind another ordinary callout.
-      if (!audio || !priority || (current && currentPriority === 4 && priority < 4)) return false;
+      // Only the ultimate owns an interruption lock. F remains a short tactical
+      // acknowledgement; Q/E intentionally have no voice clips.
+      if (!audio || !priority || (current && currentPriority === 2 && priority < 2)) return false;
       stop();
       current = audio;
       currentPriority = priority;

@@ -54,14 +54,15 @@ test("ILYA weapon upgrades calculate independent rifle and sword bonuses", () =>
   assert.equal(bonuses.swordDamageMultiplier, 1.36);
 });
 
-test("region confirmation exposes the sword unlock gate and its dedicated guide", async () => {
+test("character management owns weapon selection and region confirmation stays concise", async () => {
   const campaignScreens = await readFile(new URL("../src/ui/campaign/CampaignScreens.jsx", import.meta.url), "utf8");
   const app = await readFile(new URL("../src/App.jsx", import.meta.url), "utf8");
-  assert.match(campaignScreens, /className="sortie-weapon-loadout"/);
-  assert.match(campaignScreens, /무기에 따라 레벨업 증강 트리가 변경됩니다/);
+  assert.match(campaignScreens, /className="character-weapon-management"/);
+  assert.match(campaignScreens, /출격 전 이 화면에서 장비와 증강 트리를 확정합니다/);
   assert.match(campaignScreens, /onWeaponChange\?\.\(weapon\.id\)/);
-  assert.match(campaignScreens, /2구역 보스 처치 필요/);
-  assert.match(campaignScreens, /빔 소드 스킬 가이드/);
+  assert.match(campaignScreens, /유리 사구 최초 클리어 필요/);
+  assert.doesNotMatch(campaignScreens, /className="sortie-equipment-summary"/);
+  assert.doesNotMatch(campaignScreens, /className="sortie-weapon-loadout"/);
   assert.match(campaignScreens, /guideType === "sword" \? SWORD_ABILITY_GUIDE/);
   assert.match(app, /setCampaignMainWeapon\(campaign, activeSlotId, mainWeaponId\)/);
   assert.match(app, /mainWeaponId=\{activeMainWeaponId\}/);

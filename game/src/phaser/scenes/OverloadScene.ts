@@ -348,9 +348,9 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     if (!this.state.levelupPending && !this.narrativePaused && !isTerminal(this.state)) {
       this.accumulator = Math.min(this.accumulator + frameMs / 1000, FIXED_STEP * 5);
       let steps = 0;
+      this.view.syncCamera(this.state);
+      this.updateAimFromPointer();
       while (this.accumulator >= FIXED_STEP && steps < 5) {
-        this.view.syncCamera(this.state);
-        this.updateAimFromPointer();
         stepSwarm(this.state, this.gameInput, FIXED_STEP);
         this.view.syncCamera(this.state);
         this.updateAimFromPointer();

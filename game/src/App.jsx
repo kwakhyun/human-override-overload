@@ -47,6 +47,7 @@ import {
 } from "./game/content/baseUpgrades.js";
 import { getMainWeapons, isMainWeaponUnlocked } from "./game/content/weapons.js";
 import { getPlayableCharacters, isCharacterUnlocked } from "./game/content/characters.js";
+import { resolveCharacterDialogueLine } from "./game/content/characterDialogue.js";
 import { DEFENSE_TOWER_DEFINITIONS, getDefenseStage, getDefenseStages } from "./defense/content.js";
 import {
   canLaunchRegion,
@@ -115,7 +116,6 @@ const BASE_DOM_ASSET_KEYS = Object.freeze([
   "hanaResearchLab",
   "ilyaEquipmentWorkshop",
   "characterSyncChamber",
-  "mobileMenuIconAtlas",
   "augmentationCoreVisual",
   "havenNpcPortraits",
   "rheaControlOfficer",
@@ -1122,7 +1122,7 @@ function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onS
     const handleTutorialKey = (event) => {
       if (event.repeat) return;
       const expected = event.code === `Key${ability.key}`;
-      const next = expected || event.code === "Enter" || event.code === "ArrowRight";
+      const next = expected || event.code === "Space" || event.code === "Enter" || event.code === "ArrowRight";
       const back = event.code === "ArrowLeft";
       const skip = event.code === "Escape";
       if (!next && !back && !skip && !PAUSED_GAMEPLAY_KEYS.has(event.code)) return;
@@ -1147,7 +1147,7 @@ function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onS
           <small>레아 · 실전 인터페이스 {stepIndex + 1} / {MANUAL_ABILITY_GUIDE.length}</small>
           <header><kbd>{ability.key}</kbd><div><h2 id="combat-tutorial-title">{ability.koreanName}</h2><span>{ability.name}</span></div></header>
           <p>{ability.overlayPrompt}</p>
-          <b>아래에서 빛나는 실제 {ability.key} 버튼을 직접 눌러도 다음 단계로 이동합니다.</b>
+          <b><kbd>SPACE</kbd> 또는 빛나는 실제 {ability.key} 버튼으로 다음 설명을 확인합니다.</b>
         </div>
         <footer>
           <button type="button" onClick={onBack} disabled={stepIndex === 0}><ArrowLeft weight="bold" /> 이전</button>
@@ -1854,9 +1854,7 @@ function NarrativePanel({ dialogue, assets, region, bossStage, characterId = "ae
   const lines = SCENARIO_SCRIPT[dialogue.beat] || [];
   const scriptedLine = lines[dialogue.index];
   if (!scriptedLine) return null;
-  const line = scriptedLine.speaker === "AEGIS" && characterId === "mika"
-    ? { ...scriptedLine, speaker: "MIKA", text: scriptedLine.mikaText || scriptedLine.text }
-    : scriptedLine;
+  const line = resolveCharacterDialogueLine(scriptedLine, dialogue.beat, dialogue.index, characterId);
   const finalLine = dialogue.index >= lines.length - 1;
   const portrait = resolveNarrativePortrait(line.speaker, assets, region, bossStage);
   const hostile = Boolean(NARRATIVE_BOSS_REGION_IDS[line.speaker]);
@@ -1869,7 +1867,7 @@ function NarrativePanel({ dialogue, assets, region, bossStage, characterId = "ae
         <p>{line.text}</p>
       </div>
       <button type="button" onClick={onAdvance} aria-label={finalLine ? "대화를 끝내고 계속 전진" : "다음 대사"}>
-        <span>{finalLine ? "계속 전진" : "다음"}</span><ArrowRight weight="bold" />
+        <span>{finalLine ? "계속 전진" : "다음"}<kbd>SPACE</kbd></span><ArrowRight weight="bold" />
       </button>
     </section>
   );
@@ -2091,7 +2089,9 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
         onEvent: (event) => {
           if (stopped) return;
           if (event.type === "playerHit") triggerTouchFeedback(event.critical ? [26, 18, 34] : 18, audioSettings?.hapticsEnabled !== false);
-          if (event.type === "manualAbilityActivated") agentVoiceRef.current?.play(event.ability);
+          if (event.type === "manualAbilityActivated" && (event.ability === "stratosRun" || event.ability === "helixTempest")) {
+            agentVoiceRef.current?.play(event.ability);
+          }
           const sound = resolveEventSound(event);
           if (sound) sfx.play(sound);
           if (event.type === "scenario" && SCENARIO_SCRIPT[event.beat]) {
@@ -2182,12 +2182,14 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   useEffect(() => {
     if (!dialogue || preparing) return undefined;
     const handleDialogueKey = (event) => {
+      if (event.repeat) return;
       if (event.code !== "Enter" && event.code !== "Space") return;
       event.preventDefault();
+      event.stopImmediatePropagation();
       advanceDialogue();
     };
-    window.addEventListener("keydown", handleDialogueKey);
-    return () => window.removeEventListener("keydown", handleDialogueKey);
+    window.addEventListener("keydown", handleDialogueKey, true);
+    return () => window.removeEventListener("keydown", handleDialogueKey, true);
   }, [advanceDialogue, dialogue, preparing]);
 
   const rewardOpen = Boolean(hud?.rewards?.options?.length);
@@ -2300,6 +2302,10 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
     : 0;
   const bossSiren = Boolean(hud?.boss?.siren?.active);
   const bombSequence = hud?.boss?.bombSequence;
+  const bombPhase = String(bombSequence?.phase || "");
+  const bombSlowMotion = bombPhase === "siren" || bombPhase === "armed";
+  const bombTargeting = bombPhase === "armed";
+  const bombRetaliation = bombPhase === "retaliation";
   const bombArmorActive = Boolean(hud?.boss?.bombArmor?.active);
   const hudAutoFocusEligible = Number(hud?.time || 0) >= 6 || Number(hud?.kills || 0) > 0;
   const hudFocusMode = Boolean(
@@ -2326,7 +2332,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
 
   return (
     <main
-      className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}${hudFocusMode ? " is-hud-focus" : ""}`}
+      className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}${bombSlowMotion ? " is-bomb-slow-motion" : ""}${bombTargeting ? " is-bomb-targeting" : ""}${bombRetaliation ? " is-bomb-retaliation" : ""}${hudFocusMode ? " is-hud-focus" : ""}`}
       aria-hidden={preparing ? "true" : undefined}
       inert={preparing}
     >
@@ -2430,8 +2436,8 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
               <div className={`boss-bomb-directive is-${bombSequence.phase}`} role="status" aria-live="assertive">
                 <Warning weight="fill" />
                 <span>
-                  <small>{bombSequence.phase === "siren" ? "전역 폭발 경보" : "숫자 순서대로 폭탄 클릭"}</small>
-                  <strong>{bombSequence.phase === "siren" ? `${bombSequence.count}개 설치 중` : `다음 번호 ${bombSequence.expectedOrder}`}</strong>
+                  <small>{bombRetaliation ? "실패 · 슬로우 모션 해제" : bombSequence.phase === "siren" ? "전역 폭발 경보 · 슬로우 모션" : "숫자 순서대로 폭탄 클릭"}</small>
+                  <strong>{bombRetaliation ? `남은 폭탄 ${bombSequence.retaliationCount}개 추적 중` : bombSequence.phase === "siren" ? `${bombSequence.count}개 설치 중` : `다음 번호 ${bombSequence.expectedOrder}`}</strong>
                 </span>
                 <b>{Math.max(0, Number(bombSequence.timer || 0)).toFixed(1)}초</b>
               </div>
@@ -2443,7 +2449,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
                 <b>{Math.max(0, Number(hud.boss.bombArmor.timer || 0)).toFixed(1)}초</b>
               </div>
             )}
-            {(parryActive || bossSiren) && <div className="boss-crisis-screen" aria-hidden="true"><i /><i /></div>}
+            {(parryActive || bombSlowMotion || bombRetaliation) && <div className="boss-crisis-screen" aria-hidden="true"><i /><i /></div>}
             {playerStunned && <div className="stun-screen-effect" aria-hidden="true"><i /><i /><i /><i /></div>}
             {!dialogue && <RouteMinimap hud={hud} region={region} />}
             {!dialogue && <RouteClearTransition transition={hud?.expedition?.clearTransition} />}
@@ -2569,6 +2575,7 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
 
   useEffect(() => {
     const escape = (event) => {
+      if (event.repeat) return;
       if (tutorialActive && ["Escape", "Enter", " ", "ArrowRight", "ArrowLeft"].includes(event.key)) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -2587,6 +2594,9 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
   }, [advanceTutorial, finishTutorial, onBase, tutorialActive]);
 
   const selectedTowerDefinition = hud?.selectedTower ? DEFENSE_TOWER_DEFINITIONS[hud.selectedTower.type] : null;
+  const selectedTowerUpgradeCost = selectedTowerDefinition && hud?.selectedTower?.rank < 3
+    ? Math.round(selectedTowerDefinition.cost * (0.7 + hud.selectedTower.rank * 0.45))
+    : null;
   const selectedNodeLabel = hud?.selectedNodeId ? `방어 패드 ${String(hud.selectedNodeId).split("-").at(-1)}` : "원형 패드를 선택하세요";
   const guideTarget = tutorialActive ? DEFENSE_GUIDE_STEPS[tutorialStep]?.target : null;
   return (
@@ -2617,18 +2627,20 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
           </div>
           {hud?.selectedTower ? <span>강화 단계 {hud.selectedTower.rank} / 3</span> : <span>{hud?.selectedNodeId ? "타워를 선택하세요" : "빛나는 패드를 먼저 선택하세요"}</span>}
         </header>
-        {!hud?.selectedTower ? (
-          <div className={`defense-tower-palette${guideTarget === "palette" ? " is-guide-target" : ""}`} data-defense-tower-palette>
-            {Object.values(DEFENSE_TOWER_DEFINITIONS).map((tower, index) => {
-              const Icon = DEFENSE_TOWER_ICONS[tower.id] || Crosshair;
-              const disabled = !hud?.selectedNodeId || (hud?.credits || 0) < tower.cost;
-              return <button type="button" data-defense-tower={tower.id} aria-label={`${tower.name}, ${tower.role}, 자원 ${tower.cost}`} title={tower.description} disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="fill" /><span><b>{tower.name}</b><small>{tower.role}</small></span><em>비용 {tower.cost}</em></button>;
-            })}
-          </div>
-        ) : (
-          <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="fill" /><span><small>{selectedTowerDefinition?.role}</small><b>{hud.selectedTower.rank >= 3 ? "최대 강화 완료" : `${selectedTowerDefinition?.name} 강화`}</b></span><ArrowRight weight="bold" /></button>
-        )}
-        <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="fill" /><span><small>{hud?.wave === 1 ? "첫 웨이브 준비" : `다음 웨이브까지 ${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "웨이브 시작" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
+        <div className={`defense-tower-palette${guideTarget === "palette" ? " is-guide-target" : ""}`} data-defense-tower-palette>
+          {Object.values(DEFENSE_TOWER_DEFINITIONS).map((tower, index) => {
+            const Icon = DEFENSE_TOWER_ICONS[tower.id] || Crosshair;
+            const disabled = !hud?.selectedNodeId || Boolean(hud?.selectedTower) || (hud?.credits || 0) < tower.cost;
+            const compactName = tower.name.split(" ").at(-1);
+            return <button type="button" data-defense-tower={tower.id} aria-label={`${tower.name}, ${tower.role}, 자원 ${tower.cost}`} title={hud?.selectedTower ? "빈 패드로 이동하면 바로 설치할 수 있습니다." : tower.description} disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="duotone" /><span><b><span className="defense-tower-name-full">{tower.name}</span><span className="defense-tower-name-compact">{compactName}</span></b><small>{tower.role}</small></span><em>{tower.cost}</em></button>;
+          })}
+        </div>
+        <div className="defense-command-actions">
+          {hud?.selectedTower && (
+            <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3 || (hud?.credits || 0) < (selectedTowerUpgradeCost || 0)} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="duotone" /><span><small>{hud.selectedTower.rank >= 3 ? "강화 완료" : `비용 ${selectedTowerUpgradeCost}`}</small><b>{hud.selectedTower.rank >= 3 ? "최대 단계" : "즉시 강화"}</b></span><ArrowRight weight="bold" /></button>
+          )}
+          <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="duotone" /><span><small>{hud?.wave === 1 ? "첫 웨이브" : `${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "웨이브 시작" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
+        </div>
       </aside>
       {tutorialActive && <DefenseSpotlightGuide stepIndex={tutorialStep} portrait={assets?.controlOfficer} onNext={advanceTutorial} onBack={() => setTutorialStep((step) => Math.max(0, step - 1))} onSkip={finishTutorial} />}
     </main>
@@ -2856,10 +2868,12 @@ export function App() {
         : facility.id === "equipment"
           ? assets?.ilyaEquipmentWorkshop
           : facility.id === "augmentation" ? assets?.characterSyncChamber : null,
-      menuIconAtlas: assets?.mobileMenuIconAtlas,
       augmentationCoreVisual: facility.id === "augmentation" ? assets?.augmentationCoreVisual : null,
       selectedCharacterId: activeCharacterId,
       mainWeaponId: activeMainWeaponId,
+      weapons: facility.id === "augmentation" ? mainWeapons : [],
+      completedRegionIds: activeSlot.completedRegionIds || [],
+      equipmentRanks: progression.equipmentRanks || {},
       characters: facility.id === "augmentation" ? unlockedPlayableCharacters.map((character) => ({
         ...character,
         weaponName: character.id === "mika"
@@ -2884,7 +2898,6 @@ export function App() {
     researchLab: assets?.hanaResearchLab,
     equipmentWorkshop: assets?.ilyaEquipmentWorkshop,
     characterSyncChamber: assets?.characterSyncChamber,
-    menuIconAtlas: assets?.mobileMenuIconAtlas,
     augmentationCoreVisual: assets?.augmentationCoreVisual,
     npcPortraits: assets?.havenNpcPortraits,
     controlOfficer: assets?.rheaControlOfficer,
@@ -3170,9 +3183,9 @@ export function App() {
     setScreen(swordGuideReturnScreen);
   }, [activeSlotId, campaign, consumePostVictoryScene, prepareSurface, swordGuideReturnScreen]);
 
-  const openSwordAbilityGuide = useCallback(() => {
+  const openSwordAbilityGuide = useCallback((returnScreen = "regions") => {
     if (!beamSwordUnlocked) return;
-    setSwordGuideReturnScreen("regions");
+    setSwordGuideReturnScreen(returnScreen);
     setScreen("sword-guide");
   }, [beamSwordUnlocked]);
 
@@ -3357,7 +3370,7 @@ export function App() {
         assets={campaignAssets}
         guideType="sword"
         onComplete={finishSwordAbilityGuide}
-        onBack={swordGuideReturnScreen === "regions" ? () => setScreen("regions") : null}
+        onBack={swordGuideReturnScreen === "regions" || swordGuideReturnScreen === "base" ? () => setScreen(swordGuideReturnScreen) : null}
       />
     );
   } else if (screen === "base" && campaignView) {
@@ -3378,6 +3391,8 @@ export function App() {
         onPurchaseUpgrade={purchaseBaseUpgrade}
         onExchangeResources={exchangeBaseResources}
         onCharacterChange={selectCharacter}
+        onWeaponChange={selectMainWeapon}
+        onOpenSwordGuide={() => openSwordAbilityGuide("base")}
         onCloseFacility={closeFacility}
         onBoard={openRegionSelect}
         onDefense={openDefenseSelect}
@@ -3385,7 +3400,7 @@ export function App() {
       />
     );
   } else if (screen === "regions" && campaignView) {
-    content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={unlockedPlayableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onWeaponChange={selectMainWeapon} onOpenSwordGuide={openSwordAbilityGuide} onSelect={launchCombat} onBack={() => setScreen("base")} />;
+    content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={unlockedPlayableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onSelect={launchCombat} onBack={() => setScreen("base")} />;
   } else if (screen === "defense-select" && campaignView) {
     content = <DefenseStageSelectScreen stages={defenseStages} campaign={campaignView} assets={campaignAssets} onSelect={launchDefense} onBack={() => setScreen("base")} />;
   } else if (screen === "defense") {
@@ -3397,28 +3412,30 @@ export function App() {
   } else if (screen === "sortie" || screen === "game") {
     content = (
       <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>
-        <PhaserArenaScreen
-          assets={assets}
-          regionId={activeRegionId}
-          region={activeRegion}
-          combatBonuses={combatBonuses}
-          mainWeaponId={activeMainWeaponId}
-          characterId={activeCharacterId}
-          mikaUnlocked={mikaUnlocked}
-          soundEnabled={soundEnabled}
-          audioSettings={audioSettings}
-          sfx={sfx}
-          onToggleSound={toggleSound}
-          onAudioSettingsChange={updateAudioSettings}
-          onFinish={finish}
-          onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null}
-          showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass)}
-          skipOpeningNarrative={repeatSortie}
-          onCombatTutorialComplete={finishCombatOverlay}
-          preparing={screen === "sortie"}
-          onRuntimeProgress={handleCombatRuntimeProgress}
-          onRuntimeReady={handleCombatRuntimeReady}
-        />
+        {(screen === "game" || sortieVideoComplete) && (
+          <PhaserArenaScreen
+            assets={assets}
+            regionId={activeRegionId}
+            region={activeRegion}
+            combatBonuses={combatBonuses}
+            mainWeaponId={activeMainWeaponId}
+            characterId={activeCharacterId}
+            mikaUnlocked={mikaUnlocked}
+            soundEnabled={soundEnabled}
+            audioSettings={audioSettings}
+            sfx={sfx}
+            onToggleSound={toggleSound}
+            onAudioSettingsChange={updateAudioSettings}
+            onFinish={finish}
+            onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null}
+            showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass)}
+            skipOpeningNarrative={repeatSortie}
+            onCombatTutorialComplete={finishCombatOverlay}
+            preparing={screen === "sortie"}
+            onRuntimeProgress={handleCombatRuntimeProgress}
+            onRuntimeReady={handleCombatRuntimeReady}
+          />
+        )}
         {screen === "sortie" && (
           <SortieCinematicScreen
             region={activeRegion}

@@ -34,8 +34,6 @@ class FakeAudio {
 
 test("Google Chirp ability callouts use stable manifest paths and shipped MP3 files", async () => {
   const expected = [
-    ["empPulse", "emp-pulse-start.mp3", 4800],
-    ["aegisWard", "aegis-ward-start.mp3", 3072],
     ["stratosRun", "stratos-run-v2.mp3", 5184],
     ["helixTempest", "helix-tempest-start.mp3", 3648],
   ];
@@ -51,15 +49,13 @@ test("agent voice preloads only in combat, follows the sound toggle, and protect
   const voice = createAgentVoice({
     AudioCtor: FakeAudio,
     paths: {
-      empPulse: "q.mp3",
-      aegisWard: "e.mp3",
       stratosRun: "f.mp3",
       helixTempest: "r.mp3",
     },
   });
   assert.equal(FakeAudio.instances.length, 0);
   voice.preload();
-  assert.equal(FakeAudio.instances.length, 4);
+  assert.equal(FakeAudio.instances.length, 2);
   assert.ok(FakeAudio.instances.every((audio) => (
     audio.preload === "auto" && audio.volume === 0.78 && audio.loadCount === 1
   )));
@@ -67,21 +63,21 @@ test("agent voice preloads only in combat, follows the sound toggle, and protect
   assert.equal(voice.play("helixTempest"), true);
   assert.equal(voice.play("empPulse"), false);
   assert.equal(FakeAudio.instances.find((audio) => audio.src === "r.mp3").playCount, 1);
-  assert.equal(FakeAudio.instances.find((audio) => audio.src === "q.mp3").playCount, 0);
 
   voice.setEnabled(false);
   assert.equal(voice.play("aegisWard"), false);
   voice.setEnabled(true);
-  assert.equal(voice.play("aegisWard"), true);
+  assert.equal(voice.play("aegisWard"), false);
+  FakeAudio.instances.find((audio) => audio.src === "r.mp3").onended();
   assert.equal(voice.play("stratosRun"), true);
-  assert.equal(voice.play("empPulse"), true, "ordinary tactical callouts interrupt each other immediately");
+  assert.equal(voice.play("empPulse"), false, "Q/E intentionally remain silent");
   voice.dispose();
   assert.ok(FakeAudio.instances.every((audio) => audio.onended === null));
 });
 
 test("runtime plays voice only after a successful manual ability activation", () => {
   const runtime = appSource.slice(appSource.indexOf("function PhaserArenaScreen"), appSource.indexOf("function ResultScreen"));
-  assert.match(runtime, /event\.type === "manualAbilityActivated"[^\n]+agentVoiceRef\.current\?\.play\(event\.ability\)/);
+  assert.match(runtime, /event\.type === "manualAbilityActivated"[\s\S]*?event\.ability === "stratosRun"[\s\S]*?event\.ability === "helixTempest"[\s\S]*?agentVoiceRef\.current\?\.play\(event\.ability\)/);
   assert.doesNotMatch(runtime, /manualAbilityRejected[^\n]+agentVoiceRef\.current\?\.play/);
   assert.match(runtime, /voice\?\.setEnabled\(soundEnabled\)/);
   assert.match(runtime, /voice\.dispose\(\)/);

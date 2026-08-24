@@ -663,6 +663,9 @@ export class BattleView {
       this.hudCamera.flash(150, 190, 255, 255, false);
       this.spawnFx("phaseBreak", this.player.x, this.player.y, COLORS.cyan, 1.8);
       this.spawnFx("bossBurst", this.boss.x, this.boss.y, COLORS.white, 2.1);
+    } else if (type === "bossBombRetaliation") {
+      this.mainCamera.shake(220, 0.009);
+      this.hudCamera.flash(100, 255, 48, 66, false);
     } else if (type === "bossParryFailed" || type === "bossBombSequenceFailed") {
       this.mainCamera.shake(380, 0.018);
       this.hudCamera.flash(180, 255, 42, 68, false);
@@ -705,27 +708,25 @@ export class BattleView {
     this.syncPlayer(state, time, quality);
     this.syncBoss(state, time);
     this.syncEnemies(state, time, quality);
-    this.drawEnemyHealthBars(state, quality);
     this.syncAllies(state, time, quality);
-    this.drawShadows(state, quality);
     this.drawTelegraphs(state, time, quality);
     this.syncBossPatternSprites(state, time, quality);
     this.syncBossTimedBombSprites(state, time);
-    // PERFORMANCE keeps authoritative danger geometry and actor movement at
-    // the scene cadence, while retaining cosmetic Graphics/sprite state for a
-    // bounded 30 Hz update. This halves the busiest VFX rebuild path without
-    // making telegraphs, the player, enemies, or the boss less responsive.
-    const cosmeticTick = this.currentQualityId === "performance"
-      ? Math.floor(this.scene.time.now / (1000 / 30))
-      : Math.floor(this.scene.time.now);
+    // Keep authoritative danger geometry and actor movement at scene cadence,
+    // but rebuild pooled cosmetic graphics at a bounded rate. Large waves used
+    // to clear/redraw health bars, shadows and damage text every display frame.
+    const cosmeticHz = this.currentQualityId === "performance" ? 20 : this.currentQualityId === "cinematic" ? 60 : 30;
+    const cosmeticTick = Math.floor(this.scene.time.now / (1000 / cosmeticHz));
     if (cosmeticTick !== this.lastCosmeticTick) {
       this.lastCosmeticTick = cosmeticTick;
+      this.drawEnemyHealthBars(state, quality);
+      this.drawShadows(state, quality);
       this.drawWorldEffects(state, time, quality);
+      this.drawImpactFx(this.scene.time.now / 1000, quality);
+      this.drawForeground(state, time, quality);
+      this.drawDamageTexts(state, quality);
     }
     this.drawProjectiles(state, quality);
-    this.drawImpactFx(this.scene.time.now / 1000, quality);
-    this.drawForeground(state, time, quality);
-    this.drawDamageTexts(state, quality);
     this.drawHudOverlay(state, time);
   }
 
@@ -737,16 +738,17 @@ export class BattleView {
     for (const trace of expedition.traces ?? []) {
       const image = this.traceSprites.get(String(trace?.id ?? ""));
       if (!image) continue;
+      const triggered = Boolean(trace.triggered);
       const x = finite(trace.x, EXPEDITION_WORLD_WIDTH * 0.5);
       const y = finite(trace.y, EXPEDITION_WORLD_HEIGHT * 0.5);
-      if (trace.triggered || x < view.left - 180 || x > view.right + 180 || y < view.top - 180 || y > view.bottom + 180) continue;
+      if (x < view.left - 180 || x > view.right + 180 || y < view.top - 180 || y > view.bottom + 180) continue;
       const size = trace.id === "moss" ? 62 : trace.id === "rook" ? 54 : 58;
       image
         .setVisible(true)
         .setPosition(x, y)
-        .setDisplaySize(size, size)
-        .setAlpha(trace.triggered ? 0.78 : 1)
-        .setTint(trace.triggered ? 0xbad1d5 : 0xffffff);
+        .setDisplaySize(triggered ? size * 1.12 : size, triggered ? size * 1.12 : size)
+        .setAlpha(triggered ? 0.92 : 1)
+        .setTint(triggered ? 0xd8fbff : 0xffffff);
     }
   }
 
@@ -1550,10 +1552,12 @@ export class BattleView {
       const phase = String(sequence.phase ?? "siren");
       const urgency = clamp01(1 - finite(sequence.timer) / Math.max(0.001, finite(sequence.duration, 1)));
       for (const bomb of sequence.bombs) {
-        if (cursor >= this.bossTimedBombSprites.length || bomb?.exploded) break;
+        if (cursor >= this.bossTimedBombSprites.length) break;
+        if (bomb?.exploded) continue;
         const image = this.bossTimedBombSprites[cursor];
         const label = this.bossTimedBombLabels[cursor];
         const defused = Boolean(bomb?.defused);
+        const retaliating = !defused && phase === "retaliation";
         const expected = !defused && finite(bomb?.order) === finite(sequence.expectedOrder, 1);
         const pulse = Math.round((Math.sin(time * 10 + cursor) * 0.5 + 0.5) * 10);
         let column = defused ? 4 : 0;
@@ -1562,18 +1566,23 @@ export class BattleView {
           const blink = Math.floor(time * (urgency > 0.66 ? 12 : 7)) % 2;
           column = urgency > 0.72 ? 3 - blink : 1 + blink;
         }
+        if (retaliating) column = 5;
+        const bombSize = retaliating ? 196 + pulse : expected ? 188 + pulse : 170;
         setAtlasFrame(image, column, 0);
         image
           .setPosition(finite(bomb?.x), finite(bomb?.y))
-          .setDisplaySize(expected ? 188 + pulse : 170, expected ? 188 + pulse : 170)
+          .setDisplaySize(bombSize, bombSize)
+          .setRotation(retaliating
+            ? Math.atan2(finite(state?.player?.y) - finite(bomb?.y), finite(state?.player?.x) - finite(bomb?.x)) + Math.PI * 0.5
+            : 0)
           .setAlpha(defused ? 0.62 : 1)
           .setVisible(true)
           .clearTint();
         label
           .setPosition(finite(bomb?.x), finite(bomb?.y) - 2)
-          .setText(defused ? "✓" : String(bomb?.order ?? cursor + 1))
+          .setText(defused ? "✓" : retaliating ? "!" : String(bomb?.order ?? cursor + 1))
           .setColor(defused ? "#cffff0" : expected ? "#031014" : "#ffffff")
-          .setBackgroundColor(defused ? "#0b4538" : expected ? "#eaffff" : "#25060d")
+          .setBackgroundColor(defused ? "#0b4538" : expected ? "#eaffff" : retaliating ? "#ff263f" : "#25060d")
           .setStroke(defused ? "#05221c" : expected ? "#ffffff" : "#020609", expected ? 4 : 10)
           .setAlpha(defused ? 0.74 : 1)
           .setVisible(true);
@@ -2766,10 +2775,22 @@ export class BattleView {
     this.drawExpeditionMarkers(state, time, graphics);
     const bombSequence = state?.boss?.bombSequence;
     if (bombSequence && Array.isArray(bombSequence.bombs)) {
+      const retaliating = bombSequence.phase === "retaliation";
       for (const bomb of bombSequence.bombs) {
         if (bomb?.defused || bomb?.exploded) continue;
         const x = finite(bomb?.x);
         const y = finite(bomb?.y);
+        if (retaliating) {
+          const targetX = finite(state?.player?.x);
+          const targetY = finite(state?.player?.y);
+          graphics.lineStyle(13, COLORS.black, 0.72);
+          graphics.lineBetween(x, y, targetX, targetY);
+          graphics.lineStyle(4, COLORS.red, 0.96);
+          graphics.lineBetween(x, y, targetX, targetY);
+          graphics.lineStyle(3, COLORS.white, 0.94);
+          graphics.strokeCircle(targetX, targetY, 32 + Math.sin(time * 18) * 4);
+          continue;
+        }
         const expected = finite(bomb?.order) === finite(bombSequence.expectedOrder, 1);
         const pulse = Math.sin(time * (expected ? 12 : 7) + finite(bomb?.order)) * 5;
         const radius = (expected ? 92 : 84) + pulse;
@@ -2899,15 +2920,16 @@ export class BattleView {
         3,
       );
 
-      const radius = 14 + Math.sin(time * 6) * 1.2;
+      const bombTargeting = state?.boss?.bombSequence?.phase === "armed";
+      const radius = bombTargeting ? 32 + Math.sin(time * 9) * 2.8 : 14 + Math.sin(time * 6) * 1.2;
       graphics.lineStyle(6, COLORS.black, 0.78);
       graphics.strokeCircle(aimX, aimY, radius + 1);
-      graphics.lineStyle(2.5, COLORS.cyan, 0.96);
+      graphics.lineStyle(bombTargeting ? 5 : 2.5, bombTargeting ? COLORS.amber : COLORS.cyan, 0.98);
       graphics.strokeCircle(aimX, aimY, radius);
-      graphics.lineStyle(2, COLORS.white, 0.98);
-      graphics.strokeCircle(aimX, aimY, 4);
-      const bracket = radius + 11;
-      const notch = radius - 3;
+      graphics.lineStyle(bombTargeting ? 4 : 2, COLORS.white, 0.98);
+      graphics.strokeCircle(aimX, aimY, bombTargeting ? 8 : 4);
+      const bracket = radius + (bombTargeting ? 18 : 11);
+      const notch = radius - (bombTargeting ? 8 : 3);
       graphics.lineStyle(5, COLORS.black, 0.7);
       graphics.lineBetween(aimX - bracket, aimY, aimX - notch, aimY);
       graphics.lineBetween(aimX + notch, aimY, aimX + bracket, aimY);
@@ -2930,16 +2952,16 @@ export class BattleView {
     if (!expedition) return;
     const view = this.mainCamera.worldView;
     for (const trace of expedition.traces ?? []) {
-      if (trace.triggered) continue;
+      const triggered = Boolean(trace.triggered);
       const x = finite(trace.x, EXPEDITION_WORLD_WIDTH * 0.5);
       const y = finite(trace.y, EXPEDITION_WORLD_HEIGHT * 0.5);
       if (x < view.left - 160 || x > view.right + 160 || y < view.top - 160 || y > view.bottom + 160) continue;
-      const pulse = 0.46 + Math.sin(time * 5 + finite(trace.distance) * 0.01) * 0.14;
-      graphics.lineStyle(2, COLORS.cyan, pulse);
-      graphics.strokeCircle(x, y - 12, 18 + pulse * 5);
-      graphics.lineStyle(1, trace.triggered ? COLORS.red : COLORS.cyan, 0.72);
+      const pulse = 0.5 + Math.sin(time * (triggered ? 7 : 5) + finite(trace.distance) * 0.01) * 0.16;
+      graphics.lineStyle(triggered ? 4 : 2, triggered ? COLORS.white : COLORS.cyan, pulse);
+      graphics.strokeCircle(x, y - 12, (triggered ? 24 : 18) + pulse * 5);
+      graphics.lineStyle(triggered ? 2 : 1, triggered ? COLORS.cyan : COLORS.cyan, 0.82);
       graphics.lineBetween(x, y - 31, x, y - 66);
-      graphics.fillStyle(trace.triggered ? COLORS.red : COLORS.cyan, 0.92);
+      graphics.fillStyle(triggered ? COLORS.white : COLORS.cyan, 0.96);
       graphics.fillCircle(x, y - 70, 4);
     }
   }

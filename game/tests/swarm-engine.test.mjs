@@ -1315,7 +1315,16 @@ test("terminal traces resolve from kill progress and never expose navigation anc
   stepSwarm(wrongEngine, createSwarmInput(), 1 / 60);
 
   assert.ok(wrongEngine.expedition.distance >= 21_800);
-  assert.equal(wrongEngine.expedition.traces.find((trace) => trace.id === "moss").triggered, true);
+  const revealedTrace = wrongEngine.expedition.traces.find((trace) => trace.id === "moss");
+  assert.equal(revealedTrace.triggered, true);
+  assert.equal(Number.isFinite(revealedTrace.interactionX), true);
+  assert.equal(Number.isFinite(revealedTrace.interactionY), true);
+  assert.equal(revealedTrace.x, revealedTrace.interactionX);
+  assert.equal(revealedTrace.y, revealedTrace.interactionY);
+  assert.ok(
+    Math.hypot(revealedTrace.x - playerPosition.x, revealedTrace.y - playerPosition.y) < 240,
+    "triggered ally evidence must remain staged inside the active combat camera",
+  );
   assert.equal("nextWaveAnchor" in wrongEngine.expedition, false);
   assert.equal("nextWaveAnchor" in getSwarmHud(wrongEngine).expedition, false);
   assert.deepEqual({ x: wrongEngine.player.x, y: wrongEngine.player.y }, playerPosition);
@@ -1710,6 +1719,9 @@ test("low-health bosses deploy 2, 3, then 4 numbered bombs and enforce click ord
     assert.ok(state.boss.bombSequence.bombs.every((bomb) => (
       bomb.x >= 54 && bomb.x <= WORLD_WIDTH - 54 && bomb.y >= 54 && bomb.y <= WORLD_HEIGHT - 54
     )));
+    const slowTimeBefore = state.time;
+    stepSwarm(state, input, 1 / 60);
+    assert.ok(state.time - slowTimeBefore < 1 / 120, "numbered bombs must slow the combat world clock");
     stepFor(state, input, 1.2);
     assert.equal(state.boss.bombSequence?.phase, "armed");
     assert.equal(state.boss.bombSequence?.duration, durations[tier]);
@@ -1736,10 +1748,23 @@ test("low-health bosses deploy 2, 3, then 4 numbered bombs and enforce click ord
   failureInput.bossMechanicClickX = second.x;
   failureInput.bossMechanicClickY = second.y;
   stepSwarm(failure, failureInput, 1 / 60);
+  clearPressedInput(failureInput);
+  assert.equal(failure.boss.bombSequence?.phase, "retaliation");
+  assert.equal(failure.player.hp, hpBefore, "wrong-order input should launch the bombs before damage resolves");
+  assert.equal(failure.stats.bossBombFailures, 1);
+  const retaliationEvents = drainSwarmEvents(failure);
+  assert.ok(retaliationEvents.some((event) => event.type === "bossBombRetaliation" && event.reason === "wrongOrder"));
+  const activeBomb = failure.boss.bombSequence.bombs.find((bomb) => !bomb.defused && !bomb.exploded);
+  const distanceBefore = Math.hypot(activeBomb.x - failure.player.x, activeBomb.y - failure.player.y);
+  const releasedTimeBefore = failure.time;
+  stepSwarm(failure, failureInput, 1 / 60);
+  assert.ok(failure.time - releasedTimeBefore > 1 / 120, "retaliation must release slow motion");
+  const distanceAfter = Math.hypot(activeBomb.x - failure.player.x, activeBomb.y - failure.player.y);
+  assert.ok(distanceAfter < distanceBefore, "remaining bombs must visibly home toward the player");
+  stepFor(failure, failureInput, 1);
   assert.equal(failure.boss.bombSequence, null);
   assert.ok(failure.player.hp < hpBefore);
-  assert.equal(failure.stats.bossBombFailures, 1);
-  assert.ok(failure.boss.bombArmorTimer > 8.9);
+  assert.ok(failure.boss.bombArmorTimer > 8, "boss armor punishment must remain active after the retaliation flight resolves");
   const bombArmorHud = getSwarmHud(failure).boss.bombArmor;
   assert.equal(bombArmorHud.active, true);
   assert.equal(bombArmorHud.damageMultiplier, 0.16);
@@ -1769,6 +1794,30 @@ test("low-health bosses deploy 2, 3, then 4 numbered bombs and enforce click ord
   const unarmoredDelta = 100 * failure.player.overdriveDamage;
   assert.ok(Math.abs(armoredDelta / unarmoredDelta - 0.16) < 0.0001, `failed bomb armor should retain 16% damage, received ${armoredDelta / unarmoredDelta}`);
   assert.ok(drainSwarmEvents(failure).some((event) => event.type === "bossBombSequenceFailed" && event.reason === "wrongOrder"));
+});
+
+test("numbered bomb timeout releases slow motion and launches every remaining bomb", () => {
+  const state = createBossState(0, "wrong-engine-core");
+  delayPlayerWeapons(state);
+  state.boss.hp = state.boss.maxHp * 0.54;
+  const input = createSwarmInput();
+  stepSwarm(state, input, 1 / 60);
+  stepFor(state, input, 1.2);
+  assert.equal(state.boss.bombSequence?.phase, "armed");
+  const hpBefore = state.player.hp;
+  const remaining = state.boss.bombSequence.bombs.length;
+  state.boss.bombSequence.timer = 0.001;
+  stepSwarm(state, input, 1 / 60);
+  assert.equal(state.boss.bombSequence?.phase, "retaliation");
+  assert.equal(state.boss.bombSequence?.retaliationCount, remaining);
+  assert.equal(state.player.hp, hpBefore);
+  stepFor(state, input, 1);
+  assert.equal(state.boss.bombSequence, null);
+  assert.ok(state.player.hp < hpBefore);
+  assert.equal(state.stats.bossBombFailures, 1);
+  const events = drainSwarmEvents(state);
+  assert.ok(events.some((event) => event.type === "bossBombRetaliation" && event.reason === "timeout"));
+  assert.ok(events.some((event) => event.type === "bossBombSequenceFailed" && event.reason === "timeout"));
 });
 
 test("glass-dune signature warnings use the same lane and target geometry as their damage", () => {

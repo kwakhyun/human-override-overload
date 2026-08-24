@@ -105,10 +105,27 @@ export class DefenseScene extends Phaser.Scene {
     return this.selectNode(this.state.nodes[nextIndex].id);
   }
 
+  private selectNextEmptyNode(fromNodeId: string | null) {
+    if (!this.state.nodes.length) return false;
+    const startIndex = this.state.nodes.findIndex((node: { id: string }) => node.id === fromNodeId);
+    for (let offset = 1; offset <= this.state.nodes.length; offset += 1) {
+      const node = this.state.nodes[(Math.max(0, startIndex) + offset) % this.state.nodes.length];
+      const occupied = this.state.towers.some((tower: { nodeId: string }) => tower.nodeId === node.id);
+      if (occupied) continue;
+      selectDefenseNode(this.state, node.id);
+      return true;
+    }
+    return false;
+  }
+
   buildTower(towerType: string) {
     if (this.suspended) return false;
+    const builtNodeId = this.state.selectedNodeId;
     const built = buildDefenseTower(this.state, towerType);
-    if (built) this.publishHud();
+    if (built) {
+      this.selectNextEmptyNode(builtNodeId);
+      this.publishHud();
+    }
     return built;
   }
 

@@ -31,6 +31,10 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.doesNotMatch(view, /const live = new Set<string>\(\)/);
   assert.doesNotMatch(view, /new Map<string, number>\(state\.towers\.map/);
   assert.match(scene, /this\.view\?\.handleEvent\(event/);
+  assert.match(scene, /private selectNextEmptyNode/);
+  assert.match(scene, /this\.selectNextEmptyNode\(builtNodeId\)/);
+  assert.match(app, /className="defense-command-actions"/);
+  assert.match(app, /Boolean\(hud\?\.selectedTower\)/);
   assert.match(createGame, /const logicalWidth = portrait \? 720 : 1280/);
   assert.match(createGame, /const logicalHeight = portrait \? 1280 : 720/);
   assert.match(createGame, /mobile\.portrait \|\| window\.innerHeight > window\.innerWidth/);
@@ -87,14 +91,15 @@ test("defense art ships dedicated atlases plus three full and performance stage 
   }
 });
 
-test("defense HUD keeps Korean combat labels and actions readable on desktop and portrait mobile", async () => {
-  const [app, styles] = await Promise.all([
+test("defense HUD keeps compact persistent build and upgrade controls on desktop and portrait mobile", async () => {
+  const [app, styles, responsiveStyles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/styles/p1-p2.css", root), "utf8"),
   ]);
   assert.match(app, />방벽 내구도</);
   assert.match(app, />남은 적</);
-  assert.match(app, />비용 \{tower\.cost\}</);
+  assert.match(app, /<em>\{tower\.cost\}<\/em>/);
   assert.match(app, /"웨이브 시작"/);
   assert.match(styles, /Defense readability pass/);
   assert.match(styles, /\.defense-tower-palette button b \{ font-size: 14px;/);
@@ -102,5 +107,8 @@ test("defense HUD keeps Korean combat labels and actions readable on desktop and
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\) \{[\s\S]*\.defense-core-status small \{ font-size: 13px; \}/);
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\) \{[\s\S]*\.defense-wave-status b \{ margin-top: 3px; font-size: 20px; \}/);
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\) \{[\s\S]*\.defense-guide-copy p \{ font-size: 15px;/);
-  assert.match(styles, /\.defense-command-dock \{ min-height: 184px; grid-template-columns: 1fr;/);
+  assert.match(responsiveStyles, /\.defense-runtime-screen \.defense-command-dock \{[\s\S]*min-height: 78px;/);
+  assert.match(responsiveStyles, /\.defense-command-actions/);
+  assert.match(responsiveStyles, /grid-template-rows: 36px 62px 48px/);
+  assert.match(responsiveStyles, /\.defense-runtime-screen \.defense-tower-palette button \{[\s\S]*min-height: 66px/);
 });

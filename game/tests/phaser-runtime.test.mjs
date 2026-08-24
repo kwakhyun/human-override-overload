@@ -188,7 +188,11 @@ test("PERFORMANCE rendering culls invisible work without dropping authoritative 
   assert.match(view, /private isSegmentVisible/);
   assert.match(view, /if \(image\.frame\.name !== name\) image\.setFrame\(name\)/);
   assert.match(render, /this\.drawTelegraphs\(state, time, quality\)/);
-  assert.match(render, /Math\.floor\(this\.scene\.time\.now \/ \(1000 \/ 30\)\)/);
+  assert.match(render, /const cosmeticHz = this\.currentQualityId === "performance" \? 20 : this\.currentQualityId === "cinematic" \? 60 : 30/);
+  assert.match(render, /Math\.floor\(this\.scene\.time\.now \/ \(1000 \/ cosmeticHz\)\)/);
+  for (const cosmetic of ["drawEnemyHealthBars", "drawShadows", "drawWorldEffects", "drawImpactFx", "drawDamageTexts"]) {
+    assert.ok(render.indexOf(cosmetic) > render.indexOf("if (cosmeticTick !== this.lastCosmeticTick)"), `${cosmetic} stays on the bounded cosmetic cadence`);
+  }
   assert.ok(render.indexOf("drawTelegraphs") < render.indexOf("cosmeticTick"), "danger warnings stay at the scene cadence");
   assert.match(enemies, /if \(!inView\)/);
   assert.match(enemies, /for \(let index = 0; index < enemies\.length; index \+= 1\)/);
@@ -242,6 +246,8 @@ test("authored trace props and campaign region art are registered without restor
   assert.match(view, /\["rook", "nyx", "moss"\]\.forEach/);
   assert.match(view, /const x = finite\(trace\.x, EXPEDITION_WORLD_WIDTH \* 0\.5\)/);
   assert.match(view, /const y = finite\(trace\.y, EXPEDITION_WORLD_HEIGHT \* 0\.5\)/);
+  assert.doesNotMatch(view, /trace\.revealX|trace\.revealY/);
+  assert.doesNotMatch(view, /if \(trace\.triggered\) continue/);
   assert.match(view, /this\.worldBack\.add\(image\)/);
   assert.doesNotMatch(view, /trace\.kind === "body"|trace\.kind === "weapon"/);
 });
@@ -477,21 +483,30 @@ test("boss parry and numbered bombs use repeat-safe Shift and authoritative worl
   assert.match(scene, /this\.cameras\.main\.getWorldPoint\(pointer\.x, pointer\.y\)/);
   assert.match(engine, /bossMechanicClickX/);
   assert.match(engine, /clicked\.order !== sequence\.expectedOrder/);
+  assert.match(engine, /const BOSS_BOMB_SLOW_SCALE = BOSS_PARRY_SLOW_SCALE/);
+  assert.match(engine, /sequence\.phase === "retaliation"/);
+  assert.match(engine, /emit\(state, "bossBombRetaliation"/);
   assert.match(bridge, /queueParry\(\): void/);
   assert.match(createGame, /parry: \(\) => bridge\.queueParry\(\)/);
   assert.deepEqual([bombAtlas.readUInt32BE(16), bombAtlas.readUInt32BE(20)], [384, 128]);
   assert.match(manifest, /timed-bomb-pixel-atlas\.png", kind: "atlas", columns: 6, rows: 2/);
   assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.bossTimedBombPixel, 6, 2\)/);
   assert.match(view, /syncBossTimedBombSprites\(state, time\)/);
-  assert.match(view, /setAtlasFrame\(image, Math\.min\(5, Math\.floor\(progress \* 6\)\), 1\)/);
-  assert.match(view, /setDisplaySize\(expected \? 188 \+ pulse : 170/);
-  assert.match(view, /setText\(defused \? "✓" : String\(bomb\?\.order/);
-  assert.match(view, /setBackgroundColor\(defused \? "#0b4538" : expected \? "#eaffff"/);
+  assert.match(view, /if \(retaliating\) column = 5/);
+  assert.match(view, /const bombSize = retaliating \? 196 \+ pulse : expected \? 188 \+ pulse : 170/);
+  assert.match(view, /retaliating \? "!" : String\(bomb\?\.order/);
+  assert.match(view, /retaliating \? "#ff263f"/);
+  assert.match(view, /const bombTargeting = state\?\.boss\?\.bombSequence\?\.phase === "armed"/);
+  assert.match(view, /const radius = bombTargeting \? 32/);
   assert.match(animation, /id\.includes\("refractionsweep"\)/);
   assert.match(animation, /id\.includes\("undertow"\)/);
   assert.match(app, /className="boss-parry-prompt"/);
   assert.match(app, /className={`boss-bomb-directive is-\$\{bombSequence\.phase\}`}/);
-  assert.match(styles, /\.is-parry-window \.phaser-host canvas[\s\S]*filter: grayscale\(1\)/);
+  assert.match(app, /is-bomb-targeting/);
+  assert.match(app, /is-bomb-retaliation/);
+  assert.match(styles, /\.is-parry-window \.phaser-host canvas \{[\s\S]*?filter: grayscale\(1\)/);
+  assert.match(styles, /\.is-bomb-slow-motion \.phaser-host canvas \{[\s\S]*?saturate\(1\.08\)/);
+  assert.match(styles, /\.is-bomb-retaliation \.boss-crisis-screen/);
   assert.match(styles, /\.boss-parry-prompt strong \{[^}]*white-space: nowrap;[^}]*word-break: keep-all;/);
 });
 
@@ -610,7 +625,7 @@ test("directional hero art, rifle-origin projectiles, reticle cue, and wheel zoo
   assert.match(projectiles, /originX = finite\(state\?\.player\?\.x\) \+ muzzle\.x/);
   assert.match(projectiles, /displayX = originX \+ \(x - originX\) \* launchBlend/);
   assert.match(foreground, /drawPixelDottedLine\([\s\S]*?COLORS\.cyan[\s\S]*?0\.32/);
-  assert.match(foreground, /graphics\.strokeCircle\(aimX, aimY, 4\)/);
+  assert.match(foreground, /graphics\.strokeCircle\(aimX, aimY, bombTargeting \? 8 : 4\)/);
   assert.match(camera, /this\.userZoomFactor = clamp/);
   assert.match(camera, /clamp\(0\.34 \* this\.userZoomFactor, 0\.3, 0\.48\)/);
   assert.match(camera, /bossStageActive[\s\S]*?0\.68, 0\.98[\s\S]*?0\.84, 1\.42/);

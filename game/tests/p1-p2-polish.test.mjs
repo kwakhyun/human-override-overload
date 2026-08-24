@@ -152,27 +152,20 @@ test("desktop command UI preserves readable hierarchy, clear keyboard affordance
   assert.match(responsiveStyles, /content: attr\(data-tooltip\)/);
 });
 
-test("command menus use the simplified v2 atlas and one restrained visual language", async () => {
-  const [manifest, screens, responsiveStyles, credits] = await Promise.all([
-    read("src/game/assets/manifest.ts"),
+test("command menus use compact semantic vector icons and one restrained visual language", async () => {
+  const [screens, responsiveStyles] = await Promise.all([
     read("src/ui/campaign/CampaignScreens.jsx"),
     read("src/styles/p1-p2.css"),
-    read("CREDITS.md"),
   ]);
 
-  assert.match(manifest, /mobileMenuIconAtlas: "\.\/assets\/overload\/ui\/campaign\/command-menu-icons-v2\.webp"/);
-  for (const icon of [
-    "research", "equipment", "navigation", "defense", "operative",
-    "sortie", "researchCurrency", "equipmentCurrency", "augmentation",
-  ]) {
-    assert.match(screens, new RegExp(`${icon}: Object\\.freeze\\(\\[\\d, \\d\\]\\)`));
-  }
+  assert.doesNotMatch(screens, /MENU_ICON_CELLS/);
+  assert.match(screens, /generated-menu-icon is-\$\{icon\}/);
+  assert.match(screens, /<FallbackIcon weight="duotone"/);
   assert.match(responsiveStyles, /COMMAND SURFACE SYSTEM V2/);
   assert.match(responsiveStyles, /--command-surface: rgba\(2, 11, 16, 0\.92\)/);
   assert.match(responsiveStyles, /\.campaign-shell \.generated-menu-icon \{[\s\S]*border-radius: 4px;[\s\S]*box-shadow: inset 0 0 0 1px/);
+  assert.match(responsiveStyles, /\.campaign-shell \.generated-menu-icon > svg \{ width: 62%; height: 62%; filter: none; \}/);
+  assert.match(responsiveStyles, /\.generated-menu-icon:is\(\.is-equipment, \.is-equipmentCurrency\)/);
   assert.match(responsiveStyles, /\.campaign-shell :is\([\s\S]*\.save-slot-card,[\s\S]*\.base-menu-button,[\s\S]*\.facility-upgrade,[\s\S]*\.region-card,[\s\S]*\.defense-stage-card/);
   assert.match(responsiveStyles, /\.campaign-shell \.region-card:hover:not\(:disabled\)[\s\S]*translateY\(-3px\)/);
-  assert.match(credits, /Active simplified command-menu icon atlas v2/);
-  assert.match(credits, /command-menu-icons-v2\.webp/);
-  assert.match(credits, /uniform solid near-black navy background matching #020B10/);
 });

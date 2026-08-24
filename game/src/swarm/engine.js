@@ -70,6 +70,11 @@ const EXPEDITION_TRACES = Object.freeze([
   Object.freeze({ id: "nyx", distance: 13200, x: 2920, y: 1380, kind: "weapon", beat: "nyx-trace" }),
   Object.freeze({ id: "moss", distance: 21800, x: 2048, y: 2980, kind: "body", beat: "moss-trace" }),
 ]);
+const EXPEDITION_TRACE_REVEAL_OFFSETS = Object.freeze({
+  rook: Object.freeze({ x: 156, y: -74 }),
+  nyx: Object.freeze({ x: -164, y: 62 }),
+  moss: Object.freeze({ x: 138, y: 92 }),
+});
 const SURGE_WAVES = Object.freeze([
   Object.freeze({ warnAt: 8, startAt: 8.72, warningLead: 0.72, count: 14, rate: 12, label: "근접 추격대 · WAVE I" }),
   Object.freeze({ warnAt: 24, startAt: 24.76, warningLead: 0.76, count: 22, rate: 14, label: "근접 증원대 · WAVE II" }),
@@ -181,6 +186,9 @@ const BOSS_BOMB_THRESHOLDS = Object.freeze([0.55, 0.3, 0.12]);
 const BOSS_BOMB_COUNTS = Object.freeze([2, 3, 4]);
 const BOSS_BOMB_SIREN_DURATION = 1.15;
 const BOSS_BOMB_ACTIVE_DURATIONS = Object.freeze([12, 16, 20]);
+const BOSS_BOMB_SLOW_SCALE = BOSS_PARRY_SLOW_SCALE;
+const BOSS_BOMB_RETALIATION_DURATION = 0.92;
+const BOSS_BOMB_RETALIATION_TRACKING = 9.5;
 const BOSS_BOMB_ARMOR_DURATION = 9;
 const BOSS_BOMB_ARMOR_DAMAGE_MULTIPLIER = 0.16;
 const PROJECTILE_DAMAGE_SOURCES = Object.freeze(new Set([
@@ -1344,6 +1352,19 @@ function updateExpedition(state) {
   for (const trace of expedition.traces) {
     if (trace.triggered || expedition.distance < trace.distance) continue;
     trace.triggered = true;
+    const revealOffset = EXPEDITION_TRACE_REVEAL_OFFSETS[trace.id] ?? { x: 144, y: -64 };
+    const arena = activeArena(state);
+    trace.authoredX ??= trace.x;
+    trace.authoredY ??= trace.y;
+    // The staged prop, minimap marker and dialogue trigger now share one
+    // authoritative coordinate. Previously the renderer used revealX/revealY
+    // while interaction/HUD consumers kept reading x/y, producing a visible
+    // prop that did not match the active story location.
+    trace.x = clamp(state.player.x + revealOffset.x, arena.left + 96, arena.right - 96);
+    trace.y = clamp(state.player.y + revealOffset.y, arena.top + 96, arena.bottom - 96);
+    trace.interactionX = trace.x;
+    trace.interactionY = trace.y;
+    trace.revealedAt = state.time;
     expedition.checkpointIndex += 1;
     emit(state, "scenario", { beat: trace.beat, trace: trace.kind, checkpoint: expedition.checkpointIndex });
   }
@@ -5115,43 +5136,48 @@ function startBossBombSequence(state, tier) {
   });
 }
 
-function explodeBossBombSequence(state, reason) {
+function detonateBossBomb(state, bomb) {
+  if (!bomb || bomb.defused || bomb.exploded) return false;
+  bomb.exploded = true;
+  bomb.state = "exploded";
+  burst(state, bomb.x, bomb.y, "#ff7452", 24, 360, 0.82, 8);
+  state.bossBombBursts.push({
+    id: bomb.id,
+    x: bomb.x,
+    y: bomb.y,
+    life: 0.72,
+    maxLife: 0.72,
+    radius: 210,
+  });
+  state.shockwaves.push({
+    type: "bossTimedBomb",
+    x: bomb.x,
+    y: bomb.y,
+    maxRadius: 250,
+    life: 0.68,
+    maxLife: 0.68,
+    color: "#ff674c",
+    width: 14,
+  });
+  return true;
+}
+
+function finishBossBombRetaliation(state, sequence) {
   const boss = state.boss;
-  const sequence = boss.bombSequence;
-  if (!sequence) return false;
   for (const bomb of sequence.bombs) {
-    if (bomb.defused) continue;
-    bomb.exploded = true;
-    bomb.state = "exploded";
-    burst(state, bomb.x, bomb.y, "#ff7452", 24, 360, 0.82, 8);
-    state.bossBombBursts.push({
-      id: bomb.id,
-      x: bomb.x,
-      y: bomb.y,
-      life: 0.72,
-      maxLife: 0.72,
-      radius: 210,
-    });
-    state.shockwaves.push({
-      type: "bossTimedBomb",
-      x: bomb.x,
-      y: bomb.y,
-      maxRadius: 250,
-      life: 0.68,
-      maxLife: 0.68,
-      color: "#ff674c",
-      width: 14,
-    });
+    if (bomb.defused || bomb.exploded) continue;
+    bomb.x = state.player.x;
+    bomb.y = state.player.y;
+    detonateBossBomb(state, bomb);
   }
   const damage = Math.max(150, state.player.maxHp * (0.32 + sequence.count * 0.018));
-  damagePlayer(state, damage, `bossTimedBomb:${reason}`, {
+  damagePlayer(state, damage, `bossTimedBomb:${sequence.failureReason}`, {
     unavoidable: true,
     critical: true,
     stun: 0.85,
     hitStun: 0.85,
     invulnerability: 1,
   });
-  state.stats.bossBombFailures += 1;
   boss.bombArmorTimer = BOSS_BOMB_ARMOR_DURATION;
   boss.bombArmorDuration = BOSS_BOMB_ARMOR_DURATION;
   boss.bombSequence = null;
@@ -5160,11 +5186,44 @@ function explodeBossBombSequence(state, reason) {
   state.flash = Math.max(state.flash, 0.88);
   state.shake = Math.max(state.shake, 30);
   emit(state, "bossBombSequenceFailed", {
-    reason,
+    reason: sequence.failureReason,
     count: sequence.count,
+    remaining: sequence.retaliationCount,
     damage,
     armorDuration: BOSS_BOMB_ARMOR_DURATION,
     bossDamageMultiplier: BOSS_BOMB_ARMOR_DAMAGE_MULTIPLIER,
+  });
+  return true;
+}
+
+function beginBossBombRetaliation(state, reason) {
+  const boss = state.boss;
+  const sequence = boss.bombSequence;
+  if (!sequence) return false;
+  const remaining = sequence.bombs.filter((bomb) => !bomb.defused && !bomb.exploded);
+  sequence.phase = "retaliation";
+  sequence.failureReason = reason;
+  sequence.retaliationCount = remaining.length;
+  sequence.timer = BOSS_BOMB_RETALIATION_DURATION;
+  sequence.duration = BOSS_BOMB_RETALIATION_DURATION;
+  sequence.progress = 0;
+  remaining.forEach((bomb, index) => {
+    bomb.state = "retaliating";
+    bomb.launchDelay = index * 0.055;
+    bomb.launchProgress = 0;
+  });
+  state.stats.bossBombFailures += 1;
+  boss.siren = null;
+  boss.attackState = "bomb-retaliation";
+  boss.attackTimer = BOSS_BOMB_RETALIATION_DURATION;
+  state.flash = Math.max(state.flash, 0.42);
+  state.shake = Math.max(state.shake, 14);
+  emit(state, "bossBombRetaliation", {
+    reason,
+    count: sequence.count,
+    remaining: remaining.length,
+    duration: BOSS_BOMB_RETALIATION_DURATION,
+    slowScale: 1,
   });
   return true;
 }
@@ -5218,6 +5277,28 @@ function updateBossBombSequence(state, input, dt) {
   }
   if (!sequence) return false;
 
+  if (sequence.phase === "retaliation") {
+    sequence.timer = Math.max(0, sequence.timer - dt);
+    sequence.progress = clamp(1 - sequence.timer / Math.max(0.001, sequence.duration), 0, 1);
+    let flying = 0;
+    for (const bomb of sequence.bombs) {
+      if (bomb.defused || bomb.exploded) continue;
+      flying += 1;
+      bomb.launchDelay = Math.max(0, finite(bomb.launchDelay) - dt);
+      if (bomb.launchDelay > 0) continue;
+      const dx = state.player.x - bomb.x;
+      const dy = state.player.y - bomb.y;
+      const distance = Math.hypot(dx, dy);
+      const tracking = 1 - Math.exp(-dt * BOSS_BOMB_RETALIATION_TRACKING);
+      bomb.x += dx * tracking;
+      bomb.y += dy * tracking;
+      bomb.launchProgress = sequence.progress;
+      if (distance <= state.player.radius + bomb.radius * 0.46) detonateBossBomb(state, bomb);
+    }
+    if (flying === 0 || sequence.timer <= 0) finishBossBombRetaliation(state, sequence);
+    return true;
+  }
+
   sequence.timer = Math.max(0, sequence.timer - dt);
   sequence.progress = clamp(1 - sequence.timer / Math.max(0.001, sequence.duration), 0, 1);
   if (boss.siren) boss.siren.timer = sequence.timer;
@@ -5255,7 +5336,7 @@ function updateBossBombSequence(state, input, dt) {
     }
     if (clicked) {
       if (clicked.order !== sequence.expectedOrder) {
-        explodeBossBombSequence(state, "wrongOrder");
+        beginBossBombRetaliation(state, "wrongOrder");
         return true;
       }
       clicked.defused = true;
@@ -5277,11 +5358,11 @@ function updateBossBombSequence(state, input, dt) {
       }
     }
   }
-  if (sequence.timer <= 0) explodeBossBombSequence(state, "timeout");
+  if (sequence.timer <= 0) beginBossBombRetaliation(state, "timeout");
   return true;
 }
 
-function updateBoss(state, dt, input) {
+function updateBoss(state, dt, input, mechanicDt = dt) {
   const boss = state.boss;
   boss.hitFlash = Math.max(0, boss.hitFlash - dt);
   boss.hitStun = Math.max(0, boss.hitStun - dt);
@@ -5309,7 +5390,7 @@ function updateBoss(state, dt, input) {
   boss.damageMultiplier = (boss.groggy > 0
     ? boss.groggyMultiplier
     : boss.weakness > 0 ? 2 : 1) * (boss.bombArmorTimer > 0 ? boss.bombArmorDamageMultiplier : 1);
-  const bombMechanicActive = updateBossBombSequence(state, input, dt);
+  const bombMechanicActive = updateBossBombSequence(state, input, mechanicDt);
   if (bombMechanicActive) {
     boss.vx = 0;
     boss.vy = 0;
@@ -5449,7 +5530,10 @@ export function stepSwarm(state, input, dt) {
     state.expedition.entryEngagedAt = state.time;
   }
 
-  const timeScale = state.phase === "boss" ? updateBossParryWindow(state, input, delta) : 1;
+  const parryTimeScale = state.phase === "boss" ? updateBossParryWindow(state, input, delta) : 1;
+  const bombPhase = state.phase === "boss" ? state.boss?.bombSequence?.phase : null;
+  const bombTimeScale = bombPhase === "siren" || bombPhase === "armed" ? BOSS_BOMB_SLOW_SCALE : 1;
+  const timeScale = Math.min(parryTimeScale, bombTimeScale);
   const worldDelta = delta * timeScale;
 
   state.time = Math.min(state.duration, state.time + worldDelta);
@@ -5481,7 +5565,7 @@ export function stepSwarm(state, input, dt) {
     updateHealingKits(state, worldDelta);
     updateSwarmSpawning(state, worldDelta);
   } else if (state.phase === "boss") {
-    updateBoss(state, worldDelta, input);
+    updateBoss(state, worldDelta, input, delta);
     updateOrbitWeapon(state, worldDelta);
     updateSupportSkills(state, worldDelta);
     updateProjectiles(state, worldDelta);
@@ -5735,6 +5819,8 @@ export function getSwarmHud(state) {
         timer: state.boss.bombSequence.timer,
         duration: state.boss.bombSequence.duration,
         progress: state.boss.bombSequence.progress,
+        failureReason: state.boss.bombSequence.failureReason ?? null,
+        retaliationCount: state.boss.bombSequence.retaliationCount ?? 0,
         bombs: state.boss.bombSequence.bombs.map((bomb) => ({
           id: bomb.id,
           order: bomb.order,
