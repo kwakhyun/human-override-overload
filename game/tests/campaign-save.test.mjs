@@ -214,6 +214,24 @@ test("the beam-sword guide can only be completed after the Glass Dune clear", ()
   assert.deepEqual(completeSwordAbilityGuide(completed, "slot-1", { now: "2026-08-10T08:00:00.000Z" }), completed);
 });
 
+test("the first Abyssal Archive clear queues the one-time Vesper recruitment scene", () => {
+  let campaign = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
+  campaign = completeRegion(campaign, "slot-1", "wrong-engine-core", { status: "victory" }, { now: NOW });
+  campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "recruit", { now: NOW });
+  campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "return", { now: NOW });
+  campaign = completeRegion(campaign, "slot-1", "glass-dune", { status: "victory" }, { now: NOW });
+  campaign = completeSwordAbilityGuide(campaign, "slot-1", { now: NOW });
+  campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "return", { now: NOW });
+  campaign = completeRegion(campaign, "slot-1", "abyssal-archive", { status: "victory" }, { now: NOW });
+
+  assert.deepEqual(getCampaignPostVictorySteps(campaign, "slot-1"), ["vesper-recruit", "return"]);
+  assert.ok(getCampaignSlot(campaign, "slot-1").storyFlags.includes("vesper-unlocked"));
+
+  campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "vesper-recruit", { now: NOW });
+  assert.ok(getCampaignSlot(campaign, "slot-1").storyFlags.includes("vesper-recruit-seen"));
+  assert.deepEqual(getCampaignPostVictorySteps(campaign, "slot-1"), ["return"]);
+});
+
 test("locked regions and defeats do not advance progress", () => {
   const initial = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
   const lockedAttempt = completeRegion(initial, "slot-1", "glass-dune", { status: "victory" }, { now: NOW });

@@ -27,18 +27,24 @@ test("combat dialogue reuses authored standalone portraits and exact shared atla
     [1536, 512],
   );
   assert.deepEqual(
-    pngDimensions(await readBytes("public/assets/overload/ui/npcs/sera-nightjar-pilot-v1.png")),
-    [836, 1881],
+    pngDimensions(await readBytes("public/assets/overload/ui/npcs/ilya-mechanic-v2.png")),
+    [941, 1672],
+  );
+  assert.deepEqual(
+    pngDimensions(await readBytes("public/assets/overload/ui/npcs/sera-nightjar-pilot-v2.png")),
+    [842, 1869],
   );
 
-  for (const [npcId, frameIndex] of [["hana", 0], ["ilya", 1]]) {
+  for (const [npcId, frameIndex] of [["hana", 0]]) {
     assert.equal(BASE_NPCS[npcId].portraitKey, "havenNpcPortraits");
     assert.equal(BASE_NPCS[npcId].portraitIndex, frameIndex);
   }
+  assert.equal(BASE_NPCS.ilya.portraitMode, "standalone");
+  assert.equal(BASE_NPCS.ilya.portraitKey, "ilyaPortrait");
   assert.equal(BASE_NPCS.lark.name, "SERA");
   assert.equal(BASE_NPCS.lark.portraitMode, "standalone");
   assert.equal(BASE_NPCS.lark.portraitKey, "nightjarPilot");
-  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/ui/npcs/sera-nightjar-pilot-v1.png");
+  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/ui/npcs/sera-nightjar-pilot-v2.png");
 
   for (const [regionId, path] of [
     ["wrong-engine-core", "public/assets/overload/boss/wrong-engine-forms-atlas.png"],

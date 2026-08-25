@@ -129,17 +129,18 @@ test("the base has HANA, ILYA, SERA, and RHEA with authored portraits and intera
   assert.equal(HOME_BASE.assets.background.path, "./assets/overload/campaign/haven-09-base.webp");
   assert.equal(HOME_BASE.assets.airshipConsole.path, "./assets/overload/campaign/strategic-world-map.webp");
   assert.deepEqual(getBaseNpcs().map((npc) => npc.name), ["HANA", "ILYA", "SERA", "RHEA"]);
-  assert.deepEqual(getBaseNpcs().slice(0, 2).map((npc) => npc.portraitIndex), [0, 1]);
+  assert.equal(BASE_NPCS.hana.portraitIndex, 0);
   assert.equal(Object.keys(BASE_NPCS).length, 4);
-  for (const npc of getBaseNpcs().slice(0, 2)) {
-    assert.equal(npc.portraitPath, "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png");
-    assert.equal(npc.portraitKey, "havenNpcPortraits");
-    assert.ok(npc.dialogue.length > 0);
-  }
+  assert.equal(BASE_NPCS.hana.portraitPath, "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png");
+  assert.equal(BASE_NPCS.hana.portraitKey, "havenNpcPortraits");
+  assert.equal(BASE_NPCS.ilya.portraitMode, "standalone");
+  assert.equal(BASE_NPCS.ilya.portraitKey, "ilyaPortrait");
+  assert.equal(BASE_NPCS.ilya.portraitPath, "./assets/overload/ui/npcs/ilya-mechanic-v2.png");
+  assert.ok(getBaseNpcs().slice(0, 2).every((npc) => npc.dialogue.length > 0));
   assert.equal(BASE_NPCS.lark.name, "SERA");
   assert.equal(BASE_NPCS.lark.portraitMode, "standalone");
   assert.equal(BASE_NPCS.lark.portraitKey, "nightjarPilot");
-  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/ui/npcs/sera-nightjar-pilot-v1.png");
+  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/ui/npcs/sera-nightjar-pilot-v2.png");
   assert.equal(BASE_NPCS.rhea.portraitMode, "standalone");
   assert.equal(BASE_NPCS.rhea.portraitKey, "rheaControlOfficer");
   assert.equal(BASE_NPCS.rhea.portraitPath, "./assets/overload/ui/npcs/rhea-control-officer.png");
@@ -185,9 +186,10 @@ test("campaign content is immutable and exports one flat DOM preload map of exis
   assert.equal(Object.isFrozen(BASE_NPCS), true);
   const assets = getCampaignDomAssets();
   assert.equal(Object.isFrozen(assets), true);
-  assert.equal(Object.keys(assets).length, 17);
+  assert.equal(Object.keys(assets).length, 18);
   assert.equal(assets.havenBase, "./assets/overload/campaign/haven-09-base.webp");
   assert.equal(assets.havenNpcPortraits, BASE_NPCS.hana.portraitPath);
+  assert.equal(assets.ilyaPortrait, BASE_NPCS.ilya.portraitPath);
   assert.equal(assets.nightjarPilot, BASE_NPCS.lark.portraitPath);
   assert.equal(assets.rheaControlOfficer, BASE_NPCS.rhea.portraitPath);
   assert.equal(assets["overload-abyssal-archive-route"], CAMPAIGN_REGIONS["abyssal-archive"].assets.dom.thumbnail.path);

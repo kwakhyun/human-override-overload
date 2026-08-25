@@ -27,6 +27,12 @@ import { useDialogFocusTrap } from "../useDialogFocusTrap.js";
 import { MIKA_RECRUIT_DIALOGUE } from "../../game/content/characterDialogue.js";
 import { DEFENSE_DOCTRINES } from "../../defense/content.js";
 
+const VESPER_RECRUIT_DIALOGUE = Object.freeze([
+  Object.freeze({ portrait: "aegis", speaker: "이지스", text: "심해 기록고의 신호원이군. 혼자서 드라운드 오라클의 감시망을 무너뜨린 건가?" }),
+  Object.freeze({ portrait: "vesper", speaker: "베스퍼", text: "지원이 늦었어. 그래도 마지막 좌표는 지켜 냈으니, 작전은 성공으로 기록해도 되겠지." }),
+  Object.freeze({ portrait: "vesper", speaker: "베스퍼", text: "호출부호 베스퍼. 지금부터 헤이븐-09의 정밀 사격과 기동 저격을 맡는다." }),
+]);
+
 function assetSource(asset, fallback = "") {
   return asset?.src || asset || fallback;
 }
@@ -786,6 +792,19 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
             )}
             <section className="character-trait-note"><small>OPERATIVE TRAIT</small><strong>{profile?.traitName}</strong><span>{profile?.traitDescription}</span></section>
             <button type="button" className="character-open-upgrades command-ui-button" data-ui-sound="click" onClick={() => setActiveTab("upgrade")}><Sparkle weight="fill" /> 스킬 링크 해금 보기</button>
+            <section className="character-story-archive" aria-labelledby="character-story-title">
+              <header><small>PERSONNEL ARCHIVE</small><strong id="character-story-title">{profile?.backgroundTitle || "전투원 기록"}</strong></header>
+              <p>{profile?.backgroundSummary}</p>
+              <div>
+                {(profile?.storyEntries || []).map((entry, index) => (
+                  <article key={`${profile?.id}-story-${index}`}>
+                    <small>FILE {String(index + 1).padStart(2, "0")}</small>
+                    <strong>{entry.title}</strong>
+                    <span>{entry.text}</span>
+                  </article>
+                ))}
+              </div>
+            </section>
           </div>
         ) : (
           <div className="character-upgrade-content">
@@ -936,6 +955,53 @@ export function MikaRecruitScreen({ assets, onComplete }) {
           <p>{line.text}</p>
           <button type="button" data-ui-sound={finalLine ? "uiConfirm" : "click"} onClick={next}>
             <span>{finalLine ? "미카의 합류를 확인한다" : "다음 대화"}<kbd>SPACE</kbd></span><ArrowRight weight="bold" />
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export function VesperRecruitScreen({ assets, onComplete }) {
+  const dialogRef = useRef(null);
+  const [lineIndex, setLineIndex] = useState(0);
+  const line = VESPER_RECRUIT_DIALOGUE[Math.min(lineIndex, VESPER_RECRUIT_DIALOGUE.length - 1)];
+  const finalLine = lineIndex >= VESPER_RECRUIT_DIALOGUE.length - 1;
+  const next = useCallback(
+    () => finalLine ? onComplete?.() : setLineIndex((index) => index + 1),
+    [finalLine, onComplete],
+  );
+  const portraitSource = line.portrait === "aegis" ? assets?.playerPortrait : assets?.vesperPortrait;
+  useDialogFocusTrap(dialogRef, true);
+  useEffect(() => {
+    const advance = (event) => {
+      if ((event.code !== "Space" && event.code !== "Enter") || event.repeat) return;
+      event.preventDefault();
+      next();
+    };
+    window.addEventListener("keydown", advance);
+    return () => window.removeEventListener("keydown", advance);
+  }, [next]);
+  return (
+    <main className="campaign-shell mika-recruit-screen vesper-recruit-screen">
+      {assets?.characterSyncChamber && <img className="campaign-background" src={assetSource(assets.characterSyncChamber)} alt="헤이븐-09 전투원 동기화실" />}
+      <div className="mika-recruit-shade" aria-hidden="true" />
+      <header className="mika-recruit-heading">
+        <small>심해 기록고 · 최초 클리어</small>
+        <strong id="vesper-recruit-title">신규 전투원 합류</strong>
+      </header>
+      <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="vesper-recruit-title" ref={dialogRef} tabIndex={-1}>
+        <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
+          {portraitSource && <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} />}
+        </figure>
+        <div className="mika-recruit-progress" aria-label={`${lineIndex + 1}/${VESPER_RECRUIT_DIALOGUE.length} 대화`}>
+          {VESPER_RECRUIT_DIALOGUE.map((_, index) => <i className={index <= lineIndex ? "is-active" : ""} key={index} />)}
+        </div>
+        <div className="mika-recruit-dialogue-box">
+          <div><small>{line.portrait === "vesper" ? "VESPER PRECISION OPERATIVE" : "AEGIS FIELD LEAD"}</small><strong>{line.speaker}</strong></div>
+          <p>{line.text}</p>
+          <button type="button" data-ui-sound={finalLine ? "uiConfirm" : "click"} onClick={next}>
+            <span>{finalLine ? "베스퍼 합류를 승인한다" : "다음 대화"}<kbd>SPACE</kbd></span><ArrowRight weight="bold" />
           </button>
         </div>
       </section>
@@ -1193,18 +1259,12 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
   );
 }
 
-export function DefenseStageSelectScreen({ stages, campaign, assets, npc, onSelect, onBack }) {
+export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, onBack }) {
   const background = assetSource(assets?.defenseBattlefield || assets?.homeBase);
-  const portrait = assetSource(assets?.controlOfficer);
   const completedIds = campaign?.completedDefenseStageIds || [];
   const unlockedIds = campaign?.unlockedDefenseStageIds || [];
   const [selectedDoctrineId, setSelectedDoctrineId] = useState("rapidDeployment");
-  const [rheaReactionIndex, setRheaReactionIndex] = useState(-1);
   const doctrineIcons = { rapidDeployment: Lightning, fireControl: Target, lastBastion: ShieldStar };
-  const rheaDialogue = npc?.portraitDialogue?.length ? npc.portraitDialogue : npc?.dialogue || [];
-  const rheaDefenseLine = rheaReactionIndex >= 0 && rheaDialogue.length
-    ? localizeWorldText(rheaDialogue[rheaReactionIndex % rheaDialogue.length])
-    : "침투로는 셋, 방어 패드는 열둘. 웨이브가 시작되기 전에 화력 축선을 계산해.";
   useEffect(() => {
     const close = (event) => {
       if (event.key !== "Escape") return;
@@ -1224,12 +1284,6 @@ export function DefenseStageSelectScreen({ stages, campaign, assets, npc, onSele
         <h1>헤이븐 방어망</h1>
         <p>방어 패드에 포대를 배치하고, 적을 처치해 얻은 자원으로 강화하세요. 중앙 추론핵을 끝까지 지켜야 합니다.</p>
       </header>
-      <aside className="defense-rhea-briefing">
-        <button type="button" className="npc-illustration-button" onClick={() => setRheaReactionIndex((index) => nextDialogueIndex(index, rheaDialogue))} aria-label="전술 관제관 레아와 대화">
-          {portrait && <img src={portrait} alt="디펜스 작전을 지휘하는 전술 관제관 레아" />}
-        </button>
-        <div><small>전술 관제관 · 레아</small><strong role="status">“{rheaDefenseLine}”</strong></div>
-      </aside>
       <section className="defense-doctrine-panel" aria-label="출격 교리 선택">
         <header><small>PRE-SORTIE DOCTRINE</small><strong>이번 작전의 지휘 교리</strong><span>교리는 해당 출격에만 적용됩니다.</span></header>
         <div>

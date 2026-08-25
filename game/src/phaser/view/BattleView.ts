@@ -437,6 +437,7 @@ export class BattleView {
       : ASSET_KEYS.playerDirectionalAim;
     this.prepareAtlas(this.playerDirectionalTexture, 8, 8);
     this.prepareAtlas(ASSET_KEYS.playerMikaDirectionalAim, 8, 8);
+    this.prepareAtlas(ASSET_KEYS.playerVesperDirectionalAim, 8, 8);
     this.prepareAtlas(ASSET_KEYS.enemyHunterMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemyRiflemanMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemySniperMotion, 6, 4);
@@ -453,6 +454,7 @@ export class BattleView {
     if (scene.textures.exists(ASSET_KEYS.swordSkillPixel)) this.preparePixelAtlas(ASSET_KEYS.swordSkillPixel, 6, 4);
     if (scene.textures.exists(ASSET_KEYS.swordManualAbilityPixel)) this.preparePixelAtlas(ASSET_KEYS.swordManualAbilityPixel, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.mikaAbilityPixel, 6, 4);
+    this.prepareAtlas(ASSET_KEYS.vesperAbilityHd, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.enemyDeathPixel, 6, 1);
     const hasSquadTraces = scene.textures.exists(ASSET_KEYS.squadTraces);
     if (hasSquadTraces) ensureAtlasFrames(scene, ASSET_KEYS.squadTraces, 3, 1);
@@ -851,6 +853,8 @@ export class BattleView {
     const directionalFrame = resolveHeroDirectionalAimFrame(animation, entity);
     const directionalTexture = entity?.characterId === "mika"
       ? ASSET_KEYS.playerMikaDirectionalAim
+      : entity?.characterId === "vesper"
+        ? ASSET_KEYS.playerVesperDirectionalAim
       : entity?.mainWeaponId === "beam-sword"
       ? ASSET_KEYS.playerSwordDirectionalAim
       : ASSET_KEYS.playerDirectionalAim;
@@ -884,9 +888,7 @@ export class BattleView {
           ? COLORS.white
           : panicActive && Math.sin(panicClock * 26) > 0
             ? 0xff8da2
-            : entity?.characterId === "vesper"
-              ? 0xffd3a0
-              : 0xffffff,
+            : 0xffffff,
       );
 
     const muzzleVisible = rifleEquipped && finite(entity?.attackTimer) > 0.055 && !entity?.dead && finite(entity?.stunTimer) <= 0;
@@ -2214,7 +2216,10 @@ export class BattleView {
       const radius = Math.max(80, finite(effect?.radius, 320));
       if (!this.isCircleVisible(x, y, radius, 96)) continue;
       let image = this.swordManualAbilitySprites[visible];
-      const texture = effect?.atlas === "mika" ? ASSET_KEYS.mikaAbilityPixel : ASSET_KEYS.swordManualAbilityPixel;
+      const vesperEffect = effect?.atlas === "vesper";
+      const texture = effect?.atlas === "mika"
+        ? ASSET_KEYS.mikaAbilityPixel
+        : vesperEffect ? ASSET_KEYS.vesperAbilityHd : ASSET_KEYS.swordManualAbilityPixel;
       if (!image) {
         image = this.scene.add.image(0, 0, texture).setBlendMode(Phaser.BlendModes.ADD);
         this.worldFront.add(image);
@@ -2222,11 +2227,13 @@ export class BattleView {
       }
       if (image.texture.key !== texture) image.setTexture(texture);
       const type = String(effect?.type ?? "spectralSwordArray");
-      const row = type === "phantomRend" || type === "ribbonVortex"
-        ? 1
-        : type === "imperialSwordDomain" || type === "cometDuet"
-          ? 2
-          : type === "heavenfallExecution" || type === "heartbeatCarnival" ? 3 : 0;
+      const row = vesperEffect
+        ? type === "zeroMark" ? 1 : type === "railBurst" ? 2 : type === "deadline" ? 3 : 0
+        : type === "phantomRend" || type === "ribbonVortex"
+          ? 1
+          : type === "imperialSwordDomain" || type === "cometDuet"
+            ? 2
+            : type === "heavenfallExecution" || type === "heartbeatCarnival" ? 3 : 0;
       const progress = 1 - clamp01(finite(effect?.life) / Math.max(0.001, finite(effect?.maxLife, 1)));
       const visualProgress = type === "heavenfallExecution" && !effect?.detonated
         ? 1 - clamp01(finite(effect?.warning) / Math.max(0.001, finite(effect?.warningMax, 0.68)))
@@ -2243,6 +2250,7 @@ export class BattleView {
         .setDisplaySize(size, size)
         .setAlpha(0.98 * clamp01(finite(effect?.life) / Math.max(0.12, finite(effect?.maxLife, 1) * 0.16)))
         .clearTint();
+      if (vesperEffect) image.setBlendMode(Phaser.BlendModes.ADD);
       visible += 1;
     }
     for (let index = visible; index < this.swordManualAbilitySprites.length; index += 1) {

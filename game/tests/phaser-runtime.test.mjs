@@ -27,7 +27,7 @@ test("the title screen is a full-bleed user key art composition with only essent
 
 test("the DOM campaign manifest ships SERA's dedicated full-body pilot art", async () => {
   const manifest = await read("src/game/assets/manifest.ts");
-  assert.match(manifest, /nightjarPilot: "\.\/assets\/overload\/ui\/npcs\/sera-nightjar-pilot-v1\.png"/);
+  assert.match(manifest, /nightjarPilot: "\.\/assets\/overload\/ui\/npcs\/sera-nightjar-pilot-v2\.png"/);
 });
 
 test("the active App mounts the Phaser runtime while React owns the DOM HUD", async () => {

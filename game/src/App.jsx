@@ -99,6 +99,7 @@ import {
   LarkFlightOperationsScreen,
   MANUAL_ABILITY_GUIDE,
   MikaRecruitScreen,
+  VesperRecruitScreen,
   RegionSelectScreen,
   ReturnCinematicScreen,
   SaveSlotScreen,
@@ -139,6 +140,7 @@ const BASE_DOM_ASSET_KEYS = Object.freeze([
   "vesperPortrait",
   "augmentationCoreVisual",
   "havenNpcPortraits",
+  "ilyaPortrait",
   "nightjarPilot",
   "rheaControlOfficer",
   "returnToHaven",
@@ -151,7 +153,7 @@ const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "tutorialStratosRun",
   "tutorialHelixTempest",
 ]);
-const DEFENSE_DOM_ASSET_KEYS = Object.freeze(["defenseBattlefield", "defenseBattlefieldPortrait", "rheaControlOfficer"]);
+const DEFENSE_DOM_ASSET_KEYS = Object.freeze(["defenseBattlefield", "defenseBattlefieldPortrait"]);
 const COMBAT_DOM_ASSET_KEYS = Object.freeze([
   "portrait",
   "mikaPortrait",
@@ -572,6 +574,14 @@ function resolveNarrativePortrait(speaker, assets, activeRegion, bossStage = 1) 
   if (npcId) {
     const npc = BASE_NPCS[npcId];
     const source = domAssetSource(assets?.[npc?.portraitKey]);
+    if (source && npc?.portraitMode === "standalone") {
+      return {
+        source,
+        mode: "standalone",
+        variant: npc.id === "lark" ? "sera" : "support",
+        alt: `${localizeSpeakerName(normalizedSpeaker)} 대화 일러스트`,
+      };
+    }
     return source ? {
       source,
       mode: "atlas",
@@ -2595,7 +2605,7 @@ const DEFENSE_GUIDE_STEPS = Object.freeze([
   Object.freeze({ target: "wave", kicker: "04 · 지휘 개입", title: "웨이브 정보와 전술 명령을 활용하세요", description: "조기 호출 현상금과 다음 적 구성을 확인하세요. Q·W·E 전술 명령, T 표적 우선순위, S 판매, F 2배속으로 전황에 직접 개입합니다." }),
 ]);
 
-function DefenseSpotlightGuide({ stepIndex, portrait, onNext, onBack, onSkip }) {
+function DefenseSpotlightGuide({ stepIndex, onNext, onBack, onSkip }) {
   const modalRef = useRef(null);
   const step = DEFENSE_GUIDE_STEPS[stepIndex];
   useDialogFocusTrap(modalRef, Boolean(step));
@@ -2605,7 +2615,6 @@ function DefenseSpotlightGuide({ stepIndex, portrait, onNext, onBack, onSkip }) 
     <section className={`defense-guide-overlay is-${step.target}`} data-defense-guide-step={stepIndex + 1} aria-label={`디펜스 첫 도전 가이드 ${stepIndex + 1}단계`}>
       <div className={`defense-guide-spotlight is-${step.target}`} aria-hidden="true" />
       <article className="defense-guide-card" role="dialog" aria-modal="true" aria-labelledby="defense-guide-title" ref={modalRef} tabIndex={-1}>
-        {portrait && <img src={portrait?.src || portrait} alt="전술 관제관 레아" />}
         <div className="defense-guide-copy">
           <small>{step.kicker} · 레아 전술 교신</small>
           <h2 id="defense-guide-title">{step.title}</h2>
@@ -2669,6 +2678,8 @@ function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutorial = f
           else if (event.type === "defenseCoreHit") sfx.play("defenseBreach");
           else if (event.type === "defenseCoreRepaired") sfx.play("defenseRepair");
           else if (event.type === "defenseEnemyDestroyed" && event.elite) sfx.play("defenseEliteDown");
+          else if (event.type === "defenseTowerFired") sfx.play("towerShot");
+          else if (event.type === "defenseEnemyHit") sfx.play("enemyHit");
           else if (event.type === "defenseVictory") sfx.play("victory");
           else if (event.type === "defenseDefeat") sfx.play("defenseDefeat");
         },
@@ -2731,7 +2742,6 @@ function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutorial = f
       <div className="defense-phaser-host" ref={hostRef} />
       {loadProgress < 1 && <div className="defense-load-chip">방어 체계 동기화 {Math.round(loadProgress * 100)}%</div>}
       <header className="defense-combat-hud">
-        <div className="defense-rhea-chip">{assets?.controlOfficer && <img src={assets.controlOfficer?.src || assets.controlOfficer} alt="" />}<span><small>{hud?.doctrineName || "지휘 교리"} · {hud?.phase === "wave" ? "교전 관제" : "배치 준비"}</small><b>{stage?.name}</b></span></div>
         <div className={`defense-core-status${guideTarget === "core" ? " is-guide-target" : ""}`}><span><small>방벽 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
         <div className="defense-wave-command">
           <span><small>WAVE {String(hud?.wave || 1).padStart(2, "0")} / {String(hud?.totalWaves || stage?.waveCounts.length).padStart(2, "0")}</small><b>{hud?.phase === "wave" ? `교전 중 · 잔존 ${hud?.liveEnemies || 0}` : "다음 공세 분석 완료"}</b></span>
@@ -2778,14 +2788,14 @@ function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutorial = f
           )}
         </section>
         <section className="defense-command-abilities">
-          <header><span><small>RHEA TACTICAL LINK</small><b>전술 명령</b></span><i><em style={{ width: `${Math.round((hud?.commandPoints || 0) / Math.max(1, hud?.maxCommandPoints || 100) * 100)}%` }} /></i><strong>{Math.floor(hud?.commandPoints || 0)}</strong></header>
+          <header><span><small>TACTICAL COMMAND LINK</small><b>전술 명령</b></span><i><em style={{ width: `${Math.round((hud?.commandPoints || 0) / Math.max(1, hud?.maxCommandPoints || 100) * 100)}%` }} /></i><strong>{Math.floor(hud?.commandPoints || 0)}</strong></header>
           <div>{(hud?.abilities || []).map((ability, index) => { const Icon = abilityIcons[ability.id] || Crosshair; const repairAtFull = ability.id === "emergencyRepair" && hud?.baseHp >= hud?.maxBaseHp; return <button type="button" disabled={!ability.ready || repairAtFull} onClick={() => controllerRef.current?.activateAbility(ability.id)} key={ability.id}><kbd>{["Q", "W", "E"][index]}</kbd><Icon weight="duotone" /><span><b>{ability.name}</b><small>{ability.cooldownRemaining > 0 ? `${ability.cooldownRemaining.toFixed(1)}초` : ability.detail}</small></span><em>{ability.cost}</em></button>; })}</div>
         </section>
         <div className="defense-command-actions">
           <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave aria-label="웨이브 시작" disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="duotone" /><span><small>{hud?.earlyCallBonus > 0 ? `조기 호출 현상금 +${hud.earlyCallBonus}` : hud?.wave === 1 ? "첫 웨이브" : `${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "공세 즉시 호출" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
         </div>
       </aside>
-      {tutorialActive && <DefenseSpotlightGuide stepIndex={tutorialStep} portrait={assets?.controlOfficer} onNext={advanceTutorial} onBack={() => setTutorialStep((step) => Math.max(0, step - 1))} onSkip={finishTutorial} />}
+      {tutorialActive && <DefenseSpotlightGuide stepIndex={tutorialStep} onNext={advanceTutorial} onBack={() => setTutorialStep((step) => Math.max(0, step - 1))} onSkip={finishTutorial} />}
     </main>
   );
 }
@@ -3060,11 +3070,7 @@ export function App() {
       augmentationCoreVisual: facility.id === "augmentation" ? assets?.augmentationCoreVisual : null,
       npc: facilityNpc ? {
         ...facilityNpc,
-        portraitSource: facilityNpc.portraitKey === "nightjarPilot"
-          ? assets?.nightjarPilot
-          : facilityNpc.portraitKey === "rheaControlOfficer"
-            ? assets?.rheaControlOfficer
-            : assets?.havenNpcPortraits,
+        portraitSource: assets?.[facilityNpc.portraitKey] || assets?.havenNpcPortraits,
       } : null,
       selectedCharacterId: activeCharacterId,
       mainWeaponId: activeMainWeaponId,
@@ -3240,6 +3246,14 @@ export function App() {
       );
       return;
     }
+    if (nextStep === "vesper-recruit") {
+      prepareSurface(
+        "신규 전투원 베스퍼 동기화 중",
+        [DOM_ASSET_REFS.vesperPortrait?.src, DOM_ASSET_REFS.characterSyncChamber?.src],
+        () => setScreen("vesper-recruit"),
+      );
+      return;
+    }
     if (nextStep === "sword-guide") {
       setSwordGuideReturnScreen("post-victory");
       setScreen("sword-guide");
@@ -3369,6 +3383,10 @@ export function App() {
 
   const finishMikaRecruitment = useCallback(() => {
     consumePostVictoryScene("recruit");
+  }, [consumePostVictoryScene]);
+
+  const finishVesperRecruitment = useCallback(() => {
+    consumePostVictoryScene("vesper-recruit");
   }, [consumePostVictoryScene]);
 
   const finishSwordAbilityGuide = useCallback(() => {
@@ -3674,13 +3692,15 @@ export function App() {
   } else if (screen === "regions" && campaignView) {
     content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={unlockedPlayableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onSelect={launchCombat} onBack={() => setScreen("base")} />;
   } else if (screen === "defense-select" && campaignView) {
-    content = <DefenseStageSelectScreen stages={defenseStages} campaign={campaignView} assets={campaignAssets} npc={BASE_NPCS.rhea} onSelect={launchDefense} onBack={() => setScreen("base")} />;
+    content = <DefenseStageSelectScreen stages={defenseStages} campaign={campaignView} assets={campaignAssets} onSelect={launchDefense} onBack={() => setScreen("base")} />;
   } else if (screen === "defense") {
     content = <DefenseArenaScreen stageId={activeDefenseStageId} doctrineId={activeDefenseDoctrineId} assets={campaignAssets} sfx={sfx} showTutorial={activeDefenseStageId === "haven-perimeter" && !activeSlot?.defenseGuideSeen} onTutorialComplete={finishDefenseGuide} onFinish={finishDefense} onBase={() => setScreen("base")} />;
   } else if (screen === "defense-result") {
     content = <DefenseResultScreen result={defenseResult} stage={getDefenseStage(activeDefenseStageId)} rewards={defenseResult?.rewards} onRetry={() => { setDefenseResult(null); setScreen("defense"); }} onBase={() => setScreen("base")} />;
   } else if (screen === "recruit") {
     content = <MikaRecruitScreen assets={campaignAssets} onComplete={finishMikaRecruitment} />;
+  } else if (screen === "vesper-recruit") {
+    content = <VesperRecruitScreen assets={campaignAssets} onComplete={finishVesperRecruitment} />;
   } else if (screen === "sortie" || screen === "game") {
     content = (
       <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>

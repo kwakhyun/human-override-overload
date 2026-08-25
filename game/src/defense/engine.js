@@ -121,6 +121,15 @@ function damageEnemy(state, enemy, amount, source, towerId, options = {}) {
   if (enemy.role === "siegeWalker" && !options.armorPiercing) nextAmount *= 0.72;
   enemy.hp -= nextAmount;
   enemy.hitFlash = 0.12;
+  emit(state, "defenseEnemyHit", {
+    enemyId: enemy.id,
+    role: enemy.role,
+    x: enemy.x,
+    y: enemy.y,
+    source,
+    towerId,
+    damage: Math.max(0, nextAmount),
+  });
   if (options.vulnerable) enemy.vulnerableTimer = Math.max(enemy.vulnerableTimer, options.vulnerable);
   if (enemy.hp > 0) return false;
   state.credits += enemy.reward;
@@ -159,6 +168,13 @@ function fireTower(state, tower) {
   tower.cooldown = stats.cooldown;
   tower.attackTimer = 0.32;
   tower.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
+  emit(state, "defenseTowerFired", {
+    towerId: tower.id,
+    towerType: tower.type,
+    targetId: target.id,
+    x: tower.x,
+    y: tower.y,
+  });
   if (tower.type === "pulseSentry") {
     state.projectiles.push({ id: `defense-shot-${state.nextProjectileId++}`, kind: "pulse", towerId: tower.id, targetId: target.id, x: tower.x, y: tower.y, speed: 520, damage: stats.damage, armorPiercing: tower.specialization === "armorPiercer", radius: 7, color: 0x63efff });
     return;

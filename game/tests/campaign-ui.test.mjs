@@ -115,6 +115,8 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   ]);
   assert.match(app, /assets\?\.havenBase/);
   assert.match(app, /assets\?\.havenNpcPortraits/);
+  assert.match(app, /"ilyaPortrait"/);
+  assert.match(app, /assets\?\.\[facilityNpc\.portraitKey\] \|\| assets\?\.havenNpcPortraits/);
   assert.match(app, /assets\?\.nightjarPilot/);
   assert.match(app, /assets\?\.rheaControlOfficer/);
   assert.match(app, /assets\?\.airshipRegionMap/);
@@ -254,7 +256,7 @@ test("character information presents full-height art, live stats, and a characte
   assert.match(tacticalStyles, /@media \(min-width: 901px\) and \(max-width: 1279px\)[\s\S]*grid-template: 84px minmax\(0, 1fr\) \/ minmax\(300px, 34vw\) minmax\(0, 1fr\) 104px/);
 });
 
-test("campaign presentation keeps dialogue art passive and gives facilities, SERA, regions, and RHEA dedicated staging", async () => {
+test("campaign presentation keeps dialogue art passive while SERA, Vesper, and defense use dedicated staging", async () => {
   const [screens, tacticalStyles, defenseStyles] = await Promise.all([
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles/tactical-os.css", root), "utf8"),
@@ -271,9 +273,10 @@ test("campaign presentation keeps dialogue art passive and gives facilities, SER
   assert.match(tacticalStyles, /\.flight-ops-lark\.is-sera \{[\s\S]*border: 0;[\s\S]*background: transparent/);
   assert.match(tacticalStyles, /\.flight-ops-lark-portrait\.is-sera > img[\s\S]*height: 142%;[\s\S]*object-position: center 8%/);
   assert.match(screens, /const unlocked = Boolean\(profile\?\.unlocked\) && requiredGrade <= progressionRank/);
-  assert.match(tacticalStyles, /\.character-art-stage\.is-vesper > img[\s\S]*bottom: -42%/);
-  assert.match(defenseStyles, /\.defense-rhea-briefing > \.npc-illustration-button[\s\S]*height: 212px/);
-  assert.match(defenseStyles, /@media \(max-width: 820px\), \(orientation: portrait\)[\s\S]*\.defense-rhea-briefing[\s\S]*display: grid/);
+  assert.match(tacticalStyles, /\.character-art-stage\.is-vesper > img \{[\s\S]*height: 160% !important;[\s\S]*object-position: center top !important/);
+  assert.doesNotMatch(screens, /className="defense-rhea-briefing"/);
+  assert.match(defenseStyles, /body \.defense-runtime-screen \{[\s\S]*grid-template-rows: minmax\(0, 1fr\) 190px !important/);
+  assert.match(defenseStyles, /body \.defense-rhea-briefing \{ display: none !important; \}/);
 });
 
 test("region sortie dialog switches to the compact rail before two-column minimums clip", async () => {

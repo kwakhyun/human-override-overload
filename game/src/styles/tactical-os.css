@@ -6438,3 +6438,205 @@ details:focus-visible {
     padding: 54px 16px 18px;
   }
 }
+
+/* 2026-08 character presentation finish: standalone NPCs and operatives use
+   deliberate viewport crops rather than exposing the source image canvas. */
+.campaign-shell .base-npc-portrait.is-lark {
+  background-position: center 3% !important;
+  background-size: auto 188% !important;
+}
+
+.narrative-portrait.is-sera {
+  width: clamp(168px, 22vw, 310px);
+}
+
+.narrative-portrait.is-sera img {
+  top: -3%;
+  width: 122%;
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
+}
+
+@media (min-width: 901px) {
+  .character-art-stage.is-vesper > img {
+    top: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: 50% !important;
+    width: auto !important;
+    height: 160% !important;
+    max-width: none !important;
+    object-fit: contain !important;
+    object-position: center top !important;
+    transform: translateX(-50%);
+  }
+
+  .base-motion-portrait.is-vesper {
+    bottom: 0;
+    height: 94%;
+    overflow: hidden;
+  }
+
+  .base-motion-portrait.is-vesper .motion-portrait-original {
+    top: 0;
+    bottom: auto;
+    left: 50%;
+    width: auto;
+    height: 152%;
+    max-width: none;
+    object-fit: contain;
+    object-position: center top;
+    transform: translateX(-50%);
+  }
+
+  .sortie-character-card.is-amber img {
+    top: -2%;
+    bottom: auto;
+    left: -2px;
+    width: 138px;
+    height: 258px;
+    object-fit: cover;
+    object-position: center top;
+  }
+}
+
+.character-story-archive {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid rgba(116, 239, 255, 0.24);
+  border-left: 3px solid var(--character-accent, #6ceafa);
+  background:
+    linear-gradient(120deg, rgba(8, 26, 34, 0.92), rgba(3, 12, 17, 0.84)),
+    repeating-linear-gradient(90deg, transparent 0 62px, rgba(111, 231, 249, 0.025) 63px);
+}
+
+.character-story-archive > header {
+  display: grid;
+  gap: 4px;
+}
+
+.character-story-archive > header small {
+  color: var(--character-accent, #73e8f8);
+  font: 700 10px/1.2 var(--font-mono);
+  letter-spacing: 0.14em;
+}
+
+.character-story-archive > header strong {
+  color: #f3fdff;
+  font-size: clamp(20px, 1.7vw, 27px);
+  line-height: 1.2;
+}
+
+.character-story-archive > p {
+  max-width: 880px;
+  margin: 0;
+  color: #bfd2d8;
+  font-size: 14px;
+  line-height: 1.7;
+  word-break: keep-all;
+}
+
+.character-story-archive > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.character-story-archive article {
+  display: grid;
+  min-height: 112px;
+  padding: 13px 14px;
+  align-content: start;
+  gap: 5px;
+  border-top: 1px solid rgba(116, 239, 255, 0.26);
+  background: rgba(3, 11, 16, 0.72);
+}
+
+.character-story-archive article small {
+  color: #758f97;
+  font: 700 9px/1.2 var(--font-mono);
+  letter-spacing: 0.13em;
+}
+
+.character-story-archive article strong {
+  color: #eafdff;
+  font-size: 15px;
+}
+
+.character-story-archive article span {
+  color: #9eb5bc;
+  font-size: 13px;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+.vesper-recruit-screen .mika-recruit-shade {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255, 179, 74, 0.17), transparent 32%),
+    linear-gradient(90deg, rgba(1, 7, 11, 0.52), rgba(12, 9, 4, 0.9));
+}
+
+.vesper-recruit-screen .mika-recruit-heading small,
+.vesper-recruit-screen .mika-recruit-dialogue-box > div small {
+  color: #ffc66f;
+}
+
+.vesper-recruit-screen .mika-recruit-character.is-vesper {
+  top: 5%;
+  bottom: 25%;
+  width: min(44vw, 660px);
+  overflow: hidden;
+}
+
+.vesper-recruit-screen .mika-recruit-character.is-vesper img {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: auto;
+  height: 158%;
+  max-width: none;
+  object-fit: contain;
+  object-position: center top;
+  transform: translateX(-50%);
+}
+
+.vesper-recruit-screen .mika-recruit-dialogue-box {
+  border-color: rgba(255, 194, 94, 0.62);
+  box-shadow: inset 3px 0 #ffc25f, 0 26px 80px rgba(0, 0, 0, 0.58);
+}
+
+@media (max-width: 900px), (orientation: portrait) {
+  .campaign-shell .base-npc-portrait.is-lark {
+    background-position: center 2% !important;
+    background-size: auto 172% !important;
+  }
+
+  .narrative-portrait.is-sera img {
+    top: -2%;
+    width: 126%;
+  }
+
+  .character-story-archive {
+    padding: 14px;
+  }
+
+  .character-story-archive > p {
+    font-size: 13px;
+  }
+
+  .character-story-archive > div {
+    grid-template-columns: 1fr;
+  }
+
+  .vesper-recruit-screen .mika-recruit-character.is-vesper {
+    top: 6%;
+    bottom: 31%;
+    width: min(94vw, 590px);
+  }
+
+  .vesper-recruit-screen .mika-recruit-character.is-vesper img {
+    height: 150%;
+  }
+}

@@ -21,6 +21,12 @@ export const PLAYABLE_CHARACTERS = deepFreeze({
     unlockDescription: "기본 지급 전투원",
     traitName: "적응형 병기 체계",
     traitDescription: "원거리와 근접 무장을 교체하며 어떤 전장에서도 안정적으로 대응합니다.",
+    backgroundTitle: "헤이븐-09의 마지막 방패",
+    backgroundSummary: "소버린 점령지에서 회수된 생존 전투원. 기계 군단의 전술 패턴을 몸으로 기억하며 헤이븐-09의 선봉을 맡습니다.",
+    storyEntries: [
+      { title: "회수 기록", text: "폐허 수송로에서 단독으로 난민 행렬을 지키던 중 레아의 구조 신호에 응답했습니다." },
+      { title: "현재 임무", text: "소버린의 추론핵을 파괴하고 잃어버린 인간 거점을 다시 연결하는 원정대장입니다." },
+    ],
   },
   mika: {
     id: "mika",
@@ -36,6 +42,12 @@ export const PLAYABLE_CHARACTERS = deepFreeze({
     unlockDescription: "오답 엔진 중앙로 최초 클리어 시 합류",
     traitName: "연쇄 굴절",
     traitDescription: "공격이 주변 표적 사이를 튕기며 밀집한 적을 빠르게 정리합니다.",
+    backgroundTitle: "프리즘 잔광의 생존자",
+    backgroundSummary: "오답 엔진 심부에서 구조된 변칙 근접 전투원. 장난스러운 태도와 달리 전장의 에너지 흐름을 본능적으로 읽습니다.",
+    storyEntries: [
+      { title: "첫 조우", text: "오답 엔진의 봉쇄 구역에서 분홍빛 고리를 전개해 기계 군단의 포위를 스스로 돌파했습니다." },
+      { title: "합류 이후", text: "헤이븐-09 원정대에 합류해 다수전과 전열 붕괴 임무를 전담합니다." },
+    ],
   },
   vesper: {
     id: "vesper",
@@ -51,6 +63,12 @@ export const PLAYABLE_CHARACTERS = deepFreeze({
     unlockDescription: "심해 기록고 최초 클리어 시 합류",
     traitName: "제로 벡터",
     traitDescription: "최대 내구도는 낮지만 이동 속도와 공격 피해, 발사 속도가 크게 증가합니다.",
+    backgroundTitle: "심해 기록고의 황금 궤적",
+    backgroundSummary: "침수된 기록 도시의 독립 정밀 요원. 잃어버린 도시들의 좌표를 추적하며 소버린의 기록 말살을 저지해 왔습니다.",
+    storyEntries: [
+      { title: "봉인된 호출부호", text: "베스퍼는 심해 기록고 최하층에서 단독 작전을 이어가며 드라운드 오라클의 감시망을 역추적했습니다." },
+      { title: "헤이븐-09 합류", text: "3구역 해방 뒤 이지스의 구조 제안을 받아들이고 장거리 정밀 사격과 기동 저격을 담당합니다." },
+    ],
   },
 });
 

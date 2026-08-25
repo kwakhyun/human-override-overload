@@ -50,7 +50,7 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(view, /state\.battlefield\.core/);
   assert.match(view, /getDefenseTowerStats\(selected, state\.doctrine\)/);
   assert.match(view, /enemy\.elite/);
-  assert.match(screens, /전술 관제관 · 레아/);
+  assert.doesNotMatch(screens, /className="defense-rhea-briefing"/);
   assert.match(screens, /Object\.values\(DEFENSE_DOCTRINES\)/);
   assert.match(screens, /onSelect\(stage\.id, selectedDoctrineId\)/);
   assert.match(styles, /\.defense-tower-palette/);
@@ -112,10 +112,10 @@ test("defense HUD keeps readable commercial command controls on desktop and port
   assert.match(app, /controllerRef\.current\?\.cycleTargetPriority\(\)/);
   assert.match(app, /controllerRef\.current\?\.activateAbility\(ability\.id\)/);
   assert.match(app, /controllerRef\.current\?\.setSpeed\(2\)/);
-  assert.match(defenseStyles, /height: 184px/);
+  assert.match(defenseStyles, /grid-template-rows: minmax\(0, 1fr\) 190px !important/);
   assert.match(defenseStyles, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(defenseStyles, /@media \(max-width: 820px\), \(orientation: portrait\)/);
-  assert.match(defenseStyles, /grid-template-areas: "title" "palette" "console" "abilities" "actions"/);
+  assert.match(defenseStyles, /grid-template-rows: minmax\(0, 57dvh\) minmax\(0, 43dvh\) !important/);
   assert.match(defenseStyles, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
   assert.match(defenseStyles, /height: 358px/);
   assert.match(main, /styles\/defense-overhaul\.css/);

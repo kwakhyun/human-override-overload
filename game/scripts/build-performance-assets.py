@@ -29,6 +29,7 @@ JOBS = (
     Job("hero/survivor-directional-aim-atlas.png", "hero/performance/survivor-directional-aim-atlas.png", 0.75, 8, 8),
     Job("hero/survivor-sword-directional-aim-atlas.png", "hero/performance/survivor-sword-directional-aim-atlas.png", 0.75, 8, 8),
     Job("hero/mika-directional-aim-atlas.png", "hero/performance/mika-directional-aim-atlas.png", 0.75, 8, 8),
+    Job("hero/vesper-directional-aim-atlas.png", "hero/performance/vesper-directional-aim-atlas.png", 0.5, 8, 8),
     Job("enemies/motion-v2/suicide-drone-motion-atlas.png", "enemies/motion-v2/performance/suicide-drone-motion-atlas.png", 0.75, 6, 4),
     Job("enemies/motion-v2/rifleman-motion-atlas.png", "enemies/motion-v2/performance/rifleman-motion-atlas.png", 0.75, 6, 4),
     Job("enemies/motion-v2/sniper-motion-atlas.png", "enemies/motion-v2/performance/sniper-motion-atlas.png", 0.75, 6, 4),

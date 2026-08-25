@@ -55,9 +55,10 @@ export const BASE_NPCS = deepFreeze({
     name: "ILYA",
     role: "SYSTEMS ENGINEER",
     station: "REPAIR BAY",
-    portraitKey: "havenNpcPortraits",
-    portraitPath: "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png",
-    portraitIndex: 1,
+    portraitKey: "ilyaPortrait",
+    portraitPath: "./assets/overload/ui/npcs/ilya-mechanic-v2.png",
+    portraitIndex: null,
+    portraitMode: "standalone",
     portraitDialogue: [
       "장비는 거짓말을 안 해. 소리가 달라졌다면 어디선가 마모가 시작된 거지.",
       "그 손으로 공구함은 건드리지 마. 정비가 필요하면 나부터 불러.",
@@ -76,7 +77,7 @@ export const BASE_NPCS = deepFreeze({
     role: "NIGHTJAR CHIEF PILOT",
     station: "FLIGHT CONTROL",
     portraitKey: "nightjarPilot",
-    portraitPath: "./assets/overload/ui/npcs/sera-nightjar-pilot-v1.png",
+    portraitPath: "./assets/overload/ui/npcs/sera-nightjar-pilot-v2.png",
     portraitMode: "standalone",
     portraitDialogue: [
       "항로는 이미 잡았어. 지휘관이 고개만 끄덕이면 나이트자는 바로 뜰 수 있어.",
