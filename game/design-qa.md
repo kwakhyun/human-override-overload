@@ -1147,3 +1147,14 @@ final result: passed
 - Focused verification: expedition, swarm, Phaser runtime, and HUD suites pass 132/132; TypeScript passes; live browser QA passes at both 390x844 and 360x800 with zero page errors, no horizontal overflow, no HUD overlap, and verified right-then-down touch movement.
 
 final result: passed
+
+### Iteration 50 — settings, static lobby art, defense audio, and VESPER · 2026-08-25
+
+- Main lobby: added a persistent `SYSTEM / 설정` command that opens the same focus-managed, auto-saving settings surface as the title screen. Desktop and portrait mobile keep independent layouts.
+- Lobby art: removed the visibly incomplete Cubism/Live2D runtime, dependency, vendor core, and AEGIS/MIKA model bundles. The lobby now uses stable static key art while retaining transparent body-zone interaction dialogue.
+- Defense audio: routed selection, construction, upgrade, sale, wave, ability, breach, repair, elite-down, clear, and defeat events to dedicated procedural Web Audio cues under the global sound setting.
+- New operative: added original blonde precision interceptor VESPER with transparent production art, independent profile/dialogue/active-skill identity, authoritative combat multipliers, and an `abyssal-archive` first-clear unlock. Character management exposes her locked art/profile before unlock but refuses launch selection.
+- Visual correction: live QA found the locked preview initially reporting generic AEGIS values; it now displays the authoritative VESPER identity values (320 hull, 116% output, 112% fire cycle on the baseline slot).
+- Verification: TypeScript, the 323-test full suite after the Korean accessibility-label correction, production Vite/Sites build, Sites worker suite, and live 1440×900 plus 390×844 browser QA pass. Settings, locked preview, static art, responsive scroll, and zero console warnings/errors were verified.
+
+final result: passed

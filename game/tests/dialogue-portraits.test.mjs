@@ -13,7 +13,7 @@ function pngDimensions(bytes) {
   return [bytes.readUInt32BE(16), bytes.readUInt32BE(20)];
 }
 
-test("combat dialogue reuses the authored standalone portraits and exact three-column atlases", async () => {
+test("combat dialogue reuses authored standalone portraits and exact shared atlases", async () => {
   assert.deepEqual(
     pngDimensions(await readBytes("public/assets/overload/hero/survivor-portrait.png")),
     [941, 1672],
@@ -26,11 +26,19 @@ test("combat dialogue reuses the authored standalone portraits and exact three-c
     pngDimensions(await readBytes("public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png")),
     [1536, 512],
   );
+  assert.deepEqual(
+    pngDimensions(await readBytes("public/assets/overload/ui/npcs/sera-nightjar-pilot-v1.png")),
+    [836, 1881],
+  );
 
-  for (const [npcId, frameIndex] of [["hana", 0], ["ilya", 1], ["lark", 2]]) {
+  for (const [npcId, frameIndex] of [["hana", 0], ["ilya", 1]]) {
     assert.equal(BASE_NPCS[npcId].portraitKey, "havenNpcPortraits");
     assert.equal(BASE_NPCS[npcId].portraitIndex, frameIndex);
   }
+  assert.equal(BASE_NPCS.lark.name, "SERA");
+  assert.equal(BASE_NPCS.lark.portraitMode, "standalone");
+  assert.equal(BASE_NPCS.lark.portraitKey, "nightjarPilot");
+  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/ui/npcs/sera-nightjar-pilot-v1.png");
 
   for (const [regionId, path] of [
     ["wrong-engine-core", "public/assets/overload/boss/wrong-engine-forms-atlas.png"],

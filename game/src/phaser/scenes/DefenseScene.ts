@@ -1,11 +1,15 @@
 import Phaser from "phaser";
 import {
+  activateDefenseAbility,
   buildDefenseTower,
   createDefenseState,
+  cycleDefenseTargetPriority,
   drainDefenseEvents,
   getDefenseHud,
   getDefenseResult,
   selectDefenseNode,
+  sellDefenseTower,
+  specializeDefenseTower,
   startDefenseWave,
   stepDefense,
   upgradeDefenseTower,
@@ -29,10 +33,11 @@ export class DefenseScene extends Phaser.Scene {
   private finishSent = false;
   private hudElapsed = 0;
   private readonly portrait: boolean;
+  private simulationSpeed = 1;
 
-  constructor(stageId: string, callbacks: DefenseSceneCallbacks, portrait = false) {
+  constructor(stageId: string, doctrineId: string, callbacks: DefenseSceneCallbacks, portrait = false) {
     super({ key: "DefenseBattle" });
-    this.state = createDefenseState({ stageId });
+    this.state = createDefenseState({ stageId, doctrineId });
     this.callbacks = callbacks;
     this.portrait = portrait;
   }
@@ -49,6 +54,15 @@ export class DefenseScene extends Phaser.Scene {
     this.input.keyboard?.on("keydown-THREE", () => this.buildTower("skyfireBattery"));
     this.input.keyboard?.on("keydown-FOUR", () => this.buildTower("aegisBastion"));
     this.input.keyboard?.on("keydown-U", () => this.upgradeTower());
+    this.input.keyboard?.on("keydown-T", () => this.cycleTargetPriority());
+    this.input.keyboard?.on("keydown-S", () => this.sellTower());
+    this.input.keyboard?.on("keydown-Z", () => this.specializeTower(0));
+    this.input.keyboard?.on("keydown-X", () => this.specializeTower(1));
+    this.input.keyboard?.on("keydown-Q", () => this.activateAbility("empSweep"));
+    this.input.keyboard?.on("keydown-W", () => this.activateAbility("orbitalStrike"));
+    this.input.keyboard?.on("keydown-E", () => this.activateAbility("emergencyRepair"));
+    this.input.keyboard?.on("keydown-P", () => this.setSpeed(this.simulationSpeed > 0 ? 0 : 1));
+    this.input.keyboard?.on("keydown-F", () => this.setSpeed(this.simulationSpeed === 2 ? 1 : 2));
     this.input.keyboard?.on("keydown-LEFT", () => this.cycleNode(-1));
     this.input.keyboard?.on("keydown-UP", () => this.cycleNode(-1));
     this.input.keyboard?.on("keydown-RIGHT", () => this.cycleNode(1));
@@ -64,7 +78,7 @@ export class DefenseScene extends Phaser.Scene {
       return;
     }
     const delta = Math.min(0.1, deltaMs / 1000);
-    this.accumulator += delta;
+    this.accumulator += delta * this.simulationSpeed;
     while (this.accumulator >= 1 / 60) {
       stepDefense(this.state, 1 / 60);
       this.accumulator -= 1 / 60;
@@ -86,7 +100,7 @@ export class DefenseScene extends Phaser.Scene {
   }
 
   private publishHud() {
-    this.callbacks.onHud(getDefenseHud(this.state));
+    this.callbacks.onHud({ ...getDefenseHud(this.state), simulationSpeed: this.simulationSpeed });
   }
 
   selectNode(nodeId: string) {
@@ -136,6 +150,38 @@ export class DefenseScene extends Phaser.Scene {
     return upgraded;
   }
 
+  specializeTower(branchIndex: number) {
+    if (this.suspended) return false;
+    // Branch ids live in the deterministic HUD so DOM and keyboard paths share one source of truth.
+    const hud: any = getDefenseHud(this.state);
+    const branchId = hud.selectedTower?.branches?.[branchIndex]?.id;
+    if (!branchId) return false;
+    const changed = specializeDefenseTower(this.state, branchId);
+    if (changed) this.publishHud();
+    return changed;
+  }
+
+  cycleTargetPriority() {
+    if (this.suspended) return false;
+    const changed = cycleDefenseTargetPriority(this.state);
+    if (changed) this.publishHud();
+    return changed;
+  }
+
+  sellTower() {
+    if (this.suspended) return false;
+    const changed = sellDefenseTower(this.state);
+    if (changed) this.publishHud();
+    return changed;
+  }
+
+  activateAbility(abilityId: string) {
+    if (this.suspended) return false;
+    const activated = activateDefenseAbility(this.state, abilityId);
+    if (activated) this.publishHud();
+    return activated;
+  }
+
   startWave() {
     if (this.suspended) return false;
     const started = startDefenseWave(this.state);
@@ -145,5 +191,11 @@ export class DefenseScene extends Phaser.Scene {
 
   setSuspended(suspended: boolean) {
     this.suspended = suspended;
+  }
+
+  setSpeed(speed: number) {
+    this.simulationSpeed = speed <= 0 ? 0 : speed >= 2 ? 2 : 1;
+    this.publishHud();
+    return true;
   }
 }

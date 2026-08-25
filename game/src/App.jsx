@@ -3,8 +3,11 @@ import {
   ArrowCounterClockwise,
   ArrowLeft,
   ArrowRight,
+  ArrowsClockwise,
   Brain,
+  Coins,
   Crosshair,
+  FastForward,
   GearSix,
   Lightning,
   MapPin,
@@ -16,6 +19,7 @@ import {
   Pulse,
   Robot,
   ShieldChevron,
+  ShieldStar,
   SpeakerHigh,
   SpeakerSlash,
   Sparkle,
@@ -23,6 +27,7 @@ import {
   Target,
   Timer,
   Trophy,
+  Trash,
   Warning,
 } from "@phosphor-icons/react";
 import { createSfxEngine } from "./audio/sfx.js";
@@ -31,6 +36,14 @@ import { createAgentVoice } from "./audio/agentVoice.js";
 import { DOM_PREVIEW_ASSET_PATHS, getRegionArenaAsset } from "./game/assets/manifest.ts";
 import { preloadDomImages, scheduleDomImagePreload } from "./game/assets/domPreloader.js";
 import { useDialogFocusTrap } from "./ui/useDialogFocusTrap.js";
+import { GameSettingsOverlay } from "./ui/settings/GameSettingsOverlay.jsx";
+import {
+  DEFAULT_GAME_SETTINGS,
+  GAME_SETTINGS_STORAGE_KEY as SETTINGS_STORAGE_KEY,
+  loadGameSettings,
+  mergeGameSettings,
+  saveGameSettings,
+} from "./game/settings/gameSettings.js";
 import {
   BASE_NPCS,
   DEFAULT_REGION_ID,
@@ -120,12 +133,16 @@ const BASE_DOM_ASSET_KEYS = Object.freeze([
   "hanaResearchLab",
   "ilyaEquipmentWorkshop",
   "characterSyncChamber",
+  "player",
+  "mikaPortrait",
+  "vesperPortrait",
   "augmentationCoreVisual",
   "havenNpcPortraits",
+  "nightjarPilot",
   "rheaControlOfficer",
   "returnToHaven",
 ]);
-const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "player", "mikaPortrait"]);
+const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "player", "mikaPortrait", "vesperPortrait"]);
 const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "rheaControlOfficer",
   "tutorialEmpPulse",
@@ -137,6 +154,7 @@ const DEFENSE_DOM_ASSET_KEYS = Object.freeze(["defenseBattlefield", "defenseBatt
 const COMBAT_DOM_ASSET_KEYS = Object.freeze([
   "portrait",
   "mikaPortrait",
+  "vesperPortrait",
   "rheaControlOfficer",
   ...Object.keys(ASSET_PATHS).filter((key) => key.startsWith("reward")),
 ]);
@@ -194,10 +212,11 @@ function mixedRegionName(region) {
 const SPEAKER_NAME_KO = Object.freeze({
   AEGIS: "이지스",
   MIKA: "미카",
+  VESPER: "베스퍼",
   OPERATOR: "관제관",
   HANA: "하나",
   ILYA: "일리야",
-  LARK: "라크",
+  LARK: "세라",
   RHEA: "레아",
   ROOK: "루크",
   NYX: "닉스",
@@ -516,6 +535,7 @@ const SCENARIO_SCRIPT = Object.freeze({
 const NARRATIVE_STANDALONE_PORTRAITS = Object.freeze({
   AEGIS: Object.freeze({ assetKey: "portrait", variant: "hero", alt: "이지스 상반신 일러스트" }),
   MIKA: Object.freeze({ assetKey: "mikaPortrait", variant: "mika", alt: "미카 상반신 일러스트" }),
+  VESPER: Object.freeze({ assetKey: "vesperPortrait", variant: "vesper", alt: "베스퍼 상반신 일러스트" }),
   OPERATOR: Object.freeze({ assetKey: "rheaControlOfficer", variant: "operator", alt: "전술 관제관 레아 상반신 일러스트" }),
   RHEA: Object.freeze({ assetKey: "rheaControlOfficer", variant: "operator", alt: "전술 관제관 레아 상반신 일러스트" }),
 });
@@ -785,29 +805,6 @@ function InitialAssetLoadingScreen({ progress = 0, label = "초기 작전 자료
   );
 }
 
-const SETTINGS_STORAGE_KEY = "human-override.overload.settings.v1";
-const DEFAULT_GAME_SETTINGS = Object.freeze({
-  musicVolume: 1,
-  sfxVolume: 0.78,
-  voiceVolume: 0.78,
-  hapticsEnabled: true,
-});
-
-function loadGameSettings() {
-  if (typeof window === "undefined") return { ...DEFAULT_GAME_SETTINGS };
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) || "null");
-    return {
-      musicVolume: Math.max(0, Math.min(1, Number(stored?.musicVolume ?? DEFAULT_GAME_SETTINGS.musicVolume))),
-      sfxVolume: Math.max(0, Math.min(1, Number(stored?.sfxVolume ?? DEFAULT_GAME_SETTINGS.sfxVolume))),
-      voiceVolume: Math.max(0, Math.min(1, Number(stored?.voiceVolume ?? DEFAULT_GAME_SETTINGS.voiceVolume))),
-      hapticsEnabled: stored?.hapticsEnabled !== false,
-    };
-  } catch {
-    return { ...DEFAULT_GAME_SETTINGS };
-  }
-}
-
 function triggerTouchFeedback(pattern = 12, enabled = true) {
   if (!enabled) return;
   if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
@@ -815,7 +812,7 @@ function triggerTouchFeedback(pattern = 12, enabled = true) {
   navigator.vibrate(pattern);
 }
 
-function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic }) {
+function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic, onOpenSettings }) {
   return (
     <main className="overload-intro intro-cinematic">
       {assets?.intro && (
@@ -852,6 +849,16 @@ function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic 
         >
           {musicPlaying ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}
           <span>{musicPlaying ? "타이틀 음악 재생 중" : "타이틀 음악 재생"}</span>
+        </button>
+        <button
+          className="intro-settings-toggle"
+          type="button"
+          data-ui-sound="uiConfirm"
+          onClick={onOpenSettings}
+          aria-label="환경 설정 열기"
+        >
+          <GearSix weight="fill" />
+          <span>환경 설정</span>
         </button>
         {assetError && <p className="asset-warning"><Warning /> 일부 이미지 대신 안전 렌더링을 사용합니다.</p>}
         <div className="intro-minimal-controls" aria-label="게임 조작">
@@ -1052,7 +1059,7 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
     <aside className={`expedition-combat-dock${compact ? " is-commercial-compact" : ""}${player.reserveCharacterId ? " has-tag" : ""}${tutorialAbilityId ? " is-tutorial-active" : ""}${healthRatio <= 0.3 ? " is-danger-state" : ""}`} aria-label="생존 및 액티브 능력 상태">
       <div className={`vital-cluster${healthRatio <= 0.3 ? " is-critical" : ""}`}>
         {damageWarning && <i className="vital-damage-flash" key={`damage-${damagePulse}`} aria-hidden="true" />}
-        <span>{player.characterId === "mika" ? "미카" : "이지스"} 내구도 <small>레벨 {hud?.level || 1}</small></span>
+        <span>{player.characterId === "mika" ? "미카" : player.characterId === "vesper" ? "베스퍼" : "이지스"} 내구도 <small>레벨 {hud?.level || 1}</small></span>
         <b>{Math.ceil(hp)} <small>/ {Math.ceil(maxHp)}</small></b>
         <div
           className="vital-bar"
@@ -1122,13 +1129,13 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
         {player.reserveCharacterId && (
           <button
             type="button"
-            className={`combat-tag-switch${player.tagReady ? " is-ready" : " is-cooling"}${player.characterId === "mika" ? " is-mika" : " is-aegis"}`}
+            className={`combat-tag-switch${player.tagReady ? " is-ready" : " is-cooling"}${player.characterId === "mika" ? " is-mika" : player.characterId === "vesper" ? " is-vesper" : " is-aegis"}`}
             onClick={() => onTag?.()}
             disabled={!player.tagReady}
             aria-label={`T 캐릭터 교대. 대기 ${Math.ceil(player.tagCooldown || 0)}초`}
             aria-keyshortcuts="T"
           >
-            <span><kbd>T</kbd><strong>{player.reserveCharacterId === "mika" ? "미카" : "이지스"}</strong></span>
+            <span><kbd>T</kbd><strong>{player.reserveCharacterId === "mika" ? "미카" : player.reserveCharacterId === "vesper" ? "베스퍼" : "이지스"}</strong></span>
             <small>{player.tagReady ? "교대 가능" : `${(player.tagCooldown || 0).toFixed(1)}초`}</small>
           </button>
         )}
@@ -1989,7 +1996,7 @@ function RouteMinimap({ hud, region }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, characterId, mikaUnlocked = false, soundEnabled, audioSettings, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, characterId, mikaUnlocked = false, vesperUnlocked = false, soundEnabled, audioSettings, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const frameRef = useRef(null);
   const controllerRef = useRef(null);
@@ -2154,7 +2161,17 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
           if (!preparingRef.current && !pausedRef.current && !combatTutorialActiveRef.current) controllerRef.current?.focus();
           reportRuntimeReady();
         },
-      }, { regionId, combatBonuses: runtimeCombatBonusesRef.current.value, mainWeaponId, characterId, mikaUnlocked, startSuspended: preparingRef.current });
+      }, {
+        regionId,
+        combatBonuses: runtimeCombatBonusesRef.current.value,
+        mainWeaponId,
+        characterId,
+        mikaUnlocked,
+        vesperUnlocked,
+        startSuspended: preparingRef.current,
+        qualityPreference: audioSettings?.graphicsQuality,
+        screenShakeEnabled: audioSettings?.screenShakeEnabled !== false,
+      });
       controllerRef.current = controller;
       controller.setSuspended(preparingRef.current || pausedRef.current || combatTutorialActiveRef.current);
     }).catch(() => {
@@ -2169,7 +2186,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx]);
+  }, [characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked]);
 
   const selectReward = useCallback((id) => {
     controllerRef.current?.chooseReward(id);
@@ -2514,9 +2531,9 @@ const DEFENSE_TOWER_ICONS = Object.freeze({
 
 const DEFENSE_GUIDE_STEPS = Object.freeze([
   Object.freeze({ target: "core", kicker: "01 · 방어 목표", title: "헤이븐 방벽을 지키세요", description: "세 침투로의 적이 중앙 추론핵에 도달하면 방벽이 손상됩니다. 상단 내구도가 0이 되면 작전 실패입니다." }),
-  Object.freeze({ target: "field", kicker: "02 · 건설 위치", title: "빛나는 방어 패드를 선택하세요", description: "전장에 표시된 원형 패드 하나를 클릭하세요. 적의 세 이동 경로가 겹치는 지점부터 확보하면 유리합니다." }),
-  Object.freeze({ target: "palette", kicker: "03 · 화력 배치", title: "역할이 다른 포대를 건설하세요", description: "센트리는 단일 화력, 릴레이는 연쇄 공격, 포대는 광역 공격, 바스티온은 감속을 담당합니다. 처치 자원으로 건설·강화합니다." }),
-  Object.freeze({ target: "wave", kicker: "04 · 공세 시작", title: "준비가 끝나면 웨이브를 시작하세요", description: "조기 개시로 다음 공세를 즉시 호출할 수 있습니다. 숫자키 1~4로 건설하고 U로 선택 포대를 강화할 수도 있습니다." }),
+  Object.freeze({ target: "field", kicker: "02 · 화망 설계", title: "패드를 선택해 사거리와 축선을 확인하세요", description: "선택한 포대의 사거리와 현재 표적이 전장에 표시됩니다. 선두·강적·밀집 우선순위를 바꿔 같은 배치에서도 전술을 조정할 수 있습니다." }),
+  Object.freeze({ target: "palette", kicker: "03 · 체계 조합", title: "네 체계의 역할을 조합하세요", description: "센트리 단일 화력, 릴레이 연쇄 제압, 스카이파이어 범위 폭격, 바스티온 감속을 조합하고 2단계부터 전문화를 선택하세요." }),
+  Object.freeze({ target: "wave", kicker: "04 · 지휘 개입", title: "웨이브 정보와 전술 명령을 활용하세요", description: "조기 호출 현상금과 다음 적 구성을 확인하세요. Q·W·E 전술 명령, T 표적 우선순위, S 판매, F 2배속으로 전황에 직접 개입합니다." }),
 ]);
 
 function DefenseSpotlightGuide({ stepIndex, portrait, onNext, onBack, onSkip }) {
@@ -2550,7 +2567,7 @@ function DefenseSpotlightGuide({ stepIndex, portrait, onNext, onBack, onSkip }) 
   );
 }
 
-function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTutorialComplete, onFinish, onBase }) {
+function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutorial = false, onTutorialComplete, onFinish, onBase }) {
   const hostRef = useRef(null);
   const controllerRef = useRef(null);
   const [hud, setHud] = useState(null);
@@ -2583,15 +2600,23 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
         onHud: (nextHud) => !cancelled && setHud(nextHud),
         onEvent: (event) => {
           if (cancelled) return;
-          if (event.type === "defenseTowerBuilt" || event.type === "defenseTowerUpgraded") sfx.play("upgrade");
-          else if (event.type === "defenseCoreHit") sfx.play("playerHit");
-          else if (event.type === "defenseWaveStarted") sfx.play("alert");
+          if (event.type === "defenseNodeSelected" || event.type === "defenseTargetPriorityChanged") sfx.play("defenseSelect");
+          else if (event.type === "defenseTowerBuilt") sfx.play("defenseBuild");
+          else if (event.type === "defenseTowerUpgraded" || event.type === "defenseTowerSpecialized") sfx.play("defenseUpgrade");
+          else if (event.type === "defenseTowerSold") sfx.play("defenseSell");
+          else if (event.type === "defenseEarlyWaveCalled" || event.type === "defenseWaveStarted") sfx.play("defenseWave");
+          else if (event.type === "defenseWaveCleared") sfx.play("defenseClear");
+          else if (event.type === "defenseAbilityActivated") sfx.play("defenseAbility");
+          else if (event.type === "defenseCoreHit") sfx.play("defenseBreach");
+          else if (event.type === "defenseCoreRepaired") sfx.play("defenseRepair");
+          else if (event.type === "defenseEnemyDestroyed" && event.elite) sfx.play("defenseEliteDown");
           else if (event.type === "defenseVictory") sfx.play("victory");
+          else if (event.type === "defenseDefeat") sfx.play("defenseDefeat");
         },
         onFinish: (result) => !cancelled && onFinish(result),
         onLoadProgress: (progress) => !cancelled && setLoadProgress(progress),
         onReady: () => !cancelled && setLoadProgress(1),
-      }, stageId);
+      }, stageId, doctrineId);
       controllerRef.current = controller;
     });
     return () => {
@@ -2599,7 +2624,7 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [onFinish, sfx, stageId]);
+  }, [doctrineId, onFinish, sfx, stageId]);
 
   useEffect(() => {
     if (loadProgress < 1) return;
@@ -2632,6 +2657,10 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
     : null;
   const selectedNodeLabel = hud?.selectedNodeId ? `방어 패드 ${String(hud.selectedNodeId).split("-").at(-1)}` : "원형 패드를 선택하세요";
   const guideTarget = tutorialActive ? DEFENSE_GUIDE_STEPS[tutorialStep]?.target : null;
+  const priorityLabels = { first: "선두 우선", strong: "강적 우선", cluster: "밀집 우선" };
+  const enemyLabels = { hunter: "드론", rifleman: "장갑", sniper: "저격", siegeWalker: "공성", elite: "정예" };
+  const abilityIcons = { empSweep: Pulse, orbitalStrike: Crosshair, emergencyRepair: ShieldStar };
+  const nextWaveEntries = Object.entries(hud?.nextWave || {}).filter(([, count]) => count > 0);
   return (
     <main
       className="defense-runtime-screen"
@@ -2643,22 +2672,27 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
       <div className="defense-phaser-host" ref={hostRef} />
       {loadProgress < 1 && <div className="defense-load-chip">방어 체계 동기화 {Math.round(loadProgress * 100)}%</div>}
       <header className="defense-combat-hud">
-        <div className="defense-rhea-chip">{assets?.controlOfficer && <img src={assets.controlOfficer?.src || assets.controlOfficer} alt="" />}<span><small>{hud?.phase === "wave" ? "교전 관제 중" : "배치 준비"}</small><b>{stage?.name}</b></span></div>
+        <div className="defense-rhea-chip">{assets?.controlOfficer && <img src={assets.controlOfficer?.src || assets.controlOfficer} alt="" />}<span><small>{hud?.doctrineName || "지휘 교리"} · {hud?.phase === "wave" ? "교전 관제" : "배치 준비"}</small><b>{stage?.name}</b></span></div>
         <div className={`defense-core-status${guideTarget === "core" ? " is-guide-target" : ""}`}><span><small>방벽 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
-        <div className="defense-wave-status"><span><small>웨이브</small><b>{hud?.wave || 1}/{hud?.totalWaves || stage?.waveCounts.length}</b></span><span><small>남은 적</small><b>{hud?.liveEnemies || 0}</b></span><span><small>격파</small><b>{hud?.kills || 0}</b></span><span><small>자원</small><b>{hud?.credits || 0}</b></span></div>
+        <div className="defense-wave-command">
+          <span><small>WAVE {String(hud?.wave || 1).padStart(2, "0")} / {String(hud?.totalWaves || stage?.waveCounts.length).padStart(2, "0")}</small><b>{hud?.phase === "wave" ? `교전 중 · 잔존 ${hud?.liveEnemies || 0}` : "다음 공세 분석 완료"}</b></span>
+          <i><em style={{ width: `${Math.round((hud?.waveProgress || 0) * 100)}%` }} /></i>
+        </div>
+        <div className="defense-wave-status"><span><small>격파</small><b>{hud?.kills || 0}</b></span><span><small>전술 자원</small><b><Coins weight="fill" /> {hud?.credits || 0}</b></span><span><small>정예</small><b>{hud?.eliteEnemies || 0}</b></span></div>
+        <div className="defense-speed-controls" aria-label="전투 속도"><button type="button" className={hud?.simulationSpeed === 0 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(0)} aria-label="일시정지"><Pause weight="fill" /></button><button type="button" className={hud?.simulationSpeed === 1 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(1)}><Play weight="fill" />1×</button><button type="button" className={hud?.simulationSpeed === 2 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(2)}><FastForward weight="fill" />2×</button></div>
         <button type="button" className="defense-exit" data-ui-sound="uiClose" onClick={onBase}><HouseLine weight="bold" /> 기지로 <kbd>ESC</kbd></button>
       </header>
 
       <div className={`defense-guide-world-target${guideTarget === "field" ? " is-guide-target" : ""}`} aria-hidden="true" />
       <aside className={`defense-command-dock${hud?.selectedNodeId ? " has-selected-pad" : " needs-pad"}`}>
         <header>
-          <div><small>{hud?.selectedTower ? "선택한 타워" : "건설 위치"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>
+          <div><small>{hud?.selectedTower ? "FIRE CONTROL" : "DEPLOYMENT PAD"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>
           <div className="defense-pad-stepper" aria-label="건설 패드 순환 선택">
             <button type="button" onClick={() => controllerRef.current?.cycleNode(-1)} aria-label="이전 건설 패드"><ArrowLeft weight="bold" /></button>
             <span><kbd>←</kbd><kbd>→</kbd><b>패드 선택</b></span>
             <button type="button" onClick={() => controllerRef.current?.cycleNode(1)} aria-label="다음 건설 패드"><ArrowRight weight="bold" /></button>
           </div>
-          {hud?.selectedTower ? <span>강화 단계 {hud.selectedTower.rank} / 3</span> : <span>{hud?.selectedNodeId ? "타워를 선택하세요" : "빛나는 패드를 먼저 선택하세요"}</span>}
+          {hud?.selectedTower ? <span>RANK {hud.selectedTower.rank} / 3 · {priorityLabels[hud.selectedTower.targetPriority]}</span> : <span>{hud?.selectedNodeId ? "배치 체계를 선택하세요" : "빛나는 패드를 먼저 선택하세요"}</span>}
         </header>
         <div className={`defense-tower-palette${guideTarget === "palette" ? " is-guide-target" : ""}`} data-defense-tower-palette>
           {Object.values(DEFENSE_TOWER_DEFINITIONS).map((tower, index) => {
@@ -2668,11 +2702,28 @@ function DefenseArenaScreen({ stageId, assets, sfx, showTutorial = false, onTuto
             return <button type="button" data-defense-tower={tower.id} aria-label={`${tower.name}, ${tower.role}, 자원 ${tower.cost}`} title={hud?.selectedTower ? "빈 패드로 이동하면 바로 설치할 수 있습니다." : tower.description} disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="duotone" /><span><b><span className="defense-tower-name-full">{tower.name}</span><span className="defense-tower-name-compact">{compactName}</span></b><small>{tower.role}</small></span><em>{tower.cost}</em></button>;
           })}
         </div>
-        <div className="defense-command-actions">
-          {hud?.selectedTower && (
-            <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3 || (hud?.credits || 0) < (selectedTowerUpgradeCost || 0)} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="duotone" /><span><small>{hud.selectedTower.rank >= 3 ? "강화 완료" : `비용 ${selectedTowerUpgradeCost}`}</small><b>{hud.selectedTower.rank >= 3 ? "최대 단계" : "즉시 강화"}</b></span><ArrowRight weight="bold" /></button>
+        <section className="defense-tower-console">
+          {hud?.selectedTower ? (
+            <>
+              <div className="defense-tower-metrics"><span><small>DMG</small><b>{hud.selectedTower.damage}</b></span><span><small>RNG</small><b>{hud.selectedTower.range}</b></span><span><small>RATE</small><b>{hud.selectedTower.cooldown}s</b></span></div>
+              <div className="defense-tower-quick-actions">
+                <button type="button" onClick={() => controllerRef.current?.cycleTargetPriority()}><ArrowsClockwise weight="bold" /><span><small>표적 규칙 <kbd>T</kbd></small><b>{priorityLabels[hud.selectedTower.targetPriority]}</b></span></button>
+                <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3 || (hud?.credits || 0) < (selectedTowerUpgradeCost || 0)} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="duotone" /><span><small>{hud.selectedTower.rank >= 3 ? "강화 완료" : `비용 ${selectedTowerUpgradeCost}`} <kbd>U</kbd></small><b>{hud.selectedTower.rank >= 3 ? "최대 단계" : "즉시 강화"}</b></span></button>
+                <button type="button" className="defense-sell-button" onClick={() => controllerRef.current?.sellTower()}><Trash weight="bold" /><span><small>철거 <kbd>S</kbd></small><b>+{hud.selectedTower.sellRefund}</b></span></button>
+              </div>
+              {hud.selectedTower.rank >= 2 && !hud.selectedTower.specialization && <div className="defense-specialization"><small>전문화 선택 · 변경 불가</small><span>{hud.selectedTower.branches.map((branch, index) => <button type="button" style={{ "--branch-accent": branch.accent }} onClick={() => controllerRef.current?.specializeTower(index)} key={branch.id}><kbd>{index ? "X" : "Z"}</kbd><b>{branch.name}</b><em>{branch.detail}</em></button>)}</span></div>}
+              {hud.selectedTower.specialization && <div className="defense-specialization is-locked"><small>전문화 적용</small><b>{hud.selectedTower.branches.find((branch) => branch.id === hud.selectedTower.specialization)?.name}</b></div>}
+            </>
+          ) : (
+            <div className="defense-next-wave-intel"><small>NEXT WAVE INTEL</small><strong>적 구성 사전 분석</strong><span>{nextWaveEntries.map(([role, count]) => <b className={role === "elite" || role === "siegeWalker" ? "is-danger" : ""} key={role}><em>{enemyLabels[role]}</em>{count}</b>)}</span></div>
           )}
-          <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="duotone" /><span><small>{hud?.wave === 1 ? "첫 웨이브" : `${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "웨이브 시작" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
+        </section>
+        <section className="defense-command-abilities">
+          <header><span><small>RHEA TACTICAL LINK</small><b>전술 명령</b></span><i><em style={{ width: `${Math.round((hud?.commandPoints || 0) / Math.max(1, hud?.maxCommandPoints || 100) * 100)}%` }} /></i><strong>{Math.floor(hud?.commandPoints || 0)}</strong></header>
+          <div>{(hud?.abilities || []).map((ability, index) => { const Icon = abilityIcons[ability.id] || Crosshair; const repairAtFull = ability.id === "emergencyRepair" && hud?.baseHp >= hud?.maxBaseHp; return <button type="button" disabled={!ability.ready || repairAtFull} onClick={() => controllerRef.current?.activateAbility(ability.id)} key={ability.id}><kbd>{["Q", "W", "E"][index]}</kbd><Icon weight="duotone" /><span><b>{ability.name}</b><small>{ability.cooldownRemaining > 0 ? `${ability.cooldownRemaining.toFixed(1)}초` : ability.detail}</small></span><em>{ability.cost}</em></button>; })}</div>
+        </section>
+        <div className="defense-command-actions">
+          <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave aria-label="웨이브 시작" disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="duotone" /><span><small>{hud?.earlyCallBonus > 0 ? `조기 호출 현상금 +${hud.earlyCallBonus}` : hud?.wave === 1 ? "첫 웨이브" : `${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "공세 즉시 호출" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
         </div>
       </aside>
       {tutorialActive && <DefenseSpotlightGuide stepIndex={tutorialStep} portrait={assets?.controlOfficer} onNext={advanceTutorial} onBack={() => setTutorialStep((step) => Math.max(0, step - 1))} onSkip={finishTutorial} />}
@@ -2686,9 +2737,10 @@ function DefenseResultScreen({ result, stage, rewards, onRetry, onBase }) {
     <main className={`defense-result-screen${victory ? " is-victory" : " is-defeat"}`}>
       <section>
         <small>RHEA DEFENSE CONTROL · {stage?.subtitle}</small>
+        <div className="defense-result-rank" aria-label={`작전 평가 ${result?.rank || "D"}`}>{result?.rank || "D"}</div>
         <h1>{victory ? "방어 작전 성공" : "추론핵 방어 실패"}</h1>
         <p>{victory ? "방어 작전 기록을 저장했습니다. 회수한 자원은 기지 저장고에 보관됩니다." : "포대 배치와 사격 범위를 조정한 뒤 다시 도전하세요."}</p>
-        <div className="defense-result-stats"><span><small>도달 웨이브</small><b>{result?.waves || 0} / {result?.totalWaves || stage?.waveCounts.length}</b></span><span><small>격파</small><b>{result?.kills || 0}</b></span><span><small>기지 피해</small><b>{result?.leaks || 0}</b></span></div>
+        <div className="defense-result-stats"><span><small>작전 점수</small><b>{(result?.score || 0).toLocaleString()}</b></span><span><small>도달 웨이브</small><b>{result?.waves || 0} / {result?.totalWaves || stage?.waveCounts.length}</b></span><span><small>격파</small><b>{result?.kills || 0}</b></span><span><small>방벽 잔존</small><b>{result?.coreHp ?? 0} / {result?.maxCoreHp ?? stage?.baseHp}</b></span><span><small>조기 호출 수익</small><b>+{result?.earlyCallCredits || 0}</b></span></div>
         {victory && rewards && <div className="defense-result-rewards"><span>회수 보상</span><b>연구 자료 +{rewards.researchData}</b><b>장비 부품 +{rewards.equipmentParts}</b><b>동기화 코어 +{rewards.augmentationCores}</b></div>}
         <footer><button type="button" className="primary-cta" onClick={onRetry}><ArrowCounterClockwise weight="bold" /> 같은 방어선 재도전</button><button type="button" className="result-base-return" onClick={onBase}><HouseLine weight="bold" /> 헤이븐-09로 복귀</button></footer>
       </section>
@@ -2774,13 +2826,15 @@ function ResultScreen({ result, assets, region, onRestart, onBase, onContinue })
 export function App() {
   const { assets, error: assetError, progress: assetProgress } = useGameAssets();
   const [screen, setScreen] = useState("intro");
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [audioSettings, setAudioSettings] = useState(loadGameSettings);
+  const [soundEnabled, setSoundEnabled] = useState(() => audioSettings.masterSoundEnabled !== false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [result, setResult] = useState(null);
   const [campaign, setCampaign] = useState(() => loadCampaign());
   const [activeSlotId, setActiveSlotId] = useState(null);
   const [activeRegionId, setActiveRegionId] = useState(DEFAULT_REGION_ID);
   const [activeDefenseStageId, setActiveDefenseStageId] = useState("haven-perimeter");
+  const [activeDefenseDoctrineId, setActiveDefenseDoctrineId] = useState("rapidDeployment");
   const [defenseResult, setDefenseResult] = useState(null);
   const [activeNpc, setActiveNpc] = useState(null);
   const [npcLineIndex, setNpcLineIndex] = useState(0);
@@ -2824,6 +2878,7 @@ export function App() {
     [playableCharacters],
   );
   const mikaUnlocked = isCharacterUnlocked("mika", activeSlot?.completedRegionIds || []);
+  const vesperUnlocked = isCharacterUnlocked("vesper", activeSlot?.completedRegionIds || []);
   const beamSwordUnlocked = isMainWeaponUnlocked("beam-sword", activeSlot?.completedRegionIds || []);
   const activeRegion = useMemo(() => getRegion(activeRegionId) || getRegion(DEFAULT_REGION_ID), [activeRegionId]);
   const activeBgmPath = useMemo(() => resolveMusicTrack(screen, activeRegionId), [screen, activeRegionId]);
@@ -2870,6 +2925,7 @@ export function App() {
     const facility = getBaseFacility(activeFacilityId);
     if (!facility) return null;
     const currency = BASE_CURRENCIES[facility.currencyId];
+    const facilityNpc = BASE_NPCS[facility.npcId] || null;
     const copy = FACILITY_COPY[facility.id] || {};
     const progression = activeSlot.progression || {};
     const upgrades = getBaseUpgrades(facility.npcId).map((upgrade, index) => {
@@ -2922,30 +2978,39 @@ export function App() {
           ? assets?.ilyaEquipmentWorkshop
           : facility.id === "augmentation" ? assets?.characterSyncChamber : null,
       augmentationCoreVisual: facility.id === "augmentation" ? assets?.augmentationCoreVisual : null,
+      npc: facilityNpc ? {
+        ...facilityNpc,
+        portraitSource: facilityNpc.portraitKey === "nightjarPilot"
+          ? assets?.nightjarPilot
+          : facilityNpc.portraitKey === "rheaControlOfficer"
+            ? assets?.rheaControlOfficer
+            : assets?.havenNpcPortraits,
+      } : null,
       selectedCharacterId: activeCharacterId,
       mainWeaponId: activeMainWeaponId,
       weapons: facility.id === "augmentation" ? mainWeapons : [],
       completedRegionIds: activeSlot.completedRegionIds || [],
       equipmentRanks: progression.equipmentRanks || {},
-      characters: facility.id === "augmentation" ? unlockedPlayableCharacters.map((character) => ({
+      characters: facility.id === "augmentation" ? playableCharacters.map((character) => ({
         ...character,
-        weaponName: character.id === "mika"
+        weaponName: character.id === "mika" || character.id === "vesper"
           ? character.weaponName
           : mainWeapons.find((weapon) => weapon.id === activeMainWeaponId)?.koreanName || character.weaponName,
-        portraitSource: character.id === "mika" ? assets?.mikaPortrait : assets?.player,
+        portraitSource: assets?.[character.portraitAssetKey] || assets?.player,
       })) : [],
       combatStats: facility.id === "augmentation" ? {
         maxHp: 360 + (combatBonuses?.maxHpFlat || 0),
         damageOutput: Math.round((combatBonuses?.damageMultiplier || 1) * 100),
         aegisSpeed: Math.round(245 * (combatBonuses?.moveSpeedMultiplier || 1)),
         mikaSpeed: Math.round(245 * 1.08 * (combatBonuses?.moveSpeedMultiplier || 1)),
+        vesperSpeed: Math.round(245 * 1.12 * (combatBonuses?.moveSpeedMultiplier || 1)),
         fireRate: Math.round((combatBonuses?.fireRateMultiplier || 1) * 100),
         completedRegions: activeSlot.completedRegionIds?.length || 0,
       } : null,
       upgrades,
       exchanges,
     };
-  }, [activeFacilityId, activeSlotId, activeSlot, campaign, assets, activeCharacterId, activeMainWeaponId, unlockedPlayableCharacters, mainWeapons, combatBonuses]);
+  }, [activeFacilityId, activeSlotId, activeSlot, campaign, assets, activeCharacterId, activeMainWeaponId, playableCharacters, mainWeapons, combatBonuses]);
   const campaignAssets = useMemo(() => ({
     homeBase: assets?.havenLobby || assets?.havenBase,
     researchLab: assets?.hanaResearchLab,
@@ -2953,10 +3018,12 @@ export function App() {
     characterSyncChamber: assets?.characterSyncChamber,
     augmentationCoreVisual: assets?.augmentationCoreVisual,
     npcPortraits: assets?.havenNpcPortraits,
+    nightjarPilot: assets?.nightjarPilot,
     controlOfficer: assets?.rheaControlOfficer,
     regionMap: assets?.airshipRegionMap,
     playerPortrait: assets?.player,
     mikaPortrait: assets?.mikaPortrait,
+    vesperPortrait: assets?.vesperPortrait,
     tutorialEmpPulse: assets?.tutorialEmpPulse,
     tutorialAegisWard: assets?.tutorialAegisWard,
     tutorialStratosRun: assets?.tutorialStratosRun,
@@ -2993,13 +3060,16 @@ export function App() {
   }, [sfx]);
   useEffect(() => sfx.setEnabled(soundEnabled), [sfx, soundEnabled]);
   useEffect(() => sfx.setVolume(audioSettings.sfxVolume), [audioSettings.sfxVolume, sfx]);
+  useEffect(() => { saveGameSettings(audioSettings); }, [audioSettings]);
   useEffect(() => {
-    try {
-      window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(audioSettings));
-    } catch {
-      // Private browsing and storage denial keep settings session-local.
-    }
-  }, [audioSettings]);
+    const root = document.documentElement;
+    root.classList.toggle("game-reduced-motion", Boolean(audioSettings.reducedMotion));
+    root.classList.toggle("game-high-contrast", Boolean(audioSettings.highContrast));
+    return () => {
+      root.classList.remove("game-reduced-motion");
+      root.classList.remove("game-high-contrast");
+    };
+  }, [audioSettings.highContrast, audioSettings.reducedMotion]);
   useEffect(() => {
     const bgm = bgmRef.current;
     if (!bgm) return;
@@ -3058,9 +3128,11 @@ export function App() {
       bgm.pause();
       setBgmPlaying(false);
       setSoundEnabled(false);
+      setAudioSettings((current) => mergeGameSettings(current, { masterSoundEnabled: false }));
       return;
     }
     setSoundEnabled(true);
+    setAudioSettings((current) => mergeGameSettings(current, { masterSoundEnabled: true }));
     bgm.muted = false;
     bgm.volume = 0.34;
     bgm.play().then(() => setBgmPlaying(true)).catch(() => setBgmPlaying(false));
@@ -3103,6 +3175,7 @@ export function App() {
   const openSaveSlots = useCallback(() => {
     sfx.start();
     sfx.play("start");
+    setSettingsOpen(false);
     setScreen("save");
   }, [sfx]);
 
@@ -3294,13 +3367,14 @@ export function App() {
     prepareSurface("레아 방어 관제망 준비 중", domAssetSources(DEFENSE_DOM_ASSET_KEYS), () => setScreen("defense-select"));
   }, [closeFacility, closeNpc, prepareSurface]);
 
-  const launchDefense = useCallback((stageId) => {
+  const launchDefense = useCallback((stageId, doctrineId = "rapidDeployment") => {
     const slot = activeSlotId ? getCampaignSlot(campaign, activeSlotId) : null;
     if (!slot || !canLaunchDefenseStage(slot, stageId)) {
       sfx.play("denied");
       return;
     }
     setActiveDefenseStageId(stageId);
+    setActiveDefenseDoctrineId(doctrineId);
     setDefenseResult(null);
     setScreen("defense");
   }, [activeSlotId, campaign, sfx]);
@@ -3434,11 +3508,21 @@ export function App() {
   const toggleSound = useCallback(() => {
     const nextEnabled = !soundEnabled;
     setSoundEnabled(nextEnabled);
+    setAudioSettings((current) => mergeGameSettings(current, { masterSoundEnabled: nextEnabled }));
   }, [soundEnabled]);
 
   const updateAudioSettings = useCallback((patch) => {
-    setAudioSettings((current) => ({ ...current, ...patch }));
+    setAudioSettings((current) => mergeGameSettings(current, patch));
+    if (Object.prototype.hasOwnProperty.call(patch || {}, "masterSoundEnabled")) {
+      setSoundEnabled(patch.masterSoundEnabled !== false);
+    }
   }, []);
+
+  const resetGameSettings = useCallback(() => {
+    setAudioSettings({ ...DEFAULT_GAME_SETTINGS });
+    setSoundEnabled(DEFAULT_GAME_SETTINGS.masterSoundEnabled);
+    sfx.play("uiConfirm");
+  }, [sfx]);
 
   let content;
   if (!assets) {
@@ -3451,6 +3535,7 @@ export function App() {
     content = (
       <AbilityGuideScreen
         assets={campaignAssets}
+        npc={BASE_NPCS.rhea}
         guideType="starter"
         onComplete={finishAbilityGuide}
         onBack={guideReturnScreen === "base" ? () => setScreen("base") : null}
@@ -3460,6 +3545,7 @@ export function App() {
     content = (
       <AbilityGuideScreen
         assets={campaignAssets}
+        npc={BASE_NPCS.rhea}
         guideType="sword"
         onComplete={finishSwordAbilityGuide}
         onBack={swordGuideReturnScreen === "regions" || swordGuideReturnScreen === "base" ? () => setScreen(swordGuideReturnScreen) : null}
@@ -3489,6 +3575,7 @@ export function App() {
         onCloseFacility={closeFacility}
         onBoard={openRegionSelect}
         onDefense={openDefenseSelect}
+        onOpenSettings={() => setSettingsOpen(true)}
         onTitle={() => { closeNpc(); closeFacility(); setScreen("save"); }}
       />
     );
@@ -3496,6 +3583,7 @@ export function App() {
     content = (
       <LarkFlightOperationsScreen
         campaign={campaignView}
+        pilot={BASE_NPCS.lark}
         plans={flightPlans}
         activePlanId={activeFlightPlan?.id}
         assets={campaignAssets}
@@ -3506,9 +3594,9 @@ export function App() {
   } else if (screen === "regions" && campaignView) {
     content = <RegionSelectScreen regions={regions} clusters={regionClusters} campaign={campaignView} assets={campaignAssets} weapons={mainWeapons} equippedWeaponId={activeMainWeaponId} characters={unlockedPlayableCharacters} selectedCharacterId={activeCharacterId} onCharacterChange={selectCharacter} onSelect={launchCombat} onBack={() => setScreen("base")} />;
   } else if (screen === "defense-select" && campaignView) {
-    content = <DefenseStageSelectScreen stages={defenseStages} campaign={campaignView} assets={campaignAssets} onSelect={launchDefense} onBack={() => setScreen("base")} />;
+    content = <DefenseStageSelectScreen stages={defenseStages} campaign={campaignView} assets={campaignAssets} npc={BASE_NPCS.rhea} onSelect={launchDefense} onBack={() => setScreen("base")} />;
   } else if (screen === "defense") {
-    content = <DefenseArenaScreen stageId={activeDefenseStageId} assets={campaignAssets} sfx={sfx} showTutorial={activeDefenseStageId === "haven-perimeter" && !activeSlot?.defenseGuideSeen} onTutorialComplete={finishDefenseGuide} onFinish={finishDefense} onBase={() => setScreen("base")} />;
+    content = <DefenseArenaScreen stageId={activeDefenseStageId} doctrineId={activeDefenseDoctrineId} assets={campaignAssets} sfx={sfx} showTutorial={activeDefenseStageId === "haven-perimeter" && !activeSlot?.defenseGuideSeen} onTutorialComplete={finishDefenseGuide} onFinish={finishDefense} onBase={() => setScreen("base")} />;
   } else if (screen === "defense-result") {
     content = <DefenseResultScreen result={defenseResult} stage={getDefenseStage(activeDefenseStageId)} rewards={defenseResult?.rewards} onRetry={() => { setDefenseResult(null); setScreen("defense"); }} onBase={() => setScreen("base")} />;
   } else if (screen === "recruit") {
@@ -3525,6 +3613,7 @@ export function App() {
             mainWeaponId={activeMainWeaponId}
             characterId={activeCharacterId}
             mikaUnlocked={mikaUnlocked}
+            vesperUnlocked={vesperUnlocked}
             soundEnabled={soundEnabled}
             audioSettings={audioSettings}
             sfx={sfx}
@@ -3532,7 +3621,7 @@ export function App() {
             onAudioSettingsChange={updateAudioSettings}
             onFinish={finish}
             onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null}
-            showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass)}
+            showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass && audioSettings.combatHintsEnabled !== false)}
             skipOpeningNarrative={repeatSortie}
             onCombatTutorialComplete={finishCombatOverlay}
             preparing={screen === "sortie"}
@@ -3567,6 +3656,7 @@ export function App() {
         onStart={openSaveSlots}
         musicPlaying={bgmPlaying}
         onToggleMusic={startTitleMusic}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
     );
   }
@@ -3574,6 +3664,15 @@ export function App() {
   return (
     <>
       {content}
+      {settingsOpen && (
+        <GameSettingsOverlay
+          key={SETTINGS_STORAGE_KEY}
+          settings={audioSettings}
+          onChange={updateAudioSettings}
+          onReset={resetGameSettings}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
       <audio
         ref={bgmRef}
         src={activeBgmPath || undefined}

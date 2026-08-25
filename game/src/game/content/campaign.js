@@ -38,6 +38,10 @@ export const BASE_NPCS = deepFreeze({
     portraitKey: "havenNpcPortraits",
     portraitPath: "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png",
     portraitIndex: 0,
+    portraitDialogue: [
+      "분석 중이야. 지휘관, 화면을 가리면 오차가 0.7% 늘어나.",
+      "조금만 기다려. 이번 표본은 전투 예측 모델에 꽤 좋은 자료가 될 것 같아.",
+    ],
     facilityId: "research",
     facilityLabel: "연구 시작",
     dialogue: [
@@ -54,6 +58,10 @@ export const BASE_NPCS = deepFreeze({
     portraitKey: "havenNpcPortraits",
     portraitPath: "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png",
     portraitIndex: 1,
+    portraitDialogue: [
+      "장비는 거짓말을 안 해. 소리가 달라졌다면 어디선가 마모가 시작된 거지.",
+      "그 손으로 공구함은 건드리지 마. 정비가 필요하면 나부터 불러.",
+    ],
     facilityId: "equipment",
     facilityLabel: "장비 개조",
     dialogue: [
@@ -64,12 +72,17 @@ export const BASE_NPCS = deepFreeze({
   },
   lark: {
     id: "lark",
-    name: "LARK",
-    role: "AIRSHIP PILOT",
-    station: "FLIGHT GANTRY",
-    portraitKey: "havenNpcPortraits",
-    portraitPath: "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png",
-    portraitIndex: 2,
+    name: "SERA",
+    role: "NIGHTJAR CHIEF PILOT",
+    station: "FLIGHT CONTROL",
+    portraitKey: "nightjarPilot",
+    portraitPath: "./assets/overload/ui/npcs/sera-nightjar-pilot-v1.png",
+    portraitMode: "standalone",
+    portraitDialogue: [
+      "항로는 이미 잡았어. 지휘관이 고개만 끄덕이면 나이트자는 바로 뜰 수 있어.",
+      "계기판보다 내 감각이 빠를 때도 있지. 그래도 출격 전 점검은 절대 생략 안 해.",
+      "난 세라. 흔들림 없는 비행과 살아 돌아오는 길을 책임질게.",
+    ],
     interaction: "open-flight-operations",
     flightOperationLabel: "항로 작전 편성",
     flightOperationsDialogue: [
@@ -95,6 +108,10 @@ export const BASE_NPCS = deepFreeze({
     portraitKey: "rheaControlOfficer",
     portraitPath: "./assets/overload/ui/npcs/rhea-control-officer.png",
     portraitMode: "standalone",
+    portraitDialogue: [
+      "시선은 전장에 둬. 필요한 정보는 내가 가장 짧은 경로로 전달할게.",
+      "관제 링크는 정상. 다음 판단은 네가 내리면 돼.",
+    ],
     interaction: "open-ability-guide",
     interactionLabel: "사용 스킬 브리핑",
     dialogue: [

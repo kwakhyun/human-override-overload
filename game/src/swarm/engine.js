@@ -247,11 +247,18 @@ export const MIKA_MANUAL_ACTIVE_ABILITIES = Object.freeze({
   stratosRun: Object.freeze({ id: "cometDuet", key: "F", name: "COMET DUET", nameKo: "쌍성 질주", baseCooldown: 27 }),
   helixTempest: Object.freeze({ id: "heartbeatCarnival", key: "R", name: "HEARTBEAT CARNIVAL", nameKo: "심장박동 카니발", baseCooldown: 74 }),
 });
+export const VESPER_MANUAL_ACTIVE_ABILITIES = Object.freeze({
+  empPulse: Object.freeze({ id: "vectorStep", key: "Q", name: "VECTOR STEP", nameKo: "벡터 스텝", baseCooldown: 18 }),
+  aegisWard: Object.freeze({ id: "zeroMark", key: "E", name: "ZERO MARK", nameKo: "제로 마크", baseCooldown: 28 }),
+  stratosRun: Object.freeze({ id: "railBurst", key: "F", name: "RAIL BURST", nameKo: "레일 버스트", baseCooldown: 34 }),
+  helixTempest: Object.freeze({ id: "deadline", key: "R", name: "DEADLINE", nameKo: "데드라인", baseCooldown: 72 }),
+});
 const MANUAL_ABILITY_KEYS = Object.freeze(["empPulse", "aegisWard", "stratosRun", "helixTempest"]);
 const MANUAL_INPUT_FIELDS = Object.freeze(["empPulsePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]);
 
 function manualAbilityDefinitionsFor(characterId, aegisWeaponId = "pulse-rifle") {
   if (characterId === "mika") return MIKA_MANUAL_ACTIVE_ABILITIES;
+  if (characterId === "vesper") return VESPER_MANUAL_ACTIVE_ABILITIES;
   return aegisWeaponId === "beam-sword"
     ? SWORD_MANUAL_ACTIVE_ABILITIES
     : MANUAL_ACTIVE_ABILITIES;
@@ -268,6 +275,7 @@ function createManualAbilityBanks(aegisWeaponId) {
   return {
     aegis: createManualAbilityBank(manualAbilityDefinitionsFor("aegis", aegisWeaponId)),
     mika: createManualAbilityBank(manualAbilityDefinitionsFor("mika", aegisWeaponId)),
+    vesper: createManualAbilityBank(manualAbilityDefinitionsFor("vesper", aegisWeaponId)),
   };
 }
 
@@ -288,7 +296,8 @@ function normalizeManualAbilityBank(bank, definitions) {
 }
 
 function ensureManualAbilityBanks(state) {
-  const characterId = state.player?.characterId === "mika" ? "mika" : "aegis";
+  const requestedCharacterId = state.player?.characterId;
+  const characterId = requestedCharacterId === "mika" || requestedCharacterId === "vesper" ? requestedCharacterId : "aegis";
   const aegisWeaponId = state.player?.aegisWeaponId ?? state.player?.mainWeaponId ?? "pulse-rifle";
   if (!state.manualAbilityBanks || typeof state.manualAbilityBanks !== "object") {
     const banks = createManualAbilityBanks(aegisWeaponId);
@@ -302,7 +311,7 @@ function ensureManualAbilityBanks(state) {
     }
     state.manualAbilityBanks = banks;
   }
-  for (const ownerId of ["aegis", "mika"]) {
+  for (const ownerId of ["aegis", "mika", "vesper"]) {
     state.manualAbilityBanks[ownerId] = normalizeManualAbilityBank(
       state.manualAbilityBanks[ownerId],
       manualAbilityDefinitionsFor(ownerId, aegisWeaponId),
@@ -316,7 +325,7 @@ function ensureManualAbilityBanks(state) {
 
 function manualAbilityBankFor(state, characterId) {
   ensureManualAbilityBanks(state);
-  return state.manualAbilityBanks[characterId === "mika" ? "mika" : "aegis"];
+  return state.manualAbilityBanks[characterId === "mika" || characterId === "vesper" ? characterId : "aegis"];
 }
 
 const ENEMY_DATA = Object.freeze({
@@ -809,31 +818,58 @@ function sanitizeMainWeaponId(value) {
 }
 
 function sanitizeCharacterId(value) {
-  return value === "mika" ? "mika" : "aegis";
+  if (value === "mika" || value === "vesper") return value;
+  return "aegis";
 }
 
-function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true) {
+function characterDisplayName(characterId) {
+  if (characterId === "mika") return "MIKA";
+  if (characterId === "vesper") return "VESPER";
+  return "AEGIS";
+}
+
+function characterSpeedMultiplier(characterId) {
+  if (characterId === "mika") return 1.08;
+  if (characterId === "vesper") return 1.12;
+  return 1;
+}
+
+function characterDamageMultiplier(characterId) {
+  return characterId === "vesper" ? 1.16 : 1;
+}
+
+function characterFireRateMultiplier(characterId) {
+  return characterId === "vesper" ? 1.08 : 1;
+}
+
+function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true) {
   const bonuses = sanitizeCombatBonuses(combatBonuses);
-  const weaponId = sanitizeMainWeaponId(mainWeaponId);
-  const safeCharacterId = mikaUnlocked ? sanitizeCharacterId(characterId) : "aegis";
-  const maxHp = 360 + bonuses.maxHpFlat;
+  const requestedCharacterId = sanitizeCharacterId(characterId);
+  const safeCharacterId = requestedCharacterId === "mika" && !mikaUnlocked
+    ? "aegis"
+    : requestedCharacterId === "vesper" && !vesperUnlocked ? "aegis" : requestedCharacterId;
+  const fieldLeadCharacterId = safeCharacterId === "mika" ? "aegis" : safeCharacterId;
+  const weaponId = safeCharacterId === "vesper" ? "pulse-rifle" : sanitizeMainWeaponId(mainWeaponId);
+  const maxHp = (safeCharacterId === "vesper" ? 320 : 360) + bonuses.maxHpFlat;
   return {
-    name: safeCharacterId === "mika" ? "MIKA" : "AEGIS",
+    name: characterDisplayName(safeCharacterId),
     characterId: safeCharacterId,
-    reserveCharacterId: mikaUnlocked ? (safeCharacterId === "mika" ? "aegis" : "mika") : null,
+    fieldLeadCharacterId,
+    reserveCharacterId: mikaUnlocked ? (safeCharacterId === "mika" ? fieldLeadCharacterId : "mika") : null,
     mikaUnlocked: Boolean(mikaUnlocked),
+    vesperUnlocked: Boolean(vesperUnlocked),
     tagCooldown: 0,
     tagCooldownMax: 10,
     mainWeaponId: weaponId,
     aegisWeaponId: weaponId,
-    weaponDamageMultiplier: weaponId === "beam-sword" ? bonuses.swordDamageMultiplier : bonuses.rifleDamageMultiplier,
+    weaponDamageMultiplier: (weaponId === "beam-sword" ? bonuses.swordDamageMultiplier : bonuses.rifleDamageMultiplier) * characterDamageMultiplier(safeCharacterId),
     x: GAME_WIDTH * 0.5,
     y: GAME_HEIGHT * 0.5,
     vx: 0,
     vy: 0,
     angle: 0,
     radius: 15,
-    speed: 245 * bonuses.moveSpeedMultiplier * (safeCharacterId === "mika" ? 1.08 : 1),
+    speed: 245 * bonuses.moveSpeedMultiplier * characterSpeedMultiplier(safeCharacterId),
     hp: maxHp,
     maxHp,
     shield: 0,
@@ -848,7 +884,7 @@ function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId =
     xp: 0,
     nextXp: xpRequirementForLevel(1),
     damageMultiplier: bonuses.damageMultiplier,
-    fireRateMultiplier: bonuses.fireRateMultiplier,
+    fireRateMultiplier: bonuses.fireRateMultiplier * characterFireRateMultiplier(safeCharacterId),
     xpGainMultiplier: bonuses.xpGainMultiplier,
     healingMultiplier: bonuses.healingMultiplier,
     baseCombatBonuses: bonuses,
@@ -939,10 +975,10 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
   };
 }
 
-export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true } = {}) {
+export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
   const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
-  const player = createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked);
+  const player = createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked, vesperUnlocked);
   const manualAbilityBanks = createManualAbilityBanks(player.aegisWeaponId);
   const state = {
     mode: "swarm",
@@ -1106,7 +1142,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
   };
   if (state.expedition) {
     state.player.invulnerability = Math.max(state.player.invulnerability, EXPEDITION_ENTRY_GRACE_DURATION);
-    state.player.name = state.player.characterId === "mika" ? "MIKA" : "AEGIS";
+    state.player.name = characterDisplayName(state.player.characterId);
     state.player.x = EXPEDITION_WORLD_WIDTH * 0.5;
     state.player.y = EXPEDITION_WORLD_HEIGHT * 0.5;
     state.boss.x = WORLD_WIDTH * 0.8;
@@ -1229,22 +1265,23 @@ function tagCharacter(state) {
   const player = state.player;
   if (!player.mikaUnlocked || !player.reserveCharacterId || player.dead || player.stunTimer > 0 || player.tagCooldown > 0) return false;
   ensureManualAbilityBanks(state);
-  const nextCharacterId = player.characterId === "mika" ? "aegis" : "mika";
+  const nextCharacterId = player.characterId === "mika" ? player.fieldLeadCharacterId : "mika";
   player.characterId = nextCharacterId;
-  player.reserveCharacterId = nextCharacterId === "mika" ? "aegis" : "mika";
-  player.name = nextCharacterId === "mika" ? "MIKA" : "AEGIS";
-  player.speed = 245 * player.baseCombatBonuses.moveSpeedMultiplier * (nextCharacterId === "mika" ? 1.08 : 1);
+  player.reserveCharacterId = nextCharacterId === "mika" ? player.fieldLeadCharacterId : "mika";
+  player.name = characterDisplayName(nextCharacterId);
+  player.speed = 245 * player.baseCombatBonuses.moveSpeedMultiplier * characterSpeedMultiplier(nextCharacterId);
+  player.fireRateMultiplier = player.baseCombatBonuses.fireRateMultiplier * characterFireRateMultiplier(nextCharacterId);
   player.weaponDamageMultiplier = nextCharacterId === "mika"
     ? Math.max(player.baseCombatBonuses.rifleDamageMultiplier, player.baseCombatBonuses.swordDamageMultiplier)
     : player.aegisWeaponId === "beam-sword"
-      ? player.baseCombatBonuses.swordDamageMultiplier
-      : player.baseCombatBonuses.rifleDamageMultiplier;
+      ? player.baseCombatBonuses.swordDamageMultiplier * characterDamageMultiplier(nextCharacterId)
+      : player.baseCombatBonuses.rifleDamageMultiplier * characterDamageMultiplier(nextCharacterId);
   player.tagCooldown = player.tagCooldownMax;
   player.invulnerability = Math.max(player.invulnerability, 0.52);
   player.attackTimer = 0;
   player.recoil = 0;
   ensureManualAbilityBanks(state);
-  state.shockwaves.push({ type: "characterTag", x: player.x, y: player.y, maxRadius: 130, life: 0.42, maxLife: 0.42, color: nextCharacterId === "mika" ? "#ff79d8" : "#79eeff", width: 8 });
+  state.shockwaves.push({ type: "characterTag", x: player.x, y: player.y, maxRadius: 130, life: 0.42, maxLife: 0.42, color: nextCharacterId === "mika" ? "#ff79d8" : nextCharacterId === "vesper" ? "#ffc26f" : "#79eeff", width: 8 });
   emit(state, "characterTagged", { characterId: nextCharacterId, reserveCharacterId: player.reserveCharacterId, cooldown: player.tagCooldownMax, x: player.x, y: player.y });
   return true;
 }
@@ -3679,9 +3716,9 @@ function updateManualAbilityEntities(state, dt) {
 
 function updateManualAbilities(state, input, dt) {
   const activeAbilities = ensureManualAbilityBanks(state);
-  // Both squad members recover while tagged out, but their clocks never
+  // Every operative recovers while tagged out, but their clocks never
   // merge. This preserves the old continuously-ticking cooldown behavior.
-  for (const characterId of ["aegis", "mika"]) {
+  for (const characterId of ["aegis", "mika", "vesper"]) {
     const bank = state.manualAbilityBanks[characterId];
     for (const ability of MANUAL_ABILITY_KEYS) {
       const entry = bank[ability];

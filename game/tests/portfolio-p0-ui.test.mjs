@@ -35,14 +35,14 @@ test("completing the combat tutorial keeps the active Phaser run alive", async (
   assert.match(app, /onFinishRef\.current\(result\)/);
   assert.match(
     app,
-    /\}, \[characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx\]\);/,
+    /\}, \[characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked\]\);/,
   );
   assert.doesNotMatch(app, /\[characterId, combatBonuses, mainWeaponId/);
 });
 
 test("locked MIKA is absent and a valid saved loadout is immediately launchable", async () => {
   const [app, screens, styles] = await sources();
-  assert.match(app, /characters: facility\.id === "augmentation" \? unlockedPlayableCharacters\.map/);
+  assert.match(app, /characters: facility\.id === "augmentation" \? playableCharacters\.map/);
   assert.match(screens, /const availableCharacters = useMemo\([\s\S]*character\?\.unlocked !== false/);
   assert.match(screens, /\{availableCharacters\.map\(\(character\) =>/);
   assert.doesNotMatch(screens, /confirmedWeaponId/);

@@ -124,18 +124,22 @@ test("every region exposes one manifest-aligned square arena descriptor", async 
   assert.equal(getRegion("abyssal-archive").assets.battle.bossForms.key, "overload-abyssal-archive-boss-forms");
 });
 
-test("the base has HANA, ILYA, LARK, and RHEA with authored portraits and interactions", () => {
+test("the base has HANA, ILYA, SERA, and RHEA with authored portraits and interactions", () => {
   assert.equal(HOME_BASE.id, "haven-09");
   assert.equal(HOME_BASE.assets.background.path, "./assets/overload/campaign/haven-09-base.webp");
   assert.equal(HOME_BASE.assets.airshipConsole.path, "./assets/overload/campaign/strategic-world-map.webp");
-  assert.deepEqual(getBaseNpcs().map((npc) => npc.name), ["HANA", "ILYA", "LARK", "RHEA"]);
-  assert.deepEqual(getBaseNpcs().slice(0, 3).map((npc) => npc.portraitIndex), [0, 1, 2]);
+  assert.deepEqual(getBaseNpcs().map((npc) => npc.name), ["HANA", "ILYA", "SERA", "RHEA"]);
+  assert.deepEqual(getBaseNpcs().slice(0, 2).map((npc) => npc.portraitIndex), [0, 1]);
   assert.equal(Object.keys(BASE_NPCS).length, 4);
-  for (const npc of getBaseNpcs().slice(0, 3)) {
+  for (const npc of getBaseNpcs().slice(0, 2)) {
     assert.equal(npc.portraitPath, "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png");
     assert.equal(npc.portraitKey, "havenNpcPortraits");
     assert.ok(npc.dialogue.length > 0);
   }
+  assert.equal(BASE_NPCS.lark.name, "SERA");
+  assert.equal(BASE_NPCS.lark.portraitMode, "standalone");
+  assert.equal(BASE_NPCS.lark.portraitKey, "nightjarPilot");
+  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/ui/npcs/sera-nightjar-pilot-v1.png");
   assert.equal(BASE_NPCS.rhea.portraitMode, "standalone");
   assert.equal(BASE_NPCS.rhea.portraitKey, "rheaControlOfficer");
   assert.equal(BASE_NPCS.rhea.portraitPath, "./assets/overload/ui/npcs/rhea-control-officer.png");
@@ -145,6 +149,7 @@ test("the base has HANA, ILYA, LARK, and RHEA with authored portraits and intera
   assert.equal(getBaseNpc("LARK").interaction, "open-flight-operations");
   assert.equal(getBaseNpc("LARK").interactionLabel, "항로 작전 편성");
   assert.ok(getBaseNpc("LARK").milestoneDialogue.some((line) => line.includes("외곽 권역")));
+  assert.ok(getBaseNpcs().every((npc) => npc.portraitDialogue.length > 0));
   assert.equal(getBaseNpc("missing"), null);
 });
 
@@ -180,9 +185,10 @@ test("campaign content is immutable and exports one flat DOM preload map of exis
   assert.equal(Object.isFrozen(BASE_NPCS), true);
   const assets = getCampaignDomAssets();
   assert.equal(Object.isFrozen(assets), true);
-  assert.equal(Object.keys(assets).length, 16);
+  assert.equal(Object.keys(assets).length, 17);
   assert.equal(assets.havenBase, "./assets/overload/campaign/haven-09-base.webp");
   assert.equal(assets.havenNpcPortraits, BASE_NPCS.hana.portraitPath);
+  assert.equal(assets.nightjarPilot, BASE_NPCS.lark.portraitPath);
   assert.equal(assets.rheaControlOfficer, BASE_NPCS.rhea.portraitPath);
   assert.equal(assets["overload-abyssal-archive-route"], CAMPAIGN_REGIONS["abyssal-archive"].assets.dom.thumbnail.path);
   assert.equal(assets["overload-neon-foundry-route"], CAMPAIGN_REGIONS["neon-foundry"].assets.dom.thumbnail.path);

@@ -426,6 +426,7 @@ export class BattleView {
   private bossRevealStartedAt = -1;
   private bossRevealFromZoom = 1.08;
   private userZoomFactor = 1;
+  private screenShakeEnabled = true;
 
   constructor(scene: Phaser.Scene, regionId = "wrong-engine-core", portraitPresentation = false) {
     this.scene = scene;
@@ -540,6 +541,10 @@ export class BattleView {
     this.syncPresentationViewport();
   }
 
+  setScreenShakeEnabled(enabled: boolean) {
+    this.screenShakeEnabled = enabled;
+  }
+
   private prepareAtlas(key: string, columns: number, rows: number) {
     if (this.preparedAtlases.has(key)) return true;
     if (!this.scene.textures.exists(key)) return false;
@@ -621,15 +626,15 @@ export class BattleView {
       this.bossRevealStartedAt = this.scene.time.now;
       this.bossRevealFromZoom = this.mainCamera.zoom;
     } else if (["bossContact", "bossContactHit", "playerStunned"].includes(type)) {
-      this.mainCamera.shake(170, 0.0085);
+      this.shakeCamera(170, 0.0085);
       this.hudCamera.flash(90, 255, 42, 68, false);
       this.spawnFx("playerHit", this.player.x, this.player.y, COLORS.red, 1.2);
     } else if (["bossStage", "bossStagePulse", "overdrive", "skillMastered"].includes(type)) {
-      this.mainCamera.shake(250, type === "bossStage" ? 0.012 : 0.006);
+      this.shakeCamera(250, type === "bossStage" ? 0.012 : 0.006);
       this.hudCamera.flash(120, type === "overdrive" ? 88 : 255, type === "overdrive" ? 242 : 70, type === "overdrive" ? 255 : 80, false);
       if (type === "bossStage") this.spawnFx("phaseBreak", this.boss.x, this.boss.y, COLORS.red, 2.25);
     } else if (type === "dash") {
-      this.mainCamera.shake(90, 0.0025);
+      this.shakeCamera(90, 0.0025);
     } else if (type === "empPulseActivated") {
       this.shakeImpact(120, 0.0045, 90);
       this.spawnFx("weaponBlast", finite(event?.x, this.player.x), finite(event?.y, this.player.y), COLORS.cyan, 1.55);
@@ -656,35 +661,35 @@ export class BattleView {
     } else if (type === "bossPatternFire" || type === "bossRageBurst") {
       this.spawnFx("weaponBlast", this.boss.x, this.boss.y, COLORS.red, type === "bossRageBurst" ? 1.8 : 1.25);
     } else if (type === "bossParryWindow") {
-      this.mainCamera.shake(150, 0.0035);
+      this.shakeCamera(150, 0.0035);
       this.hudCamera.flash(85, 225, 246, 255, false);
     } else if (type === "bossParrySuccess") {
-      this.mainCamera.shake(320, 0.014);
+      this.shakeCamera(320, 0.014);
       this.hudCamera.flash(150, 190, 255, 255, false);
       this.spawnFx("phaseBreak", this.player.x, this.player.y, COLORS.cyan, 1.8);
       this.spawnFx("bossBurst", this.boss.x, this.boss.y, COLORS.white, 2.1);
     } else if (type === "bossBombRetaliation") {
-      this.mainCamera.shake(220, 0.009);
+      this.shakeCamera(220, 0.009);
       this.hudCamera.flash(100, 255, 48, 66, false);
     } else if (type === "bossParryFailed" || type === "bossBombSequenceFailed") {
-      this.mainCamera.shake(380, 0.018);
+      this.shakeCamera(380, 0.018);
       this.hudCamera.flash(180, 255, 42, 68, false);
       this.spawnFx("playerHit", this.player.x, this.player.y, COLORS.red, 1.7);
     } else if (type === "bossSiren") {
-      this.mainCamera.shake(460, 0.0065);
+      this.shakeCamera(460, 0.0065);
       this.hudCamera.flash(130, 255, 32, 55, false);
     } else if (type === "bossBombDefused" || type === "bossBombSequenceCleared") {
       this.spawnFx("weaponBlast", type === "bossBombDefused" ? finite(event?.x, this.player.x) : this.boss.x, type === "bossBombDefused" ? finite(event?.y, this.player.y) : this.boss.y, COLORS.green, type === "bossBombDefused" ? 0.8 : 1.9);
     } else if (type === "enemySelfDestruct") {
-      this.mainCamera.shake(180, event?.elite ? 0.011 : 0.0075);
+      this.shakeCamera(180, event?.elite ? 0.011 : 0.0075);
     } else if (type === "healthKitPicked") {
       this.spawnFx("weaponBlast", finite(event?.x), finite(event?.y), COLORS.green, 0.95);
     } else if (type === "routeClearWarning") {
-      this.mainCamera.shake(260, 0.006);
+      this.shakeCamera(260, 0.006);
       this.hudCamera.flash(120, 255, 190, 72, false);
       this.spawnFx("weaponBlast", this.player.x, this.player.y, COLORS.amber, 1.35);
     } else if (type === "routeClearPanic") {
-      this.mainCamera.shake(420, 0.009);
+      this.shakeCamera(420, 0.009);
       this.hudCamera.flash(150, 255, 50, 82, false);
       this.spawnFx("playerHit", this.player.x, this.player.y, COLORS.red, 1.3);
     } else if (type === "bossAutoTransition") {
@@ -692,11 +697,17 @@ export class BattleView {
     }
   }
 
+  private shakeCamera(duration: number, intensity: number) {
+    if (!this.screenShakeEnabled) return;
+    this.mainCamera.shake(duration, intensity);
+  }
+
   private shakeImpact(duration: number, intensity: number, minimumGap = 70) {
+    if (!this.screenShakeEnabled) return;
     const now = this.scene.time.now;
     if (now - this.lastImpactShakeAt < minimumGap) return;
     this.lastImpactShakeAt = now;
-    this.mainCamera.shake(duration, intensity);
+    this.shakeCamera(duration, intensity);
   }
 
   render(state: any, quality: QualityPreset) {
@@ -873,7 +884,9 @@ export class BattleView {
           ? COLORS.white
           : panicActive && Math.sin(panicClock * 26) > 0
             ? 0xff8da2
-            : 0xffffff,
+            : entity?.characterId === "vesper"
+              ? 0xffd3a0
+              : 0xffffff,
       );
 
     const muzzleVisible = rifleEquipped && finite(entity?.attackTimer) > 0.055 && !entity?.dead && finite(entity?.stunTimer) <= 0;

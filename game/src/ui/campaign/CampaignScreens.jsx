@@ -10,20 +10,29 @@ import {
   ChatText,
   Crosshair,
   FloppyDisk,
+  GearSix,
+  Lightning,
   Lock,
   MapTrifold,
   Play,
   ShieldChevron,
+  ShieldStar,
   Sparkle,
   Sword,
+  Target,
   User,
   Wrench,
 } from "@phosphor-icons/react";
 import { useDialogFocusTrap } from "../useDialogFocusTrap.js";
 import { MIKA_RECRUIT_DIALOGUE } from "../../game/content/characterDialogue.js";
+import { DEFENSE_DOCTRINES } from "../../defense/content.js";
 
 function assetSource(asset, fallback = "") {
   return asset?.src || asset || fallback;
+}
+
+function nextDialogueIndex(index, lines) {
+  return lines?.length ? (index + 1) % lines.length : -1;
 }
 
 function getRailIndex(container) {
@@ -68,7 +77,7 @@ function CarouselPosition({ className, label, index, count, onPrevious, onNext }
 const NPC_DISPLAY = Object.freeze({
   hana: Object.freeze({ name: "하나", role: "기지 지휘관 · 연구실" }),
   ilya: Object.freeze({ name: "일리야", role: "장비 기술자 · 정비소" }),
-  lark: Object.freeze({ name: "라크", role: "비행선 조종사 · 격납고" }),
+  lark: Object.freeze({ name: "세라", role: "나이트자 수석 조종사 · 항로 관제" }),
   rhea: Object.freeze({ name: "레아", role: "전술 관제관 · 관제실" }),
 });
 
@@ -100,6 +109,12 @@ const CHARACTER_ACTIVE_LOADOUTS = Object.freeze({
     Object.freeze({ key: "F", name: "쌍성 질주", detail: "왕복 돌진", icon: AirplaneTilt }),
     Object.freeze({ key: "R", name: "심장박동 카니발", detail: "링 블레이드 폭풍", icon: Broadcast }),
   ]),
+  vesper: Object.freeze([
+    Object.freeze({ key: "Q", name: "벡터 스텝", detail: "회피 사격", icon: Lightning }),
+    Object.freeze({ key: "E", name: "제로 마크", detail: "약점 표식", icon: Target }),
+    Object.freeze({ key: "F", name: "레일 버스트", detail: "관통 저격", icon: Crosshair }),
+    Object.freeze({ key: "R", name: "데드라인", detail: "고속 섬멸", icon: AirplaneTilt }),
+  ]),
 });
 
 const PORTRAIT_REACTIONS = Object.freeze({
@@ -114,6 +129,12 @@ const PORTRAIT_REACTIONS = Object.freeze({
     chest: Object.freeze(["자, 잠깐! 거긴 안 돼… 정말 하지 마. …미워하진 않지만.", "너무 가깝잖아! 심장 소리 들리면 책임져."]),
     arms: Object.freeze(["손잡고 싶으면 그냥 말해. 이번만이야.", "팔은 전투 준비 완료! 네가 잡아 주면… 조금 더 든든할지도."]),
     legs: Object.freeze(["간지럽잖아! 출격 전에 장난치지 마… 조금만 더.", "도망 못 가게 잡는 거야? 나도 같이 갈 테니까 놔 줘."]),
+  }),
+  vesper: Object.freeze({
+    head: Object.freeze(["전술 계산 중이야. 머리카락은 나중에 정리해 줘.", "집중은 흐트러지지 않았어. 다음 표적을 말해." ]),
+    chest: Object.freeze(["방탄 플레이트 상태 양호. 너무 걱정하지 마.", "제로 벡터 동기화 완료. 출격 가능해." ]),
+    arms: Object.freeze(["레일 피스톨 영점은 완벽해.", "손목 보정기 반응 정상. 한 발이면 충분해." ]),
+    legs: Object.freeze(["기동 보조기 점검 완료. 먼저 길을 열게.", "내 장점은 속도야. 따라올 수 있겠어?" ]),
   }),
 });
 
@@ -415,24 +436,33 @@ const ABILITY_ICON = Object.freeze({
   sword: Sword,
 });
 
-function NpcPortrait({ npc, assets }) {
+function resolveNpcPortraitSource(npc, assets) {
+  if (npc?.portraitKey === "nightjarPilot") return assetSource(assets?.nightjarPilot);
+  if (npc?.portraitKey === "rheaControlOfficer") return assetSource(assets?.controlOfficer);
+  return assetSource(assets?.npcPortraits);
+}
+
+function NpcPortrait({ npc, assets, onReact }) {
   const standalone = npc.portraitMode === "standalone";
-  const atlas = assetSource(standalone ? assets?.controlOfficer : assets?.npcPortraits);
+  const portrait = resolveNpcPortraitSource(npc, assets);
   return (
-    <div
+    <button
+      type="button"
       className={standalone ? "base-npc-portrait is-standalone" : "base-npc-portrait"}
-      role="img"
-      aria-label={`${npc.name} 상반신 초상화`}
+      aria-label={`${npc.name} 일러스트와 상호작용`}
+      onClick={onReact}
+      disabled={!onReact}
       style={{
-        backgroundImage: atlas ? `url(${atlas})` : undefined,
+        backgroundImage: portrait ? `url(${portrait})` : undefined,
         backgroundPosition: standalone ? "center bottom" : `${(npc.portraitIndex || 0) * 50}% center`,
       }}
-    />
+    ><span className="npc-portrait-interaction-hint"><ChatText weight="fill" /> 클릭해서 대화</span></button>
   );
 }
 
 export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, onFacility, onInteraction }) {
   const dialogRef = useRef(null);
+  const [portraitReactionIndex, setPortraitReactionIndex] = useState(-1);
   useDialogFocusTrap(dialogRef, Boolean(npc));
   const lines = npc?.dialogue || [];
   const line = localizeWorldText(lines[Math.min(lineIndex, Math.max(0, lines.length - 1))] || "통신 기록이 없습니다.");
@@ -449,14 +479,20 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
     window.addEventListener("keydown", handleDialogueSpace);
     return () => window.removeEventListener("keydown", handleDialogueSpace);
   }, [final, npc, onAdvance, onClose]);
+  useEffect(() => setPortraitReactionIndex(-1), [npc?.id]);
   if (!npc) return null;
   const display = NPC_DISPLAY[npc.id] || { name: npc.name, role: npc.role };
+  const portraitDialogue = npc.portraitDialogue?.length ? npc.portraitDialogue : npc.dialogue;
+  const portraitReaction = portraitReactionIndex >= 0
+    ? localizeWorldText(portraitDialogue[portraitReactionIndex % portraitDialogue.length])
+    : null;
   return (
     <section className="base-dialogue" role="dialog" aria-modal="true" aria-labelledby="base-dialogue-name" ref={dialogRef} tabIndex={-1}>
-      <NpcPortrait npc={npc} assets={assets} />
+      <NpcPortrait npc={npc} assets={assets} onReact={() => setPortraitReactionIndex((index) => nextDialogueIndex(index, portraitDialogue))} />
       <div className="base-dialogue-copy">
         <small>{display.role}</small>
         <h2 id="base-dialogue-name">{display.name}</h2>
+        {portraitReaction && <p className="npc-portrait-reaction" role="status">{portraitReaction}</p>}
         <p>{line}</p>
         <footer className="base-dialogue-actions">
           {npc.facilityId && onFacility && (
@@ -481,16 +517,46 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
 
 export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose, onWeaponChange, onOpenSwordGuide }) {
   const dialogRef = useRef(null);
+  const [npcReactionIndex, setNpcReactionIndex] = useState(-1);
   useDialogFocusTrap(dialogRef, Boolean(facility && facility.id !== "augmentation"));
+  useEffect(() => setNpcReactionIndex(-1), [facility?.id]);
   if (!facility) return null;
   if (facility.id === "augmentation") {
     return <CharacterInformationPanel facility={facility} onPurchase={onPurchase} onClose={onClose} onCharacterChange={facility.onCharacterChange} onWeaponChange={onWeaponChange} onOpenSwordGuide={onOpenSwordGuide} />;
   }
   const isResearch = facility.id === "research";
   const FacilityIcon = isResearch ? Brain : Wrench;
+  const facilityNpc = facility.npc;
+  const facilityNpcDisplay = facilityNpc ? NPC_DISPLAY[facilityNpc.id] || { name: facilityNpc.name, role: facilityNpc.role } : null;
+  const facilityNpcDialogue = facilityNpc?.portraitDialogue?.length ? facilityNpc.portraitDialogue : facilityNpc?.dialogue || [];
+  const facilityNpcReaction = npcReactionIndex >= 0 && facilityNpcDialogue.length
+    ? localizeWorldText(facilityNpcDialogue[npcReactionIndex % facilityNpcDialogue.length])
+    : "일러스트를 눌러 담당자와 대화하세요.";
   return (
-    <section className={`base-facility-panel facility-${facility.id}${facility.artSource ? " has-key-art" : ""}`} role="dialog" aria-modal="true" aria-labelledby="base-facility-name" ref={dialogRef} tabIndex={-1}>
+    <section className={`base-facility-panel facility-${facility.id}${facility.artSource ? " has-key-art" : ""}${facilityNpc ? " has-npc-host" : ""}`} role="dialog" aria-modal="true" aria-labelledby="base-facility-name" ref={dialogRef} tabIndex={-1}>
       {facility.artSource && <img className="facility-key-art" src={assetSource(facility.artSource)} alt="기지 시설 일러스트" />}
+      {facilityNpc && (
+        <aside className="facility-npc-stage" aria-label={`${facilityNpcDisplay.name} 담당자 인터랙션`}>
+          <button
+            type="button"
+            className={`facility-npc-portrait${facilityNpc.portraitMode === "standalone" ? " is-standalone" : ""}`}
+            onClick={() => setNpcReactionIndex((index) => nextDialogueIndex(index, facilityNpcDialogue))}
+            aria-label={`${facilityNpcDisplay.name} 일러스트와 대화`}
+          >
+            <span
+              style={{
+                backgroundImage: facilityNpc.portraitSource ? `url(${assetSource(facilityNpc.portraitSource)})` : undefined,
+                backgroundPosition: facilityNpc.portraitMode === "standalone" ? "center bottom" : `${(facilityNpc.portraitIndex || 0) * 50}% center`,
+              }}
+            />
+          </button>
+          <div className="facility-npc-dialogue" role="status">
+            <small>{facilityNpcDisplay.role}</small>
+            <strong>{facilityNpcDisplay.name}</strong>
+            <p>{facilityNpcReaction}</p>
+          </div>
+        </aside>
+      )}
       <header>
         <span><FacilityIcon weight="fill" /></span>
         <div>
@@ -583,13 +649,20 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
     : upgrades;
   const activeLoadout = profile?.id === "mika"
     ? CHARACTER_ACTIVE_LOADOUTS.mika
-    : facility?.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
+    : profile?.id === "vesper"
+      ? CHARACTER_ACTIVE_LOADOUTS.vesper
+      : facility?.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
+  const baseDamageOutput = facility?.combatStats?.damageOutput || 100;
+  const baseFireRate = facility?.combatStats?.fireRate || 100;
+  const displayedMaxHp = profile?.id === "vesper" ? 320 : (facility?.combatStats?.maxHp || 360);
+  const displayedDamageOutput = profile?.id === "vesper" ? Math.round(baseDamageOutput * 1.16) : baseDamageOutput;
+  const displayedFireRate = profile?.id === "vesper" ? Math.round(baseFireRate * 1.08) : baseFireRate;
   const completedRegions = new Set(facility?.completedRegionIds || []);
   const chooseCharacter = (characterId) => {
     const selected = facility?.characters?.find((character) => character.id === characterId);
-    if (!selected?.unlocked) return;
+    if (!selected) return;
     setProfileId(characterId);
-    onCharacterChange?.(characterId);
+    if (selected.unlocked) onCharacterChange?.(characterId);
   };
   const purchaseUpgrade = (upgradeId) => {
     setUpgradePulse((value) => value + 1);
@@ -621,6 +694,12 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
 
       <figure className="character-art-stage" id="character-art-stage">
         {profile?.portraitSource && <img src={assetSource(profile.portraitSource)} alt={`${profile.koreanName} 전신 일러스트`} />}
+        {!profile?.unlocked && (
+          <div className="character-lock-banner" role="status">
+            <Lock weight="fill" />
+            <span><small>OPERATIVE LOCKED</small><strong>{profile?.unlockDescription || "작전 구역 클리어 시 합류"}</strong></span>
+          </div>
+        )}
         <figcaption>
           <small>{profile?.role}</small>
           <h2 id="character-information-name">{profile?.koreanName}</h2>
@@ -643,10 +722,10 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
             </header>
             <p>{profile?.description}</p>
             <dl className="character-stat-grid">
-              <div><dt>최대 내구도</dt><dd>{facility?.combatStats?.maxHp || 360}</dd></div>
-              <div><dt>공격 출력</dt><dd>{facility?.combatStats?.damageOutput || 100}%</dd></div>
-              <div><dt>기동 속도</dt><dd>{profile?.id === "mika" ? facility?.combatStats?.mikaSpeed : facility?.combatStats?.aegisSpeed}</dd></div>
-              <div><dt>공격 주기</dt><dd>{facility?.combatStats?.fireRate || 100}%</dd></div>
+              <div><dt>최대 내구도</dt><dd>{displayedMaxHp}</dd></div>
+              <div><dt>공격 출력</dt><dd>{displayedDamageOutput}%</dd></div>
+              <div><dt>기동 속도</dt><dd>{profile?.id === "mika" ? facility?.combatStats?.mikaSpeed : profile?.id === "vesper" ? facility?.combatStats?.vesperSpeed : facility?.combatStats?.aegisSpeed}</dd></div>
+              <div><dt>공격 주기</dt><dd>{displayedFireRate}%</dd></div>
               <div><dt>해방 구역</dt><dd>{facility?.combatStats?.completedRegions || 0} / 6</dd></div>
               <div><dt>태그 대기</dt><dd>10초</dd></div>
             </dl>
@@ -694,8 +773,9 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
                 {completedRegions.has("glass-dune") && <button type="button" className="character-sword-guide-button" data-ui-sound="click" onClick={onOpenSwordGuide}><Sword weight="fill" /> 빔 소드 스킬 가이드</button>}
               </section>
             ) : (
-              <section className="character-fixed-weapon-note"><strong>프리즘 링블레이드</strong><span>미카 전용 고정 장비 · 태그 시 자동 전환</span></section>
+              <section className="character-fixed-weapon-note"><strong>{profile?.weaponName}</strong><span>{profile?.koreanName} 전용 고정 장비 · 태그 시 자동 전환</span></section>
             )}
+            <section className="character-trait-note"><small>OPERATIVE TRAIT</small><strong>{profile?.traitName}</strong><span>{profile?.traitDescription}</span></section>
             <button type="button" className="character-open-upgrades command-ui-button" data-ui-sound="click" onClick={() => { setActiveTab("upgrade"); setPortraitCompact(true); }}><Sparkle weight="fill" /> 동기화 코어로 영구 강화</button>
           </div>
         ) : (
@@ -756,8 +836,8 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
 
       <nav className="character-roster-rail" aria-label="전투원 선택">
         {(facility?.characters || []).map((character) => (
-          <button type="button" className={`${character.id === profile?.id ? "is-active" : ""}${character.unlocked ? "" : " is-locked"}`} aria-label={character.unlocked ? `${character.koreanName} 정보 보기` : `${character.koreanName} 잠김. 오답 엔진 중앙로 최초 클리어 필요`} aria-pressed={character.id === profile?.id} aria-disabled={!character.unlocked} onClick={() => chooseCharacter(character.id)} key={character.id}>
-            <img src={assetSource(character.portraitSource)} alt="" /><span>{character.unlocked ? character.koreanName : <><Lock weight="fill" /> 미해금</>}</span>
+          <button type="button" className={`${character.id === profile?.id ? "is-active" : ""}${character.unlocked ? "" : " is-locked"}`} aria-label={character.unlocked ? `${character.koreanName} 정보 보기` : `${character.koreanName} 미리보기. ${character.unlockDescription}`} aria-pressed={character.id === profile?.id} onClick={() => chooseCharacter(character.id)} key={character.id}>
+            <img src={assetSource(character.portraitSource)} alt="" /><span>{character.unlocked ? character.koreanName : <><Lock weight="fill" /> {character.koreanName}</>}</span>
           </button>
         ))}
       </nav>
@@ -782,11 +862,11 @@ function MotionPortraitStage({ source, characterId, name, onOpen }) {
   return (
     <section
       className={`base-motion-portrait is-${characterId}${reaction ? ` is-reacting reaction-${reaction.area}` : ""}`}
-      data-portrait-renderer="original-illustration"
+      data-portrait-renderer="static-key-art"
       aria-label={`${name} 상호작용 포트레이트`}
     >
-      <div className="motion-portrait-body" aria-hidden="true">
-        <img className="motion-portrait-original" src={assetSource(source)} alt="" />
+      <div className="motion-portrait-body">
+        <img className="motion-portrait-original static-character-portrait" src={assetSource(source)} alt={`${name} 전신 일러스트`} />
       </div>
       <div className="portrait-interaction-zones" aria-label={`${name} 터치 상호작용`}>
         <button type="button" className="portrait-zone is-head" data-ui-sound="click" onClick={() => react("head")} aria-label={`${name} 머리 반응 보기`} />
@@ -856,14 +936,14 @@ export function MikaRecruitScreen({ assets, onComplete }) {
   );
 }
 
-export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, availableUpgrades = {}, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onExchangeResources, onCharacterChange, onWeaponChange, onOpenSwordGuide, onCloseFacility, onBoard, onDefense, onTitle }) {
+export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, availableUpgrades = {}, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onExchangeResources, onCharacterChange, onWeaponChange, onOpenSwordGuide, onCloseFacility, onBoard, onDefense, onOpenSettings, onTitle }) {
   const facilityRailRef = useRef(null);
   const [facilityRailIndex, setFacilityRailIndex] = useState(0);
   const background = assetSource(assets?.homeBase);
   const completed = campaign?.completedRegionIds?.length || 0;
   const activeCharacterId = campaign?.loadout?.characterId || "aegis";
-  const activeCharacterName = activeCharacterId === "mika" ? "미카" : "이지스";
-  const activePortrait = activeCharacterId === "mika" ? assets?.mikaPortrait : assets?.playerPortrait;
+  const activeCharacterName = activeCharacterId === "mika" ? "미카" : activeCharacterId === "vesper" ? "베스퍼" : "이지스";
+  const activePortrait = activeCharacterId === "mika" ? assets?.mikaPortrait : activeCharacterId === "vesper" ? assets?.vesperPortrait : assets?.playerPortrait;
   const modalOpen = Boolean(activeNpc || activeFacility);
   const moveFacilityRail = useCallback((delta) => {
     const nextIndex = Math.max(0, Math.min((npcs?.length || 1) - 1, facilityRailIndex + delta));
@@ -897,6 +977,9 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
             <span><small>동기화 코어</small><b>{campaign?.progression?.augmentationCores || 0}</b></span>
           </button>
         </nav>
+        <button type="button" className="base-settings-button" data-ui-sound="click" onClick={onOpenSettings} aria-label="게임 설정 열기">
+          <GearSix weight="bold" /><span><small>SYSTEM</small><strong>설정</strong></span>
+        </button>
       </header>
 
       <MotionPortraitStage source={activePortrait} characterId={activeCharacterId} name={activeCharacterName} onOpen={() => onOpenFacility("augmentation")} />
@@ -949,8 +1032,8 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
 
       <aside className="base-objective">
         <small>작전 현황 · 해방 권역 {completed} / 6</small>
-        <strong>{larkAlert ? "라크가 신규 권역 신호를 해독했습니다" : completed >= 3 ? "외곽 권역 작전 진행 중" : "지역 추론핵을 추적하세요"}</strong>
-        <p>{larkAlert ? "격납고에서 느낌표가 떠 있는 라크와 대화하세요." : completed >= 3 ? "작전 권역을 고른 뒤 출격할 구역을 선택하세요." : "비행선에서 다음 출격 구역을 선택하세요."}</p>
+        <strong>{larkAlert ? "세라가 신규 권역 항로를 해독했습니다" : completed >= 3 ? "외곽 권역 작전 진행 중" : "지역 추론핵을 추적하세요"}</strong>
+        <p>{larkAlert ? "항로 관제에서 느낌표가 떠 있는 세라와 대화하세요." : completed >= 3 ? "작전 권역을 고른 뒤 출격할 구역을 선택하세요." : "비행선에서 다음 출격 구역을 선택하세요."}</p>
         {campaign?.lastRegionRewards && (
           <div className="base-reward-receipt">
             <span>작전 노획 자원</span>
@@ -975,16 +1058,21 @@ const FLIGHT_PLAN_ICON = Object.freeze({
   "raptor-escort": Crosshair,
 });
 
-export function LarkFlightOperationsScreen({ campaign, plans = [], activePlanId, assets, onSelect, onBack }) {
+export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], activePlanId, assets, onSelect, onBack }) {
   const [selectedPlanId, setSelectedPlanId] = useState(activePlanId || plans[0]?.id || null);
+  const [pilotReactionIndex, setPilotReactionIndex] = useState(-1);
   const completedRegions = campaign?.completedRegionIds?.length || 0;
   const operations = campaign?.flightOperations || {};
   const background = assetSource(assets?.regionMap || assets?.homeBase);
-  const larkAtlas = assetSource(assets?.npcPortraits);
+  const pilotPortrait = assetSource(assets?.nightjarPilot);
   const selectedPlan = plans.find((plan) => plan.id === selectedPlanId) || plans[0] || null;
   const selectedUnlocked = Boolean(selectedPlan && completedRegions >= selectedPlan.unlockClears);
   const selectedActive = selectedPlan?.id === activePlanId;
   const SelectedIcon = FLIGHT_PLAN_ICON[selectedPlan?.id] || AirplaneTilt;
+  const pilotDialogue = pilot?.portraitDialogue?.length ? pilot.portraitDialogue : pilot?.dialogue || [];
+  const pilotLine = pilotReactionIndex >= 0 && pilotDialogue.length
+    ? localizeWorldText(pilotDialogue[pilotReactionIndex % pilotDialogue.length])
+    : selectedPlan?.pilotQuote || "항로를 골라. 나이트자는 어디든 갈 수 있어.";
 
   useEffect(() => {
     setSelectedPlanId(activePlanId || plans[0]?.id || null);
@@ -1007,9 +1095,12 @@ export function LarkFlightOperationsScreen({ campaign, plans = [], activePlanId,
       <header className="flight-ops-heading">
         <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={onBack}><ArrowLeft weight="bold" /> 기지로 <kbd>ESC</kbd></button>
         <div>
-          <small>LARK FLIGHT CONTROL · NIGHTJAR OPERATIONS</small>
-          <h1>항로 작전 편성</h1>
-          <p>출격 지점을 고르는 화면이 아닙니다. 나이트자의 침투 교리를 선택해 다음 전투의 기동·생존·화력 조건을 바꾸세요.</p>
+          <small>SERA FLIGHT CONTROL · NIGHTJAR OPERATIONS</small>
+          <h1>출격 항로 교리</h1>
+          <p>다음 출격에 적용할 전투 보너스 1개를 선택합니다. 출격 구역은 작전 권역에서 별도로 선택합니다.</p>
+          <ol className="flight-ops-purpose" aria-label="항로 교리 적용 순서">
+            <li><b>01</b> 교리 선택</li><li><b>02</b> 효과 확인</li><li><b>03</b> 다음 출격에 적용</li>
+          </ol>
         </div>
         <dl className="flight-ops-record">
           <div><dt>개방 권역</dt><dd>{completedRegions} / 6</dd></div>
@@ -1018,13 +1109,21 @@ export function LarkFlightOperationsScreen({ campaign, plans = [], activePlanId,
         </dl>
       </header>
 
-      <section className="flight-ops-console" aria-label="라크 비행 작전 통제실">
+      <section className="flight-ops-console" aria-label="세라 출격 항로 교리 통제실">
         <aside className="flight-ops-lark">
-          <div className="flight-ops-lark-portrait" style={{ backgroundImage: larkAtlas ? `url(${larkAtlas})` : undefined }} role="img" aria-label="비행선 조종사 라크" />
+          <button
+            type="button"
+            className="flight-ops-lark-portrait"
+            onClick={() => setPilotReactionIndex((index) => nextDialogueIndex(index, pilotDialogue))}
+            aria-label="나이트자 수석 조종사 세라와 대화"
+          >
+            {pilotPortrait && <img src={pilotPortrait} alt="청백색 비행복과 항로 태블릿을 든 나이트자 수석 조종사 세라" />}
+            <span><ChatText weight="fill" /> 세라에게 말 걸기</span>
+          </button>
           <div>
-            <small>AIRSHIP PILOT · FLIGHT GANTRY</small>
-            <strong>라크</strong>
-            <p>“{selectedPlan?.pilotQuote || "항로를 골라. 나이트자는 언제든 뜰 수 있어."}”</p>
+            <small>NIGHTJAR CHIEF PILOT · FLIGHT CONTROL</small>
+            <strong>세라</strong>
+            <p role="status">“{pilotLine}”</p>
           </div>
         </aside>
 
@@ -1070,7 +1169,7 @@ export function LarkFlightOperationsScreen({ campaign, plans = [], activePlanId,
             <dl>
               {selectedPlan.effects.map((effect) => <div key={effect.label}><dt>{effect.label}</dt><dd>{effect.value}</dd></div>)}
             </dl>
-            {!selectedUnlocked && <p className="flight-plan-lock-copy"><Lock weight="fill" /> 권역 {selectedPlan.unlockClears}곳을 클리어하면 라크가 이 항로를 개방합니다.</p>}
+            {!selectedUnlocked && <p className="flight-plan-lock-copy"><Lock weight="fill" /> 권역 {selectedPlan.unlockClears}곳을 클리어하면 세라가 이 항로를 개방합니다.</p>}
             <button
               type="button"
               className="flight-plan-activate command-ui-button"
@@ -1087,11 +1186,18 @@ export function LarkFlightOperationsScreen({ campaign, plans = [], activePlanId,
   );
 }
 
-export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, onBack }) {
+export function DefenseStageSelectScreen({ stages, campaign, assets, npc, onSelect, onBack }) {
   const background = assetSource(assets?.defenseBattlefield || assets?.homeBase);
   const portrait = assetSource(assets?.controlOfficer);
   const completedIds = campaign?.completedDefenseStageIds || [];
   const unlockedIds = campaign?.unlockedDefenseStageIds || [];
+  const [selectedDoctrineId, setSelectedDoctrineId] = useState("rapidDeployment");
+  const [rheaReactionIndex, setRheaReactionIndex] = useState(-1);
+  const doctrineIcons = { rapidDeployment: Lightning, fireControl: Target, lastBastion: ShieldStar };
+  const rheaDialogue = npc?.portraitDialogue?.length ? npc.portraitDialogue : npc?.dialogue || [];
+  const rheaDefenseLine = rheaReactionIndex >= 0 && rheaDialogue.length
+    ? localizeWorldText(rheaDialogue[rheaReactionIndex % rheaDialogue.length])
+    : "침투로는 셋, 방어 패드는 열둘. 웨이브가 시작되기 전에 화력 축선을 계산해.";
   useEffect(() => {
     const close = (event) => {
       if (event.key !== "Escape") return;
@@ -1112,19 +1218,37 @@ export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, o
         <p>방어 패드에 포대를 배치하고, 적을 처치해 얻은 자원으로 강화하세요. 중앙 추론핵을 끝까지 지켜야 합니다.</p>
       </header>
       <aside className="defense-rhea-briefing">
-        {portrait && <img src={portrait} alt="디펜스 작전을 지휘하는 전술 관제관 레아" />}
-        <div><small>전술 관제관 · 레아</small><strong>“침투로는 셋. 방어 패드는 열둘. 웨이브가 시작되기 전에 화력 축선을 계산해.”</strong></div>
+        <button type="button" className="npc-illustration-button" onClick={() => setRheaReactionIndex((index) => nextDialogueIndex(index, rheaDialogue))} aria-label="전술 관제관 레아와 대화">
+          {portrait && <img src={portrait} alt="디펜스 작전을 지휘하는 전술 관제관 레아" />}
+        </button>
+        <div><small>전술 관제관 · 레아</small><strong role="status">“{rheaDefenseLine}”</strong></div>
       </aside>
+      <section className="defense-doctrine-panel" aria-label="출격 교리 선택">
+        <header><small>PRE-SORTIE DOCTRINE</small><strong>이번 작전의 지휘 교리</strong><span>교리는 해당 출격에만 적용됩니다.</span></header>
+        <div>
+          {Object.values(DEFENSE_DOCTRINES).map((doctrine, index) => {
+            const Icon = doctrineIcons[doctrine.id] || ShieldChevron;
+            const selected = doctrine.id === selectedDoctrineId;
+            return (
+              <button type="button" className={selected ? "is-selected" : ""} style={{ "--doctrine-accent": doctrine.accent }} aria-pressed={selected} onClick={() => setSelectedDoctrineId(doctrine.id)} key={doctrine.id}>
+                <kbd>{index + 1}</kbd><Icon weight={selected ? "fill" : "duotone"} />
+                <span><small>{doctrine.callSign}</small><b>{doctrine.name}</b><em>{doctrine.description}</em></span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
       <section className="defense-stage-grid" aria-label="디펜스 스테이지 선택">
         {(stages || []).map((stage) => {
           const unlocked = unlockedIds.includes(stage.id);
           const completed = completedIds.includes(stage.id);
           const record = campaign?.defenseStageRecords?.[stage.id];
           return (
-            <button type="button" className={`defense-stage-card${unlocked ? "" : " is-locked"}${completed ? " is-cleared" : ""}`} style={{ "--defense-stage-art": `url("${stage.previewPath}")` }} aria-label={`${stage.name}, ${unlocked ? completed ? "방어 완료" : "출격 가능" : "잠김"}`} disabled={!unlocked} onClick={() => onSelect(stage.id)} key={stage.id}>
+            <button type="button" className={`defense-stage-card${unlocked ? "" : " is-locked"}${completed ? " is-cleared" : ""}`} style={{ "--defense-stage-art": `url("${stage.previewPath}")` }} aria-label={`${stage.name}, ${unlocked ? completed ? "방어 완료" : "출격 가능" : "잠김"}`} disabled={!unlocked} onClick={() => onSelect(stage.id, selectedDoctrineId)} key={stage.id}>
               <div className="defense-stage-card-top"><span>DEFENSE {String(stage.order).padStart(2, "0")}</span><b>{unlocked ? completed ? "방어 완료" : "출격 가능" : "잠김"}</b></div>
               <strong>{stage.name}</strong><small>{stage.subtitle}</small>
               <p>{stage.description}</p>
+              <div className="defense-stage-intel"><span><small>주요 위협</small><b>{stage.threat}</b></span><span><small>전장 규칙</small><b>{stage.mutator}</b></span></div>
               <dl><div><dt>웨이브</dt><dd>{stage.waveCounts.length}</dd></div><div><dt>기지 내구</dt><dd>{stage.baseHp}</dd></div><div><dt>위험도</dt><dd>{"◆".repeat(stage.order)}</dd></div></dl>
               <footer>
                 <span>{unlocked ? completed ? `${record?.clears || 1}회 방어 완료` : "출격 가능" : "이전 방어선을 먼저 지켜야 합니다"}</span>
@@ -1139,8 +1263,9 @@ export function DefenseStageSelectScreen({ stages, campaign, assets, onSelect, o
   );
 }
 
-export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, onBack }) {
+export function AbilityGuideScreen({ assets, npc, guideType = "rifle", onComplete, onBack }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [rheaReactionIndex, setRheaReactionIndex] = useState(-1);
   const guideEntries = guideType === "sword" ? SWORD_ABILITY_GUIDE : guideType === "starter" ? STARTER_BRIEFING_GUIDE : MANUAL_ABILITY_GUIDE;
   const ability = guideEntries[activeIndex];
   const ActiveIcon = ABILITY_ICON[ability.icon] || Crosshair;
@@ -1148,6 +1273,10 @@ export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, on
   const background = assetSource(assets?.homeBase);
   const example = assetSource(assets?.[ability.exampleAssetKey]);
   const final = activeIndex === guideEntries.length - 1;
+  const rheaDialogue = npc?.portraitDialogue?.length ? npc.portraitDialogue : npc?.dialogue || [];
+  const rheaGuideLine = rheaReactionIndex >= 0 && rheaDialogue.length
+    ? localizeWorldText(rheaDialogue[rheaReactionIndex % rheaDialogue.length])
+    : ability.quote;
 
   const advanceGuide = useCallback(() => {
     if (final) onComplete?.();
@@ -1180,8 +1309,10 @@ export function AbilityGuideScreen({ assets, guideType = "rifle", onComplete, on
       {background && <img className="campaign-background" src={background} alt="헤이븐-09 전술 관제실" />}
       <div className="ability-guide-shade" aria-hidden="true" />
       <aside className="ability-guide-rhea" aria-label="전술 관제관 레아">
-        {portrait && <img src={portrait} alt="은빛 보랏빛 단발과 전술 헤드셋을 착용한 관제관 레아" />}
-        <div><small>전술 관제 · 레아</small><strong>“{ability.quote}”</strong></div>
+        <button type="button" className="npc-illustration-button" onClick={() => setRheaReactionIndex((index) => nextDialogueIndex(index, rheaDialogue))} aria-label="전술 관제관 레아와 대화">
+          {portrait && <img src={portrait} alt="은빛 보랏빛 단발과 전술 헤드셋을 착용한 관제관 레아" />}
+        </button>
+        <div><small>전술 관제 · 레아</small><strong role="status">“{rheaGuideLine}”</strong></div>
       </aside>
 
       <section className="ability-guide-console" aria-labelledby="ability-guide-title">
@@ -1485,7 +1616,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
               <div className="sortie-character-options">
                 {availableCharacters.map((character) => {
                   const selected = character.id === selectedCharacterId;
-                  const portrait = assetSource(assets?.[character.id === "mika" ? "mikaPortrait" : "playerPortrait"]);
+                  const portrait = assetSource(assets?.[character.portraitAssetKey === "player" ? "playerPortrait" : character.portraitAssetKey]);
                   return (
                     <button
                       type="button"

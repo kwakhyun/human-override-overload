@@ -246,11 +246,14 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private readonly regionId?: string;
   private readonly combatBonuses?: Readonly<Record<string, number>>;
   private readonly mainWeaponId?: "pulse-rifle" | "beam-sword";
-  private readonly characterId?: "aegis" | "mika";
+  private readonly characterId?: "aegis" | "mika" | "vesper";
   private readonly mikaUnlocked: boolean;
+  private readonly vesperUnlocked: boolean;
   private readonly assetProfile: AssetProfile;
   private readonly mobileAutoAim: boolean;
   private readonly portraitPresentation: boolean;
+  private initialQuality: "cinematic" | "balanced" | "performance" = "balanced";
+  private screenShakeEnabled = true;
   private state: any;
   private gameInput: any;
   private view?: BattleView;
@@ -288,8 +291,9 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     regionId?: string,
     combatBonuses?: Readonly<Record<string, number>>,
     mainWeaponId?: "pulse-rifle" | "beam-sword",
-    characterId?: "aegis" | "mika",
+    characterId?: "aegis" | "mika" | "vesper",
     mikaUnlocked = true,
+    vesperUnlocked = true,
     assetProfile: AssetProfile = "full",
     mobileAutoAim = false,
     portraitPresentation = false,
@@ -301,18 +305,32 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.mainWeaponId = mainWeaponId;
     this.characterId = characterId;
     this.mikaUnlocked = mikaUnlocked;
+    this.vesperUnlocked = vesperUnlocked;
     this.assetProfile = resolveAssetProfile(assetProfile);
     this.mobileAutoAim = mobileAutoAim;
     this.portraitPresentation = portraitPresentation;
   }
 
+  configurePresentationSettings(
+    initialQuality: "cinematic" | "balanced" | "performance",
+    screenShakeEnabled = true,
+  ) {
+    this.initialQuality = initialQuality;
+    this.screenShakeEnabled = screenShakeEnabled;
+  }
+
   create() {
-    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId, characterId: this.characterId, mikaUnlocked: this.mikaUnlocked });
+    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId, characterId: this.characterId, mikaUnlocked: this.mikaUnlocked, vesperUnlocked: this.vesperUnlocked });
     applyDebugScene(this.state, this.bridge.debugScene);
     this.gameInput = createSwarmInput();
-    this.governor = createPerformanceGovernor({ environment: window });
+    this.governor = createPerformanceGovernor({
+      environment: window,
+      initialQuality: this.initialQuality,
+      maxAutoQuality: this.initialQuality,
+    });
     this.applyQualityLimit();
     this.view = new BattleView(this, this.state.regionId, this.portraitPresentation);
+    this.view.setScreenShakeEnabled(this.screenShakeEnabled);
     if (this.state.phase === "boss" || this.state.expedition?.bossRoom || isTerminal(this.state)) {
       this.prepareBossAssets();
     }

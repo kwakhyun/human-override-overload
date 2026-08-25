@@ -32,6 +32,17 @@ const EVENT_COOLDOWNS_MS = {
   patternFail: 320,
   bossDeath: 1000,
   victory: 1000,
+  defenseSelect: 55,
+  defenseBuild: 100,
+  defenseUpgrade: 160,
+  defenseSell: 120,
+  defenseWave: 700,
+  defenseClear: 700,
+  defenseBreach: 320,
+  defenseAbility: 260,
+  defenseRepair: 360,
+  defenseEliteDown: 240,
+  defenseDefeat: 1000,
 };
 
 const EVENT_VOICE_COSTS = {
@@ -76,6 +87,17 @@ const EVENT_VOICE_COSTS = {
   uiConfirm: 2,
   uiClose: 1,
   collect: 1,
+  defenseSelect: 1,
+  defenseBuild: 3,
+  defenseUpgrade: 4,
+  defenseSell: 2,
+  defenseWave: 3,
+  defenseClear: 4,
+  defenseBreach: 5,
+  defenseAbility: 5,
+  defenseRepair: 3,
+  defenseEliteDown: 4,
+  defenseDefeat: 5,
 };
 
 const PRIORITY_EVENTS = new Set([
@@ -89,6 +111,9 @@ const PRIORITY_EVENTS = new Set([
   "bossDeath",
   "explosion",
   "victory",
+  "defenseBreach",
+  "defenseAbility",
+  "defenseDefeat",
 ]);
 
 export function createSfxEngine() {
@@ -437,6 +462,48 @@ export function createSfxEngine() {
         [330, 494, 659, 988].forEach((frequency, index) => {
           tone({ frequency, endFrequency: frequency * 1.04, duration: 0.16, delay: index * 0.045, volume: 0.022, wet: 0.32 });
         });
+        break;
+      case "defenseSelect":
+        tone({ frequency: 540, endFrequency: 720, duration: 0.07, type: "square", volume: 0.018, filterFrequency: 1800 });
+        break;
+      case "defenseBuild":
+        noise({ duration: 0.12, volume: 0.024, filterFrequency: 740, q: 0.7 });
+        tone({ frequency: 145, endFrequency: 430, duration: 0.2, type: "square", volume: 0.034, wet: 0.22 });
+        tone({ frequency: 620, endFrequency: 940, duration: 0.12, delay: 0.1, volume: 0.022, wet: 0.25 });
+        break;
+      case "defenseUpgrade":
+        [294, 440, 659, 880].forEach((frequency, index) => tone({ frequency, endFrequency: frequency * 1.06, duration: 0.15, delay: index * 0.045, type: "triangle", volume: 0.024, wet: 0.32 }));
+        break;
+      case "defenseSell":
+        tone({ frequency: 760, endFrequency: 260, duration: 0.18, type: "triangle", volume: 0.026, wet: 0.18 });
+        tone({ frequency: 300, endFrequency: 520, duration: 0.1, delay: 0.12, volume: 0.018 });
+        break;
+      case "defenseWave":
+        tone({ frequency: 185, endFrequency: 370, duration: 0.22, type: "square", volume: 0.038, wet: 0.26 });
+        tone({ frequency: 560, endFrequency: 880, duration: 0.18, delay: 0.14, type: "sawtooth", volume: 0.025, wet: 0.3 });
+        break;
+      case "defenseClear":
+        [392, 523, 784].forEach((frequency, index) => tone({ frequency, endFrequency: frequency * 1.08, duration: 0.24, delay: index * 0.075, volume: 0.026, wet: 0.42 }));
+        break;
+      case "defenseBreach":
+        noise({ duration: 0.36, volume: 0.058, filterFrequency: 390, q: 0.44, wet: 0.28 });
+        tone({ frequency: 180, endFrequency: 42, duration: 0.46, type: "sawtooth", volume: 0.06, filterFrequency: 900 });
+        tone({ frequency: 680, endFrequency: 420, duration: 0.12, delay: 0.05, type: "square", volume: 0.034 });
+        break;
+      case "defenseAbility":
+        noise({ duration: 0.34, volume: 0.04, filterType: "highpass", filterFrequency: 1900, wet: 0.48 });
+        tone({ frequency: 170, endFrequency: 1240, duration: 0.46, type: "sawtooth", volume: 0.046, filterFrequency: 3200, wet: 0.46 });
+        break;
+      case "defenseRepair":
+        [330, 494, 740].forEach((frequency, index) => tone({ frequency, endFrequency: frequency * 1.12, duration: 0.28, delay: index * 0.08, volume: 0.022, wet: 0.46 }));
+        break;
+      case "defenseEliteDown":
+        noise({ duration: 0.3, volume: 0.05, filterFrequency: 520, q: 0.55, wet: 0.34 });
+        tone({ frequency: 260, endFrequency: 55, duration: 0.38, type: "square", volume: 0.045, filterFrequency: 1200, wet: 0.22 });
+        break;
+      case "defenseDefeat":
+        noise({ duration: 0.8, volume: 0.052, filterFrequency: 310, q: 0.4, wet: 0.46 });
+        [330, 247, 185, 123].forEach((frequency, index) => tone({ frequency, endFrequency: frequency * 0.72, duration: 0.35, delay: index * 0.12, type: "sawtooth", volume: 0.035, wet: 0.4 }));
         break;
       case "victory":
         [261, 329, 392, 523].forEach((frequency, index) => {

@@ -1302,16 +1302,36 @@ details:focus-visible {
   color: var(--os-paper);
   clip-path: var(--os-cut-sm);
   box-shadow: var(--os-shadow);
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, filter 160ms ease;
 }
 
 .region-world-map .region-map-hotspot.is-available {
   border-color: var(--os-cyan);
 }
 
-.region-world-map .region-map-hotspot.is-available:hover {
-  transform: translate(-2px, -4px);
+.region-world-map .region-map-hotspot.is-available:hover,
+.region-world-map .region-map-hotspot.is-available:focus-visible {
+  outline: 0;
+  transform: translate(-50%, -50%);
   border-color: var(--os-acid);
   background: rgba(11, 31, 38, 0.96);
+  box-shadow: 0 0 0 1px rgba(203, 255, 69, 0.38), 0 16px 42px rgba(0, 0, 0, 0.56), inset 0 0 30px rgba(203, 255, 69, 0.06);
+}
+
+.region-world-map .region-map-hotspot.is-locked {
+  border-color: rgba(119, 157, 166, 0.34);
+  background: rgba(3, 11, 16, 0.92);
+  filter: grayscale(0.72) brightness(0.66);
+}
+
+.region-world-map .region-map-hotspot > svg {
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.region-world-map .region-map-hotspot.is-available:hover > svg,
+.region-world-map .region-map-hotspot.is-available:focus-visible > svg {
+  color: var(--os-acid);
+  transform: translateX(4px);
 }
 
 .region-map-hotspot > i {
@@ -3327,6 +3347,500 @@ details:focus-visible {
   }
 }
 
+/* ===========================================================================
+   NPC FACILITY HOSTS + SERA FLIGHT CONTROL
+   Preserve portrait aspect ratios, explain screen purpose, and make every
+   authored NPC illustration an explicit dialogue affordance.
+   ========================================================================== */
+
+.base-npc-portrait {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  color: var(--os-paper);
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto !important;
+}
+
+.base-npc-portrait:disabled {
+  cursor: default;
+}
+
+.base-npc-portrait:focus-visible,
+.facility-npc-portrait:focus-visible,
+.flight-ops-lark-portrait:focus-visible,
+.npc-illustration-button:focus-visible {
+  outline: 2px solid var(--os-acid);
+  outline-offset: -2px;
+}
+
+.npc-portrait-interaction-hint {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  padding: 7px 9px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(118, 242, 247, 0.38);
+  background: rgba(2, 10, 14, 0.86);
+  color: var(--os-cyan);
+  font: 700 9px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34);
+}
+
+.npc-portrait-interaction-hint svg {
+  width: 14px;
+  height: 14px;
+}
+
+.base-dialogue-copy .npc-portrait-reaction {
+  min-height: 0;
+  margin: 8px 0 0;
+  padding: 8px 11px;
+  border-left: 2px solid var(--os-acid);
+  background: rgba(199, 255, 74, 0.075);
+  color: #efffd1;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.base-facility-panel.has-npc-host .facility-npc-stage {
+  position: absolute;
+  z-index: 3;
+  top: 226px;
+  bottom: 28px;
+  left: clamp(26px, 4vw, 68px);
+  display: flex;
+  width: 250px;
+  min-height: 330px;
+  flex-direction: column;
+  border: 1px solid var(--os-line);
+  border-top: 2px solid var(--os-cyan);
+  background: linear-gradient(180deg, rgba(3, 14, 19, 0.96), rgba(2, 8, 12, 0.98));
+  box-shadow: var(--os-shadow);
+  clip-path: var(--os-cut-sm);
+}
+
+.facility-npc-portrait {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-bottom: 1px solid var(--os-line);
+  background: radial-gradient(circle at 50% 34%, rgba(64, 207, 226, 0.14), transparent 60%), #02090d;
+  cursor: pointer;
+}
+
+.facility-npc-portrait > span {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: 300% 100%;
+  filter: saturate(0.92) contrast(1.04);
+  transition: transform 180ms var(--os-ease), filter 180ms ease;
+}
+
+.facility-npc-portrait.is-standalone > span {
+  background-position: center bottom !important;
+  background-size: contain;
+}
+
+.facility-npc-portrait:hover > span,
+.facility-npc-portrait:focus-visible > span {
+  filter: saturate(1.04) contrast(1.08) brightness(1.06);
+  transform: scale(1.025);
+}
+
+.facility-npc-dialogue {
+  display: flex;
+  min-height: 0;
+  padding: 15px 16px 17px;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.facility-npc-dialogue small {
+  color: var(--os-cyan);
+  font: 700 8px/1.3 "IBM Plex Mono", monospace;
+  letter-spacing: 0.07em;
+}
+
+.facility-npc-dialogue strong {
+  margin-top: 4px;
+  color: var(--os-paper);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.facility-npc-dialogue p {
+  margin: 10px 0 0;
+  color: #c6d7da;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.flight-ops-purpose {
+  display: flex;
+  margin: 11px 0 0;
+  padding: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+
+.flight-ops-purpose li {
+  display: inline-flex;
+  padding: 5px 8px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(118, 242, 247, 0.2);
+  background: rgba(118, 242, 247, 0.045);
+  color: #bfd2d6;
+  font-size: 10px;
+}
+
+.flight-ops-purpose b {
+  color: var(--os-acid);
+  font: 700 9px/1 "IBM Plex Mono", monospace;
+}
+
+.flight-ops-lark::before {
+  content: "SERA // PILOT LINK";
+}
+
+.flight-ops-lark-portrait {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 270px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: #02070b;
+  cursor: pointer;
+  mask-image: none;
+}
+
+.flight-ops-lark-portrait > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: saturate(0.92) contrast(1.04);
+  transition: filter 180ms ease, transform 220ms var(--os-ease);
+}
+
+.flight-ops-lark-portrait:hover > img,
+.flight-ops-lark-portrait:focus-visible > img {
+  filter: saturate(1.04) contrast(1.07) brightness(1.05);
+  transform: scale(1.015);
+}
+
+.flight-ops-lark-portrait > span {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  padding: 7px 9px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(118, 242, 247, 0.4);
+  background: rgba(2, 10, 14, 0.86);
+  color: var(--os-cyan);
+  font: 700 9px/1 "IBM Plex Mono", monospace;
+}
+
+.npc-illustration-button {
+  appearance: none;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ability-guide-rhea {
+  pointer-events: none;
+}
+
+.ability-guide-rhea > .npc-illustration-button {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.ability-guide-rhea > .npc-illustration-button > img {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 95%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(20px 10px 32px rgba(0, 0, 0, 0.72));
+}
+
+.ability-guide-rhea > div {
+  pointer-events: none;
+}
+
+.defense-rhea-briefing > .npc-illustration-button {
+  width: 155px;
+  height: 190px;
+  align-self: end;
+}
+
+.defense-rhea-briefing > .npc-illustration-button > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center top;
+}
+
+@media (max-width: 1100px) and (min-width: 901px) {
+  .base-facility-panel.has-npc-host .facility-npc-stage {
+    width: 218px;
+  }
+
+  .base-facility-panel.has-npc-host .facility-upgrade-grid,
+  .base-facility-panel.has-npc-host .facility-exchange-panel {
+    margin-left: 270px;
+  }
+}
+
+@media (max-width: 900px) {
+  .base-facility-panel.has-npc-host {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    align-content: start;
+  }
+
+  .base-facility-panel.has-npc-host > header { order: 0; }
+  .base-facility-panel.has-npc-host > .facility-resource {
+    position: relative;
+    top: auto;
+    left: auto;
+    order: 1;
+    width: auto;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-stage {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    display: grid;
+    order: 2;
+    width: 100%;
+    min-height: 150px;
+    grid-template-columns: 138px minmax(0, 1fr);
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-portrait {
+    width: 138px;
+    height: 148px;
+    aspect-ratio: auto;
+    border-right: 1px solid var(--os-line);
+    border-bottom: 0;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-dialogue {
+    justify-content: center;
+  }
+
+  .base-facility-panel.has-npc-host .facility-upgrade-grid {
+    order: 3;
+    margin: 0;
+  }
+
+  .base-facility-panel.has-npc-host .facility-exchange-panel {
+    order: 4;
+    margin: 0;
+  }
+
+  .flight-ops-heading {
+    min-height: 0;
+  }
+
+  .flight-ops-purpose {
+    margin-top: 8px;
+  }
+
+  .flight-ops-lark-portrait {
+    width: 112px;
+    min-height: 142px;
+    height: 142px;
+  }
+
+  .flight-ops-lark-portrait > img {
+    object-fit: cover;
+    object-position: center 18%;
+  }
+
+  .flight-ops-lark-portrait > span,
+  .npc-portrait-interaction-hint {
+    display: none;
+  }
+}
+
+/* Static lobby key art, lobby settings, and locked-operative preview. */
+.campaign-shell.home-base-screen .base-settings-button {
+  display: grid;
+  min-width: 88px;
+  min-height: 54px;
+  padding: 7px 12px;
+  grid-template-columns: 24px 1fr;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--os-line);
+  color: var(--os-paper);
+  background: rgba(3, 12, 17, 0.9);
+  pointer-events: auto;
+}
+
+.campaign-shell.home-base-screen .base-settings-button:hover,
+.campaign-shell.home-base-screen .base-settings-button:focus-visible {
+  border-color: var(--os-lime);
+  color: var(--os-lime);
+  background: rgba(16, 31, 27, 0.96);
+}
+
+.base-settings-button > svg { width: 22px; height: 22px; }
+.base-settings-button > span { display: grid; text-align: left; }
+.base-settings-button small { color: var(--os-muted); font: 600 8px/1 var(--font-mono); letter-spacing: 0.12em; }
+.base-settings-button strong { margin-top: 3px; font-size: 13px; }
+
+.base-motion-portrait.is-vesper::after {
+  background: radial-gradient(ellipse, rgba(255, 183, 91, 0.27), transparent 68%);
+}
+
+.base-motion-portrait.is-vesper {
+  bottom: -1%;
+  left: 22%;
+  width: min(40vw, 548px);
+  height: 94%;
+}
+
+.static-character-portrait {
+  position: absolute;
+  inset: 0;
+  animation: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+.character-information-panel.is-amber {
+  --character-accent: #ffc76f;
+  --character-accent-soft: rgba(255, 183, 79, 0.2);
+}
+
+.character-information-panel.is-amber .character-art-stage > img {
+  width: 106%;
+  max-width: none;
+  left: -3%;
+}
+
+.character-lock-banner {
+  position: absolute;
+  z-index: 4;
+  right: 14px;
+  bottom: 128px;
+  left: 14px;
+  display: flex;
+  min-height: 56px;
+  padding: 10px 12px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255, 199, 111, 0.68);
+  color: #fff2d8;
+  background: rgba(19, 13, 8, 0.9);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.42);
+}
+
+.character-lock-banner > svg { width: 24px; height: 24px; color: #ffc76f; }
+.character-lock-banner > span { display: grid; gap: 3px; }
+.character-lock-banner small { color: #ffc76f; font: 700 8px/1 var(--font-mono); letter-spacing: 0.14em; }
+.character-lock-banner strong { font-size: 11px; line-height: 1.35; }
+
+.character-trait-note {
+  display: grid;
+  margin-top: 8px;
+  padding: 10px 12px;
+  grid-template-columns: max-content 1fr;
+  align-items: center;
+  gap: 3px 12px;
+  border-left: 2px solid var(--character-accent);
+  background: var(--character-accent-soft);
+}
+
+.character-trait-note small { grid-column: 1 / -1; color: var(--character-accent); font: 700 8px/1 var(--font-mono); letter-spacing: 0.12em; }
+.character-trait-note strong { font-size: 12px; }
+.character-trait-note span { color: #abc0c5; font-size: 10px; line-height: 1.45; }
+
+.character-roster-rail button.is-locked {
+  cursor: pointer;
+  filter: saturate(0.5) brightness(0.72);
+}
+
+.character-roster-rail button.is-locked:hover,
+.character-roster-rail button.is-locked:focus-visible {
+  filter: saturate(0.8) brightness(0.9);
+  border-color: #ffc76f;
+}
+
+@media (max-width: 900px) {
+  .campaign-shell.home-base-screen .base-settings-button {
+    min-width: 44px;
+    width: 44px;
+    min-height: 44px;
+    padding: 8px;
+    grid-template-columns: 1fr;
+    place-items: center;
+  }
+
+  .base-settings-button > span { display: none; }
+  .base-motion-portrait.is-vesper { left: 9%; width: 82%; }
+  .character-lock-banner { right: 8px; bottom: 88px; left: 8px; }
+}
+
+@media (max-width: 520px) {
+  .base-facility-panel.has-npc-host .facility-npc-stage {
+    min-height: 132px;
+    grid-template-columns: 116px minmax(0, 1fr);
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-portrait {
+    width: 116px;
+    height: 130px;
+  }
+
+  .facility-npc-dialogue {
+    padding: 12px;
+  }
+
+  .facility-npc-dialogue strong {
+    font-size: 21px;
+  }
+
+  .facility-npc-dialogue p {
+    font-size: 11px;
+  }
+
+  .flight-ops-purpose li {
+    font-size: 9px;
+  }
+}
+
 /* --------------------------------------------------------------------------
    LARK // independent Nightjar flight-operations content
    -------------------------------------------------------------------------- */
@@ -4366,7 +4880,19 @@ details:focus-visible {
 
   .region-select-screen.is-cluster-map .region-map-hotspot.is-available:hover,
   .region-select-screen.is-cluster-map .region-map-hotspot.is-available:focus-visible {
-    transform: translateX(3px);
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .region-world-map .region-map-hotspot,
+  .region-world-map .region-map-hotspot > svg {
+    transition: none;
+  }
+
+  .region-world-map .region-map-hotspot.is-available:hover > svg,
+  .region-world-map .region-map-hotspot.is-available:focus-visible > svg {
+    transform: none;
   }
 }
 
@@ -5049,5 +5575,50 @@ details:focus-visible {
     text-overflow: ellipsis;
     white-space: nowrap;
     writing-mode: horizontal-tb !important;
+  }
+}
+
+/* Final cascade lock for interactive NPC art. Keep after all density passes. */
+.campaign-shell .base-npc-portrait,
+.campaign-shell .base-npc-portrait.is-standalone {
+  background-color: transparent !important;
+  pointer-events: auto !important;
+}
+
+.campaign-shell .base-npc-portrait.is-standalone {
+  background-position: center bottom !important;
+}
+
+.flight-ops-lark::before {
+  content: "SERA // PILOT LINK";
+}
+
+.flight-ops-lark-portrait {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: #02070b;
+  cursor: pointer;
+  mask-image: none;
+}
+
+.flight-ops-lark-portrait > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+@media (max-width: 900px) {
+  .flight-ops-lark-portrait {
+    width: 112px;
+    min-height: 142px;
+    height: 142px;
+  }
+
+  .flight-ops-lark-portrait > img {
+    object-fit: cover;
+    object-position: center 18%;
   }
 }

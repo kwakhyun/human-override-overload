@@ -1,16 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  activateDefenseAbility,
   buildDefenseTower,
   createDefenseState,
+  cycleDefenseTargetPriority,
   drainDefenseEvents,
   getDefenseHud,
   selectDefenseNode,
+  sellDefenseTower,
+  specializeDefenseTower,
   startDefenseWave,
   stepDefense,
   upgradeDefenseTower,
 } from "../src/defense/engine.js";
-import { DEFENSE_STAGES, DEFENSE_TOWER_DEFINITIONS, getUnlockedDefenseStageIds } from "../src/defense/content.js";
+import { DEFENSE_DOCTRINES, DEFENSE_STAGES, DEFENSE_TOWER_DEFINITIONS, getUnlockedDefenseStageIds } from "../src/defense/content.js";
 import { DEFENSE_BATTLEFIELDS, getDefenseBattlefield } from "../src/defense/battlefields.js";
 import {
   canLaunchDefenseStage,
@@ -39,13 +43,46 @@ test("defense placement spends run credits, rejects overlap, and upgrades to ran
   assert.equal(state.nodes.length, 12);
   assert.equal(selectDefenseNode(state, "node-01"), true);
   assert.equal(buildDefenseTower(state, "pulseSentry"), true);
-  assert.equal(state.credits, state.stage.startingCredits - DEFENSE_TOWER_DEFINITIONS.pulseSentry.cost);
+  assert.equal(state.credits, state.stage.startingCredits + DEFENSE_DOCTRINES.rapidDeployment.startingCredits - DEFENSE_TOWER_DEFINITIONS.pulseSentry.cost);
   assert.equal(buildDefenseTower(state, "arcRelay"), false, "an occupied defense pad cannot stack another system");
   state.credits = 999;
   assert.equal(upgradeDefenseTower(state), true);
   assert.equal(upgradeDefenseTower(state), true);
   assert.equal(upgradeDefenseTower(state), false);
   assert.equal(state.towers[0].rank, 3);
+});
+
+test("doctrines, targeting, specialization, selling, and tactical commands create deterministic strategic choices", () => {
+  const bastion = createDefenseState({ stageId: "haven-perimeter", doctrineId: "lastBastion" });
+  assert.equal(bastion.maxBaseHp, bastion.stage.baseHp + DEFENSE_DOCTRINES.lastBastion.baseHp);
+
+  const state = createDefenseState({ stageId: "haven-perimeter", doctrineId: "fireControl" });
+  state.credits = 999;
+  selectDefenseNode(state, "node-01");
+  assert.equal(buildDefenseTower(state, "pulseSentry"), true);
+  assert.equal(upgradeDefenseTower(state), true);
+  const hudBefore = getDefenseHud(state);
+  assert.ok(hudBefore.selectedTower.range > 220, "fire-control doctrine should visibly extend coverage");
+  assert.equal(specializeDefenseTower(state, "armorPiercer"), true);
+  assert.equal(cycleDefenseTargetPriority(state), true);
+  assert.equal(getDefenseHud(state).selectedTower.targetPriority, "strong");
+  const creditsBeforeSale = state.credits;
+  assert.equal(sellDefenseTower(state), true);
+  assert.ok(state.credits > creditsBeforeSale);
+  assert.equal(state.towers.length, 0);
+
+  state.intermission = 8;
+  const creditsBeforeCall = state.credits;
+  assert.equal(startDefenseWave(state), true);
+  assert.ok(state.credits > creditsBeforeCall, "calling a timed wave early grants a deterministic bounty");
+  stepFor(state, 0.2);
+  assert.ok(state.enemies.length > 0);
+  state.commandPoints = 100;
+  assert.equal(activateDefenseAbility(state, "empSweep"), true);
+  assert.ok(state.enemies.every((enemy) => enemy.stunTimer > 0));
+  assert.equal(state.commandPoints, 65);
+  assert.equal(activateDefenseAbility(state, "empSweep"), false, "ability cooldown blocks immediate repeats");
+  assert.ok(drainDefenseEvents(state).some((event) => event.type === "defenseAbilityActivated"));
 });
 
 function pointToSegmentDistance(point, segment) {

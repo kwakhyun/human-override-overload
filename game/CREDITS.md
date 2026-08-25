@@ -2294,3 +2294,96 @@ Lighting/mood: clinical teal glow, bone-white machinery, dark restrained atmosph
 Constraints: preserve source palette, materials, and texture language; open playable floor roughly 78% of image; no characters, creatures, enemies, UI, text, logos, watermark, horizon, black void, or central obstacle; all edges fully painted.
 Avoid: left-right corridor, huge biological specimen in center, excessive organic clutter, bright reflections under units.
 ```
+
+## SERA NIGHTJAR 수석 조종사 (2026-08-25)
+
+- 런타임 에셋: `public/assets/overload/ui/npcs/sera-nightjar-pilot-v1.png`
+- 원본 보관: `reference/source-assets/overload/campaign/sera-nightjar-pilot-imagegen-v1.png`
+- 사용자 제공 스타일 참고 이미지: `C:/Users/82105/Downloads/2a723c994b807d5df5f4d1fbc307f8d8bf0938fe216f3c88465250eae41ef868.webp`
+- 생성 도구: OpenAI ImageGen
+- 참고 이미지의 헤어 실루엣·신체 비율·셀 렌더링 방향만 참고하고 얼굴, 복장, 장비, 포즈, 문양은 복제하지 않은 오리지널 성인 캐릭터입니다.
+- 투명 배경 생성 결과에 체크 패턴이 픽셀로 포함되어, 최종 에셋은 UI 패널과 자연스럽게 합쳐지는 저채도 네이비 비행 관제 배경으로 교체했습니다.
+- 최종 머리 보정에서는 목덜미의 청백색 모근이 짙은 청록색 땋은 머리로 연속되도록 연결부만 수정했습니다.
+
+초기 생성 프롬프트:
+
+```text
+Use case: stylized-concept
+Asset type: production browser-game NPC full-body transparent cutout
+
+Input images: Image 1 is a style reference only, not an edit target. Borrow only the crisp premium anime cel-rendering, clean facial readability, bright cyan/white palette, and polished subculture-game finish. Create a distinctly original character.
+
+Primary request: Create an original adult female NIGHTJAR airship pilot NPC named SERA for the sci-fi game HUMAN OVERRIDE.
+
+Subject: confident, approachable ace pilot; short windswept aqua-silver hair; amber-cyan eyes; asymmetrical aviation headset with boom mic and a glowing navigation earpiece; cropped white and graphite flight jacket over a fitted navy pressure suit; safety-orange and cyan accents; flight harness; pilot gloves; utility belt; knee-high flight boots. One hand touches the headset in a crisp salute, the other holds a compact holographic route tablet. Strong unmistakable pilot silhouette. No hood and no robot face.
+
+Style: high-end Korean/Japanese sci-fi subculture game character illustration; crisp cel shading with subtle polished gradients; clean linework; coherent anatomy; premium production finish; original design.
+
+Composition: full body from head to boots, upright three-quarter pose, centered, generous transparent padding, readable when displayed at about 300px wide in a game UI.
+
+Background: genuinely transparent alpha.
+
+Constraints: original character only. Do not copy the reference character's face, costume, hair ornaments, mechanical scooter/weapon, exact pose, or emblem. No text, logo, watermark, frame, UI, or background. Do not crop head, hands, or feet. Correct hands and anatomy. No white matte or halo around the cutout.
+
+Avoid: photorealism, grim hooded android, gothic cloak, weapon, vehicle, exaggerated fanservice, childlike proportions.
+```
+
+배경 교체 프롬프트:
+
+```text
+Edit Image 1 only. Preserve the pilot character exactly: face, hair, headset, white/graphite jacket, navy pressure suit, safety-orange/cyan accents, pose, full-body framing, proportions, and holographic route tablet.
+
+Replace the baked checkerboard with a clean, premium, very dark navy-black airship flight-gantry backdrop designed to disappear naturally into a sci-fi game UI panel. Use a restrained vertical gradient from #06131a at the top to #02070b at the bottom, one subtle cyan rim light behind the pilot, extremely faint technical grid lines, and no visible room objects. Keep maximum contrast around pale hair, white jacket, gloves, and boots. The background must be visually quiet and nearly black so the character remains the sole focal point.
+
+No checkerboard, no white or gray backdrop, no border, no frame, no text, no logo, no watermark, no UI labels, no added props, no cropping, no anatomy changes, no halo.
+```
+
+헤어스타일·체형 조정 프롬프트:
+
+```text
+Edit Image 1 as the target character. Image 2 is the required hairstyle and body-proportion reference.
+
+Keep Image 1's original SERA pilot identity: adult female ace pilot, aviation headset with boom mic, white/graphite cropped flight jacket, navy pressure suit, cyan and safety-orange accents, harness, gloves, utility belt, flight boots, holographic route tablet, confident salute, premium sci-fi anime cel rendering, and dark navy flight-control backdrop.
+
+Change SERA to match Image 2's hairstyle silhouette and body type as closely as possible:
+- Hairstyle: pale ice-aqua hair; smooth asymmetrical chin-length bob framing the face; a pronounced curled ahoge at the crown; the back hair gathered into a long, thick, dark blue-aqua low braid/ponytail that curls behind the shoulder; softly rounded bangs and side locks. Do not include Image 2's flower hair ornament.
+- Body type and proportions: tall, slender, elegant, long-legged, narrow waist, slim shoulders and limbs, graceful subculture-game proportions matching Image 2; reduce the athletic/bulky build from Image 1. Keep her clearly adult.
+- Facial feeling: friendly, bright, composed young adult pilot, but create a distinct original face and eye shape rather than copying Image 2 exactly.
+
+Composition: full body, head to boots, same upright three-quarter pilot pose, no crop. Keep the route tablet clearly visible. The new hair tail must remain readable against the dark backdrop.
+
+Background: retain the clean near-black navy flight-control gradient and faint technical grid from Image 1; no checkerboard.
+
+Do not copy Image 2's dress, flowers, weapon/vehicle, exposed-shoulder outfit, emblems, exact face, exact pose, or accessories. No text, logo, watermark, border, frame, extra limbs, bad hands, or anatomy distortion.
+```
+
+최종 뒷머리 연결 보정 프롬프트:
+
+```text
+Edit Image 1 only. This is a surgical character-art correction.
+
+Preserve everything exactly: SERA's face, expression, ice-aqua asymmetrical bob, curled ahoge, body proportions, pilot headset, white/graphite flight jacket, navy pressure suit, orange/cyan details, pose, tablet, full-body framing, lighting, rendering style, and dark flight-control background.
+
+Fix only the rear hairstyle. The long dark blue-aqua braid currently appears disconnected. Make it anatomically and visually continuous:
+- show the rear section of the pale aqua bob naturally sweeping behind the left ear and around the occipital area;
+- gather those strands into a clearly visible, snug low ponytail base at the nape;
+- transition smoothly from pale aqua roots through a subtle blue gradient into the thick dark blue-aqua braid;
+- place the braid root behind the headset/neck and above the jacket collar, with a believable tie and overlapping hair strands;
+- ensure the braid emerges from the center-left nape, not from empty space behind the shoulder;
+- preserve the braid's existing length and curl, but make its attachment unambiguous at thumbnail size.
+
+No second ponytail, no floating hair, no detached braid, no hair clipping through the jacket or headset, no new ornament, no flower, no text, no logo, no anatomy changes.
+```
+
+## VESPER 신규 전투원 원화 · 2026-08-25
+
+- 도구: OpenAI 내장 ImageGen. 사용자가 제공한 금발 여성 캐릭터 이미지는 실루엣·색 조합·성인 여성 전투원이라는 방향을 이해하기 위한 참고 자료로만 사용했으며, 얼굴·의상 구조·표식·장비는 복제하지 않은 프로젝트 오리지널 디자인입니다.
+- 콘셉트: 성인 여성 정밀 요격 전투원 `VESPER / 베스퍼`. 금발 단발, 흑연색 전술 바디슈트, 비대칭 백색 장갑 패널, 절제된 적색 코트 테일, 호박색 센서, 접이식 레일 피스톨을 사용하는 HAVEN-09 고기동 사수입니다.
+- 생성 지시 요약: 투명 추출용 단색 크로마 배경, 머리부터 부츠까지 보이는 전신 3/4 자세, 프리미엄 SF 서브컬처 게임 캐릭터 시트, 정확한 성인 해부학과 손, 읽기 쉬운 실루엣, 텍스트·로고·워터마크·기존 IP 표식 금지.
+- 런타임 파일: `public/assets/overload/hero/vesper-portrait-v1.png` (871×1595 RGBA).
+- 후처리: `scripts/process-character-chroma.py`가 크로마 제거, 가장자리 색 오염 완화, 투명 여백 정리, 런타임 크기 최적화를 재현합니다.
+- 해금/표시 원칙: `abyssal-archive` 최초 클리어 전에도 캐릭터 정보 화면에서 잠금 상태로 원화를 볼 수 있지만 출격 선택은 거부합니다. 클리어 후 정식 전투원으로 합류합니다.
+
+## Live2D/Cubism 현재 런타임 상태 · 2026-08-25
+
+사용자 검수에서 낮은 완성도와 오류성 변형이 확인되어 `@greenmansk/react-live2d`, Cubism Web Core, AEGIS/MIKA 모델·텍스처·모션 번들을 프로덕션에서 제거했습니다. 현재 로비는 승인된 정적 전신 원화를 사용하고 투명 클릭 영역의 캐릭터별 반응 대사만 유지합니다. 위의 과거 제작 기록과 프롬프트는 출처 이력일 뿐 현재 기능 설명이 아닙니다.

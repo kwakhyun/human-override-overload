@@ -25,6 +25,11 @@ test("the title screen is a full-bleed user key art composition with only essent
   assert.match(styles, /\.intro-minimal-content\s*\{/);
 });
 
+test("the DOM campaign manifest ships SERA's dedicated full-body pilot art", async () => {
+  const manifest = await read("src/game/assets/manifest.ts");
+  assert.match(manifest, /nightjarPilot: "\.\/assets\/overload\/ui\/npcs\/sera-nightjar-pilot-v1\.png"/);
+});
+
 test("the active App mounts the Phaser runtime while React owns the DOM HUD", async () => {
   const app = await read("src/App.jsx");
   const activeRuntime = app.slice(app.indexOf("function PhaserArenaScreen"), app.indexOf("function ResultScreen"));
@@ -261,12 +266,12 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
   assert.match(createGame, /initialQuality === "performance" \|\| mobileRuntime\.touchOptimized/);
   assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
-  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, assetProfile, mobileRuntime\.autoAim, portraitPresentation\)/);
+  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, launch\.vesperUnlocked, assetProfile, mobileRuntime\.autoAim, portraitPresentation\)/);
   assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);
   assert.match(createGame, /playerX: state\?\.player\?\.x/);
   assert.match(scene, /setVirtualMovement\(x: number, y: number\)/);
   assert.match(scene, /this\.gameInput\.moveX = this\.virtualMovement\.x/);
-  assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId, characterId: this\.characterId, mikaUnlocked: this\.mikaUnlocked \}\)/);
+  assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, mainWeaponId: this\.mainWeaponId, characterId: this\.characterId, mikaUnlocked: this\.mikaUnlocked, vesperUnlocked: this\.vesperUnlocked \}\)/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId, this\.portraitPresentation\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);
   for (const key of [

@@ -28,9 +28,12 @@ export type OverloadLaunchOptions = Readonly<{
   regionId?: string;
   combatBonuses?: Readonly<Record<string, number>>;
   mainWeaponId?: "pulse-rifle" | "beam-sword";
-  characterId?: "aegis" | "mika";
+  characterId?: "aegis" | "mika" | "vesper";
   mikaUnlocked?: boolean;
+  vesperUnlocked?: boolean;
   startSuspended?: boolean;
+  qualityPreference?: "auto" | "cinematic" | "balanced" | "performance";
+  screenShakeEnabled?: boolean;
 }>;
 
 export function createOverloadGame(
@@ -45,7 +48,11 @@ export function createOverloadGame(
   const bridge = new SceneBridge(callbacks, debugScene);
   if (launch.startSuspended) bridge.setSuspended(true);
   const regionId = resolveRegionId(launch.regionId);
-  const initialQuality = detectInitialQuality(window);
+  const requestedQuality = launch.qualityPreference && launch.qualityPreference !== "auto"
+    && QUALITY_PRESETS[launch.qualityPreference]
+    ? launch.qualityPreference
+    : null;
+  const initialQuality = requestedQuality || detectInitialQuality(window);
   const mobileRuntime = detectMobileRuntime(window);
   const preset = QUALITY_PRESETS[initialQuality] ?? QUALITY_PRESETS.balanced;
   // A phone displays actors below the PERFORMANCE atlas' authored cell size,
@@ -62,7 +69,8 @@ export function createOverloadGame(
   const presentationHeight = portraitPresentation
     ? Math.max(1, Math.round(window.visualViewport?.height || window.innerHeight || parent.clientHeight))
     : 720;
-  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);
+  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, launch.vesperUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);
+  battleScene.configurePresentationSettings(initialQuality, launch.screenShakeEnabled !== false);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,

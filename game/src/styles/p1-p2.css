@@ -3110,3 +3110,387 @@ button:active:not(:disabled) {
   border-color: #7df9ff;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 240, 255, 0.3);
 }
+
+/* DEPLOYMENT ROSTER READABILITY -----------------------------------------
+   The sortie confirmation is a tactical roster decision, not telemetry.
+   Keep portraits dominant and Korean copy readable without growing back
+   into the former equipment-management screen. */
+.campaign-shell.campaign-shell.region-select-screen.has-selection > .region-sortie-dialog {
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  width: min(1180px, calc(100vw - 56px));
+  max-width: 1180px;
+  max-height: calc(100svh - 40px);
+  padding: 0;
+  overflow: hidden auto;
+  transform: translate(-50%, -50%);
+  border-color: rgba(121, 232, 248, 0.62);
+  background:
+    linear-gradient(145deg, rgba(4, 17, 23, 0.985), rgba(2, 8, 12, 0.99)),
+    #02090d;
+  box-shadow: 0 34px 100px rgba(0, 0, 0, 0.76), 0 0 44px rgba(72, 218, 239, 0.08);
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-command-header {
+  min-height: 68px;
+  padding: 13px 18px;
+  background: linear-gradient(90deg, rgba(8, 28, 36, 0.98), rgba(3, 13, 18, 0.96));
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-close {
+  min-height: 42px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-kicker span {
+  font-size: 12px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-kicker i {
+  padding: 6px 9px;
+  font-size: 11px;
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .region-sortie-layout {
+  min-height: 390px;
+  padding: 0;
+  grid-template-columns: minmax(340px, 0.72fr) minmax(620px, 1.28fr);
+  grid-template-rows: auto;
+  gap: 1px;
+  background: rgba(111, 226, 245, 0.22);
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-briefing,
+.campaign-shell.region-select-screen.has-selection .sortie-character-loadout {
+  padding: 24px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-briefing h2 {
+  font-size: clamp(42px, 3.4vw, 54px);
+  line-height: 0.96;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-briefing > p {
+  margin-top: 11px;
+  font-size: 14px;
+  line-height: 1.58;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-repeat-intel {
+  margin-top: 16px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-repeat-intel > summary {
+  min-height: 42px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-rewards {
+  margin-top: 14px;
+  padding: 10px 12px;
+  gap: 7px 10px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-rewards small,
+.campaign-shell.region-select-screen.has-selection .region-sortie-rewards span {
+  font-size: 12px;
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-loadout {
+  display: grid;
+  padding: 22px 24px 24px;
+  align-content: start;
+  gap: 16px;
+  border-color: rgba(111, 226, 245, 0.22);
+  background:
+    linear-gradient(180deg, rgba(7, 25, 32, 0.96), rgba(3, 13, 18, 0.98)),
+    #030d12;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-loadout > header {
+  min-height: 58px;
+  padding: 0 2px 13px;
+  align-items: end;
+  border-bottom: 1px solid rgba(111, 226, 245, 0.2);
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-loadout > header small {
+  color: #ef9bd8;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-loadout > header h3 {
+  margin-top: 5px;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-loadout > header > span {
+  padding-bottom: 2px;
+  color: #a9c3c8;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-loadout > header kbd {
+  min-width: 26px;
+  min-height: 26px;
+  font-size: 12px;
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card {
+  min-width: 0;
+  min-height: 252px;
+  padding: 22px 18px 20px clamp(142px, 43%, 176px);
+  align-content: end;
+  border: 1px solid rgba(112, 219, 236, 0.3);
+  border-top-width: 3px;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(75, 217, 237, 0.13), transparent 46%),
+    linear-gradient(150deg, rgba(5, 21, 28, 0.98), rgba(2, 11, 16, 0.98));
+  clip-path: none;
+  box-shadow: inset 0 1px 0 rgba(218, 250, 255, 0.035), 0 16px 30px rgba(0, 0, 0, 0.28);
+  transform: none;
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card.is-magenta {
+  border-color: rgba(255, 113, 211, 0.36);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 91, 204, 0.15), transparent 46%),
+    linear-gradient(150deg, rgba(27, 10, 27, 0.98), rgba(4, 11, 17, 0.98));
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card:hover:not(:disabled),
+.campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card:focus-visible:not(:disabled) {
+  border-color: rgba(205, 248, 255, 0.78);
+  background-color: rgba(8, 31, 39, 0.98);
+  box-shadow: inset 0 1px 0 rgba(220, 251, 255, 0.11), 0 18px 36px rgba(0, 0, 0, 0.4);
+  transform: none;
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card.is-selected,
+.campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card.is-magenta.is-selected {
+  border-color: var(--os-acid, #ceff48);
+  background:
+    linear-gradient(145deg, rgba(37, 59, 31, 0.54), rgba(4, 17, 22, 0.98)),
+    #041116;
+  box-shadow: inset 0 3px 0 var(--os-acid, #ceff48), 0 0 0 1px rgba(206, 255, 72, 0.18), 0 18px 38px rgba(0, 0, 0, 0.42);
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card img {
+  top: auto;
+  bottom: 0;
+  left: 6px;
+  width: 43%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(10px 8px 18px rgba(0, 0, 0, 0.68));
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-card > span {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 3px 8px;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-card span small {
+  margin-bottom: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-card strong {
+  font-size: 27px;
+  line-height: 1;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-card em {
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-card p {
+  display: -webkit-box;
+  margin-top: 10px;
+  overflow: hidden;
+  color: #abc1c6;
+  font-size: 13px;
+  line-height: 1.52;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-card mark {
+  top: 13px;
+  right: 13px;
+  min-height: 31px;
+  padding: 6px 9px;
+  gap: 6px;
+  color: #07100b;
+  background: var(--os-acid, #ceff48);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.campaign-shell.region-select-screen.has-selection .sortie-character-card mark svg {
+  width: 16px;
+  height: 16px;
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .region-sortie-command-footer {
+  min-height: 86px;
+  padding: 10px 14px 10px 22px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-command-footer > span {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.campaign-shell.campaign-shell.region-select-screen.has-selection .region-sortie-command-footer .region-sortie-launch {
+  width: min(390px, 42%);
+  min-width: 320px;
+  min-height: 68px;
+  padding: 10px 16px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-launch small {
+  font-size: 12px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-launch strong {
+  font-size: 20px;
+}
+
+@media (min-width: 721px) and (max-width: 1100px) {
+  .campaign-shell.campaign-shell.region-select-screen.has-selection > .region-sortie-dialog {
+    width: calc(100vw - 28px);
+    max-height: calc(100svh - 24px);
+  }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .region-sortie-layout {
+    grid-template-columns: minmax(270px, 0.72fr) minmax(430px, 1.28fr);
+  }
+
+  .campaign-shell.region-select-screen.has-selection .region-sortie-briefing,
+  .campaign-shell.region-select-screen.has-selection .sortie-character-loadout {
+    padding: 18px;
+  }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-options {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card {
+    min-height: 132px;
+    padding: 15px 16px 14px 132px;
+  }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card img {
+    left: 8px;
+    width: 118px;
+    height: 158px;
+  }
+
+  .campaign-shell.region-select-screen.has-selection .sortie-character-card strong { font-size: 22px; }
+  .campaign-shell.region-select-screen.has-selection .sortie-character-card p { margin-top: 6px; font-size: 12px; -webkit-line-clamp: 2; }
+}
+
+@media (max-width: 720px) {
+  .campaign-shell.campaign-shell.region-select-screen.has-selection > .region-sortie-dialog {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    max-height: 96svh;
+    transform: none;
+    clip-path: none;
+  }
+
+  .campaign-shell.region-select-screen.has-selection .region-sortie-command-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    min-height: 60px;
+    padding: 9px 12px;
+  }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .region-sortie-layout {
+    min-height: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-shell.region-select-screen.has-selection .region-sortie-briefing,
+  .campaign-shell.region-select-screen.has-selection .sortie-character-loadout {
+    padding: 18px 16px;
+  }
+
+  .campaign-shell.region-select-screen.has-selection .region-sortie-briefing h2 { font-size: 36px; }
+  .campaign-shell.region-select-screen.has-selection .region-sortie-briefing > p { font-size: 14px; }
+  .campaign-shell.region-select-screen.has-selection .sortie-character-loadout > header h3 { font-size: 22px; }
+  .campaign-shell.region-select-screen.has-selection .sortie-character-loadout > header > span { display: none; }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-options {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card {
+    min-height: 168px;
+    padding: 17px 15px 16px 132px;
+  }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card img {
+    left: 4px;
+    width: 122px;
+    height: 174px;
+  }
+
+  .campaign-shell.region-select-screen.has-selection .sortie-character-card span small { font-size: 12px; }
+  .campaign-shell.region-select-screen.has-selection .sortie-character-card strong { font-size: 24px; }
+  .campaign-shell.region-select-screen.has-selection .sortie-character-card p { margin-top: 7px; font-size: 13px; -webkit-line-clamp: 3; }
+  .campaign-shell.region-select-screen.has-selection .sortie-character-card mark { top: 10px; right: 10px; font-size: 11px; }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .region-sortie-command-footer {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    min-height: 76px;
+    padding: 7px 10px max(7px, env(safe-area-inset-bottom));
+    gap: 7px;
+  }
+
+  .campaign-shell.region-select-screen.has-selection .region-sortie-command-footer > span { display: none; }
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .region-sortie-command-footer .region-sortie-launch {
+    width: 100%;
+    min-width: 0;
+    min-height: 62px;
+  }
+}
+
+@media (max-width: 380px) {
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card {
+    padding-left: 116px;
+  }
+
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card img {
+    width: 106px;
+  }
+}

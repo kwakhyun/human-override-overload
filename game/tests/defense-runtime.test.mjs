@@ -5,19 +5,20 @@ import { readFile, stat } from "node:fs/promises";
 const root = new URL("../", import.meta.url);
 
 test("Phaser defense runtime stays behind its own deterministic bridge and guided DOM HUD", async () => {
-  const [app, scene, view, manifest, screens, styles, createGame] = await Promise.all([
+  const [app, scene, view, manifest, screens, styles, defenseStyles, createGame] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/phaser/scenes/DefenseScene.ts", root), "utf8"),
     readFile(new URL("src/phaser/view/DefenseView.ts", root), "utf8"),
     readFile(new URL("src/game/assets/manifest.ts", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/styles/defense-overhaul.css", root), "utf8"),
     readFile(new URL("src/phaser/createDefenseGame.ts", root), "utf8"),
   ]);
   assert.match(app, /import\("\.\/phaser\/createDefenseGame\.ts"\)/);
   assert.match(app, /<DefenseStageSelectScreen/);
   assert.match(app, /<DefenseArenaScreen/);
-  assert.match(scene, /createDefenseState\(\{ stageId \}\)/);
+  assert.match(scene, /createDefenseState\(\{ stageId, doctrineId \}\)/);
   assert.match(scene, /stepDefense\(this\.state, 1 \/ 60\)/);
   assert.match(scene, /if \(this\.suspended\) return false;/);
   assert.match(view, /ASSET_KEYS\.defenseSystemsMotion/);
@@ -47,7 +48,11 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(createGame, /new DefenseBootScene\(stageId, assetProfile/);
   assert.match(view, /state\.battlefield\.routes/);
   assert.match(view, /state\.battlefield\.core/);
+  assert.match(view, /getDefenseTowerStats\(selected, state\.doctrine\)/);
+  assert.match(view, /enemy\.elite/);
   assert.match(screens, /전술 관제관 · 레아/);
+  assert.match(screens, /Object\.values\(DEFENSE_DOCTRINES\)/);
+  assert.match(screens, /onSelect\(stage\.id, selectedDoctrineId\)/);
   assert.match(styles, /\.defense-tower-palette/);
   assert.match(app, /const DEFENSE_GUIDE_STEPS/);
   assert.match(app, /data-defense-guide-step=\{stepIndex \+ 1\}/);
@@ -59,6 +64,9 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.defense-guide-card/);
   assert.match(styles, /--defense-battlefield-portrait/);
   assert.match(styles, /\.defense-tower-palette \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(defenseStyles, /\.defense-command-abilities/);
+  assert.match(defenseStyles, /\.defense-specialization/);
+  assert.match(defenseStyles, /\.defense-stage-intel/);
   assert.match(screens, /defense-stage-card-top/);
 });
 
@@ -91,24 +99,37 @@ test("defense art ships dedicated atlases plus three full and performance stage 
   }
 });
 
-test("defense HUD keeps compact persistent build and upgrade controls on desktop and portrait mobile", async () => {
-  const [app, styles, responsiveStyles] = await Promise.all([
+test("defense HUD keeps readable commercial command controls on desktop and portrait mobile", async () => {
+  const [app, defenseStyles, main] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
-    readFile(new URL("src/styles.css", root), "utf8"),
-    readFile(new URL("src/styles/p1-p2.css", root), "utf8"),
+    readFile(new URL("src/styles/defense-overhaul.css", root), "utf8"),
+    readFile(new URL("src/main.jsx", root), "utf8"),
   ]);
   assert.match(app, />방벽 내구도</);
-  assert.match(app, />남은 적</);
+  assert.match(app, /잔존 \$\{hud\?\.liveEnemies/);
   assert.match(app, /<em>\{tower\.cost\}<\/em>/);
-  assert.match(app, /"웨이브 시작"/);
-  assert.match(styles, /Defense readability pass/);
-  assert.match(styles, /\.defense-tower-palette button b \{ font-size: 14px;/);
-  assert.match(styles, /\.defense-wave-button b \{ font-size: 16px;/);
-  assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\) \{[\s\S]*\.defense-core-status small \{ font-size: 13px; \}/);
-  assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\) \{[\s\S]*\.defense-wave-status b \{ margin-top: 3px; font-size: 20px; \}/);
-  assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\) \{[\s\S]*\.defense-guide-copy p \{ font-size: 15px;/);
-  assert.match(responsiveStyles, /\.defense-runtime-screen \.defense-command-dock \{[\s\S]*min-height: 78px;/);
-  assert.match(responsiveStyles, /\.defense-command-actions/);
-  assert.match(responsiveStyles, /grid-template-rows: 36px 62px 48px/);
-  assert.match(responsiveStyles, /\.defense-runtime-screen \.defense-tower-palette button \{[\s\S]*min-height: 66px/);
+  assert.match(app, /"공세 즉시 호출"/);
+  assert.match(app, /controllerRef\.current\?\.cycleTargetPriority\(\)/);
+  assert.match(app, /controllerRef\.current\?\.activateAbility\(ability\.id\)/);
+  assert.match(app, /controllerRef\.current\?\.setSpeed\(2\)/);
+  assert.match(defenseStyles, /height: 184px/);
+  assert.match(defenseStyles, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(defenseStyles, /@media \(max-width: 820px\), \(orientation: portrait\)/);
+  assert.match(defenseStyles, /grid-template-areas: "title" "palette" "console" "abilities" "actions"/);
+  assert.match(defenseStyles, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(defenseStyles, /height: 358px/);
+  assert.match(main, /styles\/defense-overhaul\.css/);
+});
+
+test("defense events use a dedicated procedural combat sound palette", async () => {
+  const [app, sfx] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/audio/sfx.js", root), "utf8"),
+  ]);
+  for (const cue of ["defenseSelect", "defenseBuild", "defenseUpgrade", "defenseSell", "defenseWave", "defenseClear", "defenseBreach", "defenseAbility", "defenseRepair", "defenseEliteDown", "defenseDefeat"]) {
+    assert.match(sfx, new RegExp(`case "${cue}"`));
+  }
+  assert.match(app, /event\.type === "defenseTowerBuilt"\) sfx\.play\("defenseBuild"\)/);
+  assert.match(app, /event\.type === "defenseWaveCleared"\) sfx\.play\("defenseClear"\)/);
+  assert.match(app, /event\.type === "defenseDefeat"\) sfx\.play\("defenseDefeat"\)/);
 });

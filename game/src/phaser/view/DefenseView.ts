@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { ASSET_KEYS } from "../../game/assets/manifest";
+import { getDefenseTowerStats } from "../../defense/engine.js";
+import { sampleDefenseRoute } from "../../defense/battlefields.js";
 
 type DefenseState = any;
 type DefenseEvent = Readonly<Record<string, unknown>>;
@@ -33,6 +35,7 @@ export class DefenseView {
   private readonly nodeZones = new Map<string, Phaser.GameObjects.Arc>();
   private readonly nodeLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly routeGraphics: Phaser.GameObjects.Graphics;
+  private readonly tacticalGraphics: Phaser.GameObjects.Graphics;
   private readonly effectGraphics: Phaser.GameObjects.Graphics;
   private readonly healthGraphics: Phaser.GameObjects.Graphics;
   private readonly coreGlow: Phaser.GameObjects.Arc;
@@ -47,6 +50,7 @@ export class DefenseView {
     const backgroundKey = portrait ? ASSET_KEYS.defenseBattlefieldPortrait : ASSET_KEYS.defenseBattlefield;
     scene.add.image(width / 2, height / 2, backgroundKey).setDisplaySize(width, height).setDepth(-20);
     this.routeGraphics = scene.add.graphics().setDepth(-4);
+    this.tacticalGraphics = scene.add.graphics().setDepth(2);
     const routeColor = Phaser.Display.Color.HexStringToColor(String(state.battlefield?.routeColor || "#63efff")).color;
     for (const route of state.battlefield.routes) {
       const points = route.points.map(({ x, y }: WorldPoint) => {
@@ -113,8 +117,8 @@ export class DefenseView {
 
   private enemySize(role: string) {
     const sizes: Readonly<Record<string, number>> = this.portrait
-      ? { hunter: 56, rifleman: 66, sniper: 76, siegeWalker: 118 }
-      : { hunter: 62, rifleman: 74, sniper: 84, siegeWalker: 136 };
+      ? { hunter: 64, rifleman: 76, sniper: 88, siegeWalker: 132 }
+      : { hunter: 72, rifleman: 86, sniper: 98, siegeWalker: 154 };
     return sizes[role] || sizes.hunter;
   }
 
@@ -135,7 +139,7 @@ export class DefenseView {
       const frameName = `defense-system-${row}-${column}`;
       if (sprite.frame.name !== frameName) sprite.setFrame(frameName);
       sprite.setPosition(point.x, point.y);
-      const baseSize = this.portrait ? 78 : 88;
+      const baseSize = this.portrait ? 88 : 102;
       sprite.setDisplaySize(baseSize + tower.rank * 7, baseSize + tower.rank * 7);
       sprite.setTint(tower.nodeId === state.selectedNodeId ? 0xffffff : 0xd7f8ff);
     }
@@ -171,7 +175,7 @@ export class DefenseView {
       sprite.setData("previousX", point.x);
       const size = this.enemySize(enemy.role);
       sprite.setPosition(point.x, point.y).setDisplaySize(size, size);
-      sprite.setTint(enemy.hitFlash > 0 ? 0xffffff : enemy.slowTimer > 0 ? 0x9ab7ff : 0xffffff);
+      sprite.setTint(enemy.hitFlash > 0 ? 0xffffff : enemy.vulnerableTimer > 0 ? 0xff84cf : enemy.slowTimer > 0 || enemy.stunTimer > 0 ? 0x9ab7ff : enemy.elite ? 0xffdf8c : 0xffffff);
     }
     for (const [id, sprite] of this.enemySprites) {
       if (live.has(id)) continue;
@@ -239,6 +243,20 @@ export class DefenseView {
       } else if (effect.kind === "bastion") {
         row = 3;
         size = (effect.radius || 145) * (this.portrait ? 1.18 : 2);
+      } else if (effect.kind === "emp") {
+        row = 1;
+        size = (effect.radius || 420) * (this.portrait ? 1.2 : 2);
+      } else if (effect.kind === "orbital") {
+        row = 2;
+        column = Math.min(5, 2 + Math.floor(progress * 4));
+        size = (effect.radius || 195) * (this.portrait ? 1.5 : 2.2);
+      } else if (effect.kind === "repair") {
+        row = 3;
+        size = (effect.radius || 120) * (this.portrait ? 1.4 : 2);
+      } else if (effect.kind === "incendiary") {
+        row = 2;
+        column = 4 + Math.floor(progress * 2);
+        size = (effect.radius || 90) * (this.portrait ? 1.25 : 1.8);
       } else {
         row = 0;
         column = Math.min(5, 3 + Math.floor(progress * 3));
@@ -264,13 +282,46 @@ export class DefenseView {
   private drawHealth(state: DefenseState) {
     this.healthGraphics.clear();
     for (const enemy of state.enemies) {
-      if (enemy.hp >= enemy.maxHp || enemy.hp <= 0) continue;
+      if (enemy.hp <= 0 || (enemy.hp >= enemy.maxHp && !enemy.elite && enemy.role !== "siegeWalker")) continue;
       const point = this.toDisplay(enemy.x, enemy.y);
-      const width = enemy.role === "siegeWalker" ? (this.portrait ? 82 : 96) : (this.portrait ? 38 : 44);
+      const width = enemy.role === "siegeWalker" ? (this.portrait ? 98 : 118) : enemy.elite ? (this.portrait ? 58 : 66) : (this.portrait ? 44 : 52);
       const ratio = clamp01(enemy.hp / enemy.maxHp);
       const y = point.y - this.enemySize(enemy.role) * 0.48 - 10;
       this.healthGraphics.fillStyle(0x020608, 0.9).fillRoundedRect(point.x - width / 2, y, width, 6, 2);
-      this.healthGraphics.fillStyle(0xff5876, 1).fillRoundedRect(point.x - width / 2 + 1, y + 1, (width - 2) * ratio, 4, 1);
+      this.healthGraphics.fillStyle(enemy.elite ? 0xffce67 : 0xff5876, 1).fillRoundedRect(point.x - width / 2 + 1, y + 1, (width - 2) * ratio, 4, 1);
+    }
+  }
+
+  private drawTactical(state: DefenseState) {
+    this.tacticalGraphics.clear();
+    const selected = state.towers.find((tower: any) => tower.nodeId === state.selectedNodeId);
+    if (selected) {
+      const point = this.toDisplay(selected.x, selected.y);
+      const stats = getDefenseTowerStats(selected, state.doctrine);
+      const scale = this.portrait ? 640 / 1280 : 1;
+      const radius = stats.range * scale;
+      const color = selected.type === "arcRelay" ? 0xb789ff : selected.type === "skyfireBattery" ? 0xffb45f : selected.type === "aegisBastion" ? 0x7ff7ff : 0x63efff;
+      this.tacticalGraphics.fillStyle(color, 0.055).fillCircle(point.x, point.y, radius);
+      this.tacticalGraphics.lineStyle(2, color, 0.64).strokeCircle(point.x, point.y, radius);
+      const target = state.enemies.find((enemy: any) => enemy.id === selected.targetId && enemy.hp > 0);
+      if (target) {
+        const targetPoint = this.toDisplay(target.x, target.y);
+        this.tacticalGraphics.lineStyle(1, color, 0.7).lineBetween(point.x, point.y, targetPoint.x, targetPoint.y);
+        this.tacticalGraphics.lineStyle(2, 0xffffff, 0.8).strokeCircle(targetPoint.x, targetPoint.y, this.portrait ? 18 : 22);
+      }
+    }
+    for (const enemy of state.enemies) {
+      if (!enemy.elite && enemy.role !== "siegeWalker") continue;
+      const point = this.toDisplay(enemy.x, enemy.y);
+      const radius = this.enemySize(enemy.role) * 0.52 + 8 + Math.sin(state.time * 5 + enemy.sequence) * 2;
+      this.tacticalGraphics.lineStyle(enemy.role === "siegeWalker" ? 3 : 2, enemy.role === "siegeWalker" ? 0xff5b72 : 0xffce67, 0.72).strokeCircle(point.x, point.y, radius);
+    }
+    for (let routeIndex = 0; routeIndex < state.battlefield.routes.length; routeIndex += 1) {
+      const route = state.battlefield.routes[routeIndex];
+      const sample = sampleDefenseRoute(route, ((state.time * 62 + routeIndex * route.totalLength * 0.27) % route.totalLength));
+      const point = this.toDisplay(sample.x, sample.y);
+      this.tacticalGraphics.fillStyle(0x63efff, 0.78).fillCircle(point.x, point.y, this.portrait ? 4 : 5);
+      this.tacticalGraphics.lineStyle(1, 0xbdfbff, 0.55).strokeCircle(point.x, point.y, this.portrait ? 8 : 10);
     }
   }
 
@@ -328,6 +379,7 @@ export class DefenseView {
     this.syncEnemies(state);
     this.syncProjectiles(state);
     this.syncEffects(state);
+    this.drawTactical(state);
     this.drawHealth(state);
   }
 
@@ -340,6 +392,7 @@ export class DefenseView {
     for (const zone of this.nodeZones.values()) zone.destroy();
     for (const label of this.nodeLabels.values()) label.destroy();
     this.routeGraphics.destroy();
+    this.tacticalGraphics.destroy();
     this.effectGraphics.destroy();
     this.healthGraphics.destroy();
     this.coreGlow.destroy();

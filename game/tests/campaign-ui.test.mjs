@@ -24,11 +24,13 @@ test("App connects save slots to the base, hierarchical airship selection, retur
 });
 
 test("region selection previews and confirms a sortie instead of launching on card click", async () => {
-  const [app, screens, sounds, styles] = await Promise.all([
+  const [app, screens, sounds, styles, tacticalOs, p1p2] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/audio/sfx.js", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/styles/tactical-os.css", root), "utf8"),
+    readFile(new URL("src/styles/p1-p2.css", root), "utf8"),
   ]);
   assert.match(screens, /setSelectedRegionId\(region\.id\)/);
   assert.match(screens, /className="region-world-map"/);
@@ -64,6 +66,15 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /event\.key !== "Escape"/);
   assert.match(app, /document\.addEventListener\("pointerdown", handleButtonPointer, true\)/);
   for (const cue of ["uiHover", "uiConfirm", "uiClose"]) assert.match(sounds, new RegExp(`case "${cue}"`));
+  const desktopHotspotHover = tacticalOs.match(/\.region-world-map \.region-map-hotspot\.is-available:hover,[^{]+\{([^}]*)\}/)?.[1] || "";
+  const mobileHotspotHover = tacticalOs.match(/\.region-select-screen\.is-cluster-map \.region-map-hotspot\.is-available:hover,[^{]+\{([^}]*)\}/)?.[1] || "";
+  assert.match(desktopHotspotHover, /transform: translate\(-50%, -50%\)/);
+  assert.match(mobileHotspotHover, /transform: none/);
+  assert.doesNotMatch(tacticalOs, /transform:\s*translate\(-2px,\s*-4px\)/);
+  assert.match(p1p2, /DEPLOYMENT ROSTER READABILITY/);
+  assert.match(p1p2, /\.sortie-character-card \{[\s\S]*?min-height: 252px;[\s\S]*?font-size: 13px;/);
+  assert.match(p1p2, /\.sortie-character-card\.is-selected,[\s\S]*?border-color: var\(--os-acid/);
+  assert.match(p1p2, /@media \(max-width: 720px\)[\s\S]*?min-height: 168px;[\s\S]*?min-height: 62px;/);
 });
 
 test("strategic and outer-frontier maps are optimized, preloaded, and mapped to cluster hotspots", async () => {
@@ -87,11 +98,11 @@ test("strategic and outer-frontier maps are optimized, preloaded, and mapped to 
   assert.match(campaign, /id: "outer-frontier"[\s\S]*outer-frontier-region-map\.webp[\s\S]*mapPosition: \{ x: 73, y: 47 \}/);
 });
 
-test("HAVEN highlights LARK's new-route briefing and ships a skippable return-to-base cinematic", async () => {
+test("HAVEN highlights SERA's new-route briefing and ships a skippable return-to-base cinematic", async () => {
   const screens = await readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8");
   assert.match(screens, /has-mission-alert/);
   assert.match(screens, /npc-mission-alert/);
-  assert.match(screens, /라크가 신규 권역 신호를 해독했습니다/);
+  assert.match(screens, /세라가 신규 권역 항로를 해독했습니다/);
   assert.match(screens, /export function ReturnCinematicScreen/);
   assert.match(screens, /return-cinematic/);
   assert.match(screens, /event\.key === "Escape"/);
@@ -104,6 +115,7 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   ]);
   assert.match(app, /assets\?\.havenBase/);
   assert.match(app, /assets\?\.havenNpcPortraits/);
+  assert.match(app, /assets\?\.nightjarPilot/);
   assert.match(app, /assets\?\.rheaControlOfficer/);
   assert.match(app, /assets\?\.airshipRegionMap/);
   assert.doesNotMatch(app, /commandButtonStates|--command-button-atlas/);
@@ -114,6 +126,10 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   assert.match(screens, /npc\.interactionLabel \|\| "상호작용"/);
   assert.match(screens, /작전 권역 · 출격/);
   assert.match(screens, /BaseFacilityPanel/);
+  assert.match(screens, /facility-npc-stage/);
+  assert.match(screens, /npc-illustration-button/);
+  assert.match(screens, /flight-ops-purpose/);
+  assert.match(screens, /세라에게 말 걸기/);
   assert.match(screens, /facility-upgrade-grid/);
   assert.match(screens, /base-motion-portrait/);
   assert.match(screens, /facility-key-art/);
@@ -134,9 +150,9 @@ test("HAVEN lobby uses original character art, icon currencies, edge navigation,
     readFile(new URL("src/game/assets/manifest.ts", root), "utf8"),
   ]);
   assert.match(screens, /function MotionPortraitStage/);
-  assert.match(screens, /data-portrait-renderer="original-illustration"/);
-  assert.match(screens, /className="motion-portrait-original"/);
-  assert.doesNotMatch(screens, /CubismCharacter|data-live2d/);
+  assert.match(screens, /data-portrait-renderer="static-key-art"/);
+  assert.match(screens, /className="motion-portrait-original static-character-portrait"/);
+  assert.doesNotMatch(screens, /CubismCharacter|data-motion-profile="lobby-breathing"/);
   assert.doesNotMatch(screens, /motion-portrait-expression/);
   assert.doesNotMatch(screens, /onPointerMove|--portrait-look-x|--portrait-tilt/);
   for (const zone of ["is-head", "is-chest", "is-arm is-left", "is-arm is-right", "is-legs"]) assert.match(screens, new RegExp(`portrait-zone ${zone}`));
@@ -223,7 +239,7 @@ test("character information presents full-height art, live stats, abilities, and
   assert.match(screens, /CHARACTER_ACTIVE_LOADOUTS/);
   assert.match(screens, /className="character-roster-rail"/);
   assert.match(screens, /onCharacterChange\?\.\(characterId\)/);
-  assert.match(app, /portraitSource: character\.id === "mika" \? assets\?\.mikaPortrait : assets\?\.player/);
+  assert.match(app, /portraitSource: assets\?\.\[character\.portraitAssetKey\] \|\| assets\?\.player/);
   assert.match(app, /onCharacterChange=\{selectCharacter\}/);
   assert.match(styles, /\.character-art-stage > img[\s\S]*object-fit: contain/);
   assert.match(styles, /\.character-information-panel[\s\S]*grid-template-columns: minmax\(320px, 47%\)/);

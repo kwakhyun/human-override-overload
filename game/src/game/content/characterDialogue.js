@@ -67,6 +67,27 @@ const CHARACTER_DIALOGUE_OVERRIDES = Object.freeze({
       1: "마지막 봉인 해제! 이제 정말 모두에게 돌아갈 길이 생겼어.",
     }),
   }),
+  vesper: Object.freeze({
+    deployment: Object.freeze({ 1: "전술 링크 연결. 우선 표적부터 조용히 지울게." }),
+    "rook-trace": Object.freeze({ 1: "루크의 탄착 흔적이야. 잔류 열원을 따라가면 만날 수 있어." }),
+    "nyx-trace": Object.freeze({ 1: "닉스가 남긴 절단면을 찾았어. 교전 방향을 역산한다." }),
+    "moss-trace": Object.freeze({ 1: "모스의 생체 기록 확보. 회수 경로를 열어 둘게." }),
+    "sovereign-panic": Object.freeze({ 0: "경로 예측 실패. 그래도 포기할 시간은 없어. 돌파한다." }),
+    "engine-encounter": Object.freeze({ 1: "오답 엔진 시야 확보. 약점 좌표를 고정했어." }),
+    "engine-destroyed": Object.freeze({ 1: "중심부 붕괴 확인. 다음 사선으로 이동하자." }),
+    "glass-dune-deployment": Object.freeze({ 1: "반사 지형 보정 완료. 내 탄도는 속이지 못해." }),
+    "glass-dune-encounter": Object.freeze({ 1: "거울 폭군 조준 완료. 가짜 궤적부터 걷어 낸다." }),
+    "glass-dune-destroyed": Object.freeze({ 1: "표적 소멸. 반사 신호도 전부 정지했어." }),
+    "abyssal-archive-deployment": Object.freeze({ 1: "심해 기록고 진입. 여기서부터는 내가 길을 열게." }),
+    "abyssal-archive-encounter": Object.freeze({ 1: "침몰한 예언자 확인. 기록과 함께 끝내자." }),
+    "abyssal-archive-destroyed": Object.freeze({ 1: "기록 회수 완료. 이제 헤이븐-09가 내 귀환 지점이야." }),
+    "neon-foundry-encounter": Object.freeze({ 1: "열원 과다. 냉각부 한 점만 꿰뚫으면 돼." }),
+    "neon-foundry-destroyed": Object.freeze({ 1: "주조로 정지. 사선은 깨끗해." }),
+    "storm-spire-encounter": Object.freeze({ 1: "낙뢰 주기 계산 완료. 빈 틈에 들어간다." }),
+    "storm-spire-destroyed": Object.freeze({ 1: "폭풍 소거 확인. 다음 좌표를 줘." }),
+    "gene-vault-encounter": Object.freeze({ 1: "유전자 금고 중심부 포착. 오염되기 전에 제거한다." }),
+    "gene-vault-destroyed": Object.freeze({ 1: "생체 신호 전부 정지. 임무 종료." }),
+  }),
 });
 
 export function resolveCharacterDialogueLine(scriptedLine, beat, index, characterId = "aegis") {
@@ -75,7 +96,7 @@ export function resolveCharacterDialogueLine(scriptedLine, beat, index, characte
   if (!localizedText) return scriptedLine;
   return Object.freeze({
     ...scriptedLine,
-    speaker: characterId === "mika" ? "MIKA" : scriptedLine.speaker,
+    speaker: characterId === "mika" ? "MIKA" : characterId === "vesper" ? "VESPER" : scriptedLine.speaker,
     text: localizedText,
   });
 }

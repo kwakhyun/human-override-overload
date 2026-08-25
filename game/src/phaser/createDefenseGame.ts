@@ -8,14 +8,19 @@ export type DefenseGameController = Readonly<{
   game: Phaser.Game;
   buildTower: (towerType: string) => boolean;
   upgradeTower: () => boolean;
+  specializeTower: (branchIndex: number) => boolean;
+  cycleTargetPriority: () => boolean;
+  sellTower: () => boolean;
+  activateAbility: (abilityId: string) => boolean;
   startWave: () => boolean;
   selectNode: (nodeId: string) => boolean;
   cycleNode: (direction: number) => boolean;
   setSuspended: (suspended: boolean) => void;
+  setSpeed: (speed: number) => boolean;
   destroy: () => void;
 }>;
 
-export function createDefenseGame(parent: HTMLElement, callbacks: DefenseSceneCallbacks, stageId: string): DefenseGameController {
+export function createDefenseGame(parent: HTMLElement, callbacks: DefenseSceneCallbacks, stageId: string, doctrineId = "rapidDeployment"): DefenseGameController {
   const quality = detectInitialQuality(window);
   const preset = QUALITY_PRESETS[quality] ?? QUALITY_PRESETS.balanced;
   const mobile = detectMobileRuntime(window);
@@ -30,7 +35,7 @@ export function createDefenseGame(parent: HTMLElement, callbacks: DefenseSceneCa
   const logicalWidth = portrait ? 720 : 1280;
   const logicalHeight = portrait ? 1280 : 720;
   const boot = new DefenseBootScene(stageId, assetProfile, (callbacks as any).onLoadProgress);
-  const battle = new DefenseScene(stageId, callbacks, portrait);
+  const battle = new DefenseScene(stageId, doctrineId, callbacks, portrait);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
@@ -55,10 +60,15 @@ export function createDefenseGame(parent: HTMLElement, callbacks: DefenseSceneCa
     game,
     buildTower: (towerType: string) => battle.buildTower(towerType),
     upgradeTower: () => battle.upgradeTower(),
+    specializeTower: (branchIndex: number) => battle.specializeTower(branchIndex),
+    cycleTargetPriority: () => battle.cycleTargetPriority(),
+    sellTower: () => battle.sellTower(),
+    activateAbility: (abilityId: string) => battle.activateAbility(abilityId),
     startWave: () => battle.startWave(),
     selectNode: (nodeId: string) => battle.selectNode(nodeId),
     cycleNode: (direction: number) => battle.cycleNode(direction),
     setSuspended: (suspended: boolean) => battle.setSuspended(suspended),
+    setSpeed: (speed: number) => battle.setSpeed(speed),
     destroy: () => {
       if (destroyed) return;
       destroyed = true;

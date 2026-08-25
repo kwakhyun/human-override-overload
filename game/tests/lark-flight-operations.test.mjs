@@ -21,7 +21,7 @@ import {
 
 const NOW = "2026-08-25T09:00:00.000Z";
 
-test("LARK owns three unlockable flight doctrines instead of duplicating region selection", () => {
+test("SERA owns three unlockable flight doctrines instead of duplicating region selection", () => {
   const plans = getFlightPlans();
   assert.deepEqual(plans.map((plan) => plan.id), ["night-veil", "lifeline-corridor", "raptor-escort"]);
   assert.equal(DEFAULT_FLIGHT_PLAN_ID, "night-veil");

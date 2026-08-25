@@ -168,7 +168,7 @@ test("Escape pause is guarded from modal states and supports resume, local resta
   assert.match(styles, /\.expedition-hud-actions \{[\s\S]*pointer-events: auto/);
   assert.match(styles, /\.expedition-pause-toggle \{[\s\S]*width: 38px;[\s\S]*height: 38px/);
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.expedition-pause-toggle \{ width: 48px; height: 48px; \}/);
-  assert.match(app, /\[characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx\]/);
+  assert.match(app, /\[characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked\]/);
   assert.match(app, /<PauseOverlay[\s\S]*onResume=\{resumeCombat\}[\s\S]*onRestart=\{restartCombat\}[\s\S]*onBase=\{onBase \? returnToBase : null\} \/>/);
   assert.match(app, /onBase=\{activeSlot\?\.homeBaseUnlocked \? \(\) => setScreen\("base"\) : null\}/);
 });
