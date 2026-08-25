@@ -3376,7 +3376,7 @@ button:active:not(:disabled) {
   font-size: 20px;
 }
 
-@media (min-width: 721px) and (max-width: 1100px) {
+@media (min-width: 761px) and (max-width: 1100px) {
   .campaign-shell.campaign-shell.region-select-screen.has-selection > .region-sortie-dialog {
     width: calc(100vw - 28px);
     max-height: calc(100svh - 24px);
@@ -3411,7 +3411,7 @@ button:active:not(:disabled) {
   .campaign-shell.region-select-screen.has-selection .sortie-character-card p { margin-top: 6px; font-size: 12px; -webkit-line-clamp: 2; }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .campaign-shell.campaign-shell.region-select-screen.has-selection > .region-sortie-dialog {
     top: auto;
     right: 0;

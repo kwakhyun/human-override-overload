@@ -29,7 +29,12 @@ test("portrait touch runtime uses the native viewport, a tactical camera, and de
 });
 
 test("portrait combat owns the full safe viewport and exposes a touch-anywhere floating joystick", async () => {
-  const [app, styles, html] = await Promise.all([read("src/App.jsx"), read("src/styles.css"), read("index.html")]);
+  const [app, styles, html, tacticalStyles] = await Promise.all([
+    read("src/App.jsx"),
+    read("src/styles.css"),
+    read("index.html"),
+    read("src/styles/tactical-os.css"),
+  ]);
   const activeRuntime = app.slice(app.indexOf("function PhaserArenaScreen"), app.indexOf("function ResultScreen"));
 
   assert.doesNotMatch(activeRuntime, /needsLandscape|landscape-guard|가로 모드로 회전/);
@@ -80,6 +85,8 @@ test("portrait combat owns the full safe viewport and exposes a touch-anywhere f
   assert.match(portrait, /\.ability-guide-actions > button:not\(\.ability-guide-next\) \{ min-width: 64px/);
   assert.match(portrait, /Mobile app UI v4/);
   assert.match(portrait, /\.home-base-screen \.base-lobby-topbar \{[\s\S]*display: grid;[\s\S]*grid-template-columns: 1fr/);
+  assert.match(tacticalStyles, /--mobile-lobby-header-height: 190px/);
+  assert.match(tacticalStyles, /\.home-base-screen \.base-motion-portrait,[\s\S]*top: var\(--mobile-lobby-header-height\)/);
   assert.match(portrait, /\.home-base-screen \.base-currency-rail \{[\s\S]*width: 100%;[\s\S]*grid-template-columns: repeat\(3/);
   assert.match(portrait, /\.home-base-screen \.base-lobby-navigation \{[\s\S]*overflow-x: auto;[\s\S]*grid-template-columns: repeat\(4, 132px\)/);
   assert.match(portrait, /\.home-base-screen \.base-primary-actions > \.base-defense-action \{[\s\S]*grid-column: 1 \/ -1;[\s\S]*min-height: 54px/);

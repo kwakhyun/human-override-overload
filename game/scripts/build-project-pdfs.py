@@ -75,6 +75,18 @@ DOCS = (
             "본인·AI 책임 구분",
         ),
     },
+    {
+        "source": SOURCE_DIR / "portfolio-ko.md",
+        "output": OUTPUT_DIR / "HUMAN_OVERRIDE_OVERLOAD_AI_Game_Development_Portfolio_KO.pdf",
+        "kind": "AI + GAME DEVELOPMENT PORTFOLIO",
+        "required": (
+            "프로젝트 포트폴리오",
+            "기획 의도",
+            "시스템 설계",
+            "AI 활용",
+            "검증과 한계",
+        ),
+    },
 )
 
 
@@ -407,7 +419,7 @@ def build_one(config: dict, sheet: dict[str, ParagraphStyle]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--only", choices=("game", "ai", "content"), help="Build only one PDF")
+    parser.add_argument("--only", choices=("game", "ai", "content", "portfolio"), help="Build only one PDF")
     args = parser.parse_args()
     register_fonts()
     TMP_DIR.mkdir(parents=True, exist_ok=True)
@@ -419,6 +431,8 @@ def main() -> None:
         selected = (DOCS[1],)
     elif args.only == "content":
         selected = (DOCS[2],)
+    elif args.only == "portfolio":
+        selected = (DOCS[3],)
     for config in selected:
         build_one(config, sheet)
 

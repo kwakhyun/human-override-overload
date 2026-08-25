@@ -442,27 +442,24 @@ function resolveNpcPortraitSource(npc, assets) {
   return assetSource(assets?.npcPortraits);
 }
 
-function NpcPortrait({ npc, assets, onReact }) {
+function NpcPortrait({ npc, assets }) {
   const standalone = npc.portraitMode === "standalone";
   const portrait = resolveNpcPortraitSource(npc, assets);
   return (
-    <button
-      type="button"
-      className={standalone ? "base-npc-portrait is-standalone" : "base-npc-portrait"}
-      aria-label={`${npc.name} 일러스트와 상호작용`}
-      onClick={onReact}
-      disabled={!onReact}
+    <div
+      className={`base-npc-portrait${standalone ? " is-standalone" : ""} is-${npc.id}`}
+      role="img"
+      aria-label={`${npc.name} 대화 일러스트`}
       style={{
         backgroundImage: portrait ? `url(${portrait})` : undefined,
         backgroundPosition: standalone ? "center bottom" : `${(npc.portraitIndex || 0) * 50}% center`,
       }}
-    ><span className="npc-portrait-interaction-hint"><ChatText weight="fill" /> 클릭해서 대화</span></button>
+    />
   );
 }
 
 export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, onFacility, onInteraction }) {
   const dialogRef = useRef(null);
-  const [portraitReactionIndex, setPortraitReactionIndex] = useState(-1);
   useDialogFocusTrap(dialogRef, Boolean(npc));
   const lines = npc?.dialogue || [];
   const line = localizeWorldText(lines[Math.min(lineIndex, Math.max(0, lines.length - 1))] || "통신 기록이 없습니다.");
@@ -479,20 +476,14 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
     window.addEventListener("keydown", handleDialogueSpace);
     return () => window.removeEventListener("keydown", handleDialogueSpace);
   }, [final, npc, onAdvance, onClose]);
-  useEffect(() => setPortraitReactionIndex(-1), [npc?.id]);
   if (!npc) return null;
   const display = NPC_DISPLAY[npc.id] || { name: npc.name, role: npc.role };
-  const portraitDialogue = npc.portraitDialogue?.length ? npc.portraitDialogue : npc.dialogue;
-  const portraitReaction = portraitReactionIndex >= 0
-    ? localizeWorldText(portraitDialogue[portraitReactionIndex % portraitDialogue.length])
-    : null;
   return (
     <section className="base-dialogue" role="dialog" aria-modal="true" aria-labelledby="base-dialogue-name" ref={dialogRef} tabIndex={-1}>
-      <NpcPortrait npc={npc} assets={assets} onReact={() => setPortraitReactionIndex((index) => nextDialogueIndex(index, portraitDialogue))} />
+      <NpcPortrait npc={npc} assets={assets} />
       <div className="base-dialogue-copy">
         <small>{display.role}</small>
         <h2 id="base-dialogue-name">{display.name}</h2>
-        {portraitReaction && <p className="npc-portrait-reaction" role="status">{portraitReaction}</p>}
         <p>{line}</p>
         <footer className="base-dialogue-actions">
           {npc.facilityId && onFacility && (
@@ -536,10 +527,10 @@ export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose, o
     <section className={`base-facility-panel facility-${facility.id}${facility.artSource ? " has-key-art" : ""}${facilityNpc ? " has-npc-host" : ""}`} role="dialog" aria-modal="true" aria-labelledby="base-facility-name" ref={dialogRef} tabIndex={-1}>
       {facility.artSource && <img className="facility-key-art" src={assetSource(facility.artSource)} alt="기지 시설 일러스트" />}
       {facilityNpc && (
-        <aside className="facility-npc-stage" aria-label={`${facilityNpcDisplay.name} 담당자 인터랙션`}>
+        <aside className={`facility-npc-stage is-${facilityNpc.id}`} aria-label={`${facilityNpcDisplay.name} 담당자 인터랙션`}>
           <button
             type="button"
-            className={`facility-npc-portrait${facilityNpc.portraitMode === "standalone" ? " is-standalone" : ""}`}
+            className={`facility-npc-portrait is-${facilityNpc.id}${facilityNpc.portraitMode === "standalone" ? " is-standalone" : ""}`}
             onClick={() => setNpcReactionIndex((index) => nextDialogueIndex(index, facilityNpcDialogue))}
             aria-label={`${facilityNpcDisplay.name} 일러스트와 대화`}
           >
@@ -631,27 +622,39 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
   const dialogRef = useRef(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [profileId, setProfileId] = useState(facility?.selectedCharacterId || facility?.characters?.[0]?.id || "aegis");
-  const [upgradePulse, setUpgradePulse] = useState(0);
   const [portraitCompact, setPortraitCompact] = useState(false);
-  const [upgradeFilter, setUpgradeFilter] = useState("all");
   useDialogFocusTrap(dialogRef, true);
   useEffect(() => {
     setProfileId(facility?.selectedCharacterId || facility?.characters?.[0]?.id || "aegis");
   }, [facility?.selectedCharacterId, facility?.characters]);
   const profile = facility?.characters?.find((character) => character.id === profileId) || facility?.characters?.[0];
   const upgrades = facility?.upgrades || [];
-  const totalRank = upgrades.reduce((sum, upgrade) => sum + upgrade.rank, 0);
-  const maxRank = upgrades.reduce((sum, upgrade) => sum + upgrade.maxRank, 0);
-  const affordableUpgradeCount = upgrades.filter((upgrade) => upgrade.rank < upgrade.maxRank && upgrade.canPurchase).length;
-  const maxedUpgradeCount = upgrades.filter((upgrade) => upgrade.rank >= upgrade.maxRank).length;
-  const visibleUpgrades = upgradeFilter === "available"
-    ? upgrades.filter((upgrade) => upgrade.rank < upgrade.maxRank && upgrade.canPurchase)
-    : upgrades;
   const activeLoadout = profile?.id === "mika"
     ? CHARACTER_ACTIVE_LOADOUTS.mika
     : profile?.id === "vesper"
       ? CHARACTER_ACTIVE_LOADOUTS.vesper
       : facility?.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
+  const progressionUpgrade = upgrades.find((upgrade) => upgrade.characterId === profile?.id)
+    || upgrades.find((upgrade) => String(upgrade.id || "").startsWith(`${profile?.id}-`))
+    || null;
+  const progressionRank = Math.max(0, Number(progressionUpgrade?.rank || 0));
+  const progressionSkills = progressionUpgrade?.skillLoadout?.skills || [];
+  const skillNodes = activeLoadout.map((ability, index) => {
+    const key = String(ability.key || "").trim().toUpperCase();
+    const runtimeSkill = progressionSkills.find((skill) => String(skill.slot || "").toUpperCase() === key);
+    const requiredGrade = Number(runtimeSkill?.requiredGrade ?? index);
+    const unlocked = Boolean(profile?.unlocked) && requiredGrade <= progressionRank;
+    return {
+      ability,
+      upgrade: progressionUpgrade,
+      key,
+      requiredGrade,
+      unlocked,
+      index,
+      state: unlocked ? "unlocked" : requiredGrade === progressionRank + 1 ? "next" : "locked",
+    };
+  });
+  const unlockedSkillCount = skillNodes.filter((node) => node.unlocked).length;
   const baseDamageOutput = facility?.combatStats?.damageOutput || 100;
   const baseFireRate = facility?.combatStats?.fireRate || 100;
   const displayedMaxHp = profile?.id === "vesper" ? 320 : (facility?.combatStats?.maxHp || 360);
@@ -665,7 +668,6 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
     if (selected.unlocked) onCharacterChange?.(characterId);
   };
   const purchaseUpgrade = (upgradeId) => {
-    setUpgradePulse((value) => value + 1);
     onPurchase?.(upgradeId);
   };
   return (
@@ -692,7 +694,7 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
         {portraitCompact ? "초상화 펼치기" : "초상화 접고 정보 보기"}
       </button>
 
-      <figure className="character-art-stage" id="character-art-stage">
+      <figure className={`character-art-stage is-${profile?.id || "aegis"}`} id="character-art-stage">
         {profile?.portraitSource && <img src={assetSource(profile.portraitSource)} alt={`${profile.koreanName} 전신 일러스트`} />}
         {!profile?.unlocked && (
           <div className="character-lock-banner" role="status">
@@ -704,14 +706,14 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
           <small>{profile?.role}</small>
           <h2 id="character-information-name">{profile?.koreanName}</h2>
           <strong>{profile?.name}</strong>
-          <span>동기화 랭크 {totalRank} / {maxRank}</span>
+          <span>스킬 링크 {unlockedSkillCount} / {skillNodes.length}</span>
         </figcaption>
       </figure>
 
       <section className="character-data-console">
         <nav className="character-info-tabs" aria-label="전투원 정보 분류">
           <button type="button" className={activeTab === "profile" ? "is-active" : ""} onClick={() => setActiveTab("profile")}><MenuAtlasIcon atlas={facility?.menuIconAtlas} icon="operative" fallback={User} /> 기본 정보</button>
-          <button type="button" className={activeTab === "upgrade" ? "is-active" : ""} onClick={() => { setActiveTab("upgrade"); setPortraitCompact(true); }}><MenuAtlasIcon atlas={facility?.menuIconAtlas} icon="augmentation" fallback={Sparkle} /> 영구 강화</button>
+          <button type="button" className={activeTab === "upgrade" ? "is-active" : ""} onClick={() => setActiveTab("upgrade")}><MenuAtlasIcon atlas={facility?.menuIconAtlas} icon="augmentation" fallback={Sparkle} /> 스킬 해금</button>
         </nav>
 
         {activeTab === "profile" ? (
@@ -732,9 +734,16 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
             <section className="character-active-kit" aria-label={`${profile?.koreanName} 액티브 스킬`}>
               <header><small>MANUAL COMBAT LINK</small><strong>사용 스킬</strong></header>
               <div>
-                {activeLoadout.map((ability) => {
+                {skillNodes.map(({ ability, key, unlocked, state }) => {
                   const AbilityIcon = ability.icon;
-                  return <article key={ability.key}><kbd>{ability.key}</kbd><AbilityIcon weight="fill" /><span><b>{ability.name}</b><small>{ability.detail}</small></span></article>;
+                  return (
+                    <article className={unlocked ? "is-unlocked" : "is-locked"} key={key}>
+                      <kbd>{key}</kbd>
+                      <AbilityIcon weight="fill" />
+                      <span><b>{ability.name}</b><small>{unlocked ? ability.detail : state === "next" ? "다음 강화에서 해금" : "선행 스킬 해금 필요"}</small></span>
+                      {!unlocked && <Lock className="character-skill-lock" weight="fill" />}
+                    </article>
+                  );
                 })}
               </div>
             </section>
@@ -776,60 +785,58 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
               <section className="character-fixed-weapon-note"><strong>{profile?.weaponName}</strong><span>{profile?.koreanName} 전용 고정 장비 · 태그 시 자동 전환</span></section>
             )}
             <section className="character-trait-note"><small>OPERATIVE TRAIT</small><strong>{profile?.traitName}</strong><span>{profile?.traitDescription}</span></section>
-            <button type="button" className="character-open-upgrades command-ui-button" data-ui-sound="click" onClick={() => { setActiveTab("upgrade"); setPortraitCompact(true); }}><Sparkle weight="fill" /> 동기화 코어로 영구 강화</button>
+            <button type="button" className="character-open-upgrades command-ui-button" data-ui-sound="click" onClick={() => setActiveTab("upgrade")}><Sparkle weight="fill" /> 스킬 링크 해금 보기</button>
           </div>
         ) : (
           <div className="character-upgrade-content">
-            <header><div><small>PERMANENT AUGMENTATION</small><h3>동기화 프로토콜</h3></div><span>{facility?.currencyHint}</span></header>
-            {facility?.augmentationCoreVisual && (
-              <section className={`augmentation-core-module${upgradePulse > 0 ? " is-charged" : ""}`} key={`augmentation-core-${upgradePulse}`} aria-label="동기화 코어 강화 장치">
-                <div className="augmentation-core-art" aria-hidden="true">
-                  <i className="augmentation-orbit orbit-outer" />
-                  <i className="augmentation-orbit orbit-inner" />
-                  <img src={assetSource(facility.augmentationCoreVisual)} alt="" />
-                  <span className="augmentation-core-flare" />
-                </div>
-                <div className="augmentation-core-copy">
-                  <small>HAVEN-09 // SYNC REACTOR</small>
-                  <strong>영구 강화 동기화 코어</strong>
-                  <span>코어를 소모해 전투원의 기본 성능을 영구적으로 증폭합니다.</span>
-                  <div><i style={{ width: `${maxRank > 0 ? Math.round(totalRank / maxRank * 100) : 0}%` }} /></div>
-                  <b>동기화 랭크 {totalRank} / {maxRank}</b>
-                </div>
-              </section>
-            )}
-            <section className="character-upgrade-summary" aria-label="강화 진행 요약">
-              <span><small>전체 진행</small><b>{totalRank} / {maxRank}</b></span>
-              <span><small>지금 강화 가능</small><b>{affordableUpgradeCount}</b></span>
-              <span><small>최대 강화</small><b>{maxedUpgradeCount} / {upgrades.length}</b></span>
-              <button
-                type="button"
-                className="character-upgrade-filter"
-                aria-pressed={upgradeFilter === "available"}
-                onClick={() => setUpgradeFilter((filter) => filter === "available" ? "all" : "available")}
-              >
-                <CheckCircle weight={upgradeFilter === "available" ? "fill" : "regular"} />
-                강화 가능만 보기
-              </button>
+            <header className="character-skill-ladder-heading">
+              <div><small>COMBAT LINK AUTHORIZATION</small><h3>전투 스킬 해금 경로</h3></div>
+              <span>Q 기본 지급 · E → F → R 순차 개방</span>
+            </header>
+            <section className="character-skill-ladder-summary" aria-label="스킬 해금 진행 요약">
+              <div><small>현재 전투원</small><strong>{profile?.koreanName}</strong></div>
+              <div><small>해금 진행</small><strong>{unlockedSkillCount} / {skillNodes.length}</strong></div>
+              <p>상위 스킬은 앞 단계 링크를 확보한 뒤 동기화 코어로 개방합니다. 향후 추가 스킬도 이 경로에 연장됩니다.</p>
             </section>
-            <div className="character-upgrade-list">
-              {visibleUpgrades.map((upgrade) => {
-                const maxed = upgrade.rank >= upgrade.maxRank;
-                const disabled = maxed || !upgrade.canPurchase;
-                const purchasable = !maxed && upgrade.canPurchase;
+            <ol className="character-skill-ladder" aria-label={`${profile?.koreanName} Q E F R 스킬 해금 경로`}>
+              {skillNodes.map(({ ability, upgrade, key, state, unlocked, requiredGrade }, index) => {
+                const AbilityIcon = ability.icon;
+                const canPurchase = Boolean(upgrade && !unlocked && state === "next" && upgrade.canPurchase);
+                const disabled = !canPurchase;
                 return (
-                  <article className={`character-upgrade-row${maxed ? " is-maxed" : ""}${purchasable ? " is-purchasable" : ""}`} key={upgrade.id}>
-                    <header><span>{String(upgrade.order || 1).padStart(2, "0")}</span><div><small>{upgrade.category}</small><h4>{upgrade.name}</h4></div><b>{upgrade.rank} / {upgrade.maxRank}</b></header>
-                    <p>{upgrade.description}</p>
-                    <div className="upgrade-ranks" aria-label={`${upgrade.maxRank}랭크 중 ${upgrade.rank}랭크`}>{Array.from({ length: upgrade.maxRank }, (_, index) => <i className={index < upgrade.rank ? "is-active" : ""} key={index} />)}</div>
-                    <footer><span className={`effect-next${purchasable ? " is-upgradable" : ""}`}>{maxed ? "최고 단계" : upgrade.nextEffect}</span><button type="button" className={`command-ui-button${purchasable ? " is-ready-cta" : ""}`} data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => purchaseUpgrade(upgrade.id)}>{maxed ? <><CheckCircle weight="fill" /> 완료</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><Sparkle weight="fill" /> 코어 {upgrade.nextCost}개로 강화</>}</button></footer>
-                  </article>
+                  <li className={`character-skill-node is-${state}`} key={key}>
+                    <span className="character-skill-connector" aria-hidden="true"><i /></span>
+                    <div className="character-skill-emblem"><kbd>{key}</kbd><AbilityIcon weight="fill" /></div>
+                    <div className="character-skill-copy">
+                      <small>{index === 0 ? "BASE LINK" : `AUTHORIZATION 0${requiredGrade}`}</small>
+                      <h4>{ability.name}</h4>
+                      <p>{ability.detail}</p>
+                      <span>{unlocked ? "전투 사용 가능" : state === "next" ? "다음 해금 대상" : `${skillNodes[index - 1]?.key || "선행"} 스킬 해금 필요`}</span>
+                    </div>
+                    <div className="character-skill-state">
+                      {unlocked ? (
+                        <strong><CheckCircle weight="fill" /> {key === "Q" ? "기본 해금" : "해금 완료"}</strong>
+                      ) : upgrade && state === "next" ? (
+                        <button
+                          type="button"
+                          className={`command-ui-button${canPurchase ? " is-ready-cta" : ""}`}
+                          data-ui-sound={disabled ? "denied" : "uiConfirm"}
+                          disabled={disabled}
+                          onClick={() => purchaseUpgrade(upgrade.id)}
+                        >
+                          {upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><Sparkle weight="fill" /> 코어 {upgrade.nextCost || 1}개로 해금</>}
+                        </button>
+                      ) : (
+                        <strong className="is-locked"><Lock weight="fill" /> {state === "locked" ? `${skillNodes[index - 1]?.key || "선행"} 링크 필요` : "해금 데이터 대기"}</strong>
+                      )}
+                    </div>
+                  </li>
                 );
               })}
-              {visibleUpgrades.length === 0 && (
-                <p className="character-upgrade-empty" role="status">현재 바로 강화할 수 있는 항목이 없습니다.</p>
-              )}
-            </div>
+            </ol>
+            <footer className="character-skill-ladder-footer">
+              <Sparkle weight="fill" /><span>{facility?.currencyHint || "동기화 코어는 작전 보상으로 획득합니다."}</span>
+            </footer>
           </div>
         )}
       </section>
@@ -1110,10 +1117,10 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
       </header>
 
       <section className="flight-ops-console" aria-label="세라 출격 항로 교리 통제실">
-        <aside className="flight-ops-lark">
+        <aside className="flight-ops-lark is-sera">
           <button
             type="button"
-            className="flight-ops-lark-portrait"
+            className="flight-ops-lark-portrait is-sera"
             onClick={() => setPilotReactionIndex((index) => nextDialogueIndex(index, pilotDialogue))}
             aria-label="나이트자 수석 조종사 세라와 대화"
           >
@@ -1528,7 +1535,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
           return (
             <button
               type="button"
-              className={`region-card region-${region.order}${isCompleted ? " is-completed" : ""}`}
+              className={`region-card region-${region.order}${isCompleted ? " is-completed" : ""}${isUnlocked ? "" : " is-locked"}`}
               disabled={!isUnlocked}
               aria-pressed={selectedRegionId === region.id}
               onMouseEnter={() => isUnlocked && setHoveredRegionId(region.id)}
@@ -1549,7 +1556,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
                 </span>
               )}
               <small>보스 · {BOSS_DISPLAY[region.bossName] || region.bossName}</small>
-              <b>{!isUnlocked ? <><Lock weight="fill" /> 잠김</> : isCompleted ? <><CheckCircle weight="fill" /> 작전 정보 · 재출격</> : <><MapTrifold weight="fill" /> 작전 정보 보기</>}</b>
+              <b className={`region-card-status${!isUnlocked ? " is-locked" : isCompleted ? " is-completed" : " is-ready"}`}>{!isUnlocked ? <><Lock weight="fill" /> 잠김</> : isCompleted ? <><CheckCircle weight="fill" /> 클리어 · 재출격</> : <><MapTrifold weight="fill" /> 작전 정보 보기</>}</b>
             </button>
           );
         })}

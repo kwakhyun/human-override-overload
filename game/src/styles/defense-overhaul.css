@@ -562,3 +562,139 @@ body .defense-result-rank { float: right; display: grid; place-items: center; wi
   body .defense-doctrine-panel button,
   body .defense-stage-card { transition: none; }
 }
+
+/* RHEA presentation pass: the control officer is a readable briefing host,
+   not a thumbnail tucked into a generic status chip. */
+@media (min-width: 821px) {
+  body .defense-rhea-briefing {
+    top: clamp(20px, 2.4vw, 38px);
+    right: clamp(20px, 2.8vw, 44px);
+    display: grid;
+    width: min(44vw, 620px);
+    min-height: 148px;
+    padding: 24px 24px 22px 194px;
+    align-items: center;
+    overflow: visible;
+    border-left: 3px solid var(--defense-cyan);
+    background:
+      linear-gradient(105deg, rgba(3, 19, 25, 0.98), rgba(3, 13, 20, 0.88)),
+      linear-gradient(rgba(99, 239, 255, 0.04) 1px, transparent 1px);
+    background-size: auto, 28px 28px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38);
+  }
+
+  body .defense-rhea-briefing::after {
+    position: absolute;
+    right: 24px;
+    bottom: 16px;
+    width: 72px;
+    height: 1px;
+    background: var(--defense-lime);
+    content: "";
+    opacity: 0.68;
+  }
+
+  body .defense-rhea-briefing > .npc-illustration-button {
+    position: absolute;
+    left: 8px;
+    bottom: 0;
+    width: 174px;
+    height: 212px;
+    overflow: visible;
+  }
+
+  body .defense-rhea-briefing > .npc-illustration-button > img,
+  body .defense-rhea-briefing img {
+    position: static;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+    filter: drop-shadow(14px 14px 24px rgba(0, 0, 0, 0.62));
+  }
+
+  body .defense-rhea-briefing small {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+  }
+
+  body .defense-rhea-briefing strong {
+    max-width: 380px;
+    margin-top: 9px;
+    font-size: 16px;
+    line-height: 1.58;
+    word-break: keep-all;
+  }
+
+  body .defense-stage-grid {
+    margin-top: 176px;
+  }
+}
+
+@media (max-width: 1120px) and (min-width: 821px) {
+  body .defense-rhea-briefing {
+    display: grid;
+    width: min(49vw, 500px);
+    min-height: 126px;
+    padding: 18px 18px 17px 150px;
+  }
+
+  body .defense-rhea-briefing > .npc-illustration-button {
+    width: 136px;
+    height: 172px;
+  }
+
+  body .defense-rhea-briefing strong {
+    font-size: 14px;
+  }
+
+  body .defense-stage-grid {
+    margin-top: 144px;
+  }
+}
+
+@media (max-width: 820px), (orientation: portrait) {
+  body .defense-rhea-briefing {
+    position: relative;
+    inset: auto;
+    display: grid;
+    width: 100%;
+    min-height: 136px;
+    margin: 16px 0 0;
+    padding: 16px 14px 14px 118px;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid rgba(99, 239, 255, 0.3);
+    border-left: 3px solid var(--defense-cyan);
+    background: linear-gradient(100deg, rgba(3, 19, 25, 0.98), rgba(3, 13, 20, 0.86));
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  }
+
+  body .defense-rhea-briefing > .npc-illustration-button {
+    position: absolute;
+    left: 4px;
+    bottom: -8px;
+    width: 106px;
+    height: 148px;
+  }
+
+  body .defense-rhea-briefing > .npc-illustration-button > img,
+  body .defense-rhea-briefing img {
+    position: static;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+  }
+
+  body .defense-rhea-briefing small {
+    font-size: 9px;
+  }
+
+  body .defense-rhea-briefing strong {
+    margin-top: 7px;
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: keep-all;
+  }
+}

@@ -3,10 +3,15 @@ import {
   getBaseResourceExchange,
   getBaseUpgrade,
 } from "../content/baseUpgrades.js";
+import {
+  LEGACY_AEGIS_AUGMENTATION_COSTS,
+  LEGACY_AEGIS_AUGMENTATION_IDS,
+} from "../content/characterSkills.js";
 import { getRegion } from "../content/campaign.js";
 
 export const PROGRESSION_CURRENCY_FIELDS = Object.freeze(["researchData", "equipmentParts", "augmentationCores"]);
 export const PROGRESSION_RANK_FIELDS = Object.freeze(["researchRanks", "equipmentRanks", "augmentationRanks"]);
+const AUGMENTATION_MIGRATION_VERSION = 1;
 
 export const DEFAULT_COMBAT_BONUSES = Object.freeze({
   damageMultiplier: 1,
@@ -46,6 +51,35 @@ function sanitizeRankMap(value, ids) {
   }));
 }
 
+function cumulativeCost(costs, rank) {
+  return costs.slice(0, finiteInteger(rank, 0)).reduce((total, cost) => total + finiteInteger(cost, 0), 0);
+}
+
+function migrateLegacyAugmentation(source) {
+  const ranks = source?.augmentationRanks && typeof source.augmentationRanks === "object"
+    ? source.augmentationRanks
+    : {};
+  if (finiteInteger(source?.augmentationMigrationVersion, 0) >= AUGMENTATION_MIGRATION_VERSION) {
+    return { ranks, refund: 0 };
+  }
+  const legacyRanks = LEGACY_AEGIS_AUGMENTATION_IDS.map((id) => Math.min(3, finiteInteger(ranks[id], 0)));
+  const purchasedRanks = legacyRanks.reduce((total, rank) => total + rank, 0);
+  if (purchasedRanks <= 0) return { ranks, refund: 0 };
+
+  const existingGrade = Math.min(3, finiteInteger(ranks["aegis-skill-link"], 0));
+  const migratedGrade = Math.max(existingGrade, Math.min(3, purchasedRanks));
+  const spentLegacyCores = legacyRanks.reduce(
+    (total, rank) => total + cumulativeCost(LEGACY_AEGIS_AUGMENTATION_COSTS, rank),
+    0,
+  );
+  const incrementalNewCores = cumulativeCost([1, 2, 3], migratedGrade)
+    - cumulativeCost([1, 2, 3], existingGrade);
+  return {
+    ranks: { ...ranks, "aegis-skill-link": migratedGrade },
+    refund: Math.max(0, spentLegacyCores - incrementalNewCores),
+  };
+}
+
 function rankFieldFor(upgrade) {
   if (upgrade?.category === "equipment") return "equipmentRanks";
   if (upgrade?.category === "augmentation") return "augmentationRanks";
@@ -58,6 +92,7 @@ function round(value) {
 
 export function createEmptyBaseProgression() {
   return {
+    augmentationMigrationVersion: AUGMENTATION_MIGRATION_VERSION,
     researchData: 0,
     equipmentParts: 0,
     augmentationCores: 0,
@@ -69,13 +104,15 @@ export function createEmptyBaseProgression() {
 
 export function sanitizeBaseProgression(value) {
   const source = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const augmentationMigration = migrateLegacyAugmentation(source);
   return {
+    augmentationMigrationVersion: AUGMENTATION_MIGRATION_VERSION,
     researchData: finiteInteger(source.researchData, 0),
     equipmentParts: finiteInteger(source.equipmentParts, 0),
-    augmentationCores: finiteInteger(source.augmentationCores, 0),
+    augmentationCores: finiteInteger(source.augmentationCores, 0) + augmentationMigration.refund,
     researchRanks: sanitizeRankMap(source.researchRanks, RESEARCH_IDS),
     equipmentRanks: sanitizeRankMap(source.equipmentRanks, EQUIPMENT_IDS),
-    augmentationRanks: sanitizeRankMap(source.augmentationRanks, AUGMENTATION_IDS),
+    augmentationRanks: sanitizeRankMap(augmentationMigration.ranks, AUGMENTATION_IDS),
   };
 }
 
@@ -122,9 +159,11 @@ export function getUpgradeStatus(progression, context, upgradeId) {
 
   const nextRank = upgrade.ranks[rank];
   const completedRegions = Array.isArray(context?.completedRegionIds) ? context.completedRegionIds.length : 0;
+  const completedRegionIds = Array.isArray(context?.completedRegionIds) ? context.completedRegionIds : [];
   const baseUnlocked = Boolean(context?.homeBaseUnlocked ?? context?.baseUnlocked);
   let reason = null;
   if (!baseUnlocked) reason = "base-locked";
+  else if (upgrade.unlockRegionId && !completedRegionIds.includes(upgrade.unlockRegionId)) reason = "character-locked";
   else if (completedRegions < nextRank.requiresCompletedRegions) reason = "rank-locked";
   else if (safe[upgrade.currencyId] < nextRank.cost) reason = "insufficient-funds";
   return {
@@ -137,6 +176,7 @@ export function getUpgradeStatus(progression, context, upgradeId) {
     currencyId: upgrade.currencyId,
     balance: safe[upgrade.currencyId],
     requiredCompletedRegions: nextRank.requiresCompletedRegions,
+    requiredRegionId: upgrade.unlockRegionId || null,
     purchasable: reason === null,
     reason,
   };

@@ -37,6 +37,7 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   assert.match(app, /className="vital-bar"[\s\S]*aria-valuenow=\{Math\.ceil\(hp\)\}/);
   assert.match(app, /<button[\s\S]*className=\{`combat-ability-chip[\s\S]*aria-label=\{`\$\{slot\.key\} \$\{slot\.label\}\. \$\{slot\.status\}`\}/);
   assert.match(app, /if \(slot\.action === "dash"\) onDash\?\.\(\);\s*else onActivateAbility\?\.\(slot\.action\)/);
+  assert.doesNotMatch(app, /if \(slot\.locked\) return;/);
   assert.match(app, /controllerRef\.current\?\.activateAbility\?\.\(slot\)/);
   assert.match(app, /<ExpeditionCombatDock[\s\S]*hud=\{hud\}[\s\S]*onDash=\{activateDash\}[\s\S]*onActivateAbility=\{activateAbility\}[\s\S]*tutorialAbilityId=/);
   assert.match(app, /!dialogue && !rewardOpen \? \([\s\S]*<ExpeditionCombatDock/);
@@ -168,9 +169,30 @@ test("Escape pause is guarded from modal states and supports resume, local resta
   assert.match(styles, /\.expedition-hud-actions \{[\s\S]*pointer-events: auto/);
   assert.match(styles, /\.expedition-pause-toggle \{[\s\S]*width: 38px;[\s\S]*height: 38px/);
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.expedition-pause-toggle \{ width: 48px; height: 48px; \}/);
-  assert.match(app, /\[characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked\]/);
+  assert.match(app, /\[assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked\]/);
   assert.match(app, /<PauseOverlay[\s\S]*onResume=\{resumeCombat\}[\s\S]*onRestart=\{restartCombat\}[\s\S]*onBase=\{onBase \? returnToBase : null\} \/>/);
   assert.match(app, /onBase=\{activeSlot\?\.homeBaseUnlocked \? \(\) => setScreen\("base"\) : null\}/);
+});
+
+test("combat onboarding follows only unlocked HUD skills and character tags render a transient side cut-in", async () => {
+  const [app, main, cutsceneStyles] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/main.jsx", root), "utf8"),
+    readFile(new URL("src/styles/tag-cutscene.css", root), "utf8"),
+  ]);
+  assert.match(app, /const combatTutorialAbilities = useMemo\(\(\) => MANUAL_ABILITY_GUIDE\.filter/);
+  assert.match(app, /!state\.locked && Number\(state\.rank \|\| 0\) > 0/);
+  assert.match(app, /ability=\{combatTutorialAbility\}/);
+  assert.match(app, /event\.type === "characterTagged"/);
+  assert.match(app, /setTimeout\(\(\) => setTagCutscene\(null\), 1180\)/);
+  assert.match(app, /function TagCutsceneOverlay/);
+  assert.match(main, /import "\.\/styles\/tag-cutscene\.css"/);
+  assert.match(cutsceneStyles, /\.combat-tag-cutscene/);
+  assert.match(cutsceneStyles, /pointer-events: none/);
+  assert.match(cutsceneStyles, /object-position: 50% 12%/);
+  assert.match(cutsceneStyles, /\.combat-tag-cutscene\.is-vesper img[\s\S]*scale\(1\.68\)/);
+  assert.match(cutsceneStyles, /animation: tag-cutscene-fade 1\.18s ease both/);
+  assert.match(cutsceneStyles, /prefers-reduced-motion/);
 });
 
 test("airstrike banner dedupe and independent manual ability SFX stay separate", async () => {

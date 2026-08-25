@@ -721,8 +721,10 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 - AEGIS: `public/assets/overload/hero/survivor-portrait.png`
 - RHEA 및 시나리오의 `OPERATOR` 화자:
   `public/assets/overload/ui/npcs/rhea-control-officer.png`
-- HANA·ILYA·LARK: 기존
-  `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`의 0·1·2번 프레임
+- HANA·ILYA: 기존
+  `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`의 0·1번 프레임
+- SERA: `public/assets/overload/ui/npcs/sera-nightjar-pilot-v1.png`
+  (`lark`/`LARK` 내부 식별자와 2번 레거시 프레임은 저장·서사 호환용으로만 보존)
 - THE WRONG ENGINE: `public/assets/overload/boss/wrong-engine-forms-atlas.png`
 - MIRROR TYRANT:
   `public/assets/overload/regions/glass-dune/boss-forms-atlas.png`
@@ -2380,10 +2382,18 @@ No second ponytail, no floating hair, no detached braid, no hair clipping throug
 - 도구: OpenAI 내장 ImageGen. 사용자가 제공한 금발 여성 캐릭터 이미지는 실루엣·색 조합·성인 여성 전투원이라는 방향을 이해하기 위한 참고 자료로만 사용했으며, 얼굴·의상 구조·표식·장비는 복제하지 않은 프로젝트 오리지널 디자인입니다.
 - 콘셉트: 성인 여성 정밀 요격 전투원 `VESPER / 베스퍼`. 금발 단발, 흑연색 전술 바디슈트, 비대칭 백색 장갑 패널, 절제된 적색 코트 테일, 호박색 센서, 접이식 레일 피스톨을 사용하는 HAVEN-09 고기동 사수입니다.
 - 생성 지시 요약: 투명 추출용 단색 크로마 배경, 머리부터 부츠까지 보이는 전신 3/4 자세, 프리미엄 SF 서브컬처 게임 캐릭터 시트, 정확한 성인 해부학과 손, 읽기 쉬운 실루엣, 텍스트·로고·워터마크·기존 IP 표식 금지.
-- 런타임 파일: `public/assets/overload/hero/vesper-portrait-v1.png` (871×1595 RGBA).
-- 후처리: `scripts/process-character-chroma.py`가 크로마 제거, 가장자리 색 오염 완화, 투명 여백 정리, 런타임 크기 최적화를 재현합니다.
+- 현재 런타임 파일: `public/assets/overload/hero/vesper-portrait-v2.png` (871×1595, 실제 알파 RGBA · colorType 6).
+- 이전 런타임 원본 보존: `public/assets/overload/hero/vesper-portrait-v1.png` (871×1595, RGB 녹색 크로마 원본 · colorType 2). v1은 비교·재처리 이력이며 현재 매니페스트에서 사용하지 않습니다.
+- 후처리: `scripts/process-character-chroma.py`가 녹색 크로마 제거, 가장자리 색 오염 완화, 투명 여백 정리, 런타임 크기 최적화를 재현합니다. v2는 캐릭터 정보·잠금 미리보기·태그 컷인에서 배경 없는 원본 실루엣을 유지합니다.
 - 해금/표시 원칙: `abyssal-archive` 최초 클리어 전에도 캐릭터 정보 화면에서 잠금 상태로 원화를 볼 수 있지만 출격 선택은 거부합니다. 클리어 후 정식 전투원으로 합류합니다.
 
 ## Live2D/Cubism 현재 런타임 상태 · 2026-08-25
 
-사용자 검수에서 낮은 완성도와 오류성 변형이 확인되어 `@greenmansk/react-live2d`, Cubism Web Core, AEGIS/MIKA 모델·텍스처·모션 번들을 프로덕션에서 제거했습니다. 현재 로비는 승인된 정적 전신 원화를 사용하고 투명 클릭 영역의 캐릭터별 반응 대사만 유지합니다. 위의 과거 제작 기록과 프롬프트는 출처 이력일 뿐 현재 기능 설명이 아닙니다.
+사용자 검수에서 낮은 완성도와 오류성 변형이 확인되어 `@greenmansk/react-live2d`, Cubism Web Core, AEGIS/MIKA 모델·텍스처·모션 번들을 프로덕션에서 제거했습니다. 현재 로비는 승인된 정적 전신 원화를 사용합니다. CSS 위치 이동, 홍조, 얼굴선 또는 전신 확대·축소를 Live2D처럼 보이게 하는 대체 모션도 적용하지 않습니다. 위의 과거 제작 기록과 프롬프트는 출처 이력일 뿐 현재 기능 설명이 아닙니다.
+
+## 현재 캐릭터·NPC 프레젠테이션 정책 · 2026-08-25
+
+- 대화창 NPC 일러스트는 상반신만 표시하고 클릭 상호작용을 제공하지 않습니다. 본문 글자와 초상은 서로 겹치지 않는 독립 영역을 사용합니다.
+- HANA 연구실, ILYA 정비소, SERA 항로 관제 같은 상세 화면만 NPC 일러스트 클릭 반응을 제공합니다. 일러스트는 카드 박스에 축소하지 않고 화면 좌측 하단에 크게 고정하며 SERA는 허벅지 중간까지 보이게 자릅니다.
+- 전투원 정보의 VESPER도 허벅지 중간 프레이밍을 사용하고, 잠금 상태에서 원화·역할·해금 조건은 열람 가능하되 출격·태그 선택은 차단합니다.
+- 태그 사이드 컷인은 동일한 승인 캐릭터 원화를 얼굴 중심으로 재프레이밍한 UI 파생 표시입니다. 별도 외부 이미지나 제3자 에셋을 추가하지 않습니다.

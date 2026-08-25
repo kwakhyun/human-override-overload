@@ -81,7 +81,7 @@ test("P2 character details use staged disclosure and sortie videos only preload 
   assert.match(screens, /const \[portraitCompact, setPortraitCompact\] = useState\(false\)/);
   assert.match(screens, /className=\{`character-information-panel[\s\S]*\$\{portraitCompact \? " is-portrait-compact" : ""\}`\}/);
   assert.match(screens, /className="character-portrait-toggle"/);
-  assert.match(screens, /setPortraitCompact\(true\)/);
+  assert.match(screens, /setPortraitCompact\(\(compact\) => !compact\)/);
   assert.match(screens, /preload="metadata"/);
   assert.doesNotMatch(screens, /preload="auto"/);
   assert.match(responsiveStyles, /\.character-information-panel\.is-portrait-compact \.character-art-stage \{[\s\S]*display: none/);
@@ -112,9 +112,9 @@ test("P1 and P2 polish exposes opening protection, focus HUD controls, trustwort
   assert.match(app, /compact=\{hudFocusMode\}/);
   assert.match(app, /직접 공격 명중률/);
   assert.match(app, /자폭·환경/);
-  assert.match(screens, /const \[upgradeFilter, setUpgradeFilter\] = useState\("all"\)/);
-  assert.match(screens, /강화 가능만 보기/);
-  assert.match(screens, /className="character-upgrade-summary"/);
+  assert.match(screens, /className="character-skill-ladder"/);
+  assert.match(screens, /Q E F R 스킬 해금 경로/);
+  assert.match(screens, /character-skill-node is-\$\{state\}/);
   assert.match(responsiveStyles, /\.expedition-game\.is-hud-focus \.route-objective/);
   assert.match(responsiveStyles, /\.expedition-game\.is-hud-focus \.route-minimap/);
   assert.match(responsiveStyles, /\.expedition-combat-dock\.is-commercial-compact[\s\S]*grid-template-rows: 56px 84px/);

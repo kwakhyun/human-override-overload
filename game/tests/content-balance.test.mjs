@@ -12,8 +12,8 @@ test("content balance baseline derives supply and sinks from active content data
   assert.deepEqual(summary.generatedFrom, { regions: 6, defenseStages: 3, upgradeLines: 11 });
   assert.deepEqual(summary.totalFirstClear, { researchData: 137, equipmentParts: 137, augmentationCores: 34 });
   assert.deepEqual(summary.totalRepeatClear, { researchData: 52, equipmentParts: 57, augmentationCores: 19 });
-  assert.deepEqual(summary.upgradeCosts, { researchData: 49, equipmentParts: 97, augmentationCores: 48 });
-  assert.deepEqual(summary.firstClearSurplus, { researchData: 88, equipmentParts: 40, augmentationCores: -14 });
+  assert.deepEqual(summary.upgradeCosts, { researchData: 49, equipmentParts: 97, augmentationCores: 18 });
+  assert.deepEqual(summary.firstClearSurplus, { researchData: 88, equipmentParts: 40, augmentationCores: 16 });
   assert.deepEqual(summary.resourceExchanges.map((exchange) => exchange.id), ["research-to-parts", "field-core-fabrication"]);
 });
 

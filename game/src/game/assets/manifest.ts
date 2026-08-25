@@ -322,7 +322,7 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
   player: "./assets/overload/hero/survivor-portrait.png",
   portrait: "./assets/overload/hero/survivor-portrait.png",
   mikaPortrait: "./assets/overload/hero/mika-portrait.png",
-  vesperPortrait: "./assets/overload/hero/vesper-portrait-v1.png",
+  vesperPortrait: "./assets/overload/hero/vesper-portrait-v2.png",
   hunter: "./assets/overload/enemies/hunter.png",
   suppressor: "./assets/overload/enemies/suppressor.png",
   brute: "./assets/overload/enemies/brute.png",

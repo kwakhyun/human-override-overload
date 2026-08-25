@@ -245,6 +245,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private readonly bridge: SceneBridge;
   private readonly regionId?: string;
   private readonly combatBonuses?: Readonly<Record<string, number>>;
+  private readonly characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper", number>>;
   private readonly mainWeaponId?: "pulse-rifle" | "beam-sword";
   private readonly characterId?: "aegis" | "mika" | "vesper";
   private readonly mikaUnlocked: boolean;
@@ -290,6 +291,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     bridge: SceneBridge,
     regionId?: string,
     combatBonuses?: Readonly<Record<string, number>>,
+    characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper", number>>,
     mainWeaponId?: "pulse-rifle" | "beam-sword",
     characterId?: "aegis" | "mika" | "vesper",
     mikaUnlocked = true,
@@ -302,6 +304,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.bridge = bridge;
     this.regionId = regionId;
     this.combatBonuses = combatBonuses;
+    this.characterSkillRanks = characterSkillRanks;
     this.mainWeaponId = mainWeaponId;
     this.characterId = characterId;
     this.mikaUnlocked = mikaUnlocked;
@@ -320,7 +323,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   create() {
-    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, mainWeaponId: this.mainWeaponId, characterId: this.characterId, mikaUnlocked: this.mikaUnlocked, vesperUnlocked: this.vesperUnlocked });
+    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, characterSkillRanks: this.characterSkillRanks, mainWeaponId: this.mainWeaponId, characterId: this.characterId, mikaUnlocked: this.mikaUnlocked, vesperUnlocked: this.vesperUnlocked });
     applyDebugScene(this.state, this.bridge.debugScene);
     this.gameInput = createSwarmInput();
     this.governor = createPerformanceGovernor({
@@ -450,7 +453,9 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   queueActiveAbility(ability: ActiveAbility) {
+    if (!this.state) return false;
     this.queuedActiveAbilities[ability] = true;
+    return true;
   }
 
   enterBossRoom() {
@@ -733,10 +738,10 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.gameInput.moveX = this.virtualMovement.x;
     this.gameInput.moveY = this.virtualMovement.y;
     if (this.queuedDash || Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) this.gameInput.dashPressed = true;
-    if (this.queuedActiveAbilities.empPulse || Phaser.Input.Keyboard.JustDown(this.keys.Q)) this.gameInput.empPulsePressed = true;
-    if (this.queuedActiveAbilities.aegisWard || Phaser.Input.Keyboard.JustDown(this.keys.E)) this.gameInput.aegisWardPressed = true;
-    if (this.queuedActiveAbilities.stratosRun || Phaser.Input.Keyboard.JustDown(this.keys.F)) this.gameInput.stratosRunPressed = true;
-    if (this.queuedActiveAbilities.helixTempest || Phaser.Input.Keyboard.JustDown(this.keys.R)) this.gameInput.helixTempestPressed = true;
+    if (this.queuedActiveAbilities.empPulse) this.gameInput.empPulsePressed = true;
+    if (this.queuedActiveAbilities.aegisWard) this.gameInput.aegisWardPressed = true;
+    if (this.queuedActiveAbilities.stratosRun) this.gameInput.stratosRunPressed = true;
+    if (this.queuedActiveAbilities.helixTempest) this.gameInput.helixTempestPressed = true;
     if (this.queuedParry || Phaser.Input.Keyboard.JustDown(this.keys.SHIFT)) this.gameInput.parryPressed = true;
     if (this.queuedTag || Phaser.Input.Keyboard.JustDown(this.keys.T)) this.gameInput.tagPressed = true;
     if (this.queuedBossMechanicClick) {

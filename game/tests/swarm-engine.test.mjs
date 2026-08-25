@@ -20,10 +20,13 @@ import {
   getEnemyPressureCap,
   getSniperLockCap,
   getSwarmHud,
+  isManualAbilityUnlocked,
   setSwarmAim,
   setSwarmScreenAim,
   stepSwarm,
 } from "../src/swarm/engine.js";
+
+const FULL_CHARACTER_SKILL_RANKS = Object.freeze({ aegis: 3, mika: 3, vesper: 3 });
 
 function stepFor(state, input, seconds, beforeStep) {
   const frames = Math.ceil(seconds * 60);
@@ -44,8 +47,8 @@ function forceOffer(state, id, category) {
   state.rewardOptions = [{ id, category, name: id, description: "test", level: 0, nextLevel: 1 }];
 }
 
-function createBossState(patternIndex = 0, regionId = "wrong-engine-core", mainWeaponId = "pulse-rifle") {
-  const state = createSwarmState({ random: () => 0.5, regionId, mainWeaponId });
+function createBossState(patternIndex = 0, regionId = "wrong-engine-core", mainWeaponId = "pulse-rifle", extra = {}) {
+  const state = createSwarmState({ random: () => 0.5, regionId, mainWeaponId, ...extra });
   state.phase = "boss";
   state.phaseTime = 0;
   state.enemies.length = 0;
@@ -351,8 +354,34 @@ test("phase dash grants enough invulnerability to cross the boss arena ring", ()
   assert.equal(state.player.hp, hp);
 });
 
-test("Q/E/F/R expose four independent manual ability contracts and clear as input edges", () => {
-  const state = createSwarmState({ random: () => 0.5 });
+test("new operatives begin with Q while E/F/R expose progressive lock state and reject input", () => {
+  for (let grade = 0; grade <= 3; grade += 1) {
+    const state = createSwarmState({ random: () => 0.5, characterSkillRanks: { aegis: grade } });
+    const hud = getSwarmHud(state);
+    for (const [index, ability] of ["empPulse", "aegisWard", "stratosRun", "helixTempest"].entries()) {
+      assert.equal(isManualAbilityUnlocked(state, ability), grade >= index);
+      assert.equal(hud.abilities[ability].locked, grade < index);
+      assert.equal(hud.abilities[ability].rank, grade >= index ? 1 : 0);
+      assert.equal(hud.abilities[ability].requiredGrade, index);
+      assert.equal(hud.abilities[ability].characterGrade, grade);
+      assert.equal(hud.abilities[ability].ready, grade >= index);
+      assert.equal(hud.abilities[ability].available, grade >= index);
+    }
+  }
+
+  const lockedState = createSwarmState({ random: () => 0.5 });
+  const lockedInput = createSwarmInput();
+  lockedInput.aegisWardPressed = true;
+  stepSwarm(lockedState, lockedInput, 1 / 60);
+  assert.equal(lockedState.manualAbilities.aegisWard.cooldown, 0);
+  assert.equal(lockedState.aegisWards.length, 0);
+  assert.ok(drainSwarmEvents(lockedState).some((event) => (
+    event.type === "manualAbilityRejected" && event.ability === "aegisWard" && event.reason === "locked"
+  )));
+});
+
+test("fully progressed Q/E/F/R expose four independent manual ability contracts and clear as input edges", () => {
+  const state = createSwarmState({ random: () => 0.5, characterSkillRanks: FULL_CHARACTER_SKILL_RANKS });
   const input = createSwarmInput();
   const hud = getSwarmHud(state);
   const bindings = { empPulse: "Q", aegisWard: "E", stratosRun: "F", helixTempest: "R" };
@@ -360,7 +389,7 @@ test("Q/E/F/R expose four independent manual ability contracts and clear as inpu
     assert.equal(hud.abilities[ability].id, ability);
     assert.equal(hud.abilities[ability].key, key);
     assert.equal(hud.abilities[ability].rank, 1);
-    assert.equal(hud.abilities[ability].upgradeRank, 0);
+    assert.equal(hud.abilities[ability].upgradeRank, 3);
     assert.equal(hud.abilities[ability].base, true);
     assert.equal(hud.abilities[ability].ready, true);
     assert.equal(hud.abilities[ability].available, true);
@@ -389,7 +418,7 @@ test("Q/E/F/R expose four independent manual ability contracts and clear as inpu
 
 test("beam sword replaces rifle actives with four offensive flying-sword techniques", () => {
   const createSwordAbilityState = () => {
-    const state = createSwarmState({ random: () => 0.5, mainWeaponId: "beam-sword" });
+    const state = createSwarmState({ random: () => 0.5, characterSkillRanks: FULL_CHARACTER_SKILL_RANKS, mainWeaponId: "beam-sword" });
     const templates = state.enemies.slice(0, 4).map((enemy, index) => ({
       ...enemy,
       id: 7000 + index,
@@ -459,7 +488,7 @@ test("beam sword replaces rifle actives with four offensive flying-sword techniq
 });
 
 test("MIKA fields ring blades, four exclusive actives, and a cooldown-limited battlefield tag", () => {
-  const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika", mainWeaponId: "beam-sword" });
+  const state = createSwarmState({ random: () => 0.5, expedition: true, characterSkillRanks: FULL_CHARACTER_SKILL_RANKS, characterId: "mika", mainWeaponId: "beam-sword" });
   const input = createSwarmInput();
   assert.equal(state.player.characterId, "mika");
   assert.equal(state.player.name, "MIKA");
@@ -472,7 +501,7 @@ test("MIKA fields ring blades, four exclusive actives, and a cooldown-limited ba
     ["stratosRunPressed", "cometDuet"],
     ["helixTempestPressed", "heartbeatCarnival"],
   ]) {
-    const abilityState = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika" });
+    const abilityState = createSwarmState({ random: () => 0.5, expedition: true, characterSkillRanks: FULL_CHARACTER_SKILL_RANKS, characterId: "mika" });
     const abilityInput = createSwarmInput();
     abilityInput[field] = true;
     stepSwarm(abilityState, abilityInput, 1 / 60);
@@ -757,7 +786,7 @@ test("EMP PULSE stops mechanical enemies in pointer geometry without pulling uni
 });
 
 test("AEGIS WARD follows the player and owns heal, temporary shield, reduction, and status immunity", () => {
-  const state = createBossState();
+  const state = createBossState(0, "wrong-engine-core", "pulse-rifle", { characterSkillRanks: FULL_CHARACTER_SKILL_RANKS });
   state.boss.patternCooldown = 99;
   state.boss.x = state.player.x;
   state.boss.y = state.player.y;
@@ -1372,6 +1401,10 @@ test("level-up airstrike and omega laser remain automatic and separate from manu
     ribbonVortex: 0,
     cometDuet: 0,
     heartbeatCarnival: 0,
+    vectorStep: 0,
+    zeroMark: 0,
+    railBurst: 0,
+    deadline: 0,
   });
   assert.equal(state.empPulses.length, 0);
   assert.equal(state.stratosRuns.length, 0);
@@ -1385,7 +1418,7 @@ test("level-up airstrike and omega laser remain automatic and separate from manu
 });
 
 test("STRATOS RUN creates three warned parallel sweep lanes without reusing airstrike entities or events", () => {
-  const state = createSwarmState({ random: () => 0.5 });
+  const state = createSwarmState({ random: () => 0.5, characterSkillRanks: FULL_CHARACTER_SKILL_RANKS });
   const targets = state.enemies.filter((enemy) => !enemy.elite).slice(0, 3);
   state.enemies = targets;
   state.spawnedEnemies = state.enemyBudget;
@@ -1425,7 +1458,7 @@ test("STRATOS RUN creates three warned parallel sweep lanes without reusing airs
 });
 
 test("STRATOS RUN can scorch its aimed route even when no hostile is currently alive", () => {
-  const state = createSwarmState({ random: () => 0.5 });
+  const state = createSwarmState({ random: () => 0.5, characterSkillRanks: FULL_CHARACTER_SKILL_RANKS });
   state.enemies.length = 0;
   state.spawnedEnemies = state.enemyBudget;
   setSwarmAim(state, state.player.x + 480, state.player.y + 80);
@@ -1443,7 +1476,7 @@ test("STRATOS RUN can scorch its aimed route even when no hostile is currently a
 });
 
 test("HELIX TEMPEST owns four rotating engine lances and repeated collision without omega beam reuse", () => {
-  const state = createSwarmState({ random: () => 0.5 });
+  const state = createSwarmState({ random: () => 0.5, characterSkillRanks: FULL_CHARACTER_SKILL_RANKS });
   const target = state.enemies.find((enemy) => !enemy.elite);
   state.enemies = [target];
   state.spawnedEnemies = state.enemyBudget;

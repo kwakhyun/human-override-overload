@@ -16,7 +16,7 @@ export type OverloadGameController = Readonly<{
   dash: () => void;
   parry: () => void;
   tag: () => void;
-  activateAbility: (ability: ActiveAbility) => void;
+  activateAbility: (ability: ActiveAbility) => boolean;
   enterBossRoom: () => boolean;
   continueStory: () => void;
   setSuspended: (suspended: boolean) => void;
@@ -27,6 +27,7 @@ export type OverloadGameController = Readonly<{
 export type OverloadLaunchOptions = Readonly<{
   regionId?: string;
   combatBonuses?: Readonly<Record<string, number>>;
+  characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper", number>>;
   mainWeaponId?: "pulse-rifle" | "beam-sword";
   characterId?: "aegis" | "mika" | "vesper";
   mikaUnlocked?: boolean;
@@ -69,7 +70,7 @@ export function createOverloadGame(
   const presentationHeight = portraitPresentation
     ? Math.max(1, Math.round(window.visualViewport?.height || window.innerHeight || parent.clientHeight))
     : 720;
-  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, launch.vesperUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);
+  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.characterSkillRanks, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, launch.vesperUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);
   battleScene.configurePresentationSettings(initialQuality, launch.screenShakeEnabled !== false);
   const game = new Phaser.Game({
     type: Phaser.AUTO,

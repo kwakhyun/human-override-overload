@@ -16,7 +16,7 @@ export interface BattleSceneControls {
   queueDash(): void;
   queueParry(): void;
   queueTag(): void;
-  queueActiveAbility(ability: ActiveAbility): void;
+  queueActiveAbility(ability: ActiveAbility): boolean;
   enterBossRoom(): boolean;
   continueNarrative(): void;
   setSuspended(suspended: boolean): void;
@@ -69,7 +69,7 @@ export class SceneBridge {
   }
 
   queueActiveAbility(ability: ActiveAbility) {
-    this.controls?.queueActiveAbility(ability);
+    return this.controls?.queueActiveAbility(ability) ?? false;
   }
 
   enterBossRoom() {

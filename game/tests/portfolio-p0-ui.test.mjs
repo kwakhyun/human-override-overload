@@ -20,7 +20,8 @@ test("first sortie uses a two-step essentials briefing before contextual ability
   assert.match(starter, /이동과 자동 공격/);
   assert.match(starter, /대시와 위기 대응/);
   assert.match(app, /screen === "guide"[\s\S]*guideType="starter"/);
-  assert.match(app, /tutorialAbilityId=\{combatTutorialStep >= 0 \? MANUAL_ABILITY_GUIDE/);
+  assert.match(app, /const combatTutorialAbilities = useMemo\(\(\) => MANUAL_ABILITY_GUIDE\.filter/);
+  assert.match(app, /tutorialAbilityId=\{combatTutorialAbility\?\.id \|\| null\}/);
   assert.match(app, /openingNarrativeBeatRef\.current = event\.beat/);
   assert.match(app, /if \(!showCombatTutorial \|\| !openingNarrativeComplete/);
   assert.match(app, /dialogue\.beat === openingNarrativeBeatRef\.current/);
@@ -35,7 +36,7 @@ test("completing the combat tutorial keeps the active Phaser run alive", async (
   assert.match(app, /onFinishRef\.current\(result\)/);
   assert.match(
     app,
-    /\}, \[characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked\]\);/,
+    /\}, \[assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked\]\);/,
   );
   assert.doesNotMatch(app, /\[characterId, combatBonuses, mainWeaponId/);
 });

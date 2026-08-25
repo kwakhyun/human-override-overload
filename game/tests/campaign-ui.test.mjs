@@ -225,18 +225,24 @@ test("Glass Dune unlocks the beam sword and opens its short-cooldown skill guide
   assert.match(styles, /\.character-weapon-card\.is-locked/);
 });
 
-test("character information presents full-height art, live stats, abilities, and persistent augmentation", async () => {
-  const [app, screens, styles] = await Promise.all([
+test("character information presents full-height art, live stats, and a character-bound skill unlock ladder", async () => {
+  const [app, screens, styles, tacticalStyles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/styles/tactical-os.css", root), "utf8"),
   ]);
   assert.match(screens, /function CharacterInformationPanel/);
-  assert.match(screens, /className="character-art-stage"/);
+  assert.match(screens, /className=\{`character-art-stage is-\$\{profile\?\.id/);
   assert.match(screens, /className="character-data-console"/);
   assert.match(screens, /기본 정보/);
-  assert.match(screens, /영구 강화/);
+  assert.match(screens, /스킬 해금/);
   assert.match(screens, /CHARACTER_ACTIVE_LOADOUTS/);
+  assert.match(screens, /progressionUpgrade = upgrades\.find\(\(upgrade\) => upgrade\.characterId === profile\?\.id\)/);
+  assert.match(screens, /requiredGrade === progressionRank \+ 1 \? "next" : "locked"/);
+  assert.match(screens, /<h4>\{ability\.name\}<\/h4>/);
+  assert.doesNotMatch(screens, /name:\s*runtimeSkill/);
+  assert.match(screens, /Q 기본 지급 · E → F → R 순차 개방/);
   assert.match(screens, /className="character-roster-rail"/);
   assert.match(screens, /onCharacterChange\?\.\(characterId\)/);
   assert.match(app, /portraitSource: assets\?\.\[character\.portraitAssetKey\] \|\| assets\?\.player/);
@@ -244,6 +250,36 @@ test("character information presents full-height art, live stats, abilities, and
   assert.match(styles, /\.character-art-stage > img[\s\S]*object-fit: contain/);
   assert.match(styles, /\.character-information-panel[\s\S]*grid-template-columns: minmax\(320px, 47%\)/);
   assert.match(styles, /@media \(max-width: 900px\), \(max-height: 600px\)[\s\S]*\.character-information-panel/);
+  assert.match(tacticalStyles, /\.character-skill-ladder[\s\S]*\.character-skill-node\.is-next/);
+  assert.match(tacticalStyles, /@media \(min-width: 901px\) and \(max-width: 1279px\)[\s\S]*grid-template: 84px minmax\(0, 1fr\) \/ minmax\(300px, 34vw\) minmax\(0, 1fr\) 104px/);
+});
+
+test("campaign presentation keeps dialogue art passive and gives facilities, SERA, regions, and RHEA dedicated staging", async () => {
+  const [screens, tacticalStyles, defenseStyles] = await Promise.all([
+    readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
+    readFile(new URL("src/styles/tactical-os.css", root), "utf8"),
+    readFile(new URL("src/styles/defense-overhaul.css", root), "utf8"),
+  ]);
+
+  assert.match(screens, /function NpcPortrait[\s\S]*?<div[\s\S]*?role="img"/);
+  assert.doesNotMatch(screens.slice(screens.indexOf("function NpcPortrait"), screens.indexOf("export function NpcDialoguePanel")), /onClick=/);
+  assert.match(screens, /facility-npc-stage is-\$\{facilityNpc\.id\}/);
+  assert.match(screens, /flight-ops-lark is-sera/);
+  assert.match(screens, /region-card-status\$\{!isUnlocked/);
+  assert.match(tacticalStyles, /\.campaign-shell \.base-npc-portrait[\s\S]*pointer-events: none !important/);
+  assert.match(tacticalStyles, /\.base-facility-panel\.has-npc-host \.facility-npc-stage[\s\S]*background: transparent/);
+  assert.match(tacticalStyles, /\.flight-ops-lark\.is-sera \{[\s\S]*border: 0;[\s\S]*background: transparent/);
+  assert.match(tacticalStyles, /\.flight-ops-lark-portrait\.is-sera > img[\s\S]*height: 142%;[\s\S]*object-position: center 8%/);
+  assert.match(screens, /const unlocked = Boolean\(profile\?\.unlocked\) && requiredGrade <= progressionRank/);
+  assert.match(tacticalStyles, /\.character-art-stage\.is-vesper > img[\s\S]*bottom: -42%/);
+  assert.match(defenseStyles, /\.defense-rhea-briefing > \.npc-illustration-button[\s\S]*height: 212px/);
+  assert.match(defenseStyles, /@media \(max-width: 820px\), \(orientation: portrait\)[\s\S]*\.defense-rhea-briefing[\s\S]*display: grid/);
+});
+
+test("region sortie dialog switches to the compact rail before two-column minimums clip", async () => {
+  const responsiveStyles = await readFile(new URL("src/styles/p1-p2.css", root), "utf8");
+  assert.match(responsiveStyles, /@media \(min-width: 761px\) and \(max-width: 1100px\)/);
+  assert.match(responsiveStyles, /@media \(max-width: 760px\)[\s\S]*\.region-sortie-layout[\s\S]*grid-template-columns: 1fr/);
 });
 
 test("HAVEN NPC dialogue advances one line per Space press and closes on the final line", async () => {
@@ -287,7 +323,7 @@ test("first-sortie briefing separates automatic build skills from four new manua
   assert.match(app, /!activeSlot\.combatOverlaySeen && !debugGuideBypass/);
   assert.match(app, /showCombatTutorial=\{Boolean/);
   assert.match(app, /function CombatAbilityTutorialOverlay/);
-  assert.match(app, /tutorialAbilityId=\{combatTutorialStep >= 0/);
+  assert.match(app, /tutorialAbilityId=\{combatTutorialAbility\?\.id \|\| null\}/);
   assert.match(app, /onNpcInteraction=\{handleNpcInteraction\}/);
   assert.match(save, /abilityGuideSeen: Boolean\(slot\.abilityGuideSeen\)/);
   assert.match(save, /combatOverlaySeen: Boolean\(slot\.combatOverlaySeen\)/);

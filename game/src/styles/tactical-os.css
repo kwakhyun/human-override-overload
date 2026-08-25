@@ -5622,3 +5622,819 @@ details:focus-visible {
     object-position: center 18%;
   }
 }
+
+/* ===========================================================================
+   CAMPAIGN PRESENTATION PASS // NPC staging, region rail, operative dossier
+   ========================================================================== */
+
+/* Lobby dialogue portraits are presentation-only. Facility and flight-control
+   portraits remain the deliberate interaction surfaces. */
+.campaign-shell .base-npc-portrait,
+.campaign-shell .base-npc-portrait.is-standalone {
+  cursor: default !important;
+  pointer-events: none !important;
+}
+
+.campaign-shell .base-npc-portrait.is-lark {
+  background-position: center 7% !important;
+  background-size: auto 178% !important;
+}
+
+@media (min-width: 901px) {
+  .campaign-shell.home-base-screen .base-lobby-topbar {
+    display: grid;
+    grid-template-columns: minmax(250px, 1fr) auto auto;
+    align-items: center;
+    column-gap: clamp(20px, 2.2vw, 38px);
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(142px, 1fr));
+    gap: 8px;
+  }
+
+  .campaign-shell.home-base-screen .base-settings-button {
+    min-width: 112px;
+    margin-left: 4px;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-stage {
+    top: 188px;
+    bottom: 0;
+    left: clamp(18px, 2.5vw, 46px);
+    width: clamp(360px, 27vw, 500px);
+    min-height: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    clip-path: none;
+    pointer-events: none;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-portrait {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+    pointer-events: auto;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-portrait > span {
+    /* Preserve the inline 0/50/100% atlas frame while scaling by height so
+       HANA/ILYA are not stretched when the portrait is promoted to a stage. */
+    background-size: auto 100%;
+    filter: saturate(0.95) contrast(1.05) drop-shadow(16px 20px 30px rgba(0, 0, 0, 0.62));
+    transform-origin: center bottom;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-portrait.is-standalone > span {
+    background-size: contain;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-dialogue {
+    position: absolute;
+    z-index: 3;
+    right: 8px;
+    bottom: 18px;
+    left: 8px;
+    min-height: 126px;
+    padding: 18px 20px;
+    border: 1px solid rgba(118, 242, 247, 0.32);
+    border-left: 3px solid var(--os-cyan);
+    background: linear-gradient(100deg, rgba(2, 10, 14, 0.98), rgba(2, 10, 14, 0.76));
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
+    pointer-events: none;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-dialogue strong {
+    font-size: 28px;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-dialogue p {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .base-facility-panel.has-npc-host .facility-upgrade-grid,
+  .base-facility-panel.has-npc-host .facility-exchange-panel {
+    margin-left: clamp(410px, 31vw, 568px);
+  }
+
+  .region-select-screen.has-cluster .region-card-grid {
+    top: clamp(198px, 23vh, 244px);
+    bottom: auto;
+    left: clamp(24px, 3.6vw, 68px);
+    width: min(470px, 35vw);
+    gap: 10px;
+  }
+
+  .region-select-screen.has-cluster .region-card {
+    min-height: 174px;
+    padding: 19px 22px 18px;
+    border-left-width: 3px;
+    background: linear-gradient(100deg, rgba(2, 11, 16, 0.97), rgba(4, 18, 24, 0.88));
+    transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  }
+
+  .region-select-screen.has-cluster .region-card:hover:not(:disabled),
+  .region-select-screen.has-cluster .region-card:focus-visible:not(:disabled) {
+    transform: none;
+    border-left-color: var(--os-acid);
+    background: linear-gradient(100deg, rgba(14, 37, 42, 0.98), rgba(4, 18, 24, 0.94));
+    box-shadow: inset 0 0 0 1px rgba(199, 255, 74, 0.22);
+  }
+
+  .region-select-screen.has-cluster .region-card.is-completed {
+    transform: none;
+    border-left-color: #67e3a3;
+    background: linear-gradient(100deg, rgba(5, 24, 25, 0.97), rgba(3, 16, 21, 0.9));
+  }
+
+  .region-select-screen.has-cluster .region-card > span {
+    font-size: 10px;
+    letter-spacing: 0.13em;
+  }
+
+  .region-select-screen.has-cluster .region-card strong {
+    margin-top: 8px;
+    font-size: clamp(27px, 2vw, 33px);
+    line-height: 1;
+  }
+
+  .region-select-screen.has-cluster .region-card p {
+    margin: 9px 0 10px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .region-select-screen.has-cluster .region-card-status {
+    display: inline-flex;
+    min-height: 28px;
+    margin-top: 9px;
+    align-items: center;
+    gap: 7px;
+    color: #d9eef1;
+    font-size: 11px;
+  }
+
+  .region-select-screen.has-cluster .region-card-status.is-completed {
+    color: #67e3a3;
+  }
+
+  .character-information-panel {
+    grid-template: 94px minmax(0, 1fr) / clamp(430px, 32vw, 590px) minmax(620px, 1fr) 150px;
+  }
+
+  .character-info-topbar {
+    min-height: 94px;
+    padding-inline: 36px;
+  }
+
+  .character-info-topbar small {
+    font-size: 11px;
+  }
+
+  .character-info-topbar strong {
+    font-size: 29px;
+  }
+
+  .character-art-stage {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .character-art-stage.is-vesper > img {
+    position: absolute;
+    right: -12%;
+    bottom: -42%;
+    width: 124%;
+    height: 142%;
+    max-width: none;
+    object-fit: contain;
+    object-position: center bottom;
+  }
+
+  .character-art-stage figcaption {
+    padding: 74px 34px 30px;
+  }
+
+  .character-art-stage figcaption small {
+    font-size: 12px;
+  }
+
+  .character-art-stage figcaption strong,
+  .character-art-stage figcaption span {
+    font-size: 13px;
+  }
+
+  .character-info-tabs {
+    height: 66px;
+  }
+
+  .character-info-tabs button {
+    min-height: 66px;
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .character-profile-content,
+  .character-upgrade-content {
+    height: calc(100% - 66px);
+    padding: clamp(28px, 2.4vw, 46px);
+  }
+
+  .character-profile-content > header h3,
+  .character-upgrade-content > header h3 {
+    font-size: clamp(34px, 2.6vw, 46px);
+  }
+
+  .character-profile-content > p {
+    max-width: 880px;
+    font-size: 16px;
+    line-height: 1.65;
+  }
+
+  .character-stat-grid dt {
+    font-size: 13px;
+  }
+
+  .character-stat-grid dd {
+    font-size: 22px;
+  }
+
+  .character-active-kit article {
+    position: relative;
+    min-height: 104px;
+    padding: 14px;
+  }
+
+  .character-active-kit article b {
+    font-size: 15px;
+  }
+
+  .character-active-kit article small {
+    font-size: 12px;
+  }
+
+  .character-active-kit article.is-locked {
+    opacity: 0.46;
+    filter: grayscale(0.55);
+  }
+
+  .character-active-kit .character-skill-lock {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 18px;
+    height: 18px;
+    color: #7f989e;
+  }
+
+  .character-roster-rail {
+    gap: 10px;
+    padding: 14px 12px;
+    align-items: center;
+  }
+
+  .character-roster-rail button {
+    width: 124px;
+    min-height: 136px;
+    padding: 7px;
+  }
+
+  .character-roster-rail button img {
+    width: 108px;
+    height: 104px;
+    object-position: center 14%;
+  }
+
+  .character-roster-rail button span {
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+}
+
+.campaign-shell.home-base-screen .base-primary-actions > .base-defense-action b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+.character-skill-ladder-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.character-skill-ladder-heading > span {
+  color: var(--os-acid);
+  font: 700 12px/1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.character-skill-ladder-summary {
+  display: grid;
+  margin-top: 22px;
+  padding: 16px 18px;
+  grid-template-columns: repeat(2, minmax(130px, 0.34fr)) minmax(260px, 1fr);
+  gap: 2px;
+  border: 1px solid var(--os-line);
+  background: linear-gradient(100deg, rgba(118, 242, 247, 0.085), rgba(118, 242, 247, 0.025));
+}
+
+.character-skill-ladder-summary > div {
+  display: grid;
+  padding: 6px 12px;
+  gap: 5px;
+  border-right: 1px solid var(--os-line);
+}
+
+.character-skill-ladder-summary small {
+  color: var(--os-muted);
+  font: 600 10px/1 var(--font-mono);
+}
+
+.character-skill-ladder-summary strong {
+  color: var(--os-paper);
+  font-size: 21px;
+}
+
+.character-skill-ladder-summary p {
+  margin: 0;
+  padding: 4px 12px;
+  color: #b8cdd1;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.character-skill-ladder {
+  display: grid;
+  margin: 20px 0 0;
+  padding: 0;
+  gap: 10px;
+  list-style: none;
+}
+
+.character-skill-node {
+  position: relative;
+  display: grid;
+  min-height: 126px;
+  padding: 15px 18px 15px 14px;
+  grid-template-columns: 72px minmax(230px, 1fr) minmax(190px, 0.48fr);
+  align-items: center;
+  gap: 18px;
+  border: 1px solid var(--os-line);
+  border-left: 4px solid #425d63;
+  background: rgba(3, 14, 19, 0.9);
+  clip-path: var(--os-cut-sm);
+}
+
+.character-skill-node.is-unlocked {
+  border-left-color: var(--os-cyan);
+  background: linear-gradient(100deg, rgba(23, 72, 79, 0.36), rgba(3, 14, 19, 0.9));
+}
+
+.character-skill-node.is-next {
+  border-color: rgba(199, 255, 74, 0.56);
+  border-left-color: var(--os-acid);
+  background: linear-gradient(100deg, rgba(62, 83, 31, 0.3), rgba(3, 14, 19, 0.94));
+  box-shadow: inset 0 0 34px rgba(199, 255, 74, 0.035);
+}
+
+.character-skill-node.is-locked {
+  opacity: 0.52;
+}
+
+.character-skill-connector {
+  position: absolute;
+  top: -12px;
+  left: 47px;
+  width: 2px;
+  height: 12px;
+  background: var(--os-line-strong);
+}
+
+.character-skill-node:first-child .character-skill-connector {
+  display: none;
+}
+
+.character-skill-emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  border: 1px solid var(--os-line-strong);
+  color: var(--os-cyan);
+  background: rgba(2, 10, 14, 0.9);
+}
+
+.character-skill-emblem kbd {
+  position: absolute;
+  top: -7px;
+  left: -7px;
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  border: 1px solid currentColor;
+  background: #071116;
+  color: var(--os-paper);
+  font: 800 14px/1 Rajdhani, sans-serif;
+}
+
+.character-skill-emblem svg {
+  width: 34px;
+  height: 34px;
+}
+
+.character-skill-node.is-next .character-skill-emblem {
+  border-color: var(--os-acid);
+  color: var(--os-acid);
+}
+
+.character-skill-copy small {
+  color: var(--os-cyan);
+  font: 700 10px/1 var(--font-mono);
+  letter-spacing: 0.12em;
+}
+
+.character-skill-copy h4 {
+  margin: 7px 0 5px;
+  color: var(--os-paper);
+  font-size: 23px;
+  line-height: 1;
+}
+
+.character-skill-copy p {
+  margin: 0;
+  color: #afc5c9;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.character-skill-copy > span {
+  display: inline-flex;
+  margin-top: 8px;
+  color: var(--os-muted);
+  font-size: 11px;
+}
+
+.character-skill-node.is-next .character-skill-copy > span {
+  color: var(--os-acid);
+}
+
+.character-skill-state {
+  min-width: 0;
+}
+
+.character-skill-state > strong {
+  display: flex;
+  min-height: 48px;
+  padding: 0 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(118, 242, 247, 0.32);
+  color: #bffaff;
+  background: rgba(118, 242, 247, 0.07);
+  font-size: 13px;
+}
+
+.character-skill-state > strong.is-locked {
+  color: var(--os-muted);
+}
+
+.character-skill-state .command-ui-button {
+  width: 100%;
+  min-height: 52px;
+  padding-inline: 14px;
+  font-size: 13px;
+}
+
+.character-skill-ladder-footer {
+  display: flex;
+  min-height: 50px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--os-line);
+  color: var(--os-muted);
+  font-size: 12px;
+}
+
+.character-skill-ladder-footer svg {
+  color: var(--os-acid);
+}
+
+/* Standalone SERA art is intentionally enlarged and bottom-cropped so the
+   flight-control surface reads as a character-led content screen. */
+.flight-ops-lark.is-sera {
+  border-left: 0;
+  overflow: hidden;
+}
+
+.flight-ops-lark-portrait.is-sera > img {
+  width: 100%;
+  height: 146%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center top;
+}
+
+@media (max-width: 900px) {
+  .campaign-shell .base-npc-portrait.is-lark {
+    background-position: center 5% !important;
+    background-size: auto 158% !important;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-stage {
+    overflow: hidden;
+    border: 0;
+    border-top: 1px solid var(--os-line-strong);
+    background: linear-gradient(90deg, rgba(2, 11, 16, 0.95), rgba(3, 16, 22, 0.84));
+    box-shadow: none;
+    clip-path: none;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-portrait {
+    background: transparent;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-dialogue {
+    padding: 14px 16px;
+  }
+
+  .character-skill-ladder-heading {
+    display: grid;
+  }
+
+  .character-skill-ladder-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .character-skill-ladder-summary p {
+    grid-column: 1 / -1;
+  }
+
+  .character-skill-node {
+    min-height: 112px;
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .character-skill-emblem {
+    width: 54px;
+    height: 54px;
+  }
+
+  .character-skill-state {
+    grid-column: 1 / -1;
+  }
+
+  .flight-ops-lark-portrait.is-sera > img {
+    height: 155%;
+    object-position: center top;
+  }
+}
+
+@media (max-width: 560px) {
+  .character-skill-ladder-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .character-skill-ladder-summary > div,
+  .character-skill-ladder-summary p {
+    grid-column: 1;
+    border-right: 0;
+  }
+
+  .character-skill-copy h4 {
+    font-size: 19px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1279px) {
+  .campaign-shell.home-base-screen .base-lobby-topbar {
+    grid-template-columns: minmax(210px, 1fr) auto auto;
+    column-gap: 12px;
+  }
+
+  .campaign-shell.home-base-screen .base-identity {
+    min-width: 210px;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail {
+    grid-template-columns: repeat(3, minmax(118px, 1fr));
+    gap: 4px;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button {
+    min-width: 118px;
+    padding-inline: 9px;
+  }
+
+  .campaign-shell.home-base-screen .base-settings-button {
+    min-width: 92px;
+    margin-left: 0;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-stage {
+    left: 18px;
+    width: 250px;
+  }
+
+  .base-facility-panel.has-npc-host .facility-upgrade-grid,
+  .base-facility-panel.has-npc-host .facility-exchange-panel {
+    margin-left: 286px;
+  }
+
+  .base-facility-panel.has-npc-host .facility-upgrade-grid {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-dialogue {
+    right: 0;
+    left: 0;
+    padding: 14px;
+  }
+
+  .base-facility-panel.has-npc-host .facility-npc-dialogue strong {
+    font-size: 23px;
+  }
+
+  .character-information-panel {
+    grid-template: 84px minmax(0, 1fr) / minmax(300px, 34vw) minmax(0, 1fr) 104px;
+  }
+
+  .character-info-topbar {
+    min-height: 84px;
+    padding-inline: 22px;
+  }
+
+  .character-info-topbar strong {
+    font-size: 24px;
+  }
+
+  .character-art-stage figcaption {
+    padding: 56px 22px 22px;
+  }
+
+  .character-art-stage figcaption h2 {
+    font-size: clamp(38px, 4.4vw, 54px);
+  }
+
+  .character-info-tabs,
+  .character-info-tabs button {
+    height: 58px;
+    min-height: 58px;
+  }
+
+  .character-profile-content,
+  .character-upgrade-content {
+    height: calc(100% - 58px);
+    padding: 22px;
+  }
+
+  .character-roster-rail {
+    gap: 5px;
+    padding: 8px;
+  }
+
+  .character-roster-rail button {
+    width: 86px;
+    min-height: 102px;
+    padding: 4px;
+  }
+
+  .character-roster-rail button img {
+    width: 76px;
+    height: 76px;
+  }
+
+  .character-roster-rail button span {
+    margin-top: 4px;
+    font-size: 10px;
+  }
+
+  .character-skill-node {
+    grid-template-columns: 58px minmax(0, 1fr);
+    gap: 13px;
+  }
+
+  .character-skill-state {
+    grid-column: 1 / -1;
+  }
+
+  .character-skill-ladder-summary {
+    grid-template-columns: repeat(2, minmax(110px, 1fr));
+  }
+
+  .character-skill-ladder-summary p {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Final responsive staging contract. The mobile lobby header now owns three
+   real rows (identity, currencies, settings), so the operative stage starts
+   below its measured footprint instead of the obsolete 132px baseline. */
+@media (max-width: 900px), (orientation: portrait) {
+  .campaign-shell.home-base-screen {
+    --mobile-lobby-header-height: 190px;
+  }
+
+  .campaign-shell.home-base-screen .base-lobby-topbar {
+    min-height: var(--mobile-lobby-header-height);
+    height: auto;
+  }
+
+  .campaign-shell.home-base-screen .base-settings-button {
+    justify-self: end;
+  }
+
+  .home-base-screen .base-motion-portrait,
+  .home-base-screen .motion-portrait-stage,
+  .home-base-screen .base-motion-portrait.is-mika {
+    top: var(--mobile-lobby-header-height);
+  }
+}
+
+/* SERA is staged as a full-height character host rather than a framed card.
+   The screen edge performs the crop and keeps the visible figure to mid-thigh. */
+.flight-ops-lark.is-sera {
+  position: relative;
+  overflow: visible;
+  border: 0;
+  border-top: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  clip-path: none;
+}
+
+.flight-ops-lark.is-sera::before {
+  left: 4px;
+}
+
+.flight-ops-lark-portrait.is-sera {
+  position: absolute;
+  inset: 0 0 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.flight-ops-lark-portrait.is-sera > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 142%;
+  object-fit: cover;
+  object-position: center 8%;
+  filter: drop-shadow(20px 20px 30px rgba(0, 0, 0, 0.62));
+}
+
+.flight-ops-lark.is-sera > div:last-child {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border: 0;
+  background: linear-gradient(0deg, rgba(2, 8, 12, 0.98), rgba(2, 8, 12, 0.72) 72%, transparent);
+}
+
+@media (max-width: 900px), (orientation: portrait) {
+  .flight-ops-lark.is-sera {
+    display: block;
+    min-height: clamp(320px, 52dvh, 470px);
+    grid-template: none;
+  }
+
+  .flight-ops-lark-portrait.is-sera {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+  }
+
+  .flight-ops-lark-portrait.is-sera > img {
+    height: 138%;
+    object-position: center 7%;
+  }
+
+  .flight-ops-lark.is-sera > div:last-child {
+    display: block;
+    padding: 54px 16px 18px;
+  }
+}

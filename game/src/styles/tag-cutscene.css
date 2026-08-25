@@ -1,0 +1,133 @@
+.combat-tag-cutscene {
+  --tag-accent: #75efff;
+  position: absolute;
+  z-index: 38;
+  top: 16%;
+  left: 0;
+  width: clamp(260px, 25vw, 400px);
+  height: clamp(170px, 24vh, 250px);
+  overflow: hidden;
+  pointer-events: none;
+  border-left: 4px solid var(--tag-accent);
+  background:
+    linear-gradient(90deg, rgba(1, 10, 15, .98) 0 34%, rgba(2, 14, 20, .9) 61%, transparent 100%);
+  filter: drop-shadow(0 0 24px rgba(0, 0, 0, .82));
+  animation: tag-cutscene-enter 1.18s cubic-bezier(.16, .9, .24, 1) both;
+  isolation: isolate;
+}
+
+.combat-tag-cutscene.is-mika { --tag-accent: #ff70d2; }
+.combat-tag-cutscene.is-vesper { --tag-accent: #ffc36f; }
+
+.combat-tag-cutscene::before,
+.combat-tag-cutscene::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+
+.combat-tag-cutscene::before {
+  background:
+    linear-gradient(180deg, transparent 0 58%, rgba(0, 0, 0, .92) 100%),
+    repeating-linear-gradient(0deg, transparent 0 4px, rgba(117, 239, 255, .05) 5px 6px);
+  mix-blend-mode: screen;
+}
+
+.combat-tag-cutscene::after {
+  inset: auto 0 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--tag-accent), transparent);
+  box-shadow: 0 0 18px var(--tag-accent);
+}
+
+.combat-tag-cutscene img {
+  position: absolute;
+  z-index: 1;
+  inset: -2% 0 0 20%;
+  width: 82%;
+  height: 104%;
+  object-fit: cover;
+  object-position: 50% 12%;
+  transform: scale(1.38);
+  transform-origin: 54% 18%;
+  filter: saturate(1.08) contrast(1.06);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 82%, transparent 100%);
+}
+
+.combat-tag-cutscene.is-mika img {
+  object-position: 50% 10%;
+  transform: scale(1.46);
+  transform-origin: 54% 17%;
+}
+
+.combat-tag-cutscene.is-vesper img {
+  object-position: 50% 6%;
+  transform: scale(1.68);
+  transform-origin: 52% 15%;
+}
+
+.combat-tag-cutscene > div {
+  position: absolute;
+  z-index: 5;
+  left: 18px;
+  bottom: 18px;
+  display: grid;
+  gap: 1px;
+  color: #f4fdff;
+  text-shadow: 0 2px 8px #000;
+}
+
+.combat-tag-cutscene small,
+.combat-tag-cutscene b {
+  color: var(--tag-accent);
+  font: 700 10px/1.1 "IBM Plex Mono", monospace;
+  letter-spacing: .13em;
+}
+
+.combat-tag-cutscene strong {
+  font: 700 clamp(28px, 3.2vw, 48px)/.96 Rajdhani, sans-serif;
+  letter-spacing: -.03em;
+}
+
+.combat-tag-cutscene-rail {
+  position: absolute;
+  z-index: 6;
+  top: 0;
+  left: 0;
+  width: 44%;
+  height: 2px;
+  background: var(--tag-accent);
+  box-shadow: 0 0 14px var(--tag-accent);
+}
+
+@keyframes tag-cutscene-enter {
+  0% { opacity: 0; transform: translateX(-28%) skewX(-5deg); clip-path: inset(0 100% 0 0); }
+  15% { opacity: 1; transform: translateX(0) skewX(0); clip-path: inset(0 0 0 0); }
+  75% { opacity: 1; transform: translateX(0); clip-path: inset(0 0 0 0); }
+  100% { opacity: 0; transform: translateX(-5%); clip-path: inset(0 0 0 68%); }
+}
+
+@media (max-width: 760px), (orientation: portrait) {
+  .combat-tag-cutscene {
+    top: 18%;
+    width: min(66vw, 310px);
+    height: min(23vh, 210px);
+  }
+
+  .combat-tag-cutscene img {
+    inset-inline-start: 16%;
+    width: 88%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .combat-tag-cutscene { animation: tag-cutscene-fade 1.18s ease both; }
+}
+
+@keyframes tag-cutscene-fade {
+  0%, 100% { opacity: 0; }
+  18%, 78% { opacity: 1; }
+}

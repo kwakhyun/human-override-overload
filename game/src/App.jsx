@@ -60,6 +60,7 @@ import {
 } from "./game/content/baseUpgrades.js";
 import { getMainWeapons, isMainWeaponUnlocked } from "./game/content/weapons.js";
 import { getPlayableCharacters, isCharacterUnlocked } from "./game/content/characters.js";
+import { getCharacterSkillLoadout, getCharacterSkillRanks } from "./game/content/characterSkills.js";
 import { resolveCharacterDialogueLine } from "./game/content/characterDialogue.js";
 import { getFlightPlans } from "./game/content/flightOperations.js";
 import { DEFENSE_TOWER_DEFINITIONS, getDefenseStage, getDefenseStages } from "./defense/content.js";
@@ -1081,7 +1082,6 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
               if (tutorialTarget) onTutorialTarget?.();
               return;
             }
-            if (slot.locked) return;
             if (slot.action === "dash") onDash?.();
             else onActivateAbility?.(slot.action);
           };
@@ -1144,9 +1144,8 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
   );
 }
 
-function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onSkip }) {
+function CombatAbilityTutorialOverlay({ ability, stepIndex, totalSteps, portrait, onNext, onBack, onSkip }) {
   const modalRef = useRef(null);
-  const ability = MANUAL_ABILITY_GUIDE[stepIndex];
   useDialogFocusTrap(modalRef, Boolean(ability));
 
   useEffect(() => {
@@ -1176,7 +1175,7 @@ function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onS
       <section className={`combat-tutorial-card tutorial-${ability.id}`} ref={modalRef} tabIndex={-1}>
         {portraitSource && <img src={portraitSource} alt="전술 관제관 레아" />}
         <div className="combat-tutorial-copy">
-          <small>레아 · 실전 인터페이스 {stepIndex + 1} / {MANUAL_ABILITY_GUIDE.length}</small>
+          <small>레아 · 실전 인터페이스 {stepIndex + 1} / {totalSteps}</small>
           <header><kbd>{ability.key}</kbd><div><h2 id="combat-tutorial-title">{ability.koreanName}</h2><span>{ability.name}</span></div></header>
           <p>{ability.overlayPrompt}</p>
           <b><kbd>SPACE</kbd> 또는 빛나는 실제 {ability.key} 버튼으로 다음 설명을 확인합니다.</b>
@@ -1184,10 +1183,35 @@ function CombatAbilityTutorialOverlay({ stepIndex, portrait, onNext, onBack, onS
         <footer>
           <button type="button" onClick={onBack} disabled={stepIndex === 0}><ArrowLeft weight="bold" /> 이전</button>
           <button type="button" className="combat-tutorial-skip" onClick={onSkip}>건너뛰기 <kbd>Esc</kbd></button>
-          <button type="button" className="combat-tutorial-next" onClick={onNext}>{stepIndex === MANUAL_ABILITY_GUIDE.length - 1 ? "실전 시작" : "다음"} <ArrowRight weight="bold" /></button>
+          <button type="button" className="combat-tutorial-next" onClick={onNext}>{stepIndex === totalSteps - 1 ? "실전 시작" : "다음"} <ArrowRight weight="bold" /></button>
         </footer>
       </section>
     </div>
+  );
+}
+
+const TAG_CUTSCENE_COPY = Object.freeze({
+  aegis: Object.freeze({ assetKey: "player", name: "이지스", callout: "AEGIS // LINK SHIFT" }),
+  mika: Object.freeze({ assetKey: "mikaPortrait", name: "미카", callout: "MIKA // PRISM LINK" }),
+  vesper: Object.freeze({ assetKey: "vesperPortrait", name: "베스퍼", callout: "VESPER // NIGHT LINK" }),
+});
+
+function TagCutsceneOverlay({ cutscene }) {
+  if (!cutscene?.source) return null;
+  return (
+    <aside
+      className={`combat-tag-cutscene is-${cutscene.characterId}`}
+      aria-live="polite"
+      aria-label={`${cutscene.name} 전투원 태그 완료`}
+    >
+      <span className="combat-tag-cutscene-rail" aria-hidden="true" />
+      <img src={cutscene.source} alt="" />
+      <div>
+        <small>{cutscene.callout}</small>
+        <strong>{cutscene.name}</strong>
+        <b>COMBAT LINK</b>
+      </div>
+    </aside>
   );
 }
 
@@ -1996,7 +2020,7 @@ function RouteMinimap({ hud, region }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeaponId, characterId, mikaUnlocked = false, vesperUnlocked = false, soundEnabled, audioSettings, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterSkillRanks, mainWeaponId, characterId, mikaUnlocked = false, vesperUnlocked = false, soundEnabled, audioSettings, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const frameRef = useRef(null);
   const controllerRef = useRef(null);
@@ -2007,6 +2031,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   const [dialogue, setDialogue] = useState(null);
   const [paused, setPaused] = useState(false);
   const [combatTutorialStep, setCombatTutorialStep] = useState(-1);
+  const [tagCutscene, setTagCutscene] = useState(null);
   const [openingNarrativeComplete, setOpeningNarrativeComplete] = useState(!showCombatTutorial);
   const [runRevision, setRunRevision] = useState(0);
   const [hudDensityPreference, setHudDensityPreference] = useState("auto");
@@ -2017,6 +2042,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   const openingNarrativeBeatRef = useRef(null);
   const openingScenarioHandledRef = useRef(false);
   const agentVoiceRef = useRef(null);
+  const tagCutsceneTimeoutRef = useRef(0);
   const preparingRef = useRef(preparing);
   const onFinishRef = useRef(onFinish);
   const onRuntimeProgressRef = useRef(onRuntimeProgress);
@@ -2027,6 +2053,11 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   const runtimeCombatBonusesRef = useRef({ signature: combatBonusesSignature, value: combatBonuses });
   if (runtimeCombatBonusesRef.current.signature !== combatBonusesSignature) {
     runtimeCombatBonusesRef.current = { signature: combatBonusesSignature, value: combatBonuses };
+  }
+  const characterSkillRanksSignature = JSON.stringify(characterSkillRanks || {});
+  const runtimeCharacterSkillRanksRef = useRef({ signature: characterSkillRanksSignature, value: characterSkillRanks });
+  if (runtimeCharacterSkillRanksRef.current.signature !== characterSkillRanksSignature) {
+    runtimeCharacterSkillRanksRef.current = { signature: characterSkillRanksSignature, value: characterSkillRanks };
   }
   onFinishRef.current = onFinish;
   onRuntimeProgressRef.current = onRuntimeProgress;
@@ -2064,7 +2095,11 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
     openingScenarioHandledRef.current = false;
     setOpeningNarrativeComplete(!showCombatTutorial);
     setHudDensityPreference("auto");
+    window.clearTimeout(tagCutsceneTimeoutRef.current);
+    setTagCutscene(null);
   }, [regionId, runRevision, showCombatTutorial]);
+
+  useEffect(() => () => window.clearTimeout(tagCutsceneTimeoutRef.current), []);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -2127,6 +2162,19 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
           if (event.type === "manualAbilityActivated" && (event.ability === "stratosRun" || event.ability === "helixTempest")) {
             agentVoiceRef.current?.play(event.ability);
           }
+          if (event.type === "characterTagged") {
+            const characterId = String(event.characterId || "aegis");
+            const copy = TAG_CUTSCENE_COPY[characterId] || TAG_CUTSCENE_COPY.aegis;
+            const source = assets?.[copy.assetKey]?.src || assets?.[copy.assetKey] || "";
+            window.clearTimeout(tagCutsceneTimeoutRef.current);
+            setTagCutscene({
+              ...copy,
+              characterId,
+              source,
+              key: `${characterId}-${event.time}`,
+            });
+            tagCutsceneTimeoutRef.current = window.setTimeout(() => setTagCutscene(null), 1180);
+          }
           const sound = resolveEventSound(event);
           if (sound) sfx.play(sound);
           if (event.type === "scenario" && SCENARIO_SCRIPT[event.beat]) {
@@ -2164,6 +2212,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
       }, {
         regionId,
         combatBonuses: runtimeCombatBonusesRef.current.value,
+        characterSkillRanks: runtimeCharacterSkillRanksRef.current.value,
         mainWeaponId,
         characterId,
         mikaUnlocked,
@@ -2186,7 +2235,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [characterId, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked]);
+  }, [assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked]);
 
   const selectReward = useCallback((id) => {
     controllerRef.current?.chooseReward(id);
@@ -2238,6 +2287,10 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   }, [advanceDialogue, dialogue, preparing]);
 
   const rewardOpen = Boolean(hud?.rewards?.options?.length);
+  const combatTutorialAbilities = useMemo(() => MANUAL_ABILITY_GUIDE.filter((ability) => {
+    const state = hud?.abilities?.[ability.id];
+    return Boolean(state) && !state.locked && Number(state.rank || 0) > 0;
+  }), [hud?.abilities]);
 
   const pauseCombat = useCallback(() => {
     if (preparing || pausedRef.current || combatTutorialActiveRef.current || dialogue || rewardOpen) return;
@@ -2249,11 +2302,11 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
 
   useEffect(() => {
     if (!showCombatTutorial || !openingNarrativeComplete || combatTutorialHandledRef.current || combatTutorialStep >= 0) return;
-    if (!hud || dialogue || rewardOpen) return;
+    if (!hud || dialogue || rewardOpen || combatTutorialAbilities.length === 0) return;
     combatTutorialActiveRef.current = true;
     setCombatTutorialStep(0);
     controllerRef.current?.setSuspended(true);
-  }, [combatTutorialStep, dialogue, hud, openingNarrativeComplete, rewardOpen, showCombatTutorial]);
+  }, [combatTutorialAbilities.length, combatTutorialStep, dialogue, hud, openingNarrativeComplete, rewardOpen, showCombatTutorial]);
 
   const finishCombatTutorial = useCallback(() => {
     if (combatTutorialHandledRef.current) return;
@@ -2268,12 +2321,12 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   }, [dialogue, onCombatTutorialComplete, rewardOpen]);
 
   const advanceCombatTutorial = useCallback(() => {
-    if (combatTutorialStep >= MANUAL_ABILITY_GUIDE.length - 1) {
+    if (combatTutorialStep >= combatTutorialAbilities.length - 1) {
       finishCombatTutorial();
       return;
     }
-    setCombatTutorialStep((step) => Math.min(MANUAL_ABILITY_GUIDE.length - 1, step + 1));
-  }, [combatTutorialStep, finishCombatTutorial]);
+    setCombatTutorialStep((step) => Math.min(combatTutorialAbilities.length - 1, step + 1));
+  }, [combatTutorialAbilities.length, combatTutorialStep, finishCombatTutorial]);
 
   const rewindCombatTutorial = useCallback(() => {
     setCombatTutorialStep((step) => Math.max(0, step - 1));
@@ -2378,6 +2431,9 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
   const playerHp = Math.max(0, Number(hud?.player?.hp) || 0);
   const playerMaxHp = Math.max(1, Number(hud?.player?.maxHp) || 1);
   const isCriticalHealth = playerHp > 0 && (playerHp / playerMaxHp) <= 0.3;
+  const combatTutorialAbility = combatTutorialStep >= 0
+    ? combatTutorialAbilities[combatTutorialStep] || null
+    : null;
 
   return (
     <main
@@ -2396,6 +2452,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
               aria-label="HUMAN OVERRIDE Phaser 전진형 생존 전장. 모바일에서는 가까운 적을 자동 조준합니다."
               onPointerDown={() => controllerRef.current?.focus()}
             />
+            {tagCutscene && <TagCutsceneOverlay key={tagCutscene.key} cutscene={tagCutscene} />}
             <div className="expedition-hud" aria-label="필수 전투 정보">
               <div className={hud?.boss ? "route-objective is-boss" : "route-objective"}>
                 <span>{hud?.boss ? `${hud.boss.stage || 1}단계` : `${hud?.expedition?.bossRoom ? 4 : Math.min(3, (hud?.expedition?.checkpoint || 0) + 1)} / 4 구간`}</span>
@@ -2452,13 +2509,15 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
                 onDash={activateDash}
                 onTag={activateTag}
                 onActivateAbility={activateAbility}
-                tutorialAbilityId={combatTutorialStep >= 0 ? MANUAL_ABILITY_GUIDE[combatTutorialStep]?.id : null}
+                tutorialAbilityId={combatTutorialAbility?.id || null}
                 onTutorialTarget={advanceCombatTutorial}
               />
             ) : null}
             {combatTutorialStep >= 0 && (
               <CombatAbilityTutorialOverlay
+                ability={combatTutorialAbility}
                 stepIndex={combatTutorialStep}
+                totalSteps={combatTutorialAbilities.length}
                 portrait={assets?.rheaControlOfficer}
                 onNext={advanceCombatTutorial}
                 onBack={rewindCombatTutorial}
@@ -2908,6 +2967,10 @@ export function App() {
     () => (activeSlotId ? getCampaignCombatBonuses(campaign, activeSlotId) : null),
     [activeSlotId, campaign],
   );
+  const characterSkillRanks = useMemo(
+    () => getCharacterSkillRanks(activeSlot?.progression),
+    [activeSlot?.progression],
+  );
   const activeMainWeaponId = useMemo(
     () => (activeSlotId ? getCampaignMainWeapon(campaign, activeSlotId) : "pulse-rifle"),
     [activeSlotId, campaign],
@@ -2931,13 +2994,30 @@ export function App() {
     const upgrades = getBaseUpgrades(facility.npcId).map((upgrade, index) => {
       const status = getCampaignUpgradeStatus(campaign, activeSlotId, upgrade.id);
       const rank = status.rank || 0;
+      const skillLoadout = upgrade.characterId ? getCharacterSkillLoadout(upgrade.characterId) : null;
       const currentRanks = upgrade.ranks.slice(0, rank);
       const nextRanks = upgrade.ranks.slice(0, Math.min(upgrade.ranks.length, rank + 1));
+      const characterLockedReason = status.reason === "character-locked" ? "전투원 해금 필요" : null;
       const lockedReason = status.reason === "rank-locked"
         ? `${status.requiredCompletedRegions}개 지역 해방 필요`
-        : status.reason === "base-locked" ? "헤이븐-09 잠김" : null;
+        : status.reason === "insufficient-funds" ? `${currency?.koreanName || "재화"} 부족`
+          : status.reason === "base-locked" ? "헤이븐-09 잠김" : null;
       return {
         id: upgrade.id,
+        characterId: upgrade.characterId || null,
+        statusReason: status.reason || null,
+        requiredRegionId: status.requiredRegionId || null,
+        skillLoadout,
+        unlockedSkills: skillLoadout?.skills.filter((skill) => skill.requiredGrade <= rank) || [],
+        nextSkillUnlock: skillLoadout?.skills.find((skill) => skill.requiredGrade === rank + 1) || null,
+        skillUnlockRanks: upgrade.ranks.map((entry) => ({
+          rank: entry.rank,
+          slot: entry.unlockSlot || null,
+          abilityKey: entry.unlockAbilityKey || null,
+          name: entry.unlockName || null,
+          cost: entry.cost,
+          requiresCompletedRegions: entry.requiresCompletedRegions,
+        })),
         order: index + 1,
         category: upgrade.category === "research" ? "영구 연구" : upgrade.category === "augmentation" ? "인물 강화" : "영구 장비",
         name: upgrade.koreanName,
@@ -2948,7 +3028,7 @@ export function App() {
         nextEffect: formatBaseBonusEntries(nextRanks),
         nextCost: status.cost || 0,
         canPurchase: Boolean(status.purchasable),
-        lockedReason,
+        lockedReason: characterLockedReason || lockedReason,
       };
     });
     const exchanges = facility.id === "research" ? getBaseResourceExchanges(facility.npcId).map((exchange) => {
@@ -3610,6 +3690,7 @@ export function App() {
             regionId={activeRegionId}
             region={activeRegion}
             combatBonuses={combatBonuses}
+            characterSkillRanks={characterSkillRanks}
             mainWeaponId={activeMainWeaponId}
             characterId={activeCharacterId}
             mikaUnlocked={mikaUnlocked}

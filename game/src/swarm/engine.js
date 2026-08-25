@@ -3,6 +3,10 @@ import {
   REGION_BOSS_PATTERNS,
   REGION_MID_BOSS_PROFILES,
 } from "../game/content/combatCatalog.js";
+import {
+  getCharacterAbilityUnlockState,
+  sanitizeCharacterSkillRanks,
+} from "../game/content/characterSkills.js";
 
 export { BOSS_PATTERNS, REGION_BOSS_PATTERNS, REGION_MID_BOSS_PROFILES };
 
@@ -975,7 +979,7 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
   };
 }
 
-export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true } = {}) {
+export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, characterSkillRanks = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
   const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
   const player = createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked, vesperUnlocked);
@@ -1002,6 +1006,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       victory: regionConfig.victoryBeat,
     },
     player,
+    characterSkillRanks: sanitizeCharacterSkillRanks(characterSkillRanks),
     boss: createBoss(regionConfig),
     aim: { x: GAME_WIDTH * 0.82, y: GAME_HEIGHT * 0.5 },
     aimX: GAME_WIDTH * 0.82,
@@ -1132,6 +1137,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
         empPulse: 0, aegisWard: 0, stratosRun: 0, helixTempest: 0,
         spectralSwordArray: 0, phantomRend: 0, imperialSwordDomain: 0, heavenfallExecution: 0,
         prismRicochet: 0, ribbonVortex: 0, cometDuet: 0, heartbeatCarnival: 0,
+        vectorStep: 0, zeroMark: 0, railBurst: 0, deadline: 0,
       },
       overdriveTier: 0,
       batchedOverflowLevels: 0,
@@ -3133,9 +3139,17 @@ function hasManualCombatTarget(state) {
   return state.enemies.some((enemy) => !enemy.dead);
 }
 
+export function isManualAbilityUnlocked(state, ability, characterId = state?.player?.characterId) {
+  return getCharacterAbilityUnlockState(
+    state?.characterSkillRanks,
+    characterId,
+    ability,
+  ).unlocked;
+}
+
 function manualAbilityAvailable(state, ability) {
   const entry = ensureManualAbilityBanks(state)[ability];
-  if (!entry || state.player.dead || state.player.stunTimer > 0 || entry.cooldown > 0) return false;
+  if (!entry || !isManualAbilityUnlocked(state, ability) || state.player.dead || state.player.stunTimer > 0 || entry.cooldown > 0) return false;
   return ability === "helixTempest" ? hasManualCombatTarget(state) : true;
 }
 
@@ -3381,6 +3395,114 @@ function triggerHeartbeatCarnival(state) {
   state.shockwaves.push({ type: "heartbeatCarnival", x: player.x, y: player.y, maxRadius: radius, life: 0.8, maxLife: 0.8, color: "#ff75d5", width: 18 });
   emit(state, "mikaManualAbility", { ability: "heartbeatCarnival", x: player.x, y: player.y, radius, hits });
   return commitManualAbility(state, "helixTempest", { hits, radius });
+}
+
+function applyVesperLineDamage(state, startX, startY, endX, endY, halfWidth, damage, source) {
+  let hits = 0;
+  if (state.phase === "boss") {
+    const boss = state.boss;
+    if (boss.active && !boss.dead
+      && pointLineDistance(boss.x, boss.y, startX, startY, endX, endY) <= halfWidth + boss.radius) {
+      if (damageBoss(state, damage, source) > 0) hits += 1;
+    }
+    return hits;
+  }
+  for (const enemy of state.enemies) {
+    if (enemy.dead || finite(enemy.spawnDelay) > 0
+      || pointLineDistance(enemy.x, enemy.y, startX, startY, endX, endY) > halfWidth + enemy.radius) continue;
+    if (damageEnemy(state, enemy, damage, source) > 0) hits += 1;
+  }
+  return hits;
+}
+
+function triggerVectorStep(state) {
+  const player = state.player;
+  const direction = normalize(state.aim.x - player.x, state.aim.y - player.y, Math.cos(player.angle), Math.sin(player.angle));
+  const startX = player.x;
+  const startY = player.y;
+  const arena = activeArena(state);
+  player.x = clamp(startX + direction.x * 330, arena.left + player.radius, arena.right - player.radius);
+  player.y = clamp(startY + direction.y * 330, arena.top + player.radius, arena.bottom - player.radius);
+  clampPlayerToFloor(player, state.expedition);
+  player.invulnerability = Math.max(player.invulnerability, 0.48);
+  const damage = 330 * player.damageMultiplier * player.weaponDamageMultiplier;
+  const hits = applyVesperLineDamage(state, startX, startY, player.x, player.y, 58, damage, "vectorStep");
+  pushSwordManualEffect(state, "phantomRend", (startX + player.x) * 0.5, (startY + player.y) * 0.5, 350, 0.72, {
+    atlas: "vesper", startX, startY, endX: player.x, endY: player.y, angle: Math.atan2(direction.y, direction.x), hits,
+  });
+  state.shockwaves.push({ type: "vectorStep", x: player.x, y: player.y, maxRadius: 118, life: 0.42, maxLife: 0.42, color: "#ffc36f", width: 8 });
+  state.shake = Math.max(state.shake, 10);
+  emit(state, "vesperManualAbility", { ability: "vectorStep", startX, startY, endX: player.x, endY: player.y, hits });
+  return commitManualAbility(state, "empPulse", { hits, distance: Math.hypot(player.x - startX, player.y - startY) });
+}
+
+function triggerZeroMark(state) {
+  const player = state.player;
+  const arena = activeArena(state);
+  const x = clamp(state.aim.x, arena.left + 24, arena.right - 24);
+  const y = clamp(state.aim.y, arena.top + 24, arena.bottom - 24);
+  const radius = 280;
+  const damage = 440 * player.damageMultiplier * player.weaponDamageMultiplier;
+  const hits = applySwordAbilityArea(state, x, y, radius, damage, "zeroMark");
+  if (state.phase !== "boss") {
+    for (const enemy of state.enemies) {
+      if (enemy.dead || finite(enemy.spawnDelay) > 0 || Math.hypot(enemy.x - x, enemy.y - y) > radius + enemy.radius) continue;
+      enemy.slow = Math.max(finite(enemy.slow), 2.4);
+      enemy.hitStun = Math.max(finite(enemy.hitStun), 0.32);
+    }
+  }
+  const visualDuration = 1.05;
+  state.empPulses.push({
+    id: ++state.nextEntityId,
+    type: "zeroMark",
+    x,
+    y,
+    radius,
+    life: visualDuration,
+    maxLife: visualDuration,
+    geometry: { kind: "circle", x, y, radius, collisionRadius: radius },
+  });
+  state.shockwaves.push({ type: "zeroMark", x, y, maxRadius: radius, life: 0.58, maxLife: 0.58, color: "#ffc36f", width: 11 });
+  state.shake = Math.max(state.shake, 13);
+  emit(state, "vesperManualAbility", { ability: "zeroMark", x, y, radius, hits, slowDuration: 2.4 });
+  return commitManualAbility(state, "aegisWard", { x, y, radius, hits, slowDuration: 2.4 });
+}
+
+function triggerRailBurst(state) {
+  const player = state.player;
+  const direction = normalize(state.aim.x - player.x, state.aim.y - player.y, Math.cos(player.angle), Math.sin(player.angle));
+  const centerX = player.x + direction.x * 620;
+  const centerY = player.y + direction.y * 620;
+  const lane = createStratosLane(state, centerX, centerY, direction, 0, 0);
+  lane.type = "railBurstLane";
+  lane.source = "railBurst";
+  lane.warning = 0.24;
+  lane.warningMax = 0.24;
+  lane.sweepDuration = 0.34;
+  lane.damage = 780 * player.damageMultiplier * player.weaponDamageMultiplier;
+  lane.geometry.collisionHalfWidth = 34;
+  state.stratosRuns.push(lane);
+  emit(state, "vesperManualAbility", { ability: "railBurst", x: centerX, y: centerY, laneCount: 1, geometry: { ...lane.geometry } });
+  emit(state, "stratosRunWarning", { x: centerX, y: centerY, laneCount: 1, lanes: [{ ...lane.geometry }] });
+  return commitManualAbility(state, "stratosRun", { x: centerX, y: centerY, laneCount: 1 });
+}
+
+function triggerDeadline(state) {
+  const ability = "helixTempest";
+  if (!hasManualCombatTarget(state)) return rejectManualAbility(state, ability, "no-target");
+  const player = state.player;
+  const arena = activeArena(state);
+  const x = clamp(state.aim.x, arena.left + 24, arena.right - 24);
+  const y = clamp(state.aim.y, arena.top + 24, arena.bottom - 24);
+  const radius = 560;
+  const damage = 1850 * player.damageMultiplier * player.weaponDamageMultiplier;
+  const hits = applySwordAbilityArea(state, x, y, radius, damage, "deadline", true);
+  pushSwordManualEffect(state, "deadline", x, y, radius, 1.35, { atlas: "vesper", hits });
+  state.shockwaves.push({ type: "deadline", x, y, maxRadius: radius, life: 0.82, maxLife: 0.82, color: "#ffc36f", width: 20 });
+  state.flash = Math.max(state.flash, 0.54);
+  state.shake = Math.max(state.shake, 24);
+  emit(state, "vesperManualAbility", { ability: "deadline", x, y, radius, hits, executeOrdinary: true });
+  return commitManualAbility(state, ability, { x, y, radius, hits, executeOrdinary: true });
 }
 
 function triggerEmpPulse(state) {
@@ -3644,13 +3766,13 @@ function updateStratosRuns(state, dt) {
     if (state.phase === "boss") {
       const boss = state.boss;
       if (!lane.bossHit && boss.active && !boss.dead && intersectsSweep(boss.x, boss.y, boss.radius)) {
-        damageBoss(state, lane.damage, "stratosRun");
+        damageBoss(state, lane.damage, lane.source || "stratosRun");
         lane.bossHit = true;
       }
     } else {
       for (const enemy of state.enemies) {
         if (enemy.dead || lane.hitIds.includes(enemy.id) || !intersectsSweep(enemy.x, enemy.y, enemy.radius)) continue;
-        damageEnemy(state, enemy, lane.damage, "stratosRun");
+        damageEnemy(state, enemy, lane.damage, lane.source || "stratosRun");
         lane.hitIds.push(enemy.id);
       }
     }
@@ -3731,6 +3853,10 @@ function updateManualAbilities(state, input, dt) {
     const active = input?.[MANUAL_INPUT_FIELDS[index]];
     if (!active) continue;
     const entry = activeAbilities[ability];
+    if (!isManualAbilityUnlocked(state, ability)) {
+      rejectManualAbility(state, ability, "locked");
+      continue;
+    }
     if (state.player.dead) {
       rejectManualAbility(state, ability, "dead");
       continue;
@@ -3748,6 +3874,11 @@ function updateManualAbilities(state, input, dt) {
       else if (ability === "aegisWard") triggerRibbonVortex(state);
       else if (ability === "stratosRun") triggerCometDuet(state);
       else triggerHeartbeatCarnival(state);
+    } else if (state.player.characterId === "vesper") {
+      if (ability === "empPulse") triggerVectorStep(state);
+      else if (ability === "aegisWard") triggerZeroMark(state);
+      else if (ability === "stratosRun") triggerRailBurst(state);
+      else triggerDeadline(state);
     } else if (state.player.mainWeaponId === "beam-sword") {
       if (ability === "empPulse") triggerSpectralSwordArray(state);
       else if (ability === "aegisWard") triggerPhantomRend(state);
@@ -5710,23 +5841,27 @@ export function getSwarmHud(state) {
   const manualHud = (ability) => {
     const definition = manualAbilityDefinition(state, ability);
     const entry = state.manualAbilities[ability];
+    const unlock = getCharacterAbilityUnlockState(state.characterSkillRanks, player.characterId, ability);
     const maxCooldown = entry.cooldown > 0 ? entry.maxCooldown : manualAbilityCooldownDuration(state, ability);
     return {
       id: definition.id,
       name: definition.name,
       nameKo: definition.nameKo,
-      rank: 1,
-      upgradeRank: 0,
+      rank: unlock.unlocked ? 1 : 0,
+      upgradeRank: unlock.grade,
       base: true,
       cooldown: Math.max(0, entry.cooldown),
       maxCooldown,
       cooldownMax: maxCooldown,
-      ready: entry.cooldown <= 0.05,
+      ready: unlock.unlocked && entry.cooldown <= 0.05,
       available: manualAbilityAvailable(state, ability),
       maxRank: 3,
       manual: true,
       ultimate: definition.key === "R",
       key: definition.key,
+      locked: !unlock.unlocked,
+      requiredGrade: unlock.requiredGrade,
+      characterGrade: unlock.grade,
     };
   };
   return {

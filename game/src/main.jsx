@@ -11,6 +11,7 @@ import "./styles/p1-p2.css";
 import "./styles/tactical-os.css";
 import "./styles/settings.css";
 import "./styles/defense-overhaul.css";
+import "./styles/tag-cutscene.css";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

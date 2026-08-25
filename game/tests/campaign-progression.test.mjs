@@ -14,6 +14,10 @@ import {
 } from "../src/game/content/baseUpgrades.js";
 import { BASE_NPCS } from "../src/game/content/campaign.js";
 import {
+  CHARACTER_SKILL_LOADOUTS,
+  getCharacterSkillRanks,
+} from "../src/game/content/characterSkills.js";
+import {
   DEFAULT_COMBAT_BONUSES,
   PROGRESSION_CURRENCY_FIELDS,
   calculateCombatBonuses,
@@ -66,7 +70,7 @@ const FULL_CONTEXT = {
   completedRegionIds: ["wrong-engine-core", "glass-dune", "abyssal-archive"],
 };
 
-test("HANA, ILYA, and AEGIS permanent progression lines each expose three ranks", () => {
+test("HANA, ILYA, and character skill-link progression lines each expose three ranks", () => {
   assert.equal(getBaseUpgrades("hana").length, 3);
   assert.equal(getBaseUpgrades("ilya").length, 5);
   assert.equal(getBaseUpgrades("aegis").length, 3);
@@ -84,11 +88,50 @@ test("HANA, ILYA, and AEGIS permanent progression lines each expose three ranks"
     assert.equal(upgrade.ranks.length, 3);
     assert.deepEqual(upgrade.ranks.map((rank) => rank.rank), [1, 2, 3]);
     const weaponLine = upgrade.id === "ilya-rifle-emitter" || upgrade.id === "ilya-sword-resonator";
-    const expectedUnlocks = upgrade.category === "augmentation" ? [1, 3, 5] : weaponLine ? [0, 1, 2] : [1, 2, 3];
+    const expectedUnlocks = upgrade.category === "augmentation" ? [1, 2, 3] : weaponLine ? [0, 1, 2] : [1, 2, 3];
     assert.deepEqual(upgrade.ranks.map((rank) => rank.requiresCompletedRegions), expectedUnlocks);
     assert.ok(upgrade.ranks[0].cost < upgrade.ranks[2].cost);
     assert.equal(getBaseUpgrade(upgrade.id), upgrade);
   }
+});
+
+test("character skill links are data-driven and migrate legacy AEGIS augments once with a core refund", () => {
+  assert.deepEqual(Object.keys(CHARACTER_SKILL_LOADOUTS), ["aegis", "mika", "vesper"]);
+  for (const loadout of Object.values(CHARACTER_SKILL_LOADOUTS)) {
+    assert.deepEqual(loadout.skills.map((skill) => skill.slot), ["Q", "E", "F", "R"]);
+    assert.deepEqual(loadout.skills.map((skill) => skill.requiredGrade), [0, 1, 2, 3]);
+    const upgrade = getBaseUpgrade(loadout.progressionId);
+    assert.equal(upgrade.characterId, loadout.characterId);
+    assert.deepEqual(upgrade.ranks.map((rank) => rank.unlockSlot), ["E", "F", "R"]);
+  }
+
+  const migrated = sanitizeBaseProgression({
+    augmentationCores: 4,
+    augmentationRanks: {
+      "aegis-assault-sync": 3,
+      "aegis-vital-frame": 1,
+      "aegis-reflex-drive": 0,
+    },
+  });
+  assert.deepEqual(getCharacterSkillRanks(migrated), { aegis: 3, mika: 0, vesper: 0 });
+  assert.equal(migrated.augmentationCores, 16, "18 legacy cores minus the 6-core skill grade cost refunds 12 once");
+  assert.equal("aegis-assault-sync" in migrated.augmentationRanks, false);
+
+  const sanitizedAgain = sanitizeBaseProgression(migrated);
+  assert.equal(sanitizedAgain.augmentationCores, 16, "the explicit new skill-link key makes migration idempotent");
+  assert.deepEqual(getCharacterSkillRanks(sanitizedAgain), { aegis: 3, mika: 0, vesper: 0 });
+
+  const mixed = sanitizeBaseProgression({
+    augmentationCores: 4,
+    augmentationRanks: {
+      "aegis-skill-link": 0,
+      "aegis-assault-sync": 2,
+      "aegis-vital-frame": 1,
+    },
+  });
+  assert.deepEqual(getCharacterSkillRanks(mixed), { aegis: 3, mika: 0, vesper: 0 });
+  assert.equal(mixed.augmentationCores, 7, "a pre-created zero-valued skill key cannot discard legacy ranks or their refund");
+  assert.equal(sanitizeBaseProgression(mixed).augmentationCores, 7, "the persisted migration version prevents a second refund");
 });
 
 test("base progression has explicit currencies and sanitized rank maps", () => {

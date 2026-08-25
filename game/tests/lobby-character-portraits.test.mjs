@@ -19,15 +19,21 @@ test("lobby uses stable static key art without the removed Live2D runtime", asyn
   assert.doesNotMatch(styles, /cubism-character/);
   assert.match(manifest, /player: "\.\/assets\/overload\/hero\/survivor-portrait\.png"/);
   assert.match(manifest, /mikaPortrait: "\.\/assets\/overload\/hero\/mika-portrait\.png"/);
-  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v1\.png"/);
+  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v2\.png"/);
   assert.match(styles, /\.motion-portrait-body \{[\s\S]*overflow: hidden/);
   assert.match(styles, /\.motion-portrait-original \{[\s\S]*object-fit: contain;[\s\S]*object-position: center top/);
 
-  for (const file of ["survivor-portrait.png", "mika-portrait.png", "vesper-portrait-v1.png"]) {
+  for (const file of ["survivor-portrait.png", "mika-portrait.png", "vesper-portrait-v2.png"]) {
     const url = new URL(`public/assets/overload/hero/${file}`, root);
     const [asset, png] = await Promise.all([stat(url), readFile(url)]);
     assert.ok(asset.size > 150_000, `${file} should retain readable character detail`);
     assert.equal(png.subarray(1, 4).toString("ascii"), "PNG");
+    if (file === "vesper-portrait-v2.png") {
+      assert.ok(
+        [4, 6].includes(png[25]),
+        "Vesper production cutout must keep a real PNG alpha channel instead of a baked checkerboard",
+      );
+    }
   }
 
   await assert.rejects(access(new URL("src/ui/live2d/CubismCharacter.jsx", root)));

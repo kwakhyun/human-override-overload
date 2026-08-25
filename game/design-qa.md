@@ -1,12 +1,11 @@
 # Design QA — HUMAN OVERRIDE: OVERLOAD
 
 - 최초 검증일: 2026-08-10
-- 마지막 전체 검증 체크포인트: 2026-08-15 · 269/269, TypeScript, production build, Sites 4/4
-- 현재 계약 정합성 기준일: 2026-08-20 · 이후 변경은 범위별 집중 테스트만 수행
-- 현재 런타임 계약: 빔 소드 Q/E/F/R 6/9/15/45초, `현재 웨이브 전멸 + 다음 authored
-  전투 구간 도달` 이중 게이트와 `14→22→34→52→79→120→180→220`기 공세,
-  외곽 중간 보스는 지역 적 예산 전멸 뒤 출현,
-  01—03 선택 출격 영상은 `preload="auto"`, Cubism/Live2D는 비활성 제작 이력
+- 마지막 전체 검증 체크포인트: 역사적 통과 수치는 각 Iteration에 보존하며 최신 작업본에는 재사용하지 않음
+- 현재 계약 정합성 기준일: 2026-08-25 · 최신 통합 변경은 최종 배포 전 전체 회귀 검증 대기
+- 현재 런타임 계약: 지역별 4,096×4,096 정사각형 전장과 360도 이동, 현재 웨이브 전멸만으로
+  이어지는 8방향 전송 게이트, AEGIS·MIKA·VESPER 3인 로스터, Q 시작 후 E→F→R 순차 해금,
+  정적 로비 일러스트, SERA 파일럿 상세 화면과 NPC 상세 화면 한정 클릭 반응
 - 브라우저: Codex 인앱 브라우저·Edge WebGL
 - 데스크톱 뷰포트: 1440×810, DPR 1
 - 모바일 기준 뷰포트: 320×700, 360×800, 390×844 세로 · 812×375 보조 가로
@@ -1158,3 +1157,15 @@ final result: passed
 - Verification: TypeScript, the 323-test full suite after the Korean accessibility-label correction, production Vite/Sites build, Sites worker suite, and live 1440×900 plus 390×844 browser QA pass. Settings, locked preview, static art, responsive scroll, and zero console warnings/errors were verified.
 
 final result: passed
+
+### Iteration 51 — NPC presentation, skill unlock ladder, roster and tag polish — 2026-08-25
+
+- NPC presentation contract: dialogue decks show a non-interactive upper-body portrait with enlarged body copy and no character overlap. Facility screens alone expose portrait click reactions. HANA, ILYA, and SERA use large left-side art anchored outside card frames; SERA is framed to mid-thigh at the bottom edge.
+- Character information: desktop typography and roster rail are enlarged, basic/permanent tabs no longer span an unreadable width, and locked characters remain inspectable while launch selection stays blocked. VESPER uses the same mid-thigh framing contract as the established roster.
+- Growth redesign: a fresh operative starts with Q only. E, F, and R are sequential character-specific skill unlock nodes with explicit icon, state, cost, prerequisite, and locked HUD feedback. This replaces the character-panel damage/hull/speed duplication while HANA research and ILYA equipment upgrades retain their facility roles.
+- Tag feedback: a successful combat tag briefly reveals a face-focused character cut-in from the screen edge without pausing simulation or obscuring the center threat field.
+- Defense and campaign UI: RHEA defense dialogue, region/sector comparison cards, lobby currency/settings spacing, defense CTA wrapping, and NPC illustration framing are part of the same responsive desktop/mobile pass.
+- Documentation: runtime, mobile, AI usage, audio, credits, design baseline, portfolio source, and PDF build manifest were reconciled with the current feature contract.
+- Release gate: the previous 323/323, typecheck, production build, Sites 4/4, and browser checks are a pre-iteration checkpoint. This iteration must not be marked passed until the updated full suite, build, PDF render/visual inspection, desktop/mobile browser QA, push, and public deployment have all completed.
+
+final result: pending release verification

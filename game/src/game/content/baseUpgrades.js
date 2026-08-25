@@ -1,3 +1,5 @@
+import { CHARACTER_SKILL_PROGRESSION_LINES } from "./characterSkills.js";
+
 function deepFreeze(value) {
   if (!value || typeof value !== "object" || Object.isFrozen(value)) return value;
   for (const child of Object.values(value)) deepFreeze(child);
@@ -166,7 +168,7 @@ const ILYA_EQUIPMENT_LINES = {
   },
 };
 
-const AEGIS_AUGMENTATION_LINES = {
+const LEGACY_AEGIS_AUGMENTATION_LINES = {
   "aegis-assault-sync": {
     id: "aegis-assault-sync", ownerId: "aegis", category: "augmentation", currencyId: "augmentationCores",
     name: "ASSAULT SYNCHRONIZATION", koreanName: "공격 동기화", description: "전투 신경과 주무기 코어의 반응을 맞춰 모든 공격의 피해를 영구적으로 높입니다.",
@@ -195,6 +197,12 @@ const AEGIS_AUGMENTATION_LINES = {
     ],
   },
 };
+
+// Kept above only as a readable record for old-save migration. Runtime
+// progression now unlocks character skills instead of duplicating the combat
+// stat bonuses already provided by Hana and Ilya.
+void LEGACY_AEGIS_AUGMENTATION_LINES;
+const AEGIS_AUGMENTATION_LINES = CHARACTER_SKILL_PROGRESSION_LINES;
 
 export const HANA_RESEARCH_UPGRADES = deepFreeze(HANA_RESEARCH_LINES);
 export const ILYA_EQUIPMENT_UPGRADES = deepFreeze(ILYA_EQUIPMENT_LINES);

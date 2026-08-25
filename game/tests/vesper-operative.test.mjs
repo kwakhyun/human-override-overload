@@ -2,7 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { getPlayableCharacter, getPlayableCharacters, isCharacterUnlocked } from "../src/game/content/characters.js";
-import { createSwarmState, VESPER_MANUAL_ACTIVE_ABILITIES } from "../src/swarm/engine.js";
+import { getCharacterSkillLoadout } from "../src/game/content/characterSkills.js";
+import {
+  createSwarmInput,
+  createSwarmState,
+  drainSwarmEvents,
+  stepSwarm,
+  VESPER_MANUAL_ACTIVE_ABILITIES,
+} from "../src/swarm/engine.js";
 
 test("VESPER remains previewable but unlocks only after clearing Abyssal Archive", () => {
   const vesper = getPlayableCharacter("vesper");
@@ -32,6 +39,62 @@ test("VESPER launch gating and combat identity are authoritative in the simulati
   assert.equal(VESPER_MANUAL_ACTIVE_ABILITIES.helixTempest.id, "deadline");
 });
 
+test("VESPER Q/E/F/R names and runtime effects share one progression contract", () => {
+  const loadout = getCharacterSkillLoadout("vesper");
+  assert.deepEqual(
+    loadout.skills.map(({ slot, runtimeKey, name, koreanName }) => ({ slot, runtimeKey, name, koreanName })),
+    Object.entries(VESPER_MANUAL_ACTIVE_ABILITIES).map(([runtimeKey, ability]) => ({
+      slot: ability.key,
+      runtimeKey,
+      name: ability.name,
+      koreanName: ability.nameKo,
+    })),
+  );
+
+  const bindings = [
+    ["empPulsePressed", "vectorStep", (state) => state.player.invulnerability > 0 && state.swordManualAbilities.some((effect) => effect.atlas === "vesper")],
+    ["aegisWardPressed", "zeroMark", (state) => state.empPulses.some((effect) => effect.type === "zeroMark")],
+    ["stratosRunPressed", "railBurst", (state) => state.stratosRuns.some((lane) => lane.source === "railBurst")],
+    ["helixTempestPressed", "deadline", (state) => state.shockwaves.some((effect) => effect.type === "deadline")],
+  ];
+  for (const [inputField, abilityId, hasDistinctEffect] of bindings) {
+    const state = createSwarmState({
+      random: () => 0.5,
+      duration: 999,
+      characterId: "vesper",
+      vesperUnlocked: true,
+      characterSkillRanks: { vesper: 3 },
+    });
+    if (abilityId === "deadline") {
+      state.phase = "boss";
+      state.boss.active = true;
+      state.boss.dead = false;
+    }
+    const input = createSwarmInput();
+    input[inputField] = true;
+    stepSwarm(state, input, 1 / 60);
+    const events = drainSwarmEvents(state);
+    assert.ok(events.some((event) => event.type === "vesperManualAbility" && event.ability === abilityId));
+    assert.ok(events.some((event) => event.type === "manualAbilityActivated" && event.ability === abilityId));
+    assert.ok(hasDistinctEffect(state), `${abilityId} must leave its VESPER-specific simulation effect`);
+  }
+});
+
+test("VESPER locked skill input is rejected before creating its effect", () => {
+  const state = createSwarmState({
+    random: () => 0.5,
+    characterId: "vesper",
+    vesperUnlocked: true,
+    characterSkillRanks: { vesper: 0 },
+  });
+  const input = createSwarmInput();
+  input.aegisWardPressed = true;
+  stepSwarm(state, input, 1 / 60);
+  const events = drainSwarmEvents(state);
+  assert.ok(events.some((event) => event.type === "manualAbilityRejected" && event.ability === "zeroMark" && event.reason === "locked"));
+  assert.equal(state.empPulses.some((effect) => effect.type === "zeroMark"), false);
+});
+
 test("character management exposes locked art previews and lobby settings", async () => {
   const [app, screens, manifest] = await Promise.all([
     readFile(new URL("../src/App.jsx", import.meta.url), "utf8"),
@@ -47,5 +110,6 @@ test("character management exposes locked art previews and lobby settings", asyn
   assert.match(screens, /className="base-settings-button"/);
   assert.match(app, /onOpenSettings=\{\(\) => setSettingsOpen\(true\)\}/);
   assert.match(app, /\{settingsOpen && \(/);
-  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v1\.png"/);
+  assert.match(app, /status\.reason === "insufficient-funds" \? `\$\{currency\?\.koreanName \|\| "재화"\} 부족`/);
+  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v2\.png"/);
 });
