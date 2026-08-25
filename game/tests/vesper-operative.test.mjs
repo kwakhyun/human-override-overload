@@ -7,6 +7,7 @@ import {
   createSwarmInput,
   createSwarmState,
   drainSwarmEvents,
+  setSwarmAim,
   stepSwarm,
   VESPER_MANUAL_ACTIVE_ABILITIES,
 } from "../src/swarm/engine.js";
@@ -78,6 +79,55 @@ test("VESPER Q/E/F/R names and runtime effects share one progression contract", 
     assert.ok(events.some((event) => event.type === "manualAbilityActivated" && event.ability === abilityId));
     assert.ok(hasDistinctEffect(state), `${abilityId} must leave its VESPER-specific simulation effect`);
   }
+});
+
+test("VESPER basic fire uses its own twin vector needles and periodic piercing lock lance", () => {
+  const state = createSwarmState({
+    random: () => 0.5,
+    duration: 999,
+    expedition: true,
+    characterId: "vesper",
+    vesperUnlocked: true,
+  });
+  const input = createSwarmInput();
+  setSwarmAim(state, state.player.x + 900, state.player.y);
+  drainSwarmEvents(state);
+
+  stepSwarm(state, input, 1 / 60);
+  const baselineNeedles = state.projectiles.filter((projectile) => projectile.kind === "vesperVectorNeedle");
+  assert.equal(baselineNeedles.length, 2);
+  assert.equal(state.projectiles.some((projectile) => projectile.kind === "pulse"), false);
+  assert.ok(baselineNeedles[0].y < baselineNeedles[1].y, "the twin firing lanes must remain visually separate");
+  assert.ok(baselineNeedles.every((projectile) => projectile.pierce === 1));
+  assert.ok(baselineNeedles.every((projectile) => Math.abs(Math.hypot(projectile.vx, projectile.vy) - 1104) < 0.0001));
+  assert.ok(Number.isFinite(state.player.fireTimers.vector) && state.player.fireTimers.vector > 0);
+  let events = drainSwarmEvents(state);
+  assert.ok(events.some((event) => event.type === "vesperNeedleAttack" && event.count === 2 && event.lockLance === false));
+
+  for (let volley = 0; volley < 3; volley += 1) {
+    state.player.fireTimers.vector = 0;
+    stepSwarm(state, input, 1 / 60);
+    events = drainSwarmEvents(state);
+  }
+  assert.ok(events.some((event) => event.type === "vesperNeedleAttack" && event.lockLance === true));
+  const lockLance = state.projectiles.find((projectile) => projectile.kind === "vesperLockLance");
+  assert.ok(lockLance);
+  assert.equal(lockLance.pierce, 5);
+  assert.ok(lockLance.damage > baselineNeedles[0].damage);
+  assert.ok(Math.hypot(lockLance.vx, lockLance.vy) > Math.hypot(baselineNeedles[0].vx, baselineNeedles[0].vy));
+});
+
+test("VESPER vector projectiles have dedicated Phaser trails and sound identity", async () => {
+  const [battleView, app] = await Promise.all([
+    readFile(new URL("../src/phaser/view/BattleView.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/App.jsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(battleView, /type\.includes\("vespervectorneedle"\)/);
+  assert.match(battleView, /type\.includes\("vesperlocklance"\)/);
+  assert.match(battleView, /const vesperNeedle = projectileKind\.includes\("vesper"\)/);
+  assert.match(battleView, /graphics\.lineStyle\(1\.25, 0x8ff4ff, 0\.7\)/);
+  assert.match(app, /vesperVectorNeedle: "rail"/);
+  assert.match(app, /vesperVectorCorona: "emp"/);
 });
 
 test("VESPER locked skill input is rejected before creating its effect", () => {

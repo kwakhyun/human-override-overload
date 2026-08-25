@@ -339,6 +339,9 @@ function allyMotionTexture(ally: any) {
 
 function projectileArt(projectile: any) {
   const type = String(projectile?.kind ?? "pulse").toLowerCase();
+  if (type.includes("vesperlocklance")) return { column: 2, row: 0, width: 128, height: 22 };
+  if (type.includes("vespervectorcorona")) return { column: 1, row: 0, width: 58, height: 18 };
+  if (type.includes("vespervectorneedle")) return { column: 0, row: 0, width: 82, height: 16 };
   if (type.includes("mikahalo")) return { column: 2, row: 2, width: 72, height: 72 };
   if (type.includes("crescent")) return { column: 0, row: 1, width: 76, height: 76 };
   if (type.includes("rail") || type.includes("omega")) return { column: 2, row: 0, width: 132, height: 40 };
@@ -2590,6 +2593,8 @@ export class BattleView {
       const angle = Number.isFinite(projectile?.angle) ? projectile.angle : Math.atan2(finite(projectile?.vy), finite(projectile?.vx));
       const projectileKind = String(projectile?.kind ?? "pulse").toLowerCase();
       const swordWave = projectileKind.includes("crescent");
+      const vesperNeedle = projectileKind.includes("vesper");
+      const vesperLockLance = projectileKind.includes("vesperlocklance");
       const launchesFromRifle = !projectileKind.includes("overdrive") && !projectileKind.includes("orbit");
       const launchAge = finite(projectile?.age, 1);
       let displayX = x;
@@ -2618,19 +2623,43 @@ export class BattleView {
         .setAlpha(0.96)
         .setTint(colorNumber(projectile?.color, 0xffffff));
       if (!projectileKind.includes("orbit") && launchAge > 0.012) {
-        const trailLength = projectileKind.includes("rail") || projectileKind.includes("overdrive")
-          ? 86
+        const trailLength = vesperLockLance
+          ? 112
+          : vesperNeedle
+            ? 62
+            : projectileKind.includes("rail") || projectileKind.includes("overdrive")
+              ? 86
           : projectileKind.includes("rocket") || projectileKind.includes("sentry")
             ? 52
             : 34;
         const trailColor = colorNumber(projectile?.color, COLORS.cyan);
-        graphics.lineStyle(projectileKind.includes("rail") ? 5.5 : 3.5, trailColor, projectileKind.includes("rail") ? 0.72 : 0.56);
-        graphics.lineBetween(
-          displayX - Math.cos(angle) * trailLength,
-          displayY - Math.sin(angle) * trailLength,
-          displayX - Math.cos(angle) * art.width * 0.18,
-          displayY - Math.sin(angle) * art.width * 0.18,
-        );
+        if (vesperNeedle) {
+          const normalX = -Math.sin(angle);
+          const normalY = Math.cos(angle);
+          const gap = vesperLockLance ? 4.5 : 2.5;
+          const trailStartX = displayX - Math.cos(angle) * trailLength;
+          const trailStartY = displayY - Math.sin(angle) * trailLength;
+          const trailEndX = displayX - Math.cos(angle) * art.width * 0.18;
+          const trailEndY = displayY - Math.sin(angle) * art.width * 0.18;
+          graphics.lineStyle(vesperLockLance ? 3.2 : 2.2, trailColor, vesperLockLance ? 0.88 : 0.76);
+          graphics.lineBetween(trailStartX + normalX * gap, trailStartY + normalY * gap, trailEndX + normalX * gap, trailEndY + normalY * gap);
+          graphics.lineBetween(trailStartX - normalX * gap, trailStartY - normalY * gap, trailEndX - normalX * gap, trailEndY - normalY * gap);
+          graphics.lineStyle(1.25, 0x8ff4ff, 0.7);
+          graphics.lineBetween(trailStartX, trailStartY, trailEndX, trailEndY);
+          const finX = displayX - Math.cos(angle) * 12;
+          const finY = displayY - Math.sin(angle) * 12;
+          graphics.lineStyle(1.8, 0xfff1a6, 0.9);
+          graphics.lineBetween(finX + normalX * 7, finY + normalY * 7, displayX - Math.cos(angle) * 2, displayY - Math.sin(angle) * 2);
+          graphics.lineBetween(finX - normalX * 7, finY - normalY * 7, displayX - Math.cos(angle) * 2, displayY - Math.sin(angle) * 2);
+        } else {
+          graphics.lineStyle(projectileKind.includes("rail") ? 5.5 : 3.5, trailColor, projectileKind.includes("rail") ? 0.72 : 0.56);
+          graphics.lineBetween(
+            displayX - Math.cos(angle) * trailLength,
+            displayY - Math.sin(angle) * trailLength,
+            displayX - Math.cos(angle) * art.width * 0.18,
+            displayY - Math.sin(angle) * art.width * 0.18,
+          );
+        }
       }
       visibleProjectiles += 1;
     }

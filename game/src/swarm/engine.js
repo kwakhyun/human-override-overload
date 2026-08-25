@@ -48,7 +48,7 @@ const GRID_SIZE = 96;
 const LEGACY_WORLD_SIZE = Object.freeze({ width: GAME_WIDTH, height: GAME_HEIGHT });
 const BOSS_WORLD_SIZE = Object.freeze({ width: WORLD_WIDTH, height: WORLD_HEIGHT });
 const EXPEDITION_WORLD_SIZE = Object.freeze({ width: EXPEDITION_WORLD_WIDTH, height: EXPEDITION_WORLD_HEIGHT });
-const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sword", "wave", "titan", "flash", "storm", "halo"]);
+const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sword", "wave", "titan", "flash", "storm", "halo", "vector"]);
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
 const EXPEDITION_FLOOR_ELLIPSE = Object.freeze({ x: 960, y: 540, rx: 840, ry: 460 });
 const EXPEDITION_ROUTE_LENGTH = 25000;
@@ -916,7 +916,8 @@ function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId =
     moveBlend: 0,
     dashBlend: 0,
     dead: false,
-    fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0, sword: 0, wave: 0, titan: 0, flash: 0, storm: 0, halo: 0 },
+    fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0, sword: 0, wave: 0, titan: 0, flash: 0, storm: 0, halo: 0, vector: 0 },
+    vesperVectorSequence: 0,
     swordCombo: 0,
     orbitAngle: 0,
     orbitMasterTimer: 0,
@@ -1701,6 +1702,98 @@ function updateMikaWeapons(state, attackSpeed) {
   emit(state, "mikaHaloAttack", { count, haloRank, x: player.x, y: player.y, angle: player.angle });
 }
 
+function updateVesperWeapons(state, attackSpeed) {
+  const player = state.player;
+  const timers = player.fireTimers;
+  if (timers.vector > 0) return;
+
+  const pulseRank = clamp(state.build.weapons.pulse || 1, 1, 5);
+  const overdriveBonus = Math.max(0, player.overdriveTier - 1);
+  const count = clamp(2 + Math.max(0, player.multishot - 1) + overdriveBonus, 2, 6);
+  const baseAngle = player.angle;
+  const lateralGap = count === 2 ? 9 : 12;
+  const damage = 18 + (pulseRank - 1) * 1.5 + player.level * 0.32;
+  const speed = 1080 + pulseRank * 24;
+  const pierce = 1 + (pulseRank >= 4 ? 1 : 0);
+  let emitted = 0;
+
+  for (let index = 0; index < count; index += 1) {
+    const lane = count === 1 ? 0 : index / (count - 1) - 0.5;
+    const angle = baseAngle + lane * 0.036;
+    const lateral = lane * lateralGap * 2;
+    const x = player.x + Math.cos(baseAngle) * 27 - Math.sin(baseAngle) * lateral;
+    const y = player.y + Math.sin(baseAngle) * 27 + Math.cos(baseAngle) * lateral;
+    if (pushPlayerProjectile(state, {
+      kind: "vesperVectorNeedle",
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      angle,
+      radius: 5,
+      damage: damage * player.damageMultiplier * player.weaponDamageMultiplier,
+      color: index % 2 === 0 ? "#f7d96c" : "#8ff4ff",
+      life: 1.2,
+      pierce,
+      hitIds: [],
+      vectorLane: lane,
+    })) emitted += 1;
+  }
+
+  player.vesperVectorSequence = (finite(player.vesperVectorSequence) + 1) % 4;
+  const lockLance = player.vesperVectorSequence === 0;
+  if (lockLance) {
+    const angle = baseAngle;
+    if (pushPlayerProjectile(state, {
+      kind: "vesperLockLance",
+      x: player.x + Math.cos(angle) * 32,
+      y: player.y + Math.sin(angle) * 32,
+      vx: Math.cos(angle) * (1450 + pulseRank * 30),
+      vy: Math.sin(angle) * (1450 + pulseRank * 30),
+      angle,
+      radius: 7,
+      damage: (34 + pulseRank * 4 + player.level * 0.55) * player.damageMultiplier * player.weaponDamageMultiplier,
+      color: "#fff1a6",
+      life: 0.95,
+      pierce: 4 + pulseRank,
+      hitIds: [],
+      vectorLane: 0,
+    })) emitted += 1;
+  }
+
+  if (player.overdriveTier >= 2 && player.overdriveVolleyTimer <= 0) {
+    const coronaCount = player.overdriveTier >= 3 ? 14 : 8;
+    fireRadialVolley(state, "vesperVectorCorona", coronaCount, 980, player.overdriveTier >= 3 ? 44 : 30, 6, 1.1, {
+      color: "#d9ff7b",
+      pierce: player.overdriveTier >= 3 ? 3 : 2,
+    });
+    player.overdriveVolleyTimer = player.overdriveTier >= 3 ? 0.92 : 1.55;
+    emit(state, "masterAttack", { skill: "vesperVectorCorona", count: coronaCount });
+  }
+
+  if (emitted > 0) {
+    player.recoil = Math.max(player.recoil, lockLance ? 0.9 : 0.58);
+    player.attackState = "vesperVectorNeedles";
+    player.attackTimer = Math.max(player.attackTimer, lockLance ? 0.2 : 0.12);
+    player.animationState = "attack";
+    player.animationTimer = Math.max(player.animationTimer, lockLance ? 0.2 : 0.12);
+    if (state.time - state.lastShotEvent >= 0.12) {
+      state.lastShotEvent = state.time;
+      emit(state, "shot", { kind: "vesperVectorNeedle", count: emitted, x: player.x, y: player.y });
+    }
+    emit(state, "vesperNeedleAttack", {
+      count,
+      emitted,
+      lockLance,
+      pulseRank,
+      x: player.x,
+      y: player.y,
+      angle: player.angle,
+    });
+  }
+  timers.vector += Math.max(0.15, 0.205 * attackSpeed / (1 + (pulseRank - 1) * 0.065));
+}
+
 function updateAutoWeapons(state, dt) {
   const player = state.player;
   const timers = player.fireTimers;
@@ -1713,12 +1806,14 @@ function updateAutoWeapons(state, dt) {
     return;
   }
 
+  if (player.characterId === "vesper") updateVesperWeapons(state, attackSpeed);
+
   if (player.mainWeaponId === "beam-sword") {
     updateSwordWeapons(state, dt, attackSpeed);
     return;
   }
 
-  if (timers.pulse <= 0) {
+  if (player.characterId !== "vesper" && timers.pulse <= 0) {
     const count = clamp(player.multishot + Math.max(0, player.overdriveTier - 1), 1, 7);
     fireBulletFan(state, "pulse", count, count > 1 ? 0.12 * (count - 1) : 0, 850, 34, 5, 1.55, { pierce: state.build.weapons.pulse >= 5 ? 2 : state.build.weapons.pulse >= 4 ? 1 : 0 });
     if (player.overdriveTier >= 2 && player.overdriveVolleyTimer <= 0) {

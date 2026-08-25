@@ -394,6 +394,9 @@ const EVENT_SOUNDS = Object.freeze({
 const WEAPON_EVENT_SOUNDS = Object.freeze({
   pulse: "shoot",
   pulseOverdrive: "emp",
+  vesperVectorNeedle: "rail",
+  vesperLockLance: "rail",
+  vesperVectorCorona: "emp",
   scatter: "shoot",
   rail: "rail",
   rocket: "towerShot",
