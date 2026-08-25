@@ -48,6 +48,7 @@ import {
 import { getMainWeapons, isMainWeaponUnlocked } from "./game/content/weapons.js";
 import { getPlayableCharacters, isCharacterUnlocked } from "./game/content/characters.js";
 import { resolveCharacterDialogueLine } from "./game/content/characterDialogue.js";
+import { getFlightPlans } from "./game/content/flightOperations.js";
 import { DEFENSE_TOWER_DEFINITIONS, getDefenseStage, getDefenseStages } from "./defense/content.js";
 import {
   canLaunchRegion,
@@ -62,6 +63,7 @@ import {
   completeDefenseStage,
   createCampaignSlot,
   getCampaignCombatBonuses,
+  getCampaignFlightPlan,
   getCampaignMainWeapon,
   getCampaignPostVictorySteps,
   getCampaignCharacter,
@@ -74,11 +76,13 @@ import {
   saveCampaign,
   setCampaignMainWeapon,
   setCampaignCharacter,
+  setCampaignFlightPlan,
 } from "./game/save/campaignSave.js";
 import {
   AbilityGuideScreen,
   DefenseStageSelectScreen,
   HomeBaseScreen,
+  LarkFlightOperationsScreen,
   MANUAL_ABILITY_GUIDE,
   MikaRecruitScreen,
   RegionSelectScreen,
@@ -154,18 +158,18 @@ const BASE_BONUS_LABELS = Object.freeze({
 
 const FACILITY_COPY = Object.freeze({
   research: {
-    kicker: "하나 · 소버린 분석 연구실",
-    description: "회수한 추론 데이터를 분석해 영구 전투 보너스로 바꿉니다. 높은 단계의 연구에는 더 많은 지역을 해방해야 합니다.",
+    kicker: "하나 · 전술 데이터 분석실",
+    description: "전장에서 회수한 연산 데이터를 분석하여 상시 전술 능력을 영구 증폭합니다. 상위 단계 연구는 추가 작전 구역 해방이 필요합니다.",
     currencyHint: "지역 추론핵을 파괴하면 획득",
   },
   equipment: {
-    kicker: "일리야 · 이지스 장비 정비소",
-    description: "전장에서 회수한 부품으로 펄스 소총과 빔 소드, 장갑, 나나이트 장비를 영구적으로 개조합니다.",
+    kicker: "일리야 · 병기 및 외골격 정비소",
+    description: "노획한 장비 부품으로 주무기 펄스 소총과 빔 소드, 방호 장갑 및 나나이트 수복기를 영구 개조합니다.",
     currencyHint: "적 군단과 보스의 잔해에서 회수",
   },
   augmentation: {
-    kicker: "이지스 · 인물 동기화실",
-    description: "반복 작전에서 얻은 동기화 코어로 신체 보조 프레임과 전투 신경을 영구적으로 강화합니다.",
+    kicker: "헤이븐-09 · 신경 동기화 챔버",
+    description: "동기화 코어를 주입하여 전투원의 기체 반응성과 전투 신경계를 영구적으로 증강합니다.",
     currencyHint: "지역을 반복 공략하고 추론핵을 파괴하면 획득",
   },
 });
@@ -393,24 +397,24 @@ const IMPACT_EVENT_TYPES = new Set([
 
 const EVENT_BANNERS = Object.freeze({
   swarmCleared: ["적 전멸", "보스 전장으로 자동 이동합니다."],
-  bossStage: ["공격 패턴 진화", "보스의 공격 조합이 더 빨라집니다."],
-  bossStagePulse: ["⚠ 광폭화", "장갑 형상이 바뀌고 공격이 더욱 거세집니다."],
-  bossWeakness: ["코어 노출 · 피해 2배", "돌진이 벽에 충돌했습니다. 지금 화력을 집중하세요."],
-  bossGroggy: ["보스 그로기 · 피해 2.5배", "첫 추론핵이 무방비 상태입니다. 모든 화력을 집중하세요."],
-  bossRoomLoading: ["보스 구역 준비 중", "선택한 지역의 보스 전장을 불러오고 있습니다."],
-  surgeWarning: ["⚠ 대규모 공세 임박", "전방 관문의 신호가 급증했습니다. 곧 적 증원이 밀려옵니다."],
-  surgeStart: ["증원 공세 시작", "전송 관문에서 적이 밀려옵니다. 이번 공세를 막아내세요."],
-  skillMastered: ["기술 최종 진화", "광역 섬멸 기술이 최고 단계로 진화했습니다."],
-  ultimateWarning: ["공중 지원 조준 완료", "표시된 공격 범위에서 벗어나 화력을 집중하세요."],
-  squadSummon: ["동료 합류", "전술 동료가 전투에 합류했습니다."],
-  overdrive: ["무기 과부하 해제", "누적된 처치 데이터로 화력 제한이 풀렸습니다."],
-  bossContact: ["⚠ 본체 충돌", "보스 본체와 충돌해 구동계가 잠시 정지됩니다."],
-  bossContactHit: ["⚠ 본체 충돌", "보스 본체와 충돌해 구동계가 잠시 정지됩니다."],
-  playerStunned: ["구동계 교란", "이동과 대시가 잠시 차단됩니다."],
-  bossSiren: ["⚠ 전역 폭발 경보", "시한폭탄을 화면에 표시된 숫자 순서대로 클릭해 해제하세요."],
-  bossBombSequenceArmed: ["시한폭탄 활성화", "1번부터 차례대로 클릭하세요. 순서가 틀리면 모두 폭발합니다."],
-  bossBombSequenceCleared: ["폭탄 해제 완료", "보스 회로가 정지했습니다. 지금 화력을 집중하세요."],
-  bossBombSequenceFailed: ["폭탄 해제 실패", "폭발 충격으로 이지스 구동계가 손상되었습니다."],
+  bossStage: ["공격 패턴 진화", "보스의 공격 연산 주기가 가속됩니다."],
+  bossStagePulse: ["⚠ 광폭화", "장갑 형상이 변이되며 공격 패턴이 거세집니다."],
+  bossWeakness: ["코어 노출 · 피해 2배", "보스가 벽에 충돌했습니다. 지금 전술 화력을 집중하세요."],
+  bossGroggy: ["보스 그로기 · 피해 2.5배", "추론핵이 무방비 상태입니다. 모든 화력을 집중하세요."],
+  bossRoomLoading: ["보스 구역 진입 중", "목표 권역의 보스 전술 전장을 로드하고 있습니다."],
+  surgeWarning: ["⚠ 대규모 공세 임박", "전방 전송 관문의 신호가 폭증했습니다. 적 증원이 접근합니다."],
+  surgeStart: ["증원 공세 시작", "차원 전송 관문에서 적 군단이 진입합니다. 방어선을 유지하세요."],
+  skillMastered: ["기술 최종 진화", "광역 섬멸 전술 기술이 최고 단계로 각성했습니다."],
+  ultimateWarning: ["공중 지원 조준 완료", "지정된 공격 반경을 확보하고 화력을 집중하세요."],
+  squadSummon: ["전술 동료 합류", "지원 편대가 전장에 합류했습니다."],
+  overdrive: ["무기 과부하 해제", "누적 섬멸 데이터로 화력 리미터가 해제되었습니다."],
+  bossContact: ["⚠ 본체 충돌", "보스 기체와 충돌하여 구동계가 일시 교란되었습니다."],
+  bossContactHit: ["⚠ 본체 충돌", "보스 기체와 충돌하여 구동계가 일시 교란되었습니다."],
+  playerStunned: ["구동계 교란", "기동 및 위상 대시가 일시 차단되었습니다."],
+  bossSiren: ["⚠ 전역 폭발 경보", "시한폭탄을 화면의 숫자 순서대로 신속히 해제하십시오."],
+  bossBombSequenceArmed: ["시한폭탄 활성화", "1번부터 순서대로 해제하세요. 오입력 시 연쇄 폭발합니다."],
+  bossBombSequenceCleared: ["폭탄 해제 완료", "보스 연산 회로가 셧다운되었습니다. 총공격을 개시하세요."],
+  bossBombSequenceFailed: ["폭탄 해제 실패", "폭발 충격으로 인해 기체 프레임이 손상되었습니다."],
 });
 
 const ULTIMATE_WARNING_BANNERS = Object.freeze({
@@ -970,7 +974,15 @@ function resolveCombatDockSlot(hud, slot) {
     const remaining = Math.max(0, Number(hud?.player?.dashCooldown) || 0);
     const cooldownMax = Math.max(0.01, Number(hud?.player?.dashMax) || ABILITY_COOLDOWN_FALLBACK.dash);
     const ready = remaining <= 0.05;
-    return { ...slot, ready, locked: false, status: ready ? "사용 가능" : `${remaining.toFixed(1)}초`, meter: ready ? 1 : Math.max(0, Math.min(1, 1 - remaining / cooldownMax)) };
+    return {
+      ...slot,
+      ready,
+      locked: false,
+      remaining,
+      activeRemaining: 0,
+      status: ready ? "사용 가능" : `${remaining.toFixed(1)}초`,
+      meter: ready ? 1 : Math.max(0, Math.min(1, 1 - remaining / cooldownMax)),
+    };
   }
 
   const abilities = hud?.abilities || {};
@@ -1005,6 +1017,8 @@ function resolveCombatDockSlot(hud, slot) {
     ultimate: Boolean(ability?.ultimate),
     ready,
     locked,
+    remaining,
+    activeRemaining,
     available: targetAvailable,
     status,
     meter,
@@ -1035,7 +1049,7 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
   useEffect(() => () => window.clearTimeout(damageTimerRef.current), []);
 
   return (
-    <aside className={`expedition-combat-dock${compact ? " is-commercial-compact" : ""}${player.reserveCharacterId ? " has-tag" : ""}${tutorialAbilityId ? " is-tutorial-active" : ""}`} aria-label="생존 및 액티브 능력 상태">
+    <aside className={`expedition-combat-dock${compact ? " is-commercial-compact" : ""}${player.reserveCharacterId ? " has-tag" : ""}${tutorialAbilityId ? " is-tutorial-active" : ""}${healthRatio <= 0.3 ? " is-danger-state" : ""}`} aria-label="생존 및 액티브 능력 상태">
       <div className={`vital-cluster${healthRatio <= 0.3 ? " is-critical" : ""}`}>
         {damageWarning && <i className="vital-damage-flash" key={`damage-${damagePulse}`} aria-hidden="true" />}
         <span>{player.characterId === "mika" ? "미카" : "이지스"} 내구도 <small>레벨 {hud?.level || 1}</small></span>
@@ -1054,6 +1068,7 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
           const Icon = slot.icon;
           const tutorialTarget = tutorialAbilityId === slot.id;
           const tutorialDimmed = Boolean(tutorialAbilityId) && !tutorialTarget;
+          const isCooling = !slot.ready && !slot.locked && slot.remaining > 0;
           const activate = () => {
             if (tutorialAbilityId) {
               if (tutorialTarget) onTutorialTarget?.();
@@ -1080,6 +1095,16 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
                   className="combat-ability-cooldown"
                   style={{ "--cooldown-sweep": `${Math.round((1 - slot.meter) * 360)}deg` }}
                 />
+                {isCooling && (
+                  <span className="combat-ability-cooldown-badge">
+                    {slot.remaining < 10 ? slot.remaining.toFixed(1) : Math.ceil(slot.remaining)}s
+                  </span>
+                )}
+                {slot.activeRemaining > 0 && (
+                  <span className="combat-ability-active-badge">
+                    {slot.activeRemaining.toFixed(1)}s
+                  </span>
+                )}
                 <kbd>{slot.key}</kbd>
               </span>
               <span className="combat-ability-copy"><strong>{slot.label}</strong><b>{slot.status}</b></span>
@@ -1246,26 +1271,29 @@ function LevelUpOverlay({ offer, level, assets, rewardState, onChoose }) {
   return (
     <div className="reward-backdrop" role="dialog" aria-modal="true" aria-labelledby="reward-title">
       <section className="reward-modal" ref={modalRef} key={offerKey} tabIndex="-1">
-        <div className="reward-kicker"><Sparkle weight="fill" /> 전투 부하 진화 · 레벨 {level}</div>
-        <h2 id="reward-title">오버로드 선택</h2>
-        <p>전투가 일시 정지되었습니다. 원하는 성장 방향을 하나 선택하세요.</p>
-        {queuedRewards > 1 && <div className="reward-queue-status"><Timer weight="bold" /> 축적된 레벨업 {queuedRewards}회를 이번 선택 1회로 압축했습니다.</div>}
+        <div className="reward-kicker"><Sparkle weight="fill" /> 전술 시스템 증강 · LEVEL {level}</div>
+        <h2 id="reward-title">오버로드 프로토콜</h2>
+        <p>전술 연산 대기 중. 전장에 동기화할 시스템 증강을 선택하십시오.</p>
+        {queuedRewards > 1 && <div className="reward-queue-status"><Timer weight="bold" /> 누적된 오버로드 연산 {queuedRewards}회를 통합 선택으로 압축했습니다.</div>}
         <div className="reward-options">
           {offer.map((option, index) => {
             const meta = CATEGORY_META[option.category] || CATEGORY_META.skill;
+            const badgeType = option.mastery ? "master" : option.level ? "upgrade" : "new";
+            const badgeLabel = option.mastery ? "최종 진화" : option.level ? `랭크 ${option.level} → ${option.nextLevel || option.level + 1}` : "NEW 신규";
             return (
-              <button className={`reward-card is-${meta.color}`} key={`${option.category}-${option.id}-${index}`} type="button" onClick={() => onChoose(option.id)}>
+              <button className={`reward-card is-${meta.color}`} data-badge-type={badgeType} key={`${option.category}-${option.id}-${index}`} type="button" onClick={() => onChoose(option.id)}>
                 <span className="reward-index">0{index + 1}</span>
+                <span className={`reward-status-ribbon is-${badgeType}`}>{badgeLabel}</span>
                 <div className="reward-art"><RewardArtwork option={option} assets={assets} /></div>
-                <small>{meta.label} · {meta.korean}</small>
+                <small className="reward-category-label">{meta.label} · {meta.korean}</small>
                 <strong>{REWARD_NAMES_KO[option.id] || option.koreanName || option.name}</strong>
                 <p>{REWARD_COPY[option.id] || option.description}</p>
-                <div><span>{option.mastery ? `랭크 ${option.level} → 최종 진화` : option.level ? `랭크 ${option.level} → ${option.nextLevel || option.level + 1}` : "신규 장착"}</span><b>선택 <ArrowRight /></b></div>
+                <div className="reward-card-footer"><span>{option.mastery ? "최종 진화 완료" : option.level ? `랭크 ${option.level} 강화` : "신규 장비 획득"}</span><b>선택 <ArrowRight /></b></div>
               </button>
             );
           })}
         </div>
-        <span className="reward-note">클릭 또는 숫자키 1–3으로 선택 · 다음 선택은 전투 간격 후 나타납니다.</span>
+        <span className="reward-note">클릭 또는 숫자키 1–3으로 선택 · 다음 증강은 전술 교전 간격 후 전개됩니다.</span>
       </section>
     </div>
   );
@@ -2330,14 +2358,19 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, mainWeapon
           : `전투 진입 피해 완화 ${Math.ceil(openingProtection.remaining)}초`
         : "";
 
+  const playerHp = Math.max(0, Number(hud?.player?.hp) || 0);
+  const playerMaxHp = Math.max(1, Number(hud?.player?.maxHp) || 1);
+  const isCriticalHealth = playerHp > 0 && (playerHp / playerMaxHp) <= 0.3;
+
   return (
     <main
-      className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}${bombSlowMotion ? " is-bomb-slow-motion" : ""}${bombTargeting ? " is-bomb-targeting" : ""}${bombRetaliation ? " is-bomb-retaliation" : ""}${hudFocusMode ? " is-hud-focus" : ""}`}
+      className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}${bombSlowMotion ? " is-bomb-slow-motion" : ""}${bombTargeting ? " is-bomb-targeting" : ""}${bombRetaliation ? " is-bomb-retaliation" : ""}${hudFocusMode ? " is-hud-focus" : ""}${isCriticalHealth ? " is-low-health" : ""}`}
       aria-hidden={preparing ? "true" : undefined}
       inert={preparing}
     >
       <section className="expedition-stage">
           <div className="expedition-canvas-frame" ref={frameRef}>
+            {isCriticalHealth && <div className="critical-health-vignette" aria-hidden="true" />}
             <div
               ref={hostRef}
               className="game-canvas phaser-host"
@@ -2768,6 +2801,7 @@ export function App() {
   const defenseStages = useMemo(() => getDefenseStages(), []);
   const regionClusters = useMemo(() => getRegionClusters(), []);
   const mainWeapons = useMemo(() => getMainWeapons(), []);
+  const flightPlans = useMemo(() => getFlightPlans(), []);
   const playableCharacterDefinitions = useMemo(() => getPlayableCharacters(), []);
   const regionPreviewSources = useMemo(
     () => regions.map((region) => region?.assets?.dom?.thumbnail?.path).filter(Boolean),
@@ -2800,6 +2834,21 @@ export function App() {
     && ["wrong-engine-core", "glass-dune", "abyssal-archive"].every((regionId) => activeSlot.completedRegionIds.includes(regionId))
     && !activeSlot.storyFlags.includes(OUTER_SECTOR_BRIEFING_FLAG)
   );
+  const availableFacilityUpgrades = useMemo(() => {
+    if (!activeSlotId || !activeSlot) return { research: false, equipment: false, augmentation: false };
+    const checkFacility = (npcId) => {
+      const upgrades = getBaseUpgrades(npcId);
+      return upgrades.some((upgrade) => {
+        const status = getCampaignUpgradeStatus(campaign, activeSlotId, upgrade.id);
+        return Boolean(status.purchasable);
+      });
+    };
+    return {
+      research: checkFacility("hana"),
+      equipment: checkFacility("ilya"),
+      augmentation: checkFacility("aegis"),
+    };
+  }, [activeSlotId, activeSlot, campaign]);
   const combatBonuses = useMemo(
     () => (activeSlotId ? getCampaignCombatBonuses(campaign, activeSlotId) : null),
     [activeSlotId, campaign],
@@ -2811,6 +2860,10 @@ export function App() {
   const activeCharacterId = useMemo(
     () => (activeSlotId ? getCampaignCharacter(campaign, activeSlotId) : "aegis"),
     [activeSlotId, campaign],
+  );
+  const activeFlightPlan = useMemo(
+    () => (activeSlotId ? getCampaignFlightPlan(campaign, activeSlotId) : flightPlans[0] || null),
+    [activeSlotId, campaign, flightPlans],
   );
   const activeFacility = useMemo(() => {
     if (!activeFacilityId || !activeSlotId || !activeSlot) return null;
@@ -3191,7 +3244,13 @@ export function App() {
 
   const talkToNpc = useCallback((npc) => {
     setActiveFacilityId(null);
-    setActiveNpc(npc?.id === "lark" && larkAlert ? { ...npc, dialogue: npc.milestoneDialogue || npc.dialogue } : npc);
+    setActiveNpc(npc?.id === "lark" ? {
+      ...npc,
+      interactionLabel: npc.flightOperationLabel || npc.interactionLabel,
+      dialogue: larkAlert
+        ? npc.milestoneDialogue || npc.dialogue
+        : npc.flightOperationsDialogue || npc.dialogue,
+    } : npc);
     setNpcLineIndex(0);
   }, [larkAlert]);
 
@@ -3218,6 +3277,16 @@ export function App() {
       () => setScreen("regions"),
     );
   }, [closeFacility, closeNpc, prepareSurface, regionPreviewSources]);
+
+  const openFlightOperations = useCallback(() => {
+    closeNpc();
+    closeFacility();
+    prepareSurface(
+      "나이트자 항로 작전 데이터 동기화 중",
+      domAssetSources(["airshipRegionMap", "havenNpcPortraits", "havenLobby"]),
+      () => setScreen("flight-operations"),
+    );
+  }, [closeFacility, closeNpc, prepareSurface]);
 
   const openDefenseSelect = useCallback(() => {
     closeNpc();
@@ -3263,8 +3332,17 @@ export function App() {
         saveCampaign(nextCampaign);
       }
       openRegionSelect();
+      return;
     }
-  }, [activeSlotId, campaign, closeFacility, closeNpc, larkAlert, openRegionSelect, prepareSurface]);
+    if (interaction === "open-flight-operations") {
+      if (larkAlert && activeSlotId) {
+        const nextCampaign = completeOuterSectorBriefing(campaign, activeSlotId);
+        setCampaign(nextCampaign);
+        saveCampaign(nextCampaign);
+      }
+      openFlightOperations();
+    }
+  }, [activeSlotId, campaign, closeFacility, closeNpc, larkAlert, openFlightOperations, openRegionSelect, prepareSurface]);
 
   const finishAbilityGuide = useCallback(() => {
     let nextCampaign = campaign;
@@ -3339,6 +3417,20 @@ export function App() {
     sfx.play("click");
   }, [activeSlotId, campaign, sfx]);
 
+  const selectFlightPlan = useCallback((planId) => {
+    if (!activeSlotId) return;
+    const currentPlanId = getCampaignFlightPlan(campaign, activeSlotId)?.id;
+    const nextCampaign = setCampaignFlightPlan(campaign, activeSlotId, planId);
+    const nextPlanId = getCampaignFlightPlan(nextCampaign, activeSlotId)?.id;
+    if (nextPlanId !== planId || nextPlanId === currentPlanId) {
+      sfx.play(nextPlanId === currentPlanId ? "click" : "denied");
+      return;
+    }
+    setCampaign(nextCampaign);
+    saveCampaign(nextCampaign);
+    sfx.play("uiConfirm");
+  }, [activeSlotId, campaign, sfx]);
+
   const toggleSound = useCallback(() => {
     const nextEnabled = !soundEnabled;
     setSoundEnabled(nextEnabled);
@@ -3383,6 +3475,7 @@ export function App() {
         lineIndex={npcLineIndex}
         activeFacility={activeFacility}
         larkAlert={larkAlert}
+        availableUpgrades={availableFacilityUpgrades}
         onNpc={talkToNpc}
         onAdvanceNpc={() => setNpcLineIndex((index) => index + 1)}
         onCloseNpc={closeNpc}
@@ -3397,6 +3490,17 @@ export function App() {
         onBoard={openRegionSelect}
         onDefense={openDefenseSelect}
         onTitle={() => { closeNpc(); closeFacility(); setScreen("save"); }}
+      />
+    );
+  } else if (screen === "flight-operations" && campaignView) {
+    content = (
+      <LarkFlightOperationsScreen
+        campaign={campaignView}
+        plans={flightPlans}
+        activePlanId={activeFlightPlan?.id}
+        assets={campaignAssets}
+        onSelect={selectFlightPlan}
+        onBack={() => setScreen("base")}
       />
     );
   } else if (screen === "regions" && campaignView) {

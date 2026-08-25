@@ -26,6 +26,14 @@ import {
 } from "../content/weapons.js";
 import { DEFAULT_CHARACTER_ID, isCharacterUnlocked, sanitizeCharacterId } from "../content/characters.js";
 import { DEFENSE_STAGES, getDefenseStage, getUnlockedDefenseStageIds } from "../../defense/content.js";
+import {
+  DEFAULT_FLIGHT_PLAN_ID,
+  applyFlightPlanBonuses,
+  getFlightPlan,
+  isFlightPlanUnlocked,
+  recordFlightOperationSortie,
+  sanitizeFlightOperations,
+} from "../content/flightOperations.js";
 
 export const CAMPAIGN_SAVE_VERSION = 2;
 export const CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v2";
@@ -219,6 +227,7 @@ function sanitizeSlot(slot, index, sourceVersion = CAMPAIGN_SAVE_VERSION) {
       mainWeaponId: sanitizeMainWeaponIdForProgression(slot.loadout?.mainWeaponId ?? slot.mainWeaponId, completedRegionIds),
       characterId,
     },
+    flightOperations: sanitizeFlightOperations(slot.flightOperations, completedRegionIds),
     storyFlags,
     regionRecords: sanitizeRegionRecords(slot.regionRecords),
     completedDefenseStageIds,
@@ -312,6 +321,7 @@ export function createCampaignSlot(campaign, slotId, options = {}) {
     storyFlags: [],
     regionRecords: {},
     progression: createEmptyBaseProgression(),
+    flightOperations: sanitizeFlightOperations(null, []),
   }, index);
   const slots = sanitized.slots.slice();
   slots[index] = slot;
@@ -441,6 +451,35 @@ export function getCampaignCharacter(campaign, slotId) {
   return getCampaignSlot(campaign, slotId)?.loadout?.characterId || DEFAULT_CHARACTER_ID;
 }
 
+export function getCampaignFlightOperations(campaign, slotId) {
+  const slot = getCampaignSlot(campaign, slotId);
+  return sanitizeFlightOperations(slot?.flightOperations, slot?.completedRegionIds || []);
+}
+
+export function getCampaignFlightPlan(campaign, slotId) {
+  const operations = getCampaignFlightOperations(campaign, slotId);
+  return getFlightPlan(operations.activePlanId) || getFlightPlan(DEFAULT_FLIGHT_PLAN_ID);
+}
+
+export function setCampaignFlightPlan(campaign, slotId, planId, options = {}) {
+  const sanitized = sanitizeCampaign(campaign);
+  const index = normalizeSlotIndex(slotId);
+  const slot = index >= 0 ? sanitized.slots[index] : null;
+  if (!slot || !getFlightPlan(planId) || !isFlightPlanUnlocked(planId, slot.completedRegionIds)) return sanitized;
+  if (slot.flightOperations.activePlanId === planId) return sanitized;
+  const nextSlot = sanitizeSlot({
+    ...slot,
+    updatedAt: resolveNow(options.now),
+    flightOperations: {
+      ...slot.flightOperations,
+      activePlanId: planId,
+    },
+  }, index);
+  const slots = sanitized.slots.slice();
+  slots[index] = nextSlot;
+  return { version: CAMPAIGN_SAVE_VERSION, slots };
+}
+
 export function canLaunchRegion(slot, regionId) {
   const region = getRegion(regionId);
   if (!region || !slot) return false;
@@ -525,6 +564,7 @@ export function completeRegion(campaign, slotId, regionId, result = {}, options 
     completedRegionIds,
     storyFlags: deriveStoryFlags(completedRegionIds, slot.storyFlags),
     regionRecords,
+    flightOperations: recordFlightOperationSortie(slot.flightOperations, completedRegionIds),
     progression: rewardGrant.progression,
     lastRegionRewards: {
       regionId,
@@ -695,5 +735,8 @@ export function exchangeCampaignResources(campaign, slotId, exchangeId, quantity
 }
 
 export function getCampaignCombatBonuses(campaign, slotId) {
-  return calculateCombatBonuses(getCampaignProgression(campaign, slotId));
+  const slot = getCampaignSlot(campaign, slotId);
+  const baseBonuses = calculateCombatBonuses(slot?.progression);
+  if (!slot) return baseBonuses;
+  return applyFlightPlanBonuses(baseBonuses, slot?.flightOperations?.activePlanId || DEFAULT_FLIGHT_PLAN_ID);
 }

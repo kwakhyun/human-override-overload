@@ -70,8 +70,13 @@ export const BASE_NPCS = deepFreeze({
     portraitKey: "havenNpcPortraits",
     portraitPath: "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png",
     portraitIndex: 2,
-    interaction: "open-region-select",
-    interactionLabel: "항로 선택 화면",
+    interaction: "open-flight-operations",
+    flightOperationLabel: "항로 작전 편성",
+    flightOperationsDialogue: [
+      "나이트자 비행 계획은 준비됐어. 이번엔 어디로 갈지만 정하는 게 아니야.",
+      "침투, 보급, 호위 중 하나를 골라. 내가 만든 항로가 네 전투 방식까지 바꿔 줄 거야.",
+    ],
+    interactionLabel: "항로 작전 편성",
     dialogue: [
       "나이트자 항법계 준비 끝. 해금된 구역이라면 어디든 데려다줄게.",
       "항로 지도를 열까? 귀환지는 언제나 HAVEN-09로 맞춰 놨어.",

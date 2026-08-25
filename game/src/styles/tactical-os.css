@@ -1,0 +1,5053 @@
+/*
+ * HUMAN OVERRIDE // HELIOS TACTICAL OS
+ * Final product-facing presentation layer. This file intentionally sits after
+ * the legacy stabilization sheets so every screen shares one visual language.
+ *
+ * Direction: asymmetric command rails, editorial typography, hard information
+ * hierarchy, clear threat states, and a protected playfield. Decorative glow is
+ * secondary to contrast and never carries meaning by itself.
+ */
+
+:root {
+  --os-black: #03070a;
+  --os-ink: #071016;
+  --os-panel: rgba(5, 15, 21, 0.94);
+  --os-panel-soft: rgba(7, 20, 27, 0.82);
+  --os-panel-solid: #071219;
+  --os-paper: #f1f6f5;
+  --os-muted: #8da0a8;
+  --os-dim: #566971;
+  --os-cyan: #76f2f7;
+  --os-cyan-strong: #22d4df;
+  --os-acid: #d9ff57;
+  --os-amber: #ffbd5b;
+  --os-magenta: #ff4b83;
+  --os-danger: #ff4d5f;
+  --os-line: rgba(118, 242, 247, 0.24);
+  --os-line-strong: rgba(118, 242, 247, 0.62);
+  --os-shadow: 0 18px 52px rgba(0, 0, 0, 0.72);
+  --os-cut-sm: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  --os-cut-md: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  --os-cut-left: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  --os-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html,
+body,
+#root {
+  min-width: 320px;
+  background: var(--os-black);
+}
+
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+details:focus-visible {
+  outline: 2px solid var(--os-acid);
+  outline-offset: 3px;
+}
+
+.campaign-shell,
+.overload-intro,
+.expedition-game,
+.defense-runtime-screen {
+  color: var(--os-paper);
+  font-family: "Rajdhani", sans-serif;
+}
+
+.campaign-shell {
+  isolation: isolate;
+  background: var(--os-black);
+}
+
+.campaign-shell::before {
+  z-index: 0;
+  opacity: 0.72;
+  background:
+    linear-gradient(90deg, transparent 0 49.8%, rgba(118, 242, 247, 0.035) 50%, transparent 50.2%),
+    linear-gradient(0deg, transparent 0 49.8%, rgba(118, 242, 247, 0.025) 50%, transparent 50.2%);
+  background-size: 72px 72px;
+}
+
+.campaign-shell::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(118, 242, 247, 0.12);
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.36);
+}
+
+.campaign-background,
+.intro-key-art {
+  filter: saturate(0.86) contrast(1.08);
+}
+
+.campaign-back,
+.facility-close,
+.region-sortie-close {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(3, 10, 14, 0.88);
+  color: var(--os-paper);
+  clip-path: var(--os-cut-sm);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.campaign-back:hover,
+.facility-close:hover,
+.region-sortie-close:hover {
+  border-color: var(--os-cyan);
+  background: rgba(18, 49, 58, 0.92);
+  color: #fff;
+}
+
+.command-ui-button {
+  border-radius: 0 !important;
+  clip-path: var(--os-cut-sm);
+}
+
+/* --------------------------------------------------------------------------
+   TITLE // cinematic brand lockup
+   -------------------------------------------------------------------------- */
+
+.overload-intro.intro-cinematic {
+  min-height: 100svh;
+  overflow: hidden;
+  background: #03070a;
+}
+
+.intro-cinematic .intro-key-art {
+  object-position: center 40%;
+  transform: scale(1.025);
+  animation: os-intro-art 10s var(--os-ease) both;
+}
+
+.intro-cinematic::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(1, 5, 8, 0.97) 0%, rgba(1, 5, 8, 0.76) 28%, rgba(1, 5, 8, 0.12) 60%, rgba(1, 5, 8, 0.36) 100%),
+    linear-gradient(0deg, rgba(1, 5, 8, 0.68), transparent 34%);
+}
+
+.intro-cinematic::after {
+  content: "COMMAND AUTHORITY  /  HUMANITY LAST RESORT  /  09";
+  position: absolute;
+  z-index: 2;
+  right: 3.2vw;
+  bottom: 3.2vh;
+  color: rgba(226, 247, 246, 0.68);
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.19em;
+  writing-mode: vertical-rl;
+}
+
+.intro-minimal-content {
+  z-index: 3;
+  top: 50%;
+  left: clamp(38px, 6.8vw, 110px);
+  width: min(590px, 48vw);
+  padding: 36px 34px 28px 40px;
+  transform: translateY(-50%);
+  border: 0;
+  border-left: 2px solid var(--os-cyan);
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, rgba(4, 13, 18, 0.92), rgba(4, 13, 18, 0.42) 82%, transparent);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.intro-minimal-content > small:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--os-cyan);
+  font: 600 11px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.18em;
+}
+
+.intro-minimal-content > small:first-child::before {
+  content: "09";
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 22px;
+  background: var(--os-cyan);
+  color: #031013;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.intro-minimal-content h1 {
+  display: grid;
+  margin: 0;
+  font-size: clamp(58px, 6.2vw, 102px);
+  line-height: 0.72;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+}
+
+.intro-minimal-content h1 span,
+.intro-minimal-content h1 em,
+.intro-minimal-content h1 b {
+  display: block;
+  width: max-content;
+  font-style: normal;
+}
+
+.intro-minimal-content h1 span {
+  color: var(--os-paper);
+  font-weight: 700;
+}
+
+.intro-minimal-content h1 em {
+  margin-top: 0.31em;
+  color: var(--os-magenta);
+  font-weight: 700;
+  text-shadow: 0 0 28px rgba(255, 75, 131, 0.24);
+}
+
+.intro-minimal-content h1 b {
+  margin-top: 2.2em;
+  color: var(--os-cyan);
+  font: 600 clamp(14px, 1.25vw, 20px)/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.42em;
+}
+
+.intro-minimal-content > p {
+  max-width: 510px;
+  margin: 30px 0 20px;
+  color: #d6e0e1;
+  font-size: clamp(16px, 1.25vw, 20px);
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.intro-start.primary-cta {
+  width: min(360px, 100%);
+  min-height: 62px;
+  padding: 0 22px;
+  border: 1px solid var(--os-acid);
+  background: linear-gradient(90deg, var(--os-acid), #9ddf5a);
+  color: #07100b;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
+  clip-path: var(--os-cut-md);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.intro-start.primary-cta:hover:not(:disabled) {
+  transform: translateX(8px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.56), 0 0 26px rgba(217, 255, 87, 0.2);
+}
+
+.intro-start-note {
+  margin-top: 10px;
+  color: var(--os-muted);
+  font: 400 10px/1.4 "IBM Plex Mono", monospace;
+}
+
+.intro-music-toggle {
+  min-height: 40px;
+  margin-top: 10px;
+  border-radius: 0;
+  border-color: var(--os-line);
+  background: rgba(4, 13, 18, 0.72);
+  clip-path: var(--os-cut-sm);
+}
+
+.intro-minimal-controls {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--os-line);
+  color: var(--os-muted);
+}
+
+.intro-minimal-controls kbd {
+  border-radius: 0;
+  border-color: var(--os-line-strong);
+  background: rgba(118, 242, 247, 0.08);
+  color: var(--os-paper);
+}
+
+/* --------------------------------------------------------------------------
+   SAVE PROFILE // asymmetric tactical archive
+   -------------------------------------------------------------------------- */
+
+.save-slot-screen {
+  min-height: 100svh;
+  overflow: hidden;
+  padding: clamp(34px, 5vw, 80px) clamp(28px, 7vw, 112px);
+  background:
+    radial-gradient(circle at 74% 34%, rgba(29, 92, 100, 0.16), transparent 34%),
+    linear-gradient(125deg, #03070a, #071219 62%, #03070a);
+}
+
+.save-slot-screen .campaign-grid {
+  opacity: 0.25;
+  background-size: 64px 64px;
+}
+
+.save-slot-screen .campaign-heading {
+  position: relative;
+  z-index: 2;
+  max-width: 780px;
+}
+
+.save-slot-screen .campaign-heading small {
+  color: var(--os-cyan);
+  font: 600 11px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.14em;
+}
+
+.save-slot-screen .campaign-heading h1 {
+  margin: 22px 0 8px;
+  color: var(--os-paper);
+  font-size: clamp(56px, 6.2vw, 96px);
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+}
+
+.save-slot-screen .campaign-heading p {
+  color: var(--os-muted);
+  font-size: 16px;
+}
+
+.save-slot-grid {
+  position: absolute;
+  z-index: 2;
+  right: clamp(28px, 7vw, 112px);
+  bottom: clamp(34px, 7vh, 76px);
+  left: clamp(28px, 7vw, 112px);
+  display: grid;
+  grid-template-columns: 1.16fr 0.92fr 0.92fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.save-slot-card {
+  min-height: 280px;
+  padding: 24px;
+  border: 1px solid var(--os-line);
+  border-radius: 0;
+  background:
+    linear-gradient(135deg, rgba(10, 29, 37, 0.96), rgba(3, 10, 14, 0.98));
+  color: var(--os-paper);
+  clip-path: var(--os-cut-md);
+  box-shadow: var(--os-shadow);
+  transition: transform 180ms var(--os-ease), border-color 180ms ease, background 180ms ease;
+}
+
+.save-slot-card:first-child {
+  min-height: 330px;
+  border-color: var(--os-cyan);
+  background:
+    linear-gradient(155deg, rgba(20, 63, 72, 0.9), rgba(3, 11, 16, 0.98) 68%);
+}
+
+.save-slot-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--os-acid);
+}
+
+.save-slot-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--os-line);
+}
+
+.save-slot-number,
+.save-slot-status-tag {
+  color: var(--os-cyan);
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.12em;
+}
+
+.save-slot-status-tag {
+  padding: 6px 8px;
+  border: 1px solid currentColor;
+  color: var(--os-acid);
+}
+
+.save-slot-icon-wrapper,
+.empty-slot-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 30px 0 18px;
+  border: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(118, 242, 247, 0.07);
+  color: var(--os-cyan);
+}
+
+.save-slot-card > strong {
+  font-size: clamp(24px, 2.2vw, 34px);
+  line-height: 1;
+}
+
+.save-slot-card > p,
+.save-slot-card > small {
+  color: var(--os-muted);
+}
+
+.save-slot-meter {
+  height: 3px;
+  margin: 22px 0 14px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.save-slot-meter i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--os-cyan), var(--os-acid));
+}
+
+.save-slot-card > b {
+  right: 22px;
+  bottom: 22px;
+  color: var(--os-paper);
+  font-size: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   HAVEN-09 // operator-first command deck
+   -------------------------------------------------------------------------- */
+
+.campaign-shell.home-base-screen {
+  overflow: hidden;
+  background: #020609;
+}
+
+.home-base-screen .home-base-surface {
+  position: relative;
+  z-index: 2;
+  min-height: 100svh;
+}
+
+.home-base-screen .campaign-background {
+  object-position: center;
+  opacity: 0.88;
+}
+
+.home-base-screen .base-vignette {
+  background:
+    linear-gradient(90deg, rgba(1, 5, 8, 0.74), transparent 36%, transparent 67%, rgba(1, 5, 8, 0.76)),
+    linear-gradient(0deg, rgba(1, 5, 8, 0.82), transparent 44%),
+    radial-gradient(circle at 48% 48%, transparent 0 32%, rgba(1, 5, 8, 0.24) 78%);
+}
+
+.campaign-shell.home-base-screen .base-lobby-topbar {
+  top: 0;
+  right: 0;
+  left: 0;
+  min-height: 86px;
+  padding: 14px clamp(18px, 2vw, 34px);
+  border-bottom: 1px solid var(--os-line);
+  background: linear-gradient(180deg, rgba(2, 8, 12, 0.98), rgba(2, 8, 12, 0.72));
+  box-shadow: none;
+}
+
+.campaign-shell.home-base-screen .base-identity {
+  min-width: 250px;
+  padding: 0 0 0 18px;
+  border: 0;
+  border-left: 3px solid var(--os-cyan);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.campaign-shell.home-base-screen .base-identity small {
+  color: var(--os-cyan);
+  font-size: 10px;
+  letter-spacing: 0.17em;
+}
+
+.campaign-shell.home-base-screen .base-identity strong {
+  color: var(--os-paper);
+  font-size: 30px;
+  letter-spacing: -0.02em;
+  text-shadow: none;
+}
+
+.campaign-shell.home-base-screen .base-identity span {
+  margin-top: 2px;
+  color: var(--os-muted);
+  font-size: 10px;
+}
+
+.campaign-shell.home-base-screen .base-currency-rail {
+  gap: 2px;
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button {
+  min-width: 142px;
+  min-height: 54px;
+  padding: 7px 14px;
+  border: 0;
+  border-left: 1px solid var(--os-line);
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0;
+  background: rgba(8, 22, 29, 0.56);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button:hover {
+  transform: none;
+  background: rgba(19, 46, 55, 0.8);
+  box-shadow: inset 0 -2px 0 var(--os-cyan);
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button > svg,
+.campaign-shell.home-base-screen .base-currency-rail button > .menu-atlas-icon,
+.campaign-shell.home-base-screen .base-currency-rail button > .generated-menu-icon {
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border: 1px solid var(--os-line);
+  color: var(--os-cyan);
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button small {
+  color: var(--os-muted);
+  font-size: 9px;
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button b {
+  color: var(--os-paper);
+  font-size: 21px;
+}
+
+.home-base-screen .base-motion-portrait,
+.home-base-screen .motion-portrait-stage {
+  z-index: 3;
+  bottom: -2%;
+  left: 31%;
+  width: min(43vw, 650px);
+  height: 92%;
+  filter: drop-shadow(0 26px 40px rgba(0, 0, 0, 0.68));
+}
+
+.home-base-screen .motion-portrait-stage::before {
+  opacity: 0.46;
+}
+
+.home-base-screen .motion-portrait-caption {
+  right: auto;
+  bottom: 18%;
+  left: 4%;
+  min-width: 180px;
+  border: 1px solid var(--os-line-strong);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.94);
+  clip-path: var(--os-cut-sm);
+}
+
+.home-base-screen .portrait-touch-hint {
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.8);
+  color: var(--os-cyan);
+}
+
+.campaign-shell.home-base-screen .base-objective {
+  top: 116px;
+  bottom: auto;
+  left: clamp(18px, 2vw, 34px);
+  width: min(28vw, 360px);
+  padding: 18px 18px 16px 22px;
+  border: 0;
+  border-left: 3px solid var(--os-acid);
+  border-radius: 0;
+  background: linear-gradient(90deg, rgba(3, 12, 17, 0.92), rgba(3, 12, 17, 0.44));
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.campaign-shell.home-base-screen .base-objective::before {
+  content: "CURRENT DIRECTIVE";
+  display: block;
+  margin-bottom: 12px;
+  color: var(--os-acid);
+  font: 600 9px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.18em;
+}
+
+.campaign-shell.home-base-screen .base-objective small {
+  color: var(--os-cyan);
+  font-size: 10px;
+}
+
+.campaign-shell.home-base-screen .base-objective strong {
+  max-width: 310px;
+  margin-top: 8px;
+  font-size: 25px;
+  line-height: 1.05;
+}
+
+.campaign-shell.home-base-screen .base-objective p {
+  margin-top: 8px;
+  color: #b4c2c6;
+  font-size: 14px;
+}
+
+.campaign-shell.home-base-screen .base-objective button {
+  min-height: 34px;
+  border-radius: 0;
+  color: var(--os-paper);
+}
+
+.campaign-shell.home-base-screen .base-lobby-navigation {
+  top: auto;
+  right: auto;
+  bottom: 24px;
+  left: clamp(18px, 2vw, 34px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(112px, 1fr));
+  gap: 2px;
+  width: min(54vw, 680px);
+}
+
+.campaign-shell.home-base-screen .base-menu-button {
+  min-height: 86px;
+  padding: 13px 14px;
+  border: 0;
+  border-top: 1px solid var(--os-line);
+  border-left: 0;
+  border-radius: 0;
+  background: rgba(4, 14, 19, 0.9);
+  box-shadow: none;
+  backdrop-filter: none;
+  clip-path: var(--os-cut-sm);
+}
+
+.campaign-shell.home-base-screen .base-menu-button::before {
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--os-cyan);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms ease;
+}
+
+.campaign-shell.home-base-screen .base-menu-button:hover {
+  transform: translateY(-6px);
+  border-color: transparent;
+  background: rgba(13, 36, 45, 0.98);
+  box-shadow: none;
+}
+
+.campaign-shell.home-base-screen .base-menu-button:hover::before {
+  width: 100%;
+  transform: scaleX(1);
+}
+
+.campaign-shell.home-base-screen .base-menu-button > svg,
+.campaign-shell.home-base-screen .base-menu-button > .menu-atlas-icon,
+.campaign-shell.home-base-screen .base-menu-button > .generated-menu-icon,
+.campaign-shell.home-base-screen .base-menu-button span:first-of-type {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--os-cyan);
+  box-shadow: none;
+}
+
+.campaign-shell.home-base-screen .base-menu-button small {
+  max-width: 104px;
+  overflow: hidden;
+  color: var(--os-dim);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campaign-shell.home-base-screen .base-menu-button strong {
+  font-size: 18px;
+}
+
+.home-base-screen .base-facility-position {
+  display: none;
+}
+
+.campaign-shell.home-base-screen .base-primary-actions {
+  right: clamp(18px, 2.6vw, 42px);
+  bottom: 26px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "sortie sortie"
+    "character defense";
+  gap: 2px;
+  width: min(34vw, 480px);
+}
+
+.campaign-shell.home-base-screen .base-sortie-action {
+  grid-area: sortie;
+  min-height: 112px;
+  padding: 20px 22px;
+  border: 1px solid var(--os-acid);
+  border-radius: 0;
+  background: linear-gradient(100deg, #c8f150, var(--os-acid)) !important;
+  color: #06100b;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.48);
+  clip-path: var(--os-cut-md);
+}
+
+.campaign-shell.home-base-screen .base-sortie-action::before {
+  content: "01";
+  position: absolute;
+  right: 64px;
+  bottom: -17px;
+  color: rgba(3, 12, 8, 0.16);
+  font-size: 94px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action::after {
+  display: none;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action:hover {
+  transform: translateY(-5px);
+  background: #e8ff8d !important;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.58);
+}
+
+.campaign-shell.home-base-screen .base-sortie-action small,
+.campaign-shell.home-base-screen .base-sortie-action strong,
+.campaign-shell.home-base-screen .base-sortie-action svg {
+  position: relative;
+  z-index: 1;
+  color: #06100b;
+  text-shadow: none;
+  filter: none;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action .generated-menu-icon {
+  border: 1px solid rgba(215, 255, 72, 0.5);
+  background: #07100b !important;
+  color: var(--os-acid) !important;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action .generated-menu-icon > svg {
+  color: var(--os-acid) !important;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action small {
+  font-size: 10px;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action strong {
+  font-size: 29px;
+}
+
+.campaign-shell.home-base-screen .base-character-action,
+.campaign-shell.home-base-screen .base-defense-action {
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(4, 14, 19, 0.94);
+  box-shadow: none;
+  backdrop-filter: none;
+  clip-path: var(--os-cut-sm);
+}
+
+.campaign-shell.home-base-screen .base-character-action {
+  grid-area: character;
+}
+
+.campaign-shell.home-base-screen .base-defense-action {
+  grid-area: defense;
+}
+
+.campaign-shell.home-base-screen .base-character-action:hover,
+.campaign-shell.home-base-screen .base-defense-action:hover {
+  transform: translateY(-3px);
+  border-color: var(--os-cyan);
+  background: rgba(12, 35, 43, 0.98);
+  box-shadow: none;
+}
+
+.campaign-shell.home-base-screen .base-character-action small,
+.campaign-shell.home-base-screen .base-defense-action small {
+  color: var(--os-muted);
+  font: 400 8px/1 "IBM Plex Mono", monospace;
+}
+
+.campaign-shell.home-base-screen .base-character-action b,
+.campaign-shell.home-base-screen .base-defense-action b {
+  color: var(--os-paper);
+  font-size: 16px;
+}
+
+@keyframes os-intro-art {
+  from { transform: scale(1.07); filter: saturate(0.72) contrast(1.12); }
+  to { transform: scale(1.025); filter: saturate(0.86) contrast(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-cinematic .intro-key-art,
+  .save-slot-card,
+  .base-menu-button,
+  .base-sortie-action {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   FACILITIES // full-screen workstations, not floating card galleries
+   -------------------------------------------------------------------------- */
+
+.base-facility-panel,
+.character-information-panel {
+  inset: 0;
+  width: 100%;
+  height: 100svh;
+  max-width: none;
+  max-height: none;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--os-black) !important;
+  box-shadow: none !important;
+  clip-path: none;
+}
+
+.base-facility-panel::before,
+.character-information-panel::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(118, 242, 247, 0.035) 1px, transparent 1px),
+    linear-gradient(rgba(118, 242, 247, 0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.base-facility-panel .facility-key-art,
+.character-info-environment {
+  opacity: 0.26;
+  filter: saturate(0.66) contrast(1.15);
+}
+
+.base-facility-panel > header {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  min-height: 112px;
+  padding: 20px clamp(26px, 4vw, 68px);
+  border-bottom: 1px solid var(--os-line) !important;
+  background: rgba(3, 10, 14, 0.9);
+}
+
+.base-facility-panel > header > span {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 1px solid var(--os-line-strong) !important;
+  border-radius: 0 !important;
+  background: rgba(118, 242, 247, 0.07) !important;
+  color: var(--os-cyan) !important;
+  box-shadow: none !important;
+  clip-path: var(--os-cut-sm);
+}
+
+.base-facility-panel > header small {
+  color: var(--os-cyan) !important;
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.15em !important;
+}
+
+.base-facility-panel > header h2 {
+  margin: 5px 0 2px;
+  color: var(--os-paper) !important;
+  font-size: clamp(30px, 3vw, 48px) !important;
+  line-height: 0.96;
+  text-shadow: none !important;
+}
+
+.base-facility-panel > header p {
+  max-width: 760px;
+  color: var(--os-muted);
+  font-size: 13px;
+}
+
+.base-facility-panel .facility-resource {
+  position: absolute;
+  z-index: 3;
+  top: 132px;
+  left: clamp(26px, 4vw, 68px);
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 16px;
+  width: 250px;
+  padding: 16px 18px;
+  border: 0 !important;
+  border-left: 3px solid var(--os-acid) !important;
+  border-radius: 0;
+  background: rgba(3, 12, 17, 0.9) !important;
+  box-shadow: none !important;
+}
+
+.base-facility-panel .facility-resource small {
+  color: var(--os-muted);
+  font: 500 9px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.1em;
+}
+
+.base-facility-panel .facility-resource strong {
+  grid-row: span 2;
+  color: var(--os-paper);
+  font-size: 34px;
+}
+
+.base-facility-panel .facility-resource span {
+  color: var(--os-dim);
+  font-size: 10px;
+}
+
+.base-facility-panel .facility-upgrade-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+  gap: 2px;
+  margin: 20px clamp(26px, 4vw, 68px) 0 clamp(314px, 24vw, 370px);
+  padding: 0;
+}
+
+.base-facility-panel .facility-upgrade {
+  min-height: 272px;
+  padding: 20px;
+  border: 0 !important;
+  border-top: 2px solid var(--os-line-strong) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.055) !important;
+  border-radius: 0 !important;
+  background: rgba(5, 17, 23, 0.92) !important;
+  box-shadow: none !important;
+  clip-path: var(--os-cut-sm);
+  transition: transform 180ms var(--os-ease), background 180ms ease;
+}
+
+.base-facility-panel .facility-upgrade:nth-child(even) {
+  transform: translateY(18px);
+}
+
+.base-facility-panel .facility-upgrade:hover {
+  transform: translateY(-5px) !important;
+  background: rgba(12, 34, 42, 0.98) !important;
+  box-shadow: none !important;
+}
+
+.base-facility-panel .facility-upgrade.is-purchasable {
+  border-top-color: var(--os-acid) !important;
+}
+
+.base-facility-panel .facility-upgrade > header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.base-facility-panel .upgrade-index-badge {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--os-line) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--os-cyan) !important;
+  font: 600 12px/1 "IBM Plex Mono", monospace;
+}
+
+.base-facility-panel .facility-upgrade h3 {
+  color: var(--os-paper) !important;
+  font-size: 22px !important;
+}
+
+.base-facility-panel .facility-upgrade > p {
+  min-height: 52px;
+  color: var(--os-muted);
+  font-size: 13px;
+}
+
+.base-facility-panel .facility-upgrade dl {
+  border: 0;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.base-facility-panel .facility-upgrade dl > div {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.base-facility-panel .facility-upgrade button.command-ui-button {
+  min-height: 44px;
+  border: 1px solid var(--os-line) !important;
+  background: transparent !important;
+  color: var(--os-paper) !important;
+  box-shadow: none !important;
+}
+
+.base-facility-panel .facility-upgrade button.is-ready-cta {
+  border-color: var(--os-acid) !important;
+  background: var(--os-acid) !important;
+  color: #07100b !important;
+}
+
+.base-facility-panel .facility-exchange-panel {
+  position: relative;
+  z-index: 2;
+  margin: 26px clamp(26px, 4vw, 68px) 28px clamp(314px, 24vw, 370px);
+  border: 0 !important;
+  border-top: 1px solid var(--os-line) !important;
+  border-radius: 0 !important;
+  background: rgba(3, 11, 16, 0.86) !important;
+  box-shadow: none !important;
+}
+
+/* Character dossier */
+.character-information-panel {
+  display: grid;
+  grid-template: 86px minmax(0, 1fr) / minmax(360px, 40vw) minmax(0, 1fr) 104px;
+}
+
+.character-info-topbar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 20px;
+  min-height: 86px;
+  padding: 12px 24px 12px 34px;
+  border-bottom: 1px solid var(--os-line);
+  background: rgba(3, 10, 14, 0.94);
+}
+
+.character-info-topbar > div:first-child {
+  padding-left: 14px;
+  border-left: 3px solid var(--os-cyan);
+}
+
+.character-info-topbar small {
+  color: var(--os-cyan);
+  font: 600 9px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.13em;
+}
+
+.character-info-topbar strong {
+  color: var(--os-paper);
+  font-size: 25px;
+}
+
+.character-core-balance {
+  min-height: 46px;
+  border: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(118, 242, 247, 0.055);
+  clip-path: var(--os-cut-sm);
+}
+
+.character-art-stage {
+  grid-column: 1;
+  grid-row: 2;
+  z-index: 2;
+  min-height: 0;
+  border: 0;
+  border-right: 1px solid var(--os-line);
+  background: linear-gradient(180deg, rgba(7, 21, 28, 0.18), rgba(3, 10, 14, 0.86));
+}
+
+.character-art-stage img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 24px 28px rgba(0, 0, 0, 0.66));
+}
+
+.character-art-stage figcaption {
+  padding: 46px 28px 26px;
+  border-left: 3px solid var(--os-cyan);
+  background: linear-gradient(0deg, rgba(2, 8, 12, 0.98), rgba(2, 8, 12, 0));
+}
+
+.character-art-stage figcaption h2 {
+  color: var(--os-paper);
+  font-size: clamp(42px, 5vw, 72px);
+  line-height: 0.84;
+  text-shadow: none;
+}
+
+.character-data-console {
+  grid-column: 2;
+  grid-row: 2;
+  z-index: 2;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  background: rgba(3, 11, 16, 0.84);
+}
+
+.character-info-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 58px;
+  border-bottom: 1px solid var(--os-line);
+}
+
+.character-info-tabs button {
+  border: 0;
+  border-right: 1px solid var(--os-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--os-muted);
+}
+
+.character-info-tabs button.is-active {
+  background: rgba(118, 242, 247, 0.09);
+  box-shadow: inset 0 -3px 0 var(--os-cyan);
+  color: var(--os-paper);
+}
+
+.character-profile-content,
+.character-upgrade-content {
+  height: calc(100% - 58px);
+  overflow: auto;
+  padding: clamp(22px, 3vw, 42px);
+  scrollbar-color: var(--os-cyan) rgba(255, 255, 255, 0.04);
+}
+
+.character-profile-content > header h3,
+.character-upgrade-content > header h3 {
+  color: var(--os-paper);
+  font-size: clamp(28px, 3vw, 42px);
+}
+
+.character-stat-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.character-stat-grid div {
+  min-height: 66px;
+  border: 0;
+  border-top: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(118, 242, 247, 0.035);
+}
+
+.character-stat-grid dd {
+  color: var(--os-cyan);
+  font: 600 20px/1 "IBM Plex Mono", monospace;
+}
+
+.character-active-kit > div {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+}
+
+.character-active-kit article {
+  min-height: 92px;
+  border: 0;
+  border-top: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(6, 20, 27, 0.82);
+}
+
+.character-active-kit article kbd {
+  border-radius: 0;
+  background: var(--os-paper);
+  color: var(--os-ink);
+}
+
+.character-weapon-options {
+  gap: 2px;
+}
+
+.character-weapon-card,
+.character-upgrade-row {
+  border: 0;
+  border-left: 2px solid var(--os-line) !important;
+  border-radius: 0;
+  background: rgba(7, 22, 29, 0.86);
+  box-shadow: none;
+  clip-path: var(--os-cut-sm);
+}
+
+.character-weapon-card.is-equipped,
+.character-upgrade-row.is-purchasable {
+  border-left-color: var(--os-acid) !important;
+}
+
+.character-roster-rail {
+  grid-column: 3;
+  grid-row: 2;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border-left: 1px solid var(--os-line);
+  background: rgba(2, 8, 12, 0.94);
+}
+
+.character-roster-rail button {
+  width: 80px;
+  min-height: 96px;
+  border: 1px solid var(--os-line);
+  border-radius: 0;
+  background: transparent;
+  clip-path: var(--os-cut-sm);
+}
+
+.character-roster-rail button.is-active {
+  border-color: var(--os-acid);
+  box-shadow: inset 0 -3px 0 var(--os-acid);
+}
+
+.character-portrait-toggle {
+  z-index: 7;
+  top: 98px;
+  left: 20px;
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.9);
+  color: var(--os-muted);
+}
+
+/* --------------------------------------------------------------------------
+   SORTIE // map-first operation browser and compact dossier
+   -------------------------------------------------------------------------- */
+
+.region-select-screen .region-map-shade {
+  background:
+    linear-gradient(90deg, rgba(2, 7, 10, 0.8), transparent 34%, rgba(2, 7, 10, 0.14) 70%, rgba(2, 7, 10, 0.5)),
+    linear-gradient(0deg, rgba(2, 7, 10, 0.72), transparent 42%);
+}
+
+.region-select-heading {
+  z-index: 3;
+  top: clamp(22px, 4vh, 48px);
+  left: clamp(24px, 4vw, 64px);
+  max-width: min(620px, 48vw);
+}
+
+.region-select-heading > small {
+  color: var(--os-cyan);
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.16em;
+}
+
+.region-select-heading h1 {
+  margin-top: 18px;
+  color: var(--os-paper);
+  font-size: clamp(50px, 5vw, 78px);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+.region-select-heading h1 span {
+  color: var(--os-cyan);
+  font-size: 0.42em;
+  letter-spacing: 0;
+}
+
+.region-world-map .region-map-hotspot {
+  width: clamp(250px, 20vw, 330px);
+  min-height: 92px;
+  padding: 14px 42px 14px 64px;
+  border: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.88);
+  color: var(--os-paper);
+  clip-path: var(--os-cut-sm);
+  box-shadow: var(--os-shadow);
+}
+
+.region-world-map .region-map-hotspot.is-available {
+  border-color: var(--os-cyan);
+}
+
+.region-world-map .region-map-hotspot.is-available:hover {
+  transform: translate(-2px, -4px);
+  border-color: var(--os-acid);
+  background: rgba(11, 31, 38, 0.96);
+}
+
+.region-map-hotspot > i {
+  width: 42px;
+  height: 42px;
+  border-color: var(--os-cyan);
+  border-radius: 0;
+  transform: rotate(45deg);
+}
+
+.region-map-hotspot > i > i {
+  transform: rotate(-45deg);
+}
+
+.region-map-hotspot > span,
+.region-map-hotspot > small {
+  color: var(--os-muted);
+  font: 500 9px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.1em;
+}
+
+.region-map-hotspot > strong {
+  color: var(--os-paper);
+  font-size: 24px;
+}
+
+.region-select-screen.has-cluster .region-card-grid {
+  z-index: 3;
+  top: 210px;
+  right: auto;
+  bottom: 30px;
+  left: clamp(24px, 4vw, 64px);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  width: min(410px, 34vw);
+  overflow: visible;
+}
+
+.region-select-screen.has-cluster .region-card {
+  min-height: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-left: 2px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.88);
+  clip-path: var(--os-cut-sm);
+  box-shadow: none;
+}
+
+.region-select-screen.has-cluster .region-card:hover:not(:disabled),
+.region-select-screen.has-cluster .region-card.is-completed {
+  transform: translateX(8px);
+  border-left-color: var(--os-acid);
+  background: rgba(11, 31, 38, 0.96);
+}
+
+.region-select-screen.has-cluster .region-card > span {
+  color: var(--os-cyan);
+  font: 600 9px/1 "IBM Plex Mono", monospace;
+}
+
+.region-select-screen.has-cluster .region-card strong {
+  margin-top: 6px;
+  font-size: 25px;
+}
+
+.region-select-screen.has-cluster .region-card p {
+  margin: 6px 0;
+  color: var(--os-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.region-select-screen.has-cluster .region-threat {
+  display: none;
+}
+
+.region-select-screen.has-cluster .region-card small,
+.region-select-screen.has-cluster .region-card b {
+  font-size: 10px;
+}
+
+.region-card-position,
+.region-mobile-swipe-hint {
+  display: none !important;
+}
+
+.region-focus-background {
+  object-position: center;
+  filter: saturate(0.9) contrast(1.12);
+}
+
+.region-sortie-dialog {
+  z-index: 20;
+  top: 50%;
+  right: clamp(24px, 4vw, 64px);
+  bottom: auto;
+  left: auto;
+  width: min(900px, 68vw);
+  max-height: calc(100svh - 54px);
+  padding: 0;
+  transform: translateY(-50%);
+  overflow: hidden auto;
+  border: 1px solid var(--os-line-strong);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.97);
+  clip-path: var(--os-cut-md);
+  box-shadow: var(--os-shadow);
+}
+
+/* Beat the legacy deployment geometry without relying on transform side effects. */
+.campaign-shell.region-select-screen.has-selection > .region-sortie-dialog {
+  top: 50%;
+  right: clamp(24px, 4vw, 64px);
+  bottom: auto;
+  left: auto;
+  width: min(900px, 68vw);
+  max-width: none;
+  max-height: calc(100svh - 54px);
+  padding: 0;
+  transform: translateY(-50%);
+  overflow: hidden auto;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-layout {
+  padding: 0;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(360px, 1.28fr);
+  gap: 1px;
+}
+
+.campaign-shell.region-select-screen.has-selection .region-sortie-command-footer {
+  padding: 8px 12px 8px 20px;
+}
+
+.region-sortie-command-header {
+  min-height: 58px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--os-line);
+  background: rgba(7, 22, 29, 0.9);
+}
+
+.region-sortie-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(360px, 1.28fr);
+  gap: 1px;
+  background: var(--os-line);
+}
+
+.region-sortie-briefing,
+.sortie-character-loadout {
+  padding: 22px;
+  background: var(--os-panel-solid);
+}
+
+.region-sortie-briefing h2 {
+  font-size: clamp(34px, 3.5vw, 52px);
+  line-height: 0.9;
+}
+
+.region-sortie-briefing h2 em {
+  color: var(--os-cyan);
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.17em;
+}
+
+.region-sortie-rewards {
+  display: grid;
+  gap: 2px;
+}
+
+.region-sortie-rewards .reward-tier {
+  border: 0;
+  border-left: 2px solid var(--os-amber);
+  border-radius: 0;
+  background: rgba(255, 189, 91, 0.055);
+}
+
+.reward-chips span {
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.sortie-character-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.sortie-character-card {
+  min-height: 190px;
+  border: 0;
+  border-top: 2px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(7, 22, 29, 0.88);
+  clip-path: var(--os-cut-sm);
+}
+
+.sortie-character-card.is-selected {
+  border-top-color: var(--os-acid);
+  background: linear-gradient(160deg, rgba(45, 69, 36, 0.6), rgba(7, 22, 29, 0.94));
+}
+
+.sortie-character-card img {
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.6));
+}
+
+.region-sortie-command-footer {
+  min-height: 70px;
+  padding: 8px 12px 8px 20px;
+  border-top: 1px solid var(--os-line);
+  background: rgba(3, 10, 14, 0.98);
+}
+
+.region-sortie-launch {
+  min-width: 320px;
+  min-height: 54px;
+  border: 1px solid var(--os-acid) !important;
+  background: var(--os-acid) !important;
+  color: #07100b !important;
+}
+
+.region-sortie-launch small,
+.region-sortie-launch strong,
+.region-sortie-launch svg {
+  color: #07100b !important;
+}
+
+/* --------------------------------------------------------------------------
+   DIALOGUE / TUTORIAL / RECRUIT // readable narrative stage
+   -------------------------------------------------------------------------- */
+
+.base-dialogue-panel {
+  z-index: 40;
+  background: rgba(1, 5, 8, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.base-dialogue-card {
+  right: clamp(24px, 5vw, 76px);
+  bottom: clamp(24px, 6vh, 70px);
+  left: clamp(24px, 5vw, 76px);
+  min-height: 210px;
+  padding: 24px 28px 22px min(30vw, 420px);
+  border: 0;
+  border-top: 2px solid var(--os-cyan);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.97);
+  clip-path: var(--os-cut-md);
+  box-shadow: var(--os-shadow);
+}
+
+.base-dialogue-card > img {
+  left: 16px;
+  bottom: 0;
+  width: min(28vw, 390px);
+  height: calc(100% + 140px);
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(14px 14px 22px rgba(0, 0, 0, 0.54));
+}
+
+.base-dialogue-speaker {
+  color: var(--os-cyan);
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.15em;
+}
+
+.base-dialogue-copy {
+  color: var(--os-paper);
+  font-size: clamp(20px, 2vw, 30px);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.base-dialogue-next {
+  min-width: 150px;
+  min-height: 50px;
+  border: 1px solid var(--os-acid);
+  border-radius: 0;
+  background: var(--os-acid);
+  color: #07100b;
+  clip-path: var(--os-cut-sm);
+}
+
+.ability-guide-screen .guide-console,
+.defense-guide-card,
+.mika-recruit-screen .mika-recruit-dialog {
+  border: 1px solid var(--os-line-strong);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.96);
+  clip-path: var(--os-cut-md);
+  box-shadow: var(--os-shadow);
+}
+
+.ability-guide-screen .guide-console button,
+.defense-guide-card button,
+.mika-recruit-screen button {
+  border-radius: 0;
+  clip-path: var(--os-cut-sm);
+}
+
+/* --------------------------------------------------------------------------
+   OVERLOAD REWARD // decisive three-column combat interrupt
+   -------------------------------------------------------------------------- */
+
+.reward-backdrop {
+  background: rgba(1, 5, 8, 0.78);
+  backdrop-filter: blur(6px) saturate(0.7);
+}
+
+.reward-modal {
+  width: min(1120px, calc(100vw - 44px));
+  max-height: calc(100svh - 44px);
+  padding: 28px 30px 24px;
+  border: 1px solid var(--os-line-strong);
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, rgba(118, 242, 247, 0.025) 1px, transparent 1px),
+    linear-gradient(rgba(118, 242, 247, 0.025) 1px, transparent 1px),
+    rgba(3, 11, 16, 0.98);
+  background-size: 44px 44px;
+  clip-path: var(--os-cut-md);
+  box-shadow: var(--os-shadow);
+}
+
+.reward-modal h2 {
+  color: var(--os-paper);
+  font-size: clamp(38px, 4vw, 58px);
+  line-height: 0.9;
+}
+
+.reward-kicker {
+  color: var(--os-cyan);
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.13em;
+}
+
+.reward-options {
+  gap: 2px;
+}
+
+.reward-card {
+  min-height: 330px;
+  border: 0;
+  border-top: 2px solid var(--os-line-strong);
+  border-radius: 0;
+  background: rgba(5, 17, 23, 0.96);
+  clip-path: var(--os-cut-sm);
+  box-shadow: none;
+}
+
+.reward-card:hover,
+.reward-card:focus-visible {
+  transform: translateY(-7px);
+  border-top-color: var(--os-acid);
+  background: rgba(12, 34, 42, 0.98);
+}
+
+.reward-status-ribbon {
+  border-radius: 0;
+  color: #06100b;
+}
+
+.reward-card-footer {
+  border-top: 1px solid var(--os-line);
+}
+
+/* --------------------------------------------------------------------------
+   COMBAT // protected playfield, low-profile command instruments
+   -------------------------------------------------------------------------- */
+
+.expedition-game.is-phaser-runtime {
+  background: #020609;
+}
+
+.expedition-canvas-frame::after {
+  content: "";
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.22);
+}
+
+.expedition-hud {
+  top: max(10px, env(safe-area-inset-top));
+  right: 50%;
+  left: auto;
+  width: min(520px, 48vw);
+  min-height: 52px;
+  padding: 6px 10px;
+  transform: translateX(50%);
+  border: 0;
+  border-top: 1px solid var(--os-line-strong);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.88);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.36);
+  clip-path: var(--os-cut-sm);
+  backdrop-filter: blur(5px);
+}
+
+.progress-hud,
+.route-objective {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  grid-template-rows: auto 3px;
+  gap: 4px 12px;
+  align-items: center;
+}
+
+.progress-hud > span,
+.progress-hud > small,
+.progress-hud > em,
+.route-objective > span,
+.route-objective > small,
+.route-objective > em,
+.route-objective > b {
+  color: var(--os-muted);
+  font: 500 9px/1 "IBM Plex Mono", monospace;
+}
+
+.progress-hud > strong,
+.route-objective > strong {
+  color: var(--os-paper);
+  font-size: 18px;
+  text-align: center;
+}
+
+.progress-hud > i,
+.route-objective > div {
+  grid-column: 1 / -1;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-hud > i > i,
+.route-objective > div > i {
+  background: linear-gradient(90deg, var(--os-cyan), var(--os-acid));
+}
+
+.expedition-hud-actions {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  display: flex;
+  gap: 2px;
+}
+
+.expedition-hud-actions button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.88);
+  color: var(--os-paper);
+  clip-path: var(--os-cut-sm);
+}
+
+.expedition-combat-dock {
+  right: 50%;
+  bottom: max(0px, env(safe-area-inset-bottom));
+  left: auto;
+  width: min(760px, calc(100vw - 300px));
+  min-height: 88px;
+  padding: 7px 9px 8px;
+  transform: translateX(50%);
+  border: 0;
+  border-top: 1px solid var(--os-line-strong);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.92);
+  box-shadow: 0 -14px 30px rgba(0, 0, 0, 0.38);
+  clip-path: var(--os-cut-sm);
+  backdrop-filter: blur(5px);
+}
+
+.expedition-combat-dock .vital-cluster {
+  display: grid;
+  grid-template-columns: auto auto minmax(120px, 1fr);
+  gap: 6px 10px;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 4px 6px;
+  border-bottom: 1px solid var(--os-line);
+}
+
+.vital-cluster > span {
+  color: var(--os-muted);
+  font: 500 9px/1 "IBM Plex Mono", monospace;
+}
+
+.vital-cluster > strong,
+.vital-cluster > b {
+  color: var(--os-paper);
+  font: 600 19px/1 "IBM Plex Mono", monospace;
+}
+
+.vital-cluster > progress,
+.vital-cluster > .vital-bar {
+  height: 5px;
+}
+
+.combat-ability-grid,
+.combat-dock-abilities {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+  padding-top: 4px;
+}
+
+.combat-ability-button,
+.combat-ability-chip {
+  min-width: 0;
+  min-height: 46px;
+  padding: 3px 5px 3px 42px;
+  border: 0;
+  border-left: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(7, 23, 30, 0.78);
+  clip-path: var(--os-cut-sm);
+}
+
+.combat-ability-button:hover:not(:disabled),
+.combat-ability-chip:hover:not(:disabled) {
+  background: rgba(17, 46, 55, 0.96);
+  box-shadow: inset 0 -2px 0 var(--os-acid);
+}
+
+.combat-ability-button > span:first-child,
+.combat-ability-chip > span:first-child,
+.combat-ability-icon {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  width: 34px;
+  height: 34px;
+}
+
+.combat-ability-button kbd,
+.combat-ability-chip kbd {
+  position: absolute;
+  z-index: 4;
+  top: -3px;
+  left: -3px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 19px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: var(--os-paper);
+  color: #06100b;
+  font: 700 10px/1 "IBM Plex Mono", monospace;
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.48);
+}
+
+.combat-ability-copy strong {
+  overflow: hidden;
+  color: var(--os-paper);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combat-ability-copy b {
+  color: var(--os-acid);
+  font: 500 8px/1 "IBM Plex Mono", monospace;
+}
+
+.combat-ability-cooldown-badge,
+.combat-ability-active-badge {
+  border-radius: 0;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.expedition-minimap,
+.route-minimap {
+  right: max(0px, env(safe-area-inset-right));
+  bottom: max(0px, env(safe-area-inset-bottom));
+  width: 190px;
+  height: 190px;
+  border: 0;
+  border-top: 1px solid var(--os-line-strong);
+  border-left: 1px solid var(--os-line-strong);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.9);
+  box-shadow: -12px -12px 28px rgba(0, 0, 0, 0.35);
+  clip-path: none;
+}
+
+.expedition-minimap > header,
+.route-minimap > header {
+  height: 28px;
+  padding: 0 8px;
+  background: rgba(118, 242, 247, 0.06);
+}
+
+.expedition-minimap > header strong,
+.expedition-minimap > header span,
+.route-minimap > header strong,
+.route-minimap > header span {
+  color: var(--os-cyan);
+  font: 600 8px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.08em;
+}
+
+.expedition-input-hint,
+.transient-controls {
+  bottom: 10px;
+  left: 12px;
+  padding: 7px 10px;
+  border-left: 2px solid var(--os-cyan);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.76);
+  color: var(--os-muted);
+  font: 500 9px/1 "IBM Plex Mono", monospace;
+}
+
+.event-banner {
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.96);
+  clip-path: var(--os-cut-sm);
+}
+
+.expedition-game.is-low-health::before {
+  box-shadow: inset 0 0 80px rgba(255, 77, 95, 0.36);
+}
+
+/* --------------------------------------------------------------------------
+   DEFENSE // compact deploy console
+   -------------------------------------------------------------------------- */
+
+.defense-runtime-screen {
+  background: #020609;
+}
+
+.defense-combat-hud {
+  top: 0;
+  right: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: 260px minmax(260px, 1fr) 420px 96px;
+  gap: 2px;
+  min-height: 64px;
+  padding: 6px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--os-line-strong);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.9);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
+  clip-path: none;
+}
+
+.defense-rhea-chip,
+.defense-core-status,
+.defense-wave-status,
+.defense-exit {
+  min-height: 50px;
+  border: 0;
+  border-left: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(7, 23, 30, 0.6);
+}
+
+.defense-rhea-chip img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.defense-wave-status span {
+  min-width: 76px;
+  border-right: 1px solid var(--os-line);
+}
+
+.defense-wave-status small,
+.defense-core-status small,
+.defense-rhea-chip small {
+  color: var(--os-muted);
+  font: 500 8px/1 "IBM Plex Mono", monospace;
+}
+
+.defense-wave-status b,
+.defense-core-status b,
+.defense-rhea-chip b {
+  color: var(--os-paper);
+  font-size: 18px;
+}
+
+.defense-command-panel,
+.defense-command-dock {
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) 330px;
+  gap: 2px;
+  min-height: 102px;
+  padding: 7px;
+  border: 0;
+  border-top: 1px solid var(--os-line-strong);
+  border-radius: 0;
+  background: rgba(3, 11, 16, 0.92);
+  box-shadow: 0 -14px 32px rgba(0, 0, 0, 0.36);
+  clip-path: var(--os-cut-sm);
+}
+
+.defense-selection-status,
+.defense-command-dock > header {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-left: 2px solid var(--os-cyan);
+  background: rgba(7, 23, 30, 0.72);
+}
+
+.defense-tower-deck,
+.defense-tower-palette {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.defense-tower-deck > button,
+.defense-tower-palette > button {
+  min-width: 0;
+  min-height: 84px;
+  padding: 8px 8px 8px 42px;
+  border: 0;
+  border-top: 1px solid var(--os-line);
+  border-radius: 0;
+  background: rgba(7, 23, 30, 0.72);
+  clip-path: var(--os-cut-sm);
+}
+
+.defense-tower-deck > button:hover:not(:disabled),
+.defense-tower-deck > button.is-selected,
+.defense-tower-palette > button:hover:not(:disabled),
+.defense-tower-palette > button.is-selected {
+  border-top-color: var(--os-acid);
+  background: rgba(19, 46, 55, 0.94);
+}
+
+.defense-tower-deck > button kbd,
+.defense-tower-palette > button kbd {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 20px;
+  border: 0;
+  border-radius: 0;
+  background: var(--os-paper);
+  color: var(--os-ink);
+}
+
+.defense-command-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.defense-command-actions button {
+  min-height: 84px;
+  border-radius: 0;
+  clip-path: var(--os-cut-sm);
+}
+
+.defense-start-wave,
+.defense-wave-button {
+  border: 1px solid var(--os-acid) !important;
+  background: var(--os-acid) !important;
+  color: #07100b !important;
+}
+
+.defense-stage-select-screen .defense-stage-grid,
+.defense-stage-select-screen .defense-stage-card {
+  border-radius: 0;
+}
+
+.defense-stage-select-screen .defense-stage-card {
+  border: 0;
+  border-top: 2px solid var(--os-line);
+  background: rgba(3, 11, 16, 0.9);
+  clip-path: var(--os-cut-sm);
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE CONTRACT // mobile is a distinct command layout
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  .campaign-shell.home-base-screen .base-currency-rail button {
+    min-width: 112px;
+  }
+
+  .campaign-shell.home-base-screen .base-lobby-navigation {
+    grid-template-columns: repeat(4, minmax(96px, 1fr));
+    width: 52vw;
+  }
+
+  .campaign-shell.home-base-screen .base-menu-button {
+    padding-inline: 10px;
+  }
+
+  .campaign-shell.home-base-screen .base-primary-actions {
+    width: 38vw;
+  }
+
+  .base-facility-panel .facility-upgrade-grid {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    margin-left: 290px;
+  }
+
+  .base-facility-panel .facility-exchange-panel {
+    margin-left: 290px;
+  }
+
+  .character-information-panel {
+    grid-template-columns: minmax(310px, 36vw) minmax(0, 1fr) 86px;
+  }
+
+  .character-active-kit > div {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .region-sortie-dialog {
+    width: min(860px, 82vw);
+  }
+
+  .defense-combat-hud {
+    grid-template-columns: 220px minmax(220px, 1fr) 330px 84px;
+  }
+
+  .defense-command-panel {
+    grid-template-columns: 220px minmax(0, 1fr) 270px;
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --os-shadow: 0 14px 32px rgba(0, 0, 0, 0.66);
+  }
+
+  body {
+    overscroll-behavior: none;
+  }
+
+  .campaign-shell::after {
+    border: 0;
+  }
+
+  .campaign-back,
+  .facility-close,
+  .region-sortie-close {
+    min-height: 44px;
+    font-size: 11px;
+  }
+
+  /* Title */
+  .intro-cinematic::before {
+    background:
+      linear-gradient(0deg, rgba(1, 5, 8, 0.98) 0%, rgba(1, 5, 8, 0.82) 43%, rgba(1, 5, 8, 0.08) 76%),
+      linear-gradient(90deg, rgba(1, 5, 8, 0.5), transparent 62%);
+  }
+
+  .intro-cinematic::after {
+    display: none;
+  }
+
+  .intro-cinematic .intro-key-art {
+    height: 70%;
+    object-position: 60% top;
+    transform: none;
+  }
+
+  .intro-minimal-content {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    padding: 24px 20px max(18px, env(safe-area-inset-bottom));
+    transform: none;
+    border-left: 0;
+    border-top: 2px solid var(--os-cyan);
+    background: linear-gradient(0deg, rgba(2, 8, 12, 1), rgba(2, 8, 12, 0.93));
+  }
+
+  .intro-minimal-content > small:first-child {
+    margin-bottom: 10px;
+    font-size: 9px;
+  }
+
+  .intro-minimal-content h1 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0 10px;
+    font-size: clamp(46px, 14.5vw, 66px);
+    line-height: 0.83;
+  }
+
+  .intro-minimal-content h1 em {
+    margin-top: 0.2em;
+  }
+
+  .intro-minimal-content h1 b {
+    width: 100%;
+    margin-top: 1.2em;
+    font-size: 11px;
+  }
+
+  .intro-minimal-content > p {
+    margin: 15px 0 14px;
+    font-size: 15px;
+    line-height: 1.42;
+  }
+
+  .intro-start.primary-cta {
+    width: 100%;
+    min-height: 58px;
+    font-size: 18px;
+  }
+
+  .intro-start-note,
+  .intro-minimal-controls {
+    display: none;
+  }
+
+  .intro-music-toggle {
+    position: absolute;
+    right: 18px;
+    bottom: calc(100% + 14px);
+    min-width: 48px;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+  }
+
+  .intro-music-toggle span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .intro-mobile-controls {
+    display: none;
+  }
+
+  /* Save profiles */
+  .save-slot-screen {
+    min-height: 100svh;
+    padding: 18px 14px 28px;
+    overflow: auto;
+  }
+
+  .save-slot-screen .campaign-heading {
+    position: relative;
+    z-index: 3;
+  }
+
+  .save-slot-screen .campaign-heading h1 {
+    margin-top: 20px;
+    font-size: 46px;
+  }
+
+  .save-slot-screen .campaign-heading p {
+    margin-top: 9px;
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .save-slot-grid {
+    position: relative;
+    inset: auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin-top: 30px;
+  }
+
+  .save-slot-card,
+  .save-slot-card:first-child {
+    min-height: 190px;
+    padding: 18px;
+  }
+
+  .save-slot-icon-wrapper,
+  .empty-slot-mark {
+    width: 40px;
+    height: 40px;
+    margin: 15px 0 12px;
+  }
+
+  .save-slot-card > strong {
+    font-size: 25px;
+  }
+
+  /* Home base: deliberately stacked, no absolute collision */
+  .campaign-shell.home-base-screen {
+    min-height: 100svh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .home-base-screen .home-base-surface {
+    min-height: 1120px;
+  }
+
+  .home-base-screen .campaign-background {
+    position: fixed;
+    height: 100svh;
+    object-position: 54% center;
+    opacity: 0.78;
+  }
+
+  .home-base-screen .base-vignette {
+    position: fixed;
+    background:
+      linear-gradient(0deg, rgba(1, 5, 8, 0.92), transparent 45%),
+      linear-gradient(90deg, rgba(1, 5, 8, 0.46), transparent 70%);
+  }
+
+  .campaign-shell.home-base-screen .base-lobby-topbar {
+    top: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    min-height: 132px;
+    padding: max(12px, env(safe-area-inset-top)) 12px 9px;
+    background: rgba(2, 8, 12, 0.96);
+  }
+
+  .campaign-shell.home-base-screen .base-identity {
+    min-width: 0;
+    min-height: 46px;
+    padding-left: 12px;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .campaign-shell.home-base-screen .base-identity small {
+    font-size: 8px;
+  }
+
+  .campaign-shell.home-base-screen .base-identity strong {
+    font-size: 24px;
+  }
+
+  .campaign-shell.home-base-screen .base-identity span {
+    position: absolute;
+    top: 15px;
+    right: 12px;
+    width: auto;
+    font-size: 8px;
+    white-space: nowrap;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    width: 100%;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button {
+    min-width: 0;
+    min-height: 58px;
+    padding: 6px 7px;
+    border-left: 0;
+    border-top: 1px solid var(--os-line);
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button > svg,
+  .campaign-shell.home-base-screen .base-currency-rail button > .generated-menu-icon {
+    width: 29px;
+    height: 29px;
+    flex: 0 0 29px;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button small {
+    font-size: 8px;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button b {
+    font-size: 18px;
+  }
+
+  .home-base-screen .base-motion-portrait,
+  .home-base-screen .motion-portrait-stage {
+    top: 132px;
+    bottom: auto;
+    left: 50%;
+    width: min(104vw, 480px);
+    height: 430px;
+    transform: translateX(-50%);
+    filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.64));
+  }
+
+  .home-base-screen .base-motion-portrait.is-mika {
+    top: 132px;
+    bottom: auto;
+    left: 50%;
+    width: min(104vw, 480px);
+    height: 430px;
+  }
+
+  .home-base-screen .motion-portrait-body {
+    overflow: visible;
+  }
+
+  .home-base-screen .motion-portrait-caption {
+    right: 18px;
+    bottom: 8px;
+    left: auto;
+    min-width: 142px;
+    padding: 8px 10px;
+  }
+
+  .home-base-screen .motion-portrait-caption strong {
+    font-size: 21px;
+  }
+
+  .home-base-screen .portrait-touch-hint {
+    display: none;
+  }
+
+  .campaign-shell.home-base-screen .base-objective {
+    display: block !important;
+    top: 566px;
+    left: 12px;
+    width: calc(100% - 24px);
+    min-height: 116px;
+    padding: 14px 14px 12px 18px;
+    background: rgba(3, 11, 16, 0.92);
+  }
+
+  .campaign-shell.home-base-screen .base-objective::before {
+    margin-bottom: 7px;
+  }
+
+  .campaign-shell.home-base-screen .base-objective strong {
+    font-size: 21px;
+  }
+
+  .campaign-shell.home-base-screen .base-objective p {
+    font-size: 13px;
+  }
+
+  .campaign-shell.home-base-screen .base-objective .base-reward-receipt,
+  .campaign-shell.home-base-screen .base-objective > button {
+    display: none;
+  }
+
+  .campaign-shell.home-base-screen .base-primary-actions {
+    top: 704px;
+    right: 12px;
+    bottom: auto;
+    left: 12px;
+    grid-template-columns: 1fr 1fr;
+    width: auto;
+  }
+
+  .campaign-shell.home-base-screen .base-sortie-action {
+    min-height: 104px;
+    padding: 15px 17px;
+  }
+
+  .campaign-shell.home-base-screen .base-sortie-action strong {
+    font-size: 25px;
+  }
+
+  .campaign-shell.home-base-screen .base-character-action,
+  .campaign-shell.home-base-screen .base-defense-action {
+    min-height: 70px;
+    padding: 10px;
+  }
+
+  .campaign-shell.home-base-screen .base-character-action b,
+  .campaign-shell.home-base-screen .base-defense-action b {
+    font-size: 15px;
+  }
+
+  .campaign-shell.home-base-screen .base-character-action > svg:last-child,
+  .campaign-shell.home-base-screen .base-defense-action > svg:last-child {
+    display: none;
+  }
+
+  .campaign-shell.home-base-screen .base-lobby-navigation {
+    top: 910px;
+    right: auto;
+    bottom: auto;
+    left: 12px;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 96px;
+    width: calc(100% - 24px);
+    gap: 2px;
+    height: auto !important;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .campaign-shell.home-base-screen .base-lobby-navigation::-webkit-scrollbar {
+    display: none;
+  }
+
+  .campaign-shell.home-base-screen .base-menu-button {
+    width: 100%;
+    min-height: 98px;
+    scroll-snap-align: none;
+  }
+
+  .campaign-shell.home-base-screen .base-menu-button small {
+    max-width: 120px;
+    font-size: 9px;
+  }
+
+  .campaign-shell.home-base-screen .base-menu-button strong {
+    font-size: 20px;
+  }
+
+  .home-base-screen .base-facility-position {
+    display: none;
+  }
+
+  /* Facilities */
+  .base-facility-panel,
+  .character-information-panel {
+    position: fixed;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .base-facility-panel::-webkit-scrollbar,
+  .character-information-panel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .base-facility-panel > header {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 10px;
+    min-height: 92px;
+    padding: 12px;
+  }
+
+  .base-facility-panel > header > span {
+    width: 40px;
+    height: 40px;
+  }
+
+  .base-facility-panel > header h2 {
+    font-size: 28px !important;
+  }
+
+  .base-facility-panel > header small {
+    display: block;
+    overflow: hidden;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .base-facility-panel > header p {
+    display: none !important;
+  }
+
+  .base-facility-panel .facility-close {
+    width: 44px;
+    padding: 0;
+    font-size: 0;
+    color: transparent;
+  }
+
+  .base-facility-panel .facility-close svg {
+    width: 20px;
+    height: 20px;
+    color: var(--os-paper);
+  }
+
+  .base-facility-panel .facility-close kbd {
+    display: none;
+  }
+
+  .base-facility-panel .facility-resource {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    margin: 14px 12px 8px;
+  }
+
+  .base-facility-panel .facility-upgrade-grid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    margin: 0 12px;
+  }
+
+  .base-facility-panel .facility-upgrade,
+  .base-facility-panel .facility-upgrade:nth-child(even) {
+    min-height: 0;
+    padding: 17px;
+    transform: none;
+  }
+
+  .base-facility-panel .facility-upgrade > p {
+    min-height: 0;
+  }
+
+  .base-facility-panel .facility-exchange-panel {
+    margin: 14px 12px 28px;
+  }
+
+  .character-information-panel {
+    display: block;
+    height: 100svh;
+  }
+
+  .character-info-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    grid-template-columns: 1fr auto;
+    min-height: 76px;
+    padding: 10px 12px;
+  }
+
+  .character-core-balance {
+    display: none;
+  }
+
+  .campaign-shell .character-info-topbar .facility-close {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    font-size: 0;
+    color: transparent;
+    white-space: nowrap;
+    justify-content: center;
+  }
+
+  .campaign-shell .character-info-topbar .facility-close svg {
+    width: 20px;
+    height: 20px;
+    color: var(--os-paper);
+  }
+
+  .campaign-shell .character-info-topbar .facility-close kbd {
+    display: none;
+  }
+
+  .character-art-stage {
+    width: 100%;
+    height: 48svh;
+    min-height: 390px;
+    border-right: 0;
+    border-bottom: 1px solid var(--os-line);
+  }
+
+  .character-art-stage figcaption h2 {
+    font-size: 52px;
+  }
+
+  .character-data-console {
+    width: 100%;
+    min-height: 640px;
+  }
+
+  .character-profile-content,
+  .character-upgrade-content {
+    height: auto;
+    overflow: visible;
+    padding: 18px 12px 110px;
+  }
+
+  .character-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .character-active-kit > div {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .character-weapon-options {
+    grid-template-columns: 1fr;
+  }
+
+  .character-roster-rail {
+    position: fixed;
+    z-index: 12;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    padding: 7px 12px max(7px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--os-line-strong);
+    border-left: 0;
+    background: rgba(2, 8, 12, 0.98);
+  }
+
+  .character-roster-rail button {
+    width: 76px;
+    min-height: 72px;
+  }
+
+  .character-portrait-toggle {
+    top: 88px;
+    left: 12px;
+  }
+
+  /* Region map and sortie sheet */
+  .region-select-heading {
+    top: 14px;
+    right: 14px;
+    left: 14px;
+    max-width: none;
+  }
+
+  .region-select-heading h1 {
+    margin-top: 14px;
+    font-size: 42px;
+  }
+
+  .region-select-heading p {
+    font-size: 13px;
+  }
+
+  .region-world-map .region-map-hotspot {
+    width: min(270px, 72vw);
+    min-height: 94px;
+    padding: 12px 34px 12px 58px;
+  }
+
+  .region-map-hotspot > strong {
+    font-size: 21px;
+  }
+
+  .region-select-screen.has-cluster .region-card-grid {
+    top: auto;
+    right: 0;
+    bottom: 16px;
+    left: 0;
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    padding: 0 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .region-select-screen.has-cluster .region-card {
+    flex: 0 0 84vw;
+    min-height: 245px;
+    padding: 20px;
+    scroll-snap-align: center;
+  }
+
+  .region-select-screen.has-cluster .region-card:hover:not(:disabled),
+  .region-select-screen.has-cluster .region-card.is-completed {
+    transform: none;
+  }
+
+  .region-select-screen.has-cluster .region-card strong {
+    font-size: 31px;
+  }
+
+  .region-select-screen.has-cluster .region-card p {
+    font-size: 15px;
+  }
+
+  .region-select-screen.has-cluster .region-threat {
+    display: grid;
+  }
+
+  .region-card-position {
+    display: flex !important;
+    right: 14px;
+    bottom: 278px;
+    left: 14px;
+  }
+
+  .region-sortie-dialog {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 94svh;
+    transform: none;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    clip-path: none;
+  }
+
+  .campaign-shell.region-select-screen.has-selection > .region-sortie-dialog {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 94svh;
+    padding: 0;
+    transform: none;
+  }
+
+  .campaign-shell.region-select-screen.has-selection .region-sortie-layout {
+    padding: 0;
+    grid-template-columns: 1fr;
+    gap: 1px;
+  }
+
+  .region-sortie-command-header {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+  }
+
+  .region-sortie-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .region-sortie-briefing,
+  .sortie-character-loadout {
+    padding: 17px 14px;
+  }
+
+  .region-sortie-briefing h2 {
+    font-size: 38px;
+  }
+
+  .sortie-character-options {
+    grid-template-columns: 1fr;
+  }
+
+  .sortie-character-card {
+    min-height: 155px;
+  }
+
+  .region-sortie-command-footer {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+  }
+
+  .region-sortie-command-footer > span {
+    display: none;
+  }
+
+  .region-sortie-launch {
+    width: 100%;
+    min-width: 0;
+    min-height: 60px;
+  }
+
+  /* Dialogue */
+  .base-dialogue-card {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    min-height: 42svh;
+    padding: 18px 16px max(18px, env(safe-area-inset-bottom));
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    clip-path: none;
+  }
+
+  .base-dialogue-card > img {
+    right: -30px;
+    bottom: calc(100% - 24px);
+    left: auto;
+    width: 72vw;
+    height: 58svh;
+    pointer-events: none;
+  }
+
+  .base-dialogue-copy {
+    min-height: 128px;
+    font-size: 19px;
+  }
+
+  .base-dialogue-next {
+    width: 100%;
+  }
+
+  /* Reward choice */
+  .reward-backdrop {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .reward-modal {
+    width: 100%;
+    height: 100svh;
+    max-height: none;
+    box-sizing: border-box;
+    padding: max(18px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+    overflow: hidden;
+    border: 0;
+    clip-path: none;
+  }
+
+  .reward-modal h2 {
+    font-size: 40px;
+  }
+
+  .reward-modal > p {
+    font-size: 14px;
+  }
+
+  .reward-options {
+    display: flex;
+    gap: 7px;
+    padding: 4px 6vw 10px 0;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .reward-card {
+    flex: 0 0 84vw;
+    min-height: 320px;
+    height: 320px;
+    scroll-snap-align: center;
+  }
+
+  .reward-note {
+    font-size: 10px;
+  }
+
+  /* Combat HUD */
+  .expedition-hud {
+    top: max(6px, env(safe-area-inset-top));
+    right: 50%;
+    width: calc(100% - 78px);
+    min-height: 48px;
+    padding: 5px 8px;
+  }
+
+  .progress-hud,
+  .route-objective {
+    grid-template-columns: auto minmax(100px, 1fr) auto;
+    gap: 3px 6px;
+  }
+
+  .expedition-game .expedition-hud .route-objective,
+  .expedition-game.is-hud-focus .expedition-hud .route-objective {
+    min-height: 0;
+    padding: 4px 42px 4px 8px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto 3px;
+    gap: 3px 6px;
+  }
+
+  .expedition-game .route-objective > span,
+  .expedition-game.is-hud-focus .route-objective > span {
+    display: block;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .expedition-game .route-objective > strong,
+  .expedition-game.is-hud-focus .route-objective > strong {
+    grid-column: 2;
+    grid-row: 1;
+    overflow: hidden;
+    font-size: 15px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expedition-game .route-objective > b,
+  .expedition-game.is-hud-focus .route-objective > b {
+    display: block;
+    grid-column: 3;
+    grid-row: 1;
+    white-space: nowrap;
+  }
+
+  .expedition-game .route-objective > div,
+  .expedition-game.is-hud-focus .route-objective > div {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .expedition-game .route-objective .combat-entry-shield {
+    display: none;
+  }
+
+  .progress-hud > strong,
+  .route-objective > strong {
+    font-size: 15px;
+  }
+
+  .progress-hud > span,
+  .progress-hud > small,
+  .progress-hud > em,
+  .route-objective > span,
+  .route-objective > small,
+  .route-objective > em,
+  .route-objective > b {
+    font-size: 7px;
+  }
+
+  .expedition-hud-actions {
+    top: max(6px, env(safe-area-inset-top));
+    right: max(4px, env(safe-area-inset-right));
+  }
+
+  .expedition-hud-actions button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .expedition-hud-actions button:not(.expedition-pause-toggle) {
+    display: none;
+  }
+
+  .expedition-combat-dock {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    min-height: 0;
+    padding: 5px 6px max(6px, env(safe-area-inset-bottom));
+    transform: none;
+    grid-template-rows: 30px 64px;
+    gap: 2px;
+    clip-path: none;
+  }
+
+  .expedition-combat-dock .vital-cluster {
+    grid-template-columns: auto auto minmax(80px, 1fr);
+    min-height: 0;
+    height: 30px;
+    padding-bottom: 2px;
+  }
+
+  .vital-cluster > span {
+    font-size: 7px;
+  }
+
+  .vital-cluster > strong,
+  .vital-cluster > b {
+    font-size: 16px;
+  }
+
+  .combat-ability-grid,
+  .combat-dock-abilities {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1px;
+    height: 64px;
+    padding-top: 1px;
+  }
+
+  .combat-ability-button,
+  .combat-ability-chip {
+    min-height: 0;
+    height: 62px;
+    padding: 32px 2px 2px;
+    border-left: 0;
+    border-top: 1px solid var(--os-line);
+    text-align: center;
+  }
+
+  .combat-ability-button > span:first-child,
+  .combat-ability-chip > span:first-child,
+  .combat-ability-icon {
+    top: 4px;
+    left: 50%;
+    width: 32px;
+    height: 32px;
+    transform: translateX(-50%);
+  }
+
+  .combat-ability-button kbd,
+  .combat-ability-chip kbd {
+    top: -3px;
+    left: -5px;
+    min-width: 24px;
+    height: 21px;
+    font-size: 10px;
+  }
+
+  .combat-ability-copy strong {
+    display: block;
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .combat-ability-copy b {
+    display: none;
+  }
+
+  .expedition-minimap,
+  .route-minimap {
+    top: auto;
+    right: 0;
+    bottom: calc(107px + env(safe-area-inset-bottom));
+    width: 118px;
+    height: 118px;
+  }
+
+  .expedition-input-hint,
+  .transient-controls {
+    display: none;
+  }
+
+  .event-banner {
+    top: 64px;
+    width: calc(100% - 24px);
+  }
+
+  /* Defense */
+  .defense-combat-hud {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: 40px 36px;
+    min-height: 0;
+    padding: max(4px, env(safe-area-inset-top)) 4px 4px;
+    gap: 2px;
+  }
+
+  .defense-rhea-chip {
+    min-width: 0;
+  }
+
+  .defense-core-status {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 0;
+    height: 36px;
+    padding: 4px 8px;
+  }
+
+  .defense-wave-status {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+    height: 40px;
+    padding: 2px;
+    justify-content: flex-end;
+  }
+
+  .defense-wave-status span {
+    min-width: 56px;
+  }
+
+  .defense-rhea-chip {
+    display: none;
+  }
+
+  .defense-exit {
+    min-height: 0;
+    height: 40px;
+  }
+
+  .defense-runtime-screen > .defense-command-dock {
+    min-height: 0;
+    padding: 3px;
+    grid-template-rows: 34px 56px 44px;
+    gap: 2px;
+  }
+
+  .defense-runtime-screen > .defense-command-dock > header {
+    min-height: 34px;
+    height: 34px;
+    padding: 1px 3px;
+    grid-template-columns: minmax(0, 1fr) 116px;
+  }
+
+  .defense-runtime-screen > .defense-command-dock > header > span {
+    display: none;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-tower-palette {
+    display: grid;
+    height: 56px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2px;
+    overflow: hidden;
+    scrollbar-width: none;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-tower-palette::-webkit-scrollbar {
+    display: none;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-tower-palette button {
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    height: 56px;
+    padding: 3px 3px 11px;
+    grid-template-columns: 25px minmax(0, 1fr);
+    gap: 3px;
+    overflow: hidden;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-tower-palette button kbd {
+    position: absolute;
+    z-index: 2;
+    top: 1px;
+    left: 1px;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-tower-palette button > svg {
+    width: 23px;
+    height: 23px;
+    grid-column: 1;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-tower-palette button > span {
+    min-width: 0;
+    grid-column: 2;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-tower-palette button small,
+  .defense-runtime-screen > .defense-command-dock .defense-tower-name-full {
+    display: none;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-tower-name-compact {
+    display: block;
+    overflow: hidden;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-command-actions {
+    height: 44px;
+    grid-template-columns: 1fr;
+  }
+
+  .defense-runtime-screen > .defense-command-dock .defense-command-actions:has(.defense-upgrade-button) {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 44px;
+  }
+
+  .defense-runtime-screen > .defense-command-dock :is(.defense-upgrade-button, .defense-wave-button) {
+    min-height: 0;
+    height: 44px;
+  }
+
+  .defense-exit {
+    grid-column: 2;
+    grid-row: 1;
+    width: 42px;
+    font-size: 0;
+  }
+
+  .defense-command-panel,
+  .defense-command-dock {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    min-height: 176px;
+    padding: 5px 5px max(5px, env(safe-area-inset-bottom));
+    clip-path: none;
+  }
+
+  .defense-selection-status,
+  .defense-command-dock > header {
+    min-height: 38px;
+    padding: 6px 8px;
+  }
+
+  .defense-tower-deck,
+  .defense-tower-palette {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .defense-tower-deck > button,
+  .defense-tower-palette > button {
+    flex: 0 0 126px;
+    min-height: 72px;
+    scroll-snap-align: start;
+  }
+
+  .defense-command-actions {
+    grid-template-columns: 1fr 1.35fr;
+  }
+
+  .defense-command-actions button {
+    min-height: 48px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   LARK // independent Nightjar flight-operations content
+   -------------------------------------------------------------------------- */
+
+.campaign-shell.flight-ops-screen {
+  position: relative;
+  display: grid;
+  min-height: 100svh;
+  overflow: hidden;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: #02070b;
+}
+
+.flight-ops-screen .flight-ops-map {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.54;
+  filter: saturate(0.7) contrast(1.15) brightness(0.58) hue-rotate(-4deg);
+}
+
+.flight-ops-shade {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 58% 34%, rgba(51, 191, 208, 0.12), transparent 32%),
+    linear-gradient(90deg, rgba(2, 7, 11, 0.98) 0%, rgba(2, 7, 11, 0.72) 30%, rgba(2, 7, 11, 0.42) 62%, rgba(2, 7, 11, 0.86) 100%),
+    linear-gradient(0deg, rgba(2, 7, 11, 0.92), transparent 50%, rgba(2, 7, 11, 0.76));
+}
+
+.flight-ops-heading {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  min-height: 142px;
+  padding: 20px clamp(20px, 2.4vw, 44px);
+  border-bottom: 1px solid var(--os-line-strong);
+  grid-template-columns: auto minmax(360px, 1fr) auto;
+  align-items: center;
+  gap: clamp(18px, 2vw, 36px);
+  background: linear-gradient(90deg, rgba(3, 11, 16, 0.98), rgba(5, 20, 26, 0.9) 58%, rgba(3, 10, 14, 0.96));
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.48);
+}
+
+.flight-ops-heading::after {
+  content: "FLIGHT OPS // 03 ACTIVE DOCTRINES";
+  position: absolute;
+  right: clamp(20px, 2.4vw, 44px);
+  bottom: -1px;
+  padding: 4px 10px;
+  background: var(--os-cyan);
+  color: #041014;
+  font: 700 9px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.08em;
+}
+
+.flight-ops-heading > div > small {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--os-cyan);
+  font: 700 clamp(10px, 0.76vw, 12px)/1.2 "IBM Plex Mono", monospace;
+  letter-spacing: 0.12em;
+}
+
+.flight-ops-heading h1 {
+  margin: 0;
+  color: var(--os-paper);
+  font-size: clamp(34px, 3vw, 54px);
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+}
+
+.flight-ops-heading p {
+  max-width: 760px;
+  margin: 9px 0 0;
+  color: #b8c8cc;
+  font-size: clamp(12px, 0.88vw, 15px);
+  line-height: 1.45;
+}
+
+.flight-ops-record {
+  display: grid;
+  min-width: 320px;
+  margin: 0;
+  border: 1px solid var(--os-line);
+  grid-template-columns: repeat(3, 1fr);
+  background: rgba(3, 12, 17, 0.82);
+  clip-path: var(--os-cut-sm);
+}
+
+.flight-ops-record > div {
+  min-width: 94px;
+  padding: 10px 14px;
+  border-left: 1px solid var(--os-line);
+}
+
+.flight-ops-record > div:first-child {
+  border-left: 0;
+}
+
+.flight-ops-record dt {
+  color: var(--os-muted);
+  font: 600 9px/1.2 "IBM Plex Mono", monospace;
+  letter-spacing: 0.08em;
+}
+
+.flight-ops-record dd {
+  margin: 4px 0 0;
+  color: var(--os-paper);
+  font: 700 18px/1 "IBM Plex Mono", monospace;
+}
+
+.flight-ops-console {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  min-height: 0;
+  padding: clamp(16px, 1.6vw, 28px) clamp(20px, 2.4vw, 44px) clamp(20px, 2vw, 36px);
+  grid-template-columns: minmax(240px, 0.7fr) minmax(330px, 1.15fr) minmax(330px, 0.95fr);
+  grid-template-rows: minmax(148px, 0.48fr) minmax(330px, 1fr);
+  gap: clamp(12px, 1.2vw, 20px);
+}
+
+.flight-ops-lark,
+.flight-route-plot,
+.flight-plan-rail,
+.flight-plan-brief {
+  border: 1px solid var(--os-line);
+  background: rgba(3, 13, 18, 0.9);
+  box-shadow: var(--os-shadow);
+  backdrop-filter: blur(8px);
+}
+
+.flight-ops-lark {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+  grid-row: 1 / 3;
+  grid-template-rows: minmax(0, 1fr) auto;
+  border-top: 2px solid var(--os-cyan);
+  clip-path: var(--os-cut-md);
+}
+
+.flight-ops-lark::before {
+  content: "LARK // PILOT LINK";
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 16px;
+  color: var(--os-cyan);
+  font: 700 9px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.1em;
+}
+
+.flight-ops-lark-portrait {
+  min-height: 270px;
+  background-position: 100% center;
+  background-size: 300% 100%;
+  filter: saturate(0.82) contrast(1.06);
+  mask-image: linear-gradient(#000 0 72%, transparent 100%);
+}
+
+.flight-ops-lark > div:last-child {
+  position: relative;
+  z-index: 2;
+  padding: 18px;
+  border-top: 1px solid var(--os-line);
+  background: linear-gradient(0deg, rgba(2, 8, 12, 0.99), rgba(3, 14, 19, 0.9));
+}
+
+.flight-ops-lark small,
+.flight-plan-title small,
+.flight-plan-brief header small {
+  color: var(--os-cyan);
+  font: 700 9px/1.25 "IBM Plex Mono", monospace;
+  letter-spacing: 0.08em;
+}
+
+.flight-ops-lark strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 27px;
+  line-height: 1;
+}
+
+.flight-ops-lark p {
+  margin: 10px 0 0;
+  color: #d5dfe1;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.flight-route-plot {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  grid-column: 2 / 4;
+  border-top: 2px solid var(--flight-accent);
+  background:
+    radial-gradient(circle at 17% 70%, color-mix(in srgb, var(--flight-accent) 25%, transparent), transparent 13%),
+    linear-gradient(rgba(118, 242, 247, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(118, 242, 247, 0.045) 1px, transparent 1px),
+    rgba(2, 11, 16, 0.88);
+  background-size: auto, 34px 34px, 34px 34px, auto;
+  clip-path: var(--os-cut-sm);
+}
+
+.flight-route-plot::before,
+.flight-route-plot::after {
+  content: "";
+  position: absolute;
+  height: 2px;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--flight-accent), rgba(118, 242, 247, 0.22));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--flight-accent) 55%, transparent);
+}
+
+.flight-route-plot::before {
+  top: 64%;
+  left: 10%;
+  width: 72%;
+  transform: rotate(-10deg);
+}
+
+.flight-route-plot::after {
+  top: 43%;
+  left: 46%;
+  width: 42%;
+  transform: rotate(12deg);
+}
+
+.flight-route-airship {
+  position: absolute;
+  z-index: 3;
+  top: 46%;
+  left: 44%;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--flight-accent);
+  place-items: center;
+  background: #061219;
+  color: var(--flight-accent);
+  clip-path: polygon(50% 0, 100% 35%, 82% 100%, 18% 100%, 0 35%);
+  animation: flight-route-drift 3.6s var(--os-ease) infinite alternate;
+}
+
+.flight-route-airship svg {
+  width: 24px;
+  height: 24px;
+  transform: rotate(28deg);
+}
+
+@keyframes flight-route-drift {
+  to { transform: translate(26px, -7px); }
+}
+
+.flight-route-plot .route-node {
+  position: absolute;
+  z-index: 2;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--flight-accent);
+  border-radius: 50%;
+  background: #061018;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--flight-accent) 12%, transparent);
+}
+
+.flight-route-plot .node-a { top: 69%; left: 9%; }
+.flight-route-plot .node-b { top: 52%; left: 37%; }
+.flight-route-plot .node-c { top: 35%; left: 68%; }
+.flight-route-plot .node-d { top: 52%; left: 88%; }
+
+.flight-route-plot > b,
+.flight-route-plot > em {
+  position: absolute;
+  z-index: 3;
+  right: 18px;
+  font-family: "IBM Plex Mono", monospace;
+  font-style: normal;
+}
+
+.flight-route-plot > b {
+  top: 16px;
+  color: var(--os-paper);
+  font-size: clamp(18px, 1.5vw, 26px);
+}
+
+.flight-route-plot > em {
+  top: 48px;
+  color: var(--flight-accent);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.flight-plan-rail {
+  display: grid;
+  min-height: 0;
+  padding: 10px;
+  overflow: auto;
+  grid-column: 2;
+  grid-row: 2;
+  grid-auto-rows: minmax(88px, 1fr);
+  gap: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--os-cyan) transparent;
+}
+
+.flight-plan-card {
+  position: relative;
+  display: grid;
+  min-height: 88px;
+  padding: 12px 12px 12px 10px;
+  border: 1px solid var(--os-line);
+  grid-template-columns: 34px 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  background: rgba(7, 21, 28, 0.76);
+  color: var(--os-paper);
+  text-align: left;
+  clip-path: var(--os-cut-sm);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms var(--os-ease);
+}
+
+.flight-plan-card:hover:not(:disabled),
+.flight-plan-card.is-selected {
+  border-color: var(--flight-accent);
+  background: color-mix(in srgb, var(--flight-accent) 10%, rgba(5, 18, 24, 0.94));
+  transform: translateX(3px);
+}
+
+.flight-plan-card.is-active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--flight-accent);
+}
+
+.flight-plan-card.is-locked {
+  opacity: 0.5;
+  filter: grayscale(0.72);
+}
+
+.flight-plan-index {
+  align-self: start;
+  color: color-mix(in srgb, var(--flight-accent) 38%, var(--os-dim));
+  font: 700 19px/1 "IBM Plex Mono", monospace;
+}
+
+.flight-plan-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, var(--flight-accent) 52%, transparent);
+  place-items: center;
+  background: color-mix(in srgb, var(--flight-accent) 10%, #041015);
+  color: var(--flight-accent);
+  clip-path: var(--os-cut-sm);
+}
+
+.flight-plan-icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+.flight-plan-title {
+  min-width: 0;
+}
+
+.flight-plan-title strong,
+.flight-plan-title em {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flight-plan-title strong {
+  margin-top: 3px;
+  font-size: 18px;
+  line-height: 1.05;
+}
+
+.flight-plan-title em {
+  margin-top: 4px;
+  color: var(--os-muted);
+  font: 600 9px/1 "IBM Plex Mono", monospace;
+  font-style: normal;
+  letter-spacing: 0.06em;
+}
+
+.flight-plan-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--flight-accent);
+  font: 700 10px/1.2 "IBM Plex Mono", monospace;
+  white-space: nowrap;
+}
+
+.flight-plan-status svg {
+  width: 14px;
+  height: 14px;
+}
+
+.flight-plan-brief {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  padding: clamp(18px, 1.5vw, 28px);
+  grid-column: 3;
+  grid-row: 2;
+  flex-direction: column;
+  border-top: 2px solid var(--flight-accent);
+  clip-path: var(--os-cut-md);
+}
+
+.flight-plan-brief::before {
+  content: "SELECTED FLIGHT DOCTRINE";
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  color: color-mix(in srgb, var(--flight-accent) 65%, var(--os-muted));
+  font: 700 8px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.08em;
+}
+
+.flight-plan-brief > header {
+  display: grid;
+  padding-top: 10px;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.flight-plan-brief > header > span {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--flight-accent);
+  place-items: center;
+  background: color-mix(in srgb, var(--flight-accent) 12%, #061018);
+  color: var(--flight-accent);
+}
+
+.flight-plan-brief > header svg {
+  width: 30px;
+  height: 30px;
+}
+
+.flight-plan-brief h2 {
+  margin: 3px 0 0;
+  font-size: clamp(24px, 2vw, 34px);
+  line-height: 1;
+}
+
+.flight-plan-brief header em {
+  display: block;
+  margin-top: 5px;
+  color: var(--os-muted);
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  font-style: normal;
+  letter-spacing: 0.08em;
+}
+
+.flight-plan-brief > p {
+  margin: 18px 0;
+  color: #c0cdd0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.flight-plan-brief dl {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.flight-plan-brief dl > div {
+  padding: 12px;
+  border: 1px solid var(--os-line);
+  background: rgba(118, 242, 247, 0.04);
+}
+
+.flight-plan-brief dt {
+  color: var(--os-muted);
+  font-size: 11px;
+}
+
+.flight-plan-brief dd {
+  margin: 4px 0 0;
+  color: var(--flight-accent);
+  font: 700 23px/1 "IBM Plex Mono", monospace;
+}
+
+.flight-plan-brief .flight-plan-lock-copy {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--os-amber);
+  font-size: 12px;
+}
+
+.flight-plan-activate {
+  display: flex;
+  width: 100%;
+  min-height: 54px;
+  margin-top: auto;
+  border: 1px solid var(--flight-accent) !important;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background: var(--flight-accent) !important;
+  color: #041014 !important;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.flight-plan-activate:disabled {
+  border-color: var(--os-line) !important;
+  background: rgba(118, 242, 247, 0.08) !important;
+  color: var(--os-muted) !important;
+  opacity: 1;
+}
+
+@media (max-width: 1100px) {
+  .flight-ops-heading {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .flight-ops-record {
+    display: none;
+  }
+
+  .flight-ops-console {
+    grid-template-columns: 230px minmax(300px, 1fr) 320px;
+  }
+
+  .flight-plan-card {
+    grid-template-columns: 28px 40px minmax(0, 1fr);
+  }
+
+  .flight-plan-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .flight-plan-status {
+    display: none;
+  }
+}
+
+@media (max-width: 800px) {
+  .campaign-shell.flight-ops-screen {
+    display: block;
+    min-height: 100svh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .flight-ops-screen .flight-ops-map {
+    position: fixed;
+    object-position: 45% center;
+  }
+
+  .flight-ops-heading {
+    display: grid;
+    min-height: 0;
+    padding: max(14px, env(safe-area-inset-top)) 14px 14px;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .flight-ops-heading::after {
+    display: none;
+  }
+
+  .flight-ops-heading .campaign-back {
+    width: max-content;
+    min-height: 38px;
+  }
+
+  .flight-ops-heading h1 {
+    font-size: clamp(34px, 11vw, 44px);
+  }
+
+  .flight-ops-heading p {
+    margin-top: 7px;
+    font-size: 13px;
+  }
+
+  .flight-ops-record {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .flight-ops-record > div {
+    min-height: 47px;
+    padding: 8px 9px;
+  }
+
+  .flight-ops-record dt {
+    font-size: 7px;
+  }
+
+  .flight-ops-record dd {
+    margin-top: 3px;
+    font-size: 14px;
+  }
+
+  .flight-ops-console {
+    display: flex;
+    min-height: 0;
+    padding: 12px 14px max(24px, env(safe-area-inset-bottom));
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .flight-route-plot {
+    order: 1;
+    width: 100%;
+    min-height: 154px;
+  }
+
+  .flight-ops-lark {
+    display: grid;
+    order: 2;
+    min-height: 142px;
+    grid-template-columns: 112px minmax(0, 1fr);
+    grid-template-rows: 142px;
+  }
+
+  .flight-ops-lark::before {
+    top: 8px;
+    left: 8px;
+    font-size: 7px;
+  }
+
+  .flight-ops-lark-portrait {
+    min-height: 142px;
+    background-position: 100% center;
+    mask-image: linear-gradient(90deg, #000 0 76%, transparent 100%);
+  }
+
+  .flight-ops-lark > div:last-child {
+    display: flex;
+    min-width: 0;
+    padding: 14px 12px 12px 2px;
+    border-top: 0;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .flight-ops-lark small {
+    overflow: hidden;
+    font-size: 7px;
+    letter-spacing: 0.04em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .flight-ops-lark strong {
+    font-size: 22px;
+  }
+
+  .flight-ops-lark p {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .flight-plan-rail {
+    display: flex;
+    order: 3;
+    margin: 0 -14px;
+    padding: 8px 14px 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-padding-inline: 14px;
+    scroll-snap-type: x mandatory;
+    gap: 8px;
+    border-right: 0;
+    border-left: 0;
+  }
+
+  .flight-plan-card {
+    min-width: min(82vw, 330px);
+    min-height: 112px;
+    padding: 12px;
+    grid-template-columns: 30px 46px minmax(0, 1fr);
+    scroll-snap-align: center;
+  }
+
+  .flight-plan-card:hover:not(:disabled),
+  .flight-plan-card.is-selected {
+    transform: translateY(-2px);
+  }
+
+  .flight-plan-status {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    display: flex;
+  }
+
+  .flight-plan-brief {
+    order: 4;
+    min-height: 315px;
+    padding: 18px;
+  }
+
+  .flight-plan-brief::before {
+    top: 8px;
+    font-size: 7px;
+  }
+
+  .flight-plan-brief > header {
+    padding-top: 8px;
+    grid-template-columns: 50px minmax(0, 1fr);
+  }
+
+  .flight-plan-brief > header > span {
+    width: 48px;
+    height: 48px;
+  }
+
+  .flight-plan-brief h2 {
+    font-size: 25px;
+  }
+
+  .flight-plan-brief > p {
+    margin: 14px 0;
+    font-size: 13px;
+  }
+
+  .flight-plan-activate {
+    min-height: 56px;
+    margin-top: 18px;
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flight-route-airship {
+    animation: none;
+  }
+}
+
+@media (max-width: 390px) {
+  .campaign-shell.home-base-screen .base-currency-rail button {
+    padding-inline: 4px;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button > svg,
+  .campaign-shell.home-base-screen .base-currency-rail button > .generated-menu-icon {
+    width: 25px;
+    height: 25px;
+    flex-basis: 25px;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button small {
+    font-size: 7px;
+  }
+
+  .campaign-shell.home-base-screen .base-sortie-action strong {
+    font-size: 22px;
+  }
+
+  .combat-ability-copy strong {
+    font-size: 7px;
+  }
+}
+
+/* ===========================================================================
+   RELEASE FINISH // combat telemetry, recruit copy, strategic map clearance
+   ========================================================================== */
+
+/* Keep the input key legible and use the existing status line as the single
+   source of truth for cooldown time. The former floating badge duplicated the
+   value and collided with the key at narrow chip widths. */
+.expedition-game .combat-ability-cooldown-badge {
+  display: none !important;
+}
+
+.expedition-game .combat-ability-chip.is-cooling .combat-ability-copy > b {
+  color: #d9ff58;
+  font-variant-numeric: tabular-nums;
+}
+
+.expedition-game .combat-ability-active-badge {
+  top: -2px;
+  right: -3px;
+  bottom: auto;
+  left: auto;
+  min-width: 25px;
+  height: 15px;
+  padding: 0 3px;
+  transform: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A fixed outer square now owns all minimap sizing. The header and field share
+   that square instead of each adding their own height, so no edge can crop. */
+.expedition-game .route-minimap,
+.expedition-game.is-hud-focus .route-minimap {
+  top: auto !important;
+  display: grid;
+  height: 184px;
+  padding: 0;
+  grid-template-rows: 28px minmax(0, 1fr);
+  gap: 0;
+  overflow: hidden;
+  contain: layout paint;
+}
+
+.expedition-game .route-minimap > header,
+.expedition-game.is-hud-focus .route-minimap > header {
+  min-width: 0;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  overflow: hidden;
+}
+
+.expedition-game .route-minimap > header span,
+.expedition-game .route-minimap > header b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expedition-game .route-minimap-field,
+.expedition-game .route-minimap-field.is-arena,
+.expedition-game .route-minimap-field.is-boss {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  margin: 0;
+  aspect-ratio: auto;
+}
+
+/* Recruit encounter copy is primary narrative content, not metadata. */
+.mika-recruit-screen .mika-recruit-dialogue-box {
+  grid-template-columns: minmax(190px, 0.22fr) minmax(420px, 1fr) minmax(210px, 0.24fr);
+  column-gap: clamp(24px, 2.2vw, 42px);
+}
+
+.mika-recruit-screen .mika-recruit-dialogue-box > div small {
+  font-size: 12px;
+}
+
+.mika-recruit-screen .mika-recruit-dialogue-box > div strong {
+  font-size: clamp(29px, 2vw, 34px);
+}
+
+.mika-recruit-screen .mika-recruit-dialogue-box > p {
+  max-width: 960px;
+  font-size: clamp(20px, 1.35vw, 25px);
+  line-height: 1.55;
+}
+
+/* The world-map heading previously retained its centered page margin while
+   also receiving a left offset. Make it a true safe-area anchor. */
+.region-select-screen.is-cluster-map .region-select-heading {
+  position: absolute;
+  top: max(24px, env(safe-area-inset-top));
+  right: auto;
+  left: max(34px, env(safe-area-inset-left));
+  width: min(610px, calc(100vw - 68px));
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.region-select-screen.is-cluster-map .region-select-heading .campaign-back {
+  margin-bottom: 14px;
+}
+
+.region-select-screen.is-cluster-map .region-select-heading h1 {
+  margin-top: 12px;
+  font-size: clamp(48px, 4.2vw, 68px);
+  line-height: 0.94;
+}
+
+/* Clamp geographic callouts to the visible command-safe area and stack their
+   English designation so long names cannot be cut by the card edge. */
+.region-select-screen.is-cluster-map .region-map-hotspot {
+  top: clamp(190px, var(--map-y), calc(100% - 84px));
+  left: clamp(190px, var(--map-x), calc(100% - 190px));
+  width: clamp(286px, 19vw, 354px);
+  min-height: 100px;
+  box-sizing: border-box;
+  padding: 14px 42px 14px 68px;
+  overflow: visible;
+}
+
+.region-select-screen.is-cluster-map .region-map-hotspot > strong {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  white-space: normal;
+}
+
+.region-select-screen.is-cluster-map .region-map-hotspot > strong em {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 9px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .expedition-game .combat-ability-chip.is-cooling .combat-ability-copy strong {
+    display: none;
+  }
+
+  .expedition-game .combat-ability-chip.is-cooling .combat-ability-copy > b {
+    display: block;
+    overflow: hidden;
+    font-size: 9px;
+    line-height: 1.05;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expedition-game .route-minimap,
+  .expedition-game.is-hud-focus .route-minimap {
+    top: auto !important;
+    right: max(6px, env(safe-area-inset-right)) !important;
+    bottom: calc(116px + env(safe-area-inset-bottom)) !important;
+    width: 116px;
+    height: 116px;
+    grid-template-rows: 24px minmax(0, 1fr);
+  }
+
+  .expedition-game .route-minimap > header,
+  .expedition-game.is-hud-focus .route-minimap > header {
+    height: 24px;
+    padding: 0 5px;
+    gap: 3px;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-dock-abilities,
+  .expedition-game .expedition-combat-dock.is-commercial-compact.has-tag .combat-dock-abilities {
+    position: relative;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-tag-switch,
+  .expedition-game .expedition-combat-dock.is-commercial-compact.has-tag .combat-tag-switch {
+    position: absolute !important;
+    z-index: 8;
+    top: -43px !important;
+    right: 4px !important;
+    bottom: auto !important;
+    left: auto !important;
+    display: grid !important;
+    width: 66px !important;
+    min-width: 66px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 3px 4px !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 18px 12px !important;
+    gap: 0 !important;
+    overflow: hidden;
+  }
+
+  .mika-recruit-screen .mika-recruit-dialogue-box {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+
+  .mika-recruit-screen .mika-recruit-dialogue-box > div small {
+    font-size: 10px;
+  }
+
+  .mika-recruit-screen .mika-recruit-dialogue-box > div strong {
+    font-size: 27px;
+  }
+
+  .mika-recruit-screen .mika-recruit-dialogue-box > p {
+    font-size: 18px;
+    line-height: 1.52;
+  }
+
+  .region-select-screen.is-cluster-map .region-select-heading {
+    top: max(12px, env(safe-area-inset-top));
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+
+  .region-select-screen.is-cluster-map .region-select-heading h1 {
+    margin-top: 7px;
+    font-size: clamp(34px, 10vw, 46px);
+  }
+
+  .region-select-screen.is-cluster-map .region-world-map {
+    top: 136px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    padding: 0 14px max(14px, env(safe-area-inset-bottom));
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .region-select-screen.is-cluster-map .region-map-hotspot {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    min-height: 82px;
+    padding: 11px 38px 11px 62px;
+    flex: 0 0 auto;
+    transform: none;
+  }
+
+  .region-select-screen.is-cluster-map .region-map-hotspot.is-available:hover,
+  .region-select-screen.is-cluster-map .region-map-hotspot.is-available:focus-visible {
+    transform: translateX(3px);
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .mika-recruit-screen .mika-recruit-dialogue-box > p {
+    font-size: 16px;
+    line-height: 1.45;
+  }
+
+  .region-select-screen.is-cluster-map .region-select-heading {
+    top: 10px;
+    left: 18px;
+    width: min(420px, 42vw);
+  }
+
+  .region-select-screen.is-cluster-map .region-select-heading h1 {
+    font-size: 34px;
+  }
+}
+
+/* ===========================================================================
+   FINAL RESPONSIVE CLEARANCE PASS
+   Lobby rhythm, narrative safe zones, comparable upgrade cards and combat HUD
+   collision fixes. These selectors intentionally target the live DOM names.
+   ========================================================================== */
+
+.campaign-shell.home-base-screen .base-primary-actions {
+  column-gap: 12px;
+  row-gap: 12px;
+}
+
+.base-facility-panel .facility-upgrade-grid {
+  gap: 12px;
+  align-items: stretch;
+}
+
+.base-facility-panel .facility-upgrade,
+.base-facility-panel .facility-upgrade:nth-child(even) {
+  display: flex;
+  height: 100%;
+  min-height: 342px;
+  flex-direction: column;
+  transform: none !important;
+}
+
+.base-facility-panel .facility-upgrade:hover {
+  transform: translateY(-3px) !important;
+}
+
+.base-facility-panel .facility-upgrade > button.command-ui-button {
+  margin-top: auto;
+}
+
+@media (min-width: 721px) {
+  .campaign-shell .base-dialogue {
+    --dialogue-portrait-safe: clamp(420px, 34vw, 500px);
+    right: clamp(22px, 3vw, 48px);
+    bottom: clamp(22px, 4vh, 42px);
+    left: clamp(22px, 3vw, 48px);
+    min-height: 270px;
+    max-height: min(340px, 46dvh);
+    box-sizing: border-box;
+    padding: 28px 32px 24px var(--dialogue-portrait-safe);
+    align-items: center;
+    overflow: visible;
+    border-top: 2px solid var(--os-cyan);
+    background:
+      linear-gradient(90deg, rgba(2, 8, 12, 0.99) 0 var(--dialogue-portrait-safe), rgba(4, 17, 22, 0.985) var(--dialogue-portrait-safe) 100%);
+    box-shadow: 0 -18px 54px rgba(0, 0, 0, 0.58);
+    clip-path: none;
+  }
+
+  .campaign-shell .base-npc-portrait {
+    left: clamp(30px, 7vw, 112px);
+    width: min(28vw, 360px);
+    height: calc(100% + 78px);
+    pointer-events: none;
+  }
+
+  .campaign-shell .base-dialogue-copy {
+    position: relative;
+    z-index: 2;
+    min-width: 0;
+    max-height: calc(min(340px, 46dvh) - 52px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .campaign-shell .base-dialogue-copy > small {
+    font-size: 12px;
+    line-height: 1.3;
+    letter-spacing: 0.08em;
+  }
+
+  .campaign-shell .base-dialogue-copy h2 {
+    margin-top: 6px;
+    font-size: clamp(27px, 2.2vw, 34px);
+    line-height: 1.05;
+  }
+
+  .campaign-shell .base-dialogue-copy p {
+    max-width: 900px;
+    min-height: 64px;
+    margin-top: 10px;
+    color: #d7e8eb;
+    font-size: clamp(18px, 1.34vw, 21px);
+    line-height: 1.55;
+  }
+
+  .campaign-shell .base-dialogue-actions {
+    display: flex;
+    margin-top: 16px;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .campaign-shell .base-dialogue-actions button {
+    min-height: 48px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .campaign-shell .dialogue-escape-hint {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 901px) {
+  .expedition-game .expedition-hud,
+  .expedition-game.is-hud-focus .expedition-hud {
+    top: max(8px, env(safe-area-inset-top));
+    right: 50%;
+    left: auto;
+    display: grid;
+    width: min(620px, calc(100vw - 28px));
+    min-height: 0;
+    padding: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 7px;
+    align-items: start;
+    transform: translateX(50%);
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    clip-path: none;
+    backdrop-filter: none;
+  }
+
+  .expedition-game .expedition-hud .route-objective,
+  .expedition-game.is-hud-focus .expedition-hud .route-objective {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 6px 10px 7px;
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto 3px;
+    gap: 4px 8px;
+  }
+
+  .expedition-game .route-objective > strong,
+  .expedition-game.is-hud-focus .route-objective > strong {
+    min-width: 0;
+    grid-column: 3;
+    grid-row: 1;
+    overflow: hidden;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expedition-game .route-objective > div,
+  .expedition-game.is-hud-focus .route-objective > div {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .expedition-game .expedition-hud .expedition-hud-actions,
+  .expedition-game.is-hud-focus .expedition-hud .expedition-hud-actions {
+    position: static !important;
+    inset: auto !important;
+    display: flex;
+    width: auto;
+    margin: 0 !important;
+    grid-column: 2;
+    grid-row: 1;
+    gap: 4px;
+    align-self: start;
+    transform: none !important;
+  }
+
+  .expedition-game .expedition-hud-actions button {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+  }
+
+  .expedition-game .expedition-combat-dock {
+    width: min(820px, calc(100vw - 380px));
+    min-width: 0;
+    min-height: 94px;
+    padding: 7px 9px 8px;
+  }
+
+  .expedition-game .combat-dock-abilities {
+    gap: 4px;
+  }
+
+  .expedition-game .combat-ability-chip {
+    position: relative;
+    display: grid;
+    min-height: 52px;
+    padding: 4px 6px 4px 5px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 7px;
+    align-items: center;
+    text-align: left;
+    overflow: hidden;
+  }
+
+  .expedition-game .combat-ability-chip .combat-ability-icon {
+    position: relative !important;
+    inset: auto !important;
+    width: 36px;
+    height: 36px;
+    transform: none !important;
+  }
+
+  .expedition-game .combat-ability-chip .combat-ability-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    overflow: hidden;
+  }
+
+  .expedition-game .combat-ability-chip .combat-ability-copy strong {
+    display: block;
+    overflow: hidden;
+    font-size: 11px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expedition-game .combat-ability-chip .combat-ability-copy > b {
+    display: block;
+    overflow: hidden;
+    font-size: 9px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expedition-game .combat-ability-chip .combat-ability-icon kbd {
+    position: absolute;
+    z-index: 4;
+    inset: 0;
+    display: grid;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    place-items: center;
+    padding: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(0, 8, 11, 0.28);
+    font-size: 14px;
+  }
+
+  .expedition-game .combat-ability-chip[data-combat-ability="dash"] .combat-ability-icon kbd {
+    font-size: 8px;
+  }
+}
+
+.expedition-game .combat-ability-cooldown-badge,
+.expedition-game .combat-ability-active-badge {
+  position: absolute;
+  z-index: 6;
+  top: auto;
+  right: -3px;
+  bottom: -3px;
+  left: auto;
+  display: grid;
+  min-width: 30px;
+  height: 17px;
+  place-items: center;
+  padding: 0 3px;
+  border: 1px solid rgba(118, 242, 247, 0.7);
+  background: rgba(1, 8, 12, 0.94);
+  color: var(--os-paper);
+  font-size: 9px;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.66);
+}
+
+.expedition-game .route-minimap {
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: 184px;
+  height: 184px;
+  box-sizing: border-box;
+  border: 1px solid var(--os-line-strong);
+  box-shadow: -8px -8px 24px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 720px) {
+  .campaign-shell.home-base-screen .base-primary-actions {
+    column-gap: 10px;
+    row-gap: 10px;
+  }
+
+  .base-facility-panel .facility-upgrade,
+  .base-facility-panel .facility-upgrade:nth-child(even) {
+    height: auto;
+    min-height: 0;
+    transform: none !important;
+  }
+
+  .campaign-shell .base-dialogue {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    min-height: 340px;
+    max-height: min(470px, 61dvh);
+    box-sizing: border-box;
+    padding: 20px 14px max(16px, env(safe-area-inset-bottom)) min(43vw, 166px);
+    overflow: visible;
+    isolation: isolate;
+  }
+
+  .campaign-shell .base-npc-portrait,
+  .campaign-shell .base-npc-portrait.is-standalone {
+    z-index: 1;
+    bottom: 0;
+    left: 2px;
+    width: min(40vw, 154px);
+    height: calc(100% + 72px);
+    background-size: auto 100%;
+    background-position: center bottom !important;
+    pointer-events: none;
+  }
+
+  .campaign-shell .base-dialogue-copy {
+    position: relative;
+    z-index: 2;
+    max-height: calc(min(470px, 61dvh) - 40px - env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+
+  .campaign-shell .base-dialogue-copy > small {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .campaign-shell .base-dialogue-copy h2 {
+    font-size: 26px;
+  }
+
+  .campaign-shell .base-dialogue-copy p {
+    min-height: 0;
+    margin-top: 10px;
+    font-size: 17px;
+    line-height: 1.55;
+  }
+
+  .campaign-shell .base-dialogue-actions {
+    margin-top: 14px;
+    gap: 7px;
+  }
+
+  .campaign-shell .base-dialogue-actions button {
+    min-height: 54px;
+    font-size: 14px;
+  }
+
+  .expedition-game .expedition-hud,
+  .expedition-game.is-hud-focus .expedition-hud {
+    top: max(6px, env(safe-area-inset-top));
+    right: 50%;
+    left: auto;
+    display: grid;
+    width: calc(100vw - 12px);
+    min-height: 0;
+    padding: 0;
+    grid-template-columns: minmax(0, 1fr) 36px;
+    gap: 4px;
+    align-items: start;
+    transform: translateX(50%);
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    clip-path: none;
+  }
+
+  .expedition-game .expedition-hud .route-objective,
+  .expedition-game.is-hud-focus .expedition-hud .route-objective {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    box-sizing: border-box;
+    padding: 5px 7px 6px;
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto 3px;
+    gap: 3px 5px;
+  }
+
+  .expedition-game .route-objective > strong,
+  .expedition-game.is-hud-focus .route-objective > strong {
+    grid-column: 2;
+    grid-row: 1;
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expedition-game .route-objective > b,
+  .expedition-game.is-hud-focus .route-objective > b {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .expedition-game .route-objective > div,
+  .expedition-game.is-hud-focus .route-objective > div {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .expedition-game .expedition-hud .expedition-hud-actions,
+  .expedition-game.is-hud-focus .expedition-hud .expedition-hud-actions {
+    position: static !important;
+    inset: auto !important;
+    display: flex;
+    width: 36px;
+    margin: 0 !important;
+    grid-column: 2;
+    grid-row: 1;
+    transform: none !important;
+  }
+
+  .expedition-game .expedition-hud-actions button {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+  }
+
+  .expedition-game .route-minimap {
+    right: max(6px, env(safe-area-inset-right));
+    bottom: calc(122px + env(safe-area-inset-bottom));
+    width: 116px;
+    height: 116px;
+    border: 1px solid var(--os-line-strong);
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    min-height: 0;
+    padding: 4px 6px max(5px, env(safe-area-inset-bottom));
+    grid-template-rows: 42px 62px;
+    gap: 2px;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .vital-cluster,
+  .expedition-game .expedition-combat-dock.is-commercial-compact.has-tag .vital-cluster {
+    height: 42px;
+    min-height: 0;
+    box-sizing: border-box;
+    padding: 2px 72px 4px 4px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 23px 7px;
+    gap: 2px 7px;
+  }
+
+  .expedition-game .expedition-combat-dock .vital-cluster > span {
+    min-width: 0;
+    grid-column: 1;
+    grid-row: 1;
+    overflow: hidden;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expedition-game .expedition-combat-dock .vital-cluster > b {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 16px;
+    white-space: nowrap;
+  }
+
+  .expedition-game .expedition-combat-dock .vital-cluster > .vital-bar {
+    height: 6px;
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-dock-abilities,
+  .expedition-game .expedition-combat-dock.is-commercial-compact.has-tag .combat-dock-abilities {
+    height: 62px;
+    padding-top: 1px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: 60px;
+    gap: 3px;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-ability-chip {
+    position: relative;
+    display: block;
+    height: 60px;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-ability-icon {
+    position: absolute !important;
+    top: 3px !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: 50% !important;
+    width: 32px;
+    height: 32px;
+    transform: translateX(-50%) !important;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-ability-copy {
+    position: absolute;
+    right: 2px;
+    bottom: 5px;
+    left: 2px;
+    display: block;
+    width: auto;
+    min-width: 0;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-ability-copy strong {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    font-size: 8px;
+    line-height: 1.05;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-ability-copy > b {
+    display: none;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-tag-switch {
+    position: absolute;
+    z-index: 4;
+    top: -45px;
+    right: 4px;
+    width: 66px;
+    min-width: 66px;
+    height: 38px;
+    min-height: 38px;
+    padding: 3px 4px;
+    grid-template-columns: 1fr;
+    grid-template-rows: 18px 12px;
+    gap: 0;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-tag-switch strong {
+    font-size: 11px;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-tag-switch small {
+    font-size: 9px;
+  }
+
+  .expedition-game .combat-ability-chip .combat-ability-icon kbd {
+    inset: 0;
+    width: auto;
+    height: auto;
+    min-width: 0;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 13px;
+  }
+
+  .expedition-game .combat-ability-chip[data-combat-ability="dash"] .combat-ability-icon kbd {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 390px) {
+  .campaign-shell .base-dialogue {
+    padding-left: min(42vw, 156px);
+  }
+
+  .campaign-shell .base-npc-portrait,
+  .campaign-shell .base-npc-portrait.is-standalone {
+    width: min(39vw, 146px);
+  }
+
+  .campaign-shell .base-dialogue-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-shell .base-dialogue-actions button,
+  .campaign-shell .base-dialogue-next {
+    width: 100%;
+    grid-column: 1;
+  }
+}
+
+/* Last-mile mobile cascade guard: later density rules must not return the tag
+   action to the sixth skill column or wrap its two-line label vertically. */
+@media (max-width: 720px) {
+  .expedition-game .portrait-touch-hint {
+    display: none !important;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-tag-switch,
+  .expedition-game .expedition-combat-dock.is-commercial-compact.has-tag .combat-tag-switch {
+    position: absolute !important;
+    top: -43px !important;
+    right: 4px !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: 66px !important;
+    min-width: 66px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 3px 4px !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 18px 12px !important;
+    gap: 0 !important;
+    overflow: hidden;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-tag-switch > span,
+  .expedition-game .expedition-combat-dock.is-commercial-compact.has-tag .combat-tag-switch > span {
+    position: absolute !important;
+    top: 2px !important;
+    right: 0 !important;
+    bottom: auto !important;
+    left: 0 !important;
+    display: flex !important;
+    width: auto !important;
+    height: 18px !important;
+    min-width: 0;
+    grid-row: 1;
+    align-items: center;
+    justify-content: center !important;
+    flex-direction: row !important;
+    gap: 4px;
+  }
+
+  .expedition-game .expedition-combat-dock.is-commercial-compact .combat-tag-switch small,
+  .expedition-game .expedition-combat-dock.is-commercial-compact.has-tag .combat-tag-switch small {
+    position: absolute !important;
+    right: 0 !important;
+    bottom: 3px !important;
+    left: 0 !important;
+    display: block !important;
+    width: auto !important;
+    min-width: 0;
+    grid-row: 2;
+    overflow: hidden;
+    font-size: 8px;
+    line-height: 1;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    writing-mode: horizontal-tb !important;
+  }
+}

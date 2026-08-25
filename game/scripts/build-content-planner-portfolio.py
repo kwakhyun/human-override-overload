@@ -108,8 +108,8 @@ def style(
         leading=leading or size * 1.42,
         textColor=color,
         alignment=align,
-        wordWrap="CJK",
-        splitLongWords=True,
+        wordWrap=None,
+        splitLongWords=False,
     )
 
 
@@ -572,8 +572,8 @@ def metric_strip(c: canvas.Canvas, x: float, y: float, w: float, h: float, items
         para(c, f"<font color='{accent.hexval()}'><b>{esc(value)}</b></font><br/><font color='#A6B1BE'>{esc(label)}</font>", x + index * each + 5, y + h - 7, each - 10, STYLES["center"])
 
 
-def region_tile(c: canvas.Canvas, x: float, y: float, w: float, h: float, item: tuple[str, str, str, str, str, str], accent) -> None:
-    number, name, budget, identity, signature, boss = item
+def region_tile(c: canvas.Canvas, x: float, y: float, w: float, h: float, item: tuple[str, str, str, str, str, str, str], accent) -> None:
+    number, name, budget, identity, detail_label, detail, boss = item
     rounded_panel(c, x, y, w, h, PANEL, GRID, CARD_RADIUS)
     c.setFillColor(accent)
     c.rect(x, y + h - 3, w, 3, fill=1, stroke=0)
@@ -586,10 +586,7 @@ def region_tile(c: canvas.Canvas, x: float, y: float, w: float, h: float, item: 
     para(c, f"<b>{esc(name)}</b>", x + CARD_PAD, y + h - CARD_PAD, w - 2 * CARD_PAD, STYLES["h3"])
     para(c, f"<font color='{accent.hexval()}'><b>적 예산 {esc(budget)}</b></font> · {esc(identity)}", x + CARD_PAD, y + h - 38, w - 2 * CARD_PAD, STYLES["body_small"])
     rule(c, x + CARD_PAD, y + h - 70, x + w - CARD_PAD, GRID)
-    if signature == "-":
-        pattern_copy = "<font color='#8C959F'><b>중간 보스</b></font>  별도 배치 없음"
-    else:
-        pattern_copy = f"<font color='#8C959F'><b>고유 패턴</b></font>  {esc(signature)}"
+    pattern_copy = f"<font color='#8C959F'><b>{esc(detail_label)}</b></font>  {esc(detail)}"
     para(c, pattern_copy, x + CARD_PAD, y + h - 79, w - 2 * CARD_PAD, STYLES["body_small"])
     para(c, f"<font color='#8C959F'><b>최종 보스</b></font><br/><font color='#F4F7FA'><b>{esc(boss)}</b></font>", x + CARD_PAD, y + 34, w - 2 * CARD_PAD, STYLES["body_small"])
 
@@ -635,13 +632,13 @@ def slide_02(c: canvas.Canvas) -> None:
     image_window(c, ASSETS["haven"], image_x, 74 * mm, image_w, 86 * mm, (0.58, 0.5), CYAN)
     rounded_panel(c, image_x, 39 * mm, image_w, 28 * mm, PANEL_3, GRID, CARD_RADIUS)
     para(c, "<font color='#6BE4E8'><b>HAVEN-09 · 캠페인 허브</b></font><br/>출격·성장·방어 작전을 선택하고, 지역별 전투 규칙과 보상을 하나의 캠페인 흐름으로 연결했습니다.", image_x + CARD_PAD, 61 * mm, image_w - 2 * CARD_PAD, STYLES["overview_caption"])
-    para(c, "기획 의도를 문서와 데이터에 반영하고, 실제 플레이 화면까지 구현했습니다.", MARGIN_X, 160 * mm, left_w, style("overview_intro", 12, 17.5, MUTED, True))
+    para(c, "기획 의도를 문서·데이터·플레이 화면으로 구현했습니다.", MARGIN_X, 160 * mm, left_w, style("overview_intro", 12, 17.5, MUTED, True))
     stat_row(c, MARGIN_X, 137 * mm, left_w, "06", "캠페인 지역", "지역별 적 예산 · 후반 조합", CYAN)
     stat_row(c, MARGIN_X, 106 * mm, left_w, "06", "최종 보스", "독립 패턴 운용 · 3단계 변형", RED)
     stat_row(c, MARGIN_X, 75 * mm, left_w, "3+3", "중간 보스·별도 모드", "중간 보스 3종 · 디펜스 3단계", AMBER)
     rounded_panel(c, MARGIN_X, 18 * mm, left_w, 42 * mm, PANEL_3, GRID)
-    para(c, "<font color='#63ECF7'><b>담당 범위</b></font>  목표 경험, 전투 구간, 적·보스 규칙과 수치 가설의 우선순위를 정하고 최종 검수했습니다.", MARGIN_X + CARD_PAD, 54 * mm, left_w - 2 * CARD_PAD, STYLES["body_small"])
-    para(c, "<font color='#F5C768'><b>플레이 피드백</b></font>  지인 5명의 반복 플레이에서 확인한 플레이 시간·난이도·무기·캐릭터 균형·보상 문제를 개선 우선순위에 반영했습니다.", MARGIN_X + CARD_PAD, 37 * mm, left_w - 2 * CARD_PAD, STYLES["body_small"])
+    para(c, "<font color='#63ECF7'><b>담당 범위</b></font>  목표 경험, 전투 구간, 적·보스 규칙과 수치 가설을 설계하고 최종 검수했습니다.", MARGIN_X + CARD_PAD, 54 * mm, left_w - 2 * CARD_PAD, STYLES["body_small"])
+    para(c, "<font color='#F5C768'><b>플레이 피드백</b></font>  지인 5명의 반복 플레이에서 확인한 시간·난이도·전투 균형·보상 문제를 개선 우선순위에 반영했습니다.", MARGIN_X + CARD_PAD, 37 * mm, left_w - 2 * CARD_PAD, STYLES["body_small"])
 
 
 def slide_role_fit(c: canvas.Canvas) -> None:
@@ -659,10 +656,10 @@ def slide_role_fit(c: canvas.Canvas) -> None:
     gap = 7 * mm
     card_w = (full_w - gap) / 2
     cards = [
-        ("플레이 시간", "짧은 런", "지역과 공세 규모를 확장하고 중간·최종 보스를 배치해 한 번의 플레이에 학습과 절정을 만들었습니다.", RED),
+        ("플레이 시간", "짧은 플레이", "지역과 공세 규모를 확장하고 중간·최종 보스를 배치해 한 번의 플레이에 학습과 절정을 만들었습니다.", RED),
         ("난이도", "낮은 긴장감", "후반 혼성 적 조합과 역할별 압박, 단계형 보스 패턴을 추가해 대응 판단을 늘렸습니다.", CYAN),
-        ("전투 균형", "무기·캐릭터 격차", "선택 풀·스킬·성장 효과·재사용 대기시간을 분리해 각 전투 정체성을 조정했습니다.", AMBER),
-        ("반복 동기", "다음 목표 부족", "공통 재화를 파밍하는 독립 디펜스 모드와 초회 보상·영구 강화·교환 구조를 추가했습니다.", LIME),
+        ("전투 균형", "무기·캐릭터 격차", "성장 선택군·스킬·재사용 대기시간을 분리해 각 전투 정체성을 조정했습니다.", AMBER),
+        ("반복 동기", "다음 목표 부족", "공통 재화를 반복해서 얻는 독립 디펜스 모드와 초회 보상·영구 강화·교환 구조를 추가했습니다.", LIME),
     ]
     positions = [
         (MARGIN_X, 80 * mm),
@@ -682,8 +679,8 @@ def slide_03(c: canvas.Canvas) -> None:
     para(c, "기본 공격은 자동화하되, <b>이동·조준·대시·수동 스킬·태그·패턴 대응</b>은 플레이어가 직접 결정하도록 역할을 구분했습니다.", MARGIN_X, 160 * mm, left_w, style("goal_claim", 13.2, 19, CYAN_PALE, True))
     items = [
         ("01", "전투하며 전진합니다", "전투를 해결할 때마다 다음 공간이 열립니다. 단순히 전진하는 것만으로는 남은 적을 건너뛸 수 없습니다.", CYAN),
-        ("02", "선택이 전투를 바꿉니다", "성장 선택 이후 공격 범위·빈도·동료·화면 장악력이 실제 전투 양상에 반영됩니다.", AMBER),
-        ("03", "패턴을 익힐수록 대응이 정교해집니다", "전조와 판정 영역을 일치시키고, 패링·폭탄·그로기 대응을 화력 기회로 전환합니다.", RED),
+        ("02", "선택이 전투를 바꿉니다", "성장 선택에 따라 공격 범위·빈도·동료·화면 장악력이 달라집니다.", AMBER),
+        ("03", "패턴을 익힐수록 대응이 정교해집니다", "전조와 판정을 일치시키고, 패링·폭탄·그로기 대응을 반격 기회로 바꿉니다.", RED),
     ]
     y = 121 * mm
     for number, title, body, accent in items:
@@ -702,10 +699,10 @@ def slide_03(c: canvas.Canvas) -> None:
 
 
 def slide_04(c: canvas.Canvas) -> None:
-    frame(c, 5, "핵심 루프", "순간 판단·지역 런·메타 성장의 세 루프가<br/>다음 선택으로 이어집니다")
+    frame(c, 5, "핵심 루프", "순간 판단·지역 원정·공통 성장의 세 루프가<br/>다음 선택으로 이어집니다")
     loop_track(c, 119 * mm, "01", "순간 루프", "약 1~15초", ["위협 탐지", "위치·조준", "스킬·회피", "처치·XP"], CYAN)
-    loop_track(c, 77 * mm, "02", "지역 런", "약 3~9분 · 가설", ["출격", "교전 밴드", "성장 선택", "보스·결과"], AMBER)
-    loop_track(c, 35 * mm, "03", "메타 루프", "여러 런", ["재화 획득", "강화·교환", "해금", "다른 빌드"], MAGENTA)
+    loop_track(c, 77 * mm, "02", "지역 원정", "약 3~9분 · 가설", ["출격", "전투 구간", "성장 선택", "보스·결과"], AMBER)
+    loop_track(c, 35 * mm, "03", "공통 성장", "여러 원정", ["재화 획득", "강화·교환", "해금", "다른 빌드"], MAGENTA)
     return_x = PW - MARGIN_X - 7
     c.setStrokeColor(MUTED_2)
     c.setLineWidth(0.8)
@@ -731,7 +728,7 @@ def section_01(c: canvas.Canvas) -> None:
 
 
 def slide_05(c: canvas.Canvas) -> None:
-    frame(c, 6, "던전 페이싱", "처치와 전진을 함께 요구해<br/>공세 건너뛰기와 종점 대기를 줄였습니다")
+    frame(c, 6, "던전 페이싱", "처치와 전진을 함께 요구해<br/>공세 건너뛰기와 종점 정체를 줄였습니다")
     image_w = 163 * mm
     image_window(c, ASSETS["route"], MARGIN_X, 54 * mm, image_w, 106 * mm, (0.52, 0.52), RED)
     right_x = MARGIN_X + image_w + 9 * mm
@@ -744,7 +741,7 @@ def slide_05(c: canvas.Canvas) -> None:
     rule(c, right_x + CARD_PAD, 116 * mm, right_x + right_w - CARD_PAD, GRID)
     para(c, "두 조건을 모두 충족하면 다음 전투 지점에서 공세가 시작됩니다.", right_x + CARD_PAD, 110 * mm, right_w - 2 * CARD_PAD, STYLES["body"])
     rounded_panel(c, right_x, 54 * mm, right_w, 36 * mm, PANEL_3, GRID, 7)
-    para(c, "<font color='#FF5E72'><b>해결한 문제</b></font><br/>전진만으로 전투를 건너뛸 수 없도록 했습니다. 종점 대기를 막고, 최종 공세는 종점 전에 배치했으며, 동시 활성 적은 최대 220기로 제한했습니다.", right_x + CARD_PAD, 83 * mm, right_w - 2 * CARD_PAD, STYLES["body_small"])
+    para(c, "<font color='#FF5E72'><b>해결한 문제</b></font><br/>전진만으로 전투를 건너뛸 수 없도록 했습니다. 종점 정체를 막고, 최종 공세는 종점 전에 배치했으며, 동시에 등장하는 적은 최대 220기로 제한했습니다.", right_x + CARD_PAD, 83 * mm, right_w - 2 * CARD_PAD, STYLES["body_small"])
     quantities = [8, 14, 22, 34, 52, 79, 120, 180, 220]
     total_w = PW - 2 * MARGIN_X
     base_y = 18 * mm
@@ -759,7 +756,7 @@ def slide_05(c: canvas.Canvas) -> None:
         c.rect(x + 4, base_y, step_w - 8, bar_h, fill=1, stroke=0)
         c.restoreState()
         para(c, f"<b>{value}</b>", x, base_y + bar_h + 5 * mm, step_w, STYLES["center_bold"])
-    para(c, "첫 교전 8기부터 공세 규모를 단계적으로 늘렸으며, 지역 예산을 초과하는 값은 남은 수량에 맞춰 조정했습니다.", MARGIN_X, 50 * mm, total_w, STYLES["caption"])
+    para(c, "첫 교전 8기부터 공세 규모를 단계적으로 늘렸으며, 지역별 총 적 수를 넘지 않도록 마지막 공세 수를 조정했습니다.", MARGIN_X, 50 * mm, total_w, STYLES["caption"])
 
 
 def slide_06(c: canvas.Canvas) -> None:
@@ -769,10 +766,10 @@ def slide_06(c: canvas.Canvas) -> None:
     c.drawString(MARGIN_X, 137 * mm, "300")
     para(c, "<b>8 + 14 + 22 + 34 + 52 + 79 + 91 = 300</b><br/><font color='#A6B1BE'>적 300기를 모두 처치하고 MOSS를 확인해야 보스전으로 전환됩니다.</font>", MARGIN_X + 47 * mm, 154 * mm, 178 * mm, style("equation_v2", 13, 19, INK, True))
     nodes = [
-        ("출격", "시작", "목표·조작권"), ("도입", "8기", "근접형만"), ("W I", "14기", "첫 성장 가설"),
+        ("출격", "시작", "목표·조작권"), ("도입", "8기", "근접형만"), ("W I", "14기", "첫 성장 선택"),
         ("W II", "18% · 22기", "ROOK 19.2%"), ("W III", "36% · 34기", "혼성 교전"),
-        ("W IV", "54% · 52기", "NYX 52.8%"), ("W V", "70% · 79기", "광역 점검"),
-        ("FINAL", "82% · 91기", "MOSS 87.2%"), ("전환", "1.2s + 1.6s", "독립 보스전"),
+        ("W IV", "54% · 52기", "NYX 52.8%"), ("W V", "70% · 79기", "광역 화력 확인"),
+        ("FINAL", "82% · 91기", "MOSS 87.2%"), ("전환", "1.2초 + 1.6초", "독립 보스전"),
     ]
     left = MARGIN_X + 4
     right = PW - MARGIN_X - 4
@@ -799,13 +796,13 @@ def slide_06(c: canvas.Canvas) -> None:
 
 
 def slide_07(c: canvas.Canvas) -> None:
-    frame(c, 8, "적 역할", "서로 다른 역할의 적을 순차적으로 조합해<br/>타깃 우선순위를 학습하도록 설계했습니다")
+    frame(c, 8, "적 역할", "서로 다른 역할의 적을 순차적으로 조합해<br/>처치 우선순위를 학습하도록 설계했습니다")
     siege = crop_atlas_cell(ASSETS["siege_atlas"], 6, 4, 0, 0)
     roles = [
         ("01", "자폭 드론", "근접 추적", "0.95초 뒤 폭발", "반경 밖으로 이탈", ASSETS["hunter"], CYAN),
         ("02", "소총수", "중거리 점사", "3~5발 점사 후 재조준", "사선 이탈·우선 처치", ASSETS["suppressor"], AMBER),
-        ("03", "저격 플랫폼", "장거리 압박", "판정선과 같은 위치에 경고", "경고선 확인 후 이동", ASSETS["brute"], RED),
-        ("04", "공성 워커", "후반 대형 위협", "전투 후반부터 중포 압박", "완성 빌드 화력 점검", siege, MAGENTA),
+        ("03", "저격 플랫폼", "장거리 압박", "피격 판정선과 일치하는 경고선", "경고선 확인 후 이동", ASSETS["brute"], RED),
+        ("04", "공성 워커", "후반 대형 위협", "전투 후반부터 중포 압박", "완성한 빌드의 화력 확인", siege, MAGENTA),
     ]
     gap_x = 6 * mm
     gap_y = 5 * mm
@@ -837,8 +834,8 @@ def slide_07(c: canvas.Canvas) -> None:
         para(c, f"<font color='#8C959F'><b>전조</b></font>  {esc(telegraph)}", text_x, y + card_h - 23 * mm, text_w, STYLES["body_small"])
         para(c, f"<font color='#8C959F'><b>대응</b></font>  {esc(response)}", text_x, y + card_h - 36 * mm, text_w, STYLES["body_small"])
     rounded_panel(c, MARGIN_X, 27 * mm, PW - 2 * MARGIN_X, 25 * mm, PANEL_3, GRID, CARD_RADIUS)
-    para(c, "<font color='#FF5E72'><b>외곽 권역 고유 패턴</b></font><br/>기본 역할에 중간 보스의 고유 패턴을 더했습니다.", MARGIN_X + CARD_PAD, 46 * mm, 69 * mm, STYLES["body_small"])
-    signatures = [("PRESS SLAM", "근접 권위"), ("ARC VOLLEY", "다방향 탄막"), ("CHIMERA RUSH", "돌진 압박")]
+    para(c, "<font color='#FF5E72'><b>외곽 지역 고유 패턴</b></font><br/>기본 역할에 중간 보스의 고유 패턴을 더했습니다.", MARGIN_X + CARD_PAD, 46 * mm, 69 * mm, STYLES["body_small"])
+    signatures = [("PRESS SLAM", "근접 제압"), ("ARC VOLLEY", "다방향 탄막"), ("CHIMERA RUSH", "돌진 압박")]
     start_x = MARGIN_X + 78 * mm
     each = (PW - MARGIN_X - start_x - 10) / 3
     for index, (skill, role) in enumerate(signatures):
@@ -871,8 +868,8 @@ def slide_08(c: canvas.Canvas) -> None:
         para(c, esc(body), right_x + 33 * mm, top - 7 * mm, right_w - 33 * mm, stage_body)
         top -= 32 * mm
     metric_strip(c, MARGIN_X, 20 * mm, PW - 2 * MARGIN_X, 26 * mm, [
-        ("1.5초", "패턴 인지·입력 여유 가설", CYAN), ("1.8초", "반격 기회 · 피해 2배", GREEN),
-        ("55/30/12%", "단계 상승 · 폭탄 2/3/4개", AMBER), ("2.6초", "위치 활용 보상 · 피해 2.5배", RED),
+        ("1.5초", "패턴 인지와 입력에 필요한 여유", CYAN), ("1.8초", "반격 기회 · 피해 2배", GREEN),
+        ("55/30/12%", "체력 단계별 폭탄 2/3/4개", AMBER), ("2.6초", "위치 활용 보상 · 피해 2.5배", RED),
     ])
     para(c, "구현한 수치는 최종 균형값이 아니라 검증 가설이며, 패턴 성공률과 단계별 사망 원인을 다음 플레이테스트에서 확인합니다.", MARGIN_X, 54 * mm, PW - 2 * MARGIN_X, STYLES["caption"])
 
@@ -884,7 +881,7 @@ def section_02(c: canvas.Canvas) -> None:
         "02",
         "BUILD & GROWTH",
         "캐릭터와 무기 선택이 성장 규칙과 수동 스킬 운용을 바꿉니다.",
-        "전용 선택 풀, 독립 쿨다운, 메타 재화 교환, 첫 출격 안내를 하나의 선택 구조로 연결했습니다.",
+        "전용 성장 선택군, 독립 재사용 대기시간, 공통 재화 교환, 첫 출격 안내를 하나의 선택 구조로 연결했습니다.",
         "CHARACTER  /  SKILL  /  ECONOMY  /  ONBOARDING",
         ASSETS["aegis"],
         AMBER,
@@ -912,7 +909,7 @@ def slide_10(c: canvas.Canvas) -> None:
     rows = [
         ["구분", "AEGIS · 펄스 소총", "AEGIS · 빔 소드", "MIKA · 링블레이드"],
         ["기본 공격", "연속 원거리 투사체", "120° 근거리 자동 베기", "일정 시간 유지되는 프리즘 링"],
-        ["선택 풀", "산탄·레일·로켓·지원", "검기·거대 검신·돌진 참격", "소총 전용 보상 제외"],
+        ["성장 선택군", "산탄·레일·로켓·지원", "검기·거대 검신·돌진 참격", "소총 전용 보상은 등장하지 않음"],
         ["전용 성장", "투사체·지원 화력", "EDGE RESONANCE · PARRY SHEATH", "PRISM TEMPO · HEART GUARD"],
         ["수동 스킬", "Q/E/F/R 재사용 대기시간 개별 관리", "무기별 스킬 세트 분리", "태그 후에도 캐릭터별 대기시간 유지"],
     ]
@@ -935,21 +932,21 @@ def slide_11(c: canvas.Canvas) -> None:
     image_x = PW - MARGIN_X - image_w
     image_window(c, ASSETS["research"], image_x, 39 * mm, image_w, 121 * mm, (0.5, 0.48), AMBER, "기지 연구")
     left_w = image_x - MARGIN_X - 10 * mm
-    para(c, "표의 공급량은 6개 지역과 디펜스 3단계의 초회 보상만 합산했습니다. 디펜스 반복 보상은 공통 재화 파밍 경로이며, 일회성 공급 총량에서는 제외했습니다.", MARGIN_X, 158 * mm, left_w, STYLES["body"])
+    para(c, "표의 공급량은 6개 지역과 디펜스 3단계의 초회 보상만 합산했습니다. 디펜스 반복 보상은 공통 재화를 반복해서 얻는 경로이므로 일회성 공급 총량에서 제외했습니다.", MARGIN_X, 158 * mm, left_w, STYLES["body"])
     resources = [
-        ("연구 자료", "137", "49", "+88", CYAN),
-        ("장비 부품", "137", "97", "+40", AMBER),
-        ("동기화 코어", "34", "48", "-14", MAGENTA),
+        ("연구 자료", "137", "49", "88", "잔여", CYAN),
+        ("장비 부품", "137", "97", "40", "잔여", AMBER),
+        ("동기화 코어", "34", "48", "14", "부족", MAGENTA),
     ]
     top = 133 * mm
-    for name, supply, sink, diff, accent in resources:
+    for name, supply, sink, diff, diff_label, accent in resources:
         rounded_panel(c, MARGIN_X, top - 22 * mm, left_w, 22 * mm, PANEL, GRID, CARD_RADIUS)
         c.setFillColor(accent)
         c.rect(MARGIN_X, top - 22 * mm, 3, 22 * mm, fill=1, stroke=0)
         para(c, f"<b>{esc(name)}</b>", MARGIN_X + CARD_PAD, top - 8, 34 * mm, STYLES["body_bold"])
         para(c, f"<font color='{accent.hexval()}'><b>{supply}</b></font><br/><font color='#8C959F'>초회 공급</font>", MARGIN_X + 49 * mm, top - 5, 32 * mm, STYLES["center"])
         para(c, f"<b>{sink}</b><br/><font color='#8C959F'>강화 소비</font>", MARGIN_X + 85 * mm, top - 5, 32 * mm, STYLES["center"])
-        para(c, f"<b>{diff}</b><br/><font color='#8C959F'>차이</font>", MARGIN_X + 121 * mm, top - 5, 28 * mm, STYLES["center"])
+        para(c, f"<b>{diff}</b><br/><font color='#8C959F'>{diff_label}</font>", MARGIN_X + 121 * mm, top - 5, 28 * mm, STYLES["center"])
         draw_arrow(c, MARGIN_X + 79 * mm, top - 14 * mm, MARGIN_X + 83 * mm, top - 14 * mm, accent)
         top -= 27 * mm
     rounded_panel(c, MARGIN_X, 20 * mm, left_w, 29 * mm, PANEL_3, GRID, CARD_RADIUS)
@@ -972,8 +969,8 @@ def slide_12(c: canvas.Canvas) -> None:
     c.line(line_x, 52 * mm, line_x, 146 * mm)
     flows = [
         ("01", "출격 전", "장비를 확인한 뒤 출격하도록 했습니다.", "메뉴 선택 뒤에도 전투 조준이 자연스럽게 이어지도록 기본 조준점을 오른쪽에 배치했습니다.", CYAN, 138 * mm),
-        ("02", "첫 전투", "핵심 조작 두 가지만 먼저 안내합니다.", "배치 서사 뒤 Q/E/F/R 안내를 상황별로 보여주고, 종료 뒤 전투가 다시 시작되지 않도록 했습니다.", AMBER, 103 * mm),
-        ("03", "첫 승리", "결과 → 합류 → 귀환 순서로 안내합니다.", "후속 장면을 저장해 새로고침 뒤에도 1회성 장면을 이어서 볼 수 있도록 했습니다.", MAGENTA, 68 * mm),
+        ("02", "첫 전투", "핵심 조작 두 가지만 먼저 안내합니다.", "출격 연출 뒤 Q/E/F/R 안내를 상황별로 보여주고, 종료 뒤 전투가 다시 시작되지 않도록 했습니다.", AMBER, 103 * mm),
+        ("03", "첫 승리", "결과 → 합류 → 귀환 순서로 안내합니다.", "후속 장면을 저장해 새로고침 뒤에도 최초 1회 연출을 이어서 볼 수 있도록 했습니다.", MAGENTA, 68 * mm),
     ]
     for number, phase, title, body, accent, y in flows:
         c.setFillColor(accent)
@@ -981,18 +978,18 @@ def slide_12(c: canvas.Canvas) -> None:
         tag(c, f"{number} {phase}", right_x + 18, y + 11, accent)
         para(c, f"<b>{esc(title)}</b><br/><font color='#A6B1BE'>{esc(body)}</font>", right_x + 18, y + 5, right_w - 18, STYLES["body"])
     rounded_panel(c, right_x, 22 * mm, right_w, 26 * mm, PANEL_3, GRID, CARD_RADIUS)
-    para(c, "<font color='#F5C768'><b>모바일 결과 화면</b></font><br/>320×700에서도 결과 근거·보상·주요 버튼을 내부 스크롤로 확인할 수 있도록 했습니다.", right_x + CARD_PAD, 42 * mm, right_w - 2 * CARD_PAD, STYLES["body_small"])
+    para(c, "<font color='#F5C768'><b>모바일 결과 화면</b></font><br/>320×700에서도 전투 결과·보상·주요 버튼을 내부 스크롤로 확인할 수 있도록 했습니다.", right_x + CARD_PAD, 42 * mm, right_w - 2 * CARD_PAD, STYLES["body_small"])
 
 
 def slide_13(c: canvas.Canvas) -> None:
     frame(c, 14, "지역 설계", "공통 전투 구조 위에 예산·적 조합·보스를 달리해<br/>6개 지역의 플레이 리듬을 구분했습니다")
     regions = [
-        ("01", "WRONG ENGINE", "300", "흔적·학습", "-", "THE WRONG ENGINE"),
-        ("02", "GLASS DUNE", "1,000", "저격 60%", "-", "MIRROR TYRANT"),
-        ("03", "ABYSSAL", "1,000", "자폭 70%", "-", "DROWNED ORACLE"),
-        ("04", "NEON", "1,100", "외곽 적 혼합", "PRESS SLAM", "FORGE COLOSSUS"),
-        ("05", "STORM", "1,150", "외곽 적 혼합", "ARC VOLLEY", "TEMPEST WYRM"),
-        ("06", "GENE", "1,200", "외곽 적 혼합", "CHIMERA RUSH", "PALE ARCHON"),
+        ("01", "WRONG ENGINE", "300", "서사 단서·초반 학습", "지역 특징", "단서 ROOK·NYX·MOSS", "THE WRONG ENGINE"),
+        ("02", "GLASS DUNE", "1,000", "저격 비중 60%", "지역 특징", "원거리 압박 중심", "MIRROR TYRANT"),
+        ("03", "ABYSSAL", "1,000", "자폭 비중 70%", "지역 특징", "근접 회피 중심", "DROWNED ORACLE"),
+        ("04", "NEON", "1,100", "외곽 지역 혼성 적", "고유 패턴", "PRESS SLAM", "FORGE COLOSSUS"),
+        ("05", "STORM", "1,150", "외곽 지역 혼성 적", "고유 패턴", "ARC VOLLEY", "TEMPEST WYRM"),
+        ("06", "GENE", "1,200", "외곽 지역 혼성 적", "고유 패턴", "CHIMERA RUSH", "PALE ARCHON"),
     ]
     gap_x = 5 * mm
     gap_y = 8 * mm
@@ -1008,7 +1005,7 @@ def slide_13(c: canvas.Canvas) -> None:
 
 
 def slide_14(c: canvas.Canvas) -> None:
-    frame(c, 15, "모드 확장", "플레이 방식은 분리하고, 획득 재화는<br/>하나의 메타 성장으로 연결했습니다")
+    frame(c, 15, "모드 확장", "플레이 방식은 분리하고, 획득 재화는<br/>하나의 공통 성장 체계로 연결했습니다")
     gap = 7 * mm
     image_w = (PW - 2 * MARGIN_X - gap) / 2
     right_x = MARGIN_X + image_w + gap
@@ -1019,7 +1016,7 @@ def slide_14(c: canvas.Canvas) -> None:
     cards = [
         ("캠페인", "전진 원정", "처치·전진 조건과 지역별 조우, 보스 학습을 중심으로 한 캠페인 모드입니다.", CYAN),
         ("지역", "지역별 고유 요소", "적 조합과 중간·최종 보스 패턴을 지역 데이터로 분리합니다.", AMBER),
-        ("별도 모드", "디펜스 작전", "설치·방어 규칙을 사용하는 독립 게임 모드입니다. 3개 단계의 초회·반복 보상으로 공통 재화를 파밍합니다.", MAGENTA),
+        ("별도 모드", "디펜스 작전", "설치·방어 규칙을 사용하는 독립 게임 모드입니다. 3개 단계에서 공통 재화를 반복해서 얻을 수 있습니다.", MAGENTA),
     ]
     for index, (eyebrow, title, body, accent) in enumerate(cards):
         x = MARGIN_X + index * (card_w + card_gap)
@@ -1044,9 +1041,9 @@ def section_03(c: canvas.Canvas) -> None:
 def slide_15(c: canvas.Canvas) -> None:
     frame(c, 16, "플레이테스트", "5명의 반복 플레이 피드백을<br/>관찰·설계 결정·다음 검증으로 연결했습니다")
     cases = [
-        ("01", "시간·난이도", "플레이가 짧고 쉬워 후반까지 긴장이 이어지지 않았습니다.", "지역·공세 규모와 중간·최종 보스, 후반 혼성 적 조합을 추가했습니다. 다음에는 클리어 시간과 사망 구간을 확인합니다.", RED),
-        ("02", "무기·캐릭터 균형", "무기·캐릭터별 체감 성능 차이가 커 선택의 신뢰도가 낮았습니다.", "선택 풀·스킬·성장 효과·재사용 대기시간을 분리했습니다. 다음에는 무기·캐릭터별 클리어 시간과 피해 기여도를 비교합니다.", AMBER),
-        ("03", "반복 동기·보상", "전투 뒤 이어갈 목표와 원하는 재화의 선택지가 부족했습니다.", "공통 재화를 파밍하는 독립 디펜스 모드와 초회 보상·영구 강화·교환을 추가했습니다. 다음에는 모드 선택률과 재화 흐름을 확인합니다.", MAGENTA),
+        ("01", "시간·난이도", "플레이가 짧고 쉬워 후반 긴장감이 부족했습니다.", "공세 규모, 중간·최종 보스, 후반 혼성 적을 추가했습니다. 다음에는 클리어 시간과 사망 구간을 확인합니다.", RED),
+        ("02", "무기·캐릭터 균형", "무기·캐릭터 간 체감 성능 차이가 컸습니다.", "성장 선택군·스킬·재사용 대기시간을 분리했습니다. 다음에는 선택별 클리어 시간과 피해 기여도를 비교합니다.", AMBER),
+        ("03", "반복 동기·보상", "전투 뒤 이어갈 목표와 재화 획득 경로가 부족했습니다.", "독립 디펜스 모드와 초회 보상·영구 강화·교환을 추가했습니다. 다음에는 모드 선택률과 재화 흐름을 확인합니다.", MAGENTA),
     ]
     row_h = 31 * mm
     row_ys = [115 * mm, 79 * mm, 43 * mm]
@@ -1068,19 +1065,19 @@ def slide_15(c: canvas.Canvas) -> None:
         para(c, f"<font color='#FF8190'><b>받은 피드백</b></font><br/>{esc(feedback)}", feedback_x, y + 23 * mm, 72 * mm, STYLES["body_small"])
         para(c, f"<font color='#83F0AE'><b>반영한 개선</b></font><br/>{esc(improvement)}", fix_x, y + 23 * mm, w - 147 * mm - CARD_PAD, STYLES["body_small"])
     rounded_panel(c, MARGIN_X, 16 * mm, PW - 2 * MARGIN_X, 23 * mm, PANEL_3, LIME, CARD_RADIUS)
-    para(c, "<font color='#B9F66B'><b>검증 범위</b></font>  지인·친구 5명이 반복적으로 참여한 정성 피드백입니다. 문제 발견과 개선 방향만 근거로 사용하며, 정량 성과나 최종 균형 달성은 주장하지 않습니다.", MARGIN_X + CARD_PAD, 34 * mm, PW - 2 * MARGIN_X - 2 * CARD_PAD, STYLES["body"])
+    para(c, "<font color='#B9F66B'><b>검증 범위</b></font>  지인·친구 5명이 반복적으로 참여한 정성 피드백입니다. 문제와 개선 방향만 근거로 사용하며, 정량 성과를 제시하거나 균형이 완성되었다고 주장하지 않습니다.", MARGIN_X + CARD_PAD, 34 * mm, PW - 2 * MARGIN_X - 2 * CARD_PAD, STYLES["body"])
 
 
 def slide_16(c: canvas.Canvas) -> None:
-    frame(c, 17, "검증과 기여", "무엇을 확인했고 누가 결정했는지<br/>산출물 단위로 구분했습니다")
+    frame(c, 17, "검증과 기여", "무엇을 확인했고 누가 결정했는지<br/>역할과 책임으로 구분했습니다")
     left_w = 144 * mm
     right_x = MARGIN_X + left_w + 8 * mm
     right_w = PW - MARGIN_X - right_x
     para(c, "<font color='#B9F66B'><b>반복 개선 근거</b></font>", MARGIN_X, 154 * mm, left_w, STYLES["h2"])
-    para(c, "5명의 반복 플레이에서 발견한 문제를 세 가지 개선 축과 두 가지 게임 모드로 연결했습니다.", MARGIN_X, 141 * mm, left_w, STYLES["body"])
+    para(c, "플레이 시간·난이도·무기·캐릭터·보상 문제를 세 개선 축으로 묶어 두 게임 모드에 반영했습니다.", MARGIN_X, 141 * mm, left_w, STYLES["body"])
     metrics = [
         ("5명", "반복 플레이 참여자", GREEN),
-        ("5개", "핵심 피드백 주제", RED),
+        ("5개", "피드백 영역", RED),
         ("3축", "개선 우선순위", CYAN),
         ("2종", "플레이 가능한 게임 모드", MAGENTA),
     ]
@@ -1093,19 +1090,19 @@ def slide_16(c: canvas.Canvas) -> None:
         metric_card(c, x, y, metric_w, 24 * mm, value, label, "", accent)
     rounded_panel(c, MARGIN_X, 24 * mm, left_w, 41 * mm, PANEL_3, GRID, CARD_RADIUS)
     para(c, "<font color='#B9F66B'><b>확인한 내용과 남은 검증</b></font>", MARGIN_X + CARD_PAD, 59 * mm, left_w - 2 * CARD_PAD, STYLES["h3"])
-    para(c, "확인한 내용은 피드백에서 발견한 문제를 실제 콘텐츠 규칙으로 변경하고 플레이 가능한 결과물에 반영했다는 점입니다. 완료율·보스전 시간·잔존율 같은 정량 성과는 주장하지 않습니다. 다음에는 이해관계가 없는 참여자와 구조화된 기록으로 검증하겠습니다.", MARGIN_X + CARD_PAD, 50 * mm, left_w - 2 * CARD_PAD, STYLES["body_small"])
+    para(c, "피드백에서 발견한 문제를 콘텐츠 규칙으로 바꾸고, 플레이 가능한 결과물에 반영했습니다. 완료율·보스전 시간·잔존율 등 정량 성과는 아직 주장하지 않습니다. 다음에는 이해관계가 없는 참여자와 구조화된 기록으로 검증하겠습니다.", MARGIN_X + CARD_PAD, 50 * mm, left_w - 2 * CARD_PAD, STYLES["body_small"])
     rounded_panel(c, right_x, 80 * mm, right_w, 80 * mm, PANEL, GRID)
-    para(c, "<b>산출물별 책임</b>", right_x + CARD_PAD, 151 * mm, right_w - 2 * CARD_PAD, STYLES["h2"])
+    para(c, "<b>역할별 책임</b>", right_x + CARD_PAD, 151 * mm, right_w - 2 * CARD_PAD, STYLES["h2"])
     responsibilities = [
-        ("본인", "테스트 질문과 문제 정의, 우선순위, 최종 수치·규칙과 반영 여부를 결정했습니다.", CYAN, 132 * mm),
-        ("참여자 5명", "난이도·균형·보상에 대한 체감 의견을 제공했으며 기획 결정에는 참여하지 않았습니다.", GREEN, 111 * mm),
-        ("AI", "문서 구성과 구현·검사 작업을 보조했으며 최종 기획 판단은 맡지 않았습니다.", AMBER, 90 * mm),
+        ("본인", "테스트 질문, 문제 정의, 우선순위, 최종 수치·규칙과 반영 여부를 결정했습니다.", CYAN, 132 * mm),
+        ("참여자 5명", "난이도·균형·보상에 대한 체감 의견만 제공했습니다.", GREEN, 111 * mm),
+        ("AI", "문서 구성과 구현·검사를 보조했으며 최종 기획 판단에는 참여하지 않았습니다.", AMBER, 90 * mm),
     ]
     for label, body, accent, y in responsibilities:
         para(c, f"<font color='{accent.hexval()}'><b>{esc(label)}</b></font>  {esc(body)}", right_x + CARD_PAD, y, right_w - 2 * CARD_PAD, STYLES["body_small"])
     rounded_panel(c, right_x, 24 * mm, right_w, 48 * mm, PANEL_3, LIME)
     para(c, "<font color='#B9F66B'><b>핵심 설계 결과</b></font>", right_x + CARD_PAD, 65 * mm, right_w - 2 * CARD_PAD, STYLES["h3"])
-    para(c, "짧고 쉬운 플레이는 단계형 조우로, 전투 격차는 독립 전투 체계로, 다음 목표 부족은 공통 재화 파밍이 가능한 디펜스 모드로 해결했습니다.", right_x + CARD_PAD, 55 * mm, right_w - 2 * CARD_PAD, style("closing_v4", 12, 18, INK, True))
+    para(c, "짧고 쉬웠던 플레이는 단계형 조우로 보완했습니다. 성능 격차는 전용 전투 체계로 줄이고, 반복 목표는 공통 재화를 얻는 디펜스 모드로 확장했습니다.", right_x + CARD_PAD, 55 * mm, right_w - 2 * CARD_PAD, style("closing_v4", 12, 18, INK, True))
     para(c, "실행 링크는 지원서의 별도 링크 항목에 기재합니다.", right_x + CARD_PAD, 35 * mm, right_w - 2 * CARD_PAD, STYLES["body_small"])
 
 
@@ -1136,11 +1133,11 @@ REQUIRED_TEXT = (
     "8 + 14 + 22 + 34 + 52 + 79 + 91 = 300",
     "PRISM TEMPO",
     "지인 5명",
-    "공통 재화 파밍",
+    "공통 재화를 반복해서 얻는 경로",
     "독립 게임 모드",
     "정성 피드백",
-    "정량 성과는 주장하지 않습니다",
-    "최종 기획 판단은 맡지 않았습니다",
+    "정량 성과는 아직 주장하지 않습니다",
+    "최종 기획 판단에는 참여하지 않았습니다",
     "실행 링크는 지원서의 별도 링크 항목",
 )
 
@@ -1158,6 +1155,12 @@ BANNED_TEXT = (
     "지인 3명",
     "3명의 반복",
     "보조 콘텐츠",
+    "지역 런",
+    "교전 밴드",
+    "종점 대기",
+    "동시 활성 적",
+    "선택 풀",
+    "근접 권위",
 )
 
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AirplaneTilt,
+  ArrowCounterClockwise,
   ArrowLeft,
   ArrowRight,
   Brain,
@@ -185,15 +186,16 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
     <main className="campaign-shell save-slot-screen">
       <div className="campaign-grid" aria-hidden="true" />
       <header className="campaign-heading">
-        <button type="button" className="campaign-back" onClick={onBack}><ArrowLeft weight="bold" /> 타이틀</button>
-        <small>헤이븐-09 · 작전 기록 보관소</small>
-        <h1>작전 기록 선택</h1>
-        <p>보스 처치 기록과 해금한 지역은 선택한 슬롯에 자동으로 저장됩니다.</p>
+        <button type="button" className="campaign-back" onClick={onBack}><ArrowLeft weight="bold" /> 메인 메뉴</button>
+        <small>HAVEN-09 // TACTICAL ARCHIVE</small>
+        <h1>작전 프로필 선택</h1>
+        <p>보스 토벌 데이터 및 작전 구역 해금 기록은 선택한 슬롯에 자동 저장됩니다.</p>
       </header>
       <section className="save-slot-grid" aria-label="캠페인 저장 슬롯">
         {normalized.map((slot, index) => {
           const completed = slot?.completedRegionIds?.length || 0;
           const progress = Math.round(completed / 6 * 100);
+          const statusTag = !slot ? "NEW" : completed >= 6 ? "CLEAR" : completed > 0 ? "IN PROGRESS" : "READY";
           return (
             <button
               type="button"
@@ -201,22 +203,25 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
               onClick={() => onSelect(index)}
               key={`slot-${index + 1}`}
             >
-              <span className="save-slot-number">슬롯 0{index + 1}</span>
+              <div className="save-slot-card-header">
+                <span className="save-slot-number">SLOT 0{index + 1}</span>
+                <span className={`save-slot-status-tag is-${statusTag.toLowerCase().replace(" ", "-")}`}>{statusTag}</span>
+              </div>
               {slot ? (
                 <>
-                  <FloppyDisk weight="fill" />
-                  <strong>{slot.homeBaseUnlocked ? "헤이븐-09 작전 기록" : "첫 출격 준비"}</strong>
-                  <p>해방한 지역 {completed} / 6 · 진행도 {progress}%</p>
-                  <i><i style={{ width: `${progress}%` }} /></i>
+                  <div className="save-slot-icon-wrapper"><FloppyDisk weight="fill" /></div>
+                  <strong>{slot.homeBaseUnlocked ? "헤이븐-09 작전 기록" : "첫 출격 대기"}</strong>
+                  <p>해방 권역 {completed} / 6 · 전체 달성률 {progress}%</p>
+                  <div className="save-slot-meter"><i style={{ width: `${progress}%` }} /></div>
                   <small>{formatUpdatedAt(slot.updatedAt)}</small>
-                  <b>이어서 플레이 <Play weight="fill" /></b>
+                  <b>작전 속행 <Play weight="fill" /></b>
                 </>
               ) : (
                 <>
                   <span className="empty-slot-mark">+</span>
                   <strong>새 캠페인</strong>
-                  <p>이지스와 함께 첫 지역 추론핵을 공략합니다.</p>
-                  <b>새 작전 시작 <Play weight="fill" /></b>
+                  <p>이지스와 함께 오답 엔진 추론핵 공략 작전을 개시합니다.</p>
+                  <b>신규 작전 개시 <Play weight="fill" /></b>
                 </>
               )}
             </button>
@@ -461,7 +466,7 @@ export function NpcDialoguePanel({ npc, assets, lineIndex, onAdvance, onClose, o
           )}
           {npc.interaction && onInteraction && (
             <button type="button" className="base-interaction-cta" onClick={() => onInteraction(npc.interaction)}>
-              {npc.interactionLabel || "상호작용"}{npc.interaction === "open-region-select" ? <AirplaneTilt weight="fill" /> : <Crosshair weight="bold" />}
+              {npc.flightOperationLabel || npc.interactionLabel || "상호작용"}{npc.interaction === "open-flight-operations" ? <AirplaneTilt weight="fill" /> : <Crosshair weight="bold" />}
             </button>
           )}
           <button className="base-dialogue-next" type="button" data-dialog-initial-focus data-ui-sound={final ? "uiClose" : "click"} onClick={final ? onClose : onAdvance}>
@@ -481,10 +486,11 @@ export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose, o
   if (facility.id === "augmentation") {
     return <CharacterInformationPanel facility={facility} onPurchase={onPurchase} onClose={onClose} onCharacterChange={facility.onCharacterChange} onWeaponChange={onWeaponChange} onOpenSwordGuide={onOpenSwordGuide} />;
   }
-  const FacilityIcon = facility.id === "research" ? Brain : facility.id === "augmentation" ? Sparkle : Wrench;
+  const isResearch = facility.id === "research";
+  const FacilityIcon = isResearch ? Brain : Wrench;
   return (
     <section className={`base-facility-panel facility-${facility.id}${facility.artSource ? " has-key-art" : ""}`} role="dialog" aria-modal="true" aria-labelledby="base-facility-name" ref={dialogRef} tabIndex={-1}>
-      {facility.artSource && <img className="facility-key-art" src={assetSource(facility.artSource)} alt="이지스와 미카의 전투 프레임을 강화하는 동기화실" />}
+      {facility.artSource && <img className="facility-key-art" src={assetSource(facility.artSource)} alt="기지 시설 일러스트" />}
       <header>
         <span><FacilityIcon weight="fill" /></span>
         <div>
@@ -505,35 +511,37 @@ export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose, o
         {(facility.upgrades || []).map((upgrade) => {
           const maxed = upgrade.rank >= upgrade.maxRank;
           const disabled = maxed || !upgrade.canPurchase;
+          const purchasable = !maxed && upgrade.canPurchase;
           return (
-            <article className={maxed ? "facility-upgrade is-maxed" : "facility-upgrade"} key={upgrade.id}>
+            <article className={`facility-upgrade${maxed ? " is-maxed" : ""}${purchasable ? " is-purchasable" : ""} upgrade-${upgrade.id}`} key={upgrade.id}>
               <header>
-                <span>{String(upgrade.order || 1).padStart(2, "0")}</span>
+                <span className="upgrade-index-badge">{String(upgrade.order || 1).padStart(2, "0")}</span>
                 <div><small>{upgrade.category}</small><h3>{upgrade.name}</h3></div>
-                <b>{maxed ? "개조 완료" : `현재 ${upgrade.rank}단계 / 최대 ${upgrade.maxRank}단계`}</b>
+                <b>{maxed ? "MAX 개조" : `RANK ${upgrade.rank} / ${upgrade.maxRank}`}</b>
               </header>
               <div className="upgrade-ranks" aria-label={`${upgrade.maxRank}랭크 중 ${upgrade.rank}랭크`}>
                 {Array.from({ length: upgrade.maxRank }, (_, index) => <i className={index < upgrade.rank ? "is-active" : ""} key={index} />)}
               </div>
               <p>{upgrade.description}</p>
               <dl>
-                <div><dt>현재 효과</dt><dd>{upgrade.currentEffect || "효과 없음"}</dd></div>
-                <div><dt>{maxed ? "완료" : "다음 단계"}</dt><dd>{maxed ? "최고 단계" : upgrade.nextEffect}</dd></div>
+                <div><dt>현재 효과</dt><dd className="effect-current">{upgrade.currentEffect || "효과 없음"}</dd></div>
+                <div><dt>{maxed ? "완료" : "다음 단계"}</dt><dd className={`effect-next${purchasable ? " is-upgradable" : ""}`}>{maxed ? "최고 단계" : upgrade.nextEffect}</dd></div>
               </dl>
-              <button type="button" className="command-ui-button" data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => onPurchase(upgrade.id)}>
+              <button type="button" className={`command-ui-button${purchasable ? " is-ready-cta" : ""}`} data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => onPurchase(upgrade.id)}>
                 {maxed ? <><CheckCircle weight="fill" /> 개조 완료</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><FacilityIcon weight="bold" /> {upgrade.nextCost} {facility.currencyShortLabel}로 강화</>}
               </button>
             </article>
           );
         })}
       </div>
+
       {(facility.exchanges || []).length > 0 && (
         <section className="facility-exchange-panel" aria-labelledby="facility-exchange-title">
           <header>
-            <div><small>남는 자원 활용</small><h3 id="facility-exchange-title">응용 자원 제작</h3></div>
-            <span>한 번씩 즉시 제작합니다.</span>
+            <div><small>잉여 자원 전환</small><h3 id="facility-exchange-title">전술 물자 합성</h3></div>
+            <span>보유 재화를 즉시 상호 변환합니다.</span>
           </header>
-          <div>
+          <div className="facility-exchange-grid">
             {facility.exchanges.map((exchange) => (
               <article className={exchange.canExchange ? "is-ready" : ""} key={exchange.id}>
                 <div><small>{exchange.name}</small><strong>{exchange.koreanName}</strong></div>
@@ -556,16 +564,16 @@ export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose, o
 function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterChange, onWeaponChange, onOpenSwordGuide }) {
   const dialogRef = useRef(null);
   const [activeTab, setActiveTab] = useState("profile");
-  const [profileId, setProfileId] = useState(facility.selectedCharacterId || facility.characters?.[0]?.id || "aegis");
+  const [profileId, setProfileId] = useState(facility?.selectedCharacterId || facility?.characters?.[0]?.id || "aegis");
   const [upgradePulse, setUpgradePulse] = useState(0);
   const [portraitCompact, setPortraitCompact] = useState(false);
   const [upgradeFilter, setUpgradeFilter] = useState("all");
   useDialogFocusTrap(dialogRef, true);
   useEffect(() => {
-    setProfileId(facility.selectedCharacterId || facility.characters?.[0]?.id || "aegis");
-  }, [facility.selectedCharacterId, facility.characters]);
-  const profile = facility.characters?.find((character) => character.id === profileId) || facility.characters?.[0];
-  const upgrades = facility.upgrades || [];
+    setProfileId(facility?.selectedCharacterId || facility?.characters?.[0]?.id || "aegis");
+  }, [facility?.selectedCharacterId, facility?.characters]);
+  const profile = facility?.characters?.find((character) => character.id === profileId) || facility?.characters?.[0];
+  const upgrades = facility?.upgrades || [];
   const totalRank = upgrades.reduce((sum, upgrade) => sum + upgrade.rank, 0);
   const maxRank = upgrades.reduce((sum, upgrade) => sum + upgrade.maxRank, 0);
   const affordableUpgradeCount = upgrades.filter((upgrade) => upgrade.rank < upgrade.maxRank && upgrade.canPurchase).length;
@@ -575,10 +583,10 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
     : upgrades;
   const activeLoadout = profile?.id === "mika"
     ? CHARACTER_ACTIVE_LOADOUTS.mika
-    : facility.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
-  const completedRegions = new Set(facility.completedRegionIds || []);
+    : facility?.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
+  const completedRegions = new Set(facility?.completedRegionIds || []);
   const chooseCharacter = (characterId) => {
-    const selected = facility.characters?.find((character) => character.id === characterId);
+    const selected = facility?.characters?.find((character) => character.id === characterId);
     if (!selected?.unlocked) return;
     setProfileId(characterId);
     onCharacterChange?.(characterId);
@@ -589,14 +597,14 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
   };
   return (
     <section className={`character-information-panel is-${profile?.accent || "cyan"}${portraitCompact ? " is-portrait-compact" : ""}`} role="dialog" aria-modal="true" aria-labelledby="character-information-name" ref={dialogRef} tabIndex={-1}>
-      {facility.artSource && <img className="character-info-environment" src={assetSource(facility.artSource)} alt="" aria-hidden="true" />}
+      {facility?.artSource && <img className="character-info-environment" src={assetSource(facility.artSource)} alt="" aria-hidden="true" />}
       <header className="character-info-topbar">
         <div>
-          <small>{facility.kicker}</small>
+          <small>{facility?.kicker || "HAVEN-09 // SYNC CHAMBER"}</small>
           <strong>전투원 정보</strong>
         </div>
-        <div className="character-core-balance" aria-label={`보유 ${facility.currencyLabel} ${facility.currency}`}>
-          <MenuAtlasIcon atlas={facility.menuIconAtlas} icon="augmentation" fallback={Sparkle} /><span>{facility.currencyLabel}</span><b>{facility.currency}</b>
+        <div className="character-core-balance" aria-label={`보유 ${facility?.currencyLabel} ${facility?.currency}`}>
+          <MenuAtlasIcon atlas={facility?.menuIconAtlas} icon="augmentation" fallback={Sparkle} /><span>{facility?.currencyLabel}</span><b>{facility?.currency}</b>
         </div>
         <button type="button" className="facility-close" data-ui-sound="uiClose" onClick={onClose} aria-label="전투원 정보 닫기"><ArrowLeft weight="bold" /> 기지로 <kbd>ESC</kbd></button>
       </header>
@@ -623,8 +631,8 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
 
       <section className="character-data-console">
         <nav className="character-info-tabs" aria-label="전투원 정보 분류">
-          <button type="button" className={activeTab === "profile" ? "is-active" : ""} onClick={() => setActiveTab("profile")}><MenuAtlasIcon atlas={facility.menuIconAtlas} icon="operative" fallback={User} /> 기본 정보</button>
-          <button type="button" className={activeTab === "upgrade" ? "is-active" : ""} onClick={() => { setActiveTab("upgrade"); setPortraitCompact(true); }}><MenuAtlasIcon atlas={facility.menuIconAtlas} icon="augmentation" fallback={Sparkle} /> 영구 강화</button>
+          <button type="button" className={activeTab === "profile" ? "is-active" : ""} onClick={() => setActiveTab("profile")}><MenuAtlasIcon atlas={facility?.menuIconAtlas} icon="operative" fallback={User} /> 기본 정보</button>
+          <button type="button" className={activeTab === "upgrade" ? "is-active" : ""} onClick={() => { setActiveTab("upgrade"); setPortraitCompact(true); }}><MenuAtlasIcon atlas={facility?.menuIconAtlas} icon="augmentation" fallback={Sparkle} /> 영구 강화</button>
         </nav>
 
         {activeTab === "profile" ? (
@@ -635,11 +643,11 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
             </header>
             <p>{profile?.description}</p>
             <dl className="character-stat-grid">
-              <div><dt>최대 내구도</dt><dd>{facility.combatStats?.maxHp || 360}</dd></div>
-              <div><dt>공격 출력</dt><dd>{facility.combatStats?.damageOutput || 100}%</dd></div>
-              <div><dt>기동 속도</dt><dd>{profile?.id === "mika" ? facility.combatStats?.mikaSpeed : facility.combatStats?.aegisSpeed}</dd></div>
-              <div><dt>공격 주기</dt><dd>{facility.combatStats?.fireRate || 100}%</dd></div>
-              <div><dt>해방 구역</dt><dd>{facility.combatStats?.completedRegions || 0} / 6</dd></div>
+              <div><dt>최대 내구도</dt><dd>{facility?.combatStats?.maxHp || 360}</dd></div>
+              <div><dt>공격 출력</dt><dd>{facility?.combatStats?.damageOutput || 100}%</dd></div>
+              <div><dt>기동 속도</dt><dd>{profile?.id === "mika" ? facility?.combatStats?.mikaSpeed : facility?.combatStats?.aegisSpeed}</dd></div>
+              <div><dt>공격 주기</dt><dd>{facility?.combatStats?.fireRate || 100}%</dd></div>
+              <div><dt>해방 구역</dt><dd>{facility?.combatStats?.completedRegions || 0} / 6</dd></div>
               <div><dt>태그 대기</dt><dd>10초</dd></div>
             </dl>
             <section className="character-active-kit" aria-label={`${profile?.koreanName} 액티브 스킬`}>
@@ -658,11 +666,11 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
                   <span>출격 전 이 화면에서 장비와 증강 트리를 확정합니다.</span>
                 </header>
                 <div className="character-weapon-options">
-                  {(facility.weapons || []).map((weapon) => {
-                    const equipped = weapon.id === facility.mainWeaponId;
+                  {(facility?.weapons || []).map((weapon) => {
+                    const equipped = weapon.id === facility?.mainWeaponId;
                     const unlocked = !weapon.unlockRegionId || completedRegions.has(weapon.unlockRegionId);
                     const rankKey = weapon.id === "beam-sword" ? "ilya-sword-resonator" : "ilya-rifle-emitter";
-                    const rank = facility.equipmentRanks?.[rankKey] || 0;
+                    const rank = facility?.equipmentRanks?.[rankKey] || 0;
                     const WeaponIcon = weapon.id === "beam-sword" ? Sword : Crosshair;
                     return (
                       <button
@@ -692,8 +700,8 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
           </div>
         ) : (
           <div className="character-upgrade-content">
-            <header><div><small>PERMANENT AUGMENTATION</small><h3>동기화 프로토콜</h3></div><span>{facility.currencyHint}</span></header>
-            {facility.augmentationCoreVisual && (
+            <header><div><small>PERMANENT AUGMENTATION</small><h3>동기화 프로토콜</h3></div><span>{facility?.currencyHint}</span></header>
+            {facility?.augmentationCoreVisual && (
               <section className={`augmentation-core-module${upgradePulse > 0 ? " is-charged" : ""}`} key={`augmentation-core-${upgradePulse}`} aria-label="동기화 코어 강화 장치">
                 <div className="augmentation-core-art" aria-hidden="true">
                   <i className="augmentation-orbit orbit-outer" />
@@ -728,12 +736,13 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
               {visibleUpgrades.map((upgrade) => {
                 const maxed = upgrade.rank >= upgrade.maxRank;
                 const disabled = maxed || !upgrade.canPurchase;
+                const purchasable = !maxed && upgrade.canPurchase;
                 return (
-                  <article className={maxed ? "character-upgrade-row is-maxed" : "character-upgrade-row"} key={upgrade.id}>
+                  <article className={`character-upgrade-row${maxed ? " is-maxed" : ""}${purchasable ? " is-purchasable" : ""}`} key={upgrade.id}>
                     <header><span>{String(upgrade.order || 1).padStart(2, "0")}</span><div><small>{upgrade.category}</small><h4>{upgrade.name}</h4></div><b>{upgrade.rank} / {upgrade.maxRank}</b></header>
                     <p>{upgrade.description}</p>
                     <div className="upgrade-ranks" aria-label={`${upgrade.maxRank}랭크 중 ${upgrade.rank}랭크`}>{Array.from({ length: upgrade.maxRank }, (_, index) => <i className={index < upgrade.rank ? "is-active" : ""} key={index} />)}</div>
-                    <footer><span>{maxed ? "최고 단계" : upgrade.nextEffect}</span><button type="button" className="command-ui-button" data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => purchaseUpgrade(upgrade.id)}>{maxed ? <><CheckCircle weight="fill" /> 완료</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><Sparkle weight="fill" /> 코어 {upgrade.nextCost}개로 강화</>}</button></footer>
+                    <footer><span className={`effect-next${purchasable ? " is-upgradable" : ""}`}>{maxed ? "최고 단계" : upgrade.nextEffect}</span><button type="button" className={`command-ui-button${purchasable ? " is-ready-cta" : ""}`} data-ui-sound={disabled ? "denied" : "uiConfirm"} disabled={disabled} onClick={() => purchaseUpgrade(upgrade.id)}>{maxed ? <><CheckCircle weight="fill" /> 완료</> : upgrade.lockedReason ? <><Lock weight="fill" /> {upgrade.lockedReason}</> : <><Sparkle weight="fill" /> 코어 {upgrade.nextCost}개로 강화</>}</button></footer>
                   </article>
                 );
               })}
@@ -746,7 +755,7 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
       </section>
 
       <nav className="character-roster-rail" aria-label="전투원 선택">
-        {(facility.characters || []).map((character) => (
+        {(facility?.characters || []).map((character) => (
           <button type="button" className={`${character.id === profile?.id ? "is-active" : ""}${character.unlocked ? "" : " is-locked"}`} aria-label={character.unlocked ? `${character.koreanName} 정보 보기` : `${character.koreanName} 잠김. 오답 엔진 중앙로 최초 클리어 필요`} aria-pressed={character.id === profile?.id} aria-disabled={!character.unlocked} onClick={() => chooseCharacter(character.id)} key={character.id}>
             <img src={assetSource(character.portraitSource)} alt="" /><span>{character.unlocked ? character.koreanName : <><Lock weight="fill" /> 미해금</>}</span>
           </button>
@@ -785,6 +794,10 @@ function MotionPortraitStage({ source, characterId, name, onOpen }) {
         <button type="button" className="portrait-zone is-arm is-left" data-ui-sound="click" onClick={() => react("arms")} aria-label={`${name} 왼팔 반응 보기`} />
         <button type="button" className="portrait-zone is-arm is-right" data-ui-sound="click" onClick={() => react("arms")} aria-label={`${name} 오른팔 반응 보기`} />
         <button type="button" className="portrait-zone is-legs" data-ui-sound="click" onClick={() => react("legs")} aria-label={`${name} 다리 반응 보기`} />
+      </div>
+      <div className="portrait-touch-hint" aria-hidden="true">
+        <Sparkle weight="fill" />
+        <span>터치 상호작용</span>
       </div>
       {reaction && <aside className="motion-portrait-speech" key={reaction.token} role="status" aria-live="polite"><strong>{name}</strong><p>{reaction.text}</p></aside>}
       <button type="button" className="motion-portrait-caption" onClick={onOpen} aria-label={`${name} 전투원 정보 열기`}>
@@ -843,7 +856,7 @@ export function MikaRecruitScreen({ assets, onComplete }) {
   );
 }
 
-export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onExchangeResources, onCharacterChange, onWeaponChange, onOpenSwordGuide, onCloseFacility, onBoard, onDefense, onTitle }) {
+export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, availableUpgrades = {}, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onExchangeResources, onCharacterChange, onWeaponChange, onOpenSwordGuide, onCloseFacility, onBoard, onDefense, onTitle }) {
   const facilityRailRef = useRef(null);
   const [facilityRailIndex, setFacilityRailIndex] = useState(0);
   const background = assetSource(assets?.homeBase);
@@ -868,9 +881,21 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
           <span><FloppyDisk weight="fill" /> 슬롯 {(campaign?.slotIndex ?? 0) + 1} · 자동 저장</span>
         </div>
         <nav className="base-currency-rail" aria-label="기지 보유 재화">
-          <button type="button" onClick={() => onOpenFacility("research")} aria-label="연구 자료로 연구실 열기"><MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="researchCurrency" fallback={Brain} /><span><small>연구 자료</small><b>{campaign?.progression?.researchData || 0}</b></span></button>
-          <button type="button" onClick={() => onOpenFacility("equipment")} aria-label="장비 부품으로 정비소 열기"><MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="equipmentCurrency" fallback={Wrench} /><span><small>장비 부품</small><b>{campaign?.progression?.equipmentParts || 0}</b></span></button>
-          <button type="button" onClick={() => onOpenFacility("augmentation")} aria-label="동기화 코어로 전투원 정보 열기"><MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="augmentation" fallback={Sparkle} /><span><small>동기화 코어</small><b>{campaign?.progression?.augmentationCores || 0}</b></span></button>
+          <button type="button" className={availableUpgrades?.research ? "has-upgrade-ready" : ""} onClick={() => onOpenFacility("research")} aria-label="연구 자료로 연구실 열기">
+            {availableUpgrades?.research && <span className="currency-upgrade-dot" title="강화 가능" />}
+            <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="researchCurrency" fallback={Brain} />
+            <span><small>연구 자료</small><b>{campaign?.progression?.researchData || 0}</b></span>
+          </button>
+          <button type="button" className={availableUpgrades?.equipment ? "has-upgrade-ready" : ""} onClick={() => onOpenFacility("equipment")} aria-label="장비 부품으로 정비소 열기">
+            {availableUpgrades?.equipment && <span className="currency-upgrade-dot" title="강화 가능" />}
+            <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="equipmentCurrency" fallback={Wrench} />
+            <span><small>장비 부품</small><b>{campaign?.progression?.equipmentParts || 0}</b></span>
+          </button>
+          <button type="button" className={availableUpgrades?.augmentation ? "has-upgrade-ready" : ""} onClick={() => onOpenFacility("augmentation")} aria-label="동기화 코어로 전투원 정보 열기">
+            {availableUpgrades?.augmentation && <span className="currency-upgrade-dot" title="강화 가능" />}
+            <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="augmentation" fallback={Sparkle} />
+            <span><small>동기화 코어</small><b>{campaign?.progression?.augmentationCores || 0}</b></span>
+          </button>
         </nav>
       </header>
 
@@ -910,35 +935,154 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
       />
 
       <aside className="base-primary-actions">
-        <button type="button" className="base-character-action" onClick={() => onOpenFacility("augmentation")}>
+        <button type="button" className={`base-character-action${availableUpgrades?.augmentation ? " has-upgrade-alert" : ""}`} onClick={() => onOpenFacility("augmentation")}>
+          {availableUpgrades?.augmentation && <span className="npc-upgrade-badge" aria-label="강화 가능"><Sparkle weight="fill" /></span>}
           <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="operative" fallback={User} /><span><small>전투원 관리</small><b>전투원 · 강화</b></span><ArrowRight weight="bold" />
         </button>
         <button type="button" className="base-sortie-action command-ui-button" data-ui-sound="uiConfirm" onClick={onBoard}>
-          <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="sortie" fallback={AirplaneTilt} /><span><small>스텔스 비행선 나이트자</small><b>작전 권역 · 출격</b></span><Play weight="fill" />
+          <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="sortie" fallback={AirplaneTilt} /><span><small>전술 침투선 나이트자</small><b>작전 권역 · 출격</b></span><Play weight="fill" />
         </button>
         <button type="button" className="base-defense-action command-ui-button" data-ui-sound="uiConfirm" onClick={onDefense}>
-          <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="defense" fallback={ShieldChevron} /><span><small>서브 콘텐츠 · 레아 관제</small><b>기지 방어</b></span><Crosshair weight="bold" />
+          <MenuAtlasIcon atlas={assets?.menuIconAtlas} icon="defense" fallback={ShieldChevron} /><span><small>레아 전술 관제</small><b>기지 방어전</b></span><Crosshair weight="bold" />
         </button>
       </aside>
 
       <aside className="base-objective">
-        <small>현재 작전 · 해방 {completed} / 6</small>
+        <small>작전 현황 · 해방 권역 {completed} / 6</small>
         <strong>{larkAlert ? "라크가 신규 권역 신호를 해독했습니다" : completed >= 3 ? "외곽 권역 작전 진행 중" : "지역 추론핵을 추적하세요"}</strong>
         <p>{larkAlert ? "격납고에서 느낌표가 떠 있는 라크와 대화하세요." : completed >= 3 ? "작전 권역을 고른 뒤 출격할 구역을 선택하세요." : "비행선에서 다음 출격 구역을 선택하세요."}</p>
         {campaign?.lastRegionRewards && (
           <div className="base-reward-receipt">
-            <span>회수 자원</span>
-            <b>연구 +{campaign.lastRegionRewards.researchData}</b>
-            <b>부품 +{campaign.lastRegionRewards.equipmentParts}</b>
-            <b>코어 +{campaign.lastRegionRewards.augmentationCores || 0}</b>
+            <span>작전 노획 자원</span>
+            <b>연구 자료 +{campaign.lastRegionRewards.researchData}</b>
+            <b>장비 부품 +{campaign.lastRegionRewards.equipmentParts}</b>
+            <b>동기화 코어 +{campaign.lastRegionRewards.augmentationCores || 0}</b>
           </div>
         )}
-        <button type="button" onClick={onTitle}>저장 슬롯 화면</button>
+        <button type="button" onClick={onTitle}>작전 프로필 선택</button>
       </aside>
 
       </div>
       <NpcDialoguePanel npc={activeNpc} assets={assets} lineIndex={lineIndex} onAdvance={onAdvanceNpc} onClose={onCloseNpc} onFacility={onOpenFacility} onInteraction={onNpcInteraction} />
       <BaseFacilityPanel facility={activeFacility ? { ...activeFacility, onCharacterChange } : null} onPurchase={onPurchaseUpgrade} onExchange={onExchangeResources} onClose={onCloseFacility} onWeaponChange={onWeaponChange} onOpenSwordGuide={onOpenSwordGuide} />
+    </main>
+  );
+}
+
+const FLIGHT_PLAN_ICON = Object.freeze({
+  "night-veil": AirplaneTilt,
+  "lifeline-corridor": ShieldChevron,
+  "raptor-escort": Crosshair,
+});
+
+export function LarkFlightOperationsScreen({ campaign, plans = [], activePlanId, assets, onSelect, onBack }) {
+  const [selectedPlanId, setSelectedPlanId] = useState(activePlanId || plans[0]?.id || null);
+  const completedRegions = campaign?.completedRegionIds?.length || 0;
+  const operations = campaign?.flightOperations || {};
+  const background = assetSource(assets?.regionMap || assets?.homeBase);
+  const larkAtlas = assetSource(assets?.npcPortraits);
+  const selectedPlan = plans.find((plan) => plan.id === selectedPlanId) || plans[0] || null;
+  const selectedUnlocked = Boolean(selectedPlan && completedRegions >= selectedPlan.unlockClears);
+  const selectedActive = selectedPlan?.id === activePlanId;
+  const SelectedIcon = FLIGHT_PLAN_ICON[selectedPlan?.id] || AirplaneTilt;
+
+  useEffect(() => {
+    setSelectedPlanId(activePlanId || plans[0]?.id || null);
+  }, [activePlanId, plans]);
+
+  useEffect(() => {
+    const close = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onBack?.();
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [onBack]);
+
+  return (
+    <main className="campaign-shell flight-ops-screen">
+      {background && <img className="campaign-background flight-ops-map" src={background} alt="나이트자 항로 작전 전략 지도" />}
+      <div className="flight-ops-shade" aria-hidden="true" />
+      <header className="flight-ops-heading">
+        <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={onBack}><ArrowLeft weight="bold" /> 기지로 <kbd>ESC</kbd></button>
+        <div>
+          <small>LARK FLIGHT CONTROL · NIGHTJAR OPERATIONS</small>
+          <h1>항로 작전 편성</h1>
+          <p>출격 지점을 고르는 화면이 아닙니다. 나이트자의 침투 교리를 선택해 다음 전투의 기동·생존·화력 조건을 바꾸세요.</p>
+        </div>
+        <dl className="flight-ops-record">
+          <div><dt>개방 권역</dt><dd>{completedRegions} / 6</dd></div>
+          <div><dt>항로 출격</dt><dd>{operations.completedSorties || 0}</dd></div>
+          <div><dt>현재 계획</dt><dd>{plans.find((plan) => plan.id === activePlanId)?.routeCode || "NV-01"}</dd></div>
+        </dl>
+      </header>
+
+      <section className="flight-ops-console" aria-label="라크 비행 작전 통제실">
+        <aside className="flight-ops-lark">
+          <div className="flight-ops-lark-portrait" style={{ backgroundImage: larkAtlas ? `url(${larkAtlas})` : undefined }} role="img" aria-label="비행선 조종사 라크" />
+          <div>
+            <small>AIRSHIP PILOT · FLIGHT GANTRY</small>
+            <strong>라크</strong>
+            <p>“{selectedPlan?.pilotQuote || "항로를 골라. 나이트자는 언제든 뜰 수 있어."}”</p>
+          </div>
+        </aside>
+
+        <div className="flight-route-plot" aria-hidden="true" style={{ "--flight-accent": selectedPlan?.accent || "#c7ff4a" }}>
+          <span className="flight-route-airship"><AirplaneTilt weight="fill" /></span>
+          <i className="route-node node-a" /><i className="route-node node-b" /><i className="route-node node-c" /><i className="route-node node-d" />
+          <b>{selectedPlan?.callSign || "NIGHT VEIL"}</b><em>{selectedPlan?.routeCode || "NV-01"} · ROUTE LOCKED</em>
+        </div>
+
+        <nav className="flight-plan-rail" aria-label="비행 작전 교리 선택">
+          {plans.map((plan) => {
+            const unlocked = completedRegions >= plan.unlockClears;
+            const active = plan.id === activePlanId;
+            const selected = plan.id === selectedPlan?.id;
+            const Icon = FLIGHT_PLAN_ICON[plan.id] || AirplaneTilt;
+            return (
+              <button
+                type="button"
+                className={`flight-plan-card${selected ? " is-selected" : ""}${active ? " is-active" : ""}${unlocked ? "" : " is-locked"}`}
+                style={{ "--flight-accent": plan.accent }}
+                aria-pressed={selected}
+                aria-label={`${plan.koreanName}, ${unlocked ? active ? "현재 운용 중" : "편성 가능" : `${plan.unlockClears}개 권역 클리어 필요`}`}
+                onClick={() => unlocked && setSelectedPlanId(plan.id)}
+                disabled={!unlocked}
+                key={plan.id}
+              >
+                <span className="flight-plan-index">0{plan.order}</span>
+                <span className="flight-plan-icon">{unlocked ? <Icon weight="fill" /> : <Lock weight="fill" />}</span>
+                <span className="flight-plan-title"><small>{plan.category}</small><strong>{plan.koreanName}</strong><em>{plan.callSign}</em></span>
+                <span className="flight-plan-status">{unlocked ? active ? <><CheckCircle weight="fill" /> 운용 중</> : `${operations.planSorties?.[plan.id] || 0}회 출격` : `${plan.unlockClears}개 권역 클리어`}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {selectedPlan && (
+          <article className="flight-plan-brief" style={{ "--flight-accent": selectedPlan.accent }}>
+            <header>
+              <span><SelectedIcon weight="fill" /></span>
+              <div><small>{selectedPlan.routeCode} · {selectedPlan.category}</small><h2>{selectedPlan.koreanName}</h2><em>{selectedPlan.callSign}</em></div>
+            </header>
+            <p>{selectedPlan.summary}</p>
+            <dl>
+              {selectedPlan.effects.map((effect) => <div key={effect.label}><dt>{effect.label}</dt><dd>{effect.value}</dd></div>)}
+            </dl>
+            {!selectedUnlocked && <p className="flight-plan-lock-copy"><Lock weight="fill" /> 권역 {selectedPlan.unlockClears}곳을 클리어하면 라크가 이 항로를 개방합니다.</p>}
+            <button
+              type="button"
+              className="flight-plan-activate command-ui-button"
+              data-ui-sound={selectedUnlocked ? "uiConfirm" : "denied"}
+              disabled={!selectedUnlocked || selectedActive}
+              onClick={() => onSelect?.(selectedPlan.id)}
+            >
+              {selectedActive ? <><CheckCircle weight="fill" /> 현재 항로 운용 중</> : selectedUnlocked ? <><AirplaneTilt weight="fill" /> 이 항로로 비행 계획 확정</> : <><Lock weight="fill" /> 항로 잠김</>}
+            </button>
+          </article>
+        )}
+      </section>
     </main>
   );
 }
@@ -1309,19 +1453,33 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
                 <div><dt>보스 패턴</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.bossSignatures)}</dd></div>
                 {selectedRegion.midBoss && <div><dt>중간 방어체</dt><dd>{selectedRegion.midBoss.koreanName} · {selectedRegion.midBoss.name}</dd></div>}
                 <div><dt>최종 목표</dt><dd>{BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName} 파괴</dd></div>
-                <div><dt>예상 교전</dt><dd>기계 군단 {selectedRegion.enemyBudget}기</dd></div>
+                <div><dt>예상 교전</dt><dd>적성 기체 약 {selectedRegion.enemyBudget}기 추정</dd></div>
                 </dl>
               </details>
               <div className="region-sortie-rewards">
-                <small>첫 승리 회수 자원</small>
-                <span>연구 자료 +{selectedRegion.victoryRewards?.firstClear?.researchData || 0}</span>
-                <span>장비 부품 +{selectedRegion.victoryRewards?.firstClear?.equipmentParts || 0}</span>
-                <span>동기화 코어 +{selectedRegion.victoryRewards?.firstClear?.augmentationCores || 0}</span>
+                <div className="reward-tier is-first-clear">
+                  <small><Sparkle weight="fill" /> {repeatOperation ? "최초 클리어 보상 (획득 완료)" : "최초 클리어 보상"}</small>
+                  <div className="reward-chips">
+                    <span>연구 +{selectedRegion.victoryRewards?.firstClear?.researchData || 0}</span>
+                    <span>부품 +{selectedRegion.victoryRewards?.firstClear?.equipmentParts || 0}</span>
+                    <span>코어 +{selectedRegion.victoryRewards?.firstClear?.augmentationCores || 0}</span>
+                  </div>
+                </div>
+                {repeatOperation && selectedRegion.victoryRewards?.repeatClear && (
+                  <div className="reward-tier is-repeat-clear">
+                    <small><ArrowCounterClockwise weight="bold" /> 반복 파밍 보상</small>
+                    <div className="reward-chips">
+                      <span>연구 +{selectedRegion.victoryRewards.repeatClear.researchData || 0}</span>
+                      <span>부품 +{selectedRegion.victoryRewards.repeatClear.equipmentParts || 0}</span>
+                      <span>코어 +{selectedRegion.victoryRewards.repeatClear.augmentationCores || 0}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
             <section className="sortie-character-loadout" aria-labelledby="sortie-character-title">
               <header>
-                <div><small>태그 편성</small><h3 id="sortie-character-title">시작 캐릭터 선택</h3></div>
+                <div><small>전술 편제</small><h3 id="sortie-character-title">선봉 요원 선택</h3></div>
                 <span>전투 중 <kbd>T</kbd>로 두 캐릭터를 교대합니다.</span>
               </header>
               <div className="sortie-character-options">

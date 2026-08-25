@@ -2,8 +2,8 @@
   "schema_version": 1,
   "artifact": {
     "filename": "곽현_네오플_게임콘텐츠기획_포트폴리오.pdf",
-    "sha256": "7F5C9EBD8AD85E2B5968B9777DDB869B87A904C1993F6C689FBD3A72589C3EAD",
-    "bytes": 1921815,
+    "sha256": "7FC36DA593071FD29A0E8D623A660A1368CEE75BF4EA37DBA187BD3B83CFC25B",
+    "bytes": 1921366,
     "pages": 17,
     "page_size": "A4 landscape"
   },
@@ -11,7 +11,7 @@
     "direction": "neo-industrial editorial case study",
     "palette": ["#090B0E", "#F3F0E9", "#6BE4E8", "#FF4A5C", "#F4C55C", "#DE6BC2", "#B5F05A"],
     "layout": "17-page evidence-first case study with a five-person iteration narrative, asymmetric editorial grid, large gameplay windows, and flat evidence cards",
-    "typography": "embedded Malgun Gothic; 12 pt body, 10.8 pt supporting copy, 10.5 pt tables and captions, 10 pt labels, 9.5 pt minimum footer text",
+    "typography": "embedded Malgun Gothic; Korean word-boundary wrapping; 12 pt body, 10.8 pt supporting copy, 10.5 pt tables and captions, 10 pt labels, 9.5 pt minimum footer text",
     "spacing": "18 mm page safety margin, 15 pt card padding, restrained guide lines, simplified header and footer chrome"
   },
   "source_preservation": {

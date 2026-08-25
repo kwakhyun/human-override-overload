@@ -1890,3 +1890,1223 @@
   .campaign-shell.home-base-screen .base-primary-actions :is(small, b) { overflow: visible; white-space: normal; word-break: keep-all; }
   .campaign-shell .character-info-tabs button { min-height: 56px; }
 }
+
+/* ==========================================================================
+   PRODUCTION TACTICAL UI/UX POLISH LAYER (V3)
+   ========================================================================== */
+
+/* 1. Skill Cooldown Numbers & Active Badges */
+.combat-ability-icon {
+  position: relative;
+}
+
+.combat-ability-cooldown-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(3, 10, 14, 0.92);
+  border: 1px solid rgba(120, 233, 247, 0.7);
+  color: #78e9f7;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 8px rgba(120, 233, 247, 0.7);
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.combat-ability-active-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 6;
+  padding: 1px 3px;
+  border-radius: 2px;
+  background: rgba(94, 255, 177, 0.24);
+  border: 1px solid #5effb1;
+  color: #5effb1;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  animation: pulse-active-glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-active-glow {
+  0% { box-shadow: 0 0 4px rgba(94, 255, 177, 0.4); }
+  100% { box-shadow: 0 0 12px rgba(94, 255, 177, 0.9); }
+}
+
+/* 2. Critical Low Health Vignette */
+.critical-health-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  box-shadow: inset 0 0 80px 20px rgba(255, 40, 70, 0.45);
+  animation: critical-health-vignette-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes critical-health-vignette-pulse {
+  0% {
+    box-shadow: inset 0 0 50px 10px rgba(255, 40, 70, 0.3);
+    opacity: 0.7;
+  }
+  100% {
+    box-shadow: inset 0 0 110px 30px rgba(255, 40, 70, 0.7);
+    opacity: 1;
+  }
+}
+
+/* 3. Level Up Reward Ribbons & Card Polish */
+.reward-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(120, 233, 247, 0.28);
+  border-radius: 6px;
+  background: linear-gradient(170deg, rgba(6, 20, 26, 0.96) 0%, rgba(2, 9, 13, 0.98) 100%);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.3, 1), border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.reward-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(120, 233, 247, 0.75);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.65), 0 0 24px rgba(78, 231, 255, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.reward-status-ribbon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reward-status-ribbon.is-new {
+  background: rgba(94, 255, 177, 0.16);
+  border: 1px solid rgba(94, 255, 177, 0.65);
+  color: #5effb1;
+  box-shadow: 0 0 10px rgba(94, 255, 177, 0.25);
+}
+
+.reward-status-ribbon.is-upgrade {
+  background: rgba(78, 231, 255, 0.16);
+  border: 1px solid rgba(78, 231, 255, 0.65);
+  color: #78e9f7;
+  box-shadow: 0 0 10px rgba(78, 231, 255, 0.25);
+}
+
+.reward-status-ribbon.is-master {
+  background: rgba(255, 186, 87, 0.2);
+  border: 1px solid rgba(255, 186, 87, 0.8);
+  color: #ffba57;
+  box-shadow: 0 0 14px rgba(255, 186, 87, 0.35);
+  animation: pulse-master-ribbon 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-master-ribbon {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
+}
+
+.reward-card.is-master,
+.reward-card[data-badge-type="master"] {
+  border-color: rgba(255, 186, 87, 0.45);
+  background: linear-gradient(170deg, rgba(32, 21, 6, 0.96) 0%, rgba(10, 6, 2, 0.98) 100%);
+}
+
+.reward-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(120, 233, 247, 0.14);
+}
+
+.reward-card-footer span {
+  color: #8ba7ad;
+  font-size: 11px;
+}
+
+.reward-card-footer b {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #78e9f7;
+  font-size: 12px;
+}
+
+/* 4. Save Slot Cards Polish */
+.save-slot-card-header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.save-slot-status-tag {
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.save-slot-status-tag.is-clear {
+  background: rgba(94, 255, 177, 0.16);
+  border: 1px solid rgba(94, 255, 177, 0.5);
+  color: #5effb1;
+}
+
+.save-slot-status-tag.is-in-progress {
+  background: rgba(78, 231, 255, 0.16);
+  border: 1px solid rgba(78, 231, 255, 0.5);
+  color: #78e9f7;
+}
+
+.save-slot-status-tag.is-ready,
+.save-slot-status-tag.is-new {
+  background: rgba(139, 167, 173, 0.16);
+  border: 1px solid rgba(139, 167, 173, 0.4);
+  color: #c9e3e8;
+}
+
+.save-slot-icon-wrapper {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(120, 233, 247, 0.08);
+  border: 1px solid rgba(120, 233, 247, 0.25);
+  color: #78e9f7;
+}
+
+.save-slot-meter {
+  width: 100%;
+  height: 6px;
+  margin: 8px 0;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.save-slot-meter i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #37b9cb, #78e9f7);
+  box-shadow: 0 0 10px rgba(120, 233, 247, 0.6);
+  transition: width 200ms ease;
+}
+
+/* 5. Base Notification Badges */
+.currency-upgrade-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5effb1;
+  box-shadow: 0 0 10px #5effb1, 0 0 16px #5effb1;
+  animation: pulse-upgrade-dot 1.2s ease-in-out infinite alternate;
+}
+
+.npc-upgrade-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(94, 255, 177, 0.22);
+  border: 1px solid #5effb1;
+  color: #5effb1;
+  font-size: 10px;
+  box-shadow: 0 0 10px rgba(94, 255, 177, 0.5);
+  animation: pulse-upgrade-dot 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-upgrade-dot {
+  0% { transform: scale(0.9); opacity: 0.75; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
+.portrait-touch-hint {
+  position: absolute;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(2, 12, 17, 0.78);
+  border: 1px solid rgba(120, 233, 247, 0.35);
+  color: #9feef9;
+  font-size: 10px;
+  pointer-events: none;
+  opacity: 0.85;
+  backdrop-filter: blur(4px);
+  animation: float-touch-hint 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes float-touch-hint {
+  0% { transform: translate(-50%, 0); }
+  100% { transform: translate(-50%, -6px); }
+}
+
+/* 6. Facility & Upgrade Highlighting */
+.facility-upgrade.is-purchasable,
+.character-upgrade-row.is-purchasable {
+  border-color: rgba(94, 255, 177, 0.45);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35), inset 0 2px 0 rgba(94, 255, 177, 0.6);
+}
+
+.effect-next.is-upgradable {
+  color: #5effb1;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(94, 255, 177, 0.4);
+}
+
+.command-ui-button.is-ready-cta {
+  border-color: #5effb1;
+  background: linear-gradient(135deg, rgba(14, 60, 44, 0.95), rgba(7, 34, 24, 0.95));
+  color: #dffff1;
+  box-shadow: 0 0 16px rgba(94, 255, 177, 0.25);
+}
+
+.command-ui-button.is-ready-cta:hover {
+  background: linear-gradient(135deg, rgba(22, 90, 66, 0.95), rgba(12, 54, 38, 0.95));
+  box-shadow: 0 0 24px rgba(94, 255, 177, 0.45);
+}
+
+/* 7. Sortie Dialog Rewards Tier & Chips */
+.region-sortie-rewards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(120, 233, 247, 0.2);
+  background: rgba(2, 10, 14, 0.85);
+}
+
+.reward-tier {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.reward-tier small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #8ba7ad;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reward-tier.is-first-clear small {
+  color: #e6b96c;
+}
+
+.reward-tier.is-repeat-clear small {
+  color: #78e9f7;
+}
+
+.reward-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reward-chips span {
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(120, 233, 247, 0.08);
+  border: 1px solid rgba(120, 233, 247, 0.25);
+  color: #dffcff;
+}
+
+.reward-tier.is-first-clear .reward-chips span {
+  background: rgba(230, 185, 108, 0.1);
+  border-color: rgba(230, 185, 108, 0.35);
+  color: #fff2cb;
+}
+
+/* 8. Global Micro-interactions & Accessibility */
+button:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+.campaign-shell :is(.base-menu-button, .base-primary-actions > button, .command-ui-button):hover {
+  filter: brightness(1.08);
+}
+
+/* ==========================================================================
+   PRODUCTION SCI-FI TACTICAL OVERHAUL (V4 - HIGH-END PRODUCTION QUALITY)
+   ========================================================================== */
+
+/* 1. Base Lobby Cybernetic Polish */
+.campaign-shell.home-base-screen .base-lobby-topbar {
+  background: linear-gradient(180deg, rgba(3, 13, 19, 0.94) 0%, rgba(2, 9, 14, 0.88) 100%);
+  border-bottom: 1px solid rgba(120, 233, 247, 0.28);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 -1px 0 rgba(120, 233, 247, 0.15);
+  backdrop-filter: blur(14px);
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button {
+  background: linear-gradient(135deg, rgba(6, 25, 34, 0.88) 0%, rgba(3, 14, 20, 0.94) 100%);
+  border: 1px solid rgba(120, 233, 247, 0.24);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button:hover {
+  border-color: rgba(120, 233, 247, 0.65);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 14px rgba(78, 231, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.campaign-shell.home-base-screen .base-menu-button {
+  position: relative;
+  background: linear-gradient(90deg, rgba(5, 22, 30, 0.92) 0%, rgba(2, 12, 17, 0.95) 100%);
+  border: 1px solid rgba(120, 233, 247, 0.22);
+  border-left: 3px solid rgba(120, 233, 247, 0.5);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: all 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.campaign-shell.home-base-screen .base-menu-button:hover {
+  border-color: rgba(120, 233, 247, 0.65);
+  border-left-color: var(--command-cyan, #4ee7ff);
+  background: linear-gradient(90deg, rgba(9, 36, 48, 0.95) 0%, rgba(3, 16, 23, 0.98) 100%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(78, 231, 255, 0.25);
+  transform: translateX(4px);
+}
+
+.campaign-shell.home-base-screen .base-menu-button.has-upgrade-alert {
+  border-left-color: #5effb1;
+  box-shadow: 0 0 14px rgba(94, 255, 177, 0.2);
+}
+
+.campaign-shell.home-base-screen .base-primary-actions > button {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  transition: all 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.campaign-shell.home-base-screen .base-sortie-action {
+  background: linear-gradient(135deg, rgba(14, 52, 66, 0.95) 0%, rgba(6, 26, 34, 0.98) 100%);
+  border: 1px solid rgba(78, 231, 255, 0.75);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 20px rgba(78, 231, 255, 0.28);
+}
+
+.campaign-shell.home-base-screen .base-sortie-action:hover {
+  background: linear-gradient(135deg, rgba(20, 75, 95, 0.98) 0%, rgba(9, 36, 48, 0.98) 100%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 32px rgba(78, 231, 255, 0.45);
+  transform: translateY(-3px) scale(1.02);
+}
+
+.campaign-shell.home-base-screen .base-defense-action {
+  background: linear-gradient(135deg, rgba(46, 22, 60, 0.95) 0%, rgba(20, 9, 28, 0.98) 100%);
+  border: 1px solid rgba(216, 138, 255, 0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 18px rgba(216, 138, 255, 0.22);
+}
+
+.campaign-shell.home-base-screen .base-defense-action:hover {
+  background: linear-gradient(135deg, rgba(68, 32, 88, 0.98) 0%, rgba(30, 14, 42, 0.98) 100%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 28px rgba(216, 138, 255, 0.38);
+  transform: translateY(-3px) scale(1.02);
+}
+
+.campaign-shell.home-base-screen .base-character-action {
+  background: linear-gradient(135deg, rgba(9, 32, 40, 0.95) 0%, rgba(4, 16, 22, 0.98) 100%);
+  border: 1px solid rgba(120, 233, 247, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.campaign-shell.home-base-screen .base-character-action:hover {
+  border-color: rgba(120, 233, 247, 0.7);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(78, 231, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.campaign-shell.home-base-screen .base-objective {
+  background: linear-gradient(180deg, rgba(4, 18, 24, 0.94) 0%, rgba(2, 9, 13, 0.98) 100%);
+  border: 1px solid rgba(120, 233, 247, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(78, 231, 255, 0.4);
+  backdrop-filter: blur(12px);
+}
+
+/* 2. Character Stage Holographic Ring */
+.base-motion-portrait .motion-portrait-body::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(78, 231, 255, 0.25) 0%, rgba(78, 231, 255, 0) 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 3. Tactical Save Slot Grid */
+.save-slot-card {
+  position: relative;
+  background: linear-gradient(170deg, rgba(6, 22, 30, 0.95) 0%, rgba(2, 10, 15, 0.98) 100%);
+  border: 1px solid rgba(120, 233, 247, 0.25);
+  border-radius: 6px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.save-slot-card:hover {
+  border-color: rgba(120, 233, 247, 0.75);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65), 0 0 24px rgba(78, 231, 255, 0.25);
+  transform: translateY(-4px);
+}
+
+/* 4. Combat Dock Modern Dashboard */
+.expedition-combat-dock {
+  background: linear-gradient(180deg, rgba(3, 14, 20, 0.92) 0%, rgba(1, 8, 12, 0.96) 100%);
+  border: 1px solid rgba(120, 233, 247, 0.3);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), 0 0 18px rgba(78, 231, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border-radius: 6px;
+}
+
+.expedition-combat-dock kbd {
+  background: rgba(3, 15, 22, 0.9);
+  border: 1px solid rgba(120, 233, 247, 0.45);
+  color: #78e9f7;
+  font-family: var(--font-mono);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* ==========================================================================
+   V7 ULTRA PRODUCTION SCI-FI REMAKE: AAA SUB-CULTURE INTERFACE SUITE
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. GLOBAL SCI-FI SCIENTIFIC AMBIENCE & OVERLAY
+   -------------------------------------------------------------------------- */
+.campaign-shell {
+  background-color: #02060a;
+  position: relative;
+  font-feature-settings: "tnum" 1, "ss01" 1, "cv01" 1;
+}
+
+/* Futuristic Scanline and Ambient Hologram Vignette */
+.campaign-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(12, 45, 62, 0.25) 0%, transparent 65%),
+    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0, 240, 255, 0.02) 3px, rgba(0, 240, 255, 0.02) 4px);
+  z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   2. HAVEN-09 MAIN COMMAND LOBBY (HOME BASE OVERHAUL)
+   -------------------------------------------------------------------------- */
+.campaign-shell.home-base-screen {
+  background-color: #02070c;
+  overflow: hidden;
+}
+
+/* 2-1. Floating Tactical Header HUD */
+.campaign-shell.home-base-screen .base-lobby-topbar {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  left: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.campaign-shell.home-base-screen .base-identity {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 18px 10px 16px;
+  background: linear-gradient(135deg, rgba(6, 26, 38, 0.92) 0%, rgba(2, 12, 18, 0.96) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-left: 4px solid #00f0ff;
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 240, 255, 0.15);
+  backdrop-filter: blur(14px);
+}
+
+.campaign-shell.home-base-screen .base-identity small {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #7de8f7;
+  text-transform: uppercase;
+}
+
+.campaign-shell.home-base-screen .base-identity strong {
+  font-family: var(--font-display, "Rajdhani", sans-serif);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  line-height: 1.1;
+  text-shadow: 0 0 14px rgba(0, 240, 255, 0.45);
+}
+
+.campaign-shell.home-base-screen .base-identity span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8da9b0;
+}
+
+/* 2-2. Floating Currency Glass Rail (Top Right) */
+.campaign-shell.home-base-screen .base-currency-rail {
+  pointer-events: auto;
+  display: flex;
+  gap: 12px;
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 18px;
+  min-height: 52px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(6, 26, 38, 0.88) 0%, rgba(2, 12, 18, 0.94) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 240, 255, 0.65);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75), 0 0 20px rgba(0, 240, 255, 0.25);
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button:nth-child(1) { border-bottom: 2px solid #a855f7; }
+.campaign-shell.home-base-screen .base-currency-rail button:nth-child(2) { border-bottom: 2px solid #f59e0b; }
+.campaign-shell.home-base-screen .base-currency-rail button:nth-child(3) { border-bottom: 2px solid #ec4899; }
+
+.campaign-shell.home-base-screen .base-currency-rail button small {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #8da9b0;
+  text-transform: uppercase;
+}
+
+.campaign-shell.home-base-screen .base-currency-rail button b {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+}
+
+/* 2-3. Tactical Left Agent Dock (Slim Chamfered Sci-Fi Buttons) */
+.campaign-shell.home-base-screen .base-lobby-navigation {
+  position: absolute;
+  top: 130px;
+  left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 230px;
+  z-index: 10;
+}
+
+.campaign-shell.home-base-screen .base-menu-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(8, 30, 44, 0.92) 0%, rgba(3, 14, 22, 0.96) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  border-left: 4px solid rgba(0, 240, 255, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  overflow: hidden;
+}
+
+.campaign-shell.home-base-screen .base-menu-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.18) 0%, transparent 100%);
+  transition: width 220ms ease;
+}
+
+.campaign-shell.home-base-screen .base-menu-button:hover {
+  transform: translateX(8px);
+  border-color: rgba(0, 240, 255, 0.7);
+  border-left-color: #00f0ff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 240, 255, 0.3);
+}
+
+.campaign-shell.home-base-screen .base-menu-button:hover::before {
+  width: 100%;
+}
+
+.campaign-shell.home-base-screen .base-menu-button span:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 4px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: #00f0ff;
+  font-size: 20px;
+  transition: all 180ms ease;
+}
+
+.campaign-shell.home-base-screen .base-menu-button:hover span:first-child {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.5);
+  transform: scale(1.08);
+}
+
+.campaign-shell.home-base-screen .base-menu-button small {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #7de8f7;
+  text-transform: uppercase;
+}
+
+.campaign-shell.home-base-screen .base-menu-button strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-display, "Rajdhani", sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+}
+
+/* 2-4. High-Impact Right Battle Command Wing */
+.campaign-shell.home-base-screen .base-primary-actions {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 340px;
+  z-index: 10;
+}
+
+/* Grand Sortie Master Action Button */
+.campaign-shell.home-base-screen .base-sortie-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(0, 163, 196, 0.95) 0%, rgba(2, 68, 88, 0.98) 100%);
+  border: 1px solid #00f0ff;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.75), 0 0 35px rgba(0, 240, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+  overflow: hidden;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: rotate(30deg);
+  transition: all 500ms ease;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action:hover {
+  transform: translateY(-4px) scale(1.02);
+  background: linear-gradient(135deg, rgba(0, 204, 245, 0.98) 0%, rgba(4, 98, 128, 0.98) 100%);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 50px rgba(0, 240, 255, 0.75);
+}
+
+.campaign-shell.home-base-screen .base-sortie-action:hover::after {
+  left: 140%;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action small {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #e0f7fa;
+  text-transform: uppercase;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action strong {
+  display: block;
+  font-family: var(--font-display, "Rajdhani", sans-serif);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.campaign-shell.home-base-screen .base-sortie-action svg {
+  font-size: 32px;
+  color: #ffffff;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+  transition: transform 200ms ease;
+}
+
+.campaign-shell.home-base-screen .base-sortie-action:hover svg {
+  transform: translateX(4px) scale(1.15);
+}
+
+/* Wing Buttons (Operative Management & Base Defense) */
+.campaign-shell.home-base-screen .base-character-action,
+.campaign-shell.home-base-screen .base-defense-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-radius: 4px;
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 180ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.campaign-shell.home-base-screen .base-character-action {
+  background: linear-gradient(135deg, rgba(8, 32, 46, 0.9) 0%, rgba(3, 15, 22, 0.95) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.campaign-shell.home-base-screen .base-character-action:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 240, 255, 0.7);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 240, 255, 0.25);
+}
+
+.campaign-shell.home-base-screen .base-defense-action {
+  background: linear-gradient(135deg, rgba(46, 16, 56, 0.9) 0%, rgba(18, 6, 24, 0.95) 100%);
+  border: 1px solid rgba(216, 138, 255, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.campaign-shell.home-base-screen .base-defense-action:hover {
+  transform: translateY(-2px);
+  border-color: rgba(216, 138, 255, 0.8);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 20px rgba(216, 138, 255, 0.35);
+}
+
+/* 2-5. Tactical Objective Briefing (Bottom Left) */
+.campaign-shell.home-base-screen .base-objective {
+  position: absolute;
+  bottom: 30px;
+  left: 24px;
+  width: 290px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(6, 26, 38, 0.88) 0%, rgba(2, 12, 18, 0.94) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  border-left: 3px solid #00f0ff;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+}
+
+.campaign-shell.home-base-screen .base-objective small {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #7de8f7;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.campaign-shell.home-base-screen .base-objective strong {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-display, "Rajdhani", sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.campaign-shell.home-base-screen .base-objective p {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #9cb5bc;
+  line-height: 1.4;
+}
+
+.campaign-shell.home-base-screen .base-objective button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 3px;
+  color: #7de8f7;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.campaign-shell.home-base-screen .base-objective button:hover {
+  background: rgba(0, 240, 255, 0.25);
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   3. FACILITY 1: HANA RESEARCH LAB (QUANTUM DATA MATRIX OVERHAUL)
+   -------------------------------------------------------------------------- */
+.campaign-shell .base-facility-panel.facility-research {
+  border-color: rgba(168, 85, 247, 0.5);
+  background:
+    radial-gradient(circle at 50% 15%, rgba(88, 28, 135, 0.35) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(18, 8, 28, 0.98) 0%, rgba(6, 2, 12, 0.99) 100%),
+    #05020a;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.9), 0 0 45px rgba(168, 85, 247, 0.2);
+}
+
+.campaign-shell .base-facility-panel.facility-research > header {
+  border-bottom: 1px solid rgba(168, 85, 247, 0.35);
+  padding-bottom: 16px;
+}
+
+.campaign-shell .base-facility-panel.facility-research > header > span {
+  background: rgba(168, 85, 247, 0.22);
+  border-color: rgba(168, 85, 247, 0.7);
+  color: #c084fc;
+  box-shadow: 0 0 24px rgba(168, 85, 247, 0.45);
+}
+
+.campaign-shell .base-facility-panel.facility-research > header small {
+  color: #d8b4fe;
+  letter-spacing: 0.12em;
+}
+
+.campaign-shell .base-facility-panel.facility-research > header h2 {
+  font-size: 32px;
+  color: #ffffff;
+  text-shadow: 0 0 25px rgba(192, 132, 252, 0.5);
+}
+
+.campaign-shell .base-facility-panel.facility-research .facility-resource {
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  border-left: 4px solid #c084fc;
+  background: linear-gradient(90deg, rgba(88, 28, 135, 0.45), rgba(24, 8, 38, 0.45));
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.25);
+}
+
+/* Research Lab Quantum Cartridge Upgrades */
+.campaign-shell .base-facility-panel.facility-research .facility-upgrade {
+  position: relative;
+  background: linear-gradient(170deg, rgba(28, 12, 44, 0.94) 0%, rgba(10, 4, 18, 0.98) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-top: 4px solid #c084fc;
+  border-radius: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.campaign-shell .base-facility-panel.facility-research .facility-upgrade:hover {
+  border-color: rgba(192, 132, 252, 0.85);
+  border-top-color: #e9d5ff;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75), 0 0 30px rgba(168, 85, 247, 0.45);
+  transform: translateY(-4px);
+}
+
+.campaign-shell .base-facility-panel.facility-research .facility-upgrade header span {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: rgba(168, 85, 247, 0.6);
+  color: #e9d5ff;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.campaign-shell .base-facility-panel.facility-research .facility-upgrade header h3 {
+  font-size: 20px;
+  color: #ffffff;
+}
+
+.campaign-shell .base-facility-panel.facility-research .facility-upgrade .effect-next.is-upgradable {
+  color: #c084fc;
+  text-shadow: 0 0 12px rgba(192, 132, 252, 0.6);
+  font-weight: 700;
+}
+
+.campaign-shell .base-facility-panel.facility-research .facility-upgrade button.command-ui-button {
+  background: linear-gradient(135deg, rgba(126, 34, 206, 0.92) 0%, rgba(76, 22, 120, 0.98) 100%);
+  border: 1px solid #c084fc;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 18px rgba(168, 85, 247, 0.4);
+}
+
+.campaign-shell .base-facility-panel.facility-research .facility-upgrade button.command-ui-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.98) 0%, rgba(98, 28, 155, 0.98) 100%);
+  border-color: #f3e8ff;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.65), 0 0 32px rgba(168, 85, 247, 0.65);
+  transform: scale(1.02);
+}
+
+.campaign-shell .base-facility-panel.facility-research .facility-exchange-panel {
+  border-color: rgba(168, 85, 247, 0.35);
+  background: linear-gradient(180deg, rgba(22, 10, 36, 0.95) 0%, rgba(8, 3, 16, 0.98) 100%);
+  border-radius: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   4. FACILITY 2: ILYA WORKSHOP (HEAVY ARMAMENT & EXO-CHASSIS OVERHAUL)
+   -------------------------------------------------------------------------- */
+.campaign-shell .base-facility-panel.facility-equipment {
+  border-color: rgba(245, 158, 11, 0.55);
+  background:
+    radial-gradient(circle at 50% 15%, rgba(180, 83, 9, 0.3) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(24, 14, 4, 0.98) 0%, rgba(10, 5, 2, 0.99) 100%),
+    #080402;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.9), 0 0 45px rgba(245, 158, 11, 0.2);
+}
+
+.campaign-shell .base-facility-panel.facility-equipment > header {
+  border-bottom: 1px solid rgba(245, 158, 11, 0.35);
+  padding-bottom: 16px;
+}
+
+.campaign-shell .base-facility-panel.facility-equipment > header > span {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.75);
+  color: #fbbf24;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.45);
+}
+
+.campaign-shell .base-facility-panel.facility-equipment > header small {
+  color: #fde68a;
+  letter-spacing: 0.12em;
+}
+
+.campaign-shell .base-facility-panel.facility-equipment > header h2 {
+  font-size: 32px;
+  color: #ffffff;
+  text-shadow: 0 0 25px rgba(245, 158, 11, 0.5);
+}
+
+.campaign-shell .base-facility-panel.facility-equipment .facility-resource {
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  border-left: 4px solid #f59e0b;
+  background: linear-gradient(90deg, rgba(146, 64, 14, 0.45), rgba(42, 20, 4, 0.45));
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+}
+
+/* Workshop Modular Armament & Armor Rack Cards */
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade {
+  position: relative;
+  background: linear-gradient(170deg, rgba(34, 20, 6, 0.94) 0%, rgba(14, 8, 2, 0.98) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-left: 4px solid #f59e0b;
+  border-radius: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade:hover {
+  border-color: rgba(245, 158, 11, 0.85);
+  border-left-color: #fef08a;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75), 0 0 30px rgba(245, 158, 11, 0.45);
+  transform: translateY(-4px);
+}
+
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade header span {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.6);
+  color: #fef08a;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade header h3 {
+  font-size: 20px;
+  color: #ffffff;
+}
+
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade .effect-next.is-upgradable {
+  color: #fbbf24;
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+  font-weight: 700;
+}
+
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade button.command-ui-button {
+  background: linear-gradient(135deg, rgba(180, 83, 9, 0.92) 0%, rgba(120, 53, 15, 0.98) 100%);
+  border: 1px solid #fbbf24;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 18px rgba(245, 158, 11, 0.35);
+}
+
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade button.command-ui-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.98) 0%, rgba(146, 64, 14, 0.98) 100%);
+  border-color: #fef08a;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.65), 0 0 32px rgba(245, 158, 11, 0.6);
+  transform: scale(1.02);
+}
+
+/* Equipment 4 & 5 Exo-Chassis Armor Styling (Cyan/Blue Theme) */
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade.upgrade-ilya-reaction-plating,
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade.upgrade-ilya-nanite-infusion {
+  border-left-color: #00f0ff;
+}
+
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade.upgrade-ilya-reaction-plating:hover,
+.campaign-shell .base-facility-panel.facility-equipment .facility-upgrade.upgrade-ilya-nanite-infusion:hover {
+  border-left-color: #7df9ff;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75), 0 0 30px rgba(0, 240, 255, 0.45);
+}
+
+/* --------------------------------------------------------------------------
+   5. CHARACTER INFORMATION PANEL & NEURAL SYNC SUITE
+   -------------------------------------------------------------------------- */
+.character-information-panel {
+  border-radius: 8px;
+  overflow: hidden;
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.9), 0 0 45px rgba(0, 240, 255, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.character-info-topbar {
+  background: linear-gradient(90deg, rgba(8, 30, 44, 0.98) 0%, rgba(3, 14, 22, 0.95) 100%);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 16px 28px;
+}
+
+.character-info-tabs button {
+  font-family: var(--font-display, "Rajdhani", sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 10px 20px;
+}
+
+.character-art-stage figcaption {
+  background: linear-gradient(180deg, rgba(2, 10, 16, 0) 0%, rgba(2, 10, 16, 0.98) 100%);
+  padding: 24px 28px;
+}
+
+.character-art-stage figcaption h2 {
+  font-size: 38px;
+  text-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+.character-stat-grid div {
+  background: rgba(8, 32, 46, 0.75);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 4px;
+  padding: 10px 14px;
+}
+
+.character-stat-grid div b {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: #00f0ff;
+}
+
+.character-active-kit article {
+  background: rgba(8, 32, 46, 0.8);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 6px;
+  transition: all 180ms ease;
+}
+
+.character-active-kit article:hover {
+  border-color: #00f0ff;
+  background: rgba(14, 52, 72, 0.9);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+}
+
+.character-active-kit article kbd {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.6);
+  color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.character-weapon-card {
+  background: linear-gradient(170deg, rgba(8, 32, 46, 0.92) 0%, rgba(3, 14, 20, 0.96) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 6px;
+  transition: all 200ms ease;
+}
+
+.character-weapon-card.is-equipped {
+  border-color: #00f0ff;
+  border-left: 4px solid #00f0ff;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);
+}
+
+.character-weapon-card:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: #7df9ff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(0, 240, 255, 0.3);
+}

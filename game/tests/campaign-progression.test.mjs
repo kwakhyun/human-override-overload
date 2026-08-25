@@ -305,5 +305,9 @@ test("calculated combat bonuses are a flat createSwarmState-ready object", () =>
   });
 
   const campaign = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
-  assert.deepEqual(getCampaignCombatBonuses(campaign, "slot-1"), DEFAULT_COMBAT_BONUSES);
+  assert.deepEqual(getCampaignCombatBonuses(campaign, "slot-1"), {
+    ...DEFAULT_COMBAT_BONUSES,
+    moveSpeedMultiplier: 1.08,
+    fireRateMultiplier: 1.04,
+  });
 });
