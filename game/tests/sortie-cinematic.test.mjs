@@ -56,7 +56,7 @@ test("all three region sortie videos are valid six-second MP4 assets", async () 
   }
 });
 
-test("sortie cinematic defers Phaser texture upload until video decode completes", async () => {
+test("sortie cinematic boots the suspended Phaser runtime while video playback continues", async () => {
   const [app, screens, styles, createGame, bootScene, bridge] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
@@ -72,7 +72,9 @@ test("sortie cinematic defers Phaser texture upload until video decode completes
   assert.match(app, /beginSortieCinematic\(regionId\)/);
   assert.match(app, /screen === "sortie" \|\| screen === "game"/);
   assert.match(app, /className=\{`combat-runtime-shell/);
-  assert.match(app, /\{\(screen === "game" \|\| sortieVideoComplete\) && \([\s\S]*?<PhaserArenaScreen[\s\S]*?preparing=\{screen === "sortie"\}/);
+  assert.match(app, /<div className=\{`combat-runtime-shell[\s\S]*?<PhaserArenaScreen[\s\S]*?preparing=\{screen === "sortie"\}/);
+  assert.doesNotMatch(app, /\{\(screen === "game" \|\| sortieVideoComplete\) && \([\s\S]*?<PhaserArenaScreen/);
+  assert.match(app, /screen === "sortie" && sortieVideoComplete && combatRuntimeReady/);
   assert.match(app, /<SortieCinematicScreen[\s\S]*?combatLoadProgress=\{combatLoadProgress\}/);
   assert.match(app, /repeatSortie=\{repeatSortie\}/);
   assert.match(app, /activeSlot\?\.completedRegionIds\?\.includes\(regionId\)/);

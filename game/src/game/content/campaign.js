@@ -35,9 +35,9 @@ export const BASE_NPCS = deepFreeze({
     name: "HANA",
     role: "BASE COMMANDER",
     station: "COMMAND DECK",
-    portraitKey: "havenNpcPortraits",
-    portraitPath: "./assets/overload/ui/npcs/haven-npc-portraits-atlas.png",
-    portraitIndex: 0,
+    portraitKey: "hanaPortrait",
+    portraitPath: "./assets/overload/ui/npcs/hana-research-director-v2.webp",
+    portraitMode: "standalone",
     portraitDialogue: [
       "분석 중이야. 지휘관, 화면을 가리면 오차가 0.7% 늘어나.",
       "조금만 기다려. 이번 표본은 전투 예측 모델에 꽤 좋은 자료가 될 것 같아.",
@@ -56,8 +56,7 @@ export const BASE_NPCS = deepFreeze({
     role: "SYSTEMS ENGINEER",
     station: "REPAIR BAY",
     portraitKey: "ilyaPortrait",
-    portraitPath: "./assets/overload/ui/npcs/ilya-mechanic-v2.png",
-    portraitIndex: null,
+    portraitPath: "./assets/overload/ui/npcs/ilya-mechanic-v4.webp",
     portraitMode: "standalone",
     portraitDialogue: [
       "장비는 거짓말을 안 해. 소리가 달라졌다면 어디선가 마모가 시작된 거지.",
@@ -77,7 +76,7 @@ export const BASE_NPCS = deepFreeze({
     role: "NIGHTJAR CHIEF PILOT",
     station: "FLIGHT CONTROL",
     portraitKey: "nightjarPilot",
-    portraitPath: "./assets/overload/ui/npcs/sera-nightjar-pilot-v2.png",
+    portraitPath: "./assets/overload/ui/npcs/sera-nightjar-pilot-v4.webp",
     portraitMode: "standalone",
     portraitDialogue: [
       "항로는 이미 잡았어. 지휘관이 고개만 끄덕이면 나이트자는 바로 뜰 수 있어.",
@@ -107,7 +106,7 @@ export const BASE_NPCS = deepFreeze({
     role: "TACTICAL CONTROL OFFICER",
     station: "CONTROL ROOM",
     portraitKey: "rheaControlOfficer",
-    portraitPath: "./assets/overload/ui/npcs/rhea-control-officer.png",
+    portraitPath: "./assets/overload/ui/npcs/rhea-control-officer-v3.webp",
     portraitMode: "standalone",
     portraitDialogue: [
       "시선은 전장에 둬. 필요한 정보는 내가 가장 짧은 경로로 전달할게.",

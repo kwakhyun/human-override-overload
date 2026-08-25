@@ -17,23 +17,18 @@ test("lobby uses stable static key art without the removed Live2D runtime", asyn
   assert.doesNotMatch(screens, /CubismCharacter|data-motion-profile="lobby-breathing"/);
   assert.doesNotMatch(packageJson, /@greenmansk\/react-live2d/);
   assert.doesNotMatch(styles, /cubism-character/);
-  assert.match(manifest, /player: "\.\/assets\/overload\/hero\/survivor-portrait\.png"/);
-  assert.match(manifest, /mikaPortrait: "\.\/assets\/overload\/hero\/mika-portrait\.png"/);
-  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v3\.png"/);
+  assert.match(manifest, /player: "\.\/assets\/overload\/hero\/survivor-portrait-v2\.webp"/);
+  assert.match(manifest, /mikaPortrait: "\.\/assets\/overload\/hero\/mika-portrait-v2\.webp"/);
+  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v6\.webp"/);
   assert.match(styles, /\.motion-portrait-body \{[\s\S]*overflow: hidden/);
   assert.match(styles, /\.motion-portrait-original \{[\s\S]*object-fit: contain;[\s\S]*object-position: center top/);
 
-  for (const file of ["survivor-portrait.png", "mika-portrait.png", "vesper-portrait-v3.png"]) {
+  for (const file of ["survivor-portrait-v2.webp", "mika-portrait-v2.webp", "vesper-portrait-v6.webp"]) {
     const url = new URL(`public/assets/overload/hero/${file}`, root);
-    const [asset, png] = await Promise.all([stat(url), readFile(url)]);
-    assert.ok(asset.size > 150_000, `${file} should retain readable character detail`);
-    assert.equal(png.subarray(1, 4).toString("ascii"), "PNG");
-    if (file === "vesper-portrait-v3.png") {
-      assert.ok(
-        [4, 6].includes(png[25]),
-        "Vesper production cutout must keep a real PNG alpha channel instead of a baked checkerboard",
-      );
-    }
+    const [asset, webp] = await Promise.all([stat(url), readFile(url)]);
+    assert.ok(asset.size > 150_000 && asset.size < 400_000, `${file} should balance detail and transfer size`);
+    assert.equal(webp.subarray(0, 4).toString("ascii"), "RIFF");
+    assert.equal(webp.subarray(8, 12).toString("ascii"), "WEBP");
   }
 
   await assert.rejects(access(new URL("src/ui/live2d/CubismCharacter.jsx", root)));

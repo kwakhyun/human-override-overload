@@ -40,3 +40,30 @@ test("DOM image warmup decodes each URL once and reports unique progress", async
     else globalThis.Image = OriginalImage;
   }
 });
+
+test("DOM image warmup does not remain blocked by a hanging decode", async () => {
+  const OriginalImage = globalThis.Image;
+
+  class HangingDecodeImage {
+    decode() {
+      return new Promise(() => {});
+    }
+
+    set src(value) {
+      this.currentSrc = value;
+      queueMicrotask(() => this.onload?.());
+    }
+  }
+
+  globalThis.Image = HangingDecodeImage;
+  try {
+    const { preloadDomImage } = await import(`../src/game/assets/domPreloader.js?hanging=${Date.now()}`);
+    const startedAt = Date.now();
+    const result = await preloadDomImage("./hanging-decode.webp");
+    assert.equal(result.ok, true);
+    assert.ok(Date.now() - startedAt < 1_500, "decode timeout must release navigation promptly");
+  } finally {
+    if (OriginalImage === undefined) delete globalThis.Image;
+    else globalThis.Image = OriginalImage;
+  }
+});

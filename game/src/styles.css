@@ -6546,15 +6546,36 @@ kbd {
   left: clamp(24px, 8vw, 130px);
   width: min(27vw, 330px);
   height: calc(100% + 42px);
-  background-repeat: no-repeat;
   overflow: hidden;
-  background-size: 300% auto;
-  background-position-y: center !important;
+  background: transparent;
   filter: drop-shadow(12px 0 18px rgba(0, 0, 0, 0.55));
 }
 
-.base-npc-portrait.is-standalone {
-  background-size: contain;
+.base-npc-portrait > img {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: none;
+}
+
+.base-npc-portrait.is-ilya > img {
+  right: -3%;
+  left: -3%;
+  width: 106%;
+  max-width: 106%;
+  height: 106%;
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .campaign-shell .base-npc-portrait > img { height: 100%; }
+  .campaign-shell .base-npc-portrait.is-ilya > img { height: 106%; }
 }
 
 .region-mixed-name {

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { access, readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 import { BASE_NPCS, getRegion } from "../src/game/content/campaign.js";
@@ -13,38 +13,31 @@ function pngDimensions(bytes) {
   return [bytes.readUInt32BE(16), bytes.readUInt32BE(20)];
 }
 
-test("combat dialogue reuses authored standalone portraits and exact shared atlases", async () => {
-  assert.deepEqual(
-    pngDimensions(await readBytes("public/assets/overload/hero/survivor-portrait.png")),
-    [941, 1672],
-  );
-  assert.deepEqual(
-    pngDimensions(await readBytes("public/assets/overload/ui/npcs/rhea-control-officer.png")),
-    [640, 640],
-  );
-  assert.deepEqual(
-    pngDimensions(await readBytes("public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png")),
-    [1536, 512],
-  );
-  assert.deepEqual(
-    pngDimensions(await readBytes("public/assets/overload/ui/npcs/ilya-mechanic-v2.png")),
-    [941, 1672],
-  );
-  assert.deepEqual(
-    pngDimensions(await readBytes("public/assets/overload/ui/npcs/sera-nightjar-pilot-v2.png")),
-    [842, 1869],
-  );
-
-  for (const [npcId, frameIndex] of [["hana", 0]]) {
-    assert.equal(BASE_NPCS[npcId].portraitKey, "havenNpcPortraits");
-    assert.equal(BASE_NPCS[npcId].portraitIndex, frameIndex);
+test("combat dialogue uses independent optimized portraits while bosses retain authored atlases", async () => {
+  const portraitPaths = [
+    "./assets/overload/hero/survivor-portrait-v2.webp",
+    "./assets/overload/hero/mika-portrait-v2.webp",
+    "./assets/overload/hero/vesper-portrait-v6.webp",
+    ...["hana", "ilya", "lark", "rhea"].map((npcId) => BASE_NPCS[npcId].portraitPath),
+  ];
+  assert.equal(new Set(portraitPaths).size, portraitPaths.length);
+  for (const portraitPath of portraitPaths) {
+    const filePath = `public/${portraitPath.replace(/^\.\//, "")}`;
+    const [bytes, metadata] = await Promise.all([readBytes(filePath), stat(new URL(filePath, root))]);
+    assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF");
+    assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP");
+    assert.ok(metadata.size < 400_000, `${portraitPath} should remain display-size optimized`);
   }
+  await assert.rejects(access(new URL("public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png", root)));
+
+  assert.equal(BASE_NPCS.hana.portraitMode, "standalone");
+  assert.equal(BASE_NPCS.hana.portraitKey, "hanaPortrait");
   assert.equal(BASE_NPCS.ilya.portraitMode, "standalone");
   assert.equal(BASE_NPCS.ilya.portraitKey, "ilyaPortrait");
   assert.equal(BASE_NPCS.lark.name, "SERA");
   assert.equal(BASE_NPCS.lark.portraitMode, "standalone");
   assert.equal(BASE_NPCS.lark.portraitKey, "nightjarPilot");
-  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/ui/npcs/sera-nightjar-pilot-v2.png");
+  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/ui/npcs/sera-nightjar-pilot-v4.webp");
 
   for (const [regionId, path] of [
     ["wrong-engine-core", "public/assets/overload/boss/wrong-engine-forms-atlas.png"],
@@ -77,7 +70,7 @@ test("the active narrative panel resolves the actual speaker without misleading 
   assert.doesNotMatch(mapping, /\b(?:ROOK|NYX|MOSS)\b/);
 
   assert.match(mapping, /bossRegion\?\.assets\?\.dom\?\.bossPortrait\?\.path/);
-  assert.match(mapping, /frameIndex: Math\.max\(0, Math\.min\(2/);
+  assert.match(mapping, /const frameIndex = Math\.max\(0, Math\.min\(2/);
   assert.doesNotMatch(mapping, /new Image\(|Promise\.all/);
   assert.match(app, /<NarrativePortrait portrait=\{portrait\} \/>/);
   assert.match(app, /<NarrativePanel dialogue=\{dialogue\} assets=\{assets\} region=\{region\} bossStage=\{hud\?\.boss\?\.stage\}/);
@@ -85,5 +78,7 @@ test("the active narrative panel resolves the actual speaker without misleading 
   assert.match(styles, /\.narrative-portrait-frame\s*\{[\s\S]*?aspect-ratio: 1;[\s\S]*?background-position: var\(--portrait-frame-position, 0%\) center;[\s\S]*?background-size: 300% 100%;/);
   assert.match(styles, /\.narrative-portrait\.is-operator img\s*\{[\s\S]*?height: 112%;/);
   assert.match(styles, /\.narrative-portrait\.is-hostile \.narrative-portrait-frame\s*\{[\s\S]*?height: 92%;/);
-  assert.match(screens, /backgroundPosition: standalone \? "center bottom" : `\$\{\(npc\.portraitIndex \|\| 0\) \* 50\}% center`/);
+  assert.match(screens, /className=\{`base-npc-portrait is-standalone is-\$\{npc\.id\}`\}/);
+  assert.match(screens, /<img src=\{portrait\} alt="" draggable="false" decoding="async" fetchPriority="high"/);
+  assert.doesNotMatch(screens, /npc\.portraitIndex|assets\?\.npcPortraits/);
 });

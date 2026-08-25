@@ -111,5 +111,5 @@ test("character management exposes locked art previews and lobby settings", asyn
   assert.match(app, /onOpenSettings=\{\(\) => setSettingsOpen\(true\)\}/);
   assert.match(app, /\{settingsOpen && \(/);
   assert.match(app, /status\.reason === "insufficient-funds" \? `\$\{currency\?\.koreanName \|\| "재화"\} 부족`/);
-  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v3\.png"/);
+  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v6\.webp"/);
 });

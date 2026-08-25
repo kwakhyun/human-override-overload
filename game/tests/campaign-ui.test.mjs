@@ -114,15 +114,16 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
   ]);
   assert.match(app, /assets\?\.havenBase/);
-  assert.match(app, /assets\?\.havenNpcPortraits/);
+  assert.match(app, /assets\?\.hanaPortrait/);
   assert.match(app, /"ilyaPortrait"/);
-  assert.match(app, /assets\?\.\[facilityNpc\.portraitKey\] \|\| assets\?\.havenNpcPortraits/);
+  assert.match(app, /assets\?\.\[facilityNpc\.portraitKey\] \|\| facilityNpc\.portraitPath/);
   assert.match(app, /assets\?\.nightjarPilot/);
   assert.match(app, /assets\?\.rheaControlOfficer/);
   assert.match(app, /assets\?\.airshipRegionMap/);
   assert.doesNotMatch(app, /commandButtonStates|--command-button-atlas/);
   assert.match(app, /assets\?\.characterSyncChamber/);
-  assert.match(screens, /backgroundSize|background-size|backgroundPosition/);
+  assert.match(screens, /function resolveNpcPortraitSource[\s\S]*assets\?\.hanaPortrait[\s\S]*assets\?\.ilyaPortrait/);
+  assert.match(screens, /<img src=\{portrait\} alt="" draggable="false" decoding="async" fetchPriority="high"/);
   assert.match(screens, /NPC_ICON = Object\.freeze\(\{ hana: Broadcast, ilya: Wrench, lark: User, rhea: Crosshair \}\)/);
   assert.match(screens, /portraitMode === "standalone"/);
   assert.match(screens, /npc\.interactionLabel \|\| "상호작용"/);
@@ -273,7 +274,8 @@ test("campaign presentation keeps dialogue art passive while SERA, Vesper, and d
   assert.match(tacticalStyles, /\.flight-ops-lark\.is-sera \{[\s\S]*border: 0;[\s\S]*background: transparent/);
   assert.match(tacticalStyles, /\.flight-ops-lark-portrait\.is-sera > img[\s\S]*height: 142%;[\s\S]*object-position: center 8%/);
   assert.match(screens, /const unlocked = Boolean\(profile\?\.unlocked\) && requiredGrade <= progressionRank/);
-  assert.match(tacticalStyles, /\.character-art-stage\.is-vesper > img \{[\s\S]*height: 160% !important;[\s\S]*object-position: center top !important/);
+  assert.match(tacticalStyles, /\.character-art-stage\.is-vesper > img \{[\s\S]*height: 100% !important;[\s\S]*object-position: center bottom !important/);
+  assert.match(tacticalStyles, /\.base-motion-portrait\.is-vesper \.motion-portrait-original \{[\s\S]*height: 100%;[\s\S]*object-position: center bottom/);
   assert.doesNotMatch(screens, /className="defense-rhea-briefing"/);
   assert.match(defenseStyles, /body \.defense-runtime-screen \{[\s\S]*grid-template-rows: minmax\(0, 1fr\) 190px !important/);
   assert.match(defenseStyles, /body \.defense-rhea-briefing \{ display: none !important; \}/);

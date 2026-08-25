@@ -129,21 +129,11 @@ const DOM_ASSET_REFS = Object.freeze(Object.fromEntries(
 ));
 
 const INITIAL_DOM_ASSET_KEYS = Object.freeze(["intro"]);
-const BASE_DOM_ASSET_KEYS = Object.freeze([
-  "havenBase",
-  "havenLobby",
-  "hanaResearchLab",
-  "ilyaEquipmentWorkshop",
-  "characterSyncChamber",
-  "player",
-  "mikaPortrait",
-  "vesperPortrait",
-  "augmentationCoreVisual",
-  "havenNpcPortraits",
+const BASE_NPC_DOM_ASSET_KEYS = Object.freeze([
+  "hanaPortrait",
   "ilyaPortrait",
   "nightjarPilot",
   "rheaControlOfficer",
-  "returnToHaven",
 ]);
 const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "player", "mikaPortrait", "vesperPortrait"]);
 const GUIDE_DOM_ASSET_KEYS = Object.freeze([
@@ -164,6 +154,16 @@ const COMBAT_DOM_ASSET_KEYS = Object.freeze([
 
 function domAssetSources(keys) {
   return keys.map((key) => DOM_ASSET_REFS[key]?.src).filter(Boolean);
+}
+
+function characterPortraitAssetKey(characterId) {
+  if (characterId === "mika") return "mikaPortrait";
+  if (characterId === "vesper") return "vesperPortrait";
+  return "player";
+}
+
+function baseSurfaceAssetKeys(characterId) {
+  return ["havenLobby", characterPortraitAssetKey(characterId), ...BASE_NPC_DOM_ASSET_KEYS];
 }
 
 const BASE_BONUS_LABELS = Object.freeze({
@@ -574,20 +574,11 @@ function resolveNarrativePortrait(speaker, assets, activeRegion, bossStage = 1) 
   if (npcId) {
     const npc = BASE_NPCS[npcId];
     const source = domAssetSource(assets?.[npc?.portraitKey]);
-    if (source && npc?.portraitMode === "standalone") {
-      return {
-        source,
-        mode: "standalone",
-        variant: npc.id === "lark" ? "sera" : "support",
-        alt: `${localizeSpeakerName(normalizedSpeaker)} 대화 일러스트`,
-      };
-    }
     return source ? {
       source,
-      mode: "atlas",
-      variant: "support",
-      frameIndex: Math.max(0, Math.min(2, Number(npc?.portraitIndex) || 0)),
-      alt: `${localizeSpeakerName(normalizedSpeaker)} 상반신 일러스트`,
+      mode: "standalone",
+      variant: npc.id === "lark" ? "sera" : "support",
+      alt: `${localizeSpeakerName(normalizedSpeaker)} 대화 일러스트`,
     } : null;
   }
 
@@ -1912,7 +1903,7 @@ function NarrativePortrait({ portrait }) {
           }}
         />
       ) : (
-        <img src={portrait.source} alt={portrait.alt} draggable="false" decoding="async" />
+        <img src={portrait.source} alt={portrait.alt} draggable="false" decoding="async" fetchPriority="high" />
       )}
     </div>
   );
@@ -3070,7 +3061,7 @@ export function App() {
       augmentationCoreVisual: facility.id === "augmentation" ? assets?.augmentationCoreVisual : null,
       npc: facilityNpc ? {
         ...facilityNpc,
-        portraitSource: assets?.[facilityNpc.portraitKey] || assets?.havenNpcPortraits,
+        portraitSource: assets?.[facilityNpc.portraitKey] || facilityNpc.portraitPath,
       } : null,
       selectedCharacterId: activeCharacterId,
       mainWeaponId: activeMainWeaponId,
@@ -3103,7 +3094,8 @@ export function App() {
     equipmentWorkshop: assets?.ilyaEquipmentWorkshop,
     characterSyncChamber: assets?.characterSyncChamber,
     augmentationCoreVisual: assets?.augmentationCoreVisual,
-    npcPortraits: assets?.havenNpcPortraits,
+    hanaPortrait: assets?.hanaPortrait,
+    ilyaPortrait: assets?.ilyaPortrait,
     nightjarPilot: assets?.nightjarPilot,
     controlOfficer: assets?.rheaControlOfficer,
     regionMap: assets?.airshipRegionMap,
@@ -3129,12 +3121,8 @@ export function App() {
 
   useEffect(() => {
     if (!assets) return undefined;
-    return scheduleDomImagePreload([
-      ...domAssetSources(BASE_DOM_ASSET_KEYS),
-      ...domAssetSources(REGION_MAP_DOM_ASSET_KEYS),
-      ...regionPreviewSources,
-    ]);
-  }, [assets, regionPreviewSources]);
+    return scheduleDomImagePreload(domAssetSources(baseSurfaceAssetKeys(activeCharacterId)));
+  }, [activeCharacterId, assets]);
 
   useEffect(() => {
     if (screen === "sortie" && sortieVideoComplete && combatRuntimeReady) setScreen("game");
@@ -3330,7 +3318,8 @@ export function App() {
       openPostVictoryStep(pendingStep);
       return;
     }
-    prepareSurface("헤이븐-09 기지 불러오는 중", domAssetSources(BASE_DOM_ASSET_KEYS), () => setScreen("base"));
+    const nextCharacterId = getCampaignCharacter(nextCampaign, slotId);
+    prepareSurface("헤이븐-09 기지 불러오는 중", domAssetSources(baseSurfaceAssetKeys(nextCharacterId)), () => setScreen("base"));
   }, [campaign, openPostVictoryStep, prepareSurface]);
 
   const continuePostVictory = useCallback(() => {
@@ -3431,11 +3420,24 @@ export function App() {
   }, []);
 
   const openFacility = useCallback((facilityId) => {
-    if (!getBaseFacility(facilityId)) return;
+    const facility = getBaseFacility(facilityId);
+    if (!facility) return;
     setActiveNpc(null);
     setNpcLineIndex(0);
-    setActiveFacilityId(facilityId);
-  }, []);
+    const facilityAssetKeys = facilityId === "research"
+      ? ["hanaResearchLab", "hanaPortrait"]
+      : facilityId === "equipment"
+        ? ["ilyaEquipmentWorkshop", "ilyaPortrait"]
+        : ["characterSyncChamber", "augmentationCoreVisual", characterPortraitAssetKey(activeCharacterId)];
+    prepareSurface(
+      `${facility.koreanName} 인터페이스 준비 중`,
+      domAssetSources(facilityAssetKeys),
+      () => {
+        setActiveFacilityId(facilityId);
+        setScreen("base");
+      },
+    );
+  }, [activeCharacterId, prepareSurface]);
 
   const closeFacility = useCallback(() => setActiveFacilityId(null), []);
 
@@ -3454,7 +3456,7 @@ export function App() {
     closeFacility();
     prepareSurface(
       "나이트자 항로 작전 데이터 동기화 중",
-      domAssetSources(["airshipRegionMap", "havenNpcPortraits", "havenLobby"]),
+      domAssetSources(["airshipRegionMap", "nightjarPilot", "havenLobby"]),
       () => setScreen("flight-operations"),
     );
   }, [closeFacility, closeNpc, prepareSurface]);
@@ -3704,32 +3706,30 @@ export function App() {
   } else if (screen === "sortie" || screen === "game") {
     content = (
       <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>
-        {(screen === "game" || sortieVideoComplete) && (
-          <PhaserArenaScreen
-            assets={assets}
-            regionId={activeRegionId}
-            region={activeRegion}
-            combatBonuses={combatBonuses}
-            characterSkillRanks={characterSkillRanks}
-            mainWeaponId={activeMainWeaponId}
-            characterId={activeCharacterId}
-            mikaUnlocked={mikaUnlocked}
-            vesperUnlocked={vesperUnlocked}
-            soundEnabled={soundEnabled}
-            audioSettings={audioSettings}
-            sfx={sfx}
-            onToggleSound={toggleSound}
-            onAudioSettingsChange={updateAudioSettings}
-            onFinish={finish}
-            onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null}
-            showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass && audioSettings.combatHintsEnabled !== false)}
-            skipOpeningNarrative={repeatSortie}
-            onCombatTutorialComplete={finishCombatOverlay}
-            preparing={screen === "sortie"}
-            onRuntimeProgress={handleCombatRuntimeProgress}
-            onRuntimeReady={handleCombatRuntimeReady}
-          />
-        )}
+        <PhaserArenaScreen
+          assets={assets}
+          regionId={activeRegionId}
+          region={activeRegion}
+          combatBonuses={combatBonuses}
+          characterSkillRanks={characterSkillRanks}
+          mainWeaponId={activeMainWeaponId}
+          characterId={activeCharacterId}
+          mikaUnlocked={mikaUnlocked}
+          vesperUnlocked={vesperUnlocked}
+          soundEnabled={soundEnabled}
+          audioSettings={audioSettings}
+          sfx={sfx}
+          onToggleSound={toggleSound}
+          onAudioSettingsChange={updateAudioSettings}
+          onFinish={finish}
+          onBase={activeSlot?.homeBaseUnlocked ? () => setScreen("base") : null}
+          showCombatTutorial={Boolean(activeSlot && !activeSlot.combatOverlaySeen && !debugGuideBypass && audioSettings.combatHintsEnabled !== false)}
+          skipOpeningNarrative={repeatSortie}
+          onCombatTutorialComplete={finishCombatOverlay}
+          preparing={screen === "sortie"}
+          onRuntimeProgress={handleCombatRuntimeProgress}
+          onRuntimeReady={handleCombatRuntimeReady}
+        />
         {screen === "sortie" && (
           <SortieCinematicScreen
             region={activeRegion}

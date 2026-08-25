@@ -27,7 +27,7 @@ test("the title screen is a full-bleed user key art composition with only essent
 
 test("the DOM campaign manifest ships SERA's dedicated full-body pilot art", async () => {
   const manifest = await read("src/game/assets/manifest.ts");
-  assert.match(manifest, /nightjarPilot: "\.\/assets\/overload\/ui\/npcs\/sera-nightjar-pilot-v2\.png"/);
+  assert.match(manifest, /nightjarPilot: "\.\/assets\/overload\/ui\/npcs\/sera-nightjar-pilot-v4\.webp"/);
 });
 
 test("the active App mounts the Phaser runtime while React owns the DOM HUD", async () => {
@@ -233,7 +233,8 @@ test("authored trace props and campaign region art are registered without restor
   assert.equal(traceAtlas.readUInt32BE(20), 384);
   assert.match(manifest, /squad-traces-atlas\.png", kind: "atlas", columns: 3, rows: 1/);
   assert.match(manifest, /havenBase: "\.\/assets\/overload\/campaign\/haven-09-base\.webp"/);
-  assert.match(manifest, /havenNpcPortraits: "\.\/assets\/overload\/ui\/npcs\/haven-npc-portraits-atlas\.png"/);
+  assert.match(manifest, /hanaPortrait: "\.\/assets\/overload\/ui\/npcs\/hana-research-director-v2\.webp"/);
+  assert.doesNotMatch(manifest, /havenNpcPortraits|haven-npc-portraits-atlas/);
   assert.match(manifest, /airshipRegionMap: "\.\/assets\/overload\/campaign\/strategic-world-map\.webp"/);
   assert.match(manifest, /innerNetworkRegionMap: "\.\/assets\/overload\/campaign\/airship-region-map-v2\.webp"/);
   assert.match(manifest, /outerFrontierRegionMap: "\.\/assets\/overload\/campaign\/outer-frontier-region-map\.webp"/);

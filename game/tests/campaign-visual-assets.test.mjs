@@ -16,6 +16,7 @@ test("campaign UI ships the authored NIGHTJAR map and lightweight CSS command bu
   assert.doesNotMatch(styles, /--command-button-atlas/);
   const commandButtonCss = styles.slice(styles.indexOf(".command-ui-button"), styles.indexOf(".intro-minimal-content"));
   assert.doesNotMatch(commandButtonCss, /background-image|background-size: 300% 100%/);
-  assert.match(styles, /\.base-npc-portrait[\s\S]*background-size: 300% auto/);
+  assert.match(styles, /\.base-npc-portrait > img[\s\S]*object-fit: contain/);
+  assert.doesNotMatch(styles, /\.base-npc-portrait[\s\S]*background-size: 300% auto/);
   assert.match(styles, /\.region-mixed-name/);
 });

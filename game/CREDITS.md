@@ -108,7 +108,7 @@
 - 사용자 제공 은발 AEGIS 원본:
   - 원본 파일명: `Codex 이미지 2026년 8월 10일 오전 04_01_49.png`
   - 프로젝트 보존 경로: `reference/source-assets/overload/hero/silver-aegis-portrait-user-chroma.png`
-  - 대사 런타임 경로: `public/assets/overload/hero/survivor-portrait.png`
+  - 대사 런타임 경로: `public/assets/overload/hero/survivor-portrait-v2.webp`
   - 후처리: ImageGen `remove_chroma_key.py` edge-contract 1로 초록 배경만 투명화. 인물은
     재생성하지 않았고, React 대사 패널에서 머리·어깨·상반신만 확대 크롭합니다.
 - ImageGen 제작 원본:
@@ -260,10 +260,12 @@ SUPPRESSOR WISP EMP 펄스에, 4행을 적이 등장하기 전 전송 게이트 
 - HAVEN-09 기지
   - 제작 원본: `reference/source-assets/overload/campaign/haven-09-base-imagegen-source.png`
   - 런타임: `public/assets/overload/campaign/haven-09-base.webp`
-- HANA·ILYA·LARK 3×1 포트레이트 아틀라스
+- HANA·ILYA·LARK 3×1 제작 원본(레거시 소스, 공개 런타임 합본 삭제)
   - 제작 원본: `reference/source-assets/overload/campaign/haven-npc-portraits-imagegen-source.png`
   - 투명화 원본: `reference/source-assets/overload/campaign/haven-npc-portraits-alpha.png`
-  - 런타임: `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`
+  - HANA 독립 런타임: `public/assets/overload/ui/npcs/hana-research-director-v2.webp`
+  - ILYA 독립 런타임: `public/assets/overload/ui/npcs/ilya-mechanic-v4.webp`
+  - SERA 독립 런타임: `public/assets/overload/ui/npcs/sera-nightjar-pilot-v4.webp`
 - 비행선 지역 선택 지도
   - 제작 원본: `reference/source-assets/overload/campaign/airship-region-map-imagegen-source.png`
   - 삭제한 v1 런타임: `public/assets/overload/campaign/airship-region-map.webp`
@@ -695,10 +697,10 @@ OMEGA의 광선 길이, Q/E의 원형 범위와 실제 피해·보호 타이밍�
 
 - 생성일: 2026-08-10
 - 생성 도구: OpenAI 내장 ImageGen
-- 활성 런타임 경로: `public/assets/overload/ui/npcs/rhea-control-officer.png`
+- 활성 런타임 경로: `public/assets/overload/ui/npcs/rhea-control-officer-v3.webp`
 - 규격: 640×640 투명 상반신 대화 일러스트
 - 승인 스타일 참조:
-  - `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`
+  - `reference/source-assets/overload/campaign/haven-npc-portraits-alpha.png`
   - `reference/source-assets/overload/campaign/haven-09-base-imagegen-source.png`
 - ImageGen 선택 원본:
   `imagegen-job/019fe745-e7af-7d81-b358-1e3b946bb17c/exec-eb7bcb94-7ac1-49f1-b209-19186fcd0db7.png`
@@ -718,13 +720,13 @@ RHEA는 첫 일반 출격 전에 자동 레벨업 빌드와 Q/E/F/R 직접 사�
 ### 활성 대사 포트레이트 매핑 — 기존 프로젝트 원본 재사용
 
 - 신규 생성·외부 이미지: 없음
-- AEGIS: `public/assets/overload/hero/survivor-portrait.png`
+- AEGIS: `public/assets/overload/hero/survivor-portrait-v2.webp`
 - RHEA 및 시나리오의 `OPERATOR` 화자:
-  `public/assets/overload/ui/npcs/rhea-control-officer.png`
-- HANA·ILYA: 기존
-  `public/assets/overload/ui/npcs/haven-npc-portraits-atlas.png`의 0·1번 프레임
-- SERA: `public/assets/overload/ui/npcs/sera-nightjar-pilot-v1.png`
-  (`lark`/`LARK` 내부 식별자와 2번 레거시 프레임은 저장·서사 호환용으로만 보존)
+  `public/assets/overload/ui/npcs/rhea-control-officer-v3.webp`
+- HANA: `public/assets/overload/ui/npcs/hana-research-director-v2.webp`
+- ILYA: `public/assets/overload/ui/npcs/ilya-mechanic-v4.webp`
+- SERA: `public/assets/overload/ui/npcs/sera-nightjar-pilot-v4.webp`
+  (`lark`/`LARK` 내부 식별자는 저장·서사 호환용으로만 보존)
 - THE WRONG ENGINE: `public/assets/overload/boss/wrong-engine-forms-atlas.png`
 - MIRROR TYRANT:
   `public/assets/overload/regions/glass-dune/boss-forms-atlas.png`
@@ -2382,7 +2384,16 @@ No second ponytail, no floating hair, no detached braid, no hair clipping throug
 - 도구: OpenAI 내장 ImageGen. 사용자가 제공한 금발 여성 캐릭터 이미지는 실루엣·색 조합·성인 여성 전투원이라는 방향을 이해하기 위한 참고 자료로만 사용했으며, 얼굴·의상 구조·표식·장비는 복제하지 않은 프로젝트 오리지널 디자인입니다.
 - 콘셉트: 성인 여성 정밀 요격 전투원 `VESPER / 베스퍼`. 금발 단발, 흑연색 전술 바디슈트, 비대칭 백색 장갑 패널, 절제된 적색 코트 테일, 호박색 센서, 접이식 레일 피스톨을 사용하는 HAVEN-09 고기동 사수입니다.
 - 생성 지시 요약: 투명 추출용 단색 크로마 배경, 머리부터 부츠까지 보이는 전신 3/4 자세, 프리미엄 SF 서브컬처 게임 캐릭터 시트, 정확한 성인 해부학과 손, 읽기 쉬운 실루엣, 텍스트·로고·워터마크·기존 IP 표식 금지.
-- 현재 런타임 파일: `public/assets/overload/hero/vesper-portrait-v2.png` (871×1595, 실제 알파 RGBA · colorType 6).
+- 현재 런타임 파일: `public/assets/overload/hero/vesper-portrait-v6.webp` (864×1536 표시 크기 최적화 알파 WebP, 로비·전투원 정보·대화 안전영역 포함).
+
+### NPC/VESPER 공통 규격 재제작 · 2026-08-26
+
+- 생성 도구: OpenAI ImageGen. 기존 캐릭터의 얼굴·헤어·복장·역할·색상 정체성을 유지하는 재구성 작업으로 생성했습니다.
+- 공통 생성 지시: premium Korean/Japanese sci-fi subculture anime illustration, clean cel shading, coherent anatomy, no text/UI/watermark, no baked outline or halo, flat `#00FF00` chroma background for deterministic alpha extraction.
+- NPC 생성 지시: HANA, ILYA, SERA, RHEA를 동일한 카메라 거리와 가슴 아래까지의 상반신 구도로 재구성하고, 머리 위 여백과 어깨 폭을 통일했습니다. ILYA만 남성 체격 고증을 위해 약간 더 크게 구성했습니다.
+- VESPER 생성 지시: 기존 금발 정밀 요격수의 얼굴·단발·검정/백색/금색 장갑·적색 망토·홀로그램 조준 장치를 유지하고, AEGIS/MIKA와 같은 세로 캔버스에서 머리부터 허벅지 중간까지만 보이도록 재구성했습니다.
+- 무손실 생성 원본: `reference/source-assets/overload/portraits/chroma/hana-upper-v2-chroma.png`, `ilya-upper-v4-chroma.png`, `sera-upper-v4-chroma.png`, `rhea-upper-v3-chroma.png`, `vesper-mid-thigh-v5-chroma.png`.
+- 런타임 출력: NPC 4종은 768×768 알파 WebP, VESPER는 864×1536 알파 WebP이며 `scripts/build-runtime-portraits.py`의 크로마 제거·색 번짐 억제·표시 크기 최적화 파이프라인으로 생성했습니다.
 - 이전 런타임 원본 보존: `public/assets/overload/hero/vesper-portrait-v1.png` (871×1595, RGB 녹색 크로마 원본 · colorType 2). v1은 비교·재처리 이력이며 현재 매니페스트에서 사용하지 않습니다.
 - 후처리: `scripts/process-character-chroma.py`가 녹색 크로마 제거, 가장자리 색 오염 완화, 투명 여백 정리, 런타임 크기 최적화를 재현합니다. v2는 캐릭터 정보·잠금 미리보기·태그 컷인에서 배경 없는 원본 실루엣을 유지합니다.
 - 해금/표시 원칙: `abyssal-archive` 최초 클리어 전에도 캐릭터 정보 화면에서 잠금 상태로 원화를 볼 수 있지만 출격 선택은 거부합니다. 클리어 후 정식 전투원으로 합류합니다.

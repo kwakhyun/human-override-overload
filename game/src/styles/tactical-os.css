@@ -3437,22 +3437,20 @@ details:focus-visible {
   cursor: pointer;
 }
 
-.facility-npc-portrait > span {
+.facility-npc-portrait > img {
   position: absolute;
   inset: 0;
-  background-repeat: no-repeat;
-  background-size: 300% 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
   filter: saturate(0.92) contrast(1.04);
   transition: transform 180ms var(--os-ease), filter 180ms ease;
 }
 
-.facility-npc-portrait.is-standalone > span {
-  background-position: center bottom !important;
-  background-size: contain;
-}
-
-.facility-npc-portrait:hover > span,
-.facility-npc-portrait:focus-visible > span {
+.facility-npc-portrait:hover > img,
+.facility-npc-portrait:focus-visible > img {
   filter: saturate(1.04) contrast(1.08) brightness(1.06);
   transform: scale(1.025);
 }
@@ -5685,16 +5683,13 @@ details:focus-visible {
     pointer-events: auto;
   }
 
-  .base-facility-panel.has-npc-host .facility-npc-portrait > span {
-    /* Preserve the inline 0/50/100% atlas frame while scaling by height so
-       HANA/ILYA are not stretched when the portrait is promoted to a stage. */
-    background-size: auto 100%;
+  .base-facility-panel.has-npc-host .facility-npc-portrait > img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
     filter: saturate(0.95) contrast(1.05) drop-shadow(16px 20px 30px rgba(0, 0, 0, 0.62));
     transform-origin: center bottom;
-  }
-
-  .base-facility-panel.has-npc-host .facility-npc-portrait.is-standalone > span {
-    background-size: contain;
   }
 
   .base-facility-panel.has-npc-host .facility-npc-dialogue {
@@ -6439,55 +6434,113 @@ details:focus-visible {
   }
 }
 
-/* 2026-08 character presentation finish: standalone NPCs and operatives use
-   deliberate viewport crops rather than exposing the source image canvas. */
-.campaign-shell .base-npc-portrait.is-lark {
-  background-position: center 3% !important;
-  background-size: auto 188% !important;
+/* 2026-08 character presentation finish: every dialogue NPC now ships on the
+   same 1:1 upper-body canvas, so the viewport must not reintroduce per-NPC
+   magnification. ILYA alone is allowed a restrained stature adjustment. */
+.campaign-shell .base-npc-portrait > img {
+  position: absolute;
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: none;
+  background: transparent !important;
+}
+
+.campaign-shell .base-npc-portrait.is-ilya > img {
+  right: -3%;
+  left: -3%;
+  width: 106%;
+  max-width: 106%;
+  height: 106%;
 }
 
 .narrative-portrait.is-sera {
   width: clamp(168px, 22vw, 310px);
+  overflow: hidden;
 }
 
 .narrative-portrait.is-sera img {
-  top: -3%;
-  width: 122%;
-  height: auto;
+  top: auto;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  object-position: center top;
+  object-position: center bottom;
+}
+
+.character-art-stage.is-vesper > img {
+  top: auto !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  object-position: center bottom !important;
+  transform: none;
+}
+
+.base-motion-portrait.is-vesper {
+  bottom: -2%;
+  left: 31%;
+  width: min(43vw, 650px);
+  height: 92%;
+  overflow: hidden;
+}
+
+.base-motion-portrait.is-vesper .motion-portrait-original {
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: none;
 }
 
 @media (min-width: 901px) {
   .character-art-stage.is-vesper > img {
-    top: 0 !important;
-    right: auto !important;
-    bottom: auto !important;
-    left: 50% !important;
-    width: auto !important;
-    height: 160% !important;
-    max-width: none !important;
+    top: auto !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
     object-fit: contain !important;
-    object-position: center top !important;
-    transform: translateX(-50%);
+    object-position: center bottom !important;
+    transform: none;
   }
 
   .base-motion-portrait.is-vesper {
-    bottom: 0;
-    height: 94%;
+    bottom: -2%;
+    left: 31%;
+    width: min(43vw, 650px);
+    height: 92%;
     overflow: hidden;
   }
 
   .base-motion-portrait.is-vesper .motion-portrait-original {
-    top: 0;
-    bottom: auto;
-    left: 50%;
-    width: auto;
-    height: 152%;
-    max-width: none;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
     object-fit: contain;
-    object-position: center top;
-    transform: translateX(-50%);
+    object-position: center bottom;
+    transform: none;
   }
 
   .sortie-character-card.is-amber img {
@@ -6592,14 +6645,13 @@ details:focus-visible {
 
 .vesper-recruit-screen .mika-recruit-character.is-vesper img {
   position: absolute;
-  top: 0;
-  left: 50%;
-  width: auto;
-  height: 158%;
-  max-width: none;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
   object-fit: contain;
-  object-position: center top;
-  transform: translateX(-50%);
+  object-position: center bottom;
+  transform: none;
 }
 
 .vesper-recruit-screen .mika-recruit-dialogue-box {
@@ -6608,14 +6660,10 @@ details:focus-visible {
 }
 
 @media (max-width: 900px), (orientation: portrait) {
-  .campaign-shell .base-npc-portrait.is-lark {
-    background-position: center 2% !important;
-    background-size: auto 172% !important;
-  }
-
   .narrative-portrait.is-sera img {
-    top: -2%;
-    width: 126%;
+    top: 0;
+    width: auto;
+    height: 230%;
   }
 
   .character-story-archive {
@@ -6637,6 +6685,343 @@ details:focus-visible {
   }
 
   .vesper-recruit-screen .mika-recruit-character.is-vesper img {
-    height: 150%;
+    height: 100%;
+  }
+
+  .home-base-screen .base-motion-portrait.is-vesper {
+    left: 50%;
+    width: min(104vw, 480px);
+    height: auto;
+    transform: translateX(-50%);
+  }
+}
+
+/* MOBILE SINGLE-VIEW COMMAND CONTRACT -------------------------------------
+   Phone portrait keeps the complete HAVEN command set and all three overload
+   choices inside the visual viewport. This final block intentionally owns the
+   mobile cascade after the older carousel-oriented density passes. */
+@media (max-width: 720px) and (orientation: portrait) {
+  .campaign-shell.home-base-screen {
+    --mobile-lobby-header-height: 120px;
+    width: 100vw;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .campaign-shell.home-base-screen .home-base-surface {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .campaign-shell.home-base-screen .base-lobby-topbar {
+    top: max(6px, env(safe-area-inset-top));
+    right: 8px;
+    left: 8px;
+    display: grid;
+    min-height: 0;
+    height: auto;
+    grid-template-columns: minmax(0, 1fr) 48px;
+    grid-template-rows: 54px 46px;
+    gap: 6px;
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .campaign-shell.home-base-screen .base-identity {
+    min-width: 0;
+    width: auto;
+    min-height: 54px;
+    padding: 7px 10px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .campaign-shell.home-base-screen .base-identity small { font-size: 9px; }
+  .campaign-shell.home-base-screen .base-identity strong { font-size: 21px; }
+  .campaign-shell.home-base-screen .base-identity span { font-size: 9px; }
+
+  .campaign-shell.home-base-screen .base-settings-button {
+    width: 48px;
+    min-width: 48px;
+    height: 54px;
+    min-height: 54px;
+    margin: 0;
+    padding: 0;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: stretch;
+    place-items: center;
+  }
+
+  .campaign-shell.home-base-screen .base-settings-button > span { display: none; }
+
+  .campaign-shell.home-base-screen .base-currency-rail {
+    display: grid;
+    width: 100%;
+    max-width: none;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button {
+    min-width: 0;
+    min-height: 46px;
+    height: 46px;
+    padding: 5px 7px;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button > svg,
+  .campaign-shell.home-base-screen .base-currency-rail button > .menu-atlas-icon,
+  .campaign-shell.home-base-screen .base-currency-rail button > .generated-menu-icon {
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+  }
+
+  .campaign-shell.home-base-screen .base-currency-rail button small { display: none; }
+  .campaign-shell.home-base-screen .base-currency-rail button b { font-size: 15px; }
+
+  .home-base-screen .base-motion-portrait,
+  .home-base-screen .motion-portrait-stage,
+  .home-base-screen .base-motion-portrait.is-mika {
+    top: var(--mobile-lobby-header-height);
+    bottom: 288px;
+  }
+
+  .home-base-screen .motion-portrait-speech { display: none; }
+
+  .campaign-shell.home-base-screen .base-lobby-navigation {
+    top: auto;
+    right: 8px;
+    bottom: calc(max(146px, env(safe-area-inset-bottom) + 132px));
+    left: 8px;
+    display: grid;
+    width: auto;
+    height: 56px !important;
+    padding: 0;
+    overflow: visible;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    grid-auto-rows: 56px;
+    scroll-snap-type: none;
+  }
+
+  .campaign-shell.home-base-screen .base-menu-button {
+    min-width: 0;
+    min-height: 56px;
+    height: 56px;
+    padding: 6px 4px;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 4px;
+    transform: none;
+  }
+
+  .campaign-shell.home-base-screen .base-menu-button:hover,
+  .campaign-shell.home-base-screen .base-menu-button:focus-visible { transform: none; }
+
+  .campaign-shell.home-base-screen .base-menu-button > svg,
+  .campaign-shell.home-base-screen .base-menu-button > .menu-atlas-icon,
+  .campaign-shell.home-base-screen .base-menu-button > .generated-menu-icon {
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+  }
+
+  .campaign-shell.home-base-screen .base-menu-button small { display: none; }
+  .campaign-shell.home-base-screen .base-menu-button b {
+    overflow: hidden;
+    font-size: clamp(11px, 3vw, 13px);
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .campaign-shell.home-base-screen .base-primary-actions {
+    top: auto;
+    right: 8px;
+    bottom: max(6px, env(safe-area-inset-bottom));
+    left: 8px;
+    display: grid;
+    width: auto;
+    height: 115px;
+    grid-template-columns: 0.92fr 1.08fr;
+    grid-template-rows: 62px 48px;
+    gap: 5px;
+  }
+
+  .campaign-shell.home-base-screen .base-character-action,
+  .campaign-shell.home-base-screen .base-sortie-action {
+    min-height: 62px;
+    height: 62px;
+    padding: 7px 8px;
+    grid-template-columns: 24px minmax(0, 1fr) 14px;
+    gap: 5px;
+  }
+
+  .campaign-shell.home-base-screen .base-character-action {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .campaign-shell.home-base-screen .base-sortie-action {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .campaign-shell.home-base-screen .base-primary-actions > .base-defense-action {
+    width: 100%;
+    min-height: 48px;
+    height: 48px;
+    padding: 6px 8px;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: 22px minmax(0, 1fr) 14px;
+    gap: 5px;
+  }
+
+  .campaign-shell.home-base-screen .base-primary-actions small { font-size: 9px !important; }
+  .campaign-shell.home-base-screen .base-primary-actions b { font-size: 13px; }
+  .campaign-shell.home-base-screen .base-sortie-action b { font-size: 15px; }
+
+  .campaign-shell.home-base-screen .base-objective {
+    top: auto;
+    right: 8px;
+    bottom: 212px;
+    left: 8px;
+    width: auto;
+    height: 72px;
+    min-height: 0;
+    padding: 8px 10px 8px 13px;
+    overflow: hidden;
+  }
+
+  .campaign-shell.home-base-screen .base-objective::before { margin-bottom: 3px; }
+  .campaign-shell.home-base-screen .base-objective small { font-size: 8px; }
+  .campaign-shell.home-base-screen .base-objective strong {
+    overflow: hidden;
+    font-size: 15px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .campaign-shell.home-base-screen .base-objective p { display: none; }
+
+  .reward-backdrop {
+    padding: max(8px, env(safe-area-inset-top)) 6px max(8px, env(safe-area-inset-bottom));
+    overflow: hidden;
+    place-items: center;
+  }
+
+  .reward-backdrop .reward-modal {
+    width: 100%;
+    height: auto;
+    max-height: calc(100dvh - 16px);
+    padding: 12px 8px 10px;
+    overflow: hidden;
+  }
+
+  .reward-backdrop .reward-kicker { font-size: 8px; }
+  .reward-backdrop .reward-modal h2 { margin-top: 5px; font-size: clamp(24px, 7.5vw, 32px); }
+  .reward-backdrop .reward-modal > p {
+    margin: 5px 0 8px;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .reward-backdrop .reward-queue-status {
+    margin: 0 auto 6px;
+    padding: 4px 6px;
+    font-size: 8px;
+  }
+
+  .reward-backdrop .reward-options {
+    display: grid;
+    padding: 0;
+    overflow: visible;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    scroll-snap-type: none;
+  }
+
+  .reward-backdrop .reward-card {
+    display: flex;
+    width: auto;
+    min-width: 0;
+    height: clamp(224px, 43dvh, 292px);
+    min-height: 0;
+    padding: 8px 7px 7px;
+    flex: none;
+    flex-direction: column;
+    grid-template: none;
+    column-gap: 0;
+  }
+
+  .reward-backdrop .reward-art {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: clamp(78px, 16dvh, 108px);
+    min-height: 0;
+    margin: -8px -7px 7px;
+    flex: 0 0 clamp(78px, 16dvh, 108px);
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .reward-backdrop .reward-art svg { width: 42px; height: 42px; }
+  .reward-backdrop .reward-card > small { font-size: 8px; letter-spacing: 0.04em; }
+  .reward-backdrop .reward-card > strong {
+    display: -webkit-box;
+    margin-top: 3px;
+    overflow: hidden;
+    font-size: clamp(13px, 3.8vw, 16px);
+    line-height: 1.12;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .reward-backdrop .reward-card > p {
+    display: -webkit-box;
+    margin: 5px 0 6px;
+    overflow: hidden;
+    font-size: 9px;
+    line-height: 1.32;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .reward-backdrop .reward-card-footer {
+    padding-top: 5px;
+    font-size: 8px;
+  }
+
+  .reward-backdrop .reward-card > small,
+  .reward-backdrop .reward-card > strong,
+  .reward-backdrop .reward-card > p,
+  .reward-backdrop .reward-card > div:last-child { grid-column: auto; }
+
+  .reward-backdrop .reward-card-footer > span { display: none; }
+  .reward-backdrop .reward-note { display: none; }
+  .reward-backdrop .reward-index { top: 6px; left: 6px; }
+  .reward-backdrop .reward-status-ribbon {
+    top: 6px;
+    right: 5px;
+    max-width: calc(100% - 34px);
+    padding: 3px 4px;
+    overflow: hidden;
+    font-size: 7px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

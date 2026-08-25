@@ -443,24 +443,23 @@ const ABILITY_ICON = Object.freeze({
 });
 
 function resolveNpcPortraitSource(npc, assets) {
+  if (npc?.portraitKey === "hanaPortrait") return assetSource(assets?.hanaPortrait);
+  if (npc?.portraitKey === "ilyaPortrait") return assetSource(assets?.ilyaPortrait);
   if (npc?.portraitKey === "nightjarPilot") return assetSource(assets?.nightjarPilot);
   if (npc?.portraitKey === "rheaControlOfficer") return assetSource(assets?.controlOfficer);
-  return assetSource(assets?.npcPortraits);
+  return assetSource(npc?.portraitPath);
 }
 
 function NpcPortrait({ npc, assets }) {
-  const standalone = npc.portraitMode === "standalone";
   const portrait = resolveNpcPortraitSource(npc, assets);
   return (
     <div
-      className={`base-npc-portrait${standalone ? " is-standalone" : ""} is-${npc.id}`}
+      className={`base-npc-portrait is-standalone is-${npc.id}`}
       role="img"
       aria-label={`${npc.name} 대화 일러스트`}
-      style={{
-        backgroundImage: portrait ? `url(${portrait})` : undefined,
-        backgroundPosition: standalone ? "center bottom" : `${(npc.portraitIndex || 0) * 50}% center`,
-      }}
-    />
+    >
+      {portrait && <img src={portrait} alt="" draggable="false" decoding="async" fetchPriority="high" />}
+    </div>
   );
 }
 
@@ -540,12 +539,15 @@ export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose, o
             onClick={() => setNpcReactionIndex((index) => nextDialogueIndex(index, facilityNpcDialogue))}
             aria-label={`${facilityNpcDisplay.name} 일러스트와 대화`}
           >
-            <span
-              style={{
-                backgroundImage: facilityNpc.portraitSource ? `url(${assetSource(facilityNpc.portraitSource)})` : undefined,
-                backgroundPosition: facilityNpc.portraitMode === "standalone" ? "center bottom" : `${(facilityNpc.portraitIndex || 0) * 50}% center`,
-              }}
-            />
+            {facilityNpc.portraitSource && (
+              <img
+                src={assetSource(facilityNpc.portraitSource)}
+                alt=""
+                draggable="false"
+                decoding="async"
+                fetchPriority="high"
+              />
+            )}
           </button>
           <div className="facility-npc-dialogue" role="status">
             <small>{facilityNpcDisplay.role}</small>

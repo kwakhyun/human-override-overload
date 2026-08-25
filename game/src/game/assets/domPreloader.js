@@ -1,8 +1,24 @@
 const preloadCache = new Map();
+const IMAGE_DECODE_TIMEOUT_MS = 800;
 
 function normalizeSource(source) {
   if (typeof source !== "string") return "";
   return source.trim();
+}
+
+async function decodeBestEffort(image) {
+  if (typeof image.decode !== "function") return;
+  let timeoutHandle;
+  try {
+    await Promise.race([
+      Promise.resolve().then(() => image.decode()).catch(() => undefined),
+      new Promise((resolve) => {
+        timeoutHandle = setTimeout(resolve, IMAGE_DECODE_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    if (timeoutHandle) clearTimeout(timeoutHandle);
+  }
 }
 
 export function preloadDomImage(source) {
@@ -18,11 +34,9 @@ export function preloadDomImage(source) {
     const image = new Image();
     image.decoding = "async";
     image.onload = async () => {
-      try {
-        await image.decode?.();
-      } catch {
-        // A completed load is still usable when decode() is unavailable or rejects.
-      }
+      // Some WebKit/embedded-browser builds leave decode() pending even after
+      // onload. Never let an optional decode optimization block navigation.
+      await decodeBestEffort(image);
       image.onload = null;
       image.onerror = null;
       resolve({ source: normalized, ok: true });
