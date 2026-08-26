@@ -148,7 +148,7 @@ test("the base has HANA, ILYA, SERA, and RHEA with authored portraits and intera
   assert.equal(BASE_NPCS.rhea.interactionLabel, "사용 스킬 브리핑");
   assert.ok(BASE_NPCS.rhea.dialogue.length > 0);
   assert.equal(getBaseNpc("LARK").interaction, "open-flight-operations");
-  assert.equal(getBaseNpc("LARK").interactionLabel, "항로 작전 편성");
+  assert.equal(getBaseNpc("LARK").interactionLabel, "항공 지원 전술");
   assert.ok(getBaseNpc("LARK").milestoneDialogue.some((line) => line.includes("외곽 권역")));
   assert.ok(getBaseNpcs().every((npc) => npc.portraitDialogue.length > 0));
   assert.equal(getBaseNpc("missing"), null);

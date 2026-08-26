@@ -3449,6 +3449,296 @@ details:focus-visible {
   transition: transform 180ms var(--os-ease), filter 180ms ease;
 }
 
+/* FLIGHT SUPPORT CONTROL -------------------------------------------------
+   The pilot surface is a readable support loadout, not a decorative route
+   graph. Every datum below maps to a player-facing state or combat effect. */
+.flight-ops-console {
+  grid-template-columns: minmax(220px, 0.54fr) minmax(340px, 1.15fr) minmax(330px, 0.95fr);
+}
+
+.flight-command-board {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+  grid-column: 2 / 4;
+  grid-row: 1;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid color-mix(in srgb, var(--flight-accent) 56%, var(--os-line));
+  border-top: 2px solid var(--flight-accent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--flight-accent) 8%, transparent), transparent 30%),
+    linear-gradient(rgba(118, 242, 247, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(118, 242, 247, 0.035) 1px, transparent 1px),
+    rgba(2, 11, 16, 0.94);
+  background-size: auto, 28px 28px, 28px 28px, auto;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.38), inset 0 0 42px color-mix(in srgb, var(--flight-accent) 5%, transparent);
+  clip-path: var(--os-cut-sm);
+}
+
+.flight-command-board::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 32%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--flight-accent));
+  content: "";
+  box-shadow: 0 0 16px color-mix(in srgb, var(--flight-accent) 58%, transparent);
+}
+
+.flight-command-board > header {
+  display: grid;
+  min-height: 48px;
+  padding: 8px 14px;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--os-line);
+  background: rgba(2, 9, 13, 0.7);
+}
+
+.flight-command-emblem {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  border: 1px solid color-mix(in srgb, var(--flight-accent) 65%, var(--os-line));
+  place-items: center;
+  color: var(--flight-accent);
+  background: color-mix(in srgb, var(--flight-accent) 9%, #061018);
+  clip-path: var(--os-cut-xs);
+}
+
+.flight-command-emblem svg { width: 18px; height: 18px; }
+
+.flight-command-board > header small,
+.flight-command-selection small,
+.flight-command-summary dt {
+  color: var(--os-muted);
+  font: 700 8px/1.15 "IBM Plex Mono", monospace;
+  letter-spacing: 0.1em;
+}
+
+.flight-command-board > header strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--os-paper);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.flight-command-link {
+  display: inline-flex;
+  padding: 6px 9px;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid color-mix(in srgb, var(--flight-accent) 34%, var(--os-line));
+  color: var(--flight-accent);
+  background: color-mix(in srgb, var(--flight-accent) 7%, transparent);
+  font: 700 9px/1 "IBM Plex Mono", monospace;
+  white-space: nowrap;
+}
+
+.flight-command-link svg { width: 13px; height: 13px; }
+
+.flight-command-main {
+  display: grid;
+  min-height: 0;
+  padding: 10px 14px 12px;
+  grid-template-columns: minmax(150px, 0.72fr) minmax(320px, 1.45fr) minmax(210px, 0.92fr);
+  align-items: stretch;
+  gap: 14px;
+}
+
+.flight-command-selection {
+  display: flex;
+  min-width: 0;
+  padding-left: 10px;
+  flex-direction: column;
+  justify-content: center;
+  border-left: 3px solid var(--flight-accent);
+}
+
+.flight-command-selection b {
+  margin-top: 5px;
+  overflow: hidden;
+  color: var(--os-paper);
+  font-size: clamp(17px, 1.25vw, 22px);
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flight-command-selection em {
+  margin-top: 5px;
+  overflow: hidden;
+  color: var(--flight-accent);
+  font: 700 8px/1 "IBM Plex Mono", monospace;
+  font-style: normal;
+  letter-spacing: 0.07em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flight-command-phases {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  list-style: none;
+}
+
+.flight-command-phases::before {
+  position: absolute;
+  top: 50%;
+  right: 9%;
+  left: 9%;
+  height: 1px;
+  background: linear-gradient(90deg, var(--flight-accent) 0 38%, var(--os-line-strong) 38% 100%);
+  content: "";
+}
+
+.flight-command-phases li {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  color: var(--os-muted);
+}
+
+.flight-command-phases li span {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  border: 1px solid var(--os-line-strong);
+  border-radius: 50%;
+  place-items: center;
+  background: #061018;
+  font: 700 8px/1 "IBM Plex Mono", monospace;
+}
+
+.flight-command-phases li b { font-size: 9px; white-space: nowrap; }
+.flight-command-phases li.is-complete,
+.flight-command-phases li.is-active { color: var(--flight-accent); }
+.flight-command-phases li.is-complete span,
+.flight-command-phases li.is-active span {
+  border-color: var(--flight-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--flight-accent) 9%, transparent);
+}
+.flight-command-phases li.is-active span {
+  color: #061018;
+  background: var(--flight-accent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--flight-accent) 52%, transparent);
+}
+
+.flight-command-summary {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 7px;
+}
+
+.flight-command-summary > div {
+  display: flex;
+  min-width: 0;
+  padding: 8px 9px;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--os-line);
+  background: rgba(118, 242, 247, 0.035);
+}
+
+.flight-command-summary dd {
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: var(--flight-accent);
+  font: 700 10px/1.25 "IBM Plex Mono", monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flight-plan-brief::before {
+  content: "선택 전술 효과";
+  font-family: var(--font-mono);
+}
+
+/* The upper-body portrait is subordinate to the support controls. */
+.flight-ops-lark.is-sera {
+  overflow: hidden;
+}
+
+.flight-ops-lark-portrait.is-sera > img {
+  top: auto;
+  right: 3%;
+  bottom: 54px;
+  left: 3%;
+  width: 94%;
+  height: 88%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+/* Lobby reactions stay inside each operative stage. This keeps the callout
+   close to the face and prevents the wider VESPER art from clipping it. */
+@media (min-width: 721px) {
+  .home-base-screen .base-motion-portrait .motion-portrait-speech {
+    top: clamp(88px, 18%, 156px);
+    right: 3%;
+    width: min(258px, 42%);
+    max-width: calc(100% - 24px);
+    box-sizing: border-box;
+  }
+
+  .home-base-screen .base-motion-portrait.is-vesper .motion-portrait-speech {
+    top: clamp(82px, 16%, 146px);
+    right: 2%;
+    width: min(246px, 40%);
+  }
+}
+
+@media (max-width: 1100px) and (min-width: 801px) {
+  .flight-ops-console {
+    grid-template-columns: 210px minmax(300px, 1fr) 310px;
+  }
+
+  .flight-command-main {
+    grid-template-columns: minmax(150px, 0.8fr) minmax(290px, 1.35fr);
+  }
+
+  .flight-command-summary { display: none; }
+}
+
+@media (max-width: 800px), (orientation: portrait) {
+  .flight-command-board {
+    order: 1;
+    width: 100%;
+    min-height: 232px;
+  }
+
+  .flight-command-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .flight-command-phases { min-height: 52px; }
+  .flight-command-summary { grid-template-columns: minmax(0, 1fr) 82px; }
+  .flight-command-summary dd {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+  .flight-ops-lark.is-sera { order: 2; min-height: clamp(280px, 46dvh, 400px); }
+  .flight-ops-lark-portrait.is-sera > img { bottom: 48px; height: 84%; }
+  .flight-plan-rail { order: 3; }
+  .flight-plan-brief { order: 4; }
+}
+
 .facility-npc-portrait:hover > img,
 .facility-npc-portrait:focus-visible > img {
   filter: saturate(1.04) contrast(1.08) brightness(1.06);
@@ -3962,7 +4252,7 @@ details:focus-visible {
   display: grid;
   min-height: 0;
   padding: clamp(16px, 1.6vw, 28px) clamp(20px, 2.4vw, 44px) clamp(20px, 2vw, 36px);
-  grid-template-columns: minmax(240px, 0.7fr) minmax(330px, 1.15fr) minmax(330px, 0.95fr);
+  grid-template-columns: minmax(220px, 0.54fr) minmax(340px, 1.15fr) minmax(330px, 0.95fr);
   grid-template-rows: minmax(148px, 0.48fr) minmax(330px, 1fr);
   gap: clamp(12px, 1.2vw, 20px);
 }
@@ -4266,7 +4556,7 @@ details:focus-visible {
 }
 
 .flight-plan-brief::before {
-  content: "SELECTED FLIGHT DOCTRINE";
+  content: "선택 전술 효과";
   position: absolute;
   top: 12px;
   right: 14px;
@@ -4384,7 +4674,7 @@ details:focus-visible {
   }
 
   .flight-ops-console {
-    grid-template-columns: 230px minmax(300px, 1fr) 320px;
+    grid-template-columns: 210px minmax(300px, 1fr) 310px;
   }
 
   .flight-plan-card {
@@ -6132,19 +6422,18 @@ details:focus-visible {
   color: var(--os-acid);
 }
 
-/* Standalone SERA art is intentionally enlarged and bottom-cropped so the
-   flight-control surface reads as a character-led content screen. */
+/* SERA remains a character host without overpowering the support controls. */
 .flight-ops-lark.is-sera {
   border-left: 0;
   overflow: hidden;
 }
 
 .flight-ops-lark-portrait.is-sera > img {
-  width: 100%;
-  height: 146%;
+  width: 94%;
+  height: 88%;
   max-width: none;
-  object-fit: cover;
-  object-position: center top;
+  object-fit: contain;
+  object-position: center bottom;
 }
 
 @media (max-width: 900px) {
@@ -6364,11 +6653,10 @@ details:focus-visible {
   }
 }
 
-/* SERA is staged as a full-height character host rather than a framed card.
-   The screen edge performs the crop and keeps the visible figure to mid-thigh. */
+/* SERA uses the same restrained upper-body staging as the other NPC hosts. */
 .flight-ops-lark.is-sera {
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   border: 0;
   border-top: 0;
   background: transparent;
@@ -6393,11 +6681,14 @@ details:focus-visible {
 
 .flight-ops-lark-portrait.is-sera > img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 142%;
-  object-fit: cover;
-  object-position: center 8%;
+  top: auto;
+  right: 3%;
+  bottom: 54px;
+  left: 3%;
+  width: 94%;
+  height: 88%;
+  object-fit: contain;
+  object-position: center bottom;
   filter: drop-shadow(20px 20px 30px rgba(0, 0, 0, 0.62));
 }
 
@@ -6424,8 +6715,9 @@ details:focus-visible {
   }
 
   .flight-ops-lark-portrait.is-sera > img {
-    height: 138%;
-    object-position: center 7%;
+    bottom: 48px;
+    height: 84%;
+    object-position: center bottom;
   }
 
   .flight-ops-lark.is-sera > div:last-child {
@@ -6795,7 +7087,28 @@ details:focus-visible {
     bottom: 288px;
   }
 
-  .home-base-screen .motion-portrait-speech { display: none; }
+  .home-base-screen .motion-portrait-speech {
+    top: clamp(108px, 26%, 138px);
+    right: 8px;
+    display: block;
+    width: min(210px, 58vw);
+    max-width: calc(100% - 16px);
+    padding: 10px 12px;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+
+  .home-base-screen .motion-portrait-speech strong { font-size: 12px; }
+  .home-base-screen .motion-portrait-speech p {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .home-base-screen .base-motion-portrait.is-vesper .motion-portrait-speech {
+    right: 12px;
+    width: min(202px, 56vw);
+  }
 
   .campaign-shell.home-base-screen .base-lobby-navigation {
     top: auto;

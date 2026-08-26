@@ -9,6 +9,7 @@ import { App } from "./App.jsx";
 import "./styles.css";
 import "./styles/p1-p2.css";
 import "./styles/tactical-os.css";
+import "./styles/save-profiles.css";
 import "./styles/settings.css";
 import "./styles/defense-overhaul.css";
 import "./styles/tag-cutscene.css";

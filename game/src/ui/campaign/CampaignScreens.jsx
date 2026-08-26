@@ -15,6 +15,7 @@ import {
   Lock,
   MapTrifold,
   Play,
+  Plus,
   ShieldChevron,
   ShieldStar,
   Sparkle,
@@ -236,7 +237,7 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
               </div>
               {slot ? (
                 <>
-                  <div className="save-slot-icon-wrapper"><FloppyDisk weight="fill" /></div>
+                  <div className="save-slot-icon-wrapper is-saved" aria-hidden="true"><FloppyDisk weight="duotone" /></div>
                   <strong>{slot.homeBaseUnlocked ? "헤이븐-09 작전 기록" : "첫 출격 대기"}</strong>
                   <p>해방 권역 {completed} / 6 · 전체 달성률 {progress}%</p>
                   <div className="save-slot-meter"><i style={{ width: `${progress}%` }} /></div>
@@ -245,7 +246,7 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
                 </>
               ) : (
                 <>
-                  <span className="empty-slot-mark">+</span>
+                  <div className="save-slot-icon-wrapper is-new" aria-hidden="true"><Plus weight="regular" /></div>
                   <strong>새 캠페인</strong>
                   <p>이지스와 함께 오답 엔진 추론핵 공략 작전을 개시합니다.</p>
                   <b>신규 작전 개시 <Play weight="fill" /></b>
@@ -1143,11 +1144,12 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
   const selectedPlan = plans.find((plan) => plan.id === selectedPlanId) || plans[0] || null;
   const selectedUnlocked = Boolean(selectedPlan && completedRegions >= selectedPlan.unlockClears);
   const selectedActive = selectedPlan?.id === activePlanId;
+  const unlockedPlanCount = plans.filter((plan) => completedRegions >= plan.unlockClears).length;
   const SelectedIcon = FLIGHT_PLAN_ICON[selectedPlan?.id] || AirplaneTilt;
   const pilotDialogue = pilot?.portraitDialogue?.length ? pilot.portraitDialogue : pilot?.dialogue || [];
   const pilotLine = pilotReactionIndex >= 0 && pilotDialogue.length
     ? localizeWorldText(pilotDialogue[pilotReactionIndex % pilotDialogue.length])
-    : selectedPlan?.pilotQuote || "항로를 골라. 나이트자는 어디든 갈 수 있어.";
+    : selectedPlan?.pilotQuote || "지원 전술을 골라. 다음 출격부터 바로 적용할게.";
 
   useEffect(() => {
     setSelectedPlanId(activePlanId || plans[0]?.id || null);
@@ -1170,21 +1172,21 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
       <header className="flight-ops-heading">
         <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={onBack}><ArrowLeft weight="bold" /> 기지로 <kbd>ESC</kbd></button>
         <div>
-          <small>SERA FLIGHT CONTROL · NIGHTJAR OPERATIONS</small>
-          <h1>출격 항로 교리</h1>
-          <p>다음 출격에 적용할 전투 보너스 1개를 선택합니다. 출격 구역은 작전 권역에서 별도로 선택합니다.</p>
-          <ol className="flight-ops-purpose" aria-label="항로 교리 적용 순서">
-            <li><b>01</b> 교리 선택</li><li><b>02</b> 효과 확인</li><li><b>03</b> 다음 출격에 적용</li>
+          <small>SERA FLIGHT CONTROL · NIGHTJAR SUPPORT</small>
+          <h1>항공 지원 전술</h1>
+          <p>다음 출격에 적용할 나이트자 지원 1개를 선택하세요. 선택한 효과는 전투가 끝날 때까지 유지됩니다.</p>
+          <ol className="flight-ops-purpose" aria-label="항공 지원 전술 적용 순서">
+            <li><b>01</b> 전술 선택</li><li><b>02</b> 효과 확인</li><li><b>03</b> 출격 적용</li>
           </ol>
         </div>
         <dl className="flight-ops-record">
           <div><dt>개방 권역</dt><dd>{completedRegions} / 6</dd></div>
-          <div><dt>항로 출격</dt><dd>{operations.completedSorties || 0}</dd></div>
-          <div><dt>현재 계획</dt><dd>{plans.find((plan) => plan.id === activePlanId)?.routeCode || "NV-01"}</dd></div>
+          <div><dt>지원 출격</dt><dd>{operations.completedSorties || 0}</dd></div>
+          <div><dt>적용 전술</dt><dd>{plans.find((plan) => plan.id === activePlanId)?.routeCode || "FC-01"}</dd></div>
         </dl>
       </header>
 
-      <section className="flight-ops-console" aria-label="세라 출격 항로 교리 통제실">
+      <section className="flight-ops-console" aria-label="세라 항공 지원 전술 통제실">
         <aside className="flight-ops-lark is-sera">
           <button
             type="button"
@@ -1202,13 +1204,32 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
           </div>
         </aside>
 
-        <div className="flight-route-plot" aria-hidden="true" style={{ "--flight-accent": selectedPlan?.accent || "#c7ff4a" }}>
-          <span className="flight-route-airship"><AirplaneTilt weight="fill" /></span>
-          <i className="route-node node-a" /><i className="route-node node-b" /><i className="route-node node-c" /><i className="route-node node-d" />
-          <b>{selectedPlan?.callSign || "NIGHT VEIL"}</b><em>{selectedPlan?.routeCode || "NV-01"} · ROUTE LOCKED</em>
-        </div>
+        <section className="flight-command-board" aria-label="나이트자 출격 지원 현황" style={{ "--flight-accent": selectedPlan?.accent || "#c7ff4a" }}>
+          <header>
+            <span className="flight-command-emblem"><MapTrifold weight="fill" /></span>
+            <div><small>NIGHTJAR SUPPORT CONTROL</small><strong>출격 지원 현황</strong></div>
+            <span className="flight-command-link"><CheckCircle weight="fill" /> 전술 링크 정상</span>
+          </header>
+          <div className="flight-command-main">
+            <div className="flight-command-selection">
+              <small>{selectedActive ? "현재 적용 전술" : "적용 전 미리보기"}</small>
+              <b>{selectedPlan?.koreanName || "선행 정찰 지원"}</b>
+              <em>{selectedPlan?.routeCode || "FC-01"} · {selectedPlan?.callSign || "PATHFINDER"}</em>
+            </div>
+            <ol className="flight-command-phases" aria-label="지원 작전 단계">
+              <li className="is-complete"><span>01</span><b>정찰</b></li>
+              <li className="is-active"><span>02</span><b>진입</b></li>
+              <li><span>03</span><b>전투 지원</b></li>
+              <li><span>04</span><b>귀환</b></li>
+            </ol>
+            <dl className="flight-command-summary">
+              <div><dt>선택 효과</dt><dd>{selectedPlan?.effects?.map((effect) => `${effect.label} ${effect.value}`).join(" · ") || "-"}</dd></div>
+              <div><dt>해금 현황</dt><dd>{unlockedPlanCount} / {plans.length}</dd></div>
+            </dl>
+          </div>
+        </section>
 
-        <nav className="flight-plan-rail" aria-label="비행 작전 교리 선택">
+        <nav className="flight-plan-rail" aria-label="항공 지원 전술 선택">
           {plans.map((plan) => {
             const unlocked = completedRegions >= plan.unlockClears;
             const active = plan.id === activePlanId;
@@ -1220,7 +1241,7 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
                 className={`flight-plan-card${selected ? " is-selected" : ""}${active ? " is-active" : ""}${unlocked ? "" : " is-locked"}`}
                 style={{ "--flight-accent": plan.accent }}
                 aria-pressed={selected}
-                aria-label={`${plan.koreanName}, ${unlocked ? active ? "현재 운용 중" : "편성 가능" : `${plan.unlockClears}개 권역 클리어 필요`}`}
+                aria-label={`${plan.koreanName}, ${unlocked ? active ? "현재 적용 중" : "적용 가능" : `권역 ${plan.unlockClears}곳 해방 필요`}`}
                 onClick={() => unlocked && setSelectedPlanId(plan.id)}
                 disabled={!unlocked}
                 key={plan.id}
@@ -1228,7 +1249,7 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
                 <span className="flight-plan-index">0{plan.order}</span>
                 <span className="flight-plan-icon">{unlocked ? <Icon weight="fill" /> : <Lock weight="fill" />}</span>
                 <span className="flight-plan-title"><small>{plan.category}</small><strong>{plan.koreanName}</strong><em>{plan.callSign}</em></span>
-                <span className="flight-plan-status">{unlocked ? active ? <><CheckCircle weight="fill" /> 운용 중</> : `${operations.planSorties?.[plan.id] || 0}회 출격` : `${plan.unlockClears}개 권역 클리어`}</span>
+                <span className="flight-plan-status">{unlocked ? active ? <><CheckCircle weight="fill" /> 적용 중</> : "적용 가능" : `권역 ${plan.unlockClears}곳 해방`}</span>
               </button>
             );
           })}
@@ -1244,7 +1265,7 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
             <dl>
               {selectedPlan.effects.map((effect) => <div key={effect.label}><dt>{effect.label}</dt><dd>{effect.value}</dd></div>)}
             </dl>
-            {!selectedUnlocked && <p className="flight-plan-lock-copy"><Lock weight="fill" /> 권역 {selectedPlan.unlockClears}곳을 클리어하면 세라가 이 항로를 개방합니다.</p>}
+            {!selectedUnlocked && <p className="flight-plan-lock-copy"><Lock weight="fill" /> 권역 {selectedPlan.unlockClears}곳을 해방하면 이 지원 전술을 사용할 수 있습니다.</p>}
             <button
               type="button"
               className="flight-plan-activate command-ui-button"
@@ -1252,7 +1273,7 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
               disabled={!selectedUnlocked || selectedActive}
               onClick={() => onSelect?.(selectedPlan.id)}
             >
-              {selectedActive ? <><CheckCircle weight="fill" /> 현재 항로 운용 중</> : selectedUnlocked ? <><AirplaneTilt weight="fill" /> 이 항로로 비행 계획 확정</> : <><Lock weight="fill" /> 항로 잠김</>}
+              {selectedActive ? <><CheckCircle weight="fill" /> 현재 전술 적용 중</> : selectedUnlocked ? <><AirplaneTilt weight="fill" /> 이 전술 적용</> : <><Lock weight="fill" /> 해금 필요</>}
             </button>
           </article>
         )}

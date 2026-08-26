@@ -24,6 +24,8 @@ const NOW = "2026-08-25T09:00:00.000Z";
 test("SERA owns three unlockable flight doctrines instead of duplicating region selection", () => {
   const plans = getFlightPlans();
   assert.deepEqual(plans.map((plan) => plan.id), ["night-veil", "lifeline-corridor", "raptor-escort"]);
+  assert.deepEqual(plans.map((plan) => plan.koreanName), ["선행 정찰 지원", "긴급 보급 지원", "요격기 엄호 지원"]);
+  assert.deepEqual(plans.map((plan) => plan.callSign), ["PATHFINDER", "SAFEGUARD", "INTERCEPTOR"]);
   assert.equal(DEFAULT_FLIGHT_PLAN_ID, "night-veil");
   assert.deepEqual(plans.map((plan) => plan.unlockClears), [0, 1, 3]);
   assert.equal(isFlightPlanUnlocked("night-veil", []), true);
@@ -33,7 +35,7 @@ test("SERA owns three unlockable flight doctrines instead of duplicating region 
   assert.equal(Object.isFrozen(getFlightPlan("raptor-escort")), true);
 });
 
-test("a new slot starts with Night Veil and its mobility doctrine reaches the combat runtime", () => {
+test("a new slot starts with Pathfinder support and its mobility bonus reaches the combat runtime", () => {
   const campaign = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
   const slot = getCampaignSlot(campaign, "slot-1");
   assert.equal(slot.flightOperations.activePlanId, "night-veil");

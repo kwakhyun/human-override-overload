@@ -268,11 +268,16 @@ test("campaign presentation keeps dialogue art passive while SERA, Vesper, and d
   assert.doesNotMatch(screens.slice(screens.indexOf("function NpcPortrait"), screens.indexOf("export function NpcDialoguePanel")), /onClick=/);
   assert.match(screens, /facility-npc-stage is-\$\{facilityNpc\.id\}/);
   assert.match(screens, /flight-ops-lark is-sera/);
+  assert.match(screens, /flight-command-board/);
+  assert.match(screens, /NIGHTJAR SUPPORT CONTROL/);
+  assert.doesNotMatch(screens, /NIGHT VEIL/);
   assert.match(screens, /region-card-status\$\{!isUnlocked/);
   assert.match(tacticalStyles, /\.campaign-shell \.base-npc-portrait[\s\S]*pointer-events: none !important/);
   assert.match(tacticalStyles, /\.base-facility-panel\.has-npc-host \.facility-npc-stage[\s\S]*background: transparent/);
   assert.match(tacticalStyles, /\.flight-ops-lark\.is-sera \{[\s\S]*border: 0;[\s\S]*background: transparent/);
-  assert.match(tacticalStyles, /\.flight-ops-lark-portrait\.is-sera > img[\s\S]*height: 142%;[\s\S]*object-position: center 8%/);
+  assert.match(tacticalStyles, /\.flight-ops-lark-portrait\.is-sera > img[\s\S]*height: 88%;[\s\S]*object-fit: contain;[\s\S]*object-position: center bottom/);
+  assert.match(tacticalStyles, /\.home-base-screen \.base-motion-portrait \.motion-portrait-speech[\s\S]*right: 3%;[\s\S]*max-width: calc\(100% - 24px\)/);
+  assert.match(tacticalStyles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.home-base-screen \.motion-portrait-speech \{[\s\S]*right: 8px;[\s\S]*display: block;[\s\S]*max-width: calc\(100% - 16px\)/);
   assert.match(screens, /const unlocked = Boolean\(profile\?\.unlocked\) && requiredGrade <= progressionRank/);
   assert.match(tacticalStyles, /\.character-art-stage\.is-vesper > img \{[\s\S]*height: 100% !important;[\s\S]*object-position: center bottom !important/);
   assert.match(tacticalStyles, /\.base-motion-portrait\.is-vesper \.motion-portrait-original \{[\s\S]*height: 100%;[\s\S]*object-position: center bottom/);
