@@ -223,7 +223,8 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
         {normalized.map((slot, index) => {
           const completed = slot?.completedRegionIds?.length || 0;
           const progress = Math.round(completed / 6 * 100);
-          const statusTag = !slot ? "NEW" : completed >= 6 ? "CLEAR" : completed > 0 ? "IN PROGRESS" : "READY";
+          const statusKey = !slot ? "new" : completed >= 6 ? "clear" : completed > 0 ? "in-progress" : "ready";
+          const statusLabel = { new: "신규", clear: "완료", "in-progress": "진행 중", ready: "준비" }[statusKey];
           return (
             <button
               type="button"
@@ -233,7 +234,7 @@ export function SaveSlotScreen({ slots, onSelect, onBack }) {
             >
               <div className="save-slot-card-header">
                 <span className="save-slot-number">SLOT 0{index + 1}</span>
-                <span className={`save-slot-status-tag is-${statusTag.toLowerCase().replace(" ", "-")}`}>{statusTag}</span>
+                <span className={`save-slot-status-tag is-${statusKey}`}>{statusLabel}</span>
               </div>
               {slot ? (
                 <>

@@ -17,7 +17,9 @@ test("save profile grid has explicit desktop tablet mobile and short-window cont
   assert.match(styles, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(styles, /@media \(max-width: 1080px\)[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(styles, /@media \(max-width: 1080px\)[\s\S]*\.save-slot-card:nth-child\(3\)/);
-  assert.match(styles, /@media \(max-width: 720px\)[\s\S]*grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(styles, /@media \(max-width: 720px\)[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /@media \(max-width: 720px\)[\s\S]*\.save-slot-card:nth-child\(3\)[\s\S]*grid-column: auto/);
+  assert.match(styles, /@media \(max-width: 380px\)/);
   assert.match(styles, /@media \(min-width: 900px\) and \(max-height: 760px\)/);
 });
 

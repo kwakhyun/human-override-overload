@@ -226,59 +226,150 @@
 
 @media (max-width: 720px) {
   .campaign-shell.save-slot-screen {
-    padding: max(18px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+    padding: max(14px, env(safe-area-inset-top)) 10px max(22px, env(safe-area-inset-bottom));
   }
 
   .campaign-shell.save-slot-screen .campaign-heading h1 {
-    margin-top: 22px;
-    font-size: clamp(40px, 13vw, 56px);
+    margin-top: 16px;
+    font-size: clamp(34px, 10.5vw, 48px);
     line-height: 1;
   }
 
   .campaign-shell.save-slot-screen .campaign-heading p {
-    font-size: 15px;
+    max-width: 520px;
+    font-size: clamp(12px, 3.5vw, 15px);
+    line-height: 1.45;
   }
 
   .campaign-shell.save-slot-screen .save-slot-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    margin-top: 30px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(5px, 1.6vw, 9px);
+    margin-top: 22px;
   }
 
   .campaign-shell.save-slot-screen .save-slot-card,
   .campaign-shell.save-slot-screen .save-slot-card:first-child,
   .campaign-shell.save-slot-screen .save-slot-card.is-empty {
     width: 100%;
-    min-height: 322px;
-    padding: 20px;
+    min-height: clamp(268px, 42svh, 312px);
+    padding: clamp(8px, 2.7vw, 13px);
     grid-column: auto;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-card:nth-child(3) {
+    width: 100%;
+    grid-column: auto;
+    justify-self: stretch;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-card::after {
+    right: -58px;
+    bottom: -66px;
+    width: 150px;
+    height: 150px;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-card-header {
+    display: flex;
+    min-height: 25px;
+    padding-bottom: 8px;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-number,
+  .campaign-shell.save-slot-screen .save-slot-status-tag {
+    font-size: clamp(7px, 2.05vw, 9px);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-status-tag {
+    min-height: 20px;
+    margin-left: auto;
+    padding: 5px 5px 4px;
   }
 
   .campaign-shell.save-slot-screen .save-slot-icon-wrapper,
   .campaign-shell.save-slot-screen .empty-slot-mark {
-    width: 52px;
-    height: 52px;
-    margin: 16px 0 13px;
-    flex-basis: 52px;
+    width: clamp(34px, 10.5vw, 44px);
+    height: clamp(34px, 10.5vw, 44px);
+    margin: 12px 0 11px;
+    flex-basis: clamp(34px, 10.5vw, 44px);
   }
 
   .campaign-shell.save-slot-screen .save-slot-icon-wrapper svg {
-    width: 26px;
-    height: 26px;
+    width: clamp(18px, 5.7vw, 24px);
+    height: clamp(18px, 5.7vw, 24px);
   }
 
   .campaign-shell.save-slot-screen .save-slot-card > strong {
-    font-size: 26px;
+    display: -webkit-box;
+    min-height: 2.35em;
+    overflow: hidden;
+    font-size: clamp(13px, 3.8vw, 17px);
+    line-height: 1.18;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .campaign-shell.save-slot-screen .save-slot-card > p {
-    min-height: 0;
-    font-size: 15px;
+    display: -webkit-box;
+    min-height: 4.1em;
+    margin-top: 7px;
+    overflow: hidden;
+    font-size: clamp(9px, 2.55vw, 11px);
+    line-height: 1.38;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-meter {
+    height: 4px;
+    margin-top: 10px;
+    flex-basis: 4px;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-card.has-data > small {
+    margin-top: auto;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-card > small {
+    font-size: clamp(8px, 2.25vw, 10px);
+    line-height: 1.25;
   }
 
   .campaign-shell.save-slot-screen .save-slot-card > b {
-    min-height: 48px;
-    font-size: 15px;
+    min-height: 38px;
+    margin-top: 6px;
+    padding-top: 9px;
+    gap: 4px;
+    font-size: clamp(10px, 2.8vw, 12px);
+    line-height: 1.15;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-card > b svg {
+    width: 13px;
+    height: 13px;
+    flex: 0 0 13px;
+  }
+}
+
+@media (max-width: 380px) {
+  .campaign-shell.save-slot-screen {
+    padding-right: 7px;
+    padding-left: 7px;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-grid {
+    gap: 4px;
+  }
+
+  .campaign-shell.save-slot-screen .save-slot-card,
+  .campaign-shell.save-slot-screen .save-slot-card:first-child,
+  .campaign-shell.save-slot-screen .save-slot-card.is-empty {
+    min-height: 260px;
+    padding: 8px 7px;
   }
 }
 

@@ -112,12 +112,20 @@ test("defense HUD keeps readable commercial command controls on desktop and port
   assert.match(app, /controllerRef\.current\?\.cycleTargetPriority\(\)/);
   assert.match(app, /controllerRef\.current\?\.activateAbility\(ability\.id\)/);
   assert.match(app, /controllerRef\.current\?\.setSpeed\(2\)/);
+  assert.match(app, /has-selected-tower/);
+  assert.match(app, /is-combat/);
+  assert.match(app, /aria-label=\{hud\?\.phase === "wave" \? "방어전 전술 명령" : "방어전 출격 준비"\}/);
   assert.match(defenseStyles, /grid-template-rows: minmax\(0, 1fr\) 190px !important/);
   assert.match(defenseStyles, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(defenseStyles, /@media \(max-width: 820px\), \(orientation: portrait\)/);
   assert.match(defenseStyles, /grid-template-rows: minmax\(0, 57dvh\) minmax\(0, 43dvh\) !important/);
   assert.match(defenseStyles, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
-  assert.match(defenseStyles, /height: 358px/);
+  assert.match(defenseStyles, /MOBILE DEFENSE COMMAND DECK V3/);
+  assert.match(defenseStyles, /--defense-mobile-dock: clamp\(248px, 31dvh, 292px\)/);
+  assert.match(defenseStyles, /grid-template-areas:[\s\S]*"pad pad"[\s\S]*"towers towers"[\s\S]*"intel abilities"[\s\S]*"launch launch"/);
+  assert.match(defenseStyles, /grid-template-rows: 42px 64px minmax\(72px, 1fr\) 48px !important/);
+  assert.match(defenseStyles, /overflow: hidden;[\s\S]*border-top-color: rgba\(201, 255, 74, 0\.62\)/);
+  assert.match(defenseStyles, /\.defense-combat-hud \{[\s\S]*grid-template-rows: 42px 34px;[\s\S]*height: 80px/);
   assert.match(main, /styles\/defense-overhaul\.css/);
 });
 

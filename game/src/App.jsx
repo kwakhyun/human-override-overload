@@ -2735,9 +2735,9 @@ function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutorial = f
     >
       <div className="defense-phaser-host" ref={hostRef} />
       {loadProgress < 1 && <div className="defense-load-chip">방어 체계 동기화 {Math.round(loadProgress * 100)}%</div>}
-      <header className="defense-combat-hud">
+      <header className="defense-combat-hud" data-defense-phase={hud?.phase || "intermission"}>
         <div className={`defense-core-status${guideTarget === "core" ? " is-guide-target" : ""}`}><span><small>방벽 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
-        <div className="defense-wave-command">
+        <div className="defense-wave-command" aria-live="polite">
           <span><small>WAVE {String(hud?.wave || 1).padStart(2, "0")} / {String(hud?.totalWaves || stage?.waveCounts.length).padStart(2, "0")}</small><b>{hud?.phase === "wave" ? `교전 중 · 잔존 ${hud?.liveEnemies || 0}` : "다음 공세 분석 완료"}</b></span>
           <i><em style={{ width: `${Math.round((hud?.waveProgress || 0) * 100)}%` }} /></i>
         </div>
@@ -2747,7 +2747,11 @@ function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutorial = f
       </header>
 
       <div className={`defense-guide-world-target${guideTarget === "field" ? " is-guide-target" : ""}`} aria-hidden="true" />
-      <aside className={`defense-command-dock${hud?.selectedNodeId ? " has-selected-pad" : " needs-pad"}`}>
+      <aside
+        className={`defense-command-dock${hud?.selectedNodeId ? " has-selected-pad" : " needs-pad"}${hud?.selectedTower ? " has-selected-tower" : " is-deployment"}${hud?.phase === "wave" ? " is-combat" : " is-preparation"}`}
+        data-defense-phase={hud?.phase || "intermission"}
+        aria-label={hud?.phase === "wave" ? "방어전 전술 명령" : "방어전 출격 준비"}
+      >
         <header>
           <div><small>{hud?.selectedTower ? "FIRE CONTROL" : "DEPLOYMENT PAD"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>
           <div className="defense-pad-stepper" aria-label="건설 패드 순환 선택">
