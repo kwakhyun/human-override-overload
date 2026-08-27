@@ -30,7 +30,7 @@ test("VESPER launch gating and combat identity are authoritative in the simulati
   assert.equal(unlocked.player.characterId, "vesper");
   assert.equal(unlocked.player.name, "VESPER");
   assert.equal(unlocked.player.mainWeaponId, "pulse-rifle");
-  assert.equal(unlocked.player.reserveCharacterId, "mika");
+  assert.equal(unlocked.player.reserveCharacterId, "aegis");
   assert.equal(unlocked.player.maxHp, 320);
   assert.equal(unlocked.player.speed, 245 * 1.12);
   assert.equal(unlocked.player.fireRateMultiplier, 1.08);
@@ -161,5 +161,5 @@ test("character management exposes locked art previews and lobby settings", asyn
   assert.match(app, /onOpenSettings=\{\(\) => setSettingsOpen\(true\)\}/);
   assert.match(app, /\{settingsOpen && \(/);
   assert.match(app, /status\.reason === "insufficient-funds" \? `\$\{currency\?\.koreanName \|\| "재화"\} 부족`/);
-  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v6\.webp"/);
+  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v7\.webp"/);
 });

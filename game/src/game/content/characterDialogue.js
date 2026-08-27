@@ -67,6 +67,27 @@ const CHARACTER_DIALOGUE_OVERRIDES = Object.freeze({
       1: "마지막 봉인 해제! 이제 정말 모두에게 돌아갈 길이 생겼어.",
     }),
   }),
+  nox: Object.freeze({
+    deployment: Object.freeze({ 1: "작전 기록을 개시합니다. 미심사 표적은 현장에서 분류하겠습니다." }),
+    "rook-trace": Object.freeze({ 1: "루크의 탄도 기록 확보. 잔류 명령은 불법으로 판정합니다." }),
+    "nyx-trace": Object.freeze({ 1: "닉스의 암호 흔적 확인. 증거 사슬을 유지하십시오." }),
+    "moss-trace": Object.freeze({ 1: "모스의 생체 기록 보존 완료. 회수 경로를 승인합니다." }),
+    "sovereign-panic": Object.freeze({ 0: "심사 대상이 저항합니다. 긴급 처형 권한으로 전환합니다." }),
+    "engine-encounter": Object.freeze({ 1: "오답 엔진의 명령 계층을 확인했습니다. 판결을 집행합니다." }),
+    "engine-destroyed": Object.freeze({ 1: "중앙핵 정지 확인. 첫 번째 증거 묶음을 봉인합니다." }),
+    "glass-dune-deployment": Object.freeze({ 1: "반사 신호를 상호 대조합니다. 허위 표적은 자동 기각합니다." }),
+    "glass-dune-encounter": Object.freeze({ 1: "거울 폭군의 위조 기록 식별. 원본만 남기겠습니다." }),
+    "glass-dune-destroyed": Object.freeze({ 1: "위조 명령 폐기 완료. 다음 심사 구역으로 이동합니다." }),
+    "abyssal-archive-deployment": Object.freeze({ 1: "침수 기록고 접근. 손상된 증거부터 복구합니다." }),
+    "abyssal-archive-encounter": Object.freeze({ 1: "침묵한 예언자의 판단은 편향됐습니다. 재심은 없습니다." }),
+    "abyssal-archive-destroyed": Object.freeze({ 1: "기억망 봉인 완료. 기록은 헤이븐-09에 이관합니다." }),
+    "neon-foundry-encounter": Object.freeze({ 1: "주조 거신의 생산 명령을 불법으로 판정합니다." }),
+    "neon-foundry-destroyed": Object.freeze({ 1: "집행 완료. 이제 제 신원을 정식으로 제출하겠습니다." }),
+    "storm-spire-encounter": Object.freeze({ 1: "폭풍 패턴 승인 취소. 낙뢰 경로를 역추적합니다." }),
+    "storm-spire-destroyed": Object.freeze({ 1: "기상 통제권 회수. 항로를 정상 절차로 복구합니다." }),
+    "gene-vault-encounter": Object.freeze({ 1: "생체 설계 기록에 중대한 위반이 있습니다. 전부 압수합니다." }),
+    "gene-vault-destroyed": Object.freeze({ 1: "최종 판결 집행. 인간의 선택권은 보존됐습니다." }),
+  }),
   vesper: Object.freeze({
     deployment: Object.freeze({ 1: "전술 링크 연결. 우선 표적부터 조용히 지울게." }),
     "rook-trace": Object.freeze({ 1: "루크의 탄착 흔적이야. 잔류 열원을 따라가면 만날 수 있어." }),
@@ -96,7 +117,7 @@ export function resolveCharacterDialogueLine(scriptedLine, beat, index, characte
   if (!localizedText) return scriptedLine;
   return Object.freeze({
     ...scriptedLine,
-    speaker: characterId === "mika" ? "MIKA" : characterId === "vesper" ? "VESPER" : scriptedLine.speaker,
+    speaker: characterId === "mika" ? "MIKA" : characterId === "vesper" ? "VESPER" : characterId === "nox" ? "NOX" : scriptedLine.speaker,
     text: localizedText,
   });
 }

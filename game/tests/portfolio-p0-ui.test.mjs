@@ -36,7 +36,7 @@ test("completing the combat tutorial keeps the active Phaser run alive", async (
   assert.match(app, /onFinishRef\.current\(result\)/);
   assert.match(
     app,
-    /\}, \[assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked\]\);/,
+    /\}, \[assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, mikaUnlocked, noxUnlocked, regionId, runRevision, sfx, vesperUnlocked\]\);/,
   );
   assert.doesNotMatch(app, /\[characterId, combatBonuses, mainWeaponId/);
 });

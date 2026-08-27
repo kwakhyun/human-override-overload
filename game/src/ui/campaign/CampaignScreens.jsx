@@ -34,6 +34,12 @@ const VESPER_RECRUIT_DIALOGUE = Object.freeze([
   Object.freeze({ portrait: "vesper", speaker: "베스퍼", text: "호출부호 베스퍼. 지금부터 헤이븐-09의 정밀 사격과 기동 저격을 맡는다." }),
 ]);
 
+const NOX_RECRUIT_DIALOGUE = Object.freeze([
+  Object.freeze({ portrait: "aegis", speaker: "이지스", text: "주조로의 통제망은 끊겼어. 그런데 누군가 폐기 직전의 심사 기록을 우리 쪽으로 넘겼어." }),
+  Object.freeze({ portrait: "nox", speaker: "녹스", text: "증거 보존 절차를 완료했습니다. 소버린의 명령은 무효이며, 헤이븐-09의 작전권은 적법합니다." }),
+  Object.freeze({ portrait: "nox", speaker: "녹스", text: "호출부호 녹스. 표식 심사와 전장 처형을 담당하겠습니다. 판결은 지연하지 않습니다." }),
+]);
+
 function assetSource(asset, fallback = "") {
   return asset?.src || asset || fallback;
 }
@@ -122,6 +128,12 @@ const CHARACTER_ACTIVE_LOADOUTS = Object.freeze({
     Object.freeze({ key: "F", name: "레일 버스트", detail: "관통 저격", icon: Crosshair }),
     Object.freeze({ key: "R", name: "데드라인", detail: "고속 섬멸", icon: AirplaneTilt }),
   ]),
+  nox: Object.freeze([
+    Object.freeze({ key: "Q", name: "검열 격자", detail: "표식 구속", icon: Target }),
+    Object.freeze({ key: "E", name: "항소 무효", detail: "방어 차단", icon: ShieldChevron }),
+    Object.freeze({ key: "F", name: "적색 영장", detail: "연쇄 판결", icon: Crosshair }),
+    Object.freeze({ key: "R", name: "최종 판결", detail: "전장 처형", icon: Broadcast }),
+  ]),
 });
 
 const PORTRAIT_REACTIONS = Object.freeze({
@@ -142,6 +154,12 @@ const PORTRAIT_REACTIONS = Object.freeze({
     chest: Object.freeze(["방탄 플레이트 상태 양호. 너무 걱정하지 마.", "제로 벡터 동기화 완료. 출격 가능해." ]),
     arms: Object.freeze(["레일 피스톨 영점은 완벽해.", "손목 보정기 반응 정상. 한 발이면 충분해." ]),
     legs: Object.freeze(["기동 보조기 점검 완료. 먼저 길을 열게.", "내 장점은 속도야. 따라올 수 있겠어?" ]),
+  }),
+  nox: Object.freeze({
+    head: Object.freeze(["심사 집중을 방해하지 마십시오.", "시선 추적 정상. 다음 표적을 지정합니다."]),
+    chest: Object.freeze(["전술 단말은 보호 중입니다.", "권한 확인이 먼저입니다."]),
+    arms: Object.freeze(["모노와이어 장력 정상.", "판결선 전개 준비를 유지합니다."]),
+    legs: Object.freeze(["이동 경로는 이미 계산했습니다.", "후퇴 사유는 기각합니다."]),
   }),
 });
 
@@ -643,7 +661,9 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
     ? CHARACTER_ACTIVE_LOADOUTS.mika
     : profile?.id === "vesper"
       ? CHARACTER_ACTIVE_LOADOUTS.vesper
-      : facility?.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
+      : profile?.id === "nox"
+        ? CHARACTER_ACTIVE_LOADOUTS.nox
+        : facility?.mainWeaponId === "beam-sword" ? CHARACTER_ACTIVE_LOADOUTS.aegisSword : CHARACTER_ACTIVE_LOADOUTS.aegisRifle;
   const progressionUpgrade = upgrades.find((upgrade) => upgrade.characterId === profile?.id)
     || upgrades.find((upgrade) => String(upgrade.id || "").startsWith(`${profile?.id}-`))
     || null;
@@ -667,9 +687,9 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
   const unlockedSkillCount = skillNodes.filter((node) => node.unlocked).length;
   const baseDamageOutput = facility?.combatStats?.damageOutput || 100;
   const baseFireRate = facility?.combatStats?.fireRate || 100;
-  const displayedMaxHp = profile?.id === "vesper" ? 320 : (facility?.combatStats?.maxHp || 360);
-  const displayedDamageOutput = profile?.id === "vesper" ? Math.round(baseDamageOutput * 1.16) : baseDamageOutput;
-  const displayedFireRate = profile?.id === "vesper" ? Math.round(baseFireRate * 1.08) : baseFireRate;
+  const displayedMaxHp = profile?.id === "vesper" ? 320 : profile?.id === "nox" ? 338 : (facility?.combatStats?.maxHp || 360);
+  const displayedDamageOutput = profile?.id === "vesper" ? Math.round(baseDamageOutput * 1.16) : profile?.id === "nox" ? Math.round(baseDamageOutput * 1.11) : baseDamageOutput;
+  const displayedFireRate = profile?.id === "vesper" ? Math.round(baseFireRate * 1.08) : profile?.id === "nox" ? Math.round(baseFireRate * 1.03) : baseFireRate;
   const completedRegions = new Set(facility?.completedRegionIds || []);
   const chooseCharacter = (characterId) => {
     const selected = facility?.characters?.find((character) => character.id === characterId);
@@ -736,7 +756,7 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
             <dl className="character-stat-grid">
               <div><dt>최대 내구도</dt><dd>{displayedMaxHp}</dd></div>
               <div><dt>공격 출력</dt><dd>{displayedDamageOutput}%</dd></div>
-              <div><dt>기동 속도</dt><dd>{profile?.id === "mika" ? facility?.combatStats?.mikaSpeed : profile?.id === "vesper" ? facility?.combatStats?.vesperSpeed : facility?.combatStats?.aegisSpeed}</dd></div>
+              <div><dt>기동 속도</dt><dd>{profile?.id === "mika" ? facility?.combatStats?.mikaSpeed : profile?.id === "vesper" ? facility?.combatStats?.vesperSpeed : profile?.id === "nox" ? facility?.combatStats?.noxSpeed : facility?.combatStats?.aegisSpeed}</dd></div>
               <div><dt>공격 주기</dt><dd>{displayedFireRate}%</dd></div>
               <div><dt>해방 구역</dt><dd>{facility?.combatStats?.completedRegions || 0} / 6</dd></div>
               <div><dt>태그 대기</dt><dd>10초</dd></div>
@@ -1013,14 +1033,61 @@ export function VesperRecruitScreen({ assets, onComplete }) {
   );
 }
 
+export function NoxRecruitScreen({ assets, onComplete }) {
+  const dialogRef = useRef(null);
+  const [lineIndex, setLineIndex] = useState(0);
+  const line = NOX_RECRUIT_DIALOGUE[Math.min(lineIndex, NOX_RECRUIT_DIALOGUE.length - 1)];
+  const finalLine = lineIndex >= NOX_RECRUIT_DIALOGUE.length - 1;
+  const next = useCallback(
+    () => finalLine ? onComplete?.() : setLineIndex((index) => index + 1),
+    [finalLine, onComplete],
+  );
+  const portraitSource = line.portrait === "aegis" ? assets?.playerPortrait : assets?.noxPortrait;
+  useDialogFocusTrap(dialogRef, true);
+  useEffect(() => {
+    const advance = (event) => {
+      if ((event.code !== "Space" && event.code !== "Enter") || event.repeat) return;
+      event.preventDefault();
+      next();
+    };
+    window.addEventListener("keydown", advance);
+    return () => window.removeEventListener("keydown", advance);
+  }, [next]);
+  return (
+    <main className="campaign-shell mika-recruit-screen nox-recruit-screen">
+      {assets?.characterSyncChamber && <img className="campaign-background" src={assetSource(assets.characterSyncChamber)} alt="헤이븐-09 전투원 동기화실" />}
+      <div className="mika-recruit-shade" aria-hidden="true" />
+      <header className="mika-recruit-heading">
+        <small>네온 주조로 · 불법 명령 기록 회수</small>
+        <strong id="nox-recruit-title">신규 전투원 합류</strong>
+      </header>
+      <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="nox-recruit-title" ref={dialogRef} tabIndex={-1}>
+        <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
+          {portraitSource && <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} />}
+        </figure>
+        <div className="mika-recruit-progress" aria-label={`${lineIndex + 1}/${NOX_RECRUIT_DIALOGUE.length} 대화`}>
+          {NOX_RECRUIT_DIALOGUE.map((_, index) => <i className={index <= lineIndex ? "is-active" : ""} key={index} />)}
+        </div>
+        <div className="mika-recruit-dialogue-box">
+          <div><small>{line.portrait === "nox" ? "NOX JUDGMENT OPERATIVE" : "AEGIS FIELD LEAD"}</small><strong>{line.speaker}</strong></div>
+          <p>{line.text}</p>
+          <button type="button" data-ui-sound={finalLine ? "uiConfirm" : "click"} onClick={next}>
+            <span>{finalLine ? "녹스의 합류를 승인한다" : "다음 대화"}<kbd>SPACE</kbd></span><ArrowRight weight="bold" />
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, availableUpgrades = {}, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onExchangeResources, onCharacterChange, onWeaponChange, onOpenSwordGuide, onCloseFacility, onBoard, onDefense, onOpenSettings, onTitle }) {
   const facilityRailRef = useRef(null);
   const [facilityRailIndex, setFacilityRailIndex] = useState(0);
   const background = assetSource(assets?.homeBase);
   const completed = campaign?.completedRegionIds?.length || 0;
   const activeCharacterId = campaign?.loadout?.characterId || "aegis";
-  const activeCharacterName = activeCharacterId === "mika" ? "미카" : activeCharacterId === "vesper" ? "베스퍼" : "이지스";
-  const activePortrait = activeCharacterId === "mika" ? assets?.mikaPortrait : activeCharacterId === "vesper" ? assets?.vesperPortrait : assets?.playerPortrait;
+  const activeCharacterName = activeCharacterId === "mika" ? "미카" : activeCharacterId === "vesper" ? "베스퍼" : activeCharacterId === "nox" ? "녹스" : "이지스";
+  const activePortrait = activeCharacterId === "mika" ? assets?.mikaPortrait : activeCharacterId === "vesper" ? assets?.vesperPortrait : activeCharacterId === "nox" ? assets?.noxPortrait : assets?.playerPortrait;
   const modalOpen = Boolean(activeNpc || activeFacility);
   const moveFacilityRail = useCallback((delta) => {
     const nextIndex = Math.max(0, Math.min((npcs?.length || 1) - 1, facilityRailIndex + delta));
@@ -1848,7 +1915,9 @@ export function ReturnCinematicScreen({ region, backgroundSource, onComplete }) 
 
   useEffect(() => {
     completedRef.current = false;
-    const timer = window.setTimeout(finish, 5200);
+    // The destination surface is already warmed before this lightweight
+    // handoff screen opens, so do not hold the player behind a fake load.
+    const timer = window.setTimeout(finish, 1000);
     const handleKey = (event) => {
       if (event.repeat) return;
       if (event.key === "Escape" || event.key === "Enter" || event.key === " ") finish();

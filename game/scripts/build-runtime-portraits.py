@@ -12,6 +12,8 @@ from pathlib import Path
 
 from PIL import Image
 
+from operative_portrait_contract import write_contract
+
 
 ROOT = Path(__file__).resolve().parents[1]
 NPC_DIR = ROOT / "public/assets/overload/ui/npcs"
@@ -73,13 +75,24 @@ def place_on_canvas(
     top: int,
     side_padding: int,
     bottom_padding: int = 0,
+    trim_bottom_ratio: float = 0.0,
 ) -> Image.Image:
-    """Trim transparent padding and place art with a stable top/side contract."""
+    """Trim transparent padding and place art with a stable upper-body contract.
+
+    ``trim_bottom_ratio`` removes authored lower-body framing before scaling.
+    This keeps head and shoulder scale consistent when a source contains more
+    torso than the other NPC masters, without adding per-screen CSS zooms.
+    """
 
     alpha_bounds = image.getchannel("A").getbbox()
     if alpha_bounds is None:
         raise ValueError("portrait source has no visible pixels")
     subject = image.crop(alpha_bounds)
+    if trim_bottom_ratio:
+        retained_height = round(subject.height * (1 - trim_bottom_ratio))
+        if retained_height <= 0:
+            raise ValueError("portrait bottom trim removes the whole subject")
+        subject = subject.crop((0, 0, subject.width, retained_height))
     max_width = size[0] - side_padding * 2
     max_height = size[1] - top - bottom_padding
     if max_height <= 0:
@@ -105,6 +118,7 @@ def save_chroma_runtime(
     top: int,
     side_padding: int,
     bottom_padding: int = 0,
+    trim_bottom_ratio: float = 0.0,
 ) -> None:
     with Image.open(source) as opened:
         image = remove_green_chroma(opened)
@@ -114,6 +128,7 @@ def save_chroma_runtime(
             top=top,
             side_padding=side_padding,
             bottom_padding=bottom_padding,
+            trim_bottom_ratio=trim_bottom_ratio,
         )
         destination.parent.mkdir(parents=True, exist_ok=True)
         # The second despill pass leaves transparent RGB black before encoding,
@@ -121,61 +136,81 @@ def save_chroma_runtime(
         image.save(destination, "WEBP", quality=94, method=6, exact=True)
 
 
-def fit_height(image: Image.Image, max_height: int) -> Image.Image:
-    if image.height <= max_height:
-        return image
-    width = round(image.width * max_height / image.height)
-    return image.resize((width, max_height), Image.Resampling.LANCZOS)
+def save_operative_runtime(
+    source: Path,
+    destination: Path,
+    *,
+    visible_height: int,
+    side_padding: int = 16,
+    chroma_key: bool = False,
+) -> None:
+    """Place one operative on the shared 9:16 floor-anchored stage.
 
+    ``visible_height`` expresses authored stature.  Width is capped uniformly,
+    while the alpha silhouette—not the source canvas—is anchored to the lower
+    edge. This prevents transparent source padding from making a character
+    float or appear arbitrarily smaller than the rest of the roster.
+    """
 
-def save_runtime(source: Path, destination: Path, *, max_height: int, crop=None) -> None:
     with Image.open(source) as opened:
         image = opened.convert("RGBA")
-        if crop is not None:
-            image = image.crop(crop)
-        image = normalize_alpha(fit_height(image, max_height))
+        if chroma_key:
+            image = remove_green_chroma(image)
+        bounds = image.getchannel("A").getbbox()
+        if bounds is None:
+            raise ValueError(f"{source.name}: operative portrait has no visible pixels")
+        subject = image.crop(bounds)
+        max_width = 864 - side_padding * 2
+        scale = min(max_width / subject.width, visible_height / subject.height)
+        target = (round(subject.width * scale), round(subject.height * scale))
+        subject = subject.convert("RGBa").resize(target, Image.Resampling.LANCZOS).convert("RGBA")
+        image = Image.new("RGBA", (864, 1536), (0, 0, 0, 0))
+        image.alpha_composite(subject, ((864 - target[0]) // 2, 1536 - target[1]))
+        image = normalize_alpha(image)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        image.save(destination, "WEBP", quality=90, method=6, exact=True)
+        image.save(destination, "WEBP", quality=94, method=6, exact=True)
 
 
 def main() -> None:
-    save_runtime(
+    save_operative_runtime(
         HERO_DIR / "survivor-portrait.png",
         HERO_DIR / "survivor-portrait-v2.webp",
-        max_height=1536,
+        visible_height=1464,
     )
-    save_runtime(
+    save_operative_runtime(
         HERO_DIR / "mika-portrait.png",
         HERO_DIR / "mika-portrait-v2.webp",
-        max_height=1536,
+        # MIKA is canonically shorter than AEGIS; the restrained 5% difference
+        # preserves that identity without the former arbitrary oversized read.
+        visible_height=1392,
     )
     npc_specs = (
-        ("hana-upper-v2-chroma.png", "hana-research-director-v2.webp", 12, 16),
-        # ILYA is intentionally framed a little larger than the female NPCs.
-        ("ilya-upper-v4-chroma.png", "ilya-mechanic-v4.webp", 8, 6),
-        ("sera-upper-v4-chroma.png", "sera-nightjar-pilot-v4.webp", 12, 16),
-        ("rhea-upper-v3-chroma.png", "rhea-control-officer-v3.webp", 12, 16),
+        ("hana-upper-v2-chroma.png", "hana-research-director-v2.webp", 20, 16, 0.0),
+        # ILYA's swept hair needs a real asset-level safe area. Do not recover
+        # stature later with a CSS zoom because that clips the same headroom.
+        ("ilya-upper-v4-chroma.png", "ilya-mechanic-v4.webp", 42, 12, 0.0),
+        # SERA's source includes substantially more lower torso. Crop it at
+        # authoring time so her face/shoulder scale matches HANA and RHEA.
+        ("sera-upper-v4-chroma.png", "sera-nightjar-pilot-v4.webp", 20, 16, 0.12),
+        ("rhea-upper-v3-chroma.png", "rhea-control-officer-v3.webp", 20, 16, 0.0),
     )
-    for source_name, destination_name, top, side_padding in npc_specs:
+    for source_name, destination_name, top, side_padding, trim_bottom_ratio in npc_specs:
         save_chroma_runtime(
             CHROMA_SOURCE_DIR / source_name,
             NPC_DIR / destination_name,
             size=(768, 768),
             top=top,
             side_padding=side_padding,
+            trim_bottom_ratio=trim_bottom_ratio,
         )
 
-    save_chroma_runtime(
-        CHROMA_SOURCE_DIR / "vesper-mid-thigh-v5-chroma.png",
-        HERO_DIR / "vesper-portrait-v6.webp",
-        size=(864, 1536),
-        # VESPER's broader cape and armor made the subject read 20% larger than
-        # AEGIS/MIKA even on the same canvas. Keep lower UI-safe space for
-        # lobby captions and dialogue decks without a surface-specific zoom.
-        top=72,
-        side_padding=100,
-        bottom_padding=292,
+    save_operative_runtime(
+        CHROMA_SOURCE_DIR / "vesper-mid-thigh-v7-chroma.png",
+        HERO_DIR / "vesper-portrait-v7.webp",
+        visible_height=1464,
+        chroma_key=True,
     )
+    write_contract()
 
 
 if __name__ == "__main__":

@@ -245,11 +245,12 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private readonly bridge: SceneBridge;
   private readonly regionId?: string;
   private readonly combatBonuses?: Readonly<Record<string, number>>;
-  private readonly characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper", number>>;
+  private readonly characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper" | "nox", number>>;
   private readonly mainWeaponId?: "pulse-rifle" | "beam-sword";
-  private readonly characterId?: "aegis" | "mika" | "vesper";
+  private readonly characterId?: "aegis" | "mika" | "vesper" | "nox";
   private readonly mikaUnlocked: boolean;
   private readonly vesperUnlocked: boolean;
+  private readonly noxUnlocked: boolean;
   private readonly assetProfile: AssetProfile;
   private readonly mobileAutoAim: boolean;
   private readonly portraitPresentation: boolean;
@@ -291,11 +292,12 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     bridge: SceneBridge,
     regionId?: string,
     combatBonuses?: Readonly<Record<string, number>>,
-    characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper", number>>,
+    characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper" | "nox", number>>,
     mainWeaponId?: "pulse-rifle" | "beam-sword",
-    characterId?: "aegis" | "mika" | "vesper",
+    characterId?: "aegis" | "mika" | "vesper" | "nox",
     mikaUnlocked = true,
     vesperUnlocked = true,
+    noxUnlocked = true,
     assetProfile: AssetProfile = "full",
     mobileAutoAim = false,
     portraitPresentation = false,
@@ -309,6 +311,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.characterId = characterId;
     this.mikaUnlocked = mikaUnlocked;
     this.vesperUnlocked = vesperUnlocked;
+    this.noxUnlocked = noxUnlocked;
     this.assetProfile = resolveAssetProfile(assetProfile);
     this.mobileAutoAim = mobileAutoAim;
     this.portraitPresentation = portraitPresentation;
@@ -323,7 +326,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   create() {
-    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, characterSkillRanks: this.characterSkillRanks, mainWeaponId: this.mainWeaponId, characterId: this.characterId, mikaUnlocked: this.mikaUnlocked, vesperUnlocked: this.vesperUnlocked });
+    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, characterSkillRanks: this.characterSkillRanks, mainWeaponId: this.mainWeaponId, characterId: this.characterId, mikaUnlocked: this.mikaUnlocked, vesperUnlocked: this.vesperUnlocked, noxUnlocked: this.noxUnlocked });
     applyDebugScene(this.state, this.bridge.debugScene);
     this.gameInput = createSwarmInput();
     this.governor = createPerformanceGovernor({

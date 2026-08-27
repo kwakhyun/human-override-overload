@@ -48,7 +48,7 @@ const GRID_SIZE = 96;
 const LEGACY_WORLD_SIZE = Object.freeze({ width: GAME_WIDTH, height: GAME_HEIGHT });
 const BOSS_WORLD_SIZE = Object.freeze({ width: WORLD_WIDTH, height: WORLD_HEIGHT });
 const EXPEDITION_WORLD_SIZE = Object.freeze({ width: EXPEDITION_WORLD_WIDTH, height: EXPEDITION_WORLD_HEIGHT });
-const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sword", "wave", "titan", "flash", "storm", "halo", "vector"]);
+const FIRE_TIMER_KEYS = Object.freeze(["pulse", "scatter", "rail", "rocket", "sword", "wave", "titan", "flash", "storm", "halo", "vector", "warrant"]);
 const FLOOR_ELLIPSE = Object.freeze({ x: 640, y: 360, rx: 555, ry: 292 });
 const EXPEDITION_FLOOR_ELLIPSE = Object.freeze({ x: 960, y: 540, rx: 840, ry: 460 });
 const EXPEDITION_ROUTE_LENGTH = 25000;
@@ -197,7 +197,7 @@ const BOSS_BOMB_ARMOR_DURATION = 9;
 const BOSS_BOMB_ARMOR_DAMAGE_MULTIPLIER = 0.16;
 const PROJECTILE_DAMAGE_SOURCES = Object.freeze(new Set([
   "pulse", "pulseOverdrive", "scatter", "scatterMaster", "rail", "rocket",
-  "crescentWave", "mikaHaloBlade", "mikaHaloCarnival",
+  "crescentWave", "mikaHaloBlade", "mikaHaloCarnival", "noxWarrantThread",
 ]));
 const MELEE_DAMAGE_SOURCES = Object.freeze(new Set(["swordSlash", "titanEdge", "flashRend", "bladeStorm"]));
 const ALLY_DAMAGE_SOURCES = Object.freeze(new Set([
@@ -257,12 +257,19 @@ export const VESPER_MANUAL_ACTIVE_ABILITIES = Object.freeze({
   stratosRun: Object.freeze({ id: "railBurst", key: "F", name: "RAIL BURST", nameKo: "레일 버스트", baseCooldown: 34 }),
   helixTempest: Object.freeze({ id: "deadline", key: "R", name: "DEADLINE", nameKo: "데드라인", baseCooldown: 72 }),
 });
+export const NOX_MANUAL_ACTIVE_ABILITIES = Object.freeze({
+  empPulse: Object.freeze({ id: "censorGrid", key: "Q", name: "CENSOR GRID", nameKo: "검열 격자", baseCooldown: 14 }),
+  aegisWard: Object.freeze({ id: "nullAppeal", key: "E", name: "NULL APPEAL", nameKo: "항소 무효", baseCooldown: 22 }),
+  stratosRun: Object.freeze({ id: "redWarrant", key: "F", name: "RED WARRANT", nameKo: "적색 영장", baseCooldown: 30 }),
+  helixTempest: Object.freeze({ id: "finalDecree", key: "R", name: "FINAL DECREE", nameKo: "최종 판결", baseCooldown: 70 }),
+});
 const MANUAL_ABILITY_KEYS = Object.freeze(["empPulse", "aegisWard", "stratosRun", "helixTempest"]);
 const MANUAL_INPUT_FIELDS = Object.freeze(["empPulsePressed", "aegisWardPressed", "stratosRunPressed", "helixTempestPressed"]);
 
 function manualAbilityDefinitionsFor(characterId, aegisWeaponId = "pulse-rifle") {
   if (characterId === "mika") return MIKA_MANUAL_ACTIVE_ABILITIES;
   if (characterId === "vesper") return VESPER_MANUAL_ACTIVE_ABILITIES;
+  if (characterId === "nox") return NOX_MANUAL_ACTIVE_ABILITIES;
   return aegisWeaponId === "beam-sword"
     ? SWORD_MANUAL_ACTIVE_ABILITIES
     : MANUAL_ACTIVE_ABILITIES;
@@ -280,6 +287,7 @@ function createManualAbilityBanks(aegisWeaponId) {
     aegis: createManualAbilityBank(manualAbilityDefinitionsFor("aegis", aegisWeaponId)),
     mika: createManualAbilityBank(manualAbilityDefinitionsFor("mika", aegisWeaponId)),
     vesper: createManualAbilityBank(manualAbilityDefinitionsFor("vesper", aegisWeaponId)),
+    nox: createManualAbilityBank(manualAbilityDefinitionsFor("nox", aegisWeaponId)),
   };
 }
 
@@ -301,7 +309,7 @@ function normalizeManualAbilityBank(bank, definitions) {
 
 function ensureManualAbilityBanks(state) {
   const requestedCharacterId = state.player?.characterId;
-  const characterId = requestedCharacterId === "mika" || requestedCharacterId === "vesper" ? requestedCharacterId : "aegis";
+  const characterId = ["mika", "vesper", "nox"].includes(requestedCharacterId) ? requestedCharacterId : "aegis";
   const aegisWeaponId = state.player?.aegisWeaponId ?? state.player?.mainWeaponId ?? "pulse-rifle";
   if (!state.manualAbilityBanks || typeof state.manualAbilityBanks !== "object") {
     const banks = createManualAbilityBanks(aegisWeaponId);
@@ -315,7 +323,7 @@ function ensureManualAbilityBanks(state) {
     }
     state.manualAbilityBanks = banks;
   }
-  for (const ownerId of ["aegis", "mika", "vesper"]) {
+  for (const ownerId of ["aegis", "mika", "vesper", "nox"]) {
     state.manualAbilityBanks[ownerId] = normalizeManualAbilityBank(
       state.manualAbilityBanks[ownerId],
       manualAbilityDefinitionsFor(ownerId, aegisWeaponId),
@@ -329,7 +337,7 @@ function ensureManualAbilityBanks(state) {
 
 function manualAbilityBankFor(state, characterId) {
   ensureManualAbilityBanks(state);
-  return state.manualAbilityBanks[characterId === "mika" || characterId === "vesper" ? characterId : "aegis"];
+  return state.manualAbilityBanks[["mika", "vesper", "nox"].includes(characterId) ? characterId : "aegis"];
 }
 
 const ENEMY_DATA = Object.freeze({
@@ -822,46 +830,58 @@ function sanitizeMainWeaponId(value) {
 }
 
 function sanitizeCharacterId(value) {
-  if (value === "mika" || value === "vesper") return value;
+  if (value === "mika" || value === "vesper" || value === "nox") return value;
   return "aegis";
 }
 
 function characterDisplayName(characterId) {
   if (characterId === "mika") return "MIKA";
   if (characterId === "vesper") return "VESPER";
+  if (characterId === "nox") return "NOX";
   return "AEGIS";
 }
 
 function characterSpeedMultiplier(characterId) {
   if (characterId === "mika") return 1.08;
   if (characterId === "vesper") return 1.12;
+  if (characterId === "nox") return 1.06;
   return 1;
 }
 
 function characterDamageMultiplier(characterId) {
-  return characterId === "vesper" ? 1.16 : 1;
+  if (characterId === "vesper") return 1.16;
+  if (characterId === "nox") return 1.11;
+  return 1;
 }
 
 function characterFireRateMultiplier(characterId) {
-  return characterId === "vesper" ? 1.08 : 1;
+  if (characterId === "vesper") return 1.08;
+  if (characterId === "nox") return 1.03;
+  return 1;
 }
 
-function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true) {
+function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true, noxUnlocked = true) {
   const bonuses = sanitizeCombatBonuses(combatBonuses);
   const requestedCharacterId = sanitizeCharacterId(characterId);
   const safeCharacterId = requestedCharacterId === "mika" && !mikaUnlocked
     ? "aegis"
-    : requestedCharacterId === "vesper" && !vesperUnlocked ? "aegis" : requestedCharacterId;
-  const fieldLeadCharacterId = safeCharacterId === "mika" ? "aegis" : safeCharacterId;
-  const weaponId = safeCharacterId === "vesper" ? "pulse-rifle" : sanitizeMainWeaponId(mainWeaponId);
-  const maxHp = (safeCharacterId === "vesper" ? 320 : 360) + bonuses.maxHpFlat;
+    : requestedCharacterId === "vesper" && !vesperUnlocked
+      ? "aegis"
+      : requestedCharacterId === "nox" && !noxUnlocked ? "aegis" : requestedCharacterId;
+  const unlockedRoster = ["aegis", ...(mikaUnlocked ? ["mika"] : []), ...(vesperUnlocked ? ["vesper"] : []), ...(noxUnlocked ? ["nox"] : [])];
+  const tagRoster = [safeCharacterId, ...unlockedRoster.filter((id) => id !== safeCharacterId)];
+  const fieldLeadCharacterId = safeCharacterId;
+  const weaponId = safeCharacterId === "vesper" || safeCharacterId === "nox" ? "pulse-rifle" : sanitizeMainWeaponId(mainWeaponId);
+  const maxHp = (safeCharacterId === "vesper" ? 320 : safeCharacterId === "nox" ? 338 : 360) + bonuses.maxHpFlat;
   return {
     name: characterDisplayName(safeCharacterId),
     characterId: safeCharacterId,
     fieldLeadCharacterId,
-    reserveCharacterId: mikaUnlocked ? (safeCharacterId === "mika" ? fieldLeadCharacterId : "mika") : null,
+    reserveCharacterId: tagRoster.length > 1 ? tagRoster[1] : null,
+    tagRoster,
     mikaUnlocked: Boolean(mikaUnlocked),
     vesperUnlocked: Boolean(vesperUnlocked),
+    noxUnlocked: Boolean(noxUnlocked),
     tagCooldown: 0,
     tagCooldownMax: 10,
     mainWeaponId: weaponId,
@@ -916,8 +936,10 @@ function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId =
     moveBlend: 0,
     dashBlend: 0,
     dead: false,
-    fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0, sword: 0, wave: 0, titan: 0, flash: 0, storm: 0, halo: 0, vector: 0 },
+    fireTimers: { pulse: 0, scatter: 0, rail: 0, rocket: 0, sword: 0, wave: 0, titan: 0, flash: 0, storm: 0, halo: 0, vector: 0, warrant: 0 },
     vesperVectorSequence: 0,
+    noxWarrantSequence: [],
+    noxBossWarrant: 0,
     swordCombo: 0,
     orbitAngle: 0,
     orbitMasterTimer: 0,
@@ -980,10 +1002,10 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
   };
 }
 
-export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, characterSkillRanks = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true } = {}) {
+export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, characterSkillRanks = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true, noxUnlocked = true } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
   const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
-  const player = createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked, vesperUnlocked);
+  const player = createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked, vesperUnlocked, noxUnlocked);
   const manualAbilityBanks = createManualAbilityBanks(player.aegisWeaponId);
   const state = {
     mode: "swarm",
@@ -1270,14 +1292,17 @@ function clampPlayerToFloor(player, expedition = null) {
 
 function tagCharacter(state) {
   const player = state.player;
-  if (!player.mikaUnlocked || !player.reserveCharacterId || player.dead || player.stunTimer > 0 || player.tagCooldown > 0) return false;
+  const roster = Array.isArray(player.tagRoster) ? player.tagRoster.filter((id) => ["aegis", "mika", "vesper", "nox"].includes(id)) : [player.characterId];
+  if (roster.length < 2 || !player.reserveCharacterId || player.dead || player.stunTimer > 0 || player.tagCooldown > 0) return false;
   ensureManualAbilityBanks(state);
-  const nextCharacterId = player.characterId === "mika" ? player.fieldLeadCharacterId : "mika";
+  const currentIndex = Math.max(0, roster.indexOf(player.characterId));
+  const nextCharacterId = roster[(currentIndex + 1) % roster.length];
   player.characterId = nextCharacterId;
-  player.reserveCharacterId = nextCharacterId === "mika" ? player.fieldLeadCharacterId : "mika";
+  player.reserveCharacterId = roster[(currentIndex + 2) % roster.length];
   player.name = characterDisplayName(nextCharacterId);
   player.speed = 245 * player.baseCombatBonuses.moveSpeedMultiplier * characterSpeedMultiplier(nextCharacterId);
   player.fireRateMultiplier = player.baseCombatBonuses.fireRateMultiplier * characterFireRateMultiplier(nextCharacterId);
+  player.mainWeaponId = nextCharacterId === "vesper" || nextCharacterId === "nox" ? "pulse-rifle" : player.aegisWeaponId;
   player.weaponDamageMultiplier = nextCharacterId === "mika"
     ? Math.max(player.baseCombatBonuses.rifleDamageMultiplier, player.baseCombatBonuses.swordDamageMultiplier)
     : player.aegisWeaponId === "beam-sword"
@@ -1288,7 +1313,7 @@ function tagCharacter(state) {
   player.attackTimer = 0;
   player.recoil = 0;
   ensureManualAbilityBanks(state);
-  state.shockwaves.push({ type: "characterTag", x: player.x, y: player.y, maxRadius: 130, life: 0.42, maxLife: 0.42, color: nextCharacterId === "mika" ? "#ff79d8" : nextCharacterId === "vesper" ? "#ffc26f" : "#79eeff", width: 8 });
+  state.shockwaves.push({ type: "characterTag", x: player.x, y: player.y, maxRadius: 130, life: 0.42, maxLife: 0.42, color: nextCharacterId === "mika" ? "#ff79d8" : nextCharacterId === "vesper" ? "#ffc26f" : nextCharacterId === "nox" ? "#ff455d" : "#79eeff", width: 8 });
   emit(state, "characterTagged", { characterId: nextCharacterId, reserveCharacterId: player.reserveCharacterId, cooldown: player.tagCooldownMax, x: player.x, y: player.y });
   return true;
 }
@@ -1702,6 +1727,53 @@ function updateMikaWeapons(state, attackSpeed) {
   emit(state, "mikaHaloAttack", { count, haloRank, x: player.x, y: player.y, angle: player.angle });
 }
 
+function resolveNoxWarrantSequence(state) {
+  const sequence = Array.isArray(state.player.noxWarrantSequence) ? state.player.noxWarrantSequence : [];
+  const targets = sequence.map((id) => state.enemies.find((enemy) => enemy.id === id && !enemy.dead)).filter(Boolean);
+  if (targets.length < 3) return 0;
+  const damage = 118 * state.player.damageMultiplier * state.player.weaponDamageMultiplier;
+  let hits = 0;
+  for (const enemy of state.enemies) {
+    if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
+    const onFirstLine = pointLineDistance(enemy.x, enemy.y, targets[0].x, targets[0].y, targets[1].x, targets[1].y) <= 52 + enemy.radius;
+    const onSecondLine = pointLineDistance(enemy.x, enemy.y, targets[1].x, targets[1].y, targets[2].x, targets[2].y) <= 52 + enemy.radius;
+    if ((onFirstLine || onSecondLine) && damageEnemy(state, enemy, damage, "warrantJudgment") > 0) hits += 1;
+  }
+  for (let index = 0; index < targets.length - 1; index += 1) {
+    const start = targets[index];
+    const end = targets[index + 1];
+    pushSwordManualEffect(state, "redWarrant", (start.x + end.x) * 0.5, (start.y + end.y) * 0.5, Math.hypot(end.x - start.x, end.y - start.y) * 0.5, 0.62, {
+      atlas: "nox", startX: start.x, startY: start.y, endX: end.x, endY: end.y, angle: Math.atan2(end.y - start.y, end.x - start.x), hits,
+    });
+  }
+  for (const target of targets) target.noxWarranted = false;
+  state.player.noxWarrantSequence = [];
+  state.shake = Math.max(state.shake, hits > 0 ? 8 : 3);
+  emit(state, "noxWarrantResolved", { targetIds: targets.map((target) => target.id), hits });
+  return hits;
+}
+
+function applyNoxWarrantHit(state, projectile, enemy = null) {
+  if (projectile?.kind !== "noxWarrantThread") return;
+  if (!enemy) {
+    state.player.noxBossWarrant = (finite(state.player.noxBossWarrant) + 1) % 3;
+    if (state.player.noxBossWarrant === 0 && state.boss.active && !state.boss.dead) {
+      damageBoss(state, 145 * state.player.damageMultiplier * state.player.weaponDamageMultiplier, "warrantJudgment");
+      pushSwordManualEffect(state, "redWarrant", state.boss.x, state.boss.y, 190, 0.62, { atlas: "nox", hits: 1 });
+      emit(state, "noxWarrantResolved", { targetIds: ["boss"], hits: 1 });
+    }
+    return;
+  }
+  const livingIds = new Set(state.enemies.filter((entry) => !entry.dead).map((entry) => entry.id));
+  const sequence = (Array.isArray(state.player.noxWarrantSequence) ? state.player.noxWarrantSequence : []).filter((id) => livingIds.has(id));
+  if (!sequence.includes(enemy.id)) sequence.push(enemy.id);
+  enemy.noxWarranted = true;
+  enemy.noxWarrantPulse = 0.48;
+  state.player.noxWarrantSequence = sequence.slice(-3);
+  emit(state, "noxWarrantApplied", { enemyId: enemy.id, stacks: state.player.noxWarrantSequence.length, x: enemy.x, y: enemy.y });
+  if (state.player.noxWarrantSequence.length >= 3) resolveNoxWarrantSequence(state);
+}
+
 function updateVesperWeapons(state, attackSpeed) {
   const player = state.player;
   const timers = player.fireTimers;
@@ -1794,6 +1866,59 @@ function updateVesperWeapons(state, attackSpeed) {
   timers.vector += Math.max(0.15, 0.205 * attackSpeed / (1 + (pulseRank - 1) * 0.065));
 }
 
+function updateNoxWeapons(state, attackSpeed) {
+  const player = state.player;
+  const timers = player.fireTimers;
+  if (timers.warrant > 0) return;
+  let target = null;
+  let targetDistance = Number.POSITIVE_INFINITY;
+  if (state.phase !== "boss") {
+    const markedIds = new Set(Array.isArray(player.noxWarrantSequence) ? player.noxWarrantSequence : []);
+    for (const enemy of state.enemies) {
+      if (enemy.dead || finite(enemy.spawnDelay) > 0) continue;
+      const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+      const score = distance + (markedIds.has(enemy.id) ? 1200 : 0);
+      if (score < targetDistance) {
+        targetDistance = score;
+        target = enemy;
+      }
+    }
+  }
+  const aimX = target?.x ?? (state.phase === "boss" && state.boss.active ? state.boss.x : state.aim.x);
+  const aimY = target?.y ?? (state.phase === "boss" && state.boss.active ? state.boss.y : state.aim.y);
+  const angle = Math.atan2(aimY - player.y, aimX - player.x);
+  const pulseRank = clamp(state.build.weapons.pulse || 1, 1, 5);
+  const damage = (30 + pulseRank * 2.2 + player.level * 0.5) * player.damageMultiplier * player.weaponDamageMultiplier;
+  const emitted = pushPlayerProjectile(state, {
+    kind: "noxWarrantThread",
+    x: player.x + Math.cos(angle) * 30,
+    y: player.y + Math.sin(angle) * 30,
+    vx: Math.cos(angle) * (1030 + pulseRank * 18),
+    vy: Math.sin(angle) * (1030 + pulseRank * 18),
+    angle,
+    radius: 6,
+    damage,
+    color: "#ff455d",
+    life: 1.45,
+    pierce: pulseRank >= 5 ? 1 : 0,
+    hitIds: pulseRank >= 5 ? [] : null,
+    warrantTargetId: target?.id ?? null,
+  });
+  if (emitted) {
+    player.recoil = Math.max(player.recoil, 0.52);
+    player.attackState = "noxWarrantThread";
+    player.attackTimer = Math.max(player.attackTimer, 0.18);
+    player.animationState = "attack";
+    player.animationTimer = Math.max(player.animationTimer, 0.18);
+    if (state.time - state.lastShotEvent >= 0.12) {
+      state.lastShotEvent = state.time;
+      emit(state, "shot", { kind: "noxWarrantThread", count: 1, x: player.x, y: player.y });
+    }
+    emit(state, "noxWarrantAttack", { targetId: target?.id ?? null, x: player.x, y: player.y, angle });
+  }
+  timers.warrant += Math.max(0.19, 0.36 * attackSpeed / (1 + (pulseRank - 1) * 0.055));
+}
+
 function updateAutoWeapons(state, dt) {
   const player = state.player;
   const timers = player.fireTimers;
@@ -1806,6 +1931,11 @@ function updateAutoWeapons(state, dt) {
     return;
   }
 
+  if (player.characterId === "nox") {
+    updateNoxWeapons(state, attackSpeed);
+    return;
+  }
+
   if (player.characterId === "vesper") updateVesperWeapons(state, attackSpeed);
 
   if (player.mainWeaponId === "beam-sword") {
@@ -1813,7 +1943,7 @@ function updateAutoWeapons(state, dt) {
     return;
   }
 
-  if (player.characterId !== "vesper" && timers.pulse <= 0) {
+  if (player.characterId !== "vesper" && player.characterId !== "nox" && timers.pulse <= 0) {
     const count = clamp(player.multishot + Math.max(0, player.overdriveTier - 1), 1, 7);
     fireBulletFan(state, "pulse", count, count > 1 ? 0.12 * (count - 1) : 0, 850, 34, 5, 1.55, { pierce: state.build.weapons.pulse >= 5 ? 2 : state.build.weapons.pulse >= 4 ? 1 : 0 });
     if (player.overdriveTier >= 2 && player.overdriveVolleyTimer <= 0) {
@@ -2097,9 +2227,20 @@ function updateLevelFlow(state) {
   flow.batchLevels = flow.queuedLevels;
   flow.queuedLevels = 0;
   flow.lastOfferAt = state.time;
-  state.levelupPending = true;
   state.rewardOptions = buildRewardOffer(state, flow.batchLevels);
   state.rewardCycle += 1;
+  if (state.rewardOptions.length === 0) {
+    // Every protocol is already at its final evolution. Resolve the queued
+    // levels as the existing overflow bonus instead of reopening a blank
+    // modal or recycling mastered cards back into the choice pool.
+    applyBatchOverflowBonus(state, flow.batchLevels);
+    emit(state, "rewardPoolMastered", { levels: flow.batchLevels });
+    flow.batchLevels = 0;
+    flow.lastChoiceAt = state.time;
+    flow.nextOfferAt = state.time + flow.combatInterval;
+    return;
+  }
+  state.levelupPending = true;
   state.flash = Math.max(state.flash, 0.34);
   emit(state, "levelUp", {
     level: player.level,
@@ -2346,6 +2487,7 @@ function collidePlayerProjectile(state, projectile, enemy) {
   if (dx * dx + dy * dy > collisionRadius * collisionRadius) return false;
   const dealt = damageEnemy(state, enemy, projectile.damage, projectile.kind);
   if (dealt > 0) recordProjectileAccuracyHit(state, projectile);
+  if (dealt > 0) applyNoxWarrantHit(state, projectile, enemy);
   if (projectile.kind === "rocket") {
     projectile.dead = true;
     return true;
@@ -2407,6 +2549,7 @@ function updateProjectiles(state, dt) {
       if (boss.active && !boss.dead && Math.hypot(projectile.x - boss.x, projectile.y - boss.y) <= projectile.radius + boss.radius) {
         const dealt = damageBoss(state, projectile.damage, projectile.kind);
         if (dealt > 0) recordProjectileAccuracyHit(state, projectile);
+        if (dealt > 0) applyNoxWarrantHit(state, projectile);
         if (projectile.kind === "rocket") explodeRocket(state, projectile);
         projectile.dead = true;
       }
@@ -3600,6 +3743,94 @@ function triggerDeadline(state) {
   return commitManualAbility(state, ability, { x, y, radius, hits, executeOrdinary: true });
 }
 
+function triggerCensorGrid(state) {
+  const player = state.player;
+  const arena = activeArena(state);
+  const x = clamp(state.aim.x, arena.left + 24, arena.right - 24);
+  const y = clamp(state.aim.y, arena.top + 24, arena.bottom - 24);
+  const radius = 310;
+  const damage = 285 * player.damageMultiplier * player.weaponDamageMultiplier;
+  let hits = 0;
+  if (state.phase === "boss") {
+    hits = applySwordAbilityArea(state, x, y, radius, damage * 1.7, "censorGrid");
+    if (hits > 0) applyNoxWarrantHit(state, { kind: "noxWarrantThread" });
+  } else {
+    for (const enemy of state.enemies) {
+      if (enemy.dead || finite(enemy.spawnDelay) > 0 || Math.hypot(enemy.x - x, enemy.y - y) > radius + enemy.radius) continue;
+      if (damageEnemy(state, enemy, damage, "censorGrid") > 0) hits += 1;
+      enemy.hitStun = Math.max(finite(enemy.hitStun), 0.34);
+      enemy.slow = Math.max(finite(enemy.slow), 1.55);
+      applyNoxWarrantHit(state, { kind: "noxWarrantThread" }, enemy);
+    }
+  }
+  pushSwordManualEffect(state, "censorGrid", x, y, radius, 1.08, { atlas: "nox", hits });
+  state.shockwaves.push({ type: "censorGrid", x, y, maxRadius: radius, life: 0.6, maxLife: 0.6, color: "#ff455d", width: 9 });
+  state.shake = Math.max(state.shake, 11);
+  emit(state, "noxManualAbility", { ability: "censorGrid", x, y, radius, hits });
+  return commitManualAbility(state, "empPulse", { x, y, radius, hits });
+}
+
+function triggerNullAppeal(state) {
+  const player = state.player;
+  const radius = 220;
+  const shield = 112 + player.level * 2;
+  player.stunTimer = 0;
+  player.hitStun = 0;
+  player.shieldMax = Math.max(finite(player.shieldMax), shield);
+  player.shield = Math.min(player.shieldMax, finite(player.shield) + shield);
+  player.shieldDelay = 0;
+  player.invulnerability = Math.max(finite(player.invulnerability), 0.36);
+  pushSwordManualEffect(state, "nullAppeal", player.x, player.y, radius, 1.15, { atlas: "nox", shield });
+  state.shockwaves.push({ type: "nullAppeal", x: player.x, y: player.y, maxRadius: radius, life: 0.68, maxLife: 0.68, color: "#ff7b89", width: 12 });
+  emit(state, "noxManualAbility", { ability: "nullAppeal", x: player.x, y: player.y, radius, shield });
+  return commitManualAbility(state, "aegisWard", { shield, radius });
+}
+
+function triggerRedWarrant(state) {
+  const player = state.player;
+  const direction = normalize(state.aim.x - player.x, state.aim.y - player.y, Math.cos(player.angle), Math.sin(player.angle));
+  const startX = player.x;
+  const startY = player.y;
+  const endX = startX + direction.x * 1120;
+  const endY = startY + direction.y * 1120;
+  const halfWidth = 66;
+  const damage = 820 * player.damageMultiplier * player.weaponDamageMultiplier;
+  const hits = applyVesperLineDamage(state, startX, startY, endX, endY, halfWidth, damage, "redWarrant");
+  if (state.phase === "boss" && hits > 0) {
+    applyNoxWarrantHit(state, { kind: "noxWarrantThread" });
+  } else if (state.phase !== "boss") {
+    for (const enemy of state.enemies) {
+      if (enemy.dead || finite(enemy.spawnDelay) > 0
+        || pointLineDistance(enemy.x, enemy.y, startX, startY, endX, endY) > halfWidth + enemy.radius) continue;
+      applyNoxWarrantHit(state, { kind: "noxWarrantThread" }, enemy);
+    }
+  }
+  pushSwordManualEffect(state, "redWarrant", (startX + endX) * 0.5, (startY + endY) * 0.5, 570, 0.86, {
+    atlas: "nox", startX, startY, endX, endY, angle: Math.atan2(direction.y, direction.x), hits,
+  });
+  state.shake = Math.max(state.shake, 17);
+  emit(state, "noxManualAbility", { ability: "redWarrant", startX, startY, endX, endY, hits });
+  return commitManualAbility(state, "stratosRun", { startX, startY, endX, endY, hits });
+}
+
+function triggerFinalDecree(state) {
+  const ability = "helixTempest";
+  if (!hasManualCombatTarget(state)) return rejectManualAbility(state, ability, "no-target");
+  const player = state.player;
+  const arena = activeArena(state);
+  const x = clamp(state.aim.x, arena.left + 24, arena.right - 24);
+  const y = clamp(state.aim.y, arena.top + 24, arena.bottom - 24);
+  const radius = 620;
+  const damage = 1980 * player.damageMultiplier * player.weaponDamageMultiplier;
+  const hits = applySwordAbilityArea(state, x, y, radius, damage, "finalDecree", true);
+  pushSwordManualEffect(state, "finalDecree", x, y, radius, 1.5, { atlas: "nox", hits });
+  state.shockwaves.push({ type: "finalDecree", x, y, maxRadius: radius, life: 0.86, maxLife: 0.86, color: "#ff455d", width: 20 });
+  state.flash = Math.max(state.flash, 0.58);
+  state.shake = Math.max(state.shake, 27);
+  emit(state, "noxManualAbility", { ability: "finalDecree", x, y, radius, hits, executeOrdinary: true });
+  return commitManualAbility(state, ability, { x, y, radius, hits, executeOrdinary: true });
+}
+
 function triggerEmpPulse(state) {
   const ability = "empPulse";
   const radius = 300;
@@ -3935,7 +4166,7 @@ function updateManualAbilities(state, input, dt) {
   const activeAbilities = ensureManualAbilityBanks(state);
   // Every operative recovers while tagged out, but their clocks never
   // merge. This preserves the old continuously-ticking cooldown behavior.
-  for (const characterId of ["aegis", "mika", "vesper"]) {
+  for (const characterId of ["aegis", "mika", "vesper", "nox"]) {
     const bank = state.manualAbilityBanks[characterId];
     for (const ability of MANUAL_ABILITY_KEYS) {
       const entry = bank[ability];
@@ -3974,6 +4205,11 @@ function updateManualAbilities(state, input, dt) {
       else if (ability === "aegisWard") triggerZeroMark(state);
       else if (ability === "stratosRun") triggerRailBurst(state);
       else triggerDeadline(state);
+    } else if (state.player.characterId === "nox") {
+      if (ability === "empPulse") triggerCensorGrid(state);
+      else if (ability === "aegisWard") triggerNullAppeal(state);
+      else if (ability === "stratosRun") triggerRedWarrant(state);
+      else triggerFinalDecree(state);
     } else if (state.player.mainWeaponId === "beam-sword") {
       if (ability === "empPulse") triggerSpectralSwordArray(state);
       else if (ability === "aegisWard") triggerPhantomRend(state);
@@ -4206,7 +4442,7 @@ function buildRewardOffer(state, batchLevels = 1) {
       const openingCombatSkills = pool.filter((candidate) => ["airstrike", "omegaLaser", "chain", "nova"].includes(candidate));
       if (openingCombatSkills.length) pool = openingCombatSkills;
     }
-    if (!pool.length) pool = rewardPools[category];
+    if (!pool.length) continue;
     const previous = state.lastChosenByCategory[category];
     const repeatPrevious = previous && pool.includes(previous) && state.random() < 0.62;
     const offset = Math.floor(clamp(state.random(), 0, 0.999999) * pool.length);

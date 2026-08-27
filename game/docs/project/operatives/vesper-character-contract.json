@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-asset-regeneration",
+  "character": {
+    "id": "vesper",
+    "koreanName": "베스퍼",
+    "englishName": "VESPER",
+    "faction": "HAVEN-09 / PRECISION INTERCEPT",
+    "role": "정밀 요격 · 고기동 사격",
+    "weapon": "쌍발 벡터 니들",
+    "unlockRegionId": "abyssal-archive",
+    "gameplayThesis": "빠른 기동으로 사선을 바꾸며 쌍발 니들로 우선 표적을 관통하고, 주기적으로 정밀 락 랜스를 완성한다.",
+    "palette": ["#0b0d12", "#f3eee4", "#c7a35b", "#6f1725", "#9e7be8"],
+    "silhouetteNotes": "짧은 비대칭 금발 보브, 검정 지휘 망토와 진홍색 안감, 흰색 구조 패널과 금색 하드웨어. 머리 위 고리 없음.",
+    "speechRules": ["짧고 침착한 존댓말", "표적·사선·좌표·오차 용어를 사용", "허세보다 계산 결과를 먼저 말함"],
+    "backgroundTitle": "심해 기록고의 황혼 사수",
+    "backgroundSummary": "침수된 기록고에서 소실 도시의 좌표를 복원하던 고기동 요격수. HAVEN-09 합류 후 정찰·저격·기동 전술을 담당한다.",
+    "storyEntries": [
+      { "title": "정밀 봉쇄", "text": "심해 기록고의 폐쇄 회랑에서 단독 교전을 이어가며 기계 군단의 진입각을 하나씩 지웠다." },
+      { "title": "HAVEN-09 합류", "text": "03구역 해방 뒤 레아의 제안을 받아들여 원정대의 장거리 요격과 기동 지원을 맡는다." }
+    ]
+  },
+  "assets": {
+    "portraitMaster": {
+      "width": 864,
+      "height": 1536,
+      "alpha": true,
+      "path": "reference/source-assets/overload/hero/vesper-portrait-v7-master.png"
+    },
+    "portraitRuntime": "public/assets/overload/hero/vesper-portrait-v7.webp",
+    "directionalAtlas": {
+      "width": 1024,
+      "height": 1024,
+      "columns": 8,
+      "rows": 8,
+      "camera": "top-down-three-quarter",
+      "cellSize": 128,
+      "anchor": "shared bottom-center",
+      "transparentPadding": 6,
+      "directionOrder": ["south", "southeast", "east", "northeast", "north", "northwest", "west", "southwest"],
+      "columnPhases": ["locomotion-1", "locomotion-2", "locomotion-3", "locomotion-4", "attack-anticipation", "attack-release", "attack-follow-through", "attack-recovery"],
+      "comparisonAssets": ["survivor-directional-aim-atlas.png", "mika-directional-aim-atlas.png"],
+      "forbiddenElements": ["unapproved halo", "head ring", "baked background", "checkerboard matte", "floor-shadow plate"],
+      "path": "public/assets/overload/hero/vesper-directional-aim-atlas.png"
+    },
+    "performanceAtlas": "public/assets/overload/hero/performance/vesper-directional-aim-atlas.png",
+    "abilityAtlas": "public/assets/overload/vfx/manual/vesper-ability-hd-atlas.png",
+    "icons": {
+      "basic": "vector-needle",
+      "Q": "vector-step",
+      "E": "zero-mark",
+      "F": "rail-burst",
+      "R": "deadline"
+    },
+    "cropTokens": {
+      "lobby": { "containerAspect": "9:16", "objectPosition": "50% 100%", "scale": 1, "mobile": "contain bottom" },
+      "profile": { "containerAspect": "9:16", "objectPosition": "50% 100%", "scale": 1, "mobile": "contain bottom" },
+      "rosterCard": { "containerAspect": "4:5", "objectPosition": "50% 10%", "scale": 1.04, "mobile": "head to upper thigh" },
+      "sortieCard": { "containerAspect": "3:4", "objectPosition": "50% 8%", "scale": 1.08, "mobile": "head to upper thigh" },
+      "dialogue": { "containerAspect": "3:4", "objectPosition": "50% 7%", "scale": 1.4, "mobile": "upper body only" },
+      "recruit": { "containerAspect": "9:16", "objectPosition": "50% 100%", "scale": 1, "mobile": "head to mid-thigh" },
+      "tagCutIn": { "containerAspect": "8:5", "objectPosition": "50% 6%", "scale": 1.68, "mobile": "face and shoulders" }
+    }
+  },
+  "combat": {
+    "basicAttack": {
+      "id": "vesper-vector-needle",
+      "input": "continuous auto fire toward pointer or mobile auto-aim",
+      "targeting": "two separated firing lanes with periodic priority lock",
+      "cadenceSeconds": 0.31,
+      "geometry": "two narrow one-pierce needles; every fourth volley adds a five-pierce lock lance",
+      "feedback": "compact gold-white muzzle flash and converging vector streaks",
+      "performanceBudget": "3 projectiles and 10 trail particles maximum per authored lock volley"
+    },
+    "skills": {
+      "Q": { "id": "vector-step", "requiredGrade": 0 },
+      "E": { "id": "zero-mark", "requiredGrade": 1 },
+      "F": { "id": "rail-burst", "requiredGrade": 2 },
+      "R": { "id": "deadline", "requiredGrade": 3 }
+    }
+  },
+  "persistence": {
+    "unlockFlag": "vesper-unlocked",
+    "recruitSeenFlag": "vesper-recruit-seen",
+    "migrationNotes": "기존 저장은 abyssal-archive 완료 여부로 잠금 상태를 재검증하며 선택·태그 권한을 보존한다."
+  },
+  "acceptance": {
+    "automated": ["64개 셀 비어 있지 않음", "8개 방향 행 구분", "실제 알파와 안전 여백", "타입체크·테스트·빌드 통과"],
+    "manual": ["로비·전투원 정보·편성·대화·합류·태그 컷인 크롭 확인", "8방향 이동과 공격 프레임 실기 확인"],
+    "screenshots": ["desktop-lobby", "desktop-character-info", "desktop-combat", "mobile-portrait-lobby", "mobile-portrait-combat"]
+  }
+}

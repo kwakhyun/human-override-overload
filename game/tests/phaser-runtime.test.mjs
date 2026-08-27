@@ -267,13 +267,13 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
   assert.match(createGame, /initialQuality === "performance" \|\| mobileRuntime\.touchOptimized/);
   assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
-  assert.match(createGame, /characterSkillRanks\?: Readonly<Record<"aegis" \| "mika" \| "vesper", number>>/);
-  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.characterSkillRanks, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, launch\.vesperUnlocked, assetProfile, mobileRuntime\.autoAim, portraitPresentation\)/);
+  assert.match(createGame, /characterSkillRanks\?: Readonly<Record<"aegis" \| "mika" \| "vesper" \| "nox", number>>/);
+  assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.characterSkillRanks, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, launch\.vesperUnlocked, launch\.noxUnlocked, assetProfile, mobileRuntime\.autoAim, portraitPresentation\)/);
   assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);
   assert.match(createGame, /playerX: state\?\.player\?\.x/);
   assert.match(scene, /setVirtualMovement\(x: number, y: number\)/);
   assert.match(scene, /this\.gameInput\.moveX = this\.virtualMovement\.x/);
-  assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, characterSkillRanks: this\.characterSkillRanks, mainWeaponId: this\.mainWeaponId, characterId: this\.characterId, mikaUnlocked: this\.mikaUnlocked, vesperUnlocked: this\.vesperUnlocked \}\)/);
+  assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, characterSkillRanks: this\.characterSkillRanks, mainWeaponId: this\.mainWeaponId, characterId: this\.characterId, mikaUnlocked: this\.mikaUnlocked, vesperUnlocked: this\.vesperUnlocked, noxUnlocked: this\.noxUnlocked \}\)/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId, this\.portraitPresentation\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);
   for (const key of [

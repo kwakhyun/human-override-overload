@@ -13,6 +13,7 @@ const PERFORMANCE_PNG_SPECS = Object.freeze([
   ["hero/performance/survivor-directional-aim-atlas.png", 768, 768],
   ["hero/performance/survivor-sword-directional-aim-atlas.png", 768, 768],
   ["hero/performance/mika-directional-aim-atlas.png", 768, 768],
+  ["hero/performance/nox-directional-aim-atlas.png", 768, 768],
   ["enemies/motion-v2/performance/suicide-drone-motion-atlas.png", 720, 480],
   ["enemies/motion-v2/performance/rifleman-motion-atlas.png", 720, 480],
   ["enemies/motion-v2/performance/sniper-motion-atlas.png", 720, 480],
@@ -29,6 +30,12 @@ const PERFORMANCE_PNG_SPECS = Object.freeze([
   ["regions/glass-dune/motion-v2/performance/mirror-tyrant-motion-atlas.png", 1440, 960],
   ["regions/abyssal-archive/performance/boss-forms-atlas.png", 768, 256],
   ["regions/abyssal-archive/motion-v2/performance/drowned-oracle-motion-atlas.png", 1440, 960],
+  ["regions/neon-foundry/performance/enemy-forms-atlas.png", 768, 192],
+  ["regions/neon-foundry/performance/boss-forms-atlas.png", 1152, 384],
+  ["regions/storm-spire/performance/enemy-forms-atlas.png", 768, 192],
+  ["regions/storm-spire/performance/boss-forms-atlas.png", 1152, 384],
+  ["regions/gene-vault/performance/enemy-forms-atlas.png", 768, 192],
+  ["regions/gene-vault/performance/boss-forms-atlas.png", 1152, 384],
 ]);
 
 test("PERFORMANCE selects lighter paths without changing stable Phaser texture keys", async () => {

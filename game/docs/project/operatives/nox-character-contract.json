@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-for-implementation",
+  "character": {
+    "id": "nox",
+    "englishName": "NOX",
+    "koreanName": "녹스",
+    "faction": "HAVEN-09 / BLACK LEDGER",
+    "role": "전술 심사 · 표식 처형",
+    "silhouette": "허리 아래까지 흐르는 직선형 흑발, 짧은 전술 재킷과 비대칭 코트 테일, 머리 뒤에 분절된 적색 권한 링",
+    "palette": {
+      "primary": "#0a0c12",
+      "secondary": "#e8edf3",
+      "accent": "#ff405e",
+      "signal": "#ff8b9c"
+    },
+    "weapon": {
+      "name": "판결식 모노와이어",
+      "englishName": "VERDICT MONOWIRE",
+      "summary": "손목 사출기와 권한 링을 연결해 적 사이에 절단 판결선을 형성하는 지향성 와이어 병기"
+    },
+    "personality": "감정을 절제하고 모든 상황을 증거와 우선순위로 말하지만, 생존자를 숫자로만 취급하는 명령에는 단호히 불복한다.",
+    "speechRule": "짧은 보고체. 명령·판결·보류 같은 행정 용어를 전투 은어로 사용하며 감탄사는 거의 쓰지 않는다.",
+    "unlock": {
+      "regionId": "neon-foundry",
+      "regionName": "네온 주조구",
+      "condition": "네온 주조구 최초 클리어",
+      "recruitSceneId": "nox-recruit"
+    },
+    "gameplayThesis": "같은 표적을 연속 사격하는 대신 여러 적에게 영장 표식을 배분하고, 세 번째 표식에서 서로를 잇는 판결선을 완성해 무리를 절단한다.",
+    "collisionCheck": {
+      "aegis": "무기 교체와 정면 생존 중심인 이지스와 달리 표식 분배 및 연쇄 폭발을 중심으로 한다.",
+      "mika": "근접 튕김과 난전 중심인 미카와 달리 중거리 선형 제어와 우선순위 판단을 요구한다.",
+      "vesper": "단일 정밀 요격과 직선 관통 중심인 베스퍼와 달리 다중 표적 연결과 누적 표식 소비가 핵심이다."
+    }
+  },
+  "combat": {
+    "baseStats": {
+      "maxHp": 338,
+      "moveSpeedMultiplier": 1.06,
+      "damageMultiplier": 1.11,
+      "fireRateMultiplier": 1.03
+    },
+    "basicAttack": {
+      "id": "warrant-thread",
+      "koreanName": "영장 연사",
+      "input": "auto",
+      "targeting": "nearest-target with unmarked-target priority inside 860 units",
+      "cadenceSeconds": 0.34,
+      "damage": 31,
+      "mechanic": "적중 시 최대 3개의 영장 표식을 기록한다. 서로 다른 표적 3개가 표식되거나 한 표적이 3중첩에 도달하면 최근 표식들을 판결선으로 연결해 선상 적에게 추가 피해를 주고 표식을 소비한다.",
+      "projectiles": ["noxWarrantThread", "noxVerdictLine"],
+      "events": ["noxWarrantAttack", "noxVerdictResolved"]
+    },
+    "abilities": [
+      {
+        "slot": "Q",
+        "runtimeKey": "empPulse",
+        "id": "censor-grid",
+        "name": "CENSOR GRID",
+        "koreanName": "검열 격자",
+        "unlockGrade": 0,
+        "cooldownSeconds": 7.5,
+        "input": "Q",
+        "targeting": "cursor or mobile auto-aim point",
+        "effect": "지정 지점에 3초간 격자를 설치한다. 진입한 적에게 영장 표식을 부여하고 이동 속도를 낮춘다.",
+        "event": "noxManualAbility"
+      },
+      {
+        "slot": "E",
+        "runtimeKey": "aegisWard",
+        "id": "null-appeal",
+        "name": "NULL APPEAL",
+        "koreanName": "항소 무효",
+        "unlockGrade": 1,
+        "cooldownSeconds": 12,
+        "input": "E",
+        "targeting": "self and nearby marked enemies",
+        "effect": "주변 표식을 회수해 짧은 무적 대시와 표식 수에 비례한 보호막을 얻는다.",
+        "event": "noxManualAbility"
+      },
+      {
+        "slot": "F",
+        "runtimeKey": "stratosRun",
+        "id": "red-warrant",
+        "name": "RED WARRANT",
+        "koreanName": "적색 영장",
+        "unlockGrade": 2,
+        "cooldownSeconds": 18,
+        "input": "F",
+        "targeting": "highest-threat enemy near aim point",
+        "effect": "우선 표적에게 집행 영장을 부여한다. 6초 동안 모든 기본 공격 판결선이 해당 표적을 경유하며 받는 피해가 증가한다.",
+        "event": "noxManualAbility"
+      },
+      {
+        "slot": "R",
+        "runtimeKey": "helixTempest",
+        "id": "final-decree",
+        "name": "FINAL DECREE",
+        "koreanName": "최종 판결",
+        "unlockGrade": 3,
+        "cooldownSeconds": 42,
+        "input": "R",
+        "targeting": "all marked enemies in 980 units",
+        "effect": "전장에 남은 모든 영장 표식을 동시 폭발시키고 표적 사이에 다중 판결선을 생성한다. 보스에게는 중첩 수에 비례한 추가 피해를 준다.",
+        "event": "noxManualAbility"
+      }
+    ],
+    "tag": {
+      "color": "#ff405e",
+      "entryEffect": "주변 적에게 1중첩 영장을 발부하고 가장 가까운 두 표적을 즉시 연결한다.",
+      "cooldownBank": "nox"
+    }
+  },
+  "assets": {
+    "sourceMaster": "reference/source-assets/nox-portrait-master.png",
+    "portraitRuntime": "public/assets/overload/hero/nox-portrait-v1.webp",
+    "directionalAtlas": "public/assets/overload/hero/nox-directional-aim-atlas.png",
+    "performanceAtlas": "public/assets/overload/hero/performance/nox-directional-aim-atlas.png",
+    "abilityAtlas": "public/assets/overload/vfx/manual/nox-ability-hd-atlas.png",
+    "portraitBaseline": {
+      "width": 864,
+      "height": 1536,
+      "alpha": true,
+      "anchor": "bottom-center"
+    },
+    "directionalAtlasLayout": {
+      "width": 1024,
+      "height": 1024,
+      "columns": 8,
+      "rows": 8,
+      "camera": "top-down-three-quarter",
+      "anchor": "shared bottom-center",
+      "cellSize": 128,
+      "transparentPadding": 6,
+      "directionOrder": ["south", "southeast", "east", "northeast", "north", "northwest", "west", "southwest"],
+      "columnPhases": ["locomotion-1", "locomotion-2", "locomotion-3", "locomotion-4", "attack-anticipation", "attack-release", "attack-follow-through", "attack-recovery"],
+      "comparisonAssets": ["survivor-directional-aim-atlas.png", "mika-directional-aim-atlas.png"],
+      "forbiddenElements": ["floating halo", "head ring", "baked background", "checkerboard matte"]
+    },
+    "abilityAtlasLayout": {
+      "width": 1536,
+      "height": 1024,
+      "columns": 6,
+      "rows": 4
+    }
+  },
+  "cropTokens": {
+    "lobby": { "objectPosition": "50% 18%", "scale": 0.84, "visible": "head to mid-thigh" },
+    "profile": { "objectPosition": "50% 16%", "scale": 0.86, "visible": "head to mid-thigh" },
+    "sortieCard": { "objectPosition": "50% 12%", "scale": 1.02, "visible": "head to upper thigh" },
+    "dialogue": { "objectPosition": "50% 9%", "scale": 1.34, "visible": "head to waist" },
+    "recruit": { "objectPosition": "50% 15%", "scale": 0.9, "visible": "head to mid-thigh" },
+    "tagCutscene": { "objectPosition": "50% 8%", "scale": 1.72, "visible": "face and shoulders" },
+    "lockedRoster": { "objectPosition": "50% 14%", "scale": 1.02, "visible": "head to upper thigh" }
+  },
+  "saveAndProgression": {
+    "lockedPreview": true,
+    "newSlotsDefaultCharacter": "aegis",
+    "migration": "Sanitize existing save data by adding nox skill grade 0 and rejecting nox selection until neon-foundry is completed.",
+    "skillProgressionId": "nox-skill-link",
+    "skillUnlockOrder": ["Q", "E", "F", "R"]
+  },
+  "narrative": {
+    "backgroundTitle": "블랙 레저의 마지막 심사관",
+    "backgroundSummary": "소버린 생산 명령의 위조 흔적을 추적하던 독립 감찰 전투원. 네온 주조구에서 인간 생존자를 폐기 대상으로 분류한 명령을 거부하고 헤이븐-09에 증거를 넘긴다.",
+    "storyEntries": [
+      { "title": "적색 영장", "text": "녹스는 소버린의 생산 번호를 역이용해 기계 병기의 우선순위를 서로 충돌시키는 판결식을 개발했다." },
+      { "title": "합류 조건", "text": "네온 주조구의 위조 명령 원장을 회수한 뒤, 모든 판결의 최종 기준을 생존자의 귀환으로 바꾸겠다고 선언한다." }
+    ],
+    "recruitDialogueStyle": "무표정한 보고체로 시작하지만 마지막에는 지휘관이 아닌 생존자에게 충성하겠다고 명확히 선언한다."
+  },
+  "acceptance": {
+    "mustBePlayable": true,
+    "mustHaveUniqueBasicAttack": true,
+    "mustHaveFourCharacterSpecificAbilities": true,
+    "mustSupportDesktopAndMobile": true,
+    "mustSupportLockedPreview": true,
+    "mustSupportRecruitScene": true,
+    "mustSupportLobbyProfileSortieDialogueRecruitTag": true,
+    "mustPassIntegrationAudit": true,
+    "mustPassTypecheckBuildAndBrowserPlaytest": true
+  }
+}

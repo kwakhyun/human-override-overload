@@ -18,6 +18,7 @@
 
 .combat-tag-cutscene.is-mika { --tag-accent: #ff70d2; }
 .combat-tag-cutscene.is-vesper { --tag-accent: #ffc36f; }
+.combat-tag-cutscene.is-nox { --tag-accent: #ff4b61; }
 
 .combat-tag-cutscene::before,
 .combat-tag-cutscene::after {
@@ -67,6 +68,12 @@
   object-position: 50% 6%;
   transform: scale(1.68);
   transform-origin: 52% 15%;
+}
+
+.combat-tag-cutscene.is-nox img {
+  object-position: 50% 8%;
+  transform: scale(1.5);
+  transform-origin: 52% 16%;
 }
 
 .combat-tag-cutscene > div {

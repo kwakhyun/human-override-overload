@@ -339,6 +339,7 @@ function allyMotionTexture(ally: any) {
 
 function projectileArt(projectile: any) {
   const type = String(projectile?.kind ?? "pulse").toLowerCase();
+  if (type.includes("noxwarrant")) return { column: 2, row: 0, width: 96, height: 18 };
   if (type.includes("vesperlocklance")) return { column: 2, row: 0, width: 128, height: 22 };
   if (type.includes("vespervectorcorona")) return { column: 1, row: 0, width: 58, height: 18 };
   if (type.includes("vespervectorneedle")) return { column: 0, row: 0, width: 82, height: 16 };
@@ -441,6 +442,7 @@ export class BattleView {
     this.prepareAtlas(this.playerDirectionalTexture, 8, 8);
     this.prepareAtlas(ASSET_KEYS.playerMikaDirectionalAim, 8, 8);
     this.prepareAtlas(ASSET_KEYS.playerVesperDirectionalAim, 8, 8);
+    this.prepareAtlas(ASSET_KEYS.playerNoxDirectionalAim, 8, 8);
     this.prepareAtlas(ASSET_KEYS.enemyHunterMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemyRiflemanMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemySniperMotion, 6, 4);
@@ -458,6 +460,7 @@ export class BattleView {
     if (scene.textures.exists(ASSET_KEYS.swordManualAbilityPixel)) this.preparePixelAtlas(ASSET_KEYS.swordManualAbilityPixel, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.mikaAbilityPixel, 6, 4);
     this.prepareAtlas(ASSET_KEYS.vesperAbilityHd, 6, 4);
+    this.prepareAtlas(ASSET_KEYS.noxAbilityHd, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.enemyDeathPixel, 6, 1);
     const hasSquadTraces = scene.textures.exists(ASSET_KEYS.squadTraces);
     if (hasSquadTraces) ensureAtlasFrames(scene, ASSET_KEYS.squadTraces, 3, 1);
@@ -858,6 +861,8 @@ export class BattleView {
       ? ASSET_KEYS.playerMikaDirectionalAim
       : entity?.characterId === "vesper"
         ? ASSET_KEYS.playerVesperDirectionalAim
+      : entity?.characterId === "nox"
+        ? ASSET_KEYS.playerNoxDirectionalAim
       : entity?.mainWeaponId === "beam-sword"
       ? ASSET_KEYS.playerSwordDirectionalAim
       : ASSET_KEYS.playerDirectionalAim;
@@ -1223,7 +1228,8 @@ export class BattleView {
         && aimLateral <= Math.max(34, finite(entity?.radius, 22) + 18);
       if (!recentlyDamaged && !elite && !nearPlayer && !sniperEngaged && !rifleEngaged && !suicideDanger && !aimTargeted) continue;
 
-      const persistent = roleIndex === 3 || elite || nearPlayer || sniperEngaged || rifleEngaged || suicideDanger || aimTargeted;
+      const warranted = Boolean(entity?.noxWarranted);
+      const persistent = roleIndex === 3 || elite || nearPlayer || sniperEngaged || rifleEngaged || suicideDanger || aimTargeted || warranted;
       const proximityBonus = Math.max(0, 360 * 360 - distanceSq) / (360 * 360) * 100;
       const priority = (recentlyDamaged ? 1000 : 0)
         + (selfDestructArmed ? 1200 : 0)
@@ -1231,6 +1237,7 @@ export class BattleView {
         + (sniperEngaged ? 850 : 0)
         + (suicideDanger ? 800 : 0)
         + (aimTargeted ? 750 : 0)
+        + (warranted ? 1100 : 0)
         + (rifleEngaged ? 650 : 0)
         + (nearPlayer ? 600 : 0)
         + proximityBonus;
@@ -1296,6 +1303,15 @@ export class BattleView {
         graphics.fillRect(left, statusTop, 12 / zoom, 3 / zoom);
         graphics.fillStyle(COLORS.cyan, alpha);
         graphics.fillRect(left + 1 / zoom, statusTop + 1 / zoom, 10 / zoom, 1 / zoom);
+      }
+      if (entity?.noxWarranted) {
+        const markerRadius = 9 / zoom;
+        const markerX = image.x + width * 0.5 - markerRadius * 0.4;
+        const markerY = top - markerRadius * 0.72;
+        graphics.lineStyle(2 / zoom, 0xff455d, alpha);
+        graphics.strokeCircle(markerX, markerY, markerRadius);
+        graphics.lineBetween(markerX - markerRadius * 0.8, markerY, markerX + markerRadius * 0.8, markerY);
+        graphics.lineBetween(markerX, markerY - markerRadius * 0.8, markerX, markerY + markerRadius * 0.8);
       }
       if (candidate.roleIndex === 0) {
         const distance = Math.sqrt(candidate.distanceSq);
@@ -2220,9 +2236,12 @@ export class BattleView {
       if (!this.isCircleVisible(x, y, radius, 96)) continue;
       let image = this.swordManualAbilitySprites[visible];
       const vesperEffect = effect?.atlas === "vesper";
+      const noxEffect = effect?.atlas === "nox";
       const texture = effect?.atlas === "mika"
         ? ASSET_KEYS.mikaAbilityPixel
-        : vesperEffect ? ASSET_KEYS.vesperAbilityHd : ASSET_KEYS.swordManualAbilityPixel;
+        : vesperEffect
+          ? ASSET_KEYS.vesperAbilityHd
+          : noxEffect ? ASSET_KEYS.noxAbilityHd : ASSET_KEYS.swordManualAbilityPixel;
       if (!image) {
         image = this.scene.add.image(0, 0, texture).setBlendMode(Phaser.BlendModes.ADD);
         this.worldFront.add(image);
@@ -2230,7 +2249,9 @@ export class BattleView {
       }
       if (image.texture.key !== texture) image.setTexture(texture);
       const type = String(effect?.type ?? "spectralSwordArray");
-      const row = vesperEffect
+      const row = noxEffect
+        ? type === "nullAppeal" ? 1 : type === "redWarrant" ? 2 : type === "finalDecree" ? 3 : 0
+        : vesperEffect
         ? type === "zeroMark" ? 1 : type === "railBurst" ? 2 : type === "deadline" ? 3 : 0
         : type === "phantomRend" || type === "ribbonVortex"
           ? 1
@@ -2253,7 +2274,7 @@ export class BattleView {
         .setDisplaySize(size, size)
         .setAlpha(0.98 * clamp01(finite(effect?.life) / Math.max(0.12, finite(effect?.maxLife, 1) * 0.16)))
         .clearTint();
-      if (vesperEffect) image.setBlendMode(Phaser.BlendModes.ADD);
+      if (vesperEffect || noxEffect) image.setBlendMode(Phaser.BlendModes.ADD);
       visible += 1;
     }
     for (let index = visible; index < this.swordManualAbilitySprites.length; index += 1) {
@@ -2592,6 +2613,7 @@ export class BattleView {
       const art = projectileArt(projectile);
       const angle = Number.isFinite(projectile?.angle) ? projectile.angle : Math.atan2(finite(projectile?.vy), finite(projectile?.vx));
       const projectileKind = String(projectile?.kind ?? "pulse").toLowerCase();
+      const noxWarrant = projectileKind.includes("noxwarrant");
       const swordWave = projectileKind.includes("crescent");
       const vesperNeedle = projectileKind.includes("vesper");
       const vesperLockLance = projectileKind.includes("vesperlocklance");
@@ -2623,7 +2645,9 @@ export class BattleView {
         .setAlpha(0.96)
         .setTint(colorNumber(projectile?.color, 0xffffff));
       if (!projectileKind.includes("orbit") && launchAge > 0.012) {
-        const trailLength = vesperLockLance
+        const trailLength = noxWarrant
+          ? 92
+          : vesperLockLance
           ? 112
           : vesperNeedle
             ? 62
@@ -2633,7 +2657,17 @@ export class BattleView {
             ? 52
             : 34;
         const trailColor = colorNumber(projectile?.color, COLORS.cyan);
-        if (vesperNeedle) {
+        if (noxWarrant) {
+          const normalX = -Math.sin(angle);
+          const normalY = Math.cos(angle);
+          const trailStartX = displayX - Math.cos(angle) * trailLength;
+          const trailStartY = displayY - Math.sin(angle) * trailLength;
+          graphics.lineStyle(5, trailColor, 0.24);
+          graphics.lineBetween(trailStartX, trailStartY, displayX, displayY);
+          graphics.lineStyle(1.8, 0xfff1f3, 0.92);
+          graphics.lineBetween(trailStartX + normalX * 3, trailStartY + normalY * 3, displayX, displayY);
+          graphics.lineBetween(trailStartX - normalX * 3, trailStartY - normalY * 3, displayX, displayY);
+        } else if (vesperNeedle) {
           const normalX = -Math.sin(angle);
           const normalY = Math.cos(angle);
           const gap = vesperLockLance ? 4.5 : 2.5;

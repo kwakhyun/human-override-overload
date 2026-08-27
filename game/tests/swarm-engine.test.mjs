@@ -26,7 +26,7 @@ import {
   stepSwarm,
 } from "../src/swarm/engine.js";
 
-const FULL_CHARACTER_SKILL_RANKS = Object.freeze({ aegis: 3, mika: 3, vesper: 3 });
+const FULL_CHARACTER_SKILL_RANKS = Object.freeze({ aegis: 3, mika: 3, vesper: 3, nox: 3 });
 
 function stepFor(state, input, seconds, beforeStep) {
   const frames = Math.ceil(seconds * 60);
@@ -488,7 +488,7 @@ test("beam sword replaces rifle actives with four offensive flying-sword techniq
 });
 
 test("MIKA fields ring blades, four exclusive actives, and a cooldown-limited battlefield tag", () => {
-  const state = createSwarmState({ random: () => 0.5, expedition: true, characterSkillRanks: FULL_CHARACTER_SKILL_RANKS, characterId: "mika", mainWeaponId: "beam-sword" });
+  const state = createSwarmState({ random: () => 0.5, expedition: true, characterSkillRanks: FULL_CHARACTER_SKILL_RANKS, characterId: "mika", mainWeaponId: "beam-sword", vesperUnlocked: false, noxUnlocked: false });
   const input = createSwarmInput();
   assert.equal(state.player.characterId, "mika");
   assert.equal(state.player.name, "MIKA");
@@ -523,7 +523,7 @@ test("MIKA fields ring blades, four exclusive actives, and a cooldown-limited ba
 });
 
 test("tagging keeps AEGIS and MIKA manual cooldown banks independent", () => {
-  const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "aegis", duration: 999 });
+  const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "aegis", duration: 999, vesperUnlocked: false, noxUnlocked: false });
   state.levelFlow.firstDeadline = 999;
   state.levelFlow.nextOfferAt = 999;
   state.player.invulnerability = 999;
@@ -564,7 +564,7 @@ test("tagging keeps AEGIS and MIKA manual cooldown banks independent", () => {
   assert.equal(aegisHud.abilities.empPulse.ready, false);
   assert.ok(state.manualAbilityBanks.mika.empPulse.cooldown > 11.8);
 
-  const legacy = createSwarmState({ random: () => 0.5, expedition: true, characterId: "aegis", duration: 999 });
+  const legacy = createSwarmState({ random: () => 0.5, expedition: true, characterId: "aegis", duration: 999, vesperUnlocked: false, noxUnlocked: false });
   legacy.levelFlow.firstDeadline = 999;
   legacy.levelFlow.nextOfferAt = 999;
   delayPlayerWeapons(legacy);
@@ -711,7 +711,7 @@ test("result accuracy counts sword arcs while projectile, melee, and ability dam
 });
 
 test("MIKA and the tag action stay unavailable before the first-region unlock", () => {
-  const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika", mikaUnlocked: false });
+  const state = createSwarmState({ random: () => 0.5, expedition: true, characterId: "mika", mikaUnlocked: false, vesperUnlocked: false, noxUnlocked: false });
   const input = createSwarmInput();
   assert.equal(state.player.characterId, "aegis");
   assert.equal(state.player.reserveCharacterId, null);
@@ -1140,6 +1140,37 @@ test("the opening reward remains valid when every signature combat skill is alre
   assert.ok(skill?.id);
   assert.ok(skill?.name);
   assert.ok(skill?.description);
+});
+
+test("fully evolved protocols never return to the combat choice pool", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  for (const id of RIFLE_REWARD_POOLS.weapon) state.build.weapons[id] = 99;
+  state.time = 6.5;
+  state.phaseTime = 6.5;
+  state.levelFlow.queuedLevels = 1;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.levelupPending, true);
+  assert.equal(state.rewardOptions.some((option) => option.category === "weapon"), false);
+  assert.ok(state.rewardOptions.every((option) => option.level < option.maxRank));
+});
+
+test("an exhausted protocol catalog converts queued levels without opening an empty modal", () => {
+  const state = createSwarmState({ random: () => 0.5 });
+  for (const id of RIFLE_REWARD_POOLS.weapon) state.build.weapons[id] = 99;
+  for (const id of RIFLE_REWARD_POOLS.skill) state.build.skills[id] = 99;
+  for (const id of RIFLE_REWARD_POOLS.ally) state.build.allies[id] = 99;
+  state.time = 6.5;
+  state.phaseTime = 6.5;
+  state.levelFlow.queuedLevels = 3;
+  const damageBefore = state.player.damageMultiplier;
+  stepSwarm(state, createSwarmInput(), 1 / 60);
+  assert.equal(state.levelupPending, false);
+  assert.deepEqual(state.rewardOptions, []);
+  assert.equal(state.levelFlow.queuedLevels, 0);
+  assert.equal(state.levelFlow.batchLevels, 0);
+  assert.equal(state.stats.batchedOverflowLevels, 3);
+  assert.ok(state.player.damageMultiplier > damageBefore);
+  assert.ok(drainSwarmEvents(state).some((event) => event.type === "rewardPoolMastered" && event.levels === 3));
 });
 
 test("weapon rewards add real scatter, rail, rocket, and orbit combat behavior", () => {

@@ -1900,6 +1900,16 @@ Environment identity: black medical alloy floor, pale bone-like biomechanical fr
 Make left and right edges compatible in deck tone and seam rhythm for unobtrusive TileSprite repetition. Margins clearly read as hazardous containment; central route stays evenly lit, dry, walkable, and free of black voids. No labels, lettering, watermark, border, grid overlay, or interface.
 ```
 
+## VESPER pose refresh and Regions 04-06 top-down boss assets - 2026-08-27
+
+- Generation source: OpenAI ImageGen, directed specifically for original HUMAN OVERRIDE production assets. No third-party game asset was copied into the runtime.
+- VESPER prompt brief: preserve the established blonde bob, face, black/white/gold precision-interceptor suit, cape silhouette, and golden targeting sigil; change only to a restrained three-quarter ready pose with one hand on the hip; premium Korean/Japanese sci-fi subculture illustration; flat chroma background; no text, watermark, halo, frame, or scenery. Normalized runtime output: `public/assets/overload/hero/vesper-portrait-v7.webp`; retained production master: `reference/source-assets/overload/hero/vesper-portrait-v7-master.png`.
+- Region 04 prompt brief: exact 2x2 sprite sheet on chroma, strict true-nadir top-down PRESS WARDEN in cell 1 and FORGE COLOSSUS phases 1-3 in cells 2-4; heavy industrial press machinery, orange foundry heat, centered transparent padding, no text or perspective view.
+- Region 05 prompt brief: exact 2x2 sprite sheet on chroma, strict true-nadir top-down THUNDER MANTA in cell 1 and TEMPEST WYRM phases 1-3 in cells 2-4; storm conductors, cyan lightning hardware, centered transparent padding, no text or perspective view.
+- Region 06 prompt brief: exact 2x2 sprite sheet on chroma, strict true-nadir top-down CHIMERA CUSTODIAN in cell 1 and PALE ARCHON phases 1-3 in cells 2-4; pale biotech armor, restrained green reactor tissue, centered transparent padding, no text or perspective view.
+- Production sources: `reference/source-assets/overload/regions/neon-foundry/topdown-boss-source-v2.png`, `reference/source-assets/overload/regions/storm-spire/topdown-boss-source-v2.png`, and `reference/source-assets/overload/regions/gene-vault/topdown-boss-source-v2.png`.
+- Runtime contract: midboss replaces cell 4 of each regional four-cell enemy atlas; main boss ships as a three-cell phase atlas. Full and performance variants live under each matching `public/assets/overload/regions/<region>/` directory.
+
 ## Open-source dependencies
 
 - Phaser 4.2.1 — MIT License
@@ -2384,15 +2394,15 @@ No second ponytail, no floating hair, no detached braid, no hair clipping throug
 - 도구: OpenAI 내장 ImageGen. 사용자가 제공한 금발 여성 캐릭터 이미지는 실루엣·색 조합·성인 여성 전투원이라는 방향을 이해하기 위한 참고 자료로만 사용했으며, 얼굴·의상 구조·표식·장비는 복제하지 않은 프로젝트 오리지널 디자인입니다.
 - 콘셉트: 성인 여성 정밀 요격 전투원 `VESPER / 베스퍼`. 금발 단발, 흑연색 전술 바디슈트, 비대칭 백색 장갑 패널, 절제된 적색 코트 테일, 호박색 센서, 접이식 레일 피스톨을 사용하는 HAVEN-09 고기동 사수입니다.
 - 생성 지시 요약: 투명 추출용 단색 크로마 배경, 머리부터 부츠까지 보이는 전신 3/4 자세, 프리미엄 SF 서브컬처 게임 캐릭터 시트, 정확한 성인 해부학과 손, 읽기 쉬운 실루엣, 텍스트·로고·워터마크·기존 IP 표식 금지.
-- 현재 런타임 파일: `public/assets/overload/hero/vesper-portrait-v6.webp` (864×1536 표시 크기 최적화 알파 WebP, 로비·전투원 정보·대화 안전영역 포함).
+- 현재 런타임 파일: `public/assets/overload/hero/vesper-portrait-v7.webp` (864×1536 표시 크기 최적화 알파 WebP, 로비·전투원 정보·대화 안전영역 포함).
 
 ### NPC/VESPER 공통 규격 재제작 · 2026-08-26
 
 - 생성 도구: OpenAI ImageGen. 기존 캐릭터의 얼굴·헤어·복장·역할·색상 정체성을 유지하는 재구성 작업으로 생성했습니다.
-- 공통 생성 지시: premium Korean/Japanese sci-fi subculture anime illustration, clean cel shading, coherent anatomy, no text/UI/watermark, no baked outline or halo, flat `#00FF00` chroma background for deterministic alpha extraction.
+- 공통 생성 지시: premium semi-realistic Korean/Japanese sci-fi subculture illustration, coherent anatomy, refined painterly material rendering, no text/UI/watermark, no baked outline or halo, flat `#00FF00` chroma background for deterministic alpha extraction. SERA와 ILYA는 2026-08-27 이 공통 NPC 화풍에 맞춰 재제작했으며, SERA는 짧은 보브 헤어를 사용하고 ILYA는 머리 위 안전 여백을 명시적으로 확보했습니다.
 - NPC 생성 지시: HANA, ILYA, SERA, RHEA를 동일한 카메라 거리와 가슴 아래까지의 상반신 구도로 재구성하고, 머리 위 여백과 어깨 폭을 통일했습니다. ILYA만 남성 체격 고증을 위해 약간 더 크게 구성했습니다.
 - VESPER 생성 지시: 기존 금발 정밀 요격수의 얼굴·단발·검정/백색/금색 장갑·적색 망토·홀로그램 조준 장치를 유지하고, AEGIS/MIKA와 같은 세로 캔버스에서 머리부터 허벅지 중간까지만 보이도록 재구성했습니다.
-- 무손실 생성 원본: `reference/source-assets/overload/portraits/chroma/hana-upper-v2-chroma.png`, `ilya-upper-v4-chroma.png`, `sera-upper-v4-chroma.png`, `rhea-upper-v3-chroma.png`, `vesper-mid-thigh-v5-chroma.png`.
+- 무손실 생성 원본: `reference/source-assets/overload/portraits/chroma/hana-upper-v2-chroma.png`, `ilya-upper-v4-chroma.png`, `sera-upper-v4-chroma.png`, `rhea-upper-v3-chroma.png`, `vesper-mid-thigh-v7-chroma.png`.
 - 런타임 출력: NPC 4종은 768×768 알파 WebP, VESPER는 864×1536 알파 WebP이며 `scripts/build-runtime-portraits.py`의 크로마 제거·색 번짐 억제·표시 크기 최적화 파이프라인으로 생성했습니다.
 - 이전 런타임 원본 보존: `public/assets/overload/hero/vesper-portrait-v1.png` (871×1595, RGB 녹색 크로마 원본 · colorType 2). v1은 비교·재처리 이력이며 현재 매니페스트에서 사용하지 않습니다.
 - 후처리: `scripts/process-character-chroma.py`가 녹색 크로마 제거, 가장자리 색 오염 완화, 투명 여백 정리, 런타임 크기 최적화를 재현합니다. v2는 캐릭터 정보·잠금 미리보기·태그 컷인에서 배경 없는 원본 실루엣을 유지합니다.

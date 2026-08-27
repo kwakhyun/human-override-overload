@@ -105,6 +105,8 @@ test("HAVEN highlights SERA's new-route briefing and ships a skippable return-to
   assert.match(screens, /세라가 신규 권역 항로를 해독했습니다/);
   assert.match(screens, /export function ReturnCinematicScreen/);
   assert.match(screens, /return-cinematic/);
+  assert.match(screens, /window\.setTimeout\(finish, 1000\)/);
+  assert.doesNotMatch(screens, /window\.setTimeout\(finish, 5200\)/);
   assert.match(screens, /event\.key === "Escape"/);
 });
 

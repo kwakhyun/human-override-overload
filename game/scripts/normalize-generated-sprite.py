@@ -19,6 +19,11 @@ def _is_background(pixel: tuple[int, int, int], mode: str) -> bool:
     red, green, blue = pixel
     if mode == "dark":
         return max(red, green, blue) <= 18
+    if mode == "checker-light":
+        # Image generators frequently return a flattened white/light-gray
+        # transparency checker. Both tiles need to be traversable by the edge
+        # flood or alternating squares survive as a baked matte.
+        return min(red, green, blue) >= 205 and max(red, green, blue) - min(red, green, blue) <= 24
     return min(red, green, blue) >= 236 and max(red, green, blue) - min(red, green, blue) <= 18
 
 
@@ -66,7 +71,7 @@ def parse_size(value: str | None) -> tuple[int, int] | None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("path", type=Path)
-    parser.add_argument("--mode", choices=("light", "dark"), required=True)
+    parser.add_argument("--mode", choices=("light", "checker-light", "dark"), required=True)
     parser.add_argument("--resize", type=str)
     args = parser.parse_args()
 

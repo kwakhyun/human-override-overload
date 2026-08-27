@@ -47,6 +47,16 @@ export const CHARACTER_SKILL_LOADOUTS = deepFreeze({
       { slot: "R", runtimeKey: "helixTempest", requiredGrade: 3, name: "DEADLINE", koreanName: "데드라인" },
     ],
   },
+  nox: {
+    characterId: "nox",
+    progressionId: "nox-skill-link",
+    skills: [
+      { slot: "Q", runtimeKey: "empPulse", requiredGrade: 0, name: "CENSOR GRID", koreanName: "검열 격자" },
+      { slot: "E", runtimeKey: "aegisWard", requiredGrade: 1, name: "NULL APPEAL", koreanName: "항소 무효" },
+      { slot: "F", runtimeKey: "stratosRun", requiredGrade: 2, name: "RED WARRANT", koreanName: "적색 영장" },
+      { slot: "R", runtimeKey: "helixTempest", requiredGrade: 3, name: "FINAL DECREE", koreanName: "최종 판결" },
+    ],
+  },
 });
 
 function createProgressionLine(characterId, copy, unlockRegionId = null) {
@@ -89,6 +99,11 @@ export const CHARACTER_SKILL_PROGRESSION_LINES = deepFreeze({
     koreanName: "베스퍼 전투 링크",
     description: "베스퍼의 전술 의식 등급을 높여 E, F, R 스킬을 순서대로 해금합니다.",
   }, "abyssal-archive"),
+  "nox-skill-link": createProgressionLine("nox", {
+    name: "NOX JUDGMENT LINK",
+    koreanName: "녹스 판결 링크",
+    description: "동기화 코어로 검은 장부의 전술 권한을 복원해 E, F, R 판결 기술을 순차적으로 해금합니다.",
+  }, "neon-foundry"),
 });
 
 export const LEGACY_AEGIS_AUGMENTATION_IDS = Object.freeze([

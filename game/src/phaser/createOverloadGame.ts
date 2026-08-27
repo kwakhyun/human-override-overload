@@ -27,11 +27,12 @@ export type OverloadGameController = Readonly<{
 export type OverloadLaunchOptions = Readonly<{
   regionId?: string;
   combatBonuses?: Readonly<Record<string, number>>;
-  characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper", number>>;
+  characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper" | "nox", number>>;
   mainWeaponId?: "pulse-rifle" | "beam-sword";
-  characterId?: "aegis" | "mika" | "vesper";
+  characterId?: "aegis" | "mika" | "vesper" | "nox";
   mikaUnlocked?: boolean;
   vesperUnlocked?: boolean;
+  noxUnlocked?: boolean;
   startSuspended?: boolean;
   qualityPreference?: "auto" | "cinematic" | "balanced" | "performance";
   screenShakeEnabled?: boolean;
@@ -70,7 +71,7 @@ export function createOverloadGame(
   const presentationHeight = portraitPresentation
     ? Math.max(1, Math.round(window.visualViewport?.height || window.innerHeight || parent.clientHeight))
     : 720;
-  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.characterSkillRanks, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, launch.vesperUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);
+  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.characterSkillRanks, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, launch.vesperUnlocked, launch.noxUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);
   battleScene.configurePresentationSettings(initialQuality, launch.screenShakeEnabled !== false);
   const game = new Phaser.Game({
     type: Phaser.AUTO,

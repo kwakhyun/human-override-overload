@@ -12,7 +12,7 @@ test("combat feedback layers stay renderer-owned and quality bounded", () => {
   assert.match(view, /type === "ultimateImpact" \|\| type === "explosion"/);
   assert.match(view, /const hitDamage = record \? Math\.max\(0, record\.lastHp - hp\) : 0/);
   assert.match(view, /const impactScale = clamp/);
-  assert.match(view, /const trailLength = vesperLockLance/);
+  assert.match(view, /const trailLength = noxWarrant/);
   assert.match(view, /projectileKind\.includes\("rail"\) \|\| projectileKind\.includes\("overdrive"\)/);
   assert.match(view, /const fxCap = this\.currentQualityId === "performance" \? 36/);
 });

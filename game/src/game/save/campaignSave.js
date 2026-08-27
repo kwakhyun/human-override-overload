@@ -40,7 +40,7 @@ export const CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v2";
 export const LEGACY_CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v1";
 export const CAMPAIGN_SAVE_SLOT_COUNT = 3;
 export const CAMPAIGN_SLOT_PROGRESSION_FIELD = "progression";
-export const CAMPAIGN_POST_VICTORY_STEPS = Object.freeze(["recruit", "vesper-recruit", "sword-guide", "return"]);
+export const CAMPAIGN_POST_VICTORY_STEPS = Object.freeze(["recruit", "vesper-recruit", "nox-recruit", "sword-guide", "return"]);
 
 const KNOWN_REGION_IDS = new Set(getCampaignRegions().map((region) => region.id));
 const KNOWN_CHAPTER_IDS = new Set(CAMPAIGN_CHAPTERS.map((chapter) => chapter.id));
@@ -49,6 +49,7 @@ const KNOWN_POST_VICTORY_STEPS = new Set(CAMPAIGN_POST_VICTORY_STEPS);
 const POST_VICTORY_SEEN_FLAG = Object.freeze({
   recruit: "mika-recruit-seen",
   "vesper-recruit": "vesper-recruit-seen",
+  "nox-recruit": "nox-recruit-seen",
   "sword-guide": "beam-sword-guide-complete",
 });
 
@@ -88,6 +89,7 @@ function sanitizePendingPostVictorySteps(values, completedRegionIds = [], storyF
     if (!requested.has(step)) return false;
     if (step === "recruit") return isCharacterUnlocked("mika", completedRegionIds) && !storyFlags.includes("mika-recruit-seen");
     if (step === "vesper-recruit") return isCharacterUnlocked("vesper", completedRegionIds) && !storyFlags.includes("vesper-recruit-seen");
+    if (step === "nox-recruit") return isCharacterUnlocked("nox", completedRegionIds) && !storyFlags.includes("nox-recruit-seen");
     if (step === "sword-guide") return isMainWeaponUnlocked("beam-sword", completedRegionIds) && !storyFlags.includes("beam-sword-guide-complete");
     return completedRegionIds.length > 0;
   });
@@ -190,6 +192,7 @@ function deriveStoryFlags(completedRegionIds, inputFlags = []) {
   if (completedRegionIds.includes(DEFAULT_REGION_ID)) flags.add("home-base-unlocked");
   if (completedRegionIds.includes(DEFAULT_REGION_ID)) flags.add("mika-unlocked");
   if (completedRegionIds.includes("abyssal-archive")) flags.add("vesper-unlocked");
+  if (completedRegionIds.includes("neon-foundry")) flags.add("nox-unlocked");
   if (completedRegionIds.includes("glass-dune")) flags.add("beam-sword-unlocked");
   for (const chapterId of completedChapters) flags.add(`${chapterId}-cleared`);
   return [...flags];
@@ -552,12 +555,16 @@ export function completeRegion(campaign, slotId, regionId, result = {}, options 
   const vesperJustUnlocked = !isCharacterUnlocked("vesper", slot.completedRegionIds)
     && isCharacterUnlocked("vesper", completedRegionIds)
     && !slot.storyFlags.includes("vesper-recruit-seen");
+  const noxJustUnlocked = !isCharacterUnlocked("nox", slot.completedRegionIds)
+    && isCharacterUnlocked("nox", completedRegionIds)
+    && !slot.storyFlags.includes("nox-recruit-seen");
   const swordJustUnlocked = !isMainWeaponUnlocked("beam-sword", slot.completedRegionIds)
     && isMainWeaponUnlocked("beam-sword", completedRegionIds)
     && !slot.storyFlags.includes("beam-sword-guide-complete");
   const pendingPostVictorySteps = [
     ...(mikaJustUnlocked ? ["recruit"] : []),
     ...(vesperJustUnlocked ? ["vesper-recruit"] : []),
+    ...(noxJustUnlocked ? ["nox-recruit"] : []),
     ...(swordJustUnlocked ? ["sword-guide"] : []),
     "return",
   ];

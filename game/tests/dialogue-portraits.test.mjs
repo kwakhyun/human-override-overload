@@ -17,7 +17,7 @@ test("combat dialogue uses independent optimized portraits while bosses retain a
   const portraitPaths = [
     "./assets/overload/hero/survivor-portrait-v2.webp",
     "./assets/overload/hero/mika-portrait-v2.webp",
-    "./assets/overload/hero/vesper-portrait-v6.webp",
+    "./assets/overload/hero/vesper-portrait-v7.webp",
     ...["hana", "ilya", "lark", "rhea"].map((npcId) => BASE_NPCS[npcId].portraitPath),
   ];
   assert.equal(new Set(portraitPaths).size, portraitPaths.length);
@@ -47,6 +47,29 @@ test("combat dialogue uses independent optimized portraits while bosses retain a
     assert.deepEqual(pngDimensions(await readBytes(path)), [1536, 512]);
     assert.equal(getRegion(regionId).assets.dom.bossPortrait.path, `./assets/overload/${path.split("assets/overload/")[1]}`);
   }
+});
+
+test("NPC portrait build preserves ILYA headroom and normalizes SERA to an upper-body crop", async () => {
+  const buildScript = await read("scripts/build-runtime-portraits.py");
+  const tacticalStyles = await read("src/styles/tactical-os.css");
+
+  assert.match(
+    buildScript,
+    /ilya-upper-v4-chroma\.png"\s*,\s*"ilya-mechanic-v4\.webp"\s*,\s*42\s*,\s*12\s*,\s*0\.0/,
+  );
+  assert.match(
+    buildScript,
+    /sera-upper-v4-chroma\.png"\s*,\s*"sera-nightjar-pilot-v4\.webp"\s*,\s*20\s*,\s*16\s*,\s*0\.12/,
+  );
+  assert.match(buildScript, /trim_bottom_ratio/);
+  assert.doesNotMatch(
+    tacticalStyles,
+    /\.campaign-shell \.base-npc-portrait\.is-ilya > img\s*\{/,
+  );
+  assert.match(
+    tacticalStyles,
+    /\.campaign-shell \.base-npc-portrait > img\s*\{[\s\S]*?object-position: center bottom;[\s\S]*?transform: none;/,
+  );
 });
 
 test("the active narrative panel resolves the actual speaker without misleading squad fallbacks", async () => {

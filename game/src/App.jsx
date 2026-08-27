@@ -99,6 +99,7 @@ import {
   LarkFlightOperationsScreen,
   MANUAL_ABILITY_GUIDE,
   MikaRecruitScreen,
+  NoxRecruitScreen,
   VesperRecruitScreen,
   RegionSelectScreen,
   ReturnCinematicScreen,
@@ -135,7 +136,7 @@ const BASE_NPC_DOM_ASSET_KEYS = Object.freeze([
   "nightjarPilot",
   "rheaControlOfficer",
 ]);
-const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "player", "mikaPortrait", "vesperPortrait"]);
+const REGION_MAP_DOM_ASSET_KEYS = Object.freeze(["airshipRegionMap", "innerNetworkRegionMap", "outerFrontierRegionMap", "player", "mikaPortrait", "vesperPortrait", "noxPortrait"]);
 const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "rheaControlOfficer",
   "tutorialEmpPulse",
@@ -148,6 +149,7 @@ const COMBAT_DOM_ASSET_KEYS = Object.freeze([
   "portrait",
   "mikaPortrait",
   "vesperPortrait",
+  "noxPortrait",
   "rheaControlOfficer",
   ...Object.keys(ASSET_PATHS).filter((key) => key.startsWith("reward")),
 ]);
@@ -159,6 +161,7 @@ function domAssetSources(keys) {
 function characterPortraitAssetKey(characterId) {
   if (characterId === "mika") return "mikaPortrait";
   if (characterId === "vesper") return "vesperPortrait";
+  if (characterId === "nox") return "noxPortrait";
   return "player";
 }
 
@@ -213,6 +216,7 @@ function mixedRegionName(region) {
 }
 
 const SPEAKER_NAME_KO = Object.freeze({
+  NOX: "녹스",
   AEGIS: "이지스",
   MIKA: "미카",
   VESPER: "베스퍼",
@@ -539,6 +543,7 @@ const SCENARIO_SCRIPT = Object.freeze({
 });
 
 const NARRATIVE_STANDALONE_PORTRAITS = Object.freeze({
+  NOX: Object.freeze({ assetKey: "noxPortrait", variant: "nox", alt: "녹스 전술 일러스트" }),
   AEGIS: Object.freeze({ assetKey: "portrait", variant: "hero", alt: "이지스 상반신 일러스트" }),
   MIKA: Object.freeze({ assetKey: "mikaPortrait", variant: "mika", alt: "미카 상반신 일러스트" }),
   VESPER: Object.freeze({ assetKey: "vesperPortrait", variant: "vesper", alt: "베스퍼 상반신 일러스트" }),
@@ -1195,6 +1200,7 @@ function CombatAbilityTutorialOverlay({ ability, stepIndex, totalSteps, portrait
 }
 
 const TAG_CUTSCENE_COPY = Object.freeze({
+  nox: Object.freeze({ assetKey: "noxPortrait", name: "녹스", callout: "NOX // RED WARRANT" }),
   aegis: Object.freeze({ assetKey: "player", name: "이지스", callout: "AEGIS // LINK SHIFT" }),
   mika: Object.freeze({ assetKey: "mikaPortrait", name: "미카", callout: "MIKA // PRISM LINK" }),
   vesper: Object.freeze({ assetKey: "vesperPortrait", name: "베스퍼", callout: "VESPER // NIGHT LINK" }),
@@ -2024,7 +2030,7 @@ function RouteMinimap({ hud, region }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterSkillRanks, mainWeaponId, characterId, mikaUnlocked = false, vesperUnlocked = false, soundEnabled, audioSettings, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterSkillRanks, mainWeaponId, characterId, mikaUnlocked = false, vesperUnlocked = false, noxUnlocked = false, soundEnabled, audioSettings, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const frameRef = useRef(null);
   const controllerRef = useRef(null);
@@ -2221,6 +2227,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
         characterId,
         mikaUnlocked,
         vesperUnlocked,
+        noxUnlocked,
         startSuspended: preparingRef.current,
         qualityPreference: audioSettings?.graphicsQuality,
         screenShakeEnabled: audioSettings?.screenShakeEnabled !== false,
@@ -2239,7 +2246,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, mikaUnlocked, regionId, runRevision, sfx, vesperUnlocked]);
+  }, [assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, mikaUnlocked, noxUnlocked, regionId, runRevision, sfx, vesperUnlocked]);
 
   const selectReward = useCallback((id) => {
     controllerRef.current?.chooseReward(id);
@@ -2946,6 +2953,7 @@ export function App() {
   );
   const mikaUnlocked = isCharacterUnlocked("mika", activeSlot?.completedRegionIds || []);
   const vesperUnlocked = isCharacterUnlocked("vesper", activeSlot?.completedRegionIds || []);
+  const noxUnlocked = isCharacterUnlocked("nox", activeSlot?.completedRegionIds || []);
   const beamSwordUnlocked = isMainWeaponUnlocked("beam-sword", activeSlot?.completedRegionIds || []);
   const activeRegion = useMemo(() => getRegion(activeRegionId) || getRegion(DEFAULT_REGION_ID), [activeRegionId]);
   const activeBgmPath = useMemo(() => resolveMusicTrack(screen, activeRegionId), [screen, activeRegionId]);
@@ -3077,7 +3085,7 @@ export function App() {
       equipmentRanks: progression.equipmentRanks || {},
       characters: facility.id === "augmentation" ? playableCharacters.map((character) => ({
         ...character,
-        weaponName: character.id === "mika" || character.id === "vesper"
+        weaponName: character.id === "mika" || character.id === "vesper" || character.id === "nox"
           ? character.weaponName
           : mainWeapons.find((weapon) => weapon.id === activeMainWeaponId)?.koreanName || character.weaponName,
         portraitSource: assets?.[character.portraitAssetKey] || assets?.player,
@@ -3088,6 +3096,7 @@ export function App() {
         aegisSpeed: Math.round(245 * (combatBonuses?.moveSpeedMultiplier || 1)),
         mikaSpeed: Math.round(245 * 1.08 * (combatBonuses?.moveSpeedMultiplier || 1)),
         vesperSpeed: Math.round(245 * 1.12 * (combatBonuses?.moveSpeedMultiplier || 1)),
+        noxSpeed: Math.round(245 * 1.06 * (combatBonuses?.moveSpeedMultiplier || 1)),
         fireRate: Math.round((combatBonuses?.fireRateMultiplier || 1) * 100),
         completedRegions: activeSlot.completedRegionIds?.length || 0,
       } : null,
@@ -3109,6 +3118,7 @@ export function App() {
     playerPortrait: assets?.player,
     mikaPortrait: assets?.mikaPortrait,
     vesperPortrait: assets?.vesperPortrait,
+    noxPortrait: assets?.noxPortrait,
     tutorialEmpPulse: assets?.tutorialEmpPulse,
     tutorialAegisWard: assets?.tutorialAegisWard,
     tutorialStratosRun: assets?.tutorialStratosRun,
@@ -3249,6 +3259,14 @@ export function App() {
       );
       return;
     }
+    if (nextStep === "nox-recruit") {
+      prepareSurface(
+        "신규 전투원 녹스 동기화 중",
+        [DOM_ASSET_REFS.noxPortrait?.src, DOM_ASSET_REFS.characterSyncChamber?.src],
+        () => setScreen("nox-recruit"),
+      );
+      return;
+    }
     if (nextStep === "sword-guide") {
       setSwordGuideReturnScreen("post-victory");
       setScreen("sword-guide");
@@ -3383,6 +3401,10 @@ export function App() {
 
   const finishVesperRecruitment = useCallback(() => {
     consumePostVictoryScene("vesper-recruit");
+  }, [consumePostVictoryScene]);
+
+  const finishNoxRecruitment = useCallback(() => {
+    consumePostVictoryScene("nox-recruit");
   }, [consumePostVictoryScene]);
 
   const finishSwordAbilityGuide = useCallback(() => {
@@ -3710,6 +3732,8 @@ export function App() {
     content = <MikaRecruitScreen assets={campaignAssets} onComplete={finishMikaRecruitment} />;
   } else if (screen === "vesper-recruit") {
     content = <VesperRecruitScreen assets={campaignAssets} onComplete={finishVesperRecruitment} />;
+  } else if (screen === "nox-recruit") {
+    content = <NoxRecruitScreen assets={campaignAssets} onComplete={finishNoxRecruitment} />;
   } else if (screen === "sortie" || screen === "game") {
     content = (
       <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>
@@ -3723,6 +3747,7 @@ export function App() {
           characterId={activeCharacterId}
           mikaUnlocked={mikaUnlocked}
           vesperUnlocked={vesperUnlocked}
+          noxUnlocked={noxUnlocked}
           soundEnabled={soundEnabled}
           audioSettings={audioSettings}
           sfx={sfx}

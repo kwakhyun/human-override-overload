@@ -70,6 +70,27 @@ export const PLAYABLE_CHARACTERS = deepFreeze({
       { title: "헤이븐-09 합류", text: "3구역 해방 뒤 이지스의 구조 제안을 받아들이고 장거리 정밀 사격과 기동 저격을 담당합니다." },
     ],
   },
+  nox: {
+    id: "nox",
+    name: "NOX",
+    koreanName: "녹스",
+    role: "전술 심사 · 표식 처형",
+    weaponName: "판결식 모노와이어",
+    description: "전장을 감사하듯 적에게 영장 표식을 누적하고, 교차하는 모노와이어 판결선으로 다수의 표적을 동시에 처형합니다.",
+    portraitAssetKey: "noxPortrait",
+    accent: "red",
+    unlockRegionId: "neon-foundry",
+    unlockRegionName: "네온 주조장",
+    unlockDescription: "네온 주조장 최초 클리어 시 합류",
+    traitName: "검은 장부",
+    traitDescription: "기본 공격이 미표식 적을 우선 심사합니다. 영장 표식 3개가 완성되면 최근 표적 사이에 판결선이 생성됩니다.",
+    backgroundTitle: "폐쇄 명령을 거부한 심사관",
+    backgroundSummary: "소버린 중앙 전술심사국의 기록관. 민간 구역 말소 명령에서 조작된 증거를 발견한 뒤 원본 장부와 함께 탈주했습니다.",
+    storyEntries: [
+      { title: "검은 장부", text: "삭제된 작전 로그를 복원해 소버린의 전술 승인 체계가 민간 피해를 은폐했다는 증거를 확보했습니다." },
+      { title: "헤이븐-09 합류", text: "네온 주조장 봉쇄선을 무너뜨린 뒤 장부를 헤이븐-09에 인계하고 전술 심사관으로 합류했습니다." },
+    ],
+  },
 });
 
 const ORDERED_CHARACTERS = Object.freeze(Object.values(PLAYABLE_CHARACTERS));
