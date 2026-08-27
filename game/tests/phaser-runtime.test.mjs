@@ -272,7 +272,7 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);
   assert.match(createGame, /playerX: state\?\.player\?\.x/);
   assert.match(scene, /setVirtualMovement\(x: number, y: number\)/);
-  assert.match(scene, /this\.gameInput\.moveX = this\.virtualMovement\.x/);
+  assert.match(scene, /this\.gameInput\.moveX = mobilePatternInput \? 0 : this\.virtualMovement\.x/);
   assert.match(scene, /createSwarmState\(\{ duration: 600, expedition: true, regionId: this\.regionId, combatBonuses: this\.combatBonuses, characterSkillRanks: this\.characterSkillRanks, mainWeaponId: this\.mainWeaponId, characterId: this\.characterId, mikaUnlocked: this\.mikaUnlocked, vesperUnlocked: this\.vesperUnlocked, noxUnlocked: this\.noxUnlocked \}\)/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId, this\.portraitPresentation\)/);
   assert.match(scene, /beat: game\.storyBeats\.victory/);
@@ -490,6 +490,10 @@ test("boss parry and numbered bombs use repeat-safe Shift and authoritative worl
   assert.match(scene, /Phaser\.Input\.Events\.POINTER_DOWN/);
   assert.match(scene, /bombSequence\?\.phase !== "armed"/);
   assert.match(scene, /this\.cameras\.main\.getWorldPoint\(pointer\.x, pointer\.y\)/);
+  assert.match(scene, /const screenX = camera\.x \+ \(finiteNumber\(bomb\?\.x\) - camera\.worldView\.left\) \* camera\.zoom/);
+  assert.match(scene, /const tapRadius = Math\.max\(64, finiteNumber\(bomb\?\.radius, 66\) \* camera\.zoom \+ 26\)/);
+  assert.match(scene, /const mobilePatternInput = this\.portraitPresentation/);
+  assert.match(scene, /this\.gameInput\.moveX = mobilePatternInput \? 0 : this\.virtualMovement\.x/);
   assert.match(engine, /bossMechanicClickX/);
   assert.match(engine, /clicked\.order !== sequence\.expectedOrder/);
   assert.match(engine, /const BOSS_BOMB_SLOW_SCALE = BOSS_PARRY_SLOW_SCALE/);
@@ -502,7 +506,8 @@ test("boss parry and numbered bombs use repeat-safe Shift and authoritative worl
   assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.bossTimedBombPixel, 6, 2\)/);
   assert.match(view, /syncBossTimedBombSprites\(state, time\)/);
   assert.match(view, /if \(retaliating\) column = 5/);
-  assert.match(view, /const bombSize = retaliating \? 196 \+ pulse : expected \? 188 \+ pulse : 170/);
+  assert.match(view, /const portraitMechanicScale = this\.portraitPresentation \? 1\.35 : 1/);
+  assert.match(view, /const bombSize = \(retaliating \? 196 \+ pulse : expected \? 188 \+ pulse : 170\) \* portraitMechanicScale/);
   assert.match(view, /retaliating \? "!" : String\(bomb\?\.order/);
   assert.match(view, /retaliating \? "#ff263f"/);
   assert.match(view, /const bombTargeting = state\?\.boss\?\.bombSequence\?\.phase === "armed"/);

@@ -5,9 +5,10 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 
 test("Phaser combat dock gives HP visual priority and exposes only the five manual input slots", async () => {
-  const [app, styles] = await Promise.all([
+  const [app, styles, tacticalStyles] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/styles/tactical-os.css", root), "utf8"),
   ]);
 
   for (const slot of [
@@ -77,6 +78,12 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   const p0Mobile = styles.slice(styles.lastIndexOf("/* P0/P1 legibility and interaction pass"));
   assert.match(p0Mobile, /\.combat-dock-abilities \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(p0Mobile, /\.combat-ability-copy strong \{[\s\S]*-webkit-line-clamp: 2/);
+
+  const mobileDock = tacticalStyles.slice(tacticalStyles.lastIndexOf("/* MOBILE COMBAT DOCK"));
+  assert.match(mobileDock, /@media \(max-width: 720px\) and \(orientation: portrait\)/);
+  assert.match(mobileDock, /\.combat-dock-abilities \{[\s\S]*repeat\(auto-fit, minmax\(44px, 1fr\)\)/);
+  assert.match(mobileDock, /\.combat-ability-icon kbd,[\s\S]*\.combat-tag-switch kbd,[\s\S]*\.combat-ability-chip \.combat-ability-copy \{[\s\S]*display: none !important/);
+  assert.match(mobileDock, /\.combat-ability-cooldown-badge,[\s\S]*display: grid !important/);
 });
 
 test("level-up focus starts on the dialog, not option one, until real keyboard navigation", async () => {

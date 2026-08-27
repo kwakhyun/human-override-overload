@@ -29,6 +29,10 @@ import { BattleView } from "../view/BattleView";
 
 const FIXED_STEP = 1 / 60;
 
+function finiteNumber(value: unknown, fallback = 0) {
+  return Number.isFinite(value) ? Number(value) : fallback;
+}
+
 function isTerminal(state: any) {
   return state?.status === "victory" || state?.status === "defeat"
     || state?.phase === "victory" || state?.phase === "defeat";
@@ -209,14 +213,16 @@ function applyDebugScene(game: any, debugScene: string | null) {
     game.boss.patternCooldown = 30;
     game.boss.parryWindow = {
       pattern: "multiCharge",
-      life: 1.5,
-      duration: 1.5,
+      // Keep the visual QA scene alive long enough to clear the sortie cinematic
+      // and inspect the portrait-only mechanic layout on a real mobile viewport.
+      life: 30,
+      duration: 30,
       progress: 0,
       key: "Shift",
     };
     game.boss.attackState = "parry:multiCharge";
-    game.boss.attackTimer = 1.5;
-    game.player.invulnerability = 30;
+    game.boss.attackTimer = 30;
+    game.player.invulnerability = 60;
     game.events.length = 0;
   } else if (debugScene === "bombs") {
     game.boss.stage = 2;
@@ -649,7 +655,31 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
       if (this.externallySuspended || this.isRuntimeInterrupted()) return;
       if (this.state?.boss?.bombSequence?.phase !== "armed") return;
       const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-      this.queuedBossMechanicClick = { x: world.x, y: world.y };
+      if (!this.portraitPresentation) {
+        this.queuedBossMechanicClick = { x: world.x, y: world.y };
+        return;
+      }
+
+      const camera = this.cameras.main;
+      const bombs = Array.isArray(this.state?.boss?.bombSequence?.bombs)
+        ? this.state.boss.bombSequence.bombs
+        : [];
+      let nearest: any = null;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+      for (const bomb of bombs) {
+        if (bomb?.defused || bomb?.exploded) continue;
+        const screenX = camera.x + (finiteNumber(bomb?.x) - camera.worldView.left) * camera.zoom;
+        const screenY = camera.y + (finiteNumber(bomb?.y) - camera.worldView.top) * camera.zoom;
+        const distance = Math.hypot(pointer.x - screenX, pointer.y - screenY);
+        const tapRadius = Math.max(64, finiteNumber(bomb?.radius, 66) * camera.zoom + 26);
+        if (distance > tapRadius || distance >= nearestDistance) continue;
+        nearest = bomb;
+        nearestDistance = distance;
+      }
+      pointer.event?.preventDefault?.();
+      this.queuedBossMechanicClick = nearest
+        ? { x: finiteNumber(nearest.x), y: finiteNumber(nearest.y) }
+        : { x: world.x, y: world.y };
     };
     this.input.on(Phaser.Input.Events.POINTER_WHEEL, onWheel);
     this.input.on(Phaser.Input.Events.POINTER_DOWN, onBossMechanicPointerDown);
@@ -734,12 +764,17 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
 
   private captureInput() {
     const cursor = this.cursorKeys;
-    this.gameInput.up = this.virtualDirections.up || Boolean(this.keys.W?.isDown || cursor?.up?.isDown);
-    this.gameInput.down = this.virtualDirections.down || Boolean(this.keys.S?.isDown || cursor?.down?.isDown);
-    this.gameInput.left = this.virtualDirections.left || Boolean(this.keys.A?.isDown || cursor?.left?.isDown);
-    this.gameInput.right = this.virtualDirections.right || Boolean(this.keys.D?.isDown || cursor?.right?.isDown);
-    this.gameInput.moveX = this.virtualMovement.x;
-    this.gameInput.moveY = this.virtualMovement.y;
+    const bombPhase = String(this.state?.boss?.bombSequence?.phase ?? "");
+    const mobilePatternInput = this.portraitPresentation && (
+      finiteNumber(this.state?.boss?.parry?.life) > 0
+      || ["siren", "armed", "retaliation"].includes(bombPhase)
+    );
+    this.gameInput.up = !mobilePatternInput && (this.virtualDirections.up || Boolean(this.keys.W?.isDown || cursor?.up?.isDown));
+    this.gameInput.down = !mobilePatternInput && (this.virtualDirections.down || Boolean(this.keys.S?.isDown || cursor?.down?.isDown));
+    this.gameInput.left = !mobilePatternInput && (this.virtualDirections.left || Boolean(this.keys.A?.isDown || cursor?.left?.isDown));
+    this.gameInput.right = !mobilePatternInput && (this.virtualDirections.right || Boolean(this.keys.D?.isDown || cursor?.right?.isDown));
+    this.gameInput.moveX = mobilePatternInput ? 0 : this.virtualMovement.x;
+    this.gameInput.moveY = mobilePatternInput ? 0 : this.virtualMovement.y;
     if (this.queuedDash || Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) this.gameInput.dashPressed = true;
     if (this.queuedActiveAbilities.empPulse) this.gameInput.empPulsePressed = true;
     if (this.queuedActiveAbilities.aegisWard) this.gameInput.aegisWardPressed = true;

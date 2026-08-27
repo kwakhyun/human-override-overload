@@ -1409,13 +1409,20 @@ const FLOATING_JOYSTICK_BLOCKED_SELECTOR = [
   ".combat-tutorial-layer",
 ].join(",");
 
-function FloatingTouchJoystick({ surfaceRef, onMove }) {
+function FloatingTouchJoystick({ surfaceRef, onMove, disabled = false }) {
   const joystickRef = useRef(null);
 
   useEffect(() => {
     const surface = surfaceRef.current;
     const joystick = joystickRef.current;
     if (!surface || !joystick) return undefined;
+    if (disabled) {
+      joystick.classList.remove("is-active");
+      joystick.style.setProperty("--joystick-knob-x", "0px");
+      joystick.style.setProperty("--joystick-knob-y", "0px");
+      onMove(0, 0);
+      return undefined;
+    }
     const pointer = { id: null, startX: 0, startY: 0 };
     const radius = 58;
     const deadzone = 0.12;
@@ -1492,10 +1499,10 @@ function FloatingTouchJoystick({ surfaceRef, onMove }) {
       document.removeEventListener("visibilitychange", cancel);
       onMove(0, 0);
     };
-  }, [onMove, surfaceRef]);
+  }, [disabled, onMove, surfaceRef]);
 
   return (
-    <div ref={joystickRef} className="floating-touch-joystick" aria-hidden="true">
+    <div ref={joystickRef} className={`floating-touch-joystick${disabled ? " is-disabled" : ""}`} aria-hidden="true">
       <span className="floating-touch-joystick-ring" />
       <i className="floating-touch-joystick-knob" />
     </div>
@@ -2415,6 +2422,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
   const bombSlowMotion = bombPhase === "siren" || bombPhase === "armed";
   const bombTargeting = bombPhase === "armed";
   const bombRetaliation = bombPhase === "retaliation";
+  const mobileBossPatternActive = parryActive || bombSlowMotion || bombRetaliation;
   const bombArmorActive = Boolean(hud?.boss?.bombArmor?.active);
   const hudAutoFocusEligible = Number(hud?.time || 0) >= 6 || Number(hud?.kills || 0) > 0;
   const hudFocusMode = Boolean(
@@ -2448,7 +2456,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
 
   return (
     <main
-      className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}${bombSlowMotion ? " is-bomb-slow-motion" : ""}${bombTargeting ? " is-bomb-targeting" : ""}${bombRetaliation ? " is-bomb-retaliation" : ""}${hudFocusMode ? " is-hud-focus" : ""}${isCriticalHealth ? " is-low-health" : ""}`}
+      className={`expedition-game is-phaser-runtime${parryActive ? " is-parry-window" : ""}${bossSiren ? " is-boss-siren" : ""}${bombSlowMotion ? " is-bomb-slow-motion" : ""}${bombTargeting ? " is-bomb-targeting" : ""}${bombRetaliation ? " is-bomb-retaliation" : ""}${mobileBossPatternActive ? " is-mobile-boss-pattern" : ""}${hudFocusMode ? " is-hud-focus" : ""}${isCriticalHealth ? " is-low-health" : ""}`}
       aria-hidden={preparing ? "true" : undefined}
       inert={preparing}
     >
@@ -2544,9 +2552,19 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
               <button
                 className="boss-parry-prompt"
                 type="button"
-                onClick={() => controllerRef.current?.parry?.()}
+                onPointerDown={(event) => {
+                  if (event.pointerType === "mouse") return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  triggerTouchFeedback(18, audioSettings?.hapticsEnabled !== false);
+                  controllerRef.current?.parry?.();
+                }}
+                onClick={(event) => {
+                  if (event.detail !== 0 && event.nativeEvent?.pointerType !== "mouse") return;
+                  controllerRef.current?.parry?.();
+                }}
                 style={{ "--parry-progress": `${Math.round(parryProgress * 360)}deg` }}
-                aria-label="지금 Shift를 눌러 보스 공격 패링"
+                aria-label="지금 보스 공격 패링"
               >
                 <span><kbd>SHIFT</kbd><strong>지금 패링</strong></span>
                 <small>공격이 닿기 전에 반사</small>
@@ -2579,7 +2597,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
               <span>{mainWeaponId === "beam-sword" ? "포인터 방향 · 빔 소드 자동 베기" : "포인터로 조준 · 소총 자동 발사"}</span>
             </div>
             <div className="touch-controls expedition-touch-controls" aria-label="화면 어디서나 드래그하여 이동">
-              <FloatingTouchJoystick surfaceRef={frameRef} onMove={setTouchMovement} />
+              <FloatingTouchJoystick surfaceRef={frameRef} onMove={setTouchMovement} disabled={mobileBossPatternActive} />
               <span className="portrait-touch-hint">빈 곳을 누른 채 드래그해 이동 · 가까운 적 자동 조준</span>
             </div>
             <NarrativePanel dialogue={dialogue} assets={assets} region={region} bossStage={hud?.boss?.stage} characterId={hud?.player?.characterId || characterId} onAdvance={advanceDialogue} />
@@ -3288,16 +3306,17 @@ export function App() {
 
   const beginSortieCinematic = useCallback((regionId) => {
     const isRepeatSortie = Boolean(activeSlot?.completedRegionIds?.includes(regionId));
+    const bypassCinematic = Boolean(debugGuideBypass);
     setActiveRegionId(regionId);
-    setRepeatSortie(isRepeatSortie);
-    setSortieVideoComplete(isRepeatSortie);
+    setRepeatSortie(isRepeatSortie || bypassCinematic);
+    setSortieVideoComplete(isRepeatSortie || bypassCinematic);
     setCombatRuntimeReady(false);
     setCombatLoadProgress(0);
     const bgm = bgmRef.current;
     if (bgm) bgm.pause();
     const region = getRegion(regionId) || getRegion(DEFAULT_REGION_ID);
     prepareSurface("출격 영상과 작전 표식 준비 중", [region?.assets?.dom?.thumbnail?.path], () => setScreen("sortie"));
-  }, [activeSlot, prepareSurface]);
+  }, [activeSlot, debugGuideBypass, prepareSurface]);
 
   const enterCombat = useCallback(() => {
     setSortieVideoComplete(true);

@@ -22,7 +22,14 @@ test("portrait touch runtime uses the native viewport, a tactical camera, and de
   assert.match(scene, /private readonly mobileAutoAim: boolean/);
   assert.match(scene, /private readonly portraitPresentation: boolean/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId, this\.portraitPresentation\)/);
-  assert.match(view, /bossStageActive[\s\S]*clamp\(0\.66 \* this\.userZoomFactor, 0\.6, 0\.78\)[\s\S]*clamp\(0\.34 \* this\.userZoomFactor, 0\.3, 0\.48\)/);
+  assert.match(view, /resolvePortraitBossCameraFocus/);
+  assert.match(view, /const safeWidth = Math\.max\(1, finite\(viewportWidth, WIDTH\) \* 0\.82\)/);
+  assert.match(view, /const safeHeight = Math\.max\(1, finite\(viewportHeight, HEIGHT\) \* \(mechanicActive \? 0\.6 : 0\.68\)\)/);
+  assert.match(view, /zoom: clamp\(fittedZoom, 0\.24, 0\.72\)/);
+  assert.match(view, /portraitBossFocus\?\.mechanicActive/);
+  assert.match(view, /const portraitMechanicScale = this\.portraitPresentation \? 1\.35 : 1/);
+  assert.match(scene, /const tapRadius = Math\.max\(64, finiteNumber\(bomb\?\.radius, 66\) \* camera\.zoom \+ 26\)/);
+  assert.match(scene, /const mobilePatternInput = this\.portraitPresentation/);
   assert.match(scene, /enemy\.dead \|\| enemy\.hp <= 0 \|\| enemy\.spawnDelay > 0/);
   assert.match(scene, /distanceSq = \(enemy\.x - player\.x\) \*\* 2 \+ \(enemy\.y - player\.y\) \*\* 2/);
   assert.match(scene, /if \(target\) setSwarmAim\(this\.state, target\.x, target\.y\)/);
@@ -43,6 +50,8 @@ test("portrait combat owns the full safe viewport and exposes a touch-anywhere f
   assert.match(app, /const deadzone = 0\.12/);
   assert.match(app, /surface\.setPointerCapture\?\.\(event\.pointerId\)/);
   assert.match(app, /onMove\(unitX \* activeMagnitude, unitY \* activeMagnitude, event\)/);
+  assert.match(app, /disabled=\{mobileBossPatternActive\}/);
+  assert.match(app, /onPointerDown=\{\(event\) => \{[\s\S]*controllerRef\.current\?\.parry\?\.\(\)/);
   assert.match(app, /빈 곳을 누른 채 드래그해 이동 · 가까운 적 자동 조준/);
   assert.match(html, /viewport-fit=cover/);
   assert.match(styles, /\.expedition-canvas-frame \{[\s\S]*touch-action: none;[\s\S]*overscroll-behavior: none/);
@@ -51,6 +60,9 @@ test("portrait combat owns the full safe viewport and exposes a touch-anywhere f
   assert.match(portrait, /\.expedition-canvas-frame \{[\s\S]*width: 100vw;[\s\S]*height: 100dvh/);
   assert.match(portrait, /\.expedition-combat-dock \{[\s\S]*bottom: max\(8px, env\(safe-area-inset-bottom\)\)/);
   assert.match(tacticalStyles, /MOBILE SINGLE-VIEW COMMAND CONTRACT/);
+  assert.match(tacticalStyles, /MOBILE BOSS PATTERN MODE/);
+  assert.match(tacticalStyles, /\.expedition-game\.is-mobile-boss-pattern \.route-minimap/);
+  assert.match(tacticalStyles, /\.expedition-game \.boss-parry-prompt \{[\s\S]*min-height: 72px/);
   assert.match(tacticalStyles, /\.reward-backdrop \.reward-options \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(portrait, /\.narrative-panel > button \{ min-height: 50px/);
   assert.match(portrait, /\.region-sortie-command-footer \.region-sortie-launch \{ width: 100%; min-height: 62px/);

@@ -170,6 +170,64 @@ function clamp01(value: number) {
   return clamp(value, 0, 1);
 }
 
+type PortraitBossCameraFocus = Readonly<{
+  x: number;
+  y: number;
+  zoom: number;
+  mechanicActive: boolean;
+}>;
+
+function resolvePortraitBossCameraFocus(
+  state: any,
+  viewportWidth: number,
+  viewportHeight: number,
+  userZoomFactor: number,
+): PortraitBossCameraFocus | null {
+  const player = state?.player;
+  const boss = state?.boss;
+  if (!player || !boss) return null;
+
+  let minX = finite(player.x) - 96;
+  let maxX = finite(player.x) + 96;
+  let minY = finite(player.y) - 96;
+  let maxY = finite(player.y) + 96;
+  const expand = (x: number, y: number, radius: number) => {
+    minX = Math.min(minX, x - radius);
+    maxX = Math.max(maxX, x + radius);
+    minY = Math.min(minY, y - radius);
+    maxY = Math.max(maxY, y + radius);
+  };
+
+  const bossStage = clamp(Math.floor(finite(boss.stage, 1)), 1, 3);
+  const bossVisualRadius = (bossStage === 3 ? 640 : bossStage === 2 ? 560 : 480) * 0.5 + 72;
+  expand(finite(boss.x), finite(boss.y), bossVisualRadius);
+
+  const bombSequence = boss?.bombSequence;
+  const bombPhase = String(bombSequence?.phase ?? "");
+  const bombsActive = ["siren", "armed", "retaliation"].includes(bombPhase);
+  if (bombsActive && Array.isArray(bombSequence?.bombs)) {
+    for (const bomb of bombSequence.bombs) {
+      if (bomb?.exploded) continue;
+      expand(finite(bomb?.x), finite(bomb?.y), Math.max(104, finite(bomb?.radius, 66) + 38));
+    }
+  }
+
+  const parryActive = finite(boss?.parry?.life) > 0;
+  const mechanicActive = parryActive || bombsActive;
+  const safeWidth = Math.max(1, finite(viewportWidth, WIDTH) * 0.82);
+  const safeHeight = Math.max(1, finite(viewportHeight, HEIGHT) * (mechanicActive ? 0.6 : 0.68));
+  const focusWidth = Math.max(360, maxX - minX);
+  const focusHeight = Math.max(520, maxY - minY);
+  const baseZoom = 0.66 * userZoomFactor;
+  const fittedZoom = Math.min(baseZoom, safeWidth / focusWidth, safeHeight / focusHeight);
+  return {
+    x: clamp((minX + maxX) * 0.5, 0, WORLD_WIDTH),
+    y: clamp((minY + maxY) * 0.5, 0, WORLD_HEIGHT),
+    zoom: clamp(fittedZoom, 0.24, 0.72),
+    mechanicActive,
+  };
+}
+
 function ratio(entity: any) {
   return clamp01(finite(entity?.hp, 1) / Math.max(1, finite(entity?.maxHp, 1)));
 }
@@ -821,17 +879,29 @@ export class BattleView {
     const engineZoom = finite(camera.zoom, 1.08);
     // The simulation still owns the camera target, but portrait phones use a
     // presentation-only tactical lens. With a native portrait viewport these
-    // values reveal roughly 1,060x2,480 world units in a 360×844 arena view
-    // and 590x1,280 in boss rooms instead of magnifying the center 16:9 crop.
+    // values reveal roughly 1,060x2,480 world units in a 360×844 arena view.
+    // Boss rooms dynamically fit the player, boss silhouette, and every live
+    // mechanic target rather than magnifying the center of a 16:9 crop.
+    const portraitBossFocus = this.portraitPresentation && bossStageActive
+      ? resolvePortraitBossCameraFocus(
+        state,
+        Math.max(1, this.mainCamera.width),
+        Math.max(1, this.mainCamera.height),
+        this.userZoomFactor,
+      )
+      : null;
     const targetZoom = this.portraitPresentation
       ? bossStageActive
-        ? clamp(0.66 * this.userZoomFactor, 0.6, 0.78)
+        ? portraitBossFocus?.zoom ?? clamp(0.66 * this.userZoomFactor, 0.6, 0.78)
         : clamp(0.34 * this.userZoomFactor, 0.3, 0.48)
       : bossStageActive
         ? clamp(engineZoom * this.userZoomFactor, 0.68, 0.98)
         : clamp(engineZoom * this.userZoomFactor, 0.84, 1.42);
-    const targetX = finite(camera.x, bossStageActive ? WORLD_WIDTH / 2 : EXPEDITION_WORLD_WIDTH / 2);
-    const targetY = finite(camera.y, bossStageActive ? WORLD_HEIGHT / 2 : EXPEDITION_WORLD_HEIGHT / 2);
+    const targetX = portraitBossFocus?.x
+      ?? finite(camera.x, bossStageActive ? WORLD_WIDTH / 2 : EXPEDITION_WORLD_WIDTH / 2);
+    const targetY = portraitBossFocus?.y
+      ?? finite(camera.y, bossStageActive ? WORLD_HEIGHT / 2 : EXPEDITION_WORLD_HEIGHT / 2);
+    if (portraitBossFocus?.mechanicActive) this.bossRevealStartedAt = -1;
     if (this.bossRevealStartedAt >= 0) {
       const linear = clamp01((this.scene.time.now - this.bossRevealStartedAt) / 1100);
       const eased = linear * linear * (3 - 2 * linear);
@@ -1601,7 +1671,8 @@ export class BattleView {
           column = urgency > 0.72 ? 3 - blink : 1 + blink;
         }
         if (retaliating) column = 5;
-        const bombSize = retaliating ? 196 + pulse : expected ? 188 + pulse : 170;
+        const portraitMechanicScale = this.portraitPresentation ? 1.35 : 1;
+        const bombSize = (retaliating ? 196 + pulse : expected ? 188 + pulse : 170) * portraitMechanicScale;
         setAtlasFrame(image, column, 0);
         image
           .setPosition(finite(bomb?.x), finite(bomb?.y))
@@ -1618,6 +1689,7 @@ export class BattleView {
           .setColor(defused ? "#cffff0" : expected ? "#031014" : "#ffffff")
           .setBackgroundColor(defused ? "#0b4538" : expected ? "#eaffff" : retaliating ? "#ff263f" : "#25060d")
           .setStroke(defused ? "#05221c" : expected ? "#ffffff" : "#020609", expected ? 4 : 10)
+          .setScale(this.portraitPresentation ? 1.32 : 1)
           .setAlpha(defused ? 0.74 : 1)
           .setVisible(true);
         cursor += 1;
