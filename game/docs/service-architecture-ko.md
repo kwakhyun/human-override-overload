@@ -32,7 +32,7 @@ Cloudflare Sites Worker
 | `/api/v1/session` | POST | 브라우저별 익명 프로필과 일회 표시 bearer token 발급 |
 | `/api/v1/save` | GET | 현재 revision과 캠페인 문서 조회 |
 | `/api/v1/save` | PUT | `expectedRevision` 기반 낙관적 저장 |
-| `/cdn/assets/overload/*` | GET/HEAD | Cache API → R2 → `/assets/overload/*` Sites 정적 원본 순서로 조회 |
+| `/cdn/assets/overload/*` | GET/HEAD | R2 → `/assets/overload/*` Sites 정적 원본 순서로 조회 |
 
 API 쓰기는 same-origin만 허용하며 저장 본문은 512KiB로 제한합니다. bearer token 원문은 브라우저에만
 있고 D1에는 SHA-256 해시만 저장합니다. 저장 JSON은 v2와 정확히 세 슬롯인지 서버에서 다시
@@ -57,7 +57,7 @@ API 쓰기는 same-origin만 허용하며 저장 본문은 512KiB로 제한합�
 R2 키는 `site-assets/<release-version>/assets/overload/...` 형식입니다. 프로덕션 빌드는 소스의
 `/assets/overload/` 참조를 Worker가 소유하는 `/cdn/assets/overload/` namespace로 변환합니다. 첫 요청은
 해당 CDN 경로를 실제 Sites 정적 원본 경로로 매핑해 응답하면서 비동기로 R2에 복사하고, 이후
-read-through 캐시로 동작합니다. Cache API가 지역 Edge에서 먼저 응답합니다. Range 요청은 영상·음원
+R2 read-through 원본으로 동작합니다. 응답의 장기 캐시 헤더로 Cloudflare CDN 캐시도 활용합니다. Range 요청은 영상·음원
 seek 호환성을 위해 R2를 우회하되 같은 매핑을 거쳐 Sites 원본에 그대로 전달합니다. 새 에셋을 같은 URL로 교체할 때는 Worker의
 `SERVICE_VERSION`과 `R2_CACHE_VERSION`을 함께 올려 이전 객체와 분리합니다.
 
