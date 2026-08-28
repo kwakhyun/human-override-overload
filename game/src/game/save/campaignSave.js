@@ -38,6 +38,7 @@ import {
 export const CAMPAIGN_SAVE_VERSION = 2;
 export const CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v2";
 export const LEGACY_CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v1";
+export const CAMPAIGN_SAVE_EVENT = "human-override:campaign-saved";
 export const CAMPAIGN_SAVE_SLOT_COUNT = 3;
 export const CAMPAIGN_SLOT_PROGRESSION_FIELD = "progression";
 export const CAMPAIGN_POST_VICTORY_STEPS = Object.freeze(["recruit", "vesper-recruit", "nox-recruit", "sword-guide", "return"]);
@@ -277,10 +278,17 @@ export function loadCampaign(storage = resolveBrowserStorage()) {
   }
 }
 
-export function saveCampaign(campaign, storage = resolveBrowserStorage()) {
+export function saveCampaign(campaign, storage = resolveBrowserStorage(), options = {}) {
   if (!storage || typeof storage.setItem !== "function") return false;
   try {
-    storage.setItem(CAMPAIGN_SAVE_KEY, JSON.stringify(sanitizeCampaign(campaign)));
+    const sanitized = sanitizeCampaign(campaign);
+    storage.setItem(CAMPAIGN_SAVE_KEY, JSON.stringify(sanitized));
+    if (options.notify !== false
+      && storage === resolveBrowserStorage()
+      && typeof globalThis?.dispatchEvent === "function"
+      && typeof globalThis?.CustomEvent === "function") {
+      globalThis.dispatchEvent(new CustomEvent(CAMPAIGN_SAVE_EVENT, { detail: { campaign: sanitized } }));
+    }
     return true;
   } catch {
     return false;

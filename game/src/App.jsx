@@ -92,6 +92,7 @@ import {
   setCampaignCharacter,
   setCampaignFlightPlan,
 } from "./game/save/campaignSave.js";
+import { startCampaignCloudSync } from "./game/save/cloudCampaignSync.js";
 import {
   AbilityGuideScreen,
   DefenseStageSelectScreen,
@@ -2943,6 +2944,11 @@ export function App() {
   const bgmRef = useRef(null);
   const transitionTokenRef = useRef(0);
   const sfx = useMemo(() => createSfxEngine(), []);
+
+  useEffect(() => startCampaignCloudSync({
+    onCampaign: (nextCampaign) => setCampaign(nextCampaign),
+  }), []);
+
   const regions = useMemo(() => getCampaignRegions(), []);
   const defenseStages = useMemo(() => getDefenseStages(), []);
   const regionClusters = useMemo(() => getRegionClusters(), []);

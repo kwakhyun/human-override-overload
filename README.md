@@ -5,6 +5,7 @@
 통치 AI **SOVEREIGN**이 장악한 세계에서, 이동 기지 **HAVEN-09**의 전투원 **AEGIS**, **MIKA**, **VESPER**가 기계 군단을 돌파하는 Phaser 기반 탑다운 액션 서바이버입니다. 6개 캠페인 구역, 캐릭터·무기별 전투 체계, 보스 패링·시한폭탄 기믹, 스킬 해금 성장과 별도 타워 디펜스 모드를 한 프로젝트에 담았습니다.
 
 - [상세 런타임 문서](game/README.md)
+- [서비스 아키텍처·운영 가이드](game/docs/service-architecture-ko.md)
 - [전투 콘텐츠 기획 기준선](game/docs/project/content-design-baseline-ko.md)
 - [게임 소개·플레이 가이드](game/docs/project/game-guide-ko.md)
 - [AI 활용 기술 문서](game/docs/project/ai-usage-report-ko.md)
@@ -77,7 +78,9 @@ npm run build
 - CINEMATIC / BALANCED / PERFORMANCE 자동 품질 조정
 - 플레이어·적·동료·지역 보스·방어 시설의 전용 스프라이트
 - 지역별 지연 로딩, 출격 영상 중 백그라운드 전투 준비, 저사양 경량 텍스처
-- 3개 저장 슬롯, 캐릭터·무기 선택, 연구·장비·증강 영구 성장
+- Cloudflare Worker API + D1 리비전 저장 + R2 런타임 에셋 원본 캐시
+- 로컬 오프라인 복제본과 클라우드를 슬롯별 최신 시각으로 병합하는 3개 저장 슬롯
+- 캐릭터·무기 선택, 연구·장비·증강 영구 성장
 
 ## AI 활용 제작
 

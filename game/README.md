@@ -541,9 +541,15 @@ npm run build
 npm run test:sites
 ```
 
-게임 로직은 브라우저에서 로컬로 실행되며 플레이를 위한 API 키나 별도 서버가 필요하지
-않습니다. Sites 패키징 구조를 유지해 build 결과에 `dist/client/index.html`,
-`dist/server/index.js`, `dist/.openai/hosting.json`이 생성됩니다.
+전투와 디펜스 판정은 계속 브라우저의 결정론 엔진에서 실행되므로 플레이에 별도 API 키가
+필요하지 않습니다. 공개 빌드는 같은 Cloudflare Worker에서 정적 앱과 `/api/v1` 익명 클라우드
+세이브 API를 제공하고, D1에는 토큰 해시·리비전 저장을, R2에는 `/assets/overload/` 런타임
+에셋의 read-through 원본 캐시를 둡니다. 네트워크가 끊겨도 로컬 3슬롯으로 플레이하며 재연결 시
+슬롯별 `updatedAt`이 최신인 기록을 병합합니다. 상세 구조와 운영 절차는
+[`docs/service-architecture-ko.md`](docs/service-architecture-ko.md)를 참고하세요.
+
+Sites 패키징 구조를 유지해 build 결과에 `dist/client/index.html`,
+`dist/server/index.js`, `dist/.openai/hosting.json`, `dist/.openai/drizzle/`이 생성됩니다.
 
 ## 런타임 구조
 
@@ -554,6 +560,9 @@ npm run test:sites
 - `src/game/content/baseUpgrades.js`: HANA 연구·ILYA 장비 정의, 랭크와 비용
 - `src/game/progression/baseProgression.js`: 재화·구매 검증·전투 보너스 계산
 - `src/game/save/campaignSave.js`: v1 마이그레이션을 포함한 v2 3슬롯 저장과 안전한 복구
+- `src/game/save/cloudCampaignSync.js`: 익명 세션, 슬롯별 병합, 오프라인 재시도, 낙관적 충돌 처리
+- `worker/index.js`: 정적 SPA, `/api/v1` 세이브 API, R2 read-through 캐시를 제공하는 단일 Edge Worker
+- `db/schema.ts`, `drizzle/`: D1 스키마와 배포 마이그레이션
 - `src/ui/campaign/CampaignScreens.jsx`: 저장 슬롯, 기지, NPC 대화, RHEA 수동 기술 가이드, 장비·연구, 비행선 지역 선택
 - `src/defense/content.js`: 3개 방어 스테이지·4종 시설·해금·보상 정의
 - `src/defense/engine.js`: 렌더러와 분리된 60Hz 타워 디펜스 판정 소스 오브 트루스

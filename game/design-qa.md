@@ -1169,3 +1169,13 @@ final result: passed
 - Release gate: the previous 323/323, typecheck, production build, Sites 4/4, and browser checks are a pre-iteration checkpoint. This iteration must not be marked passed until the updated full suite, build, PDF render/visual inspection, desktop/mobile browser QA, push, and public deployment have all completed.
 
 final result: pending release verification
+
+### Iteration 52 — edge cloud save, D1 persistence, and R2 asset delivery — 2026-08-29
+
+- Service boundary: deterministic combat remains browser-authoritative while a same-origin Cloudflare Worker exposes only health, anonymous session, and revisioned campaign-save endpoints. Local storage remains the immediate offline save and D1 is its durable cloud replica.
+- Persistence safety: cloud credentials are random device tokens stored only in the browser and only their SHA-256 hashes reach D1. Three save slots merge independently by `updatedAt`, writes use optimistic revisions, stale clients receive `409 REVISION_CONFLICT`, and payloads are capped at 512 KiB.
+- Asset delivery: `/assets/overload/*` uses the edge Cache API plus an R2 read-through origin cache. Range requests bypass R2 so video/audio seeking remains correct; cache misses continue to fall back to the existing Sites asset origin while R2 warms asynchronously.
+- Operations: Drizzle owns the SQLite/D1 schema and generated migration, the production build packages migrations under `dist/.openai/drizzle`, and `.openai/hosting.json` binds `DB` and `FILES` without committing credentials.
+- Verification: the full gameplay suite passes 350/350, TypeScript passes, the Vite production build completes, the Worker/D1/R2 packaging suite passes 6/6, and the production dependency audit reports zero vulnerabilities. Public deployment health and persistence smoke checks are performed as the release action against this exact commit.
+
+final result: passed
