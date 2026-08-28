@@ -106,8 +106,9 @@ Phaser View / React HUD
 전투 상태를 서버 왕복에 묶지 않고 저장과 대용량 런타임 에셋만 Edge로 분리했습니다. 따라서 API나
 네트워크 장애가 프레임·판정·플레이 가능 여부를 바꾸지 않습니다. D1 저장은 익명 bearer token의
 SHA-256 해시, revision, checksum을 사용하고, 충돌 시 세 슬롯을 각각 최신 `updatedAt` 기준으로
-병합합니다. R2는 Sites 정적 원본의 read-through 계층이며 영상·음원 Range 요청은 원본으로
-우회합니다. 운영·확장 판단은 `docs/service-architecture-ko.md`에 기록했습니다.
+병합합니다. R2는 Worker 전용 `/cdn/` namespace에서 Sites 정적 원본을 읽는 read-through 계층이며
+영상·음원 Range 요청은 경로만 원본에 매핑해 직접 전달합니다. 운영·확장 판단은
+`docs/service-architecture-ko.md`에 기록했습니다.
 
 ### 캐릭터별 스킬 해금
 

@@ -543,8 +543,9 @@ npm run test:sites
 
 전투와 디펜스 판정은 계속 브라우저의 결정론 엔진에서 실행되므로 플레이에 별도 API 키가
 필요하지 않습니다. 공개 빌드는 같은 Cloudflare Worker에서 정적 앱과 `/api/v1` 익명 클라우드
-세이브 API를 제공하고, D1에는 토큰 해시·리비전 저장을, R2에는 `/assets/overload/` 런타임
-에셋의 read-through 원본 캐시를 둡니다. 네트워크가 끊겨도 로컬 3슬롯으로 플레이하며 재연결 시
+세이브 API를 제공하고, D1에는 토큰 해시·리비전 저장을, R2에는 `/cdn/assets/overload/` 전용
+런타임 경로의 read-through 원본 캐시를 둡니다. 빌드 시 원본 `/assets/overload/` 참조만 이 전용
+경로로 변환해 Sites의 정적 우선 라우팅과 충돌하지 않습니다. 네트워크가 끊겨도 로컬 3슬롯으로 플레이하며 재연결 시
 슬롯별 `updatedAt`이 최신인 기록을 병합합니다. 상세 구조와 운영 절차는
 [`docs/service-architecture-ko.md`](docs/service-architecture-ko.md)를 참고하세요.
 

@@ -1,6 +1,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+function routeRuntimeAssetsThroughEdge() {
+  return {
+    name: "human-override-r2-runtime-assets",
+    enforce: "pre",
+    transform(code, id) {
+      const normalized = id.replaceAll("\\", "/");
+      if (!normalized.includes("/src/") || !code.includes("assets/overload/")) return null;
+      const routed = code.replace(/(["'`])(?:\.\/|\/)assets\/overload\//g, "$1/cdn/assets/overload/");
+      return routed === code ? null : { code: routed, map: null };
+    },
+  };
+}
+
 function manualChunks(id) {
   const normalized = id.replaceAll("\\", "/");
   if (normalized.includes("/node_modules/phaser/")) return "phaser-vendor";
@@ -14,7 +27,7 @@ function manualChunks(id) {
   return undefined;
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   base: "./",
   build: {
     outDir: "dist/client",
@@ -33,5 +46,8 @@ export default defineConfig({
       clientFiles: ["./src/main.jsx"],
     },
   },
-  plugins: [react()],
-});
+  plugins: [
+    ...(command === "build" ? [routeRuntimeAssetsThroughEdge()] : []),
+    react(),
+  ],
+}));

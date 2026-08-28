@@ -181,15 +181,16 @@ test("uses R2 as a read-through origin cache for overload runtime assets", async
   let staticReads = 0;
   const env = {
     FILES,
-    ASSETS: {
-      fetch: async () => {
-        staticReads += 1;
-        return new Response("runtime-asset", { headers: { "content-type": "image/png" } });
-      },
-    },
+    ASSETS: {},
   };
   const ctx = { waitUntil(promise) { pending.push(promise); } };
-  const request = new Request("https://example.test/assets/overload/vfx/hit.png");
+  const originPaths = [];
+  env.ASSETS.fetch = async (request) => {
+    staticReads += 1;
+    originPaths.push(new URL(request.url).pathname);
+    return new Response("runtime-asset", { headers: { "content-type": "image/png" } });
+  };
+  const request = new Request("https://example.test/cdn/assets/overload/vfx/hit.png");
   const first = await worker.fetch(request, env, ctx);
   assert.equal(first.headers.get("x-human-override-asset-source"), "sites");
   await Promise.all(pending);
@@ -198,6 +199,30 @@ test("uses R2 as a read-through origin cache for overload runtime assets", async
   assert.equal(second.headers.get("x-human-override-asset-source"), "r2");
   assert.equal(await second.text(), "runtime-asset");
   assert.equal(staticReads, 1);
+  assert.deepEqual(originPaths, ["/assets/overload/vfx/hit.png"]);
+});
+
+test("maps ranged CDN requests to the packaged Sites asset", async () => {
+  const calls = [];
+  const response = await worker.fetch(new Request(
+    "https://example.test/cdn/assets/overload/audio/dispatch.mp3",
+    { headers: { range: "bytes=0-99" } },
+  ), {
+    FILES: {},
+    ASSETS: {
+      fetch: async (request) => {
+        calls.push({ pathname: new URL(request.url).pathname, range: request.headers.get("range") });
+        return new Response("partial", {
+          status: 206,
+          headers: { "content-range": "bytes 0-6/7" },
+        });
+      },
+    },
+  });
+
+  assert.equal(response.status, 206);
+  assert.equal(response.headers.get("content-range"), "bytes 0-6/7");
+  assert.deepEqual(calls, [{ pathname: "/assets/overload/audio/dispatch.mp3", range: "bytes=0-99" }]);
 });
 
 test("emits the files required by Sites packaging", async () => {

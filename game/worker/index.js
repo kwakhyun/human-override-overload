@@ -1,10 +1,11 @@
 const API_PREFIX = "/api/v1";
-const SERVICE_VERSION = "2026-08-29.1";
+const SERVICE_VERSION = "2026-08-29.2";
 const CAMPAIGN_VERSION = 2;
 const CAMPAIGN_SLOT_COUNT = 3;
 const MAX_SAVE_BYTES = 512 * 1024;
-const R2_CACHE_VERSION = "2026-08-29.1";
-const RUNTIME_ASSET_PREFIX = "/assets/overload/";
+const R2_CACHE_VERSION = "2026-08-29.2";
+const RUNTIME_CDN_PREFIX = "/cdn/assets/overload/";
+const RUNTIME_ORIGIN_PREFIX = "/assets/overload/";
 const RUNTIME_CACHE_CONTROL = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800";
 
 const JSON_HEADERS = Object.freeze({
@@ -195,8 +196,8 @@ async function handleApi(request, env) {
 
 function isRuntimeAssetRequest(request, env) {
   const url = new URL(request.url);
-  return Boolean(env.FILES && ["GET", "HEAD"].includes(request.method)
-    && !request.headers.has("range") && url.pathname.startsWith(RUNTIME_ASSET_PREFIX));
+  return Boolean(env.ASSETS && ["GET", "HEAD"].includes(request.method)
+    && url.pathname.startsWith(RUNTIME_CDN_PREFIX));
 }
 
 function r2Headers(object, source) {
@@ -217,12 +218,22 @@ function queueBackground(ctx, promise) {
 
 async function cacheRuntimeAsset(request, env, ctx) {
   const url = new URL(request.url);
+  const originUrl = new URL(url);
+  originUrl.pathname = `${RUNTIME_ORIGIN_PREFIX}${url.pathname.slice(RUNTIME_CDN_PREFIX.length)}`;
+  const originRequest = new Request(originUrl, request);
+
+  // Byte ranges must stay on the Sites static origin so media seeking keeps
+  // its native 206/Content-Range behavior. The /cdn namespace is still mapped
+  // back to the real packaged asset path before that request is made.
+  if (request.headers.has("range")) return env.ASSETS.fetch(originRequest);
+
+  if (!env.FILES) return env.ASSETS.fetch(originRequest);
   const cache = globalThis.caches?.default;
   if (request.method === "GET" && cache) {
     const cached = await cache.match(request);
     if (cached) return cached;
   }
-  const objectKey = `site-assets/${R2_CACHE_VERSION}${url.pathname}`;
+  const objectKey = `site-assets/${R2_CACHE_VERSION}${originUrl.pathname}`;
   const object = request.method === "HEAD" ? await env.FILES.head(objectKey) : await env.FILES.get(objectKey);
   if (object) {
     const response = new Response(request.method === "HEAD" ? null : object.body, {
@@ -232,7 +243,7 @@ async function cacheRuntimeAsset(request, env, ctx) {
     return response;
   }
 
-  const response = await env.ASSETS.fetch(request);
+  const response = await env.ASSETS.fetch(originRequest);
   if (!response.ok || request.method !== "GET") return response;
   const contentType = response.headers.get("content-type") || "application/octet-stream";
   const contentLength = Number(response.headers.get("content-length") || 0);
