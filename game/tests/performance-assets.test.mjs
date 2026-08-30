@@ -39,8 +39,8 @@ const PERFORMANCE_PNG_SPECS = Object.freeze([
 ]);
 
 test("PERFORMANCE selects lighter paths without changing stable Phaser texture keys", async () => {
-  const full = manifest.getGameAssetsForRegion("wrong-engine-core", "full");
-  const performance = manifest.getGameAssetsForRegion("wrong-engine-core", "performance");
+  const full = manifest.getGameAssetsForRegion("wrong-engine-core", "full", "pulse-rifle", ["aegis", "mika"]);
+  const performance = manifest.getGameAssetsForRegion("wrong-engine-core", "performance", "pulse-rifle", ["aegis", "mika"]);
   assert.deepEqual(performance.map((asset) => asset.key), full.map((asset) => asset.key));
 
   const fullByKey = new Map(full.map((asset) => [asset.key, asset]));
@@ -75,6 +75,34 @@ test("PERFORMANCE selects lighter paths without changing stable Phaser texture k
     "native 64px boss pixel sheets are already the low-memory profile and must not be duplicated",
   );
   assert.equal(manifest.getAllyMotionAsset("hunter-drone", "performance")?.path.includes("/performance/"), true);
+});
+
+test("combat bundles load only unlocked operatives and the selected AEGIS weapon", () => {
+  const fresh = manifest.getGameAssetsForRegion("wrong-engine-core", "full", "pulse-rifle", ["aegis"]);
+  const freshKeys = new Set(fresh.map((asset) => asset.key));
+  for (const key of [
+    manifest.ASSET_KEYS.playerMikaDirectionalAim,
+    manifest.ASSET_KEYS.playerVesperDirectionalAim,
+    manifest.ASSET_KEYS.playerNoxDirectionalAim,
+    manifest.ASSET_KEYS.mikaAbilityPixel,
+    manifest.ASSET_KEYS.vesperAbilityHd,
+    manifest.ASSET_KEYS.noxAbilityHd,
+  ]) assert.equal(freshKeys.has(key), false, `${key} must stay out of a fresh-slot load`);
+
+  const mika = new Set(manifest.getGameAssetsForRegion("wrong-engine-core", "full", "pulse-rifle", ["aegis", "mika"]).map((asset) => asset.key));
+  assert.equal(mika.has(manifest.ASSET_KEYS.playerMikaDirectionalAim), true);
+  assert.equal(mika.has(manifest.ASSET_KEYS.mikaAbilityPixel), true);
+  assert.equal(mika.has(manifest.ASSET_KEYS.playerVesperDirectionalAim), false);
+  assert.equal(mika.has(manifest.ASSET_KEYS.playerNoxDirectionalAim), false);
+
+  const pulse = new Set(manifest.getGameAssetsForRegion("wrong-engine-core", "full", "pulse-rifle", ["aegis"]).map((asset) => asset.key));
+  const sword = new Set(manifest.getGameAssetsForRegion("wrong-engine-core", "full", "beam-sword", ["aegis"]).map((asset) => asset.key));
+  assert.equal(pulse.has(manifest.ASSET_KEYS.manualAbilityPixel), true);
+  assert.equal(pulse.has(manifest.ASSET_KEYS.swordSkillPixel), false);
+  assert.equal(sword.has(manifest.ASSET_KEYS.manualAbilityPixel), false);
+  assert.equal(sword.has(manifest.ASSET_KEYS.aegisWardHd), false);
+  assert.equal(sword.has(manifest.ASSET_KEYS.empPulseHd), false);
+  assert.equal(sword.has(manifest.ASSET_KEYS.swordSkillPixel), true);
 });
 
 test("generated low-memory atlases keep their authored grids and expected dimensions", async () => {

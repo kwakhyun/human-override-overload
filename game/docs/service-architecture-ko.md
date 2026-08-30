@@ -4,7 +4,7 @@
 
 HUMAN OVERRIDE는 실시간 멀티플레이가 아닌 단일 플레이 브라우저 게임입니다. 프레임마다 서버와
 통신하는 구조는 비용과 지연만 늘리므로 전투·디펜스 판정은 기존 60Hz 결정론 엔진에 유지합니다.
-서버가 꼭 필요한 저장 복제와 에셋 전달만 Cloudflare Edge에 배치합니다.
+서버가 꼭 필요한 저장 복제와 에셋 전달만 ChatGPT Sites가 관리하는 Cloudflare 호환 Edge 계층에 배치합니다.
 
 ```text
 브라우저
@@ -13,16 +13,17 @@ HUMAN OVERRIDE는 실시간 멀티플레이가 아닌 단일 플레이 브라우
 ├─ localStorage v2 3슬롯 (즉시 저장·오프라인 권위)
 └─ Cloud save sync
           │ same-origin HTTPS /api/v1
-Cloudflare Sites Worker
+ChatGPT Sites 관리형 Worker
 ├─ 정적 SPA / 라우팅 fallback
 ├─ 익명 세션·저장 API
 ├─ D1: 프로필 토큰 해시 + revisioned campaign JSON
 └─ R2: /cdn/assets/overload/* read-through 원본 캐시
-          └─ Cloudflare Cache API: 지역 Edge 응답 캐시
+          └─ Cache-Control 기반 Sites/CDN Edge 응답 캐시
 ```
 
-이 선택은 별도 VM, 상시 실행 Node 서버, 로드 밸런서와 관리형 Postgres를 운영하지 않아도 되며
-접속이 없을 때 서버 비용이 발생하지 않는 현재 트래픽 단계의 가성비 우선 구조입니다.
+이 선택은 별도 VM, 상시 실행 Node 서버, 로드 밸런서와 관리형 Postgres를 직접 운영하지 않는
+현재 트래픽 단계의 가성비 우선 구조입니다. D1과 R2는 개인 Cloudflare 계정에 직접 만든 자원이 아니라
+`.openai/hosting.json`의 논리 바인딩을 통해 Sites가 관리하며, 비용·용량은 해당 Sites 플랜 한도를 따릅니다.
 
 ## 요청 경계
 
@@ -77,6 +78,11 @@ npm run test:sites
 - `dist/server/index.js` Worker
 - `dist/.openai/hosting.json`의 `DB` D1, `FILES` R2 논리 바인딩
 - `dist/.openai/drizzle/*.sql` D1 마이그레이션
+- 제작 재현을 위해 `public/`에 남긴 비활성 시안 46개를 제외한 `dist/client/` 런타임 에셋
+
+클라이언트는 선택 구역·무기·실제 해금 전투원의 Phaser 아틀라스만 부트 번들에 포함합니다.
+전투 대화에 필요한 포트레이트만 준비 완료 조건으로 사용하고, 레벨업 보상 이미지는 전투 준비 뒤
+유휴 프리로드합니다. `npm run analyze:assets`로 제작 전용 목록과 현재 제외 용량을 확인할 수 있습니다.
 
 배포 후 `/api/v1/health` 200, 새 익명 세션, 빈 저장 조회, revision 1 저장, 재조회와 대표
 `/cdn/assets/overload/`의 Sites 최초 응답과 R2 재조회 응답을 smoke test합니다. 운영 토큰이나 환경 비밀은 Git에 커밋하지 않습니다.

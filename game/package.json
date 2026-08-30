@@ -12,6 +12,7 @@
     "test:sites": "node --test tests/sites-worker.test.mjs",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
+    "analyze:assets": "node scripts/production-asset-policy.mjs --report",
     "analyze:content": "node scripts/report-content-balance.mjs",
     "generate:agent-voice": "node scripts/generate-google-agent-voice.mjs"
   },

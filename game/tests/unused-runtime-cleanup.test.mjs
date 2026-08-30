@@ -9,6 +9,8 @@ const retiredPaths = [
   "public/assets/overload/vfx/manual/manual-ability-motion-atlas.png",
   "public/assets/overload/vfx/omega-laser-motion-atlas.png",
   "public/assets/overload/vfx/skill-motion-atlas.png",
+  "public/assets/overload/ui/buttons/command-button-states-atlas.png",
+  "public/assets/overload/ui/campaign/mobile-menu-icons-v1.webp",
   "public/audio/README.md",
 ];
 

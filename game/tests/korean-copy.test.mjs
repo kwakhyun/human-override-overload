@@ -5,7 +5,9 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const activeCopyFiles = [
   "src/App.jsx",
+  "src/ui/combat/combatPresentation.js",
   "src/ui/campaign/CampaignScreens.jsx",
+  "src/ui/defense/DefenseScreens.jsx",
   "src/game/content/campaign.js",
   "src/game/content/baseUpgrades.js",
   "src/game/content/characters.js",

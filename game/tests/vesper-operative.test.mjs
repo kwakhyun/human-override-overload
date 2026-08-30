@@ -118,16 +118,16 @@ test("VESPER basic fire uses its own twin vector needles and periodic piercing l
 });
 
 test("VESPER vector projectiles have dedicated Phaser trails and sound identity", async () => {
-  const [battleView, app] = await Promise.all([
+  const [battleView, combatPresentation] = await Promise.all([
     readFile(new URL("../src/phaser/view/BattleView.ts", import.meta.url), "utf8"),
-    readFile(new URL("../src/App.jsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/ui/combat/combatPresentation.js", import.meta.url), "utf8"),
   ]);
   assert.match(battleView, /type\.includes\("vespervectorneedle"\)/);
   assert.match(battleView, /type\.includes\("vesperlocklance"\)/);
   assert.match(battleView, /const vesperNeedle = projectileKind\.includes\("vesper"\)/);
   assert.match(battleView, /graphics\.lineStyle\(1\.25, 0x8ff4ff, 0\.7\)/);
-  assert.match(app, /vesperVectorNeedle: "rail"/);
-  assert.match(app, /vesperVectorCorona: "emp"/);
+  assert.match(combatPresentation, /vesperVectorNeedle: "rail"/);
+  assert.match(combatPresentation, /vesperVectorCorona: "emp"/);
 });
 
 test("VESPER locked skill input is rejected before creating its effect", () => {

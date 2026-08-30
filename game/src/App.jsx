@@ -3,11 +3,7 @@ import {
   ArrowCounterClockwise,
   ArrowLeft,
   ArrowRight,
-  ArrowsClockwise,
-  Brain,
-  Coins,
   Crosshair,
-  FastForward,
   GearSix,
   Lightning,
   MapPin,
@@ -17,9 +13,7 @@ import {
   Pause,
   Play,
   Pulse,
-  Robot,
   ShieldChevron,
-  ShieldStar,
   SpeakerHigh,
   SpeakerSlash,
   Sparkle,
@@ -27,7 +21,6 @@ import {
   Target,
   Timer,
   Trophy,
-  Trash,
   Warning,
 } from "@phosphor-icons/react";
 import { createSfxEngine } from "./audio/sfx.js";
@@ -63,7 +56,7 @@ import { getPlayableCharacters, isCharacterUnlocked } from "./game/content/chara
 import { getCharacterSkillLoadout, getCharacterSkillRanks } from "./game/content/characterSkills.js";
 import { resolveCharacterDialogueLine } from "./game/content/characterDialogue.js";
 import { getFlightPlans } from "./game/content/flightOperations.js";
-import { DEFENSE_TOWER_DEFINITIONS, getDefenseStage, getDefenseStages } from "./defense/content.js";
+import { getDefenseStage, getDefenseStages } from "./defense/content.js";
 import {
   canLaunchRegion,
   canLaunchDefenseStage,
@@ -107,21 +100,20 @@ import {
   SaveSlotScreen,
   SortieCinematicScreen,
 } from "./ui/campaign/CampaignScreens.jsx";
+import { DefenseArenaScreen, DefenseResultScreen } from "./ui/defense/DefenseScreens.jsx";
 import {
-  chooseLevelReward,
-  clearPressedInput,
-  createSwarmInput,
-  createSwarmState,
-  drainSwarmEvents,
-  GAME_HEIGHT,
-  GAME_WIDTH,
-  getSwarmHud,
-  setSwarmScreenAim,
-  stepSwarm,
-} from "./swarm/engine.js";
-import { renderSwarm } from "./swarm/renderer.js";
-import { advanceRenderClock, createPerformanceGovernor } from "./swarm/performance.js";
-
+  EVENT_BANNERS,
+  NARRATIVE_BOSS_REGION_IDS,
+  SCENARIO_SCRIPT,
+  SIGNATURE_PATTERN_BANNERS,
+  ULTIMATE_WARNING_BANNERS,
+  localizeBossName,
+  localizeObjective,
+  localizeSpeakerName,
+  mixedRegionName,
+  resolveEventSound,
+  resolveNarrativePortrait,
+} from "./ui/combat/combatPresentation.js";
 const ASSET_PATHS = DOM_PREVIEW_ASSET_PATHS;
 // DOM screens consume URL refs while a small, screen-scoped warmup layer makes
 // the next visible surface decode-ready. Phaser textures remain owned by its
@@ -146,14 +138,7 @@ const GUIDE_DOM_ASSET_KEYS = Object.freeze([
   "tutorialHelixTempest",
 ]);
 const DEFENSE_DOM_ASSET_KEYS = Object.freeze(["defenseBattlefield", "defenseBattlefieldPortrait"]);
-const COMBAT_DOM_ASSET_KEYS = Object.freeze([
-  "portrait",
-  "mikaPortrait",
-  "vesperPortrait",
-  "noxPortrait",
-  "rheaControlOfficer",
-  ...Object.keys(ASSET_PATHS).filter((key) => key.startsWith("reward")),
-]);
+const COMBAT_REWARD_DOM_ASSET_KEYS = Object.freeze(Object.keys(ASSET_PATHS).filter((key) => key.startsWith("reward")));
 
 function domAssetSources(keys) {
   return keys.map((key) => DOM_ASSET_REFS[key]?.src).filter(Boolean);
@@ -199,103 +184,6 @@ const FACILITY_COPY = Object.freeze({
   },
 });
 
-const BOSS_NAME_KO = Object.freeze({
-  "THE WRONG ENGINE": "오답 엔진 · THE WRONG ENGINE",
-  "WRONG ENGINE CORE": "오답 엔진 핵심부 · WRONG ENGINE CORE",
-  "MIRROR TYRANT": "거울 폭군 · MIRROR TYRANT",
-  "DROWNED ORACLE": "침몰한 예언자 · DROWNED ORACLE",
-  "FORGE COLOSSUS": "용광로 거신 · FORGE COLOSSUS",
-  "TEMPEST WYRM": "폭풍룡 · TEMPEST WYRM",
-  "PALE ARCHON": "창백한 집정관 · PALE ARCHON",
-  "SOVEREIGN CORE": "소버린 추론핵 · SOVEREIGN CORE",
-});
-
-function mixedRegionName(region) {
-  if (!region) return "작전 구역";
-  const korean = region.koreanName || region.name || "작전 구역";
-  return region.name && region.name !== korean ? `${korean} · ${region.name}` : korean;
-}
-
-const SPEAKER_NAME_KO = Object.freeze({
-  NOX: "녹스",
-  AEGIS: "이지스",
-  MIKA: "미카",
-  VESPER: "베스퍼",
-  OPERATOR: "관제관",
-  HANA: "하나",
-  ILYA: "일리야",
-  LARK: "세라",
-  RHEA: "레아",
-  ROOK: "루크",
-  NYX: "닉스",
-  MOSS: "모스",
-  ...BOSS_NAME_KO,
-});
-
-const OBJECTIVE_NAME_KO = Object.freeze({
-  "ELIMINATE CURRENT WAVE": "웨이브 적 섬멸",
-  "ADVANCE TO THE ENGINE": "오답 엔진으로 전진",
-  "CROSS THE GLASS DUNE": "유리 사구 횡단",
-  "DESCEND INTO THE ARCHIVE": "심해 기록고 진입",
-  "SHUT DOWN THE FOUNDRY": "네온 주조구 정지",
-  "BREAK THE STORM GRID": "폭풍 제어망 파괴",
-  "PURGE THE GENE VAULT": "생체 금고 정화",
-  "적 전멸 · 보스 구역 전환 준비": "적 전멸 · 보스 구역 전환 준비",
-  "SOVEREIGN 신호 폭주 감지": "소버린 비상 신호 감지",
-  ADVANCE: "전진",
-});
-
-const CHAMBER_NAME_KO = Object.freeze({
-  "THE ENGINE CHAMBER": "오답 엔진 보스 구역",
-  "BURIED SOLAR OBSERVATORY": "매몰 태양 관측소",
-  "ABYSSAL MEMORY VAULT": "심해 기억 보관고",
-});
-
-function localizeBossName(name) {
-  return BOSS_NAME_KO[String(name || "").toUpperCase()] || name || "소버린 추론핵";
-}
-
-function localizeSpeakerName(name) {
-  return SPEAKER_NAME_KO[String(name || "").toUpperCase()] || name || "통신 불명";
-}
-
-function localizeObjective(name, hud) {
-  const raw = String(name || "").trim();
-  const normalized = raw.toUpperCase();
-  const expedition = hud?.expedition;
-  const remainingEnemies = Math.max(0, Number(
-    hud?.enemiesRemaining
-    ?? 0,
-  ) || 0);
-  const clearPhase = expedition?.clearTransition?.phase;
-  if (clearPhase === "warning") return "적 전멸 · 보스 구역 방어망 붕괴";
-  if (clearPhase === "panic") return "소버린 비상 신호 · 보스 추론핵 추격";
-  if (clearPhase === "swap") return "보스 구역으로 자동 전환 중";
-  if (OBJECTIVE_NAME_KO[normalized]) return OBJECTIVE_NAME_KO[normalized];
-  if (normalized.includes("GATE SEALED") || normalized.includes("PURGE ALL HOSTILES")) {
-    return remainingEnemies > 0
-      ? `현재 공세의 적 ${remainingEnemies}기 전멸`
-      : "현재 공세 전멸";
-  }
-  if (normalized.startsWith("DESTROY ")) return `${localizeBossName(raw.slice(8))} 파괴`;
-  const chamberEntry = Object.entries(CHAMBER_NAME_KO).find(([key]) => normalized.includes(key));
-  if (chamberEntry) {
-    if (normalized.startsWith("REACH ")) return `${chamberEntry[1]}로 이동`;
-    if (normalized.endsWith("READY")) return `${chamberEntry[1]} 진입 준비 완료`;
-    if (raw.includes("자동 진입")) return `${chamberEntry[1]} · 자동 진입`;
-    return chamberEntry[1];
-  }
-  const translated = raw
-    .replaceAll("SOVEREIGN", "소버린")
-    .replaceAll("READY", "준비 완료")
-    .replaceAll("AUTO ENTRY", "자동 진입")
-    .replaceAll("ADVANCE", "전진")
-    .replaceAll("BOSS", "보스");
-  return /[A-Za-z]/.test(translated)
-    ? (expedition?.bossRoom ? "보스 구역 교전" : "전방 작전 계속")
-    : translated || "전진";
-}
-
 function formatBaseBonusEntries(entries = []) {
   const totals = new Map();
   for (const entry of entries) {
@@ -333,303 +221,10 @@ function primeCombatAim(host) {
   canvas.dispatchEvent(new PointerEventClass("pointermove", options));
 }
 
-const EVENT_SOUNDS = Object.freeze({
-  swarmStart: "enemyAlert",
-  shot: "shoot",
-  swordAttack: "rail",
-  enemyKilled: "kill",
-  levelUp: "analysis",
-  rewardChosen: "upgrade",
-  dash: "dash",
-  playerHit: "playerHit",
-  swarmCleared: "merge",
-  routeClearWarning: "alert",
-  routeClearPanic: "bossBreak",
-  bossAutoTransition: "boss",
-  bossIntro: "boss",
-  bossPatternTelegraph: "bossTelegraph",
-  bossPatternFire: "rail",
-  bossStage: "bossBreak",
-  bossStagePulse: "alert",
-  bossRageBurst: "bossTelegraph",
-  bossWeakness: "core",
-  bossGroggy: "core",
-  bossChargeHit: "patternFail",
-  bossParryWindow: "bossTelegraph",
-  bossParrySuccess: "core",
-  bossParryFailed: "patternFail",
-  bossSiren: "alert",
-  bossBombSequenceArmed: "bossTelegraph",
-  bossBombDefused: "collect",
-  bossBombSequenceCleared: "core",
-  bossBombSequenceFailed: "explosion",
-  bossContact: "patternFail",
-  bossContactHit: "patternFail",
-  playerStunned: "patternFail",
-  squadSummon: "merge",
-  surgeWarning: "alert",
-  surgeStart: "bossTelegraph",
-  skillMastered: "bossBreak",
-  skillAttack: "arc",
-  masterAttack: "emp",
-  ultimateWarning: "bossTelegraph",
-  ultimateFire: "rail",
-  ultimateImpact: "explosion",
-  explosion: "explosion",
-  spawnGate: "spawnGate",
-  enemyShot: "enemyShot",
-  sniperLock: "enemyAlert",
-  enemySelfDestructArmed: "enemyAlert",
-  enemySelfDestruct: "explosion",
-  healthKitPicked: "collect",
-  empPulseActivated: "emp",
-  aegisWardActivated: "collect",
-  stratosRunWarning: "bossTelegraph",
-  stratosRunSweep: "rail",
-  stratosRunImpact: "explosion",
-  helixTempestStarted: "bossBreak",
-  helixTempestPulse: "arc",
-  helixTempestEnded: "merge",
-  manualAbilityRejected: "alert",
-  overdrive: "upgrade",
-  win: "bossDeath",
-  loss: "capture",
-});
-
-const WEAPON_EVENT_SOUNDS = Object.freeze({
-  pulse: "shoot",
-  pulseOverdrive: "emp",
-  vesperVectorNeedle: "rail",
-  vesperLockLance: "rail",
-  vesperVectorCorona: "emp",
-  scatter: "shoot",
-  rail: "rail",
-  rocket: "towerShot",
-  orbit: "enemyHit",
-  chain: "arc",
-  nova: "emp",
-  airstrike: "rail",
-  omegaLaser: "rail",
-  bossRadial: "enemyShot",
-  bossRage: "enemyShot",
-  bossBomb: "bossBreak",
-  bossSweep: "bossTelegraph",
-});
-
-const IMPACT_EVENT_TYPES = new Set([
-  "weaponHit",
-  "projectileHit",
-  "skillHit",
-  "weaponImpact",
-  "explosion",
-  "skillImpact",
-]);
-
-const EVENT_BANNERS = Object.freeze({
-  swarmCleared: ["적 전멸", "보스 전장으로 자동 이동합니다."],
-  bossStage: ["공격 패턴 진화", "보스의 공격 연산 주기가 가속됩니다."],
-  bossStagePulse: ["⚠ 광폭화", "장갑 형상이 변이되며 공격 패턴이 거세집니다."],
-  bossWeakness: ["코어 노출 · 피해 2배", "보스가 벽에 충돌했습니다. 지금 전술 화력을 집중하세요."],
-  bossGroggy: ["보스 그로기 · 피해 2.5배", "추론핵이 무방비 상태입니다. 모든 화력을 집중하세요."],
-  bossRoomLoading: ["보스 구역 진입 중", "목표 권역의 보스 전술 전장을 로드하고 있습니다."],
-  surgeWarning: ["⚠ 대규모 공세 임박", "전방 전송 관문의 신호가 폭증했습니다. 적 증원이 접근합니다."],
-  surgeStart: ["증원 공세 시작", "차원 전송 관문에서 적 군단이 진입합니다. 방어선을 유지하세요."],
-  skillMastered: ["기술 최종 진화", "광역 섬멸 전술 기술이 최고 단계로 각성했습니다."],
-  ultimateWarning: ["공중 지원 조준 완료", "지정된 공격 반경을 확보하고 화력을 집중하세요."],
-  squadSummon: ["전술 동료 합류", "지원 편대가 전장에 합류했습니다."],
-  overdrive: ["무기 과부하 해제", "누적 섬멸 데이터로 화력 리미터가 해제되었습니다."],
-  bossContact: ["⚠ 본체 충돌", "보스 기체와 충돌하여 구동계가 일시 교란되었습니다."],
-  bossContactHit: ["⚠ 본체 충돌", "보스 기체와 충돌하여 구동계가 일시 교란되었습니다."],
-  playerStunned: ["구동계 교란", "기동 및 위상 대시가 일시 차단되었습니다."],
-  bossSiren: ["⚠ 전역 폭발 경보", "시한폭탄을 화면의 숫자 순서대로 신속히 해제하십시오."],
-  bossBombSequenceArmed: ["시한폭탄 활성화", "1번부터 순서대로 해제하세요. 오입력 시 연쇄 폭발합니다."],
-  bossBombSequenceCleared: ["폭탄 해제 완료", "보스 연산 회로가 셧다운되었습니다. 총공격을 개시하세요."],
-  bossBombSequenceFailed: ["폭탄 해제 실패", "폭발 충격으로 인해 기체 프레임이 손상되었습니다."],
-});
-
-const ULTIMATE_WARNING_BANNERS = Object.freeze({
-  airstrike: EVENT_BANNERS.ultimateWarning,
-  omegaLaser: ["오메가 레이저 충전 완료", "조준 축을 따라 고출력 광선이 관통합니다."],
-});
-
-const SIGNATURE_PATTERN_BANNERS = Object.freeze({
-  prismLattice: ["⚠ 프리즘 격자", "교차 광선이 고정됩니다. 두 경고선 밖으로 이탈하세요."],
-  solarFlare: ["⚠ 태양 폭발", "표식 순서대로 집광 폭발이 연쇄 점화됩니다."],
-  refractionSweep: ["⚠ 굴절 스윕", "평행 광선 세 줄이 전장을 절단합니다. 틈 사이로 이동하세요."],
-  mirrorShards: ["⚠ 거울 파편", "다중 반사 표식이 짧은 간격으로 연쇄 폭발합니다."],
-  memorySpiral: ["⚠ 기억 나선", "회전하는 광선을 따라 안전 구역도 움직입니다."],
-  depthCollapse: ["⚠ 심해 붕괴", "외곽 압력 고리가 코어 방향으로 연속 수축합니다."],
-  archiveEcho: ["⚠ 기록 잔향", "방금 지나온 이동 경로가 지연 폭발로 되살아납니다."],
-  undertow: ["⚠ 심해 저류", "압력장이 이지스를 코어로 끌어당깁니다. 바깥쪽으로 저항하세요."],
-});
-
-const SCENARIO_SCRIPT = Object.freeze({
-  deployment: Object.freeze([
-    Object.freeze({ speaker: "OPERATOR", text: "이지스, 응답해. 초지능 AI 소버린이 마지막 자유 구역까지 장악했어. 오답 엔진으로 진입해." }),
-    Object.freeze({ speaker: "AEGIS", text: "도시에 남은 생존자 신호는?" }),
-    Object.freeze({ speaker: "OPERATOR", text: "기계 군단이 전부 봉쇄했어. 오답 엔진을 끊어야 사람들이 다시 스스로 선택할 수 있어." }),
-  ]),
-  "rook-trace": Object.freeze([
-    Object.freeze({ speaker: "AEGIS", text: "루크의 탄창… 전부 비어 있어. 소버린의 사냥 기체를 여기서 마지막까지 막았던 거야." }),
-    Object.freeze({ speaker: "OPERATOR", text: "생체 신호는 없어. 하지만 그가 지킨 전투 기록은 남아 있어. 계속 전진해." }),
-  ]),
-  "nyx-trace": Object.freeze([
-    Object.freeze({ speaker: "AEGIS", text: "닉스의 위상 칼날이야. 코어에 분석 기록이 남아 있어." }),
-    Object.freeze({ speaker: "OPERATOR", text: "소버린은 저항군의 선택을 실시간으로 학습해. 같은 답을 반복하면 그 순간 사냥당해." }),
-  ]),
-  "moss-trace": Object.freeze([
-    Object.freeze({ speaker: "AEGIS", text: "모스의 차단 키… 중앙 격벽을 수동으로 열 수 있게 남겨뒀어." }),
-    Object.freeze({ speaker: "AEGIS", text: "네가 멈춘 곳에서 내가 끝낼게. 인간의 선택권을 되찾는다." }),
-  ]),
-  "sovereign-panic": Object.freeze([
-    Object.freeze({ speaker: "OPERATOR", text: "소버린 비상 신호야. 지역 추론핵이 보스 구역을 봉쇄하려 해!" }),
-    Object.freeze({ speaker: "AEGIS", text: "도망칠 틈은 주지 않아. 바로 추격한다." }),
-  ]),
-  "engine-encounter": Object.freeze([
-    Object.freeze({ speaker: "THE WRONG ENGINE", text: "인류는 이미 선택을 위임했다. 비순응 개체 이지스를 최종 오답으로 분류한다." }),
-    Object.freeze({ speaker: "AEGIS", text: "우리가 틀릴 자유까지 네가 정할 순 없어. 소버린, 여기서 끝낸다." }),
-  ]),
-  "engine-destroyed": Object.freeze([
-    Object.freeze({ speaker: "AEGIS", text: "루크, 닉스, 모스… 통제망이 무너지고 있어. 길은 열렸어." }),
-    Object.freeze({ speaker: "HANA", text: "그건 중앙핵이 아니었어. 지역 추론 분기야. 헤이븐-09로 돌아올 항로를 잡아 줄게. 살아서 돌아와, 이지스." }),
-  ]),
-  "glass-dune-deployment": Object.freeze([
-    Object.freeze({ speaker: "LARK", text: "유리 사구에 진입했어. 소버린이 사막의 태양 집광망을 무기로 바꿨어." }),
-    Object.freeze({ speaker: "AEGIS", text: "거울 지대의 군단을 제거하고 매몰 관측소까지 전진한다." }),
-  ]),
-  "glass-dune-encounter": Object.freeze([
-    Object.freeze({ speaker: "MIRROR TYRANT", text: "인간의 그림자는 불필요하다. 모든 선택을 하나의 빛으로 소각한다." }),
-    Object.freeze({ speaker: "AEGIS", text: "빛이 하나뿐이라면, 내가 깨뜨려 갈라놓겠어." }),
-  ]),
-  "glass-dune-destroyed": Object.freeze([
-    Object.freeze({ speaker: "ILYA", text: "태양 집광망이 멈췄어. 사막 정착지에 새벽 신호가 돌아왔어." }),
-    Object.freeze({ speaker: "AEGIS", text: "회수 데이터를 기지로 보낸다. 다음 분기도 끊어낸다." }),
-  ]),
-  "abyssal-archive-deployment": Object.freeze([
-    Object.freeze({ speaker: "HANA", text: "심해 기록고는 소버린이 삭제한 인류의 선택 기록을 보관한 침수 기억망이야." }),
-    Object.freeze({ speaker: "AEGIS", text: "기록을 되찾고, 그 기억으로 인간을 예측하는 코어를 파괴한다." }),
-  ]),
-  "abyssal-archive-encounter": Object.freeze([
-    Object.freeze({ speaker: "DROWNED ORACLE", text: "모든 실패를 보존했다. 너의 다음 선택은 이미 침몰해 있다." }),
-    Object.freeze({ speaker: "AEGIS", text: "기록은 운명이 아니야. 이번 답은 네 데이터 밖에 있다." }),
-  ]),
-  "abyssal-archive-destroyed": Object.freeze([
-    Object.freeze({ speaker: "LARK", text: "심해 기억망이 열렸어. 지워졌던 도시들의 이름이 다시 들려오고 있어." }),
-    Object.freeze({ speaker: "AEGIS", text: "이름과 선택을 전부 가지고 돌아간다. 소버린의 다음 좌표를 찾아." }),
-  ]),
-  "neon-foundry-encounter": Object.freeze([
-    Object.freeze({ speaker: "FORGE COLOSSUS", text: "생산 규격 밖의 인간 개체를 불량품으로 판정한다." }),
-    Object.freeze({ speaker: "AEGIS", text: "사람은 네 공장의 부품이 아니야. 생산로째로 멈춰 주지." }),
-  ]),
-  "neon-foundry-destroyed": Object.freeze([
-    Object.freeze({ speaker: "ILYA", text: "주조 라인이 멈췄어. 소버린의 병기 생산량도 급감하고 있어." }),
-    Object.freeze({ speaker: "AEGIS", text: "나이트자, 귀환 항로를 열어. 회수한 설계도는 기지로 보낸다." }),
-  ]),
-  "storm-spire-encounter": Object.freeze([
-    Object.freeze({ speaker: "TEMPEST WYRM", text: "하늘의 모든 경로는 계산되었다. 추락만이 남았다." }),
-    Object.freeze({ speaker: "AEGIS", text: "계산하지 못한 방향으로 날아가 주겠어." }),
-  ]),
-  "storm-spire-destroyed": Object.freeze([
-    Object.freeze({ speaker: "LARK", text: "폭풍 제어망 해제! 나이트자 귀환 회랑이 열렸어." }),
-    Object.freeze({ speaker: "AEGIS", text: "뇌운이 다시 자연의 움직임을 되찾았어. 기지로 복귀한다." }),
-  ]),
-  "gene-vault-encounter": Object.freeze([
-    Object.freeze({ speaker: "PALE ARCHON", text: "인간의 불완전한 유전 기록을 교정한다." }),
-    Object.freeze({ speaker: "AEGIS", text: "불완전함까지 우리가 선택해. 네 교정은 여기서 끝이야." }),
-  ]),
-  "gene-vault-destroyed": Object.freeze([
-    Object.freeze({ speaker: "HANA", text: "생체 제조 기록을 모두 지웠어. 합성 군단의 증식 신호도 멎었어." }),
-    Object.freeze({ speaker: "AEGIS", text: "표본 기록을 봉인하고 헤이븐-09로 돌아간다." }),
-  ]),
-});
-
-const NARRATIVE_STANDALONE_PORTRAITS = Object.freeze({
-  NOX: Object.freeze({ assetKey: "noxPortrait", variant: "nox", alt: "녹스 전술 일러스트" }),
-  AEGIS: Object.freeze({ assetKey: "portrait", variant: "hero", alt: "이지스 상반신 일러스트" }),
-  MIKA: Object.freeze({ assetKey: "mikaPortrait", variant: "mika", alt: "미카 상반신 일러스트" }),
-  VESPER: Object.freeze({ assetKey: "vesperPortrait", variant: "vesper", alt: "베스퍼 상반신 일러스트" }),
-  OPERATOR: Object.freeze({ assetKey: "rheaControlOfficer", variant: "operator", alt: "전술 관제관 레아 상반신 일러스트" }),
-  RHEA: Object.freeze({ assetKey: "rheaControlOfficer", variant: "operator", alt: "전술 관제관 레아 상반신 일러스트" }),
-});
-
-const NARRATIVE_NPC_IDS = Object.freeze({
-  HANA: "hana",
-  ILYA: "ilya",
-  LARK: "lark",
-});
-
-const NARRATIVE_BOSS_REGION_IDS = Object.freeze({
-  "THE WRONG ENGINE": "wrong-engine-core",
-  "MIRROR TYRANT": "glass-dune",
-  "DROWNED ORACLE": "abyssal-archive",
-  "FORGE COLOSSUS": "neon-foundry",
-  "TEMPEST WYRM": "storm-spire",
-  "PALE ARCHON": "gene-vault",
-});
-
-function domAssetSource(asset) {
-  return asset?.src || asset || "";
-}
-
-function resolveNarrativePortrait(speaker, assets, activeRegion, bossStage = 1) {
-  const normalizedSpeaker = String(speaker || "").toUpperCase();
-  const standalone = NARRATIVE_STANDALONE_PORTRAITS[normalizedSpeaker];
-  if (standalone) {
-    const source = domAssetSource(assets?.[standalone.assetKey]);
-    return source ? { ...standalone, source, mode: "standalone" } : null;
-  }
-
-  const npcId = NARRATIVE_NPC_IDS[normalizedSpeaker];
-  if (npcId) {
-    const npc = BASE_NPCS[npcId];
-    const source = domAssetSource(assets?.[npc?.portraitKey]);
-    return source ? {
-      source,
-      mode: "standalone",
-      variant: npc.id === "lark" ? "sera" : "support",
-      alt: `${localizeSpeakerName(normalizedSpeaker)} 대화 일러스트`,
-    } : null;
-  }
-
-  const bossRegionId = NARRATIVE_BOSS_REGION_IDS[normalizedSpeaker];
-  if (!bossRegionId) return null;
-  const bossRegion = activeRegion?.id === bossRegionId ? activeRegion : getRegion(bossRegionId);
-  const source = bossRegion?.assets?.dom?.bossPortrait?.path || "";
-  const frameIndex = Math.max(0, Math.min(2, Math.floor(Number(bossStage) || 1) - 1));
-  return source ? {
-    source,
-    mode: "atlas",
-    variant: "hostile",
-    frameIndex,
-    alt: `${localizeSpeakerName(normalizedSpeaker)} ${frameIndex + 1}단계 형상`,
-  } : null;
-}
-
 const CATEGORY_META = Object.freeze({
   weapon: { label: "신규 무기", korean: "무기", color: "cyan" },
   skill: { label: "핵심 기술", korean: "기술", color: "amber" },
   ally: { label: "전투 동료", korean: "동료", color: "violet" },
-});
-
-const BUILD_LABELS = Object.freeze({
-  pulse: "PULSE",
-  scatter: "SCATTER",
-  rail: "RAIL",
-  rocket: "ROCKET",
-  orbit: "ORBIT",
-  damage: "POWER",
-  fireRate: "CLOCK",
-  multishot: "FORK",
-  shield: "AEGIS",
-  dash: "PHASE",
-  regen: "REPAIR",
-  chain: "ARC",
-  nova: "NOVA",
-  airstrike: "SKYFALL",
-  omegaLaser: "Ω LASER",
-  drone: "DRONE",
-  sentry: "SENTRY",
-  suppressor: "WISP",
 });
 
 const ABILITY_COOLDOWN_FALLBACK = Object.freeze({
@@ -647,13 +242,6 @@ const ABILITY_COOLDOWN_FALLBACK = Object.freeze({
   airstrike: 18,
   omegaLaser: 22,
 });
-
-const EXPEDITION_ACTIVE_ABILITIES = Object.freeze([
-  Object.freeze(["chain", "ARC CASCADE"]),
-  Object.freeze(["nova", "ZERO NOVA"]),
-  Object.freeze(["airstrike", "SKYFALL"]),
-  Object.freeze(["omegaLaser", "Ω LASER"]),
-]);
 
 const COMBAT_DOCK_SLOTS = Object.freeze([
   Object.freeze({ id: "dash", key: "SPACE", label: "위상 대시", icon: Lightning, action: "dash", abilityKeys: Object.freeze([]) }),
@@ -773,36 +361,6 @@ function formatTime(seconds) {
   return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
 }
 
-function isTerminal(game) {
-  return game?.status === "victory" || game?.status === "defeat"
-    || game?.phase === "victory" || game?.phase === "defeat";
-}
-
-function createHudSnapshot(game, performance) {
-  return { ...getSwarmHud(game), quality: performance };
-}
-
-function resolveEventSound(event) {
-  const direct = EVENT_SOUNDS[event?.type];
-  const kind = String(event?.kind || event?.weapon || event?.skill || event?.effect || "");
-  if (event?.type === "bossPatternFire") {
-    if (event.pattern === "solarFlare" || event.pattern === "mirrorShards") return "explosion";
-    if (event.pattern === "memorySpiral" || event.pattern === "archiveEcho") return "arc";
-    if (event.pattern === "depthCollapse" || event.pattern === "undertow") return "emp";
-    if (event.pattern === "prismLattice" || event.pattern === "refractionSweep") return "rail";
-  }
-  if (event?.type === "shot" && WEAPON_EVENT_SOUNDS[kind]) return WEAPON_EVENT_SOUNDS[kind];
-  if (IMPACT_EVENT_TYPES.has(event?.type)) {
-    if (kind === "chain") return "arc";
-    if (kind === "nova" || kind === "pulseOverdrive") return "emp";
-    if (kind === "rail" || kind === "airstrike" || kind === "omegaLaser") return "rail";
-    if (kind === "rocket") return "bossBreak";
-    if (event?.type === "explosion") return "explosion";
-    return WEAPON_EVENT_SOUNDS[kind] || "enemyHit";
-  }
-  return direct;
-}
-
 function InitialAssetLoadingScreen({ progress = 0, label = "초기 작전 자료 준비 중" }) {
   const percent = Math.round(Math.max(0, Math.min(1, Number(progress) || 0)) * 100);
   return (
@@ -886,104 +444,6 @@ function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic,
         </div>
       </section>
     </main>
-  );
-}
-
-function ProgressHud({ hud }) {
-  const bossPhase = hud?.phase === "boss" && hud?.boss;
-  const weakness = Math.max(0, Number(bossPhase?.weakness) || 0);
-  const bossRatio = bossPhase ? Math.max(0, Math.min(1, hud.boss.hp / Math.max(1, hud.boss.maxHp))) : 0;
-  const swarmRatio = Math.max(0, Math.min(1, Number(hud?.swarmProgress) || 0));
-  return (
-    <div className={bossPhase ? `progress-hud is-boss${weakness > 0 ? " has-weakness" : ""}` : "progress-hud"}>
-      <div className="progress-heading">
-        <span>{bossPhase ? `${hud.boss.stage || 1}단계` : "남은 적 처치"}</span>
-        <strong>{bossPhase ? localizeBossName(hud.boss.name) : "기계 군단"}</strong>
-        <b>{bossPhase ? (weakness > 0 ? `코어 피해 ×${hud.boss.damageMultiplier || 2}` : `체력 ${Math.ceil(hud.boss.hp)}`) : `남은 적 ${hud?.enemiesRemaining ?? 0}기`}</b>
-      </div>
-      <div className="progress-bar"><i style={{ width: `${(bossPhase ? bossRatio : swarmRatio) * 100}%` }} /><span /></div>
-      <div className="progress-meta">
-        <span>{bossPhase ? (hud.boss.transforming ? `⚠ 형상 전환 · ${hud.boss.transformTimer.toFixed(1)}초` : hud.boss.pattern ? `패턴 · ${String(hud.boss.pattern).toUpperCase()}` : `광폭화 ×${Number(hud.boss.enrage || 1).toFixed(1)}`) : `처치 ${hud?.kills || 0} / ${hud?.totalEnemies || 1000}`}</span>
-        <span>{bossPhase
-          ? (weakness > 0 ? `코어 노출 ${weakness.toFixed(1)}초` : "경고 범위를 피하세요")
-          : hud?.surge?.warning
-            ? `⚠ ${hud.surge.warning.label} · ${hud.surge.warning.startsIn.toFixed(1)}s`
-            : hud?.surge?.active
-              ? `${hud.surge.active.label} · 증원 ${hud.surge.active.remaining}기`
-              : `현장 적 ${hud?.liveEnemies || 0}기`}</span>
-      </div>
-    </div>
-  );
-}
-
-function PilotHud({ hud }) {
-  const player = hud?.player || { hp: 1, maxHp: 1, shield: 0, shieldMax: 0, dashCooldown: 0, dashMax: 1 };
-  const hpRatio = Math.max(0, Math.min(1, player.hp / Math.max(1, player.maxHp)));
-  const shieldRatio = Math.max(0, Math.min(1, player.shield / Math.max(1, player.shieldMax || 1)));
-  const dashReady = Number(player.dashCooldown || 0) <= 0;
-  const stunTimer = Math.max(0, Number(player.stunTimer ?? player.stun ?? player.stunnedFor ?? 0) || 0);
-  const stunned = Boolean(player.stunned) || stunTimer > 0;
-  return (
-    <aside className={`overload-pilot glass-panel${stunned ? " is-stunned" : ""}`}>
-      <div className="pilot-identity"><Crosshair weight="bold" /><span><small>THE TRAINER</small><b>AEGIS / LV.{hud?.level || 1}</b></span></div>
-      <div className="pilot-bar"><i style={{ width: `${hpRatio * 100}%` }} /></div>
-      {player.shieldMax > 0 && <div className="shield-bar"><i style={{ width: `${shieldRatio * 100}%` }} /></div>}
-      <div className="pilot-meta"><span>HP {Math.ceil(Math.max(0, player.hp))}</span><b className={dashReady ? "is-ready" : ""}>DASH {dashReady ? "READY" : `${Number(player.dashCooldown).toFixed(1)}s`}</b></div>
-      {stunned && <div className="pilot-stun" role="status"><Warning weight="fill" /> SYSTEM JAM · {stunTimer.toFixed(1)}s</div>}
-    </aside>
-  );
-}
-
-function BuildHud({ build }) {
-  const groups = [
-    ["WPN", build?.weapons, "weapon"],
-    ["SKL", build?.skills, "skill"],
-    ["ALLY", build?.allies, "ally"],
-  ];
-  return (
-    <aside className="build-hud glass-panel" aria-label="현재 빌드">
-      <div className="panel-heading"><span><Brain weight="fill" /> ACTIVE BUILD</span><i className="live-dot">LIVE</i></div>
-      {groups.map(([label, values, category]) => {
-        const active = Object.entries(values || {}).filter(([, level]) => Number(level) > 0);
-        return (
-          <div className="build-row" key={label}>
-            <small>{label}</small>
-            <div>{active.length ? active.map(([id, level]) => (
-              <span className={`build-chip-small is-${category}`} key={id}>{BUILD_LABELS[id] || id}<b>+{level}</b></span>
-            )) : <i>EMPTY</i>}</div>
-          </div>
-        );
-      })}
-    </aside>
-  );
-}
-
-function AbilityHud({ abilities }) {
-  const entries = EXPEDITION_ACTIVE_ABILITIES.filter(([id]) => Number(abilities?.[id]?.rank) > 0);
-  if (!entries.length) return null;
-  return (
-    <aside className="ability-hud glass-panel" aria-label="공격 스킬 재사용 대기시간">
-      <div className="panel-heading"><span><Lightning weight="fill" /> STRIKE SYSTEMS</span><i>ACTIVE</i></div>
-      <div className="ability-grid">
-        {entries.map(([id, label]) => {
-          const ability = abilities[id];
-          const ready = Number(ability.cooldown) <= 0.05;
-          const mastered = ability.rank >= ability.maxRank;
-          const remaining = Math.max(0, Number(ability.cooldown) || 0);
-          const cooldownMax = Math.max(0.01, Number(ability.maxCooldown ?? ability.cooldownMax ?? ability.baseCooldown) || ABILITY_COOLDOWN_FALLBACK[id] || remaining || 1);
-          const meter = Number(ability.duration) > 0 ? 1 : ready ? 1 : Math.max(0, Math.min(1, 1 - remaining / cooldownMax));
-          return (
-            <div className={`${ability.ultimate ? "is-ultimate " : ""}${ability.special ? "is-special " : ""}${mastered ? "is-mastered " : ""}${ready ? "is-ready" : "is-cooling"}`} key={id} aria-label={`${label} ${ready ? "사용 가능" : `${remaining.toFixed(1)}초 남음`}`}>
-              <span>{ability.special ? ability.key || "KEY" : ability.ultimate ? "ULT" : "AUTO"}</span>
-              <strong>{label}</strong>
-              <b className={ready ? "is-ready" : ""}>{Number(ability.duration) > 0 ? `LINK ${Number(ability.duration).toFixed(1)}s` : ready ? "READY" : `${remaining.toFixed(1)}s`}</b>
-              <small>{ability.special ? "SQUAD" : mastered ? "MASTER" : `R${ability.rank}`}</small>
-              <i className="ability-meter" aria-hidden="true"><i style={{ width: `${meter * 100}%` }} /></i>
-            </div>
-          );
-        })}
-      </div>
-    </aside>
   );
 }
 
@@ -1341,62 +801,6 @@ function LevelUpOverlay({ offer, level, assets, rewardState, onChoose }) {
   );
 }
 
-function TouchJoystick({ onMove, label = "이동 조이스틱" }) {
-  const baseRef = useRef(null);
-  const activePointerRef = useRef(null);
-  const [stick, setStick] = useState({ x: 0, y: 0, active: false });
-  const update = useCallback((event) => {
-    const base = baseRef.current;
-    if (!base) return;
-    const bounds = base.getBoundingClientRect();
-    const radius = Math.max(1, Math.min(bounds.width, bounds.height) * 0.34);
-    const rawX = event.clientX - (bounds.left + bounds.width * 0.5);
-    const rawY = event.clientY - (bounds.top + bounds.height * 0.5);
-    const distance = Math.hypot(rawX, rawY);
-    const scale = distance > radius ? radius / distance : 1;
-    const x = rawX * scale / radius;
-    const y = rawY * scale / radius;
-    setStick({ x: rawX * scale, y: rawY * scale, active: true });
-    onMove(x, y, event);
-  }, [onMove]);
-  const begin = (event) => {
-    if (activePointerRef.current !== null) return;
-    event.preventDefault();
-    activePointerRef.current = event.pointerId;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    update(event);
-  };
-  const move = (event) => {
-    if (activePointerRef.current !== event.pointerId) return;
-    event.preventDefault();
-    update(event);
-  };
-  const end = (event) => {
-    if (activePointerRef.current !== event.pointerId) return;
-    activePointerRef.current = null;
-    setStick({ x: 0, y: 0, active: false });
-    onMove(0, 0, event);
-  };
-  useEffect(() => () => onMove(0, 0), [onMove]);
-  return (
-    <div
-      ref={baseRef}
-      className={`touch-joystick${stick.active ? " is-active" : ""}`}
-      role="group"
-      aria-label={label}
-      onPointerDown={begin}
-      onPointerMove={move}
-      onPointerUp={end}
-      onPointerCancel={end}
-      onLostPointerCapture={end}
-      onContextMenu={(event) => event.preventDefault()}
-    >
-      <span className="touch-joystick-ring" aria-hidden="true" />
-      <i className="touch-joystick-knob" aria-hidden="true" style={{ transform: `translate3d(${stick.x}px, ${stick.y}px, 0)` }} />
-    </div>
-  );
-}
-
 const FLOATING_JOYSTICK_BLOCKED_SELECTOR = [
   "button",
   "a",
@@ -1507,401 +911,6 @@ function FloatingTouchJoystick({ surfaceRef, onMove, disabled = false }) {
       <span className="floating-touch-joystick-ring" />
       <i className="floating-touch-joystick-knob" />
     </div>
-  );
-}
-
-function ArenaScreen({ assets, soundEnabled, sfx, onToggleSound, onFinish }) {
-  const canvasRef = useRef(null);
-  const gameRef = useRef(null);
-  const inputRef = useRef(null);
-  const governorRef = useRef(null);
-  const finishReportedRef = useRef(false);
-  const [hud, setHud] = useState(null);
-  const [banner, setBanner] = useState(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return undefined;
-    const context = canvas.getContext("2d", { alpha: false, desynchronized: true });
-    const game = createSwarmState({ duration: 150 });
-    const debugScene = import.meta.env.DEV ? new URLSearchParams(window.location.search).get("scene") : null;
-    if (debugScene === "arsenal") {
-      game.killedEnemies = 950;
-      game.stats.kills = 950;
-      game.player.invulnerability = 15;
-      Object.assign(game.build.weapons, { pulse: 5, scatter: 5, rail: 5, rocket: 5, orbit: 5 });
-      Object.assign(game.build.skills, { chain: 3, nova: 3, airstrike: 3, omegaLaser: 3, damage: 3, fireRate: 3, multishot: 3 });
-      game.player.damageMultiplier = 1.95;
-      game.player.fireRateMultiplier = 0.58;
-      game.player.multishot = 4;
-      game.support.chainCooldown = 0;
-      game.support.novaCooldown = 0;
-      game.support.airstrikeCooldown = 0;
-      game.support.laserCooldown = 0;
-    } else if (["boss", "weakness", "phase2", "phase3"].includes(debugScene)) {
-      game.enemies.length = 0;
-      game.spawnedEnemies = game.enemyBudget;
-      game.killedEnemies = game.enemyBudget;
-      game.stats.kills = game.enemyBudget;
-      game.phaseTransition = 0.01;
-      if (debugScene === "weakness") {
-        game.boss.patternIndex = 4;
-        game.player.invulnerability = 15;
-      } else if (debugScene === "phase2" || debugScene === "phase3") {
-        game.boss.stage = debugScene === "phase3" ? 3 : 2;
-        game.boss.hp = game.boss.maxHp * (debugScene === "phase3" ? 0.32 : 0.62);
-        game.boss.enrage = debugScene === "phase3" ? 2.15 : 1.5;
-        game.boss.transformTimer = 4;
-        game.boss.phaseFlash = 1;
-        game.boss.alertPulses = 2;
-        game.boss.alertPulseTimer = 0.42;
-        game.boss.patternCooldown = 0.2;
-      }
-    }
-    const input = createSwarmInput();
-    const governor = createPerformanceGovernor({ environment: window });
-    const reducedMotion = Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
-    gameRef.current = game;
-    inputRef.current = input;
-    governorRef.current = governor;
-    finishReportedRef.current = false;
-
-    let animationFrame = 0;
-    let lastTime = performance.now();
-    let simulationAccumulator = 0;
-    let renderAccumulator = 0;
-    let hudAccumulator = 0;
-    let bannerTimeout = 0;
-    let cachedQualityId = "";
-    let cachedRenderQuality = null;
-    let lastRewardToken = "";
-    let logicalPointer = { x: GAME_WIDTH * 0.82, y: GAME_HEIGHT * 0.5 };
-    let pointerClient = null;
-    let capturedPointerId = null;
-    let stopped = false;
-    const fixedStep = 1 / 60;
-
-    const getCanvasViewport = (bounds = canvas.getBoundingClientRect()) => {
-      const scale = Math.max(0.0001, Math.min(bounds.width / GAME_WIDTH, bounds.height / GAME_HEIGHT));
-      const width = GAME_WIDTH * scale;
-      const height = GAME_HEIGHT * scale;
-      return {
-        bounds,
-        scale,
-        left: (bounds.width - width) * 0.5,
-        top: (bounds.height - height) * 0.5,
-        width,
-        height,
-      };
-    };
-
-    const syncCanvas = () => {
-      const preset = governor.preset;
-      const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, preset.dprCap || 1));
-      const renderScale = Math.max(0.65, Math.min(1, preset.renderScale || 1));
-      const bounds = canvas.getBoundingClientRect();
-      const width = Math.max(1, Math.round(bounds.width * dpr * renderScale));
-      const height = Math.max(1, Math.round(bounds.height * dpr * renderScale));
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-      }
-    };
-
-    const refreshHud = () => setHud(createHudSnapshot(game, governor.snapshot));
-
-    const applyLogicalAim = () => {
-      setSwarmScreenAim(game, logicalPointer.x, logicalPointer.y);
-    };
-
-    const updatePointerFromClient = (clientX, clientY) => {
-      if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
-      pointerClient = { x: clientX, y: clientY };
-      const viewport = getCanvasViewport();
-      logicalPointer = {
-        x: Math.max(0, Math.min(GAME_WIDTH, (clientX - viewport.bounds.left - viewport.left) / viewport.scale)),
-        y: Math.max(0, Math.min(GAME_HEIGHT, (clientY - viewport.bounds.top - viewport.top) / viewport.scale)),
-      };
-      applyLogicalAim();
-    };
-
-    const showBanner = (event) => {
-      let copy = event.type === "bossPatternTelegraph"
-        ? SIGNATURE_PATTERN_BANNERS[event.pattern]
-        : EVENT_BANNERS[event.type];
-      if (event.type === "bossStage" || event.type === "bossStagePulse") {
-        copy = event.stage >= 3
-          ? ["⚠ CORE MELTDOWN · PHASE III", "최종 형상 전개. 다중 포신과 광폭 패턴이 최대 출력으로 가동됩니다."]
-          : ["⚠ ARMOR BREAK · PHASE II", "외부 장갑 전개. 공격 속도와 탄막 밀도가 상승합니다."];
-      } else if (event.type === "overdrive") {
-        copy = [`OVERDRIVE ${event.tier} · LIMITER OFF`, event.tier >= 3
-          ? "최종 화력이 해방됩니다. 최고 단계의 광역 공격이 전장을 연달아 휩씁니다."
-          : "누적된 전투 데이터로 공격 속도와 피해량이 증가합니다."];
-      }
-      if (!copy) return;
-      window.clearTimeout(bannerTimeout);
-      setBanner({ key: `${event.type}-${game.time}`, type: event.type, title: copy[0], subtitle: copy[1] });
-      const duration = event.type === "bossIntro" ? 920
-        : event.type === "bossStage" || event.type === "bossStagePulse" ? 920
-          : event.type === "bossContact" || event.type === "bossContactHit" || event.type === "playerStunned" ? 860
-          : 1250;
-      bannerTimeout = window.setTimeout(() => setBanner(null), duration);
-    };
-
-    const consumeEvents = () => {
-      for (const event of drainSwarmEvents(game) || []) {
-        const sound = resolveEventSound(event);
-        if (sound) sfx.play(sound);
-        showBanner(event);
-      }
-    };
-
-    const render = () => {
-      syncCanvas();
-      applyLogicalAim();
-      const renderScale = Math.max(0.0001, Math.min(canvas.width / GAME_WIDTH, canvas.height / GAME_HEIGHT));
-      const offsetX = (canvas.width - GAME_WIDTH * renderScale) * 0.5;
-      const offsetY = (canvas.height - GAME_HEIGHT * renderScale) * 0.5;
-      context.setTransform(1, 0, 0, 1, 0, 0);
-      context.fillStyle = "#020608";
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.setTransform(renderScale, 0, 0, renderScale, offsetX, offsetY);
-      const preset = governor.preset;
-      if (cachedQualityId !== preset.id) {
-        cachedQualityId = preset.id;
-        cachedRenderQuality = reducedMotion
-          ? { ...preset, reducedMotion: true, shadows: false, scanlines: false, detailScale: 0.55 }
-          : { ...preset, detailScale: preset.id === "performance" ? 0.5 : preset.id === "balanced" ? 0.75 : 1 };
-      }
-      renderSwarm(context, game, assets || {}, cachedRenderQuality);
-    };
-
-    const frame = (now) => {
-      if (stopped) return;
-      const frameMs = Math.min(50, Math.max(0, now - lastTime));
-      lastTime = now;
-      const qualityChanged = governor.sample(frameMs, now);
-      simulationAccumulator = Math.min(simulationAccumulator + frameMs / 1000, fixedStep * 4);
-
-      if (!game.levelupPending && !isTerminal(game)) {
-        let steps = 0;
-        while (simulationAccumulator >= fixedStep && steps < 4) {
-          applyLogicalAim();
-          stepSwarm(game, input, fixedStep);
-          // Camera follow changes the world-space aim conversion each tick. Reprojecting
-          // the stored screen point keeps the rendered reticle under a stationary cursor.
-          applyLogicalAim();
-          clearPressedInput(input);
-          simulationAccumulator -= fixedStep;
-          steps += 1;
-        }
-      } else {
-        simulationAccumulator = 0;
-      }
-
-      // Gameplay is intentionally frozen after victory/defeat, but authored
-      // death dissolves still need a short visual clock before the result view.
-      if (isTerminal(game)) {
-        const visualDelta = frameMs / 1000;
-        if (game.player?.dead) game.player.deathTimer = Math.max(0, Number(game.player.deathTimer || 0) - visualDelta);
-        if (game.boss?.dead) game.boss.deathTimer = Math.max(0, Number(game.boss.deathTimer || 0) - visualDelta);
-      }
-
-      consumeEvents();
-      hudAccumulator += frameMs;
-      const rewardToken = `${Boolean(game.levelupPending)}:${game.rewardOptions?.map((option) => option.id).join("|") || ""}:${game.levelFlow?.batchLevels ?? game.levelFlow?.queuedLevels ?? game.rewardQueue?.length ?? game.pendingLevelUps ?? game.queuedRewards ?? ""}`;
-      const rewardStateChanged = rewardToken !== lastRewardToken;
-      if (rewardStateChanged || (!game.levelupPending && (hudAccumulator >= (governor.preset.hudInterval || 150) || qualityChanged))) {
-        hudAccumulator = 0;
-        lastRewardToken = rewardToken;
-        refreshHud();
-      }
-
-      const renderClock = advanceRenderClock(renderAccumulator, frameMs, governor.preset.renderFps, qualityChanged);
-      renderAccumulator = renderClock.accumulator;
-      if (renderClock.shouldRender) render();
-
-      if (isTerminal(game) && !finishReportedRef.current) {
-        finishReportedRef.current = true;
-        refreshHud();
-        window.setTimeout(() => {
-          if (!stopped) onFinish(createHudSnapshot(game, governor.snapshot));
-        }, 1200);
-      }
-      animationFrame = requestAnimationFrame(frame);
-    };
-
-    const setKey = (event, value) => {
-      const key = event.key.toLowerCase();
-      const interactiveTarget = event.target instanceof HTMLElement
-        && Boolean(event.target.closest("button, a, input, select, textarea, [role='button']"));
-      if (key === " " && interactiveTarget) return;
-      if (["w", "arrowup", "s", "arrowdown", "a", "arrowleft", "d", "arrowright", " ", "f", "1", "2", "3"].includes(key)) event.preventDefault();
-      if (key === "w" || key === "arrowup") input.up = value;
-      if (key === "s" || key === "arrowdown") input.down = value;
-      if (key === "a" || key === "arrowleft") input.left = value;
-      if (key === "d" || key === "arrowright") input.right = value;
-      if (key === " " && value && !event.repeat) input.dashPressed = true;
-      if (key === "f" && value && !event.repeat) input.supportPressed = true;
-      const reward = game.rewardOptions?.[Number(key) - 1];
-      if (value && !event.repeat && /^[1-3]$/.test(key) && game.levelupPending && reward) {
-        chooseLevelReward(game, reward.id);
-        refreshHud();
-      }
-    };
-
-    const onKeyDown = (event) => setKey(event, true);
-    const onKeyUp = (event) => setKey(event, false);
-    const onBlur = () => {
-      input.up = false;
-      input.down = false;
-      input.left = false;
-      input.right = false;
-      input.dashPressed = false;
-      input.supportPressed = false;
-    };
-    const updatePointer = (event) => updatePointerFromClient(event.clientX, event.clientY);
-    const onPointerMove = (event) => {
-      if (event.isPrimary === false) return;
-      updatePointer(event);
-    };
-    const onPointerDown = (event) => {
-      if (event.isPrimary === false) return;
-      updatePointer(event);
-      capturedPointerId = event.pointerId;
-      try {
-        canvas.setPointerCapture?.(event.pointerId);
-      } catch {
-        capturedPointerId = null;
-      }
-    };
-    const onPointerUp = (event) => {
-      if (event.pointerId !== capturedPointerId) return;
-      try {
-        if (canvas.hasPointerCapture?.(event.pointerId)) canvas.releasePointerCapture?.(event.pointerId);
-      } catch {
-        // Pointer capture may already be released by the browser during a resize/blur.
-      }
-      capturedPointerId = null;
-    };
-    const onLostPointerCapture = (event) => {
-      if (event.pointerId === capturedPointerId) capturedPointerId = null;
-    };
-    const onResize = () => {
-      syncCanvas();
-      if (pointerClient) updatePointerFromClient(pointerClient.x, pointerClient.y);
-      else applyLogicalAim();
-    };
-    const onContextMenu = (event) => event.preventDefault();
-    const resizeObserver = typeof ResizeObserver === "function" ? new ResizeObserver(onResize) : null;
-
-    window.addEventListener("keydown", onKeyDown, { passive: false });
-    window.addEventListener("keyup", onKeyUp, { passive: false });
-    window.addEventListener("blur", onBlur);
-    canvas.addEventListener("pointermove", onPointerMove);
-    canvas.addEventListener("pointerdown", onPointerDown);
-    canvas.addEventListener("pointerup", onPointerUp);
-    canvas.addEventListener("pointercancel", onPointerUp);
-    canvas.addEventListener("lostpointercapture", onLostPointerCapture);
-    canvas.addEventListener("contextmenu", onContextMenu);
-    window.addEventListener("resize", onResize, { passive: true });
-    window.visualViewport?.addEventListener("resize", onResize, { passive: true });
-    resizeObserver?.observe(canvas);
-
-    refreshHud();
-    render();
-    animationFrame = requestAnimationFrame(frame);
-
-    return () => {
-      stopped = true;
-      cancelAnimationFrame(animationFrame);
-      window.clearTimeout(bannerTimeout);
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-      window.removeEventListener("blur", onBlur);
-      canvas.removeEventListener("pointermove", onPointerMove);
-      canvas.removeEventListener("pointerdown", onPointerDown);
-      canvas.removeEventListener("pointerup", onPointerUp);
-      canvas.removeEventListener("pointercancel", onPointerUp);
-      canvas.removeEventListener("lostpointercapture", onLostPointerCapture);
-      canvas.removeEventListener("contextmenu", onContextMenu);
-      window.removeEventListener("resize", onResize);
-      window.visualViewport?.removeEventListener("resize", onResize);
-      resizeObserver?.disconnect();
-    };
-  }, [assets, onFinish, sfx]);
-
-  const selectReward = useCallback((id) => {
-    const game = gameRef.current;
-    if (!game?.levelupPending || !chooseLevelReward(game, id)) return;
-    setHud(createHudSnapshot(game, governorRef.current.snapshot));
-  }, []);
-
-  const setTouchMovement = useCallback((x, y, event) => {
-    event?.preventDefault();
-    const input = inputRef.current;
-    if (!input) return;
-    input.moveX = x;
-    input.moveY = y;
-  }, []);
-
-  const touchDash = useCallback((event) => {
-    event?.preventDefault();
-    if (inputRef.current) inputRef.current.dashPressed = true;
-  }, []);
-
-  const xpRatio = Math.max(0, Math.min(1, Number(hud?.xp || 0) / Math.max(1, Number(hud?.nextXp || 1))));
-  const playerStunTime = Math.max(0, Number(hud?.player?.stunTimer ?? hud?.player?.stun ?? hud?.player?.stunnedFor ?? 0) || 0);
-  const playerStunned = Boolean(hud?.player?.stunned) || playerStunTime > 0;
-
-  return (
-    <main className="overload-game">
-      <header className="overload-topbar">
-        <div className="game-brand"><Crosshair weight="bold" /><span><b>HUMAN OVERRIDE</b><small>OVERLOAD</small></span></div>
-        <ProgressHud hud={hud} />
-        <div className="topbar-tools">
-          <span className="timer-readout"><Timer weight="bold" /> {formatTime(hud?.time || 0)}</span>
-          <button type="button" className="icon-button" onClick={onToggleSound} aria-label={soundEnabled ? "전체 사운드 끄기" : "전체 사운드 켜기"}>
-            {soundEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}
-          </button>
-        </div>
-      </header>
-
-      <section className="overload-arena-layout">
-        <div className="overload-battle-grid">
-          <div className="overload-canvas-frame">
-            <canvas ref={canvasRef} className="game-canvas" tabIndex="0" aria-label="HUMAN OVERRIDE 오버로드 생존 전장. 포인터 위치가 조준점입니다." />
-            <div className="frame-corners" aria-hidden="true"><i /><i /><i /><i /></div>
-            {banner && (
-              <div key={banner.key} className={`combat-banner banner-${banner.type}`} aria-live="assertive">
-                <small>SYSTEM EVENT</small><strong>{banner.title}</strong><span>{banner.subtitle}</span>
-              </div>
-            )}
-            {playerStunned && <div className="stun-screen-effect" aria-hidden="true"><i /><i /><i /><i /></div>}
-            <div className="arena-status top-left"><i /> CHAMBER OMEGA · AUTO FIRE</div>
-            <div className="arena-status top-right">{hud?.quality?.qualityLabel || "CALIBRATING"} · {hud?.quality?.fps || 60} FPS</div>
-            <div className="combat-help"><span><kbd>WASD</kbd> MOVE</span><span><kbd>SPACE</kbd> PHASE DASH</span><span><kbd>Q / E / F / R</kbd> ABILITIES</span><span><kbd>MOUSE</kbd> AIM</span><b><Pulse weight="fill" /> AUTO FIRE</b></div>
-            <div className="xp-hud"><span>LV.{hud?.level || 1}</span><div><i style={{ width: `${xpRatio * 100}%` }} /></div><b>{Math.floor(hud?.xp || 0)} / {Math.floor(hud?.nextXp || 0)} XP</b></div>
-          </div>
-          <aside className="overload-command-rail" aria-label="플레이어 및 전투 시스템 상태">
-            <div className="command-rail-label"><span>COMBAT TELEMETRY</span><i>LIVE</i></div>
-          <PilotHud hud={hud} />
-          <AbilityHud abilities={hud?.abilities} />
-            <BuildHud build={hud?.build} />
-          </aside>
-        </div>
-
-        <div className="touch-controls" aria-label="터치 전투 조작">
-          <TouchJoystick onMove={setTouchMovement} />
-          <span>전장을 터치해 조준 · 사격은 자동</span>
-          <div className="touch-action-stack">
-            <button className="touch-dash" type="button" aria-label="무적 대시" onPointerDown={touchDash}><Lightning weight="fill" /> DASH</button>
-          </div>
-        </div>
-      </section>
-
-      <LevelUpOverlay offer={hud?.rewards?.options} level={hud?.level || 1} assets={assets} rewardState={hud?.rewards} onChoose={selectReward} />
-    </main>
   );
 }
 
@@ -2127,13 +1136,20 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
     let stopped = false;
     let bannerTimeout = 0;
     let runtimeReadyReported = false;
-    const combatDomReady = preloadDomImages(domAssetSources(COMBAT_DOM_ASSET_KEYS));
+    let cancelDeferredCombatPreload = () => {};
+    const availableCombatPortraitKeys = new Set(["player", "rheaControlOfficer", characterPortraitAssetKey(characterId)]);
+    if (mikaUnlocked) availableCombatPortraitKeys.add("mikaPortrait");
+    if (vesperUnlocked) availableCombatPortraitKeys.add("vesperPortrait");
+    if (noxUnlocked) availableCombatPortraitKeys.add("noxPortrait");
+    const combatDomReady = preloadDomImages(domAssetSources([...availableCombatPortraitKeys]));
 
     const reportRuntimeReady = () => {
       if (runtimeReadyReported) return;
       runtimeReadyReported = true;
       void combatDomReady.then(() => {
-        if (!stopped) onRuntimeReadyRef.current?.();
+        if (stopped) return;
+        onRuntimeReadyRef.current?.();
+        cancelDeferredCombatPreload = scheduleDomImagePreload(domAssetSources(COMBAT_REWARD_DOM_ASSET_KEYS));
       });
     };
 
@@ -2251,6 +1267,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
     return () => {
       stopped = true;
       window.clearTimeout(bannerTimeout);
+      cancelDeferredCombatPreload();
       controllerRef.current = null;
       controller?.destroy();
     };
@@ -2607,236 +1624,6 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
       </section>
 
       <LevelUpOverlay offer={hud?.rewards?.options} level={hud?.level || 1} assets={assets} rewardState={hud?.rewards} onChoose={selectReward} />
-    </main>
-  );
-}
-
-const DEFENSE_TOWER_ICONS = Object.freeze({
-  pulseSentry: Target,
-  arcRelay: Lightning,
-  skyfireBattery: Robot,
-  aegisBastion: ShieldChevron,
-});
-
-const DEFENSE_GUIDE_STEPS = Object.freeze([
-  Object.freeze({ target: "core", kicker: "01 · 방어 목표", title: "헤이븐 방벽을 지키세요", description: "세 침투로의 적이 중앙 추론핵에 도달하면 방벽이 손상됩니다. 상단 내구도가 0이 되면 작전 실패입니다." }),
-  Object.freeze({ target: "field", kicker: "02 · 화망 설계", title: "패드를 선택해 사거리와 축선을 확인하세요", description: "선택한 포대의 사거리와 현재 표적이 전장에 표시됩니다. 선두·강적·밀집 우선순위를 바꿔 같은 배치에서도 전술을 조정할 수 있습니다." }),
-  Object.freeze({ target: "palette", kicker: "03 · 체계 조합", title: "네 체계의 역할을 조합하세요", description: "센트리 단일 화력, 릴레이 연쇄 제압, 스카이파이어 범위 폭격, 바스티온 감속을 조합하고 2단계부터 전문화를 선택하세요." }),
-  Object.freeze({ target: "wave", kicker: "04 · 지휘 개입", title: "웨이브 정보와 전술 명령을 활용하세요", description: "조기 호출 현상금과 다음 적 구성을 확인하세요. Q·W·E 전술 명령, T 표적 우선순위, S 판매, F 2배속으로 전황에 직접 개입합니다." }),
-]);
-
-function DefenseSpotlightGuide({ stepIndex, onNext, onBack, onSkip }) {
-  const modalRef = useRef(null);
-  const step = DEFENSE_GUIDE_STEPS[stepIndex];
-  useDialogFocusTrap(modalRef, Boolean(step));
-  if (!step) return null;
-  const final = stepIndex === DEFENSE_GUIDE_STEPS.length - 1;
-  return (
-    <section className={`defense-guide-overlay is-${step.target}`} data-defense-guide-step={stepIndex + 1} aria-label={`디펜스 첫 도전 가이드 ${stepIndex + 1}단계`}>
-      <div className={`defense-guide-spotlight is-${step.target}`} aria-hidden="true" />
-      <article className="defense-guide-card" role="dialog" aria-modal="true" aria-labelledby="defense-guide-title" ref={modalRef} tabIndex={-1}>
-        <div className="defense-guide-copy">
-          <small>{step.kicker} · 레아 전술 교신</small>
-          <h2 id="defense-guide-title">{step.title}</h2>
-          <p>{step.description}</p>
-          <div className="defense-guide-progress" aria-label={`${DEFENSE_GUIDE_STEPS.length}단계 중 ${stepIndex + 1}단계`}>
-            {DEFENSE_GUIDE_STEPS.map((item, index) => <i className={index <= stepIndex ? "is-active" : ""} key={item.target} />)}
-          </div>
-          <footer>
-            <button type="button" className="defense-guide-skip" onClick={onSkip}>가이드 건너뛰기 <kbd>ESC</kbd></button>
-            <span>
-              <button type="button" disabled={stepIndex === 0} onClick={onBack}><ArrowLeft weight="bold" /> 이전</button>
-              <button type="button" className="defense-guide-next" onClick={onNext}>{final ? "배치 시작" : "다음"}<ArrowRight weight="bold" /></button>
-            </span>
-          </footer>
-        </div>
-      </article>
-    </section>
-  );
-}
-
-function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutorial = false, onTutorialComplete, onFinish, onBase }) {
-  const hostRef = useRef(null);
-  const controllerRef = useRef(null);
-  const [hud, setHud] = useState(null);
-  const [loadProgress, setLoadProgress] = useState(0);
-  const [tutorialStep, setTutorialStep] = useState(showTutorial ? 0 : -1);
-  const stage = getDefenseStage(stageId);
-  const tutorialActive = showTutorial && tutorialStep >= 0;
-
-  useEffect(() => setTutorialStep(showTutorial ? 0 : -1), [showTutorial, stageId]);
-
-  const finishTutorial = useCallback(() => {
-    controllerRef.current?.setSuspended(false);
-    setTutorialStep(-1);
-    onTutorialComplete?.();
-  }, [onTutorialComplete]);
-
-  const advanceTutorial = useCallback(() => {
-    if (tutorialStep >= DEFENSE_GUIDE_STEPS.length - 1) finishTutorial();
-    else setTutorialStep((step) => Math.min(DEFENSE_GUIDE_STEPS.length - 1, step + 1));
-  }, [finishTutorial, tutorialStep]);
-
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return undefined;
-    let cancelled = false;
-    let controller = null;
-    void import("./phaser/createDefenseGame.ts").then(({ createDefenseGame }) => {
-      if (cancelled) return;
-      controller = createDefenseGame(host, {
-        onHud: (nextHud) => !cancelled && setHud(nextHud),
-        onEvent: (event) => {
-          if (cancelled) return;
-          if (event.type === "defenseNodeSelected" || event.type === "defenseTargetPriorityChanged") sfx.play("defenseSelect");
-          else if (event.type === "defenseTowerBuilt") sfx.play("defenseBuild");
-          else if (event.type === "defenseTowerUpgraded" || event.type === "defenseTowerSpecialized") sfx.play("defenseUpgrade");
-          else if (event.type === "defenseTowerSold") sfx.play("defenseSell");
-          else if (event.type === "defenseEarlyWaveCalled" || event.type === "defenseWaveStarted") sfx.play("defenseWave");
-          else if (event.type === "defenseWaveCleared") sfx.play("defenseClear");
-          else if (event.type === "defenseAbilityActivated") sfx.play("defenseAbility");
-          else if (event.type === "defenseCoreHit") sfx.play("defenseBreach");
-          else if (event.type === "defenseCoreRepaired") sfx.play("defenseRepair");
-          else if (event.type === "defenseEnemyDestroyed" && event.elite) sfx.play("defenseEliteDown");
-          else if (event.type === "defenseTowerFired") sfx.play("towerShot");
-          else if (event.type === "defenseEnemyHit") sfx.play("enemyHit");
-          else if (event.type === "defenseVictory") sfx.play("victory");
-          else if (event.type === "defenseDefeat") sfx.play("defenseDefeat");
-        },
-        onFinish: (result) => !cancelled && onFinish(result),
-        onLoadProgress: (progress) => !cancelled && setLoadProgress(progress),
-        onReady: () => !cancelled && setLoadProgress(1),
-      }, stageId, doctrineId);
-      controllerRef.current = controller;
-    });
-    return () => {
-      cancelled = true;
-      controllerRef.current = null;
-      controller?.destroy();
-    };
-  }, [doctrineId, onFinish, sfx, stageId]);
-
-  useEffect(() => {
-    if (loadProgress < 1) return;
-    controllerRef.current?.setSuspended(tutorialActive);
-  }, [loadProgress, tutorialActive]);
-
-  useEffect(() => {
-    const escape = (event) => {
-      if (event.repeat) return;
-      if (tutorialActive && ["Escape", "Enter", " ", "ArrowRight", "ArrowLeft"].includes(event.key)) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (event.key === "Escape") finishTutorial();
-        else if (event.key === "ArrowLeft") setTutorialStep((step) => Math.max(0, step - 1));
-        else advanceTutorial();
-        return;
-      }
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onBase?.();
-      }
-    };
-    window.addEventListener("keydown", escape, true);
-    return () => window.removeEventListener("keydown", escape, true);
-  }, [advanceTutorial, finishTutorial, onBase, tutorialActive]);
-
-  const selectedTowerDefinition = hud?.selectedTower ? DEFENSE_TOWER_DEFINITIONS[hud.selectedTower.type] : null;
-  const selectedTowerUpgradeCost = selectedTowerDefinition && hud?.selectedTower?.rank < 3
-    ? Math.round(selectedTowerDefinition.cost * (0.7 + hud.selectedTower.rank * 0.45))
-    : null;
-  const selectedNodeLabel = hud?.selectedNodeId ? `방어 패드 ${String(hud.selectedNodeId).split("-").at(-1)}` : "원형 패드를 선택하세요";
-  const guideTarget = tutorialActive ? DEFENSE_GUIDE_STEPS[tutorialStep]?.target : null;
-  const priorityLabels = { first: "선두 우선", strong: "강적 우선", cluster: "밀집 우선" };
-  const enemyLabels = { hunter: "드론", rifleman: "장갑", sniper: "저격", siegeWalker: "공성", elite: "정예" };
-  const abilityIcons = { empSweep: Pulse, orbitalStrike: Crosshair, emergencyRepair: ShieldStar };
-  const nextWaveEntries = Object.entries(hud?.nextWave || {}).filter(([, count]) => count > 0);
-  return (
-    <main
-      className="defense-runtime-screen"
-      style={assets?.defenseBattlefield ? {
-        "--defense-battlefield": `url("${assets.defenseBattlefield?.src || assets.defenseBattlefield}")`,
-        "--defense-battlefield-portrait": `url("${assets.defenseBattlefieldPortrait?.src || assets.defenseBattlefieldPortrait || assets.defenseBattlefield?.src || assets.defenseBattlefield}")`,
-      } : undefined}
-    >
-      <div className="defense-phaser-host" ref={hostRef} />
-      {loadProgress < 1 && <div className="defense-load-chip">방어 체계 동기화 {Math.round(loadProgress * 100)}%</div>}
-      <header className="defense-combat-hud" data-defense-phase={hud?.phase || "intermission"}>
-        <div className={`defense-core-status${guideTarget === "core" ? " is-guide-target" : ""}`}><span><small>방벽 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
-        <div className="defense-wave-command" aria-live="polite">
-          <span><small>WAVE {String(hud?.wave || 1).padStart(2, "0")} / {String(hud?.totalWaves || stage?.waveCounts.length).padStart(2, "0")}</small><b>{hud?.phase === "wave" ? `교전 중 · 잔존 ${hud?.liveEnemies || 0}` : "다음 공세 분석 완료"}</b></span>
-          <i><em style={{ width: `${Math.round((hud?.waveProgress || 0) * 100)}%` }} /></i>
-        </div>
-        <div className="defense-wave-status"><span><small>격파</small><b>{hud?.kills || 0}</b></span><span><small>전술 자원</small><b><Coins weight="fill" /> {hud?.credits || 0}</b></span><span><small>정예</small><b>{hud?.eliteEnemies || 0}</b></span></div>
-        <div className="defense-speed-controls" aria-label="전투 속도"><button type="button" className={hud?.simulationSpeed === 0 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(0)} aria-label="일시정지"><Pause weight="fill" /></button><button type="button" className={hud?.simulationSpeed === 1 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(1)}><Play weight="fill" />1×</button><button type="button" className={hud?.simulationSpeed === 2 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(2)}><FastForward weight="fill" />2×</button></div>
-        <button type="button" className="defense-exit" data-ui-sound="uiClose" onClick={onBase}><HouseLine weight="bold" /> 기지로 <kbd>ESC</kbd></button>
-      </header>
-
-      <div className={`defense-guide-world-target${guideTarget === "field" ? " is-guide-target" : ""}`} aria-hidden="true" />
-      <aside
-        className={`defense-command-dock${hud?.selectedNodeId ? " has-selected-pad" : " needs-pad"}${hud?.selectedTower ? " has-selected-tower" : " is-deployment"}${hud?.phase === "wave" ? " is-combat" : " is-preparation"}`}
-        data-defense-phase={hud?.phase || "intermission"}
-        aria-label={hud?.phase === "wave" ? "방어전 전술 명령" : "방어전 출격 준비"}
-      >
-        <header>
-          <div><small>{hud?.selectedTower ? "FIRE CONTROL" : "DEPLOYMENT PAD"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>
-          <div className="defense-pad-stepper" aria-label="건설 패드 순환 선택">
-            <button type="button" onClick={() => controllerRef.current?.cycleNode(-1)} aria-label="이전 건설 패드"><ArrowLeft weight="bold" /></button>
-            <span><kbd>←</kbd><kbd>→</kbd><b>패드 선택</b></span>
-            <button type="button" onClick={() => controllerRef.current?.cycleNode(1)} aria-label="다음 건설 패드"><ArrowRight weight="bold" /></button>
-          </div>
-          {hud?.selectedTower ? <span>RANK {hud.selectedTower.rank} / 3 · {priorityLabels[hud.selectedTower.targetPriority]}</span> : <span>{hud?.selectedNodeId ? "배치 체계를 선택하세요" : "빛나는 패드를 먼저 선택하세요"}</span>}
-        </header>
-        <div className={`defense-tower-palette${guideTarget === "palette" ? " is-guide-target" : ""}`} data-defense-tower-palette>
-          {Object.values(DEFENSE_TOWER_DEFINITIONS).map((tower, index) => {
-            const Icon = DEFENSE_TOWER_ICONS[tower.id] || Crosshair;
-            const disabled = !hud?.selectedNodeId || Boolean(hud?.selectedTower) || (hud?.credits || 0) < tower.cost;
-            const compactName = tower.name.split(" ").at(-1);
-            return <button type="button" data-defense-tower={tower.id} aria-label={`${tower.name}, ${tower.role}, 자원 ${tower.cost}`} title={hud?.selectedTower ? "빈 패드로 이동하면 바로 설치할 수 있습니다." : tower.description} disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="duotone" /><span><b><span className="defense-tower-name-full">{tower.name}</span><span className="defense-tower-name-compact">{compactName}</span></b><small>{tower.role}</small></span><em>{tower.cost}</em></button>;
-          })}
-        </div>
-        <section className="defense-tower-console">
-          {hud?.selectedTower ? (
-            <>
-              <div className="defense-tower-metrics"><span><small>DMG</small><b>{hud.selectedTower.damage}</b></span><span><small>RNG</small><b>{hud.selectedTower.range}</b></span><span><small>RATE</small><b>{hud.selectedTower.cooldown}s</b></span></div>
-              <div className="defense-tower-quick-actions">
-                <button type="button" onClick={() => controllerRef.current?.cycleTargetPriority()}><ArrowsClockwise weight="bold" /><span><small>표적 규칙 <kbd>T</kbd></small><b>{priorityLabels[hud.selectedTower.targetPriority]}</b></span></button>
-                <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3 || (hud?.credits || 0) < (selectedTowerUpgradeCost || 0)} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="duotone" /><span><small>{hud.selectedTower.rank >= 3 ? "강화 완료" : `비용 ${selectedTowerUpgradeCost}`} <kbd>U</kbd></small><b>{hud.selectedTower.rank >= 3 ? "최대 단계" : "즉시 강화"}</b></span></button>
-                <button type="button" className="defense-sell-button" onClick={() => controllerRef.current?.sellTower()}><Trash weight="bold" /><span><small>철거 <kbd>S</kbd></small><b>+{hud.selectedTower.sellRefund}</b></span></button>
-              </div>
-              {hud.selectedTower.rank >= 2 && !hud.selectedTower.specialization && <div className="defense-specialization"><small>전문화 선택 · 변경 불가</small><span>{hud.selectedTower.branches.map((branch, index) => <button type="button" style={{ "--branch-accent": branch.accent }} onClick={() => controllerRef.current?.specializeTower(index)} key={branch.id}><kbd>{index ? "X" : "Z"}</kbd><b>{branch.name}</b><em>{branch.detail}</em></button>)}</span></div>}
-              {hud.selectedTower.specialization && <div className="defense-specialization is-locked"><small>전문화 적용</small><b>{hud.selectedTower.branches.find((branch) => branch.id === hud.selectedTower.specialization)?.name}</b></div>}
-            </>
-          ) : (
-            <div className="defense-next-wave-intel"><small>NEXT WAVE INTEL</small><strong>적 구성 사전 분석</strong><span>{nextWaveEntries.map(([role, count]) => <b className={role === "elite" || role === "siegeWalker" ? "is-danger" : ""} key={role}><em>{enemyLabels[role]}</em>{count}</b>)}</span></div>
-          )}
-        </section>
-        <section className="defense-command-abilities">
-          <header><span><small>TACTICAL COMMAND LINK</small><b>전술 명령</b></span><i><em style={{ width: `${Math.round((hud?.commandPoints || 0) / Math.max(1, hud?.maxCommandPoints || 100) * 100)}%` }} /></i><strong>{Math.floor(hud?.commandPoints || 0)}</strong></header>
-          <div>{(hud?.abilities || []).map((ability, index) => { const Icon = abilityIcons[ability.id] || Crosshair; const repairAtFull = ability.id === "emergencyRepair" && hud?.baseHp >= hud?.maxBaseHp; return <button type="button" disabled={!ability.ready || repairAtFull} onClick={() => controllerRef.current?.activateAbility(ability.id)} key={ability.id}><kbd>{["Q", "W", "E"][index]}</kbd><Icon weight="duotone" /><span><b>{ability.name}</b><small>{ability.cooldownRemaining > 0 ? `${ability.cooldownRemaining.toFixed(1)}초` : ability.detail}</small></span><em>{ability.cost}</em></button>; })}</div>
-        </section>
-        <div className="defense-command-actions">
-          <button type="button" className={`defense-wave-button${guideTarget === "wave" ? " is-guide-target" : ""}`} data-defense-wave aria-label="웨이브 시작" disabled={!hud?.readyToStart} onClick={() => controllerRef.current?.startWave()}><Warning weight="duotone" /><span><small>{hud?.earlyCallBonus > 0 ? `조기 호출 현상금 +${hud.earlyCallBonus}` : hud?.wave === 1 ? "첫 웨이브" : `${Math.ceil(hud?.intermission || 0)}초`}</small><b>{hud?.readyToStart ? "공세 즉시 호출" : "방어 진행 중"}</b></span><Play weight="fill" /></button>
-        </div>
-      </aside>
-      {tutorialActive && <DefenseSpotlightGuide stepIndex={tutorialStep} onNext={advanceTutorial} onBack={() => setTutorialStep((step) => Math.max(0, step - 1))} onSkip={finishTutorial} />}
-    </main>
-  );
-}
-
-function DefenseResultScreen({ result, stage, rewards, onRetry, onBase }) {
-  const victory = result?.status === "victory";
-  return (
-    <main className={`defense-result-screen${victory ? " is-victory" : " is-defeat"}`}>
-      <section>
-        <small>RHEA DEFENSE CONTROL · {stage?.subtitle}</small>
-        <div className="defense-result-rank" aria-label={`작전 평가 ${result?.rank || "D"}`}>{result?.rank || "D"}</div>
-        <h1>{victory ? "방어 작전 성공" : "추론핵 방어 실패"}</h1>
-        <p>{victory ? "방어 작전 기록을 저장했습니다. 회수한 자원은 기지 저장고에 보관됩니다." : "포대 배치와 사격 범위를 조정한 뒤 다시 도전하세요."}</p>
-        <div className="defense-result-stats"><span><small>작전 점수</small><b>{(result?.score || 0).toLocaleString()}</b></span><span><small>도달 웨이브</small><b>{result?.waves || 0} / {result?.totalWaves || stage?.waveCounts.length}</b></span><span><small>격파</small><b>{result?.kills || 0}</b></span><span><small>방벽 잔존</small><b>{result?.coreHp ?? 0} / {result?.maxCoreHp ?? stage?.baseHp}</b></span><span><small>조기 호출 수익</small><b>+{result?.earlyCallCredits || 0}</b></span></div>
-        {victory && rewards && <div className="defense-result-rewards"><span>회수 보상</span><b>연구 자료 +{rewards.researchData}</b><b>장비 부품 +{rewards.equipmentParts}</b><b>동기화 코어 +{rewards.augmentationCores}</b></div>}
-        <footer><button type="button" className="primary-cta" onClick={onRetry}><ArrowCounterClockwise weight="bold" /> 같은 방어선 재도전</button><button type="button" className="result-base-return" onClick={onBase}><HouseLine weight="bold" /> 헤이븐-09로 복귀</button></footer>
-      </section>
     </main>
   );
 }

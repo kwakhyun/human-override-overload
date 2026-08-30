@@ -187,12 +187,13 @@ test("HAVEN lobby uses original character art, icon currencies, edge navigation,
 });
 
 test("MIKA unlocks on the first Wrong Engine victory and keeps independent dialogue", async () => {
-  const [app, characters, dialogueContent, screens, styles] = await Promise.all([
+  const [app, characters, dialogueContent, screens, styles, combatPresentation] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/game/content/characters.js", root), "utf8"),
     readFile(new URL("src/game/content/characterDialogue.js", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/ui/combat/combatPresentation.js", root), "utf8"),
   ]);
   assert.match(characters, /unlockRegionId: "wrong-engine-core"/);
   assert.match(app, /consumePostVictoryScene\("recruit"\)/);
@@ -210,7 +211,7 @@ test("MIKA unlocks on the first Wrong Engine victory and keeps independent dialo
   assert.match(styles, /\.mika-recruit-character \{[\s\S]*left: 50%;[\s\S]*transform: translateX\(-50%\)/);
   assert.match(styles, /\.mika-recruit-dialogue-box \{[\s\S]*right: max\(28px[\s\S]*left: max\(28px/);
   assert.match(app, /resolveCharacterDialogueLine\(scriptedLine, dialogue\.beat, dialogue\.index, characterId\)/);
-  assert.match(app, /MIKA: Object\.freeze\(\{ assetKey: "mikaPortrait"/);
+  assert.match(combatPresentation, /MIKA: Object\.freeze\(\{ assetKey: "mikaPortrait"/);
 });
 
 test("Glass Dune unlocks the beam sword and opens its short-cooldown skill guide", async () => {

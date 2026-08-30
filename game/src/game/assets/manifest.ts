@@ -98,7 +98,10 @@ export const REGION_IDS = Object.freeze([DEFAULT_REGION_ID, "glass-dune", "abyss
 export type RegionId = (typeof REGION_IDS)[number];
 export type AssetProfile = "full" | "performance";
 export type MainWeaponId = "pulse-rifle" | "beam-sword";
+export type PlayableCharacterId = "aegis" | "mika" | "vesper" | "nox";
 export type DefenseStageId = "haven-perimeter" | "relay-blackout" | "sovereign-night-siege";
+
+export const PLAYABLE_CHARACTER_IDS = Object.freeze(["aegis", "mika", "vesper", "nox"] as const);
 
 export function resolveAssetProfile(profile?: string): AssetProfile {
   return profile === "performance" ? "performance" : "full";
@@ -119,12 +122,6 @@ export function resolveRegionId(regionId?: string): RegionId {
 }
 
 export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
-  { key: ASSET_KEYS.playerMikaDirectionalAim, path: "./assets/overload/hero/mika-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/mika-directional-aim-atlas.png", kind: "motion", columns: 8, rows: 8 },
-  { key: ASSET_KEYS.playerVesperDirectionalAim, path: "./assets/overload/hero/vesper-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/vesper-directional-aim-atlas.png", kind: "motion", columns: 8, rows: 8 },
-  { key: ASSET_KEYS.playerNoxDirectionalAim, path: "./assets/overload/hero/nox-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/nox-directional-aim-atlas.png", kind: "motion", columns: 8, rows: 8 },
-  { key: ASSET_KEYS.mikaAbilityPixel, path: "./assets/overload/vfx/pixel/mika-ability-atlas.png", kind: "atlas", columns: 6, rows: 4 },
-  { key: ASSET_KEYS.vesperAbilityHd, path: "./assets/overload/vfx/manual/vesper-ability-hd-atlas.png", kind: "atlas", columns: 6, rows: 4 },
-  { key: ASSET_KEYS.noxAbilityHd, path: "./assets/overload/vfx/manual/nox-ability-hd-atlas.png", kind: "atlas", columns: 6, rows: 4 },
   { key: ASSET_KEYS.enemyHunter, path: "./assets/overload/enemies/hunter.png", kind: "image" },
   { key: ASSET_KEYS.enemyRifleman, path: "./assets/overload/enemies/suppressor.png", kind: "image" },
   { key: ASSET_KEYS.enemySniper, path: "./assets/overload/enemies/brute.png", kind: "image" },
@@ -133,9 +130,6 @@ export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
   { key: ASSET_KEYS.enemySniperMotion, path: "./assets/overload/enemies/motion-v2/sniper-motion-atlas.png", performancePath: "./assets/overload/enemies/motion-v2/performance/sniper-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
   { key: ASSET_KEYS.enemySiegeWalkerMotion, path: "./assets/overload/enemies/motion-v3/siege-walker-motion-atlas.png", performancePath: "./assets/overload/enemies/motion-v3/performance/siege-walker-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
   { key: ASSET_KEYS.combatFx, path: "./assets/overload/vfx/combat-fx-atlas.png", performancePath: "./assets/overload/vfx/performance/combat-fx-atlas.png", kind: "atlas", columns: 4, rows: 3 },
-  { key: ASSET_KEYS.manualAbilityPixel, path: "./assets/overload/vfx/pixel/manual-ability-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
-  { key: ASSET_KEYS.aegisWardHd, path: "./assets/overload/vfx/manual/aegis-ward-hd-atlas.png", kind: "atlas", columns: 6, rows: 1 },
-  { key: ASSET_KEYS.empPulseHd, path: "./assets/overload/vfx/manual/emp-pulse-hd-atlas.png", kind: "atlas", columns: 6, rows: 1 },
   { key: ASSET_KEYS.enemyDeathPixel, path: "./assets/overload/vfx/pixel/enemy-death-pixel-atlas.png", kind: "atlas", columns: 6, rows: 1 },
   { key: ASSET_KEYS.automaticSkillPixel, path: "./assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
   { key: ASSET_KEYS.sovereignGateMotion, path: "./assets/overload/vfx/gates/sovereign-gate-motion-atlas.png", performancePath: "./assets/overload/vfx/gates/performance/sovereign-gate-motion-atlas.png", kind: "atlas", columns: 6, rows: 1 },
@@ -185,11 +179,30 @@ export const DEFENSE_GAME_ASSETS: readonly AssetDefinition[] = getDefenseGameAss
 export const WEAPON_GAME_ASSETS: Readonly<Record<MainWeaponId, readonly AssetDefinition[]>> = Object.freeze({
   "pulse-rifle": Object.freeze([
     { key: ASSET_KEYS.playerDirectionalAim, path: "./assets/overload/hero/survivor-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
+    { key: ASSET_KEYS.manualAbilityPixel, path: "./assets/overload/vfx/pixel/manual-ability-pixel-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+    { key: ASSET_KEYS.aegisWardHd, path: "./assets/overload/vfx/manual/aegis-ward-hd-atlas.png", kind: "atlas" as const, columns: 6, rows: 1 },
+    { key: ASSET_KEYS.empPulseHd, path: "./assets/overload/vfx/manual/emp-pulse-hd-atlas.png", kind: "atlas" as const, columns: 6, rows: 1 },
   ]),
   "beam-sword": Object.freeze([
     { key: ASSET_KEYS.playerSwordDirectionalAim, path: "./assets/overload/hero/survivor-sword-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
     { key: ASSET_KEYS.swordSkillPixel, path: "./assets/overload/vfx/pixel/sword-skill-pixel-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
     { key: ASSET_KEYS.swordManualAbilityPixel, path: "./assets/overload/vfx/pixel/sword-manual-ability-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+  ]),
+});
+
+export const OPERATIVE_GAME_ASSETS: Readonly<Record<PlayableCharacterId, readonly AssetDefinition[]>> = Object.freeze({
+  aegis: Object.freeze([]),
+  mika: Object.freeze([
+    { key: ASSET_KEYS.playerMikaDirectionalAim, path: "./assets/overload/hero/mika-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/mika-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
+    { key: ASSET_KEYS.mikaAbilityPixel, path: "./assets/overload/vfx/pixel/mika-ability-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+  ]),
+  vesper: Object.freeze([
+    { key: ASSET_KEYS.playerVesperDirectionalAim, path: "./assets/overload/hero/vesper-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/vesper-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
+    { key: ASSET_KEYS.vesperAbilityHd, path: "./assets/overload/vfx/manual/vesper-ability-hd-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+  ]),
+  nox: Object.freeze([
+    { key: ASSET_KEYS.playerNoxDirectionalAim, path: "./assets/overload/hero/nox-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/nox-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
+    { key: ASSET_KEYS.noxAbilityHd, path: "./assets/overload/vfx/manual/nox-ability-hd-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
   ]),
 });
 
@@ -314,10 +327,24 @@ export function getRegionArenaAsset(regionId?: string, profile: AssetProfile = "
   return selectAssetProfile(REGION_ROUTE_ASSETS[resolveRegionId(regionId)][0], profile);
 }
 
-export function getGameAssetsForRegion(regionId?: string, profile: AssetProfile = "full", mainWeaponId: MainWeaponId = "pulse-rifle"): readonly AssetDefinition[] {
+export function getOperativeGameAssets(characterIds: readonly string[] = PLAYABLE_CHARACTER_IDS, profile: AssetProfile = "full"): readonly AssetDefinition[] {
+  const requested = new Set(characterIds.filter((id): id is PlayableCharacterId => PLAYABLE_CHARACTER_IDS.includes(id as PlayableCharacterId)));
+  requested.add("aegis");
+  return selectAssetProfiles(PLAYABLE_CHARACTER_IDS.flatMap((id) => requested.has(id) ? OPERATIVE_GAME_ASSETS[id] : []), profile);
+}
+
+export function getGameAssetsForRegion(
+  regionId?: string,
+  profile: AssetProfile = "full",
+  mainWeaponId: MainWeaponId = "pulse-rifle",
+  availableCharacterIds: readonly string[] = PLAYABLE_CHARACTER_IDS,
+): readonly AssetDefinition[] {
   const resolved = resolveRegionId(regionId);
   const weapon = resolveMainWeaponId(mainWeaponId);
-  return selectAssetProfiles([...COMMON_GAME_ASSETS, ...WEAPON_GAME_ASSETS[weapon], ...REGION_ROUTE_ASSETS[resolved]], profile);
+  return Object.freeze([
+    ...selectAssetProfiles([...COMMON_GAME_ASSETS, ...WEAPON_GAME_ASSETS[weapon], ...REGION_ROUTE_ASSETS[resolved]], profile),
+    ...getOperativeGameAssets(availableCharacterIds, profile),
+  ]);
 }
 
 export function getBossGameAssetsForRegion(regionId?: string, profile: AssetProfile = "full"): readonly AssetDefinition[] {

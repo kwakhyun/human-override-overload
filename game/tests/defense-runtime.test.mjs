@@ -5,17 +5,18 @@ import { readFile, stat } from "node:fs/promises";
 const root = new URL("../", import.meta.url);
 
 test("Phaser defense runtime stays behind its own deterministic bridge and guided DOM HUD", async () => {
-  const [app, scene, view, manifest, screens, styles, defenseStyles, createGame] = await Promise.all([
+  const [app, scene, view, manifest, screens, runtimeScreens, styles, defenseStyles, createGame] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/phaser/scenes/DefenseScene.ts", root), "utf8"),
     readFile(new URL("src/phaser/view/DefenseView.ts", root), "utf8"),
     readFile(new URL("src/game/assets/manifest.ts", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
+    readFile(new URL("src/ui/defense/DefenseScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
     readFile(new URL("src/styles/defense-overhaul.css", root), "utf8"),
     readFile(new URL("src/phaser/createDefenseGame.ts", root), "utf8"),
   ]);
-  assert.match(app, /import\("\.\/phaser\/createDefenseGame\.ts"\)/);
+  assert.match(runtimeScreens, /import\("\.\.\/\.\.\/phaser\/createDefenseGame\.ts"\)/);
   assert.match(app, /<DefenseStageSelectScreen/);
   assert.match(app, /<DefenseArenaScreen/);
   assert.match(scene, /createDefenseState\(\{ stageId, doctrineId \}\)/);
@@ -34,8 +35,8 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(scene, /this\.view\?\.handleEvent\(event/);
   assert.match(scene, /private selectNextEmptyNode/);
   assert.match(scene, /this\.selectNextEmptyNode\(builtNodeId\)/);
-  assert.match(app, /className="defense-command-actions"/);
-  assert.match(app, /Boolean\(hud\?\.selectedTower\)/);
+  assert.match(runtimeScreens, /className="defense-command-actions"/);
+  assert.match(runtimeScreens, /Boolean\(hud\?\.selectedTower\)/);
   assert.match(createGame, /const logicalWidth = portrait \? 720 : 1280/);
   assert.match(createGame, /const logicalHeight = portrait \? 1280 : 720/);
   assert.match(createGame, /mobile\.portrait \|\| window\.innerHeight > window\.innerWidth/);
@@ -54,11 +55,11 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
   assert.match(screens, /Object\.values\(DEFENSE_DOCTRINES\)/);
   assert.match(screens, /onSelect\(stage\.id, selectedDoctrineId\)/);
   assert.match(styles, /\.defense-tower-palette/);
-  assert.match(app, /const DEFENSE_GUIDE_STEPS/);
-  assert.match(app, /data-defense-guide-step=\{stepIndex \+ 1\}/);
+  assert.match(runtimeScreens, /const DEFENSE_GUIDE_STEPS/);
+  assert.match(runtimeScreens, /data-defense-guide-step=\{stepIndex \+ 1\}/);
   assert.match(app, /completeDefenseGuide\(campaign, activeSlotId\)/);
   assert.match(app, /showTutorial=\{activeDefenseStageId === "haven-perimeter" && !activeSlot\?\.defenseGuideSeen\}/);
-  assert.match(app, /controllerRef\.current\?\.setSuspended\(tutorialActive\)/);
+  assert.match(runtimeScreens, /controllerRef\.current\?\.setSuspended\(tutorialActive\)/);
   assert.match(styles, /\.defense-guide-spotlight/);
   assert.match(styles, /\.defense-guide-card/);
   assert.match(styles, /@media \(max-width: 720px\) and \(orientation: portrait\)[\s\S]*\.defense-guide-card/);
@@ -100,21 +101,21 @@ test("defense art ships dedicated atlases plus three full and performance stage 
 });
 
 test("defense HUD keeps readable commercial command controls on desktop and portrait mobile", async () => {
-  const [app, defenseStyles, main] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+  const [runtimeScreens, defenseStyles, main] = await Promise.all([
+    readFile(new URL("src/ui/defense/DefenseScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles/defense-overhaul.css", root), "utf8"),
     readFile(new URL("src/main.jsx", root), "utf8"),
   ]);
-  assert.match(app, />방벽 내구도</);
-  assert.match(app, /잔존 \$\{hud\?\.liveEnemies/);
-  assert.match(app, /<em>\{tower\.cost\}<\/em>/);
-  assert.match(app, /"공세 즉시 호출"/);
-  assert.match(app, /controllerRef\.current\?\.cycleTargetPriority\(\)/);
-  assert.match(app, /controllerRef\.current\?\.activateAbility\(ability\.id\)/);
-  assert.match(app, /controllerRef\.current\?\.setSpeed\(2\)/);
-  assert.match(app, /has-selected-tower/);
-  assert.match(app, /is-combat/);
-  assert.match(app, /aria-label=\{hud\?\.phase === "wave" \? "방어전 전술 명령" : "방어전 출격 준비"\}/);
+  assert.match(runtimeScreens, />방벽 내구도</);
+  assert.match(runtimeScreens, /잔존 \$\{hud\?\.liveEnemies/);
+  assert.match(runtimeScreens, /<em>\{tower\.cost\}<\/em>/);
+  assert.match(runtimeScreens, /"공세 즉시 호출"/);
+  assert.match(runtimeScreens, /controllerRef\.current\?\.cycleTargetPriority\(\)/);
+  assert.match(runtimeScreens, /controllerRef\.current\?\.activateAbility\(ability\.id\)/);
+  assert.match(runtimeScreens, /controllerRef\.current\?\.setSpeed\(2\)/);
+  assert.match(runtimeScreens, /has-selected-tower/);
+  assert.match(runtimeScreens, /is-combat/);
+  assert.match(runtimeScreens, /aria-label=\{hud\?\.phase === "wave" \? "방어전 전술 명령" : "방어전 출격 준비"\}/);
   assert.match(defenseStyles, /grid-template-rows: minmax\(0, 1fr\) 190px !important/);
   assert.match(defenseStyles, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(defenseStyles, /@media \(max-width: 820px\), \(orientation: portrait\)/);
@@ -130,14 +131,14 @@ test("defense HUD keeps readable commercial command controls on desktop and port
 });
 
 test("defense events use a dedicated procedural combat sound palette", async () => {
-  const [app, sfx] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+  const [runtimeScreens, sfx] = await Promise.all([
+    readFile(new URL("src/ui/defense/DefenseScreens.jsx", root), "utf8"),
     readFile(new URL("src/audio/sfx.js", root), "utf8"),
   ]);
   for (const cue of ["defenseSelect", "defenseBuild", "defenseUpgrade", "defenseSell", "defenseWave", "defenseClear", "defenseBreach", "defenseAbility", "defenseRepair", "defenseEliteDown", "defenseDefeat"]) {
     assert.match(sfx, new RegExp(`case "${cue}"`));
   }
-  assert.match(app, /event\.type === "defenseTowerBuilt"\) sfx\.play\("defenseBuild"\)/);
-  assert.match(app, /event\.type === "defenseWaveCleared"\) sfx\.play\("defenseClear"\)/);
-  assert.match(app, /event\.type === "defenseDefeat"\) sfx\.play\("defenseDefeat"\)/);
+  assert.match(runtimeScreens, /event\.type === "defenseTowerBuilt"\) sfx\.play\("defenseBuild"\)/);
+  assert.match(runtimeScreens, /event\.type === "defenseWaveCleared"\) sfx\.play\("defenseClear"\)/);
+  assert.match(runtimeScreens, /event\.type === "defenseDefeat"\) sfx\.play\("defenseDefeat"\)/);
 });

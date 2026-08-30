@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { resolveRegionId } from "../game/assets/manifest";
+import { resolveRegionId, type PlayableCharacterId } from "../game/assets/manifest";
 import { detectInitialQuality, QUALITY_PRESETS } from "../swarm/performance.js";
 import { SceneBridge, type ActiveAbility, type Direction, type SceneCallbacks } from "./adapters/sceneBridge";
 import { primeDeterministicArsenal } from "./profiling/deterministicArsenal";
@@ -63,7 +63,12 @@ export function createOverloadGame(
   const assetProfile = initialQuality === "performance" || mobileRuntime.touchOptimized
     ? "performance"
     : "full";
-  const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, callbacks.onLoadProgress);
+  const availableCharacterIds = new Set<PlayableCharacterId>(["aegis"]);
+  if (launch.mikaUnlocked) availableCharacterIds.add("mika");
+  if (launch.vesperUnlocked) availableCharacterIds.add("vesper");
+  if (launch.noxUnlocked) availableCharacterIds.add("nox");
+  if (launch.characterId) availableCharacterIds.add(launch.characterId);
+  const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, [...availableCharacterIds], callbacks.onLoadProgress);
   const portraitPresentation = mobileRuntime.portrait && mobileRuntime.touchOptimized;
   const presentationWidth = portraitPresentation
     ? Math.max(1, Math.round(window.visualViewport?.width || window.innerWidth || parent.clientWidth))

@@ -7,21 +7,30 @@ import {
   type AssetProfile,
   type RegionId,
   type MainWeaponId,
+  type PlayableCharacterId,
 } from "../../game/assets/manifest";
 
 export class BootScene extends Phaser.Scene {
   private readonly regionId: RegionId;
   private readonly assetProfile: AssetProfile;
   private readonly mainWeaponId: MainWeaponId;
+  private readonly availableCharacterIds: readonly PlayableCharacterId[];
   private progressFill?: Phaser.GameObjects.Rectangle;
   private progressLabel?: Phaser.GameObjects.Text;
   private readonly onLoadProgress?: (progress: number) => void;
 
-  constructor(regionId?: string, assetProfile: AssetProfile = "full", mainWeaponId: MainWeaponId = "pulse-rifle", onLoadProgress?: (progress: number) => void) {
+  constructor(
+    regionId?: string,
+    assetProfile: AssetProfile = "full",
+    mainWeaponId: MainWeaponId = "pulse-rifle",
+    availableCharacterIds: readonly PlayableCharacterId[] = ["aegis", "mika", "vesper", "nox"],
+    onLoadProgress?: (progress: number) => void,
+  ) {
     super({ key: "OverloadBoot" });
     this.regionId = resolveRegionId(regionId);
     this.assetProfile = resolveAssetProfile(assetProfile);
     this.mainWeaponId = resolveMainWeaponId(mainWeaponId);
+    this.availableCharacterIds = availableCharacterIds;
     this.onLoadProgress = onLoadProgress;
   }
 
@@ -50,7 +59,7 @@ export class BootScene extends Phaser.Scene {
       this.progressLabel?.setText(`LOADING AUTHORED ASSETS · ${Math.round(value * 100)}%`);
       this.onLoadProgress?.(value);
     });
-    for (const asset of getGameAssetsForRegion(this.regionId, this.assetProfile, this.mainWeaponId)) this.load.image(asset.key, asset.path);
+    for (const asset of getGameAssetsForRegion(this.regionId, this.assetProfile, this.mainWeaponId, this.availableCharacterIds)) this.load.image(asset.key, asset.path);
   }
 
   create() {

@@ -74,11 +74,12 @@ test("NPC portrait build preserves ILYA headroom and normalizes SERA to an upper
 
 test("the active narrative panel resolves the actual speaker without misleading squad fallbacks", async () => {
   const app = await read("src/App.jsx");
+  const combatPresentation = await read("src/ui/combat/combatPresentation.js");
   const styles = await read("src/styles.css");
   const screens = await read("src/ui/campaign/CampaignScreens.jsx");
-  const mapping = app.slice(
-    app.indexOf("const NARRATIVE_STANDALONE_PORTRAITS"),
-    app.indexOf("const CATEGORY_META"),
+  const mapping = combatPresentation.slice(
+    combatPresentation.indexOf("const NARRATIVE_STANDALONE_PORTRAITS"),
+    combatPresentation.indexOf("export function resolveEventSound"),
   );
 
   assert.match(mapping, /AEGIS:[\s\S]*?assetKey: "portrait"[\s\S]*?variant: "hero"/);

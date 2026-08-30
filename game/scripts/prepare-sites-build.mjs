@@ -2,6 +2,7 @@
 import { cpSync, copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pruneAuthoringOnlyAssets } from "./production-asset-policy.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
@@ -22,4 +23,6 @@ const distDrizzle = path.join(dist, ".openai", "drizzle");
 rmSync(distDrizzle, { recursive: true, force: true });
 cpSync(drizzle, distDrizzle, { recursive: true });
 
-console.log("Prepared Sites build: worker, hosting bindings, and D1 migrations");
+const pruned = pruneAuthoringOnlyAssets(path.join(dist, "client"));
+
+console.log(`Prepared Sites build: worker, hosting bindings, D1 migrations, and ${pruned.present} authoring-only assets pruned (${(pruned.bytes / 1024 / 1024).toFixed(2)} MiB)`);

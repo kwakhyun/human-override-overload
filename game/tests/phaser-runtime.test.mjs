@@ -10,7 +10,7 @@ test("the title screen is a full-bleed user key art composition with only essent
   const engine = await read("src/swarm/engine.js");
   const manifest = await read("src/game/assets/manifest.ts");
   const styles = await read("src/styles.css");
-  const intro = app.slice(app.indexOf("function IntroScreen"), app.indexOf("function ProgressHud"));
+  const intro = app.slice(app.indexOf("function IntroScreen"), app.indexOf("function resolveCombatDockSlot"));
   assert.match(manifest, /intro: "\.\/assets\/overload\/intro\/start-screen-key-art\.webp"/);
   assert.match(intro, /className="intro-key-art"/);
   assert.match(intro, /className="intro-minimal-content"/);
@@ -35,6 +35,7 @@ test("the active App mounts the Phaser runtime while React owns the DOM HUD", as
   const activeRuntime = app.slice(app.indexOf("function PhaserArenaScreen"), app.indexOf("function ResultScreen"));
   assert.match(app, /createOverloadGame/);
   assert.match(app, /void import\("\.\/phaser\/createOverloadGame\.ts"\)/);
+  assert.doesNotMatch(app, /swarm\/renderer|renderSwarm|function ArenaScreen/);
   assert.match(app, /content = \(\s*<div className=\{`combat-runtime-shell[\s\S]*?<PhaserArenaScreen/);
   assert.match(activeRuntime, /className="game-canvas phaser-host"/);
   assert.match(activeRuntime, /className="expedition-hud"/);
@@ -266,7 +267,9 @@ test("Phaser launch options select region-specific routes, boss rooms, forms, an
   assert.match(createGame, /launch: OverloadLaunchOptions = \{\}/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
   assert.match(createGame, /initialQuality === "performance" \|\| mobileRuntime\.touchOptimized/);
-  assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, callbacks\.onLoadProgress\)/);
+  assert.match(createGame, /const availableCharacterIds = new Set<PlayableCharacterId>\(\["aegis"\]\)/);
+  assert.match(createGame, /if \(launch\.mikaUnlocked\) availableCharacterIds\.add\("mika"\)/);
+  assert.match(createGame, /new BootScene\(regionId, assetProfile, launch\.mainWeaponId, \[\.\.\.availableCharacterIds\], callbacks\.onLoadProgress\)/);
   assert.match(createGame, /characterSkillRanks\?: Readonly<Record<"aegis" \| "mika" \| "vesper" \| "nox", number>>/);
   assert.match(createGame, /new OverloadScene\(bridge, regionId, launch\.combatBonuses, launch\.characterSkillRanks, launch\.mainWeaponId, launch\.characterId, launch\.mikaUnlocked, launch\.vesperUnlocked, launch\.noxUnlocked, assetProfile, mobileRuntime\.autoAim, portraitPresentation\)/);
   assert.match(createGame, /setMovement: \(x: number, y: number\) => bridge\.setVirtualMovement\(x, y\)/);
@@ -328,7 +331,7 @@ test("BootScene registers common assets plus only the selected region with a saf
   assert.ok(!fallback.some((path) => path.includes("wrong-engine-forms-atlas")));
   assert.ok(!fallback.some((path) => path.includes("glass-dune")));
   assert.equal(manifest.resolveRegionId("not-a-region"), "wrong-engine-core");
-  assert.match(boot, /getGameAssetsForRegion\(this\.regionId, this\.assetProfile, this\.mainWeaponId\)/);
+  assert.match(boot, /getGameAssetsForRegion\(this\.regionId, this\.assetProfile, this\.mainWeaponId, this\.availableCharacterIds\)/);
   assert.doesNotMatch(boot, /GAME_ASSETS/);
   assert.match(createGame, /const regionId = resolveRegionId\(launch\.regionId\)/);
 });
@@ -357,7 +360,7 @@ test("player skills use low-resolution pixel atlases while healing kits and gate
   assert.deepEqual([gateAtlas.readUInt32BE(16), gateAtlas.readUInt32BE(20)], [1152, 192]);
   assert.equal(healingAtlas.readUInt32BE(16), 768);
   assert.equal(healingAtlas.readUInt32BE(20), 192);
-  assert.match(manifest, /manual-ability-pixel-atlas\.png", kind: "atlas", columns: 6, rows: 4/);
+  assert.match(manifest, /manual-ability-pixel-atlas\.png", kind: "atlas" as const, columns: 6, rows: 4/);
   assert.match(manifest, /automatic-skill-pixel-atlas\.png", kind: "atlas", columns: 6, rows: 4/);
   assert.deepEqual([swordManualAtlas.readUInt32BE(16), swordManualAtlas.readUInt32BE(20)], [384, 256]);
   assert.match(manifest, /sword-manual-ability-atlas\.png", kind: "atlas" as const, columns: 6, rows: 4/);

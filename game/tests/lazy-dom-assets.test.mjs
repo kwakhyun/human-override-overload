@@ -18,7 +18,10 @@ test("DOM art uses scoped decode warmups without mirroring Phaser texture groups
   assert.match(source, /scheduleDomImagePreload\(domAssetSources\(baseSurfaceAssetKeys\(activeCharacterId\)\)\)/);
   assert.match(source, /function baseSurfaceAssetKeys\(characterId\)/);
   assert.doesNotMatch(source, /scheduleDomImagePreload\(\[[\s\S]*regionPreviewSources/);
-  assert.match(source, /preloadDomImages\(domAssetSources\(COMBAT_DOM_ASSET_KEYS\)\)/);
+  assert.match(source, /const availableCombatPortraitKeys = new Set\(\["player", "rheaControlOfficer", characterPortraitAssetKey\(characterId\)\]\)/);
+  assert.match(source, /preloadDomImages\(domAssetSources\(\[\.\.\.availableCombatPortraitKeys\]\)\)/);
+  assert.match(source, /scheduleDomImagePreload\(domAssetSources\(COMBAT_REWARD_DOM_ASSET_KEYS\)\)/);
+  assert.ok(source.indexOf("scheduleDomImagePreload(domAssetSources(COMBAT_REWARD_DOM_ASSET_KEYS))") > source.indexOf("onRuntimeReadyRef.current?.()"));
   assert.doesNotMatch(source, /Promise\.all\(Object\.entries\(ASSET_PATHS\)/);
   assert.doesNotMatch(source, /getGameAssetsForRegion|COMMON_GAME_ASSETS/);
   assert.match(source, /setActiveFacilityId\(facilityId\);\s*setScreen\("base"\);/);

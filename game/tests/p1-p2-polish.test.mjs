@@ -6,8 +6,8 @@ const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
 
 test("P1 portrait combat keeps the wide lens while enlarging actors and exposing offscreen threats", async () => {
-  const [app, battleView, responsiveStyles] = await Promise.all([
-    read("src/App.jsx"),
+  const [combatPresentation, battleView, responsiveStyles] = await Promise.all([
+    read("src/ui/combat/combatPresentation.js"),
     read("src/phaser/view/BattleView.ts"),
     read("src/styles/p1-p2.css"),
   ]);
@@ -20,7 +20,7 @@ test("P1 portrait combat keeps the wide lens while enlarging actors and exposing
   assert.match(battleView, /enemy\?\.elite \|\| enemy\?\.isMidBoss \? COLORS\.amber : COLORS\.red/);
   assert.match(battleView, /graphics\.strokeCircle\(tipX, tipY, 13\)/);
   assert.match(battleView, /this\.drawPortraitThreatIndicators\(state, graphics, viewportWidth, viewportHeight\)/);
-  assert.match(app, /"ELIMINATE CURRENT WAVE": "웨이브 적 섬멸"/);
+  assert.match(combatPresentation, /"ELIMINATE CURRENT WAVE": "웨이브 적 섬멸"/);
   assert.match(responsiveStyles, /\.route-objective strong \{[\s\S]*font-size: 18px;[\s\S]*white-space: normal;[\s\S]*text-overflow: clip/);
   assert.match(responsiveStyles, /\.combat-ability-chip,[\s\S]*min-height: 62px/);
   assert.match(responsiveStyles, /\.combat-ability-copy strong,[\s\S]*font-size: 13px/);
@@ -51,8 +51,8 @@ test("P1 modals trap focus, make background surfaces inert, and expose mobile ca
 });
 
 test("P1 defense pads support keyboard and explicit previous-next navigation", async () => {
-  const [app, scene, createGame, responsiveStyles] = await Promise.all([
-    read("src/App.jsx"),
+  const [defenseScreens, scene, createGame, responsiveStyles] = await Promise.all([
+    read("src/ui/defense/DefenseScreens.jsx"),
     read("src/phaser/scenes/DefenseScene.ts"),
     read("src/phaser/createDefenseGame.ts"),
     read("src/styles/p1-p2.css"),
@@ -65,8 +65,8 @@ test("P1 defense pads support keyboard and explicit previous-next navigation", a
   assert.match(scene, /return this\.selectNode\(this\.state\.nodes\[nextIndex\]\.id\)/);
   assert.match(createGame, /cycleNode: \(direction: number\) => boolean/);
   assert.match(createGame, /cycleNode: \(direction: number\) => battle\.cycleNode\(direction\)/);
-  assert.match(app, /className="defense-pad-stepper"/);
-  assert.match(app, /onClick=\{\(\) => controllerRef\.current\?\.cycleNode\(-1\)\}/);
+  assert.match(defenseScreens, /className="defense-pad-stepper"/);
+  assert.match(defenseScreens, /onClick=\{\(\) => controllerRef\.current\?\.cycleNode\(-1\)\}/);
   assert.match(responsiveStyles, /\.defense-command-dock > header > \.defense-pad-stepper button \{ width: 48px; min-width: 48px; height: 48px; \}/);
 });
 

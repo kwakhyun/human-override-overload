@@ -92,7 +92,7 @@ test("level-up focus starts on the dialog, not option one, until real keyboard n
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
 
-  const overlay = app.slice(app.indexOf("function LevelUpOverlay"), app.indexOf("function ArenaScreen"));
+  const overlay = app.slice(app.indexOf("function LevelUpOverlay"), app.indexOf("const FLOATING_JOYSTICK_BLOCKED_SELECTOR"));
   assert.match(overlay, /modalRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
   assert.match(overlay, /className="reward-modal"[\s\S]*tabIndex="-1"/);
   assert.doesNotMatch(overlay, /firstOptionRef|firstOptionRef\.current\?\.focus/);
@@ -135,19 +135,20 @@ test("Phaser DOM HUD shows authored combat and transit cues without restoring a 
 });
 
 test("active HUD and HAVEN interactions expose Korean-first copy with NPC menu portraits", async () => {
-  const [app, screens, styles] = await Promise.all([
+  const [app, screens, styles, combatPresentation] = await Promise.all([
     readFile(new URL("src/App.jsx", root), "utf8"),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/ui/combat/combatPresentation.js", root), "utf8"),
   ]);
 
-  assert.match(app, /const BOSS_NAME_KO/);
-  assert.match(app, /function localizeObjective/);
-  assert.match(app, /normalized\.includes\("GATE SEALED"\)/);
-  assert.match(app, /clearPhase === "panic"/);
-  assert.match(app, /\? \(expedition\?\.bossRoom \? "보스 구역 교전" : "전방 작전 계속"\)/);
-  assert.match(app, /오답 엔진[\s\S]*거울 폭군[\s\S]*침몰한 예언자/);
-  assert.match(app, /bossGroggy: \["보스 그로기 · 피해 2\.5배"/);
+  assert.match(combatPresentation, /const BOSS_NAME_KO/);
+  assert.match(combatPresentation, /function localizeObjective/);
+  assert.match(combatPresentation, /normalized\.includes\("GATE SEALED"\)/);
+  assert.match(combatPresentation, /clearPhase === "panic"/);
+  assert.match(combatPresentation, /\? \(expedition\?\.bossRoom \? "보스 구역 교전" : "전방 작전 계속"\)/);
+  assert.match(combatPresentation, /오답 엔진[\s\S]*거울 폭군[\s\S]*침몰한 예언자/);
+  assert.match(combatPresentation, /bossGroggy: \["보스 그로기 · 피해 2\.5배"/);
   assert.match(app, /<strong>\{REWARD_NAMES_KO\[option\.id\]/);
   assert.match(screens, /function NpcPortrait/);
   assert.match(screens, /className=\{`base-menu-button npc-\$\{npc\.id\}/);
@@ -203,7 +204,10 @@ test("combat onboarding follows only unlocked HUD skills and character tags rend
 });
 
 test("airstrike banner dedupe and independent manual ability SFX stay separate", async () => {
-  const app = await readFile(new URL("src/App.jsx", root), "utf8");
+  const [app, combatPresentation] = await Promise.all([
+    readFile(new URL("src/App.jsx", root), "utf8"),
+    readFile(new URL("src/ui/combat/combatPresentation.js", root), "utf8"),
+  ]);
   assert.match(app, /const airstrikeBannerShownRef = useRef\(false\)/);
   assert.match(app, /airstrikeBannerShownRef\.current = false;[\s\S]*const showBanner = \(event\) =>/);
 
@@ -213,9 +217,9 @@ test("airstrike banner dedupe and independent manual ability SFX stay separate",
   assert.match(showBanner, /event\.type === "ultimateWarning" && event\.skill === "airstrike"/);
   assert.match(showBanner, /if \(airstrikeBannerShownRef\.current\) return;\s*airstrikeBannerShownRef\.current = true;/);
 
-  const soundsStart = app.indexOf("const EVENT_SOUNDS");
-  const soundsEnd = app.indexOf("const WEAPON_EVENT_SOUNDS", soundsStart);
-  const sounds = app.slice(soundsStart, soundsEnd);
+  const soundsStart = combatPresentation.indexOf("const EVENT_SOUNDS");
+  const soundsEnd = combatPresentation.indexOf("const WEAPON_EVENT_SOUNDS", soundsStart);
+  const sounds = combatPresentation.slice(soundsStart, soundsEnd);
   assert.match(sounds, /empPulseActivated: "emp"/);
   assert.match(sounds, /aegisWardActivated: "collect"/);
   assert.match(sounds, /stratosRunSweep: "rail"/);
@@ -260,6 +264,6 @@ test("phone landscape keeps rewards, defeat actions, dialogue advance, and movem
   assert.match(landscape, /\.narrative-panel \{[\s\S]*min-height: 132px/);
   assert.match(styles, /\.narrative-panel > button \{[\s\S]*min-width: 92px;[\s\S]*min-height: 58px/);
   assert.match(styles, /\.narrative-panel > button span \{ display: inline; \}/);
-  assert.equal((app.match(/<TouchJoystick onMove=/g) || []).length, 1);
+  assert.equal((app.match(/<TouchJoystick onMove=/g) || []).length, 0);
   assert.equal((app.match(/<FloatingTouchJoystick surfaceRef=/g) || []).length, 1);
 });

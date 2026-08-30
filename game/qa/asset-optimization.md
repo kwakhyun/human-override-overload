@@ -1,5 +1,18 @@
 # Runtime Asset Optimization QA
 
+## 2026-08-31 load-boundary and production packaging audit
+
+- A fresh AEGIS/pulse-rifle run now loads only the selected region, selected weapon, and unlocked operative assets.
+- Full-profile route preload changed from 32 files / 10.50 MiB to 26 files / 5.48 MiB (47.8% transfer reduction).
+- Performance-profile route preload changed from 32 files / 7.51 MiB to 26 files / 3.34 MiB (55.5% transfer reduction).
+- Combat readiness waits only for available operative/RHEA DOM portraits. Reward-card images move to an idle preload after Phaser is ready.
+- Forty-six historical or authoring-only public inputs remain reproducible in source but are pruned from `dist/client`, removing 21.41 MiB from each production package.
+- Regression contracts: `tests/performance-assets.test.mjs` and `tests/production-asset-policy.test.mjs`.
+
+The current policy is inspectable with `npm run analyze:assets`; the explicit file list lives in `scripts/production-asset-policy.mjs`.
+
+## 2026-08-09 sprite resize audit
+
 Date: 2026-08-09
 
 The production sprites were resized with premultiplied-alpha Lanczos resampling. The square canvas, transparent padding, aspect ratio, and rotation pivot were preserved. Original files are retained under `reference/source-assets/public/assets/survivor/`.
