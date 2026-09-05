@@ -24,7 +24,8 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import { createSfxEngine } from "./audio/sfx.js";
-import { resolveMusicTrack } from "./audio/music.js";
+import { resolveMusicTrack, musicTrackGain } from "./audio/music.js";
+import { createMusicPlayer } from "./audio/musicPlayer.js";
 import { createAgentVoice } from "./audio/agentVoice.js";
 import { DOM_PREVIEW_ASSET_PATHS, getRegionArenaAsset } from "./game/assets/manifest.ts";
 import { preloadDomImages, scheduleDomImagePreload } from "./game/assets/domPreloader.js";
@@ -35,7 +36,7 @@ import {
   GAME_SETTINGS_STORAGE_KEY as SETTINGS_STORAGE_KEY,
   loadGameSettings,
   mergeGameSettings,
-  saveGameSettings,
+  persistGameSettings,
 } from "./game/settings/gameSettings.js";
 import {
   BASE_NPCS,
@@ -686,33 +687,47 @@ function TagCutsceneOverlay({ cutscene }) {
   );
 }
 
-function PauseOverlay({ soundEnabled, audioSettings, onToggleSound, onAudioSettingsChange, onResume, onRestart, onBase }) {
+function PauseOverlay({ audioSettings, settingsSaved, onAudioSettingsChange, onResume, onRestart, onBase }) {
   const modalRef = useRef(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  useDialogFocusTrap(modalRef, true);
-  const updateVolume = (key, event) => onAudioSettingsChange?.({ [key]: Number(event.target.value) / 100 });
+  const [pendingAction, setPendingAction] = useState(null);
+  useDialogFocusTrap(modalRef, !settingsOpen);
+  useEffect(() => {
+    modalRef.current?.querySelector(".pause-resume")?.focus({ preventScroll: true });
+  }, [pendingAction, settingsOpen]);
+  useEffect(() => {
+    if (!pendingAction) return undefined;
+    const cancel = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (!event.repeat) setPendingAction(null);
+    };
+    window.addEventListener("keydown", cancel, true);
+    return () => window.removeEventListener("keydown", cancel, true);
+  }, [pendingAction]);
+  if (settingsOpen) return <GameSettingsOverlay settings={audioSettings} saved={settingsSaved} onChange={onAudioSettingsChange} onReset={() => onAudioSettingsChange?.({ ...DEFAULT_GAME_SETTINGS })} onClose={() => setSettingsOpen(false)} />;
   return (
-    <div className="expedition-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <div className="expedition-pause" role="dialog" aria-modal="true" aria-labelledby="pause-title" data-pause-confirmation={pendingAction || undefined}>
       <section className="expedition-pause-card" ref={modalRef} tabIndex={-1}>
-        <small>{settingsOpen ? "모바일 플레이 환경" : "전투 연결 일시 중지"}</small>
-        <h2 id="pause-title">{settingsOpen ? "게임 설정" : "일시 정지"}</h2>
-        {settingsOpen ? (
-          <div className="pause-settings-panel">
-            <label><span>BGM <b>{Math.round((audioSettings?.musicVolume ?? 1) * 100)}</b></span><input type="range" min="0" max="100" step="5" value={Math.round((audioSettings?.musicVolume ?? 1) * 100)} onChange={(event) => updateVolume("musicVolume", event)} /></label>
-            <label><span>효과음 <b>{Math.round((audioSettings?.sfxVolume ?? 0.78) * 100)}</b></span><input type="range" min="0" max="100" step="5" value={Math.round((audioSettings?.sfxVolume ?? 0.78) * 100)} onChange={(event) => updateVolume("sfxVolume", event)} /></label>
-            <label><span>전술 음성 <b>{Math.round((audioSettings?.voiceVolume ?? 0.78) * 100)}</b></span><input type="range" min="0" max="100" step="5" value={Math.round((audioSettings?.voiceVolume ?? 0.78) * 100)} onChange={(event) => updateVolume("voiceVolume", event)} /></label>
-            <button type="button" className="pause-setting-toggle" aria-pressed={audioSettings?.hapticsEnabled !== false} onClick={() => onAudioSettingsChange?.({ hapticsEnabled: audioSettings?.hapticsEnabled === false })}><Pulse weight="fill" /><span>진동 피드백</span><b>{audioSettings?.hapticsEnabled === false ? "끔" : "켬"}</b></button>
-            <button type="button" className="pause-setting-toggle" aria-pressed={soundEnabled} onClick={onToggleSound}>{soundEnabled ? <SpeakerHigh weight="fill" /> : <SpeakerSlash />}<span>전체 사운드</span><b>{soundEnabled ? "켬" : "끔"}</b></button>
-            <button type="button" className="pause-settings-back" onClick={() => setSettingsOpen(false)} autoFocus><ArrowLeft weight="bold" /><span>전투 메뉴로</span></button>
-          </div>
+        <small>HAVEN-09 · OPERATION PAUSED</small>
+        <h2 id="pause-title">{pendingAction ? pendingAction === "restart" ? "처음부터 다시 시작할까요?" : "기지로 돌아갈까요?" : "일시 정지"}</h2>
+        {pendingAction ? (
+          <>
+            <p>이번 출격의 레벨과 증강은 사라집니다. 이전에 저장한 해방 기록과 기지 강화는 유지됩니다.</p>
+            <div className="pause-confirm-actions">
+              <button type="button" className="pause-resume" onClick={() => setPendingAction(null)} autoFocus><ArrowLeft weight="bold" /><span>전투 메뉴로</span></button>
+              <button type="button" className="pause-confirm-leave" onClick={pendingAction === "restart" ? onRestart : onBase}><ArrowCounterClockwise weight="bold" /><span>{pendingAction === "restart" ? "출격 다시 시작" : "기지로 복귀"}</span></button>
+            </div>
+          </>
         ) : (
           <>
             <p>전투 시뮬레이션과 입력이 정지되었습니다.</p>
             <div>
               <button type="button" className="pause-resume" onClick={onResume} autoFocus><Play weight="fill" /><span>계속</span><kbd>ESC</kbd></button>
               <button type="button" onClick={() => setSettingsOpen(true)}><GearSix weight="fill" /><span>게임 설정</span></button>
-              <button type="button" onClick={onRestart}><ArrowCounterClockwise weight="bold" /><span>처음부터</span></button>
-              <button type="button" onClick={onBase} disabled={!onBase}><MapTrifold weight="fill" /><span>{onBase ? "헤이븐-09 기지로" : "기지 잠김"}</span></button>
+              <button type="button" onClick={() => setPendingAction("restart")}><ArrowCounterClockwise weight="bold" /><span>처음부터</span></button>
+              <button type="button" onClick={() => setPendingAction("base")} disabled={!onBase}><MapTrifold weight="fill" /><span>{onBase ? "헤이븐-09 기지로" : "기지 잠김"}</span></button>
             </div>
           </>
         )}
@@ -775,8 +790,8 @@ function LevelUpOverlay({ offer, level, assets, rewardState, onChoose }) {
       <section className="reward-modal" ref={modalRef} key={offerKey} tabIndex="-1">
         <div className="reward-kicker"><Sparkle weight="fill" /> 전술 시스템 증강 · LEVEL {level}</div>
         <h2 id="reward-title">오버로드 프로토콜</h2>
-        <p>전술 연산 대기 중. 전장에 동기화할 시스템 증강을 선택하십시오.</p>
-        {queuedRewards > 1 && <div className="reward-queue-status"><Timer weight="bold" /> 누적된 오버로드 연산 {queuedRewards}회를 통합 선택으로 압축했습니다.</div>}
+        <p>전투가 잠시 멈췄습니다. 이번 출격에서 사용할 강화를 고르세요.</p>
+        {queuedRewards > 1 && <div className="reward-queue-status"><Timer weight="bold" /> 쌓인 레벨업 {queuedRewards}회를 한 번에 강화합니다.</div>}
         <div className="reward-options">
           {offer.map((option, index) => {
             const meta = CATEGORY_META[option.category] || CATEGORY_META.skill;
@@ -1047,7 +1062,7 @@ function RouteMinimap({ hud, region }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterSkillRanks, mainWeaponId, characterId, mikaUnlocked = false, vesperUnlocked = false, noxUnlocked = false, soundEnabled, audioSettings, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterSkillRanks, mainWeaponId, characterId, mikaUnlocked = false, vesperUnlocked = false, noxUnlocked = false, soundEnabled, audioSettings, settingsSaved, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const frameRef = useRef(null);
   const controllerRef = useRef(null);
@@ -1285,17 +1300,17 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
   const activateDash = useCallback(() => {
     triggerTouchFeedback(12, audioSettings?.hapticsEnabled !== false);
     controllerRef.current?.dash();
-  }, []);
+  }, [audioSettings?.hapticsEnabled]);
 
   const activateAbility = useCallback((slot) => {
     triggerTouchFeedback(14, audioSettings?.hapticsEnabled !== false);
     controllerRef.current?.activateAbility?.(slot);
-  }, []);
+  }, [audioSettings?.hapticsEnabled]);
 
   const activateTag = useCallback(() => {
     triggerTouchFeedback([10, 20, 10], audioSettings?.hapticsEnabled !== false);
     controllerRef.current?.tag?.();
-  }, []);
+  }, [audioSettings?.hapticsEnabled]);
 
   const advanceDialogue = useCallback(() => {
     if (!dialogue) return;
@@ -1334,7 +1349,17 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
     pausedRef.current = true;
     setPaused(true);
     controllerRef.current?.setSuspended(true);
-  }, [dialogue, preparing, rewardOpen]);
+  }, [audioSettings?.hapticsEnabled, dialogue, preparing, rewardOpen]);
+
+  useEffect(() => {
+    const onHidden = () => { if (document.hidden) pauseCombat(); };
+    window.addEventListener("blur", pauseCombat);
+    document.addEventListener("visibilitychange", onHidden);
+    return () => {
+      window.removeEventListener("blur", pauseCombat);
+      document.removeEventListener("visibilitychange", onHidden);
+    };
+  }, [pauseCombat]);
 
   useEffect(() => {
     if (!showCombatTutorial || !openingNarrativeComplete || combatTutorialHandledRef.current || combatTutorialStep >= 0) return;
@@ -1375,7 +1400,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
     setPaused(false);
     controllerRef.current?.setSuspended(false);
     controllerRef.current?.focus();
-  }, []);
+  }, [audioSettings?.hapticsEnabled]);
 
   const restartCombat = useCallback(() => {
     controllerRef.current?.setSuspended(true);
@@ -1398,9 +1423,12 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
   useEffect(() => {
     if (preparing) return undefined;
     const handleEscape = (event) => {
+      // The foreground menu owns navigation; never resume combat beneath it.
+      if (paused && document.querySelector(".game-settings-layer")) return;
+      if (paused && event.key === "Escape" && document.querySelector("[data-pause-confirmation]")) return;
       if (paused && event.key !== "Escape") {
         if (PAUSED_GAMEPLAY_KEYS.has(event.code)) {
-          event.preventDefault();
+          if (!(event.code === "Space" && event.target?.closest?.("button"))) event.preventDefault();
           event.stopImmediatePropagation();
         }
         return;
@@ -1619,7 +1647,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
               <span className="portrait-touch-hint">빈 곳을 누른 채 드래그해 이동 · 가까운 적 자동 조준</span>
             </div>
             <NarrativePanel dialogue={dialogue} assets={assets} region={region} bossStage={hud?.boss?.stage} characterId={hud?.player?.characterId || characterId} onAdvance={advanceDialogue} />
-            {paused && <PauseOverlay soundEnabled={soundEnabled} audioSettings={audioSettings} onToggleSound={onToggleSound} onAudioSettingsChange={onAudioSettingsChange} onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}
+            {paused && <PauseOverlay audioSettings={audioSettings} settingsSaved={settingsSaved} onAudioSettingsChange={onAudioSettingsChange} onResume={resumeCombat} onRestart={restartCombat} onBase={onBase ? returnToBase : null} />}
           </div>
       </section>
 
@@ -1707,6 +1735,7 @@ export function App() {
   const { assets, error: assetError, progress: assetProgress } = useGameAssets();
   const [screen, setScreen] = useState("intro");
   const [audioSettings, setAudioSettings] = useState(loadGameSettings);
+  const [settingsSaved, setSettingsSaved] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(() => audioSettings.masterSoundEnabled !== false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [result, setResult] = useState(null);
@@ -1729,6 +1758,7 @@ export function App() {
   const [combatRuntimeReady, setCombatRuntimeReady] = useState(false);
   const [combatLoadProgress, setCombatLoadProgress] = useState(0);
   const bgmRef = useRef(null);
+  const musicPlayerRef = useRef(null);
   const transitionTokenRef = useRef(0);
   const sfx = useMemo(() => createSfxEngine(), []);
 
@@ -1957,12 +1987,19 @@ export function App() {
   }, [combatRuntimeReady, screen, sortieVideoComplete]);
 
   useEffect(() => () => {
-    bgmRef.current?.pause();
     sfx.dispose();
   }, [sfx]);
+  useEffect(() => {
+    const player = createMusicPlayer(bgmRef.current, { gainForTrack: musicTrackGain });
+    musicPlayerRef.current = player;
+    return () => {
+      player.dispose();
+      musicPlayerRef.current = null;
+    };
+  }, []);
   useEffect(() => sfx.setEnabled(soundEnabled), [sfx, soundEnabled]);
   useEffect(() => sfx.setVolume(audioSettings.sfxVolume), [audioSettings.sfxVolume, sfx]);
-  useEffect(() => { saveGameSettings(audioSettings); }, [audioSettings]);
+  useEffect(() => { setSettingsSaved(persistGameSettings(audioSettings).saved); }, [audioSettings]);
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("game-reduced-motion", Boolean(audioSettings.reducedMotion));
@@ -1973,17 +2010,12 @@ export function App() {
     };
   }, [audioSettings.highContrast, audioSettings.reducedMotion]);
   useEffect(() => {
-    const bgm = bgmRef.current;
-    if (!bgm) return;
-    bgm.muted = !soundEnabled;
-    if (!soundEnabled || !activeBgmPath) {
-      bgm.pause();
-      setBgmPlaying(false);
-      return;
-    }
-    bgm.volume = (screen === "intro" ? 0.34 : 0.38) * audioSettings.musicVolume;
-    bgm.play().then(() => setBgmPlaying(true)).catch(() => setBgmPlaying(false));
-  }, [activeBgmPath, audioSettings.musicVolume, screen, soundEnabled]);
+    musicPlayerRef.current?.update({
+      track: activeBgmPath,
+      enabled: soundEnabled,
+      volume: audioSettings.musicVolume,
+    });
+  }, [activeBgmPath, audioSettings.musicVolume, soundEnabled]);
 
   useEffect(() => {
     const handleButtonPointer = (event) => {
@@ -2024,10 +2056,9 @@ export function App() {
 
   const startTitleMusic = useCallback(() => {
     sfx.start();
-    const bgm = bgmRef.current;
-    if (!bgm || !activeBgmPath) return;
+    if (!activeBgmPath) return;
     if (bgmPlaying) {
-      bgm.pause();
+      musicPlayerRef.current?.update({ enabled: false });
       setBgmPlaying(false);
       setSoundEnabled(false);
       setAudioSettings((current) => mergeGameSettings(current, { masterSoundEnabled: false }));
@@ -2035,10 +2066,8 @@ export function App() {
     }
     setSoundEnabled(true);
     setAudioSettings((current) => mergeGameSettings(current, { masterSoundEnabled: true }));
-    bgm.muted = false;
-    bgm.volume = 0.34;
-    bgm.play().then(() => setBgmPlaying(true)).catch(() => setBgmPlaying(false));
-  }, [activeBgmPath, bgmPlaying, sfx]);
+    musicPlayerRef.current?.update({ track: activeBgmPath, enabled: true, volume: audioSettings.musicVolume });
+  }, [activeBgmPath, audioSettings.musicVolume, bgmPlaying, sfx]);
 
   const prepareSurface = useCallback((label, sources, onReady) => {
     const token = transitionTokenRef.current + 1;
@@ -2105,8 +2134,7 @@ export function App() {
     setSortieVideoComplete(isRepeatSortie || bypassCinematic);
     setCombatRuntimeReady(false);
     setCombatLoadProgress(0);
-    const bgm = bgmRef.current;
-    if (bgm) bgm.pause();
+    musicPlayerRef.current?.update({ track: null });
     const region = getRegion(regionId) || getRegion(DEFAULT_REGION_ID);
     prepareSurface("출격 영상과 작전 표식 준비 중", [region?.assets?.dom?.thumbnail?.path], () => setScreen("sortie"));
   }, [activeSlot, debugGuideBypass, prepareSurface]);
@@ -2562,6 +2590,7 @@ export function App() {
           noxUnlocked={noxUnlocked}
           soundEnabled={soundEnabled}
           audioSettings={audioSettings}
+          settingsSaved={settingsSaved}
           sfx={sfx}
           onToggleSound={toggleSound}
           onAudioSettingsChange={updateAudioSettings}
@@ -2613,14 +2642,15 @@ export function App() {
         <GameSettingsOverlay
           key={SETTINGS_STORAGE_KEY}
           settings={audioSettings}
+          saved={settingsSaved}
           onChange={updateAudioSettings}
           onReset={resetGameSettings}
           onClose={() => setSettingsOpen(false)}
         />
       )}
       <audio
+        key="app-background-music"
         ref={bgmRef}
-        src={activeBgmPath || undefined}
         loop
         preload="metadata"
         hidden

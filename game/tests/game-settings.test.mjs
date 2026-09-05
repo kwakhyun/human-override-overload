@@ -8,6 +8,7 @@ import {
   mergeGameSettings,
   sanitizeGameSettings,
   saveGameSettings,
+  persistGameSettings,
 } from "../src/game/settings/gameSettings.js";
 
 const root = new URL("../", import.meta.url);
@@ -69,6 +70,30 @@ test("game settings merge patches without dropping unrelated preferences", () =>
   assert.equal(next.screenShakeEnabled, false);
 });
 
+test("persistence reports storage denial without losing session preferences", () => {
+  const input = { ...DEFAULT_GAME_SETTINGS, musicVolume: 0.37 };
+  for (const storage of [null, {}, { setItem() { throw new Error("QuotaExceededError"); } }]) {
+    const result = persistGameSettings(input, storage);
+    assert.equal(result.saved, false);
+    assert.equal(result.settings.musicVolume, 0.37);
+  }
+  const storage = createStorage();
+  assert.equal(persistGameSettings(input, storage).saved, true);
+  assert.equal(loadGameSettings(storage).musicVolume, 0.37);
+});
+
+test("blocked access to the browser storage getter cannot crash game boot", () => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  Object.defineProperty(globalThis, "localStorage", { configurable: true, get() { throw new Error("SecurityError"); } });
+  try {
+    assert.deepEqual(loadGameSettings(), DEFAULT_GAME_SETTINGS);
+    assert.equal(persistGameSettings(DEFAULT_GAME_SETTINGS).saved, false);
+  } finally {
+    if (original) Object.defineProperty(globalThis, "localStorage", original);
+    else delete globalThis.localStorage;
+  }
+});
+
 test("title settings UI is focus-managed, responsive, and wired to runtime options", async () => {
   const [app, overlay, styles, main, createGame, scene, battleView] = await Promise.all([
     read("src/App.jsx"),
@@ -82,7 +107,7 @@ test("title settings UI is focus-managed, responsive, and wired to runtime optio
 
   assert.match(app, /className="intro-settings-toggle"/);
   assert.match(app, /<GameSettingsOverlay/);
-  assert.match(app, /saveGameSettings\(audioSettings\)/);
+  assert.match(app, /persistGameSettings\(audioSettings\)\.saved/);
   assert.match(app, /qualityPreference: audioSettings\?\.graphicsQuality/);
   assert.match(app, /audioSettings\.combatHintsEnabled !== false/);
   assert.match(overlay, /useDialogFocusTrap\(modalRef, true\)/);

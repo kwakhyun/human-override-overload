@@ -1179,3 +1179,12 @@ final result: pending release verification
 - Verification: the full repository suite passes 351/351, TypeScript passes, the Vite production build completes, the Worker/D1/R2 packaging suite passes 7/7, and the production dependency audit reports zero vulnerabilities. Public deployment health, persistence, Sites-origin warm, R2-hit, and byte-range smoke checks are performed as the release action against this exact commit.
 
 final result: passed
+# 2026-09-06 · BGM 화면 전환 연속성 보정
+
+- 앱 공통 음악 재생기로 같은 곡의 오디오 요소와 재생 위치를 유지한다. 로비·시설·지역 선택·항로 관제·방어전 선택의 음악을 공유하고 로딩/가이드는 이전 요청을 유지한다. 영상/무음 화면은 일시 정지하며 다른 곡에서 복귀하면 곡별 위치를 복원한다. 새 음원은 추가하지 않았다.
+- `node --test tests/music-routing.test.mjs tests/music-player.test.mjs`: 7개 통과. 곡 변경, 무음, 설정 변경, 메타데이터 복원 중 재전환, 자동 재생 거부 후 재시도를 포함한다.
+- 실제 브라우저에서 로비→전투원 관리 2회 왕복→지역 선택→로비까지 동일 오디오 요소, 재로딩 0회, 재생 시간 증가를 확인했다. 실제 MP3 변경 뒤 45초 지점 복원도 통과했다. 브라우저 오류 0. `qa/music-continuity-2026-09-06/report.json`에 기록했다. 이 검사는 재생 수명과 위치를 검증하며 음악 믹싱 청음 평가는 포함하지 않는다.
+
+## 2026-09-06 외곽 권역 자동 해금
+
+1~3구역 전체 클리어 이후 세라 브리핑이 추가로 출격을 막던 조건을 제거했다. 브리핑은 선택 대화로 보존한다. 브리핑 없는 과거 저장 상태의 외곽 지도 진입과 4~6구역 표시를 실제 브라우저로 확인했다. 미완료 구역 또는 위조된 해금/브리핑 플래그만으로는 출격할 수 없다. 관련 콘텐츠·저장·안내 검사 26개 통과. 캡처: qa/outer-unlock-2026-09-06/legacy-save.png.

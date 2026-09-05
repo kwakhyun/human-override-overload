@@ -5,7 +5,7 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 
-test("lobby uses stable static key art without the removed Live2D runtime", async () => {
+test("lobby animates the approved key art without restoring the rejected Cubism bundles", async () => {
   const [screens, styles, tacticalStyles, manifest, packageJson] = await Promise.all([
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
@@ -14,8 +14,8 @@ test("lobby uses stable static key art without the removed Live2D runtime", asyn
     readFile(new URL("package.json", root), "utf8"),
   ]);
 
-  assert.match(screens, /data-portrait-renderer="static-key-art"/);
-  assert.match(screens, /className="motion-portrait-original static-character-portrait"/);
+  assert.match(screens, /data-portrait-surface="interactive-operative"/);
+  assert.match(screens, /InteractivePortrait key=\{characterId\}/);
   assert.doesNotMatch(screens, /CubismCharacter|data-motion-profile="lobby-breathing"/);
   assert.doesNotMatch(packageJson, /@greenmansk\/react-live2d/);
   assert.doesNotMatch(styles, /cubism-character/);
@@ -76,13 +76,14 @@ test("operative key art obeys the shared floor-anchor and visible-scale contract
 });
 
 test("invisible body zones retain character-specific dialogue without fake overlays", async () => {
-  const [screens, styles] = await Promise.all([
+  const [screens, styles, portrait] = await Promise.all([
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
+    readFile(new URL("src/ui/portrait/InteractivePortrait.jsx", root), "utf8"),
   ]);
 
-  for (const zone of ["is-head", "is-chest", "is-arm is-left", "is-arm is-right", "is-legs"]) {
-    assert.match(screens, new RegExp(`portrait-zone ${zone}`));
+  for (const zone of ["head", "chest", "armLeft", "armRight", "legs"]) {
+    assert.match(portrait, new RegExp(`\\['${zone}'`));
   }
   assert.match(screens, /PORTRAIT_REACTIONS[\s\S]*vesper: Object\.freeze/);
   assert.match(styles, /\.portrait-zone \{[\s\S]*background: transparent/);

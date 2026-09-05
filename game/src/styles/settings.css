@@ -1,5 +1,17 @@
 /* HAVEN-09 system configuration ------------------------------------------ */
 
+.settings-touch-controls { display: none !important; }
+.settings-reset-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.game-settings-footer .settings-save-status { font: 500 13px/1.5 var(--font-ui, system-ui); max-width: 300px; }
+.game-settings-footer .settings-save-status.is-unsaved { color: #ffcf85; }
+.settings-reset-actions > button { color: var(--os-paper); background: transparent; }
+.game-settings-console :focus-visible { outline: 2px solid var(--os-cyan); outline-offset: 3px; }
+
+@media (pointer: coarse), (max-width: 760px) and (orientation: portrait) {
+  .settings-desktop-controls { display: none !important; }
+  .settings-touch-controls { display: grid !important; }
+}
+
 .intro-settings-toggle {
   display: inline-flex;
   min-height: 40px;
@@ -872,4 +884,24 @@
 @media (prefers-reduced-motion: reduce) {
   .game-settings-layer,
   .game-settings-console { animation: none; }
+}
+
+/* Keep settings legible and every action reachable on small phones. */
+@media (max-width: 760px) {
+  .game-settings-console { height: 100dvh; }
+  .game-settings-tabs button { flex: 1 1 0; min-width: 0; min-height: 56px; }
+  .game-settings-tabs button strong { font-size: 15px; white-space: nowrap; }
+  .settings-row-copy small,
+  .settings-section-grid > header p,
+  .settings-control-layout article span,
+  .settings-volume-row small,
+  .settings-info-strip span { font-size: 14px; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+  .settings-row-copy strong { font-size: 17px; }
+  .settings-control-layout article { min-height: 0; }
+  .settings-control-layout article span { display: block; }
+  .game-settings-footer { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .game-settings-footer .settings-save-status { display: flex; grid-column: 1 / -1; grid-row: 1; max-width: none; font-size: 13px; }
+  .game-settings-footer button { min-height: 56px; }
+  .settings-reset-actions .settings-reset { font-size: 13px; }
+  .settings-confirm kbd { display: none; }
 }

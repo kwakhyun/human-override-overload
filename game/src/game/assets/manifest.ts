@@ -419,10 +419,15 @@ export const DOM_PREVIEW_ASSET_PATHS = Object.freeze({
 
 export const TITLE_BGM_PATH = "./assets/audio/under-ashen-skies-title.mp3";
 export const BASE_BGM_PATH = "./assets/audio/last-light-in-haven-09.mp3";
+export const DEFENSE_BGM_PATH = "./assets/audio/haven-defense.mp3";
+export const RECRUITMENT_BGM_PATH = "./assets/audio/recruitment-sync.mp3";
 export const REGION_BGM_PATHS = Object.freeze({
   "wrong-engine-core": "./assets/audio/overload-main-theme.mp3",
   "glass-dune": "./assets/audio/refraction-war-glass-dune.mp3",
   "abyssal-archive": "./assets/audio/memory-below-pressure-abyssal-archive.mp3",
+  "neon-foundry": "./assets/audio/neon-foundry.mp3",
+  "storm-spire": "./assets/audio/storm-spire.mp3",
+  "gene-vault": "./assets/audio/gene-vault.mp3",
 });
 
 export const AGENT_VOICE_PATHS = Object.freeze({

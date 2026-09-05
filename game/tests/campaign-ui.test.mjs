@@ -56,7 +56,8 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /className="character-weapon-management"/);
   assert.match(screens, /className="sortie-character-loadout"/);
   assert.match(styles, /\.region-sortie-briefing \.region-sortie-intel \{ margin-top: 15px; grid-template-columns: 1fr; \}/);
-  assert.match(screens, /전투 중 <kbd>T<\/kbd>로 두 캐릭터를 교대합니다/);
+  assert.match(screens, /availableCharacters\.length > 1/);
+  assert.match(screens, /새 동료를 영입하면 전투 중 교대할 수 있습니다/);
   assert.match(app, /setCampaignCharacter\(campaign, activeSlotId, characterId\)/);
   assert.match(screens, /disabled=\{!formationConfirmed\}/);
   assert.match(screens, /onClick=\{\(\) => formationConfirmed && onSelect\(selectedRegion\.id\)\}/);
@@ -102,7 +103,8 @@ test("HAVEN highlights SERA's new-route briefing and ships a skippable return-to
   const screens = await readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8");
   assert.match(screens, /has-mission-alert/);
   assert.match(screens, /npc-mission-alert/);
-  assert.match(screens, /세라가 신규 권역 항로를 해독했습니다/);
+  assert.match(screens, /getCampaignDirective\(campaign\)/);
+  assert.match(screens, /directive\.target === "pilot" && pilot/);
   assert.match(screens, /export function ReturnCinematicScreen/);
   assert.match(screens, /return-cinematic/);
   assert.match(screens, /window\.setTimeout\(finish, 1000\)/);
@@ -155,12 +157,12 @@ test("HAVEN lobby uses original character art, icon currencies, edge navigation,
     readFile(new URL("src/game/assets/manifest.ts", root), "utf8"),
   ]);
   assert.match(screens, /function MotionPortraitStage/);
-  assert.match(screens, /data-portrait-renderer="static-key-art"/);
-  assert.match(screens, /className="motion-portrait-original static-character-portrait"/);
+  assert.match(screens, /data-portrait-surface="interactive-operative"/);
+  assert.match(screens, /InteractivePortrait key=\{characterId\}/);
   assert.doesNotMatch(screens, /CubismCharacter|data-motion-profile="lobby-breathing"/);
   assert.doesNotMatch(screens, /motion-portrait-expression/);
   assert.doesNotMatch(screens, /onPointerMove|--portrait-look-x|--portrait-tilt/);
-  for (const zone of ["is-head", "is-chest", "is-arm is-left", "is-arm is-right", "is-legs"]) assert.match(screens, new RegExp(`portrait-zone ${zone}`));
+  assert.match(screens, /name=\{name\} onReact=\{react\}/);
   assert.match(screens, /PORTRAIT_REACTIONS[\s\S]*머리 만지지 마[\s\S]*싫진 않지만/);
   assert.match(styles, /\.motion-portrait-speech/);
   assert.doesNotMatch(styles, /\.motion-portrait-expression|radial-gradient\(circle at 18% 72%/);

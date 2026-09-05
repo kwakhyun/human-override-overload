@@ -17,6 +17,7 @@ HANDOFF/
 .env.*
 .google/
 .codex-tools/
+.codex-remote-attachments/
 google-credentials*.json
 *.log
 *.local

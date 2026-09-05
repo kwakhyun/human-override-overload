@@ -25,8 +25,10 @@ import {
   Wrench,
 } from "@phosphor-icons/react";
 import { useDialogFocusTrap } from "../useDialogFocusTrap.js";
+import { InteractivePortrait, OperativePortraitImage } from "../portrait/InteractivePortrait.jsx";
 import { MIKA_RECRUIT_DIALOGUE } from "../../game/content/characterDialogue.js";
 import { DEFENSE_DOCTRINES } from "../../defense/content.js";
+import { getCampaignDirective } from "../../game/progression/campaignDirective.js";
 
 const VESPER_RECRUIT_DIALOGUE = Object.freeze([
   Object.freeze({ portrait: "aegis", speaker: "이지스", text: "심해 기록고의 신호원이군. 혼자서 드라운드 오라클의 감시망을 무너뜨린 건가?" }),
@@ -725,7 +727,7 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
       </button>
 
       <figure className={`character-art-stage is-${profile?.id || "aegis"}`} id="character-art-stage">
-        {profile?.portraitSource && <img src={assetSource(profile.portraitSource)} alt={`${profile.koreanName} 전신 일러스트`} />}
+        {profile?.portraitSource && <InteractivePortrait key={profile.id} source={assetSource(profile.portraitSource)} characterId={profile.id} name={profile.koreanName} />}
         {!profile?.unlocked && (
           <div className="character-lock-banner" role="status">
             <Lock weight="fill" />
@@ -899,7 +901,11 @@ function MotionPortraitStage({ source, characterId, name, onOpen }) {
   const [reaction, setReaction] = useState(null);
   const reactionIndex = useRef(0);
   const reactionTimer = useRef(null);
-  useEffect(() => () => clearTimeout(reactionTimer.current), []);
+  useEffect(() => {
+    setReaction(null);
+    reactionIndex.current = 0;
+    return () => clearTimeout(reactionTimer.current);
+  }, [characterId]);
   const react = useCallback((area) => {
     const lines = PORTRAIT_REACTIONS[characterId]?.[area] || [];
     const text = lines[reactionIndex.current % Math.max(1, lines.length)] || "작전 준비를 계속하세요.";
@@ -912,18 +918,11 @@ function MotionPortraitStage({ source, characterId, name, onOpen }) {
   return (
     <section
       className={`base-motion-portrait is-${characterId}${reaction ? ` is-reacting reaction-${reaction.area}` : ""}`}
-      data-portrait-renderer="static-key-art"
+      data-portrait-surface="interactive-operative"
       aria-label={`${name} 상호작용 포트레이트`}
     >
       <div className="motion-portrait-body">
-        <img className="motion-portrait-original static-character-portrait" src={assetSource(source)} alt={`${name} 전신 일러스트`} />
-      </div>
-      <div className="portrait-interaction-zones" aria-label={`${name} 터치 상호작용`}>
-        <button type="button" className="portrait-zone is-head" data-ui-sound="click" onClick={() => react("head")} aria-label={`${name} 머리 반응 보기`} />
-        <button type="button" className="portrait-zone is-chest" data-ui-sound="click" onClick={() => react("chest")} aria-label={`${name} 상체 반응 보기`} />
-        <button type="button" className="portrait-zone is-arm is-left" data-ui-sound="click" onClick={() => react("arms")} aria-label={`${name} 왼팔 반응 보기`} />
-        <button type="button" className="portrait-zone is-arm is-right" data-ui-sound="click" onClick={() => react("arms")} aria-label={`${name} 오른팔 반응 보기`} />
-        <button type="button" className="portrait-zone is-legs" data-ui-sound="click" onClick={() => react("legs")} aria-label={`${name} 다리 반응 보기`} />
+        <InteractivePortrait key={characterId} source={assetSource(source)} characterId={characterId} name={name} onReact={react} />
       </div>
       <div className="portrait-touch-hint" aria-hidden="true">
         <Sparkle weight="fill" />
@@ -969,7 +968,7 @@ export function MikaRecruitScreen({ assets, onComplete }) {
       </header>
       <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="mika-recruit-title" ref={dialogRef} tabIndex={-1}>
         <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
-          {portraitSource && <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} />}
+          {portraitSource && (line.portrait === "rhea" ? <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} /> : <OperativePortraitImage source={assetSource(portraitSource)} characterId={line.portrait} alt={`${line.speaker} 대화 일러스트`} />)}
         </figure>
         <div className="mika-recruit-progress" aria-label={`${lineIndex + 1}/${MIKA_RECRUIT_DIALOGUE.length} 대화`}>
           {MIKA_RECRUIT_DIALOGUE.map((_, index) => <i className={index <= lineIndex ? "is-active" : ""} key={index} />)}
@@ -1016,7 +1015,7 @@ export function VesperRecruitScreen({ assets, onComplete }) {
       </header>
       <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="vesper-recruit-title" ref={dialogRef} tabIndex={-1}>
         <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
-          {portraitSource && <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} />}
+          {portraitSource && (line.portrait === "rhea" ? <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} /> : <OperativePortraitImage source={assetSource(portraitSource)} characterId={line.portrait} alt={`${line.speaker} 대화 일러스트`} />)}
         </figure>
         <div className="mika-recruit-progress" aria-label={`${lineIndex + 1}/${VESPER_RECRUIT_DIALOGUE.length} 대화`}>
           {VESPER_RECRUIT_DIALOGUE.map((_, index) => <i className={index <= lineIndex ? "is-active" : ""} key={index} />)}
@@ -1063,7 +1062,7 @@ export function NoxRecruitScreen({ assets, onComplete }) {
       </header>
       <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="nox-recruit-title" ref={dialogRef} tabIndex={-1}>
         <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
-          {portraitSource && <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} />}
+          {portraitSource && (line.portrait === "rhea" ? <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} /> : <OperativePortraitImage source={assetSource(portraitSource)} characterId={line.portrait} alt={`${line.speaker} 대화 일러스트`} />)}
         </figure>
         <div className="mika-recruit-progress" aria-label={`${lineIndex + 1}/${NOX_RECRUIT_DIALOGUE.length} 대화`}>
           {NOX_RECRUIT_DIALOGUE.map((_, index) => <i className={index <= lineIndex ? "is-active" : ""} key={index} />)}
@@ -1085,6 +1084,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
   const [facilityRailIndex, setFacilityRailIndex] = useState(0);
   const background = assetSource(assets?.homeBase);
   const completed = campaign?.completedRegionIds?.length || 0;
+  const directive = getCampaignDirective(campaign);
   const activeCharacterId = campaign?.loadout?.characterId || "aegis";
   const activeCharacterName = activeCharacterId === "mika" ? "미카" : activeCharacterId === "vesper" ? "베스퍼" : activeCharacterId === "nox" ? "녹스" : "이지스";
   const activePortrait = activeCharacterId === "mika" ? assets?.mikaPortrait : activeCharacterId === "vesper" ? assets?.vesperPortrait : activeCharacterId === "nox" ? assets?.noxPortrait : assets?.playerPortrait;
@@ -1176,8 +1176,16 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
 
       <aside className="base-objective">
         <small>작전 현황 · 해방 권역 {completed} / 6</small>
-        <strong>{larkAlert ? "세라가 신규 권역 항로를 해독했습니다" : completed >= 3 ? "외곽 권역 작전 진행 중" : "지역 추론핵을 추적하세요"}</strong>
-        <p>{larkAlert ? "항로 관제에서 느낌표가 떠 있는 세라와 대화하세요." : completed >= 3 ? "작전 권역을 고른 뒤 출격할 구역을 선택하세요." : "비행선에서 다음 출격 구역을 선택하세요."}</p>
+        <strong>{directive.title}</strong>
+        <p>{directive.detail}</p>
+        <div className="campaign-progress-track" role="progressbar" aria-label="권역 해방 진행도" aria-valuemin={0} aria-valuemax={directive.total} aria-valuenow={directive.cleared}>
+          {Array.from({ length: directive.total }, (_, index) => <i className={index < directive.cleared ? "is-complete" : ""} key={index} />)}
+        </div>
+        <button type="button" className="base-directive-action" onClick={() => {
+          const pilot = npcs?.find((npc) => npc.id === "lark");
+          if (directive.target === "pilot" && pilot) onNpc(pilot);
+          else onBoard();
+        }}>{directive.action}<ArrowRight weight="bold" /></button>
         {campaign?.lastRegionRewards && (
           <div className="base-reward-receipt">
             <span>작전 노획 자원</span>
@@ -1763,7 +1771,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
             <section className="sortie-character-loadout" aria-labelledby="sortie-character-title">
               <header>
                 <div><small>전술 편제</small><h3 id="sortie-character-title">선봉 요원 선택</h3></div>
-                <span>전투 중 <kbd>T</kbd>로 두 캐릭터를 교대합니다.</span>
+                <span>{availableCharacters.length > 1 ? `해금된 전투원 ${availableCharacters.length}명을 전투 중 교대할 수 있습니다.` : "새 동료를 영입하면 전투 중 교대할 수 있습니다."}</span>
               </header>
               <div className="sortie-character-options">
                 {availableCharacters.map((character) => {

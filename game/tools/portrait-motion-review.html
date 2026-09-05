@@ -1,0 +1,29 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>전투원 모션 검수</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#10191e;color:#e8f4f5;font:14px system-ui}header{padding:18px 24px;border-bottom:1px solid #34474f}h1{font-size:22px;margin:0 0 8px}p{margin:0;color:#a9c0c5}nav{display:flex;gap:8px;padding:16px;flex-wrap:wrap}button{font:inherit;color:inherit;background:#20343e;border:1px solid #57707c;padding:10px 16px;border-radius:6px;cursor:pointer}main{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:#40515b}figure{margin:0;background:linear-gradient(#17252e,#070e13);position:relative}canvas{display:block;width:100%;height:72vh}figcaption{padding:12px;text-align:center;font-weight:700}output{padding:0 20px;display:block}@media(max-width:700px){main{grid-template-columns:repeat(2,1fr)}canvas{height:55vh}}
+</style>
+<header><h1>전투원 클릭 모션 검수</h1><p>원화 메시 방식 · Cubism 모델 검수는 별도 진행</p></header>
+<nav><button data-action="idle">대기</button><button data-action="head">머리</button><button data-action="chest">상체</button><button data-action="armLeft">왼팔</button><button data-action="armRight">오른팔</button><button data-action="legs">다리</button><button id="peak">반응 순간 정지</button><button id="blink">눈 감기 검수</button><button id="neutral">원본 자세</button></nav>
+<output id="status">원화 로딩 중</output><main></main>
+<script type="module">
+import { DOM_PREVIEW_ASSET_PATHS as assets } from '/src/game/assets/manifest.ts';
+import { createPortraitRenderer } from '/src/ui/portrait/portraitRenderer.js';
+import { createPortraitMotion } from '/src/ui/portrait/portraitMotion.js';
+const specs=[['aegis','이지스','player'],['mika','미카','mikaPortrait'],['vesper','베스퍼','vesperPortrait'],['nox','녹스','noxPortrait']];
+const entries=[];let playing=true,previous=0,action='head';
+for(const [id,name,key] of specs){
+ const figure=document.createElement('figure'),canvas=document.createElement('canvas'),caption=document.createElement('figcaption');
+ caption.textContent=name;figure.append(canvas,caption);document.querySelector('main').append(figure);
+ const image=new Image();image.src=new URL(assets[key].replace(/^\.\//,'/'),location.origin).href;await image.decode();
+ const renderer=createPortraitRenderer(canvas,image,id),motion=createPortraitMotion(id);
+ const resize=()=>{const box=canvas.getBoundingClientRect();renderer.resize(box.width,box.height,devicePixelRatio);renderer.draw(motion.output);};resize();new ResizeObserver(resize).observe(canvas);
+ entries.push({id,renderer,motion});
+}
+document.querySelector('#status').textContent='4명 렌더링 완료';
+document.querySelectorAll('[data-action]').forEach(button=>button.onclick=()=>{playing=true;action=button.dataset.action;entries.forEach(e=>action==='idle'?e.motion.reset():e.motion.react(action));document.querySelector('#status').textContent=button.textContent+' 모션 재생';});
+document.querySelector('#peak').onclick=()=>{playing=false;for(const e of entries){e.motion=createPortraitMotion(e.id);e.motion.react(action);for(let i=0;i<48;i++)e.motion.update(1/60);e.renderer.draw(e.motion.output);}document.querySelector('#status').textContent='반응 0.8초 지점';};
+document.querySelector('#blink').onclick=()=>{playing=false;for(const e of entries){e.motion.reset();e.motion.output.blink=1;e.renderer.draw(e.motion.output);}document.querySelector('#status').textContent='눈 감김 최대치';};
+document.querySelector('#neutral').onclick=()=>{playing=false;for(const e of entries){e.motion.reset();e.renderer.draw(e.motion.output);}document.querySelector('#status').textContent='원본 자세';};
+function frame(time){if(playing&&!document.hidden){for(const e of entries)e.renderer.draw(e.motion.update(previous?(time-previous)/1000:0));}previous=time;requestAnimationFrame(frame);}requestAnimationFrame(frame);
+</script></html>

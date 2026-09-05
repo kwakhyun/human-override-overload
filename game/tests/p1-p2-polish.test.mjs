@@ -39,7 +39,7 @@ test("P1 modals trap focus, make background surfaces inert, and expose mobile ca
   assert.match(focusTrap, /previouslyFocused\?\.isConnected/);
   assert.match(focusTrap, /document\.addEventListener\("keydown", trapFocus, true\)/);
   assert.match(app, /useDialogFocusTrap\(modalRef, Boolean\(ability\)\)/);
-  assert.match(app, /useDialogFocusTrap\(modalRef, true\)/);
+  assert.match(app, /useDialogFocusTrap\(modalRef, !settingsOpen\)/);
   assert.match(screens, /function CarouselPosition/);
   assert.match(screens, /className="base-facility-position"/);
   assert.match(screens, /className="region-card-position"/);
@@ -108,7 +108,7 @@ test("P1 and P2 polish exposes opening protection, focus HUD controls, trustwort
   assert.match(app, /role="status" aria-live="polite" aria-atomic="true"/);
   assert.match(app, /event\.type === "playerHit"[\s\S]*triggerTouchFeedback/);
   assert.match(app, /SETTINGS_STORAGE_KEY/);
-  assert.match(app, /className="pause-settings-panel"/);
+  assert.match(app, /if \(settingsOpen\) return <GameSettingsOverlay/);
   assert.match(app, /compact=\{hudFocusMode\}/);
   assert.match(app, /직접 공격 명중률/);
   assert.match(app, /자폭·환경/);

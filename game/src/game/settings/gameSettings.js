@@ -47,7 +47,15 @@ export function mergeGameSettings(current, patch) {
   return sanitizeGameSettings({ ...(current || {}), ...(patch || {}) });
 }
 
-export function loadGameSettings(storage = typeof window !== "undefined" ? window.localStorage : null) {
+function resolveBrowserStorage() {
+  try {
+    return globalThis.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function loadGameSettings(storage = resolveBrowserStorage()) {
   if (!storage?.getItem) return { ...DEFAULT_GAME_SETTINGS };
   try {
     const stored = JSON.parse(storage.getItem(GAME_SETTINGS_STORAGE_KEY) || "null");
@@ -57,12 +65,17 @@ export function loadGameSettings(storage = typeof window !== "undefined" ? windo
   }
 }
 
-export function saveGameSettings(settings, storage = typeof window !== "undefined" ? window.localStorage : null) {
+export function persistGameSettings(settings, storage = resolveBrowserStorage()) {
   const sanitized = sanitizeGameSettings(settings);
   try {
-    storage?.setItem?.(GAME_SETTINGS_STORAGE_KEY, JSON.stringify(sanitized));
+    if (!storage?.setItem) return { settings: sanitized, saved: false };
+    storage.setItem(GAME_SETTINGS_STORAGE_KEY, JSON.stringify(sanitized));
+    return { settings: sanitized, saved: true };
   } catch {
-    // Storage denial keeps the sanitized settings available for this session.
+    return { settings: sanitized, saved: false };
   }
-  return sanitized;
+}
+
+export function saveGameSettings(settings, storage = resolveBrowserStorage()) {
+  return persistGameSettings(settings, storage).settings;
 }

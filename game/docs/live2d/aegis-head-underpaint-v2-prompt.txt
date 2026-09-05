@@ -1,0 +1,10 @@
+Built-in image_gen edit; generated 2026-09-05.
+Input: reference/source-assets/overload/live2d-production/aegis/head-inspection.png
+Output: exec-efcaa099-a56f-4f5c-a431-cf2a32bc5393.png
+Workspace copy: reference/source-assets/overload/live2d-production/aegis/head-underpaint-v2.png
+Result is RGB with baked checkerboard. It is NOT used as a transparent portrait. Only pixels inside the original opaque silhouette, fully covered by original foreground hair at neutral, are eligible for concealed face underpainting. Existing visible face/eyes/mouth remain original.
+
+Use case: precise-object-edit
+Asset type: concealed face underpainting for a Live2D rig, not replacement key art.
+Input image 1 is the edit target: an exact close-up crop of AEGIS. Keep the exact canvas, head placement, face angle, skull shape, face proportions, eyes, nose, mouth, ear, neck, earrings, clothing, lighting, fine painted line quality, and colors unchanged.
+Remove ONLY the long silver bangs crossing the forehead/eyebrows and the two long silver sidelocks crossing the cheeks and neck. Reconstruct the small newly exposed forehead, temples, cheeks and neck behind those removed hairs. Keep the swept-back crown, braid and hair behind the head. The face must remain precisely the same person with precisely the same expression, pale gray-blue eyes and subtle closed smile. Do not enlarge eyes, alter lips, change perspective, or add makeup. Preserve all existing visible facial pixels as closely as possible. Do not redesign costume. This image will sit concealed below the original separated hair, so the newly filled facial areas need smooth continuous skin shading and no residual hair lines. No text, labels, grid or checkerboard. Preserve transparent background with real alpha where it exists.

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이지스 · Cubism Editor 작업본 검수</title>
+<style>
+  * { box-sizing: border-box } body { margin: 0; background:#0e131d; color:#edf3fc; font:16px/1.6 system-ui,sans-serif }
+  main { max-width:1100px; margin:auto; display:grid; grid-template-columns:minmax(300px,540px) 1fr; gap:40px; padding:24px }
+  .stage { min-width:0; background:radial-gradient(ellipse at 50% 45%,#26364a,#121b28 70%); border:1px solid #36465d; border-radius:16px; overflow:hidden }
+  canvas { width:100%; aspect-ratio:864/1536; display:block; cursor:pointer; touch-action:manipulation }
+  aside { padding-top:24px } h1 { font-size:28px; margin:8px 0 20px } p { color:#b8c6d9 } .badge { color:#efc789; font-size:14px; letter-spacing:.12em }
+  label { display:block; margin:24px 0 8px } input[type=range] { width:100%; min-height:40px; accent-color:#8be7df }
+  button { padding:12px 18px; min-height:48px; margin:8px 8px 8px 0; border:1px solid #4a607a; border-radius:8px; color:inherit; background:#233248; font:inherit }
+  button:focus-visible { outline:3px solid #8be7df } output { font-variant-numeric:tabular-nums } #status { overflow-wrap:anywhere; font-size:14px }
+  @media(max-width:700px) { main { grid-template-columns:1fr; gap:12px; padding:16px } .stage { width:min(100%,420px); margin:auto } aside { padding-top:0 } }
+</style>
+<main>
+  <div class="stage"><canvas id="portrait" width="864" height="1536" role="img" aria-label="이지스 Cubism 작업본"></canvas></div>
+  <aside>
+    <span class="badge">CUBISM EDITOR · WORK IN PROGRESS</span>
+    <h1>이지스 · 리깅 작업본</h1>
+    <p>Editor에서 새로 제작·출력한 MOC3를 직접 재생합니다. 호흡과 머리 기울기의 첫 키폼을 확인하는 화면입니다.</p>
+    <p>눈·입·머리카락·팔·다리의 독립 리깅은 미완료입니다. 게임에는 적용하지 않은 제작 검수본입니다.</p>
+    <label><input id="idle" type="checkbox" checked> 대기 호흡 재생</label>
+    <label for="breath">호흡 <output id="breathValue">0.00</output></label>
+    <input id="breath" type="range" min="0" max="1" step="0.01" value="0">
+    <label for="head">머리 기울기 <output id="headValue">0</output></label>
+    <input id="head" type="range" min="-30" max="30" step="0.1" value="0">
+    <button id="react">머리 반응 재생</button><button id="neutral">중립 자세</button>
+    <p id="status" role="status">Cubism 실행 파일을 읽는 중…</p>
+  </aside>
+</main>
+<script src="/reference/source-assets/overload/live2d-production/tools/live2dcubismcore.min.js"></script>
+<script type="module">
+const $ = id => document.getElementById(id);
+const root = '/reference/source-assets/overload/live2d-production/aegis/';
+const canvas = $('portrait'), gl = canvas.getContext('webgl', { alpha:true, premultipliedAlpha:false, preserveDrawingBuffer:true });
+const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+const smooth = t => t*t*t*(t*(t*6-15)+10);
+async function read(path, binary=false) {
+  const response = await fetch(root + path);
+  if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
+  return binary ? response.arrayBuffer() : response.json();
+}
+function shader(type, source) {
+  const handle = gl.createShader(type); gl.shaderSource(handle,source); gl.compileShader(handle);
+  if (!gl.getShaderParameter(handle,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(handle));
+  return handle;
+}
+try {
+  if (!gl) throw new Error('WebGL unavailable');
+  const definition = await read('aegis-working.model3.json');
+  const data = await read(definition.FileReferences.Moc, true);
+  const Core = window.Live2DCubismCore;
+  if (!Core) throw new Error('Cubism Core unavailable');
+  const start = performance.now();
+  while (true) {
+    try { Core.Version.csmGetVersion(); break; } catch(error) {
+      if (performance.now()-start > 8000) throw error;
+      await new Promise(resolve => setTimeout(resolve,30));
+    }
+  }
+  const moc = Core.Moc.fromArrayBuffer(data);
+  if (!moc) throw new Error('MOC3 incompatible or corrupt');
+  const model = Core.Model.fromMoc(moc);
+  if (!model) throw new Error('Cubism model initialization failed');
+  const d = model.drawables, p = model.parameters;
+  const breathIndex = p.ids.indexOf('ParamBreath'), headIndex = p.ids.indexOf('ParamAngleZ');
+  if (breathIndex < 0 || headIndex < 0) throw new Error('Authored parameter missing');
+  const program = gl.createProgram();
+  const vs=shader(gl.VERTEX_SHADER,'attribute vec2 aPosition; attribute vec2 aUV; varying vec2 vUV; void main(){gl_Position=vec4(aPosition.x*2.0,aPosition.y*1.125,0.0,1.0);vUV=vec2(aUV.x,1.0-aUV.y);}');
+  const fs=shader(gl.FRAGMENT_SHADER,'precision mediump float; varying vec2 vUV; uniform sampler2D uTexture; uniform float uOpacity; void main(){vec4 c=texture2D(uTexture,vUV);gl_FragColor=vec4(c.rgb,c.a*uOpacity);}');
+  gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
+  if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
+  gl.useProgram(program);gl.deleteShader(vs);gl.deleteShader(fs);
+  const position=gl.getAttribLocation(program,'aPosition'), uv=gl.getAttribLocation(program,'aUV');
+  const opacity=gl.getUniformLocation(program,'uOpacity');
+  gl.enableVertexAttribArray(position);gl.enableVertexAttribArray(uv);
+  gl.uniform1i(gl.getUniformLocation(program,'uTexture'),0);
+  gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+  const textures=[];
+  for(const file of definition.FileReferences.Textures){
+    const img=new Image();img.src=root+file;await img.decode();
+    const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.generateMipmap(gl.TEXTURE_2D);
+    textures.push(texture);
+  }
+  const buffers=Array.from({length:d.count},(_,i)=>{
+    const vertices=gl.createBuffer(), uvs=gl.createBuffer(), indices=gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER,uvs);gl.bufferData(gl.ARRAY_BUFFER,d.vertexUvs[i],gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indices);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,d.indices[i],gl.STATIC_DRAW);
+    return {vertices,uvs,indices};
+  });
+  function draw(breath,head){
+    p.values[breathIndex]=Math.max(0,Math.min(1,breath));p.values[headIndex]=Math.max(-30,Math.min(30,head));model.update();
+    gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+    for(const i of Array.from({length:d.count},(_,i)=>i).sort((a,b)=>d.renderOrders[a]-d.renderOrders[b])){
+      const b=buffers[i];gl.bindBuffer(gl.ARRAY_BUFFER,b.vertices);gl.bufferData(gl.ARRAY_BUFFER,d.vertexPositions[i],gl.DYNAMIC_DRAW);gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
+      gl.bindBuffer(gl.ARRAY_BUFFER,b.uvs);gl.vertexAttribPointer(uv,2,gl.FLOAT,false,0,0);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,b.indices);gl.bindTexture(gl.TEXTURE_2D,textures[d.textureIndices[i]]);gl.uniform1f(opacity,d.opacities[i]);
+      gl.drawElements(gl.TRIANGLES,d.indices[i].length,gl.UNSIGNED_SHORT,0);
+    }
+    d.resetDynamicFlags();$('breathValue').value=breath.toFixed(2);$('headValue').value=head.toFixed(1);
+  }
+  let clock=0,last=0,reaction=0,direction=1,disposed=false,raf=0;
+  const kick=()=>{if(reduced.matches)return;reaction=2.2;direction*=-1;};
+  $('react').onclick=kick;canvas.onclick=kick;
+  $('neutral').onclick=()=>{$('idle').checked=false;$('breath').value='0';$('head').value='0';reaction=0;draw(0,0);};
+  $('breath').oninput=()=>{$('idle').checked=false;};$('head').oninput=()=>{reaction=0;};
+  function frame(now){
+    if(disposed)return;
+    const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
+    if(!document.hidden){
+      clock+=dt;reaction=Math.max(0,reaction-dt);
+      const cycle=clock%4.8, breath=$('idle').checked&&!reduced.matches ? (cycle<1.9?smooth(cycle/1.9):1-smooth((cycle-1.9)/2.9))*.82 : Number($('breath').value);
+      const elapsed=2.2-reaction, envelope=reaction>0 ? (elapsed<.65?smooth(elapsed/.65):1-smooth((elapsed-.65)/1.55)):0;
+      draw(breath,reduced.matches?0:Number($('head').value)+direction*24*envelope);
+    }
+    raf=requestAnimationFrame(frame);
+  }
+  if(reduced.matches)$('idle').checked=false;
+  window.__cubismReview={model,draw,definition,mocVersion:new Uint8Array(data)[4],snapshot:(breath,head)=>{draw(breath,head);return d.vertexPositions.map(v=>Array.from(v));}};
+  $('status').textContent=`MOC3 로드 성공 · ArtMesh ${d.count}개 · 호흡/머리 키폼 검수 가능`;
+  document.body.dataset.ready='true';raf=requestAnimationFrame(frame);
+  window.addEventListener('pagehide',()=>{disposed=true;cancelAnimationFrame(raf);buffers.forEach(b=>Object.values(b).forEach(v=>gl.deleteBuffer(v)));textures.forEach(t=>gl.deleteTexture(t));gl.deleteProgram(program);model.release();moc._release();},{once:true});
+} catch(error){$('status').textContent=`검수 파일을 열지 못했습니다: ${error.message}`;document.body.dataset.error=error.message;console.error(error);}
+</script>
+</html>

@@ -521,6 +521,13 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
 
   setSuspended(suspended: boolean) {
     this.externallySuspended = suspended;
+    const keyboard = this.input.keyboard;
+    if (keyboard) {
+      keyboard.resetKeys();
+      keyboard.enabled = !suspended;
+      if (suspended) keyboard.disableGlobalCapture();
+      else keyboard.enableGlobalCapture();
+    }
     this.accumulator = 0;
     this.queuedDash = false;
     this.queuedParry = false;

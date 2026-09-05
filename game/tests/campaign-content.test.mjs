@@ -57,7 +57,7 @@ test("campaign content defines six sectors across the inner network and outer fr
   for (const id of ["neon-foundry", "storm-spire", "gene-vault"]) {
     const region = getRegion(id);
     assert.equal(region.clusterId, "outer-frontier");
-    assert.equal(region.briefingFlag, OUTER_SECTOR_BRIEFING_FLAG);
+    assert.equal(region.briefingFlag, undefined);
     assert.equal(region.assets.battle.enemyForms.columns, 4);
     assert.equal(region.assets.battle.bossForms.columns, 3);
     assert.ok(region.midBoss.maxHp >= 52_000);
@@ -87,7 +87,7 @@ test("region clusters expose a two-step 1—3, 4—6, and future 7—9 hierarchy
   ]);
   assert.deepEqual(getRegionCluster("inner-network").regionIds, ["wrong-engine-core", "glass-dune", "abyssal-archive"]);
   assert.deepEqual(getRegionCluster("outer-frontier").regionIds, ["neon-foundry", "storm-spire", "gene-vault"]);
-  assert.equal(getRegionCluster("outer-frontier").briefingFlag, OUTER_SECTOR_BRIEFING_FLAG);
+  assert.equal(getRegionCluster("outer-frontier").briefingFlag, undefined);
   assert.equal(getRegionCluster("terminal-orbit").comingSoon, true);
   assert.deepEqual(getRegionCluster("terminal-orbit").regionIds, []);
   assert.equal(getRegionCluster("missing-cluster"), null);

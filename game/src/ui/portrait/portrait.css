@@ -1,0 +1,56 @@
+.interactive-portrait,
+.operative-portrait-image { position: absolute; inset: 0; isolation: isolate; overflow: hidden; }
+.interactive-portrait > .portrait-source,
+.interactive-portrait > .portrait-mesh {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; object-position: center bottom; pointer-events: none;
+  filter: drop-shadow(12px 14px 22px rgba(0,0,0,.55));
+}
+.interactive-portrait > .portrait-source,
+.operative-portrait-image > .portrait-source {
+  inset: auto;
+  position: absolute;
+  left: var(--portrait-left,0px); top: var(--portrait-top,0px);
+  width: var(--portrait-width,100%); height: var(--portrait-height,100%);
+  max-width: none; object-fit: fill; transform: none;
+}
+.interactive-portrait > .portrait-mesh { visibility: hidden; }
+.interactive-portrait.is-rendered > .portrait-source { opacity: 0; }
+.interactive-portrait.is-rendered > .portrait-mesh { visibility: visible; }
+.portrait-touch-map {
+  position: absolute; z-index: 2; left: var(--portrait-left,0px); top: var(--portrait-top,0px);
+  width: var(--portrait-width,100%); height: var(--portrait-height,100%);
+  pointer-events: none;
+}
+.campaign-shell .portrait-touch-zone {
+  position: absolute; margin: 0; padding: 0; min-width: 0; min-height: 0;
+  border: 0; border-radius: 42%; background: transparent; box-shadow: none;
+  pointer-events: auto; cursor: pointer; touch-action: manipulation;
+}
+.portrait-touch-zone.is-head { left: 36%; top: 5%; width: 33%; height: 20%; }
+.portrait-touch-zone.is-chest { left: 36%; top: 29%; width: 36%; height: 27%; }
+.portrait-touch-zone.is-armLeft { left: 17%; top: 29%; width: 19%; height: 28%; }
+.portrait-touch-zone.is-armRight { left: 73%; top: 29%; width: 19%; height: 30%; }
+.portrait-touch-zone.is-legs { left: 29%; top: 66%; width: 41%; height: 33%; }
+.portrait-touch-map.is-mika .is-head { top: 12%; }
+.portrait-touch-map.is-mika .is-armRight { top: 30%; left: 72%; height: 29%; }
+.portrait-touch-map.is-vesper .is-armLeft { top: 23%; height: 29%; }
+.portrait-touch-map.is-vesper .is-armRight { top: 39%; left: 67%; height: 23%; }
+.portrait-touch-map.is-nox .is-head { top: 10%; }
+.portrait-touch-map.is-nox .is-armLeft { top: 40%; left: 7%; height: 22%; }
+.portrait-touch-map.is-nox .is-armRight { top: 46%; left: 65%; height: 35%; }
+.campaign-shell .portrait-touch-zone:focus-visible { outline: 2px solid rgba(150,237,249,.8); outline-offset: -3px; background: rgba(98,218,236,.04); }
+.character-art-stage .interactive-portrait { z-index: 1; }
+.character-art-stage figcaption,
+.character-lock-banner { pointer-events: none; }
+.motion-portrait-speech { pointer-events: none; }
+@media (max-width: 720px) and (orientation: portrait) {
+  /* Reserve the compact-view button above the common head line. */
+  .character-art-stage .interactive-portrait { top: 56px; }
+  .campaign-shell.home-base-screen .base-motion-portrait .motion-portrait-speech {
+    top: 46%; right: 8%; bottom: auto; left: 8%; width: auto; max-width: none;
+    background: rgba(3,16,22,.96); border-color: rgba(126,216,231,.5);
+  }
+  .campaign-shell.home-base-screen .base-motion-portrait .motion-portrait-speech p { font-size: 13px; }
+  .campaign-shell.home-base-screen .base-motion-portrait .motion-portrait-caption { display: none; }
+}

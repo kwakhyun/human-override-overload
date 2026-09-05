@@ -7412,8 +7412,8 @@ details:focus-visible {
 
 /* OPERATIVE PORTRAIT STAGE CONTRACT ---------------------------------------
    Every playable operative ships on one 864x1536, alpha-cropped, floor-
-   anchored canvas. Surface CSS preserves that contract instead of applying
-   character-specific zoom corrections. Keep this as the final cascade. */
+   anchored source canvas. portraitFraming.js calibrates anatomical scale in
+   a shared display frame; image, mesh and touch geometry use the same fit. */
 .character-art-stage.is-aegis > img,
 .character-art-stage.is-mika > img,
 .character-art-stage.is-vesper > img,
@@ -7432,6 +7432,7 @@ details:focus-visible {
 .home-base-screen .base-motion-portrait.is-mika,
 .home-base-screen .base-motion-portrait.is-vesper,
 .home-base-screen .base-motion-portrait.is-nox {
+  top: auto;
   bottom: -2%;
   left: 31%;
   width: min(43vw, 650px);
@@ -7458,10 +7459,30 @@ details:focus-visible {
   .home-base-screen .base-motion-portrait.is-mika,
   .home-base-screen .base-motion-portrait.is-vesper,
   .home-base-screen .base-motion-portrait.is-nox {
+    top: var(--mobile-lobby-header-height,132px);
     left: 50%;
     width: min(104vw, 480px);
     transform: translateX(-50%);
   }
+}
+
+/* Recruitment dialogue shares one frame for every playable operative. */
+@media (max-width: 720px) and (orientation: portrait) {
+  .home-base-screen .base-motion-portrait:is(.is-aegis,.is-mika,.is-vesper,.is-nox) {
+    top: var(--mobile-lobby-header-height,120px);
+    bottom: 304px;
+    height: auto;
+  }
+}
+
+.mika-recruit-character:is(.is-aegis,.is-mika,.is-vesper,.is-nox) {
+  width: min(46vw,690px);
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .mika-recruit-character:is(.is-aegis,.is-mika,.is-vesper,.is-nox) { width: min(94vw,600px); }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .mika-recruit-character:is(.is-aegis,.is-mika,.is-vesper,.is-nox) { width: min(42vw,460px); }
 }
 
 /* MOBILE COMBAT DOCK -------------------------------------------------------

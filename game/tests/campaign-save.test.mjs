@@ -257,16 +257,16 @@ test("slots remain isolated and completing both routes closes Chapter 2", () => 
   assert.deepEqual(getCampaignSlot(secondCreated, "slot-1").completedRegionIds, first.completedRegionIds);
 });
 
-test("clearing sectors 1—3 raises LARK's milestone and unlocks sorties 4—6 only after briefing", () => {
+test("clearing sectors 1—3 automatically unlocks sorties 4—6 before optional briefing", () => {
   let campaign = completeRegion(createEmptyCampaign(), "slot-1", "wrong-engine-core", { status: "victory" }, { now: NOW });
   campaign = completeRegion(campaign, "slot-1", "glass-dune", { status: "victory" }, { now: NOW });
   campaign = completeRegion(campaign, "slot-1", "abyssal-archive", { status: "victory" }, { now: NOW });
   let slot = getCampaignSlot(campaign, "slot-1");
 
   assert.ok(slot.unlockedRegionIds.includes("neon-foundry"));
-  assert.equal(canLaunchRegion(slot, "neon-foundry"), false);
-  assert.equal(canLaunchRegion(slot, "storm-spire"), false);
-  assert.equal(canLaunchRegion(slot, "gene-vault"), false);
+  assert.equal(canLaunchRegion(slot, "neon-foundry"), true);
+  assert.equal(canLaunchRegion(slot, "storm-spire"), true);
+  assert.equal(canLaunchRegion(slot, "gene-vault"), true);
   assert.equal(slot.storyFlags.includes("outer-sector-briefed"), false);
 
   campaign = completeOuterSectorBriefing(campaign, "slot-1", { now: "2026-08-10T08:00:00.000Z" });
@@ -278,6 +278,19 @@ test("clearing sectors 1—3 raises LARK's milestone and unlocks sorties 4—6 o
 
   const beforeMilestone = createCampaignSlot(createEmptyCampaign(), "slot-2", { now: NOW });
   assert.deepEqual(completeOuterSectorBriefing(beforeMilestone, "slot-2", { now: NOW }), beforeMilestone);
+});
+
+test("legacy clear-only slots unlock outer sorties without briefing but incomplete slots stay locked", () => {
+  const base = getCampaignSlot(createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW }), "slot-1");
+  const ids = ["wrong-engine-core", "glass-dune", "abyssal-archive"];
+  const legacy = { ...base, completedRegionIds: ids, unlockedRegionIds: ["wrong-engine-core"], storyFlags: [] };
+  for (const regionId of ["neon-foundry", "storm-spire", "gene-vault"]) {
+    assert.equal(canLaunchRegion(legacy, regionId), true);
+    for (const missing of ids) assert.equal(canLaunchRegion({ ...legacy,
+      completedRegionIds: ids.filter(id => id !== missing),
+      unlockedRegionIds: [regionId], storyFlags: ["outer-sector-briefed"],
+    }, regionId), false, `Missing ${missing} must still block ${regionId}`);
+  }
 });
 
 test("duplicate run IDs are idempotent and sanitization rejects forged unlocks", () => {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowCounterClockwise,
   ArrowsInSimple,
@@ -58,7 +59,7 @@ function VolumeSlider({ title, description, value, onChange, disabled = false })
         type="range"
         min="0"
         max="100"
-        step="5"
+        step="1"
         value={percent}
         disabled={disabled}
         aria-label={`${title} 음량`}
@@ -77,7 +78,7 @@ function GeneralSettings({ settings, onChange }) {
       <ToggleRow icon={Crosshair} title="전투 도움말" description="첫 출격의 조작 안내와 상황별 전술 팁을 표시합니다." checked={settings.combatHintsEnabled !== false} onChange={(value) => onChange({ combatHintsEnabled: value })} />
       <ToggleRow icon={Gauge} title="고대비 인터페이스" description="HUD 외곽선과 핵심 텍스트 대비를 강화합니다." checked={Boolean(settings.highContrast)} onChange={(value) => onChange({ highContrast: value })} />
       <ToggleRow icon={Pulse} title="모션 최소화" description="장식 애니메이션과 강한 화면 전환을 줄입니다." checked={Boolean(settings.reducedMotion)} onChange={(value) => onChange({ reducedMotion: value })} />
-      <aside className="settings-info-strip"><CheckCircle weight="fill" /><span>변경 사항은 이 기기에 즉시 적용되고 자동 저장됩니다.</span></aside>
+      <aside className="settings-info-strip"><CheckCircle weight="fill" /><span>접근성과 음량은 즉시 적용됩니다. 그래픽 품질과 카메라 흔들림은 다음 전투부터 적용됩니다.</span></aside>
     </div>
   );
 }
@@ -126,9 +127,13 @@ function ControlsSettings({ settings, onChange }) {
   return (
     <div className="settings-section-grid">
       <header><small>INPUT REFERENCE</small><h3>조작 설정</h3><p>현재 작전에 사용하는 기본 입력 체계를 확인합니다.</p></header>
-      <div className="settings-control-layout">
+      <div className="settings-control-layout settings-desktop-controls">
         <article><Keyboard weight="fill" /><div><strong>이동과 회피</strong><span><kbd>WASD</kbd> 이동</span><span><kbd>SPACE</kbd> 위상 대시</span><span><kbd>SHIFT</kbd> 패링</span></div></article>
         <article><Mouse weight="fill" /><div><strong>조준과 전투</strong><span><kbd>마우스</kbd> 조준</span><span><kbd>Q / E / F / R</kbd> 전술 스킬</span><span><kbd>T</kbd> 전투원 교대</span></div></article>
+      </div>
+      <div className="settings-control-layout settings-touch-controls">
+        <article><GameController weight="fill" /><div><strong>터치 이동과 조준</strong><span>전장 빈 곳을 누른 채 드래그해 이동합니다.</span><span>가까운 적을 자동으로 조준하고 공격합니다.</span></div></article>
+        <article><Crosshair weight="fill" /><div><strong>회피와 전술 스킬</strong><span>하단의 대시·스킬·교대 버튼을 누르세요.</span><span>보스 패링과 번호 폭탄은 화면 안내에 따라 터치하세요.</span></div></article>
       </div>
       <ToggleRow icon={Pulse} title="터치 진동 피드백" description="지원되는 모바일 기기에서 피격과 스킬 입력을 진동으로 알립니다." checked={settings.hapticsEnabled !== false} onChange={(value) => onChange({ hapticsEnabled: value })} />
       <aside className="settings-info-strip"><GameController weight="fill" /><span>모바일에서는 화면 드래그 이동과 자동 조준이 활성화됩니다.</span></aside>
@@ -136,18 +141,22 @@ function ControlsSettings({ settings, onChange }) {
   );
 }
 
-export function GameSettingsOverlay({ settings = {}, onChange, onReset, onClose }) {
+export function GameSettingsOverlay({ settings = {}, saved = true, onChange, onReset, onClose }) {
   const modalRef = useRef(null);
   const [activeTab, setActiveTab] = useState("general");
   const [fullscreen, setFullscreen] = useState(() => typeof document !== "undefined" && Boolean(document.fullscreenElement));
   const [fullscreenError, setFullscreenError] = useState(false);
+  const [resetPending, setResetPending] = useState(false);
   useDialogFocusTrap(modalRef, true);
 
   useEffect(() => {
     const handleKey = (event) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      onClose?.();
+      event.stopImmediatePropagation();
+      if (event.repeat) return;
+      if (resetPending) setResetPending(false);
+      else onClose?.();
     };
     const handleFullscreen = () => {
       setFullscreen(Boolean(document.fullscreenElement));
@@ -159,19 +168,20 @@ export function GameSettingsOverlay({ settings = {}, onChange, onReset, onClose 
       window.removeEventListener("keydown", handleKey, true);
       document.removeEventListener("fullscreenchange", handleFullscreen);
     };
-  }, [onClose]);
+  }, [onClose, resetPending]);
 
   const toggleFullscreen = async () => {
     setFullscreenError(false);
     try {
-      if (document.fullscreenElement) await document.exitFullscreen?.();
-      else await document.documentElement.requestFullscreen?.();
+      if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
+      else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+      else setFullscreenError(true);
     } catch {
       setFullscreenError(true);
     }
   };
 
-  return (
+  return createPortal(
     <div className="game-settings-layer" role="dialog" aria-modal="true" aria-labelledby="game-settings-title" onMouseDown={(event) => event.target === event.currentTarget && onClose?.()}>
       <section className="game-settings-console" ref={modalRef} tabIndex={-1}>
         <header className="game-settings-header">
@@ -180,14 +190,22 @@ export function GameSettingsOverlay({ settings = {}, onChange, onReset, onClose 
           <button type="button" className="settings-close" aria-label="설정 닫기" onClick={onClose}><X weight="bold" /></button>
         </header>
         <div className="game-settings-body">
-          <nav className="game-settings-tabs" aria-label="설정 분류">
+          <nav className="game-settings-tabs" role="tablist" aria-label="설정 분류">
             {SETTINGS_TABS.map(({ id, label, code, icon: Icon }, index) => (
-              <button type="button" className={activeTab === id ? "is-active" : ""} aria-current={activeTab === id ? "page" : undefined} onClick={() => setActiveTab(id)} autoFocus={index === 0} key={id}>
+              <button type="button" role="tab" id={`settings-tab-${id}`} aria-controls="settings-panel" aria-selected={activeTab === id} tabIndex={activeTab === id ? 0 : -1} className={activeTab === id ? "is-active" : ""} onClick={() => { setActiveTab(id); setResetPending(false); }} onKeyDown={(event) => {
+                const offset = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+                if (offset === undefined && event.key !== "Home" && event.key !== "End") return;
+                event.preventDefault();
+                const next = event.key === "Home" ? 0 : event.key === "End" ? SETTINGS_TABS.length - 1 : (index + offset + SETTINGS_TABS.length) % SETTINGS_TABS.length;
+                setActiveTab(SETTINGS_TABS[next].id);
+                setResetPending(false);
+                document.getElementById(`settings-tab-${SETTINGS_TABS[next].id}`)?.focus();
+              }} key={id}>
                 <small>{code}</small><Icon weight="fill" /><strong>{label}</strong>
               </button>
             ))}
           </nav>
-          <article className="game-settings-content">
+          <article className="game-settings-content" id="settings-panel" role="tabpanel" aria-labelledby={`settings-tab-${activeTab}`} tabIndex={0}>
             {activeTab === "general" && <GeneralSettings settings={settings} onChange={onChange} />}
             {activeTab === "audio" && <AudioSettings settings={settings} onChange={onChange} />}
             {activeTab === "graphics" && <GraphicsSettings settings={settings} onChange={onChange} fullscreen={fullscreen} onToggleFullscreen={toggleFullscreen} fullscreenError={fullscreenError} />}
@@ -195,11 +213,18 @@ export function GameSettingsOverlay({ settings = {}, onChange, onReset, onClose 
           </article>
         </div>
         <footer className="game-settings-footer">
-          <button type="button" className="settings-reset" onClick={onReset}><ArrowCounterClockwise weight="bold" /> 기본값 복원</button>
-          <p><CheckCircle weight="fill" /> 설정 저장 완료</p>
+          <div className="settings-reset-actions">
+            <button type="button" className="settings-reset" aria-label={resetPending ? "모든 설정을 기본값으로 복원" : "기본값 복원"} onClick={() => {
+              if (!resetPending) { setResetPending(true); return; }
+              onReset?.();
+              setResetPending(false);
+            }}><ArrowCounterClockwise weight="bold" /> {resetPending ? "복원 확인" : "기본값 복원"}</button>
+            {resetPending && <button type="button" onClick={() => setResetPending(false)}>취소</button>}
+          </div>
+          <p className={`settings-save-status${saved ? "" : " is-unsaved"}`} role="status"><CheckCircle weight="fill" />{resetPending ? "음량·화면·조작 설정을 모두 복원할까요?" : saved ? "설정 저장 완료" : "기기에 저장하지 못했습니다. 이번 실행에만 적용됩니다."}</p>
           <button type="button" className="settings-confirm" onClick={onClose}>설정 완료 <kbd>ESC</kbd></button>
         </footer>
       </section>
-    </div>
+    </div>, document.body,
   );
 }
