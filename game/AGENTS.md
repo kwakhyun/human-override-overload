@@ -1,5 +1,11 @@
 # Prototype Instructions
 
+## Combat skill readiness — 2026-09-07
+
+- `src/styles/skill-readiness.css` supersedes the historical icon-only mobile dock and tiny floating cooldown badges. Keep skill names and one explicit state visible: check-marked ready, a large remaining-time number, locked, no target, or incapacitated. Use distinct borders plus text/icons rather than color alone, and a bottom recharge meter driven exclusively by HUD simulation values. Never show zero or ready while a positive timer remains; preserve the same state logic across every character/weapon, dash and tag.
+- Keep desktop timer text at 20px and mobile at 18px; portrait skill names/status are at least 13px/12px. Five touch skills occupy a single bottom row, with tag in the health row. The dock and every button must fit the viewport with and without a reserve; landscape must not stretch the dock between top and bottom anchors or create an extra command row. A one-shot ready highlight respects both reduced-motion settings. Tutorial targets remain actionable.
+- Focused checkpoint: 15 HUD/readiness/formation checks and TypeScript, plus real browser casting, dash recharge, pause persistence, two-character tag, portrait/landscape boundaries and reduced motion. This is a local UI checkpoint, not a new full-suite or deployment baseline. Combat timing, unlock rules, assets and rendering authority are unchanged.
+
 ## Sortie defaults, drone heading and defense UI v4 - 2026-09-06
 
 - Default preparation to the selected lead plus one other unlocked operative; retain explicit solo changes and never expand the two-person tag roster. Remove central 3D floor lettering in every route and boss room.

@@ -32,7 +32,7 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
   assert.match(app, /function resolveCombatDockSlot\(hud, slot\)/);
   assert.match(app, /const locked = !hasAbility \|\| Boolean\(ability\.locked\) \|\| rank <= 0/);
   assert.match(app, /const targetAvailable = ability\?\.available !== false/);
-  assert.match(app, /remaining > 0\.05 \? `\$\{remaining\.toFixed\(1\)\}초`[\s\S]*!targetAvailable \? "대상 없음"/);
+  assert.match(app, /cooldownPresentation\(\{ remaining, cooldownMax, locked, blocked, available: targetAvailable/);
   assert.match(app, /ability\?\.remaining \?\? ability\?\.cooldownRemaining \?\? ability\?\.cooldown/);
   assert.match(app, /function ExpeditionCombatDock\(\{ hud, compact = false, onDash, onTag, onActivateAbility, tutorialAbilityId = null, onTutorialTarget \}\)/);
   assert.match(app, /className="vital-bar"[\s\S]*aria-valuenow=\{Math\.ceil\(hp\)\}/);

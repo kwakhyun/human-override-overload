@@ -1,12 +1,15 @@
 import { resolveSortieRoster } from './game/content/sortieFormation.js';
 import { getRegionalTerrain } from './game/content/regionalTerrain.js';
 import { NpcPortraitImage } from './ui/portrait/NpcPortraitImage.jsx';
+import { cooldownPresentation, formatCooldown } from './ui/combat/cooldownPresentation.js';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowCounterClockwise,
   ArrowLeft,
   ArrowRight,
   Crosshair,
+  CheckCircle,
+  LockSimple,
   GearSix,
   Lightning,
   MapPin,
@@ -452,18 +455,17 @@ function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic,
 }
 
 function resolveCombatDockSlot(hud, slot) {
+  const blocked = Boolean(hud?.player?.stunned) || Number(hud?.player?.hp) <= 0;
   if (slot.id === "dash") {
     const remaining = Math.max(0, Number(hud?.player?.dashCooldown) || 0);
     const cooldownMax = Math.max(0.01, Number(hud?.player?.dashMax) || ABILITY_COOLDOWN_FALLBACK.dash);
-    const ready = remaining <= 0.05;
+    const presentation = cooldownPresentation({ remaining, cooldownMax, blocked });
     return {
       ...slot,
-      ready,
+      ...presentation,
       locked: false,
       remaining,
       activeRemaining: 0,
-      status: ready ? "사용 가능" : `${remaining.toFixed(1)}초`,
-      meter: ready ? 1 : Math.max(0, Math.min(1, 1 - remaining / cooldownMax)),
     };
   }
 
@@ -482,33 +484,23 @@ function resolveCombatDockSlot(hud, slot) {
       || remaining
       || 1,
   );
-  const ready = !locked && targetAvailable && (typeof ability.ready === "boolean" ? ability.ready : remaining <= 0.05);
-  const explicitProgress = Number(ability?.progress ?? ability?.cooldownProgress);
-  const meter = Number.isFinite(explicitProgress)
-    ? Math.max(0, Math.min(1, explicitProgress))
-    : activeRemaining > 0 || ready ? 1 : locked ? 0 : Math.max(0, Math.min(1, 1 - remaining / cooldownMax));
-  const status = locked ? "잠김"
-    : activeRemaining > 0 ? `지속 ${activeRemaining.toFixed(1)}초`
-      : remaining > 0.05 ? `${remaining.toFixed(1)}초`
-        : !targetAvailable ? "대상 없음"
-          : ready ? "사용 가능" : "대기";
+  const presentation = cooldownPresentation({ remaining, cooldownMax, locked, blocked, available: targetAvailable, ready: ability?.ready !== false });
   return {
     ...slot,
     id: ability?.id || slot.id,
     label: ability?.nameKo || slot.label,
     ultimate: Boolean(ability?.ultimate),
-    ready,
+    ...presentation,
     locked,
     remaining,
     activeRemaining,
     available: targetAvailable,
-    status,
-    meter,
   };
 }
 
 function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateAbility, tutorialAbilityId = null, onTutorialTarget }) {
   const player = hud?.player || { hp: 0, maxHp: 1 };
+  const tagStatus = player.tagReady ? "교대 가능" : player.stunned ? "행동 불가" : player.tagCooldown > 0 ? `${formatCooldown(player.tagCooldown)}초` : "대기";
   const hp = Math.max(0, Number(player.hp) || 0);
   const maxHp = Math.max(1, Number(player.maxHp) || 1);
   const healthRatio = Math.max(0, Math.min(1, hp / maxHp));
@@ -531,7 +523,7 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
   useEffect(() => () => window.clearTimeout(damageTimerRef.current), []);
 
   return (
-    <aside className={`expedition-combat-dock${compact ? " is-commercial-compact" : ""}${player.reserveCharacterId ? " has-tag" : ""}${tutorialAbilityId ? " is-tutorial-active" : ""}${healthRatio <= 0.3 ? " is-danger-state" : ""}`} aria-label="생존 및 액티브 능력 상태">
+    <aside className={`expedition-combat-dock skill-readiness${compact ? " is-commercial-compact" : ""}${player.reserveCharacterId ? " has-tag" : ""}${tutorialAbilityId ? " is-tutorial-active" : ""}${healthRatio <= 0.3 ? " is-danger-state" : ""}`} aria-label="생존 및 액티브 능력 상태">
       <div className={`vital-cluster${healthRatio <= 0.3 ? " is-critical" : ""}`}>
         {damageWarning && <i className="vital-damage-flash" key={`damage-${damagePulse}`} aria-hidden="true" />}
         <span>{player.characterId === "mika" ? "미카" : player.characterId === "vesper" ? "베스퍼" : "이지스"} 내구도 <small>레벨 {hud?.level || 1}</small></span>
@@ -550,24 +542,27 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
           const Icon = slot.icon;
           const tutorialTarget = tutorialAbilityId === slot.id;
           const tutorialDimmed = Boolean(tutorialAbilityId) && !tutorialTarget;
-          const isCooling = !slot.ready && !slot.locked && slot.remaining > 0;
+          const StatusIcon = slot.locked ? LockSimple : slot.ready ? CheckCircle : Timer;
           const activate = () => {
             if (tutorialAbilityId) {
               if (tutorialTarget) onTutorialTarget?.();
               return;
             }
+            if (!slot.ready) return;
             if (slot.action === "dash") onDash?.();
             else onActivateAbility?.(slot.action);
           };
           return (
             <button
               type="button"
-              className={`combat-ability-chip${slot.ready ? " is-ready" : " is-cooling"}${slot.locked && !tutorialTarget ? " is-locked" : ""}${slot.ultimate ? " is-ultimate" : ""}${tutorialTarget ? " is-tutorial-target" : ""}${tutorialDimmed ? " is-tutorial-dimmed" : ""}`}
+              className={`combat-ability-chip is-${slot.state}${slot.ultimate ? " is-ultimate" : ""}${tutorialTarget ? " is-tutorial-target" : ""}${tutorialDimmed ? " is-tutorial-dimmed" : ""}`}
               onClick={activate}
               aria-label={`${slot.key} ${slot.label}. ${slot.status}`}
               aria-keyshortcuts={slot.key === "SPACE" ? "Space" : slot.key}
-              aria-disabled={(slot.locked && !tutorialTarget) || tutorialDimmed}
+              aria-disabled={tutorialAbilityId ? !tutorialTarget : !slot.ready}
               data-combat-ability={slot.id}
+              data-skill-state={slot.state}
+              title={`${slot.key} · ${slot.label} · ${slot.status}`}
               key={slot.id}
             >
               <span className="combat-ability-icon" aria-hidden="true">
@@ -576,19 +571,14 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
                   className="combat-ability-cooldown"
                   style={{ "--cooldown-sweep": `${Math.round((1 - slot.meter) * 360)}deg` }}
                 />
-                {isCooling && (
-                  <span className="combat-ability-cooldown-badge">
-                    {slot.remaining < 10 ? slot.remaining.toFixed(1) : Math.ceil(slot.remaining)}s
-                  </span>
-                )}
-                {slot.activeRemaining > 0 && (
-                  <span className="combat-ability-active-badge">
-                    {slot.activeRemaining.toFixed(1)}s
-                  </span>
-                )}
                 <kbd>{slot.key}</kbd>
               </span>
-              <span className="combat-ability-copy"><strong>{slot.label}</strong><b>{slot.status}</b></span>
+              <span className="combat-ability-copy">
+                <strong>{slot.label}</strong>
+                <b className="combat-skill-status"><StatusIcon weight="fill" aria-hidden="true" />{slot.status}</b>
+                {slot.activeRemaining > 0 && <small className="combat-skill-duration">효과 {formatCooldown(slot.activeRemaining)}초</small>}
+              </span>
+              <span className="combat-skill-meter" aria-hidden="true"><i style={{ transform: `scaleX(${slot.meter})` }} /></span>
               <i
                 className="visually-hidden"
                 role="progressbar"
@@ -606,11 +596,11 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
             className={`combat-tag-switch${player.tagReady ? " is-ready" : " is-cooling"}${player.characterId === "mika" ? " is-mika" : player.characterId === "vesper" ? " is-vesper" : player.characterId === "nox" ? " is-nox" : " is-aegis"}`}
             onClick={() => onTag?.()}
             disabled={!player.tagReady}
-            aria-label={`T 캐릭터 교대. 대기 ${Math.ceil(player.tagCooldown || 0)}초`}
+            aria-label={`T 캐릭터 교대. ${tagStatus}`}
             aria-keyshortcuts="T"
           >
             <span><kbd>T</kbd><strong>{player.reserveCharacterId === "mika" ? "미카" : player.reserveCharacterId === "vesper" ? "베스퍼" : player.reserveCharacterId === "nox" ? "녹스" : "이지스"}</strong></span>
-            <small>{player.tagReady ? "교대 가능" : `${(player.tagCooldown || 0).toFixed(1)}초`}</small>
+            <small>{tagStatus}</small>
           </button>
         )}
       </div>

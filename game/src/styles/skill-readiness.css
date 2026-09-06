@@ -1,0 +1,127 @@
+/* Combat readiness: one readable state, backed by the simulation's timer.
+   Supersedes the legacy icon-only mobile dock and 8–10px cooldown badges. */
+.expedition-game .expedition-combat-dock.skill-readiness {
+  --skill-ready: #94f7ce;
+  --skill-cooling: #f4cd8b;
+  --skill-muted: #b3c5d0;
+  --skill-panel: #06151e;
+}
+.expedition-game .skill-readiness .combat-dock-abilities {
+  align-items: stretch;
+  height: auto;
+}
+.expedition-game .skill-readiness .combat-ability-chip {
+  position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr);
+  grid-template-rows: 1fr; align-items: center; gap: 7px;
+  min-width: 0; height: 66px; min-height: 66px; padding: 6px 7px 10px;
+  color: var(--skill-muted); background: var(--skill-panel);
+  border: 1px solid #45616e; border-radius: 5px;
+  opacity: 1; filter: none; clip-path: none; overflow: hidden;
+  text-align: left; transition: border-color 140ms, background-color 140ms;
+}
+.expedition-game .skill-readiness .combat-ability-chip .combat-ability-icon {
+  position: relative !important; inset: auto !important; transform: none !important;
+  width: 30px; height: 30px; color: #a9c4d0; border-color: #668898; box-shadow: none;
+}
+.expedition-game .skill-readiness .combat-ability-icon > svg { width: 22px; height: 22px; }
+.expedition-game .skill-readiness .combat-ability-chip .combat-ability-copy {
+  position: static; display: flex !important; flex-direction: column; justify-content: center;
+  gap: 3px; min-width: 0; width: auto; overflow: visible; text-align: left;
+}
+.expedition-game .skill-readiness .combat-ability-chip .combat-ability-copy strong {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  width: auto; margin: 0; color: #dbeaf1; font-size: 12px; line-height: 1.2;
+  white-space: normal; word-break: keep-all; overflow-wrap: anywhere; text-overflow: clip;
+}
+.expedition-game .skill-readiness .combat-ability-chip .combat-ability-copy > b {
+  display: flex; align-items: center; justify-content: flex-start; gap: 4px;
+  color: var(--skill-muted); font-size: 13px; font-weight: 800; line-height: 1.15;
+  white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.02em; overflow: visible;
+}
+.expedition-game .skill-readiness .combat-skill-status > svg { width: 13px; height: 13px; flex-shrink: 0; }
+.expedition-game .skill-readiness .combat-ability-chip.is-cooling .combat-ability-copy > b {
+  color: var(--skill-cooling); font-size: 20px;
+}
+.expedition-game .skill-readiness .combat-ability-chip.is-cooling .combat-ability-icon > svg { opacity: .5; }
+.expedition-game .skill-readiness .combat-ability-chip.is-ready {
+  color: var(--skill-ready); border-color: #7be8b8; background: #0b2b29;
+  box-shadow: inset 0 0 0 1px #7be8b82b; animation: skill-became-ready 550ms ease-out 1;
+}
+.expedition-game .skill-readiness .combat-ability-chip.is-ready .combat-ability-copy > b { color: var(--skill-ready); }
+.expedition-game .skill-readiness .combat-ability-chip.is-ready .combat-ability-icon { color: var(--skill-ready); border-color: var(--skill-ready); }
+.expedition-game .skill-readiness .combat-ability-chip.is-locked { background: #101820; border-style: dashed; cursor: not-allowed; }
+.expedition-game .skill-readiness .combat-ability-chip.is-locked .combat-ability-icon { opacity: .45; }
+.expedition-game .skill-readiness .combat-ability-chip[aria-disabled="true"] { cursor: not-allowed; }
+.expedition-game .skill-readiness .combat-ability-chip[aria-disabled="true"]:hover {
+  border-color: #45616e; background: var(--skill-panel); box-shadow: none; transform: none;
+}
+.expedition-game .skill-readiness .combat-ability-chip:focus-visible { outline: 2px solid #fff; outline-offset: -3px; }
+.expedition-game .skill-readiness .combat-ability-chip.is-ready:hover { background: #12413c; }
+.expedition-game .skill-readiness .combat-skill-meter {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+  background: #263e4a; pointer-events: none;
+}
+.expedition-game .skill-readiness .combat-skill-meter > i {
+  display: block; width: 100%; height: 100%; background: #ddb678; transform-origin: left center;
+}
+.expedition-game .skill-readiness .is-ready .combat-skill-meter > i { background: var(--skill-ready); }
+.expedition-game .skill-readiness .combat-skill-duration { font-size: 11px; line-height: 1.2; color: #bceaf4; }
+.expedition-game .skill-readiness .combat-ability-chip.is-tutorial-target { border-color: #fff; background: #12413c; cursor: pointer; }
+.expedition-game .skill-readiness .combat-ability-chip.is-tutorial-dimmed { opacity: .38; }
+.expedition-game .skill-readiness .combat-tag-switch { opacity: 1; }
+.expedition-game .skill-readiness .combat-tag-switch small { display: block; font-size: 12px; color: #e4edf1; }
+@keyframes skill-became-ready { from { box-shadow: inset 0 0 0 2px #d6fff0, 0 0 12px #8ef5c959; } to { box-shadow: inset 0 0 0 1px #7be8b82b; } }
+
+@media (min-width: 721px) and (min-height: 601px) {
+  .expedition-game .expedition-combat-dock.skill-readiness { width: min(960px, calc(100vw - 340px)); padding: 4px 7px 5px; min-height: 0; grid-template-rows: 26px auto; gap: 3px; }
+  .expedition-game .skill-readiness .vital-cluster { min-height: 0; height: 26px; padding-block: 0; }
+}
+@media (max-width: 720px) and (orientation: portrait), (max-height: 600px) and (orientation: landscape) {
+  .expedition-game .expedition-combat-dock.skill-readiness.is-commercial-compact {
+    top: auto !important; bottom: 0 !important; height: auto !important;
+    grid-template-rows: 38px auto; gap: 2px; min-height: 0; padding: 3px 6px max(5px, env(safe-area-inset-bottom));
+  }
+  .expedition-game .expedition-combat-dock.skill-readiness.is-commercial-compact .combat-dock-abilities {
+    grid-template-columns: repeat(5, minmax(0, 1fr)); grid-template-rows: auto; height: auto; gap: 4px; padding-top: 0;
+  }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-ability-chip {
+    display: grid; grid-template-columns: 1fr; grid-template-rows: 24px 1fr;
+    place-items: center; gap: 4px; height: 98px; min-height: 98px; padding: 5px 2px 9px; text-align: center;
+  }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-ability-icon {
+    position: relative !important; inset: auto !important; transform: none !important; width: 24px; height: 24px;
+  }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-ability-copy { gap: 4px; width: 100%; align-items: center; text-align: center; }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-ability-copy strong {
+    font-size: 13px; line-height: 1.15; min-height: 30px; max-height: 30px;
+  }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-ability-copy > b { font-size: 12px; justify-content: center; gap: 2px; }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-ability-chip.is-cooling .combat-ability-copy > b { font-size: 18px; line-height: 1; }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-skill-status > svg { width: 11px; height: 11px; }
+  .expedition-game .expedition-combat-dock.skill-readiness.is-commercial-compact.has-tag .combat-tag-switch small { font-size: 12px; }
+}
+@media (max-height: 600px) and (orientation: landscape) {
+  .expedition-game .expedition-combat-dock.skill-readiness,
+  .expedition-game .expedition-combat-dock.skill-readiness.is-commercial-compact {
+    top: auto !important; bottom: 0 !important; left: 0 !important; right: 170px !important;
+    width: auto !important; height: auto !important; min-height: 0; max-width: none; transform: none !important;
+    grid-template-rows: 26px auto; gap: 3px; padding: 3px 5px max(4px, env(safe-area-inset-bottom));
+  }
+  .expedition-game .expedition-combat-dock.skill-readiness .vital-cluster { height: 26px; min-height: 0; padding-block: 0; }
+  .expedition-game .expedition-combat-dock.skill-readiness.has-tag .vital-cluster { padding-right: 100px; }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-tag-switch {
+    position: absolute; top: 2px; right: 5px; bottom: auto; left: auto;
+    width: 90px; min-width: 90px; height: 29px; min-height: 29px; padding: 1px 4px;
+    display: grid; grid-template-columns: 1fr; grid-template-rows: 13px 13px; gap: 0;
+  }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-tag-switch > span { flex-direction: row; }
+  .expedition-game .portrait-touch-hint { bottom: 112px !important; }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-ability-chip { height: 66px; min-height: 66px; grid-template-columns: 24px minmax(0, 1fr); grid-template-rows: 1fr; gap: 4px; padding: 5px 4px 9px; }
+  .expedition-game .expedition-combat-dock.skill-readiness .combat-ability-copy strong { font-size: 13px; min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .expedition-game .skill-readiness .combat-ability-chip,
+  .expedition-game .skill-readiness .combat-ability-chip.is-ready { animation: none; transition: none; }
+}
+.game-reduced-motion .expedition-game .skill-readiness .combat-ability-chip,
+.game-reduced-motion .expedition-game .skill-readiness .combat-ability-chip.is-ready { animation: none; transition: none; }
