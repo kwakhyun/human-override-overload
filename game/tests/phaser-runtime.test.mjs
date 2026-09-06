@@ -70,13 +70,13 @@ test("dialogue crops the hero to a bust and portrait mobile play stays active", 
 test("the active silver AEGIS sheets use authored 8-direction runtime geometry", async () => {
   const manifest = await read("src/game/assets/manifest.ts");
   const view = await read("src/phaser/view/BattleView.ts");
-  for (const path of ["survivor-directional-aim-atlas.png", "survivor-sword-directional-aim-atlas.png"]) {
-    const atlas = await readBytes(`public/assets/overload/hero/${path}`);
+  for (const path of ["aegis-operative.png", "aegis-sword-operative.png"]) {
+    const atlas = await readBytes(`public/assets/overload/quality-v3/${path}`);
     assert.equal(atlas.subarray(1, 4).toString("ascii"), "PNG");
     assert.deepEqual([atlas.readUInt32BE(16), atlas.readUInt32BE(20)], [1024, 1024]);
   }
-  assert.match(manifest, /survivor-directional-aim-atlas\.png[\s\S]*?columns: 8, rows: 8/);
-  assert.match(manifest, /survivor-sword-directional-aim-atlas\.png[\s\S]*?columns: 8, rows: 8/);
+  assert.match(manifest, /aegis-operative\.png[\s\S]*?columns: 8, rows: 8/);
+  assert.match(manifest, /aegis-sword-operative\.png[\s\S]*?columns: 8, rows: 8/);
   assert.doesNotMatch(manifest, /survivor-motion-atlas-v2|playerMotion/);
   assert.match(view, /this\.prepareAtlas\(this\.playerDirectionalTexture, 8, 8\)/);
   assert.match(view, /sampleActorAnimation\("hero", entity, clipElapsed\)/);
@@ -162,14 +162,14 @@ test("unified art and renderer-local impact effects replace legacy combat sprite
   const manifest = await read("src/game/assets/manifest.ts");
   const view = await read("src/phaser/view/BattleView.ts");
   assert.match(manifest, /assets\/overload\/enemies\/motion-v2\/suicide-drone-motion-atlas\.png/);
-  assert.match(manifest, /assets\/overload\/enemies\/motion-v2\/rifleman-motion-atlas\.png/);
-  assert.match(manifest, /assets\/overload\/enemies\/motion-v2\/sniper-motion-atlas\.png/);
-  assert.match(manifest, /assets\/overload\/enemies\/motion-v3\/siege-walker-motion-atlas\.png/);
+  assert.match(manifest, /assets\/overload\/quality-v3\/rifleman\.png/);
+  assert.match(manifest, /assets\/overload\/quality-v3\/sniper\.png/);
+  assert.match(manifest, /assets\/overload\/quality-v3\/siege-walker\.png/);
   assert.match(manifest, /assets\/overload\/allies\/motion-v2\/hunter-drone-motion-atlas\.png/);
   assert.match(manifest, /assets\/overload\/allies\/rook\.png/);
   assert.match(manifest, /assets\/overload\/boss\/wrong-engine-forms-atlas\.png/);
   assert.match(manifest, /assets\/overload\/vfx\/combat-fx-atlas\.png/);
-  assert.match(manifest, /assets\/overload\/vfx\/pixel\/automatic-skill-pixel-atlas\.png/);
+  assert.match(manifest, /assets\/overload\/quality-v3\/automatic-skills\.png/);
   assert.match(manifest, /assets\/overload\/vfx\/gates\/sovereign-gate-motion-atlas\.png/);
   assert.doesNotMatch(manifest, /assets\/survivor\/animation|assets\/survivor\/bosses|assets\/survivor\/skills/);
   assert.match(view, /type ViewFxKind/);
@@ -308,7 +308,7 @@ test("BootScene registers common assets plus only the selected region with a saf
   const createGame = await read("src/phaser/createOverloadGame.ts");
   const paths = (regionId) => manifest.getGameAssetsForRegion(regionId).map((asset) => asset.path);
   const glass = paths("glass-dune");
-  assert.ok(glass.includes("./assets/overload/hero/survivor-directional-aim-atlas.png"));
+  assert.ok(glass.includes("./assets/overload/quality-v3/aegis-operative.png"));
   assert.ok(glass.includes("./assets/overload/regions/glass-dune/arena-square-v1.webp"));
   assert.ok(!glass.includes("./assets/overload/regions/glass-dune/boss-room.webp"));
   assert.ok(!glass.includes("./assets/overload/regions/glass-dune/boss-forms-atlas.png"));
@@ -318,9 +318,9 @@ test("BootScene registers common assets plus only the selected region with a saf
   assert.deepEqual(glassBoss, [
     "./assets/overload/regions/glass-dune/boss-room.webp",
     "./assets/overload/regions/glass-dune/boss-forms-atlas.png",
-    "./assets/overload/regions/glass-dune/motion-v2/mirror-tyrant-motion-atlas.png",
-    "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png",
-    "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png",
+    "./assets/overload/quality-v3/glass-dune-boss.png",
+    "./assets/overload/quality-v3/boss-patterns.png",
+    "./assets/overload/quality-v3/regional-patterns.png",
     "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png",
   ]);
   assert.ok(!glass.some((path) => path.includes("abyssal-archive")));
@@ -346,29 +346,29 @@ test("Vite keeps Phaser, runtime, view, and simulation in explicit non-overlappi
   assert.match(vite, /output: \{ manualChunks \}/);
 });
 
-test("player skills use low-resolution pixel atlases while healing kits and gates keep dedicated art", async () => {
+test("player skills use unified high-resolution atlases while healing kits and gates keep dedicated art", async () => {
   const manifest = await read("src/game/assets/manifest.ts");
   const view = await read("src/phaser/view/BattleView.ts");
-  const manualAtlas = await readBytes("public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png");
-  const automaticAtlas = await readBytes("public/assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png");
-  const swordManualAtlas = await readBytes("public/assets/overload/vfx/pixel/sword-manual-ability-atlas.png");
+  const manualAtlas = await readBytes("public/assets/overload/quality-v3/aegis-skills.png");
+  const automaticAtlas = await readBytes("public/assets/overload/quality-v3/automatic-skills.png");
+  const swordManualAtlas = await readBytes("public/assets/overload/quality-v3/sword-manual-skills.png");
   const gateAtlas = await readBytes("public/assets/overload/vfx/gates/sovereign-gate-motion-atlas.png");
   const healingAtlas = await readBytes("public/assets/overload/items/healing-kit-motion-atlas.png");
   assert.equal(manualAtlas.subarray(1, 4).toString("ascii"), "PNG");
-  assert.deepEqual([manualAtlas.readUInt32BE(16), manualAtlas.readUInt32BE(20)], [384, 256]);
-  assert.deepEqual([automaticAtlas.readUInt32BE(16), automaticAtlas.readUInt32BE(20)], [384, 256]);
+  assert.deepEqual([manualAtlas.readUInt32BE(16), manualAtlas.readUInt32BE(20)], [1536, 1024]);
+  assert.deepEqual([automaticAtlas.readUInt32BE(16), automaticAtlas.readUInt32BE(20)], [1536, 1024]);
   assert.deepEqual([gateAtlas.readUInt32BE(16), gateAtlas.readUInt32BE(20)], [1152, 192]);
   assert.equal(healingAtlas.readUInt32BE(16), 768);
   assert.equal(healingAtlas.readUInt32BE(20), 192);
-  assert.match(manifest, /manual-ability-pixel-atlas\.png", kind: "atlas" as const, columns: 6, rows: 4/);
-  assert.match(manifest, /automatic-skill-pixel-atlas\.png", kind: "atlas", columns: 6, rows: 4/);
-  assert.deepEqual([swordManualAtlas.readUInt32BE(16), swordManualAtlas.readUInt32BE(20)], [384, 256]);
-  assert.match(manifest, /sword-manual-ability-atlas\.png", kind: "atlas" as const, columns: 6, rows: 4/);
+  assert.match(manifest, /aegis-skills\.png", performancePath: "[^"]+", kind: "atlas" as const, columns: 6, rows: 4/);
+  assert.match(manifest, /automatic-skills\.png", performancePath: "[^"]+", kind: "atlas", columns: 6, rows: 4/);
+  assert.deepEqual([swordManualAtlas.readUInt32BE(16), swordManualAtlas.readUInt32BE(20)], [1536, 1024]);
+  assert.match(manifest, /sword-manual-skills\.png", performancePath: "[^"]+", kind: "atlas" as const, columns: 6, rows: 4/);
   assert.match(view, /syncSwordManualAbilityFx/);
   assert.match(manifest, /sovereign-gate-motion-atlas\.png", kind: "atlas", columns: 6, rows: 1/);
   assert.match(manifest, /healing-kit-motion-atlas\.png", kind: "atlas", columns: 4, rows: 1/);
-  assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.automaticSkillPixel, 6, 4\)/);
-  assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.manualAbilityPixel, 6, 4\)/);
+  assert.match(view, /prepareAtlas\(ASSET_KEYS\.automaticSkillPixel, 6, 4\)/);
+  assert.match(view, /prepareAtlas\(ASSET_KEYS\.manualAbilityPixel, 6, 4\)/);
   assert.match(view, /prepareAtlas\(ASSET_KEYS\.aegisWardHd, 6, 1\)/);
   assert.match(view, /prepareAtlas\(ASSET_KEYS\.empPulseHd, 6, 1\)/);
   assert.match(view, /setFilter\(Phaser\.Textures\.FilterMode\.NEAREST\)/);
@@ -396,7 +396,7 @@ test("manual Q/E/F/R effects use their dedicated rows and engine-owned geometry"
   const end = view.indexOf("private syncHealingKitFx", start);
   const manual = view.slice(start, end);
   assert.ok(start >= 0 && end > start);
-  assert.match(view, /preparePixelAtlas\(ASSET_KEYS\.manualAbilityPixel, 6, 4\)/);
+  assert.match(view, /prepareAtlas\(ASSET_KEYS\.manualAbilityPixel, 6, 4\)/);
   assert.match(view, /manualAbilitySprites: Phaser\.GameObjects\.Image\[\]/);
   assert.match(view, /manualAbilityGraphics: Phaser\.GameObjects\.Graphics/);
   assert.match(view, /this\.syncManualAbilityFx\(state, time, quality\)/);
@@ -590,11 +590,11 @@ test("narrative dismissal grants a short combat grace window", async () => {
   assert.match(app, /controller\?\.continueStory\(\)/);
 });
 
-test("AEGIS selects eight authored views while other strict-overhead actors retain world-heading rotation", async () => {
+test("AEGIS selects eight authored views while actor facing preserves painted perspective", async () => {
   const view = await read("src/phaser/view/BattleView.ts");
   const pipeline = await read("scripts/prepare-overload-art.py");
-  assert.match(view, /Phaser\.Math\.Angle\.RotateTo\(record\.image\.rotation, angle/);
-  assert.match(view, /\.setRotation\(actorAngle\(entity\)\)[\s\S]*?\.setFlipX\(false\)/);
+  assert.match(view, /const visualAngle = resolveActorFacing\("ally", entity\)\.rotation/);
+  assert.match(view, /\.setRotation\(resolveActorFacing\("enemy", entity\)\.rotation\)[\s\S]*?\.setFlipX\(resolveActorFacing\("enemy", entity\)\.flipX\)/);
   const player = view.slice(view.indexOf("private syncPlayer"), view.indexOf("private syncBoss"));
   assert.match(player, /resolveHeroAimPresentation\(entity\)/);
   assert.match(player, /\.setRotation\(0\)[\s\S]*?\.setFlipX\(false\)/);
@@ -634,8 +634,8 @@ test("directional hero art, rifle-origin projectiles, reticle cue, and wheel zoo
   const foreground = view.slice(view.indexOf("private drawForeground"), view.indexOf("private drawExpeditionMarkers"));
   const camera = view.slice(view.indexOf("adjustCameraZoom"), view.indexOf("private syncPlayer"));
 
-  assert.match(manifest, /survivor-directional-aim-atlas\.png/);
-  assert.match(manifest, /performance\/survivor-directional-aim-atlas\.png/);
+  assert.match(manifest, /aegis-operative\.png/);
+  assert.match(manifest, /performance\/aegis-operative\.png/);
   assert.match(player, /ASSET_KEYS\.playerDirectionalAim/);
   assert.match(player, /\.setPosition\(finite\(entity\?\.x\) \+ muzzle\.x, finite\(entity\?\.y\) \+ muzzle\.y\)/);
   assert.match(projectiles, /launchAge < 0\.05/);

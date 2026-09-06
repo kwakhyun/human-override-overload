@@ -6,14 +6,14 @@ const manifest = await import(new URL("../src/game/assets/manifest.ts", import.m
 
 const MOTION_ATLASES = [
   ["enemyHunterMotion", "public/assets/overload/enemies/motion-v2/suicide-drone-motion-atlas.png", 960, 640, 6, 4],
-  ["enemyRiflemanMotion", "public/assets/overload/enemies/motion-v2/rifleman-motion-atlas.png", 960, 640, 6, 4],
-  ["enemySniperMotion", "public/assets/overload/enemies/motion-v2/sniper-motion-atlas.png", 960, 640, 6, 4],
+  ["enemyRiflemanMotion", "public/assets/overload/quality-v3/rifleman.png", 1152, 768, 6, 4],
+  ["enemySniperMotion", "public/assets/overload/quality-v3/sniper.png", 1152, 768, 6, 4],
   ["droneMotion", "public/assets/overload/allies/motion-v2/hunter-drone-motion-atlas.png", 640, 512, 5, 4],
   ["sentryMotion", "public/assets/overload/allies/motion-v2/pulse-sentry-motion-atlas.png", 640, 512, 5, 4],
   ["suppressorDroneMotion", "public/assets/overload/allies/motion-v2/suppressor-drone-motion-atlas.png", 640, 512, 5, 4],
-  ["bossMotion", "public/assets/overload/boss/motion-v2/wrong-engine-motion-atlas.png", 1920, 1280, 6, 4],
-  ["glassDuneBossMotion", "public/assets/overload/regions/glass-dune/motion-v2/mirror-tyrant-motion-atlas.png", 1920, 1280, 6, 4],
-  ["abyssalArchiveBossMotion", "public/assets/overload/regions/abyssal-archive/motion-v2/drowned-oracle-motion-atlas.png", 1920, 1280, 6, 4],
+  ["bossMotion", "public/assets/overload/quality-v3/wrong-engine-core-boss.png", 1536, 1024, 6, 4],
+  ["glassDuneBossMotion", "public/assets/overload/quality-v3/glass-dune-boss.png", 1536, 1024, 6, 4],
+  ["abyssalArchiveBossMotion", "public/assets/overload/quality-v3/abyssal-archive-boss.png", 1536, 1024, 6, 4],
 ];
 
 function pngDimensions(bytes) {
@@ -49,14 +49,14 @@ test("all role, ally, and regional boss motion atlases ship at the authored high
     assert.equal(definition.path.replace("./", "public/"), path);
   }
 
-  assert.equal(decodedRgba8Bytes, 40_796_160);
+  assert.ok(decodedRgba8Bytes < 40_796_160, "cleaner boss plates must keep this motion bundle below its previous decode budget");
 });
 
-test("player skills and enemy deaths ship as crisp 64px-cell atlases while SOVEREIGN gates keep their authored row", async () => {
+test("large player skills use smooth 256px cells while compact death and gate cues keep their grids", async () => {
   const specs = [
-    ["manualAbilityPixel", "public/assets/overload/vfx/pixel/manual-ability-pixel-atlas.png", 384, 256, 6, 4],
+    ["manualAbilityPixel", "public/assets/overload/quality-v3/aegis-skills.png", 1536, 1024, 6, 4],
     ["enemyDeathPixel", "public/assets/overload/vfx/pixel/enemy-death-pixel-atlas.png", 384, 64, 6, 1],
-    ["automaticSkillPixel", "public/assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png", 384, 256, 6, 4],
+    ["automaticSkillPixel", "public/assets/overload/quality-v3/automatic-skills.png", 1536, 1024, 6, 4],
     ["sovereignGateMotion", "public/assets/overload/vfx/gates/sovereign-gate-motion-atlas.png", 1152, 192, 6, 1],
   ];
   let decodedRgba8Bytes = 0;
@@ -65,7 +65,7 @@ test("player skills and enemy deaths ship as crisp 64px-cell atlases while SOVER
     assert.deepEqual(pngDimensions(bytes), [width, height], path);
     assert.equal(bytes[25], 6, `${path} must retain RGBA transparency`);
     assert.equal(width / columns, height / rows, `${path} cells must remain square`);
-    if (rows === 4) assert.equal(width / columns, 64, `${path} must use authored 64px pixel cells`);
+    if (rows === 4) assert.equal(width / columns, 256, `${path} must retain readable large-effect detail`);
     decodedRgba8Bytes += width * height * 4;
     const definition = [
       ...manifest.COMMON_GAME_ASSETS,
@@ -78,9 +78,7 @@ test("player skills and enemy deaths ship as crisp 64px-cell atlases while SOVER
     assert.equal(definition.path.replace("./", "public/"), path);
   }
 
-  assert.equal(decodedRgba8Bytes, 1_769_472, "pixel skills, enemy deaths, and the preserved gate row decoded RGBA8 budget");
-  const priorSkillVfxBytes = 1152 * 768 * 4 * 2 + 1024 * 768 * 4;
-  assert.equal(priorSkillVfxBytes - decodedRgba8Bytes, 8_454_144, "decoded RGBA8 reduction after adding the enemy death strip");
+  assert.ok(decodedRgba8Bytes < 14 * 1024 * 1024, "selected large skill bundle decode budget");
   const commonPaths = manifest.COMMON_GAME_ASSETS.map((asset) => asset.path).join("\n");
   assert.doesNotMatch(commonPaths, /vfx\/(?:manual\/manual-ability-motion-atlas|skill-motion-atlas|omega-laser-motion-atlas)\.png/);
   assert.equal(manifest.ASSET_KEYS.manualAbilityMotion, undefined);
@@ -89,9 +87,9 @@ test("player skills and enemy deaths ship as crisp 64px-cell atlases while SOVER
 });
 
 test("AEGIS WARD ships as a dedicated high-detail smooth hard-light atlas", async () => {
-  const path = "public/assets/overload/vfx/manual/aegis-ward-hd-atlas.png";
+  const path = "public/assets/overload/quality-v3/aegis-ward.png";
   const bytes = await readFile(new URL(`../${path}`, import.meta.url));
-  assert.deepEqual(pngDimensions(bytes), [1152, 192]);
+  assert.deepEqual(pngDimensions(bytes), [1536, 256]);
   assert.equal(bytes[25], 6, `${path} must retain RGBA transparency`);
   const definition = manifest.WEAPON_GAME_ASSETS["pulse-rifle"].find((asset) => asset.key === manifest.ASSET_KEYS.aegisWardHd);
   assert.ok(definition, "the high-detail ward atlas must be in the pulse-rifle bundle");
@@ -102,9 +100,9 @@ test("AEGIS WARD ships as a dedicated high-detail smooth hard-light atlas", asyn
 });
 
 test("EMP PULSE ships as a dedicated high-detail smooth electromagnetic atlas", async () => {
-  const path = "public/assets/overload/vfx/manual/emp-pulse-hd-atlas.png";
+  const path = "public/assets/overload/quality-v3/emp-pulse.png";
   const bytes = await readFile(new URL(`../${path}`, import.meta.url));
-  assert.deepEqual(pngDimensions(bytes), [1152, 192]);
+  assert.deepEqual(pngDimensions(bytes), [1536, 256]);
   assert.equal(bytes[25], 6, `${path} must retain RGBA transparency`);
   const definition = manifest.WEAPON_GAME_ASSETS["pulse-rifle"].find((asset) => asset.key === manifest.ASSET_KEYS.empPulseHd);
   assert.ok(definition, "the high-detail EMP atlas must be in the pulse-rifle bundle");

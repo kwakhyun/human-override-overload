@@ -56,7 +56,7 @@ test("PERFORMANCE selects lighter paths without changing stable Phaser texture k
   assert.ok(variants >= 11, "route bundle must replace all dominant decoded textures");
   assert.equal(
     performance.find((asset) => asset.key === manifest.ASSET_KEYS.playerMikaDirectionalAim)?.path,
-    "./assets/overload/hero/performance/mika-directional-aim-atlas.png",
+    "./assets/overload/quality-v3/performance/mika-operative.png",
     "mobile tag swaps must not keep MIKA's full 8-direction atlas resident",
   );
 
@@ -64,8 +64,6 @@ test("PERFORMANCE selects lighter paths without changing stable Phaser texture k
   const performanceBoss = manifest.getBossGameAssetsForRegion("wrong-engine-core", "performance");
   assert.deepEqual(performanceBoss.map((asset) => asset.key), fullBoss.map((asset) => asset.key));
   const bossPixelKeys = new Set([
-    manifest.ASSET_KEYS.bossPatternCommonPixel,
-    manifest.ASSET_KEYS.bossPatternRegionalPixel,
     manifest.ASSET_KEYS.bossTimedBombPixel,
   ]);
   assert.ok(performanceBoss.filter((asset) => !bossPixelKeys.has(asset.key)).every((asset) => asset.path.includes("/performance/")));

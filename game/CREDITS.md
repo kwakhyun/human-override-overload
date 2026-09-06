@@ -2425,3 +2425,13 @@ No second ponytail, no floating hair, no detached braid, no hair clipping throug
 ## 2026-09-06 신규 사용자 제공 BGM
 
 기지 방어전, 영입·동기화, 네온 주조구, 폭풍 첨탑, 생체 금고의 5곡을 원본 그대로 추가했다. 현재 총 10곡이다. 원본 파일명·런타임 경로·SHA-256·길이·후처리 여부는 [음원 반입 기록](docs/audio/music-import-2026-09-06.md)에 보존한다. 기존 5곡의 아래/앞선 프롬프트와 출처 기록은 변경하지 않는다.
+
+## Current combat sprite production — 2026-09-06
+
+The active `public/assets/overload/quality-v3/` plates were generated and refined with the built-in OpenAI ImageGen tool in Codex. AEGIS rifle/sword reuse approved original art with technical framing normalization; 26 other source plates were generated for this pass. Historical prompts above remain unchanged. The exact execution requests, including all template substitutions and correction prompts, are preserved in [sprite-quality-prompts-2026-09-06.md](docs/art/sprite-quality-prompts-2026-09-06.md).
+
+The active source-to-output mapping, original generated filenames, actual source grids, row cuts, held frames, body framing and mobile sizes are in `scripts/sprite-quality-recipes.json`. Originals are retained under `reference/source-assets/overload/sprite-quality-v3/`. `scripts/build-sprite-quality-assets.py` performs chroma/black-matte extraction and per-cell packaging, not generative drawing. Rejected flattened checkerboards, incorrect viewpoints and MIKA firearm drafts are not active assets. The two extracted AEGIS rows are derivatives, not additional independent artwork. [Implementation and review limits](docs/art/sprite-quality-implementation-2026-09-06.md).
+
+## 전투 프레임 분리 수정 - 2026-09-06
+
+생체금고 보스와 검 수동 스킬의 맞닿은 원본을 ImageGen으로 수정했다. 수정 원본은 각각 `exec-79a87c9b-8b44-4de8-a73f-85c0c6ab397e.png`, `exec-43c913d2-07e8-4358-89f5-b016e162b03f.png`이며 `reference/source-assets/overload/sprite-quality-v3/*-isolated.png`로 별도 보존한다. 기존 생성 원본·프롬프트는 유지한다. 나머지 시트는 실제 프레임 경계로 재분리했다. [정확한 수정 요청과 검증 기록](docs/art/sprite-frame-isolation-fix-2026-09-06.md)을 참조한다.

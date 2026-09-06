@@ -16,6 +16,8 @@ import {
 } from "./animation/actorAnimation";
 import { resolveManualAbilityAtlasFrame } from "./animation/manualAbilityAnimation";
 import { resolveBossPatternAtlasFrame } from "./animation/bossPatternAnimation";
+import { resolveActorFacing } from "./animation/actorFacing";
+import { resolveRegionalEnemyFrame, resolveExpandedBossFrame } from "./animation/regionalActorAnimation";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -100,6 +102,7 @@ type RegionVisualAssets = Readonly<{
   bossRoom: string;
   bossForms: string;
   bossMotion?: string;
+  expandedBossMotion?: boolean;
   enemyForms?: string;
 }>;
 
@@ -135,6 +138,8 @@ const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Objec
     bossRoom: ASSET_KEYS.neonFoundryArena,
     bossForms: ASSET_KEYS.neonFoundryBossForms,
     enemyForms: ASSET_KEYS.neonFoundryEnemyForms,
+    bossMotion: ASSET_KEYS.neonFoundryBossMotion,
+    expandedBossMotion: true,
   }),
   "storm-spire": Object.freeze({
     route: Object.freeze([ASSET_KEYS.stormSpireArena]),
@@ -143,6 +148,8 @@ const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Objec
     bossRoom: ASSET_KEYS.stormSpireArena,
     bossForms: ASSET_KEYS.stormSpireBossForms,
     enemyForms: ASSET_KEYS.stormSpireEnemyForms,
+    bossMotion: ASSET_KEYS.stormSpireBossMotion,
+    expandedBossMotion: true,
   }),
   "gene-vault": Object.freeze({
     route: Object.freeze([ASSET_KEYS.geneVaultArena]),
@@ -151,6 +158,8 @@ const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Objec
     bossRoom: ASSET_KEYS.geneVaultArena,
     bossForms: ASSET_KEYS.geneVaultBossForms,
     enemyForms: ASSET_KEYS.geneVaultEnemyForms,
+    bossMotion: ASSET_KEYS.geneVaultBossMotion,
+    expandedBossMotion: true,
   }),
 });
 
@@ -505,18 +514,18 @@ export class BattleView {
     this.prepareAtlas(ASSET_KEYS.enemyRiflemanMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemySniperMotion, 6, 4);
     this.prepareAtlas(ASSET_KEYS.enemySiegeWalkerMotion, 6, 4);
-    if (regionAssets.enemyForms) this.prepareAtlas(regionAssets.enemyForms, 4, 1);
+    if (regionAssets.enemyForms) this.prepareAtlas(regionAssets.enemyForms, 6, 4);
     if (scene.textures.exists(regionAssets.bossForms)) ensureAtlasFrames(scene, regionAssets.bossForms, 3, 1);
     ensureAtlasFrames(scene, ASSET_KEYS.combatFx, 4, 3);
-    this.preparePixelAtlas(ASSET_KEYS.automaticSkillPixel, 6, 4);
+    this.prepareAtlas(ASSET_KEYS.automaticSkillPixel, 6, 4);
     this.prepareAtlas(ASSET_KEYS.sovereignGateMotion, 6, 1);
     ensureAtlasFrames(scene, ASSET_KEYS.healingKitMotion, 4, 1);
-    this.preparePixelAtlas(ASSET_KEYS.manualAbilityPixel, 6, 4);
+    this.prepareAtlas(ASSET_KEYS.manualAbilityPixel, 6, 4);
     this.prepareAtlas(ASSET_KEYS.aegisWardHd, 6, 1);
     this.prepareAtlas(ASSET_KEYS.empPulseHd, 6, 1);
-    if (scene.textures.exists(ASSET_KEYS.swordSkillPixel)) this.preparePixelAtlas(ASSET_KEYS.swordSkillPixel, 6, 4);
-    if (scene.textures.exists(ASSET_KEYS.swordManualAbilityPixel)) this.preparePixelAtlas(ASSET_KEYS.swordManualAbilityPixel, 6, 4);
-    this.preparePixelAtlas(ASSET_KEYS.mikaAbilityPixel, 6, 4);
+    if (scene.textures.exists(ASSET_KEYS.swordSkillPixel)) this.prepareAtlas(ASSET_KEYS.swordSkillPixel, 6, 4);
+    if (scene.textures.exists(ASSET_KEYS.swordManualAbilityPixel)) this.prepareAtlas(ASSET_KEYS.swordManualAbilityPixel, 6, 4);
+    this.prepareAtlas(ASSET_KEYS.mikaAbilityPixel, 6, 4);
     this.prepareAtlas(ASSET_KEYS.vesperAbilityHd, 6, 4);
     this.prepareAtlas(ASSET_KEYS.noxAbilityHd, 6, 4);
     this.preparePixelAtlas(ASSET_KEYS.enemyDeathPixel, 6, 1);
@@ -643,9 +652,9 @@ export class BattleView {
     const { bossRoom, bossForms, bossMotion } = this.regionAssets;
     if (!this.scene.textures.exists(bossRoom) || !this.scene.textures.exists(bossForms)) return false;
     ensureAtlasFrames(this.scene, bossForms, 3, 1);
-    const hasMotion = bossMotion ? this.prepareAtlas(bossMotion, 6, 4) : false;
-    const hasCommonPatterns = this.preparePixelAtlas(ASSET_KEYS.bossPatternCommonPixel, 6, 6);
-    const hasRegionalPatterns = this.preparePixelAtlas(ASSET_KEYS.bossPatternRegionalPixel, 6, 4);
+    const hasMotion = bossMotion ? this.prepareAtlas(bossMotion, this.regionAssets.expandedBossMotion ? 8 : 6, 4) : false;
+    const hasCommonPatterns = this.prepareAtlas(ASSET_KEYS.bossPatternCommonPixel, 6, 6);
+    const hasRegionalPatterns = this.prepareAtlas(ASSET_KEYS.bossPatternRegionalPixel, 6, 4);
     const hasTimedBombs = this.preparePixelAtlas(ASSET_KEYS.bossTimedBombPixel, 6, 2);
     if (hasCommonPatterns && hasRegionalPatterns && this.bossPatternSprites.length === 0) {
       for (let index = 0; index < 16; index += 1) {
@@ -1033,7 +1042,7 @@ export class BattleView {
     const animation = sampleActorAnimation("boss", entity, clipElapsed);
     const usesDedicatedMotion = this.boss.texture.key === this.regionAssets.bossMotion;
     const bossFrame = usesDedicatedMotion
-      ? resolveDedicatedAtlasFrame("boss", animation, entity)
+      ? this.regionAssets.expandedBossMotion ? resolveExpandedBossFrame(animation, entity) : resolveDedicatedAtlasFrame("boss", animation, entity)
       : animation.fallbackAtlasFrame;
     setAtlasFrame(this.boss, bossFrame.column, bossFrame.row);
     setAtlasFrame(this.bossPhaseArt, bossFrame.column, bossFrame.row);
@@ -1052,24 +1061,18 @@ export class BattleView {
     const signalWave = 0.5 + Math.sin(clipElapsed * Math.PI * 2 * 3.5) * 0.5;
     let targetScale = 1;
     let recoilDistance = 0;
-    let rotationPulse = 0;
     if (animation.clipId === "windup") {
       targetScale = 1 + clipProgress * 0.04 + signalWave * 0.018;
-      rotationPulse = Math.sin(clipElapsed * 12) * 0.012;
     } else if (animation.clipId === "attack") {
       targetScale = 1 + signalWave * 0.035;
       recoilDistance = clamp(finite(entity?.recoil), 0, 2) * 11;
-      rotationPulse = Math.sin(clipElapsed * 18) * 0.016;
     } else if (animation.clipId === "transform") {
       targetScale = 1 + Math.sin(time * 22) * 0.055;
-      rotationPulse = Math.sin(clipElapsed * 10) * 0.022;
     } else if (animation.clipId === "hit") {
       targetScale = 0.965 + clipProgress * 0.035;
       recoilDistance = 4 * (1 - clipProgress);
-      rotationPulse = Math.sin(clipElapsed * 34) * 0.018 * (1 - clipProgress);
     } else if (animation.clipId === "death") {
       targetScale = 1 - clipProgress * 0.09;
-      rotationPulse = Math.sin(clipElapsed * 7) * 0.01 * (1 - clipProgress);
     } else if (animation.clipId === "idle") {
       targetScale = 1 + Math.sin(time * 2.4) * 0.008;
     }
@@ -1077,8 +1080,7 @@ export class BattleView {
     const alpha = entity?.dead ? clamp01(finite(entity?.deathTimer) / Math.max(0.01, finite(entity?.deathDuration, 1.25))) : 1;
     const bossSize = stage === 3 ? 640 : stage === 2 ? 560 : 480;
     const angle = actorAngle(entity);
-    const rotationStep = animation.clipId === "windup" ? 0.035 : animation.clipId === "attack" ? 0.065 : 0.09;
-    const visualAngle = Phaser.Math.Angle.RotateTo(this.boss.rotation, angle, rotationStep) + rotationPulse;
+    const visualAngle = resolveActorFacing("boss", entity).rotation;
     this.boss
       .setPosition(
         finite(entity?.x) - Math.cos(angle) * recoilDistance,
@@ -1192,7 +1194,9 @@ export class BattleView {
       record.wasHit = isHit;
       record.wasDead = isDead;
       if (usesRegionalForms) {
-        setAtlasFrame(image, entity?.isMidBoss ? 3 : role, 0);
+        const animation = sampleActorAnimation("enemy", entity, clipElapsed, phaseOffset);
+        const frame = resolveRegionalEnemyFrame(role, animation, Boolean(entity?.isMidBoss));
+        setAtlasFrame(image, frame.column, frame.row);
       } else if (usesDedicatedMotion) {
         const animationTick = Math.floor(clipElapsed * animationHz);
         if (record.animationTick !== animationTick) {
@@ -1232,8 +1236,8 @@ export class BattleView {
       image
         .setVisible(true)
         .setPosition(x, y)
-        .setRotation(actorAngle(entity))
-        .setFlipX(false)
+        .setRotation(resolveActorFacing("enemy", entity).rotation)
+        .setFlipX(resolveActorFacing("enemy", entity).flipX)
         .setDisplaySize(size, size)
         .setAlpha(alpha)
         .setTint(tint);
@@ -1455,7 +1459,7 @@ export class BattleView {
         }
         const type = String(entity?.type ?? "").toLowerCase();
         const humanoid = ["gunner", "arcanist", "warden", "vanguard"].some((token) => type.includes(token));
-        const size = type.includes("sentry") ? 58 : type.includes("emp") ? 58 : humanoid ? 64 : 48;
+        const size = type.includes("sentry") ? 58 : type.includes("emp") ? 64 : humanoid ? 70 : 52;
         const angle = actorAngle(entity);
         const stationary = (type.includes("sentry") && !entity?.mobileEscort) || type.includes("emp");
         const moveBlend = clamp01(finite(entity?.moveBlend));
@@ -1469,7 +1473,7 @@ export class BattleView {
         const attackScale = 1 + pulse * (pulseAttack ? 0.085 : 0.035) + recoil * 0.025;
         const hover = stationary ? 0 : Math.sin(time * 4 + id) * 1.2 * (1 - moveBlend);
         const recoilDistance = recoil * (humanoid ? 3.2 : 2.2);
-        const visualAngle = Phaser.Math.Angle.RotateTo(record.image.rotation, angle, stationary ? 0.2 : 0.16);
+        const visualAngle = resolveActorFacing("ally", entity).rotation;
         record.image
           .setVisible(true)
           .setPosition(
@@ -1477,10 +1481,10 @@ export class BattleView {
             y - Math.sin(angle) * recoilDistance + hover,
           )
           .setRotation(visualAngle)
-          .setFlipX(false)
+          .setFlipX(resolveActorFacing("ally", entity).flipX)
           .setDisplaySize(size * spawnScale * attackScale, size * spawnScale * attackScale)
           .setAlpha(clamp01(finite(entity?.alpha, 1)) * (0.42 + spawnEase * 0.58))
-          .setTint(pulseAttack && attackActive ? 0xc8fbff : entity?.summoned ? COLORS.violet : 0xffffff);
+          .setTint(pulseAttack && attackActive ? 0xc8fbff : 0xffffff);
       }
     }
     for (const [id, record] of this.allySprites) {
@@ -2191,7 +2195,7 @@ export class BattleView {
         .setOrigin(0.5)
         .setVisible(true)
         .setPosition(x, y)
-        .setRotation(angle)
+        .setRotation(angle + Math.PI / 2)
         .setDisplaySize(spriteSize, spriteSize)
         .setAlpha(presentationHasSweep ? 0.94 : 0.52 + centralWarningProgress * 0.28)
         .clearTint();
@@ -2344,7 +2348,8 @@ export class BattleView {
         .setPosition(x, y)
         .setRotation(finite(effect?.angle))
         .setDisplaySize(size, size)
-        .setAlpha(0.98 * clamp01(finite(effect?.life) / Math.max(0.12, finite(effect?.maxLife, 1) * 0.16)))
+        .setAlpha((0.86 / (1 + Math.max(0, Math.min(4, effects.length) - 1) * 0.2))
+          * clamp01(finite(effect?.life) / Math.max(0.12, finite(effect?.maxLife, 1) * 0.16)))
         .clearTint();
       if (vesperEffect || noxEffect) image.setBlendMode(Phaser.BlendModes.ADD);
       visible += 1;

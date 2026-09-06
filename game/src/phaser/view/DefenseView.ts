@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { ASSET_KEYS } from "../../game/assets/manifest";
 import { getDefenseTowerStats } from "../../defense/engine.js";
 import { sampleDefenseRoute } from "../../defense/battlefields.js";
+import { resolveDefenseDirection, DEFENSE_SPECIALIZATION_STYLE } from "./animation/defensePresentation";
 
 type DefenseState = any;
 type DefenseEvent = Readonly<Record<string, unknown>>;
@@ -37,6 +38,7 @@ export class DefenseView {
   private readonly routeGraphics: Phaser.GameObjects.Graphics;
   private readonly tacticalGraphics: Phaser.GameObjects.Graphics;
   private readonly effectGraphics: Phaser.GameObjects.Graphics;
+  private readonly towerModuleGraphics: Phaser.GameObjects.Graphics;
   private readonly healthGraphics: Phaser.GameObjects.Graphics;
   private readonly coreGlow: Phaser.GameObjects.Arc;
   private readonly coreLabel: Phaser.GameObjects.Text;
@@ -72,9 +74,11 @@ export class DefenseView {
       lineSpacing: 1,
     }).setOrigin(0.5).setDepth(0).setAlpha(0.9);
     this.effectGraphics = scene.add.graphics().setDepth(7);
+    this.towerModuleGraphics = scene.add.graphics().setDepth(5);
     this.healthGraphics = scene.add.graphics().setDepth(9);
     this.ensureAtlasFrames(ASSET_KEYS.defenseSystemsMotion, "defense-system", 6, 4);
     this.ensureAtlasFrames(ASSET_KEYS.defenseEnemyMotion, "defense-enemy", 6, 4);
+    this.ensureAtlasFrames(ASSET_KEYS.defenseEnemyDirections, "defense-direction", 8, 4);
     this.ensureAtlasFrames(ASSET_KEYS.defenseCombatFxMotion, "defense-fx", 6, 4);
 
     for (const node of state.nodes) {
@@ -123,6 +127,8 @@ export class DefenseView {
   }
 
   private syncTowers(state: DefenseState) {
+    const modules = this.towerModuleGraphics;
+    modules.clear();
     const live = this.liveTowerIds;
     live.clear();
     for (const tower of state.towers) {
@@ -142,6 +148,27 @@ export class DefenseView {
       const baseSize = this.portrait ? 88 : 102;
       sprite.setDisplaySize(baseSize + tower.rank * 7, baseSize + tower.rank * 7);
       sprite.setTint(tower.nodeId === state.selectedNodeId ? 0xffffff : 0xd7f8ff);
+      const module = DEFENSE_SPECIALIZATION_STYLE[String(tower.specialization)];
+      if (module) {
+        const radius = (baseSize + tower.rank * 7) * 0.29;
+        modules.lineStyle(2, module.color, 0.9);
+        modules.fillStyle(0x0c1826, 0.96);
+        if (module.shape === 'shield') {
+          modules.strokeEllipse(point.x, point.y + radius * 0.45, radius * 2.2, radius * 1.1);
+        } else if (module.shape === 'rails') {
+          for (const sign of [-1, 1]) {
+            modules.fillRoundedRect(point.x + sign*radius - 3, point.y - radius*0.55, 6, radius*1.1, 2);
+            modules.strokeRoundedRect(point.x + sign*radius - 3, point.y - radius*0.55, 6, radius*1.1, 2);
+          }
+        } else {
+          for (let index = 0; index < 3; index++) {
+            const x = point.x + (index-1)*radius*0.65;
+            const y = point.y + radius*0.75;
+            modules.fillCircle(x, y, 4);
+            modules.strokeCircle(x, y, 4);
+          }
+        }
+      }
     }
     for (const [id, sprite] of this.towerSprites) {
       if (live.has(id)) continue;
@@ -158,21 +185,25 @@ export class DefenseView {
       const point = this.toDisplay(enemy.x, enemy.y);
       let sprite = this.enemySprites.get(enemy.id);
       if (!sprite) {
-        sprite = this.scene.add.sprite(point.x, point.y, ASSET_KEYS.defenseEnemyMotion).setDepth(3);
+        sprite = this.scene.add.sprite(point.x, point.y, ASSET_KEYS.defenseEnemyDirections).setDepth(3);
         sprite.setData("previousX", point.x);
+        sprite.setData("previousY", point.y);
+        sprite.setData("direction", 0);
         sprite.setData("frameOffset", Number(String(enemy.id).split("-").at(-1)) || 0);
         this.enemySprites.set(enemy.id, sprite);
       }
       const row = ENEMY_ROWS[enemy.role] ?? 0;
       const frameOffset = Number(sprite.getData("frameOffset")) || 0;
-      let column = Math.floor(state.time * (enemy.role === "siegeWalker" ? 4.5 : 7) + frameOffset) % 3;
-      if (enemy.role === "hunter" && enemy.pathProgress > 0.78) column = 3 + Math.floor(state.time * 8) % 2;
-      if (enemy.hitFlash > 0) column = enemy.role === "siegeWalker" ? 2 : 4;
-      const frameName = `defense-enemy-${row}-${column}`;
-      if (sprite.frame.name !== frameName) sprite.setFrame(frameName);
       const previousX = Number(sprite.getData("previousX") ?? point.x);
-      if (Math.abs(point.x - previousX) > 0.15) sprite.setFlipX(point.x < previousX);
+      const previousY = Number(sprite.getData("previousY") ?? point.y);
+      const direction = resolveDefenseDirection(point.x-previousX, point.y-previousY, Number(sprite.getData("direction")) || 0);
+      const column = direction*2 + Math.floor(state.time * (enemy.role === "siegeWalker" ? 4.5 : 7) + frameOffset) % 2;
+      const frameName = `defense-direction-${row}-${column}`;
+      if (sprite.frame.name !== frameName) sprite.setFrame(frameName);
+      sprite.setFlipX(false).setRotation(0);
       sprite.setData("previousX", point.x);
+      sprite.setData("previousY", point.y);
+      sprite.setData("direction", direction);
       const size = this.enemySize(enemy.role);
       sprite.setPosition(point.x, point.y).setDisplaySize(size, size);
       sprite.setTint(enemy.hitFlash > 0 ? 0xffffff : enemy.vulnerableTimer > 0 ? 0xff84cf : enemy.slowTimer > 0 || enemy.stunTimer > 0 ? 0x9ab7ff : enemy.elite ? 0xffdf8c : 0xffffff);
@@ -394,6 +425,7 @@ export class DefenseView {
     this.routeGraphics.destroy();
     this.tacticalGraphics.destroy();
     this.effectGraphics.destroy();
+    this.towerModuleGraphics.destroy();
     this.healthGraphics.destroy();
     this.coreGlow.destroy();
     this.coreLabel.destroy();

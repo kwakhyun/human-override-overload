@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import json
 
 from PIL import Image
 
@@ -29,7 +30,8 @@ JOBS = (
     Job("hero/survivor-directional-aim-atlas.png", "hero/performance/survivor-directional-aim-atlas.png", 0.75, 8, 8),
     Job("hero/survivor-sword-directional-aim-atlas.png", "hero/performance/survivor-sword-directional-aim-atlas.png", 0.75, 8, 8),
     Job("hero/mika-directional-aim-atlas.png", "hero/performance/mika-directional-aim-atlas.png", 0.75, 8, 8),
-    Job("hero/vesper-directional-aim-atlas.png", "hero/performance/vesper-directional-aim-atlas.png", 0.5, 8, 8),
+    Job("hero/vesper-directional-aim-atlas.png", "hero/performance/vesper-directional-aim-atlas.png", 0.75, 8, 8),
+    Job("hero/nox-directional-aim-atlas.png", "hero/performance/nox-directional-aim-atlas.png", 0.75, 8, 8),
     Job("enemies/motion-v2/suicide-drone-motion-atlas.png", "enemies/motion-v2/performance/suicide-drone-motion-atlas.png", 0.75, 6, 4),
     Job("enemies/motion-v2/rifleman-motion-atlas.png", "enemies/motion-v2/performance/rifleman-motion-atlas.png", 0.75, 6, 4),
     Job("enemies/motion-v2/sniper-motion-atlas.png", "enemies/motion-v2/performance/sniper-motion-atlas.png", 0.75, 6, 4),
@@ -67,6 +69,15 @@ JOBS = (
     Job("regions/storm-spire/route-expanded-v2.webp", "regions/storm-spire/performance/route-expanded-v2.webp", 0.5),
     Job("regions/gene-vault/route-expanded-v2.webp", "regions/gene-vault/performance/route-expanded-v2.webp", 0.5),
 )
+
+
+# The reviewed quality recipes own all new atlas dimensions. Rebuilding the
+# performance tier must include these assets instead of silently serving old art.
+for recipe in json.loads((ROOT / "scripts/sprite-quality-recipes.json").read_text(encoding="utf-8")):
+    scale = recipe.get("performanceCell", round(recipe["cell"] * 0.75)) / recipe["cell"]
+    JOBS += (Job(f"quality-v3/{recipe['id']}.png", f"quality-v3/performance/{recipe['id']}.png", scale, recipe["columns"], recipe["rows"]),)
+    for name in recipe.get("extractRows", {}):
+        JOBS += (Job(f"quality-v3/{name}.png", f"quality-v3/performance/{name}.png", scale, recipe["columns"], 1),)
 
 
 def resize_job(job: Job) -> tuple[Path, tuple[int, int]]:

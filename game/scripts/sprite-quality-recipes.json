@@ -1,0 +1,482 @@
+[
+  {
+    "id": "mika-skills",
+    "generatedFile": "exec-975be2d3-1584-4f17-ad3c-a4eb5cab724e.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 128,
+    "matte": "black",
+    "flipRows": [
+      2
+    ],
+    "rowCuts": [
+      0,
+      264,
+      518,
+      737,
+      1024
+    ]
+  },
+  {
+    "id": "vesper-skills",
+    "generatedFile": "exec-aaecd640-dc70-4f01-96d8-7051e0c82d7c.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 128,
+    "matte": "black",
+    "rowCuts": [
+      0,
+      256,
+      512,
+      705,
+      1024
+    ]
+  },
+  {
+    "id": "nox-skills",
+    "generatedFile": "exec-c248d4ee-c382-4c7f-9e07-43d1daccddff.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 128,
+    "matte": "black",
+    "rowCuts": [
+      0,
+      297,
+      512,
+      746,
+      1024
+    ]
+  },
+  {
+    "id": "aegis-skills",
+    "generatedFile": "exec-8567a991-ded5-40fa-8b9b-0280050f093a.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 128,
+    "matte": "black",
+    "extractRows": {
+      "emp-pulse": 0,
+      "aegis-ward": 1
+    },
+    "rowCuts": [
+      0,
+      260,
+      512,
+      752,
+      1024
+    ]
+  },
+  {
+    "id": "sword-manual-skills",
+    "generatedFile": "exec-43c913d2-07e8-4358-89f5-b016e162b03f.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 128,
+    "matte": "black",
+    "originalGeneratedFile": "exec-7419e682-28dd-4905-9677-a8d08a07e092.png",
+    "sourceFile": "sword-manual-skills-isolated.png"
+  },
+  {
+    "id": "automatic-skills",
+    "generatedFile": "exec-80b2ad9a-07dc-406b-931d-5e9d42f01439.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 128,
+    "matte": "black",
+    "rowCuts": [
+      0,
+      282,
+      520,
+      760,
+      1024
+    ]
+  },
+  {
+    "id": "sword-auto-skills",
+    "generatedFile": "exec-fb8add9f-a92e-4fe1-a597-165ab905af10.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 128,
+    "matte": "black"
+  },
+  {
+    "id": "boss-patterns",
+    "generatedFile": "exec-c7c6f452-ae5a-4e7c-a102-0caa92b1af19.png",
+    "columns": 6,
+    "rows": 6,
+    "cell": 192,
+    "performanceCell": 128,
+    "matte": "black"
+  },
+  {
+    "id": "neon-foundry-enemies",
+    "generatedFile": "exec-bb75003c-66ea-4589-b3ca-609cd0397509.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 192,
+    "performanceCell": 128,
+    "matte": "green"
+  },
+  {
+    "id": "storm-spire-enemies",
+    "generatedFile": "exec-f20f2c7a-965d-4a57-b676-9a198ff01312.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 192,
+    "performanceCell": 128,
+    "matte": "green"
+  },
+  {
+    "id": "gene-vault-enemies",
+    "generatedFile": "exec-e1874fe8-0108-4813-9dfe-6e1817a83c69.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 192,
+    "performanceCell": 128,
+    "matte": "green"
+  },
+  {
+    "id": "neon-foundry-boss",
+    "generatedFile": "exec-80d8a5c8-4f69-403b-a8af-938487bcb3f4.png",
+    "columns": 8,
+    "sourceColumns": 7,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 192,
+    "matte": "green",
+    "columnMap": {
+      "default": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        5,
+        6
+      ],
+      "3": [
+        0,
+        1,
+        2,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "id": "storm-spire-boss",
+    "generatedFile": "exec-c27e297c-4c16-450b-bf68-722ff4efe90e.png",
+    "columns": 8,
+    "sourceColumns": 7,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 192,
+    "matte": "green",
+    "columnMap": {
+      "default": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        5,
+        6
+      ],
+      "3": [
+        0,
+        1,
+        2,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "id": "gene-vault-boss",
+    "generatedFile": "exec-79a87c9b-8b44-4de8-a73f-85c0c6ab397e.png",
+    "columns": 8,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 192,
+    "matte": "blue",
+    "originalGeneratedFile": "exec-cf0f24cd-08d3-4937-8324-2b5e2864c73d.png",
+    "sourceFile": "gene-vault-boss-isolated.png",
+    "sourceColumnsByRow": [
+      7,
+      7,
+      7,
+      8
+    ],
+    "columnMap": {
+      "default": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        0
+      ],
+      "3": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "sourceRowWidths": [
+      1600,
+      1600,
+      1600,
+      1774
+    ]
+  },
+  {
+    "id": "defense-towers",
+    "generatedFile": "exec-739d6662-b2c6-4301-be6d-0da5bfa2c6c6.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 128,
+    "matte": "green"
+  },
+  {
+    "id": "wrong-engine-core-boss",
+    "generatedFile": "exec-d675381d-45f9-4ba7-982a-ac29ac219e4c.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 192,
+    "matte": "green"
+  },
+  {
+    "id": "glass-dune-boss",
+    "generatedFile": "exec-edc0dd38-6ba4-4283-864a-db654803664d.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 192,
+    "matte": "green"
+  },
+  {
+    "id": "abyssal-archive-boss",
+    "generatedFile": "exec-dace32ca-92c3-434b-88ac-259f22c1b65c.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 256,
+    "performanceCell": 192,
+    "matte": "green"
+  },
+  {
+    "id": "rifleman",
+    "generatedFile": "exec-8b14861b-a63b-4477-932a-6919f10c042b.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 192,
+    "performanceCell": 128,
+    "matte": "green"
+  },
+  {
+    "id": "sniper",
+    "generatedFile": "exec-96f67ec6-6a65-4899-aba8-89e0b36917ed.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 192,
+    "performanceCell": 128,
+    "matte": "green"
+  },
+  {
+    "id": "siege-walker",
+    "generatedFile": "exec-210b6cb5-5e47-478f-8fce-1f7de7e0fa9e.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 192,
+    "performanceCell": 128,
+    "matte": "green"
+  },
+  {
+    "id": "defense-directions",
+    "generatedFile": "exec-2b82ced4-425f-4879-8c21-724f76116193.png",
+    "columns": 8,
+    "rows": 4,
+    "cell": 192,
+    "performanceCell": 128,
+    "matte": "green"
+  },
+  {
+    "id": "aegis-operative",
+    "sourcePath": "public/assets/overload/hero/survivor-directional-aim-atlas.png",
+    "columns": 8,
+    "rows": 8,
+    "cell": 128,
+    "performanceCell": 96,
+    "matte": "alpha",
+    "hero": true
+  },
+  {
+    "id": "aegis-sword-operative",
+    "sourcePath": "public/assets/overload/hero/survivor-sword-directional-aim-atlas.png",
+    "columns": 8,
+    "rows": 8,
+    "cell": 128,
+    "performanceCell": 96,
+    "matte": "alpha",
+    "hero": true,
+    "bodyScale": 0.85
+  },
+  {
+    "id": "vesper-operative",
+    "generatedFile": "exec-1a2bb451-fad6-450c-bcd9-b578a20da6a1.png",
+    "columns": 8,
+    "rows": 8,
+    "cell": 128,
+    "performanceCell": 96,
+    "matte": "green",
+    "hero": true,
+    "columnMap": {
+      "default": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "6": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        0,
+        1,
+        2
+      ],
+      "7": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        0,
+        1,
+        7
+      ]
+    }
+  },
+  {
+    "id": "nox-operative",
+    "generatedFile": "exec-5370cc09-9426-4ef1-9f60-689aa274d3e4.png",
+    "columns": 8,
+    "rows": 8,
+    "cell": 128,
+    "performanceCell": 96,
+    "matte": "green",
+    "hero": true,
+    "columnMap": {
+      "default": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "6": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        0,
+        1,
+        2
+      ],
+      "7": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        0,
+        1,
+        7
+      ]
+    }
+  },
+  {
+    "id": "mika-operative",
+    "generatedFile": "exec-9698d080-0e0b-4025-a62a-cc366804a9f5.png",
+    "columns": 8,
+    "rows": 8,
+    "cell": 128,
+    "performanceCell": 96,
+    "matte": "green",
+    "hero": true,
+    "columnMap": {
+      "default": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "6": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        0,
+        1,
+        2
+      ],
+      "7": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        0,
+        1,
+        7
+      ]
+    }
+  },
+  {
+    "id": "regional-patterns",
+    "generatedFile": "exec-cce2ec0a-95d0-4183-b72d-307191bc6c59.png",
+    "columns": 6,
+    "rows": 4,
+    "cell": 192,
+    "performanceCell": 128,
+    "matte": "black"
+  }
+]

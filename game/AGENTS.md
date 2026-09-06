@@ -1,5 +1,16 @@
 # Prototype Instructions
 
+## Source frame isolation correction - 2026-09-06
+
+- Source padding and runtime texture dimensions do not prove frame isolation. Use reviewed per-frame rectangles in `scripts/sprite-source-layouts.json`, source hash checks, and pre-resize foreground-edge validation. Never shrink a wrongly cropped frame to hide neighbor fragments. The two `*-isolated.png` repairs preserve the rejected spacing versions as history. Actual source poses total 905, mapped into 916 runtime slots; held recovery frames are not independent artwork. The review page reads generated grid/hash metadata and must expose every row, including boss destruction, with manual frame selection. Run `scripts/test-sprite-source-layouts.py` with the preserved sources and inspect both whole sheets and the affected runtime phases.
+
+## Combat sprite quality and perspective — 2026-09-06
+
+- The user requests improvement of the full sprite audit and a consistent graphic style across every operative's skills. Keep character-specific palettes and motifs within one clean, softly luminous sci-fi visual language. Large ability effects should not mix coarse pixel cells with unrelated HD artwork.
+- Footed actors must keep their feet toward screen-bottom at every combat aim angle. Never rotate a perspective humanoid, walking machine, or painted boss bodily through 360 degrees. Use directional poses or horizontal facing where appropriate. Free heading rotation is reserved for clearly overhead aircraft/drones. Preserve authoritative aim, hitboxes, movement and attack timing.
+
+- The active 2026-09-06 combat plates live under `quality-v3/`. Regional enemy rows now own four identities with six motion columns; outer bosses use canonical 8x4 motion plates loaded only on entry, while inner bosses retain 6x4. This supersedes the historical 4x1/3x1 outer static-art contract below. Use `scripts/sprite-quality-recipes.json` as the source-grid/row-cut/column-map/profile authority. Some generated boss frames are held to fill the runtime grid; never describe every slot as an independently authored pose. Keep the two original AEGIS atlases intact and regenerate their active framing from the recipe. Defense uses the additional 8x4 direction atlas for locomotion and retains its 6x4 death plate.
+
 ## Music continuity — 2026-09-06
 
 - Background music belongs to one app-lifetime `createMusicPlayer` transport and one keyed audio element, not individual screens. Never bind its `src` directly to the current screen. Lobby/facilities, region selection, flight operations and defense selection share the HAVEN track without reload or rewind. Loading and help inherit the previous music request (`undefined`); explicit silence uses `null` and pauses without clearing the source. Sortie entry suspends music before cinematic loading. Store per-track positions in memory and restore after metadata when returning from another song. Master sound and volume updates preserve position. Existing tracks and video sound ownership remain unchanged; the new 2026-09-06 imports supply regions 04–06, defense and recruitment. Focused checks: `tests/music-player.test.mjs`, `tests/music-routing.test.mjs`, `scripts/verify-music-continuity.mjs`.

@@ -1188,3 +1188,20 @@ final result: passed
 ## 2026-09-06 외곽 권역 자동 해금
 
 1~3구역 전체 클리어 이후 세라 브리핑이 추가로 출격을 막던 조건을 제거했다. 브리핑은 선택 대화로 보존한다. 브리핑 없는 과거 저장 상태의 외곽 지도 진입과 4~6구역 표시를 실제 브라우저로 확인했다. 미완료 구역 또는 위조된 해금/브리핑 플래그만으로는 출격할 수 없다. 관련 콘텐츠·저장·안내 검사 26개 통과. 캡처: qa/outer-unlock-2026-09-06/legacy-save.png.
+
+## Combat sprites — 2026-09-06
+
+- [x] Common smooth character skill language with distinct AEGIS/MIKA/VESPER/NOX motifs; retain authoritative telegraphs and reduce stacked effect glare.
+- [x] Feet-down perspective for grounded enemies/all bosses; four authored defense directions; no full-body aim rotation for walking actors.
+- [x] Repack actual image grids, remove neighboring-frame fragments, preserve 4px safe gutters, and create full/performance versions per cell.
+- [x] Regional enemies and all six bosses use reviewed articulated pose sheets; allies preserve their role colors at a more readable size.
+- [x] Focused type/animation/asset/defense checks plus isolated browser renderer QA. Details: `docs/art/sprite-quality-implementation-2026-09-06.md`.
+- Review limits: controlled renderer scenes, not a full campaign clear or physical-device benchmark. No production Cubism replacement is implied.
+
+## 프레임 분리 회귀 검수 - 2026-09-06
+
+- [x] 원본 905개 프레임의 절단선 검사와 출력 916칸 시각 검수.
+- [x] 제보된 보스·방어전 프레임을 검수 페이지에서 고정해 재확인.
+- [x] 실제 Phaser 보스 3단계까지 확인. 기존 대기 상태·출력 여백 검사만으로 완료 판정했던 한계를 수정.
+- [x] 검수 페이지의 행·열을 게임 에셋과 교차 검사하고 이미지 해시로 캐시 구분.
+- 전체 캠페인 실전 플레이·실물 기기 성능 검증은 이번 검사에 포함하지 않는다. [상세 기록](docs/art/sprite-frame-isolation-fix-2026-09-06.md).

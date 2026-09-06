@@ -76,19 +76,23 @@ export const ASSET_KEYS = Object.freeze({
   neonFoundryArena: "overload-neon-foundry-arena-square-v1",
   neonFoundryEnemyForms: "overload-neon-foundry-enemy-forms",
   neonFoundryBossForms: "overload-neon-foundry-boss-forms",
+  neonFoundryBossMotion: "overload-neon-foundry-boss-motion-v3",
   stormSpireRoute: "overload-storm-spire-route",
   stormSpireRouteExpanded: "overload-storm-spire-route-expanded-v2",
   stormSpireArena: "overload-storm-spire-arena-square-v1",
   stormSpireEnemyForms: "overload-storm-spire-enemy-forms",
   stormSpireBossForms: "overload-storm-spire-boss-forms",
+  stormSpireBossMotion: "overload-storm-spire-boss-motion-v3",
   geneVaultRoute: "overload-gene-vault-route",
   geneVaultRouteExpanded: "overload-gene-vault-route-expanded-v2",
   geneVaultArena: "overload-gene-vault-arena-square-v1",
   geneVaultEnemyForms: "overload-gene-vault-enemy-forms",
   geneVaultBossForms: "overload-gene-vault-boss-forms",
+  geneVaultBossMotion: "overload-gene-vault-boss-motion-v3",
   defenseBattlefield: "overload-haven-defense-grid",
   defenseBattlefieldPortrait: "overload-haven-defense-grid-portrait",
   defenseSystemsMotion: "overload-defense-systems-motion-atlas",
+  defenseEnemyDirections: "overload-defense-enemy-directions-v3",
   defenseEnemyMotion: "overload-defense-enemy-motion-atlas-v2",
   defenseCombatFxMotion: "overload-defense-combat-vfx-atlas-v2",
 } as const);
@@ -126,12 +130,12 @@ export const COMMON_GAME_ASSETS: readonly AssetDefinition[] = Object.freeze([
   { key: ASSET_KEYS.enemyRifleman, path: "./assets/overload/enemies/suppressor.png", kind: "image" },
   { key: ASSET_KEYS.enemySniper, path: "./assets/overload/enemies/brute.png", kind: "image" },
   { key: ASSET_KEYS.enemyHunterMotion, path: "./assets/overload/enemies/motion-v2/suicide-drone-motion-atlas.png", performancePath: "./assets/overload/enemies/motion-v2/performance/suicide-drone-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
-  { key: ASSET_KEYS.enemyRiflemanMotion, path: "./assets/overload/enemies/motion-v2/rifleman-motion-atlas.png", performancePath: "./assets/overload/enemies/motion-v2/performance/rifleman-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
-  { key: ASSET_KEYS.enemySniperMotion, path: "./assets/overload/enemies/motion-v2/sniper-motion-atlas.png", performancePath: "./assets/overload/enemies/motion-v2/performance/sniper-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
-  { key: ASSET_KEYS.enemySiegeWalkerMotion, path: "./assets/overload/enemies/motion-v3/siege-walker-motion-atlas.png", performancePath: "./assets/overload/enemies/motion-v3/performance/siege-walker-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
+  { key: ASSET_KEYS.enemyRiflemanMotion, path: "./assets/overload/quality-v3/rifleman.png", performancePath: "./assets/overload/quality-v3/performance/rifleman.png", kind: "motion", columns: 6, rows: 4 },
+  { key: ASSET_KEYS.enemySniperMotion, path: "./assets/overload/quality-v3/sniper.png", performancePath: "./assets/overload/quality-v3/performance/sniper.png", kind: "motion", columns: 6, rows: 4 },
+  { key: ASSET_KEYS.enemySiegeWalkerMotion, path: "./assets/overload/quality-v3/siege-walker.png", performancePath: "./assets/overload/quality-v3/performance/siege-walker.png", kind: "motion", columns: 6, rows: 4 },
   { key: ASSET_KEYS.combatFx, path: "./assets/overload/vfx/combat-fx-atlas.png", performancePath: "./assets/overload/vfx/performance/combat-fx-atlas.png", kind: "atlas", columns: 4, rows: 3 },
   { key: ASSET_KEYS.enemyDeathPixel, path: "./assets/overload/vfx/pixel/enemy-death-pixel-atlas.png", kind: "atlas", columns: 6, rows: 1 },
-  { key: ASSET_KEYS.automaticSkillPixel, path: "./assets/overload/vfx/pixel/automatic-skill-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+  { key: ASSET_KEYS.automaticSkillPixel, path: "./assets/overload/quality-v3/automatic-skills.png", performancePath: "./assets/overload/quality-v3/performance/automatic-skills.png", kind: "atlas", columns: 6, rows: 4 },
   { key: ASSET_KEYS.sovereignGateMotion, path: "./assets/overload/vfx/gates/sovereign-gate-motion-atlas.png", performancePath: "./assets/overload/vfx/gates/performance/sovereign-gate-motion-atlas.png", kind: "atlas", columns: 6, rows: 1 },
   { key: ASSET_KEYS.healingKitMotion, path: "./assets/overload/items/healing-kit-motion-atlas.png", performancePath: "./assets/overload/items/performance/healing-kit-motion-atlas.png", kind: "atlas", columns: 4, rows: 1 },
   { key: ASSET_KEYS.rook, path: "./assets/overload/allies/rook.png", kind: "image" },
@@ -160,7 +164,8 @@ const DEFENSE_STAGE_BATTLEFIELD_ASSETS: Readonly<Record<DefenseStageId, readonly
 });
 
 const DEFENSE_SHARED_ASSETS: readonly AssetDefinition[] = Object.freeze([
-  { key: ASSET_KEYS.defenseSystemsMotion, path: "./assets/overload/defense/defense-systems-motion-atlas.png", performancePath: "./assets/overload/defense/performance/defense-systems-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
+  { key: ASSET_KEYS.defenseEnemyDirections, path: "./assets/overload/quality-v3/defense-directions.png", performancePath: "./assets/overload/quality-v3/performance/defense-directions.png", kind: "motion", columns: 8, rows: 4 },
+  { key: ASSET_KEYS.defenseSystemsMotion, path: "./assets/overload/quality-v3/defense-towers.png", performancePath: "./assets/overload/quality-v3/performance/defense-towers.png", kind: "motion", columns: 6, rows: 4 },
   { key: ASSET_KEYS.defenseEnemyMotion, path: "./assets/overload/defense/defense-enemy-motion-atlas-v2.png", performancePath: "./assets/overload/defense/performance/defense-enemy-motion-atlas-v2.png", kind: "motion", columns: 6, rows: 4 },
   { key: ASSET_KEYS.defenseCombatFxMotion, path: "./assets/overload/defense/defense-combat-vfx-atlas-v2.png", performancePath: "./assets/overload/defense/performance/defense-combat-vfx-atlas-v2.png", kind: "motion", columns: 6, rows: 4 },
 ]);
@@ -178,31 +183,31 @@ export const DEFENSE_GAME_ASSETS: readonly AssetDefinition[] = getDefenseGameAss
 
 export const WEAPON_GAME_ASSETS: Readonly<Record<MainWeaponId, readonly AssetDefinition[]>> = Object.freeze({
   "pulse-rifle": Object.freeze([
-    { key: ASSET_KEYS.playerDirectionalAim, path: "./assets/overload/hero/survivor-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
-    { key: ASSET_KEYS.manualAbilityPixel, path: "./assets/overload/vfx/pixel/manual-ability-pixel-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
-    { key: ASSET_KEYS.aegisWardHd, path: "./assets/overload/vfx/manual/aegis-ward-hd-atlas.png", kind: "atlas" as const, columns: 6, rows: 1 },
-    { key: ASSET_KEYS.empPulseHd, path: "./assets/overload/vfx/manual/emp-pulse-hd-atlas.png", kind: "atlas" as const, columns: 6, rows: 1 },
+    { key: ASSET_KEYS.playerDirectionalAim, path: "./assets/overload/quality-v3/aegis-operative.png", performancePath: "./assets/overload/quality-v3/performance/aegis-operative.png", kind: "motion" as const, columns: 8, rows: 8 },
+    { key: ASSET_KEYS.manualAbilityPixel, path: "./assets/overload/quality-v3/aegis-skills.png", performancePath: "./assets/overload/quality-v3/performance/aegis-skills.png", kind: "atlas" as const, columns: 6, rows: 4 },
+    { key: ASSET_KEYS.aegisWardHd, path: "./assets/overload/quality-v3/aegis-ward.png", performancePath: "./assets/overload/quality-v3/performance/aegis-ward.png", kind: "atlas" as const, columns: 6, rows: 1 },
+    { key: ASSET_KEYS.empPulseHd, path: "./assets/overload/quality-v3/emp-pulse.png", performancePath: "./assets/overload/quality-v3/performance/emp-pulse.png", kind: "atlas" as const, columns: 6, rows: 1 },
   ]),
   "beam-sword": Object.freeze([
-    { key: ASSET_KEYS.playerSwordDirectionalAim, path: "./assets/overload/hero/survivor-sword-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
-    { key: ASSET_KEYS.swordSkillPixel, path: "./assets/overload/vfx/pixel/sword-skill-pixel-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
-    { key: ASSET_KEYS.swordManualAbilityPixel, path: "./assets/overload/vfx/pixel/sword-manual-ability-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+    { key: ASSET_KEYS.playerSwordDirectionalAim, path: "./assets/overload/quality-v3/aegis-sword-operative.png", performancePath: "./assets/overload/quality-v3/performance/aegis-sword-operative.png", kind: "motion" as const, columns: 8, rows: 8 },
+    { key: ASSET_KEYS.swordSkillPixel, path: "./assets/overload/quality-v3/sword-auto-skills.png", performancePath: "./assets/overload/quality-v3/performance/sword-auto-skills.png", kind: "atlas" as const, columns: 6, rows: 4 },
+    { key: ASSET_KEYS.swordManualAbilityPixel, path: "./assets/overload/quality-v3/sword-manual-skills.png", performancePath: "./assets/overload/quality-v3/performance/sword-manual-skills.png", kind: "atlas" as const, columns: 6, rows: 4 },
   ]),
 });
 
 export const OPERATIVE_GAME_ASSETS: Readonly<Record<PlayableCharacterId, readonly AssetDefinition[]>> = Object.freeze({
   aegis: Object.freeze([]),
   mika: Object.freeze([
-    { key: ASSET_KEYS.playerMikaDirectionalAim, path: "./assets/overload/hero/mika-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/mika-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
-    { key: ASSET_KEYS.mikaAbilityPixel, path: "./assets/overload/vfx/pixel/mika-ability-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+    { key: ASSET_KEYS.playerMikaDirectionalAim, path: "./assets/overload/quality-v3/mika-operative.png", performancePath: "./assets/overload/quality-v3/performance/mika-operative.png", kind: "motion" as const, columns: 8, rows: 8 },
+    { key: ASSET_KEYS.mikaAbilityPixel, path: "./assets/overload/quality-v3/mika-skills.png", performancePath: "./assets/overload/quality-v3/performance/mika-skills.png", kind: "atlas" as const, columns: 6, rows: 4 },
   ]),
   vesper: Object.freeze([
-    { key: ASSET_KEYS.playerVesperDirectionalAim, path: "./assets/overload/hero/vesper-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/vesper-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
-    { key: ASSET_KEYS.vesperAbilityHd, path: "./assets/overload/vfx/manual/vesper-ability-hd-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+    { key: ASSET_KEYS.playerVesperDirectionalAim, path: "./assets/overload/quality-v3/vesper-operative.png", performancePath: "./assets/overload/quality-v3/performance/vesper-operative.png", kind: "motion" as const, columns: 8, rows: 8 },
+    { key: ASSET_KEYS.vesperAbilityHd, path: "./assets/overload/quality-v3/vesper-skills.png", performancePath: "./assets/overload/quality-v3/performance/vesper-skills.png", kind: "atlas" as const, columns: 6, rows: 4 },
   ]),
   nox: Object.freeze([
-    { key: ASSET_KEYS.playerNoxDirectionalAim, path: "./assets/overload/hero/nox-directional-aim-atlas.png", performancePath: "./assets/overload/hero/performance/nox-directional-aim-atlas.png", kind: "motion" as const, columns: 8, rows: 8 },
-    { key: ASSET_KEYS.noxAbilityHd, path: "./assets/overload/vfx/manual/nox-ability-hd-atlas.png", kind: "atlas" as const, columns: 6, rows: 4 },
+    { key: ASSET_KEYS.playerNoxDirectionalAim, path: "./assets/overload/quality-v3/nox-operative.png", performancePath: "./assets/overload/quality-v3/performance/nox-operative.png", kind: "motion" as const, columns: 8, rows: 8 },
+    { key: ASSET_KEYS.noxAbilityHd, path: "./assets/overload/quality-v3/nox-skills.png", performancePath: "./assets/overload/quality-v3/performance/nox-skills.png", kind: "atlas" as const, columns: 6, rows: 4 },
   ]),
 });
 
@@ -262,15 +267,15 @@ export const REGION_ROUTE_ASSETS: Readonly<Record<RegionId, readonly AssetDefini
   ]),
   "neon-foundry": freezeAssets([
     { key: ASSET_KEYS.neonFoundryArena, path: "./assets/overload/regions/neon-foundry/arena-square-v1.webp", performancePath: "./assets/overload/regions/neon-foundry/performance/arena-square-v1.webp", kind: "image" },
-    { key: ASSET_KEYS.neonFoundryEnemyForms, path: "./assets/overload/regions/neon-foundry/enemy-forms-atlas.png", performancePath: "./assets/overload/regions/neon-foundry/performance/enemy-forms-atlas.png", kind: "atlas", columns: 4, rows: 1 },
+    { key: ASSET_KEYS.neonFoundryEnemyForms, path: "./assets/overload/quality-v3/neon-foundry-enemies.png", performancePath: "./assets/overload/quality-v3/performance/neon-foundry-enemies.png", kind: "motion", columns: 6, rows: 4 },
   ]),
   "storm-spire": freezeAssets([
     { key: ASSET_KEYS.stormSpireArena, path: "./assets/overload/regions/storm-spire/arena-square-v1.webp", performancePath: "./assets/overload/regions/storm-spire/performance/arena-square-v1.webp", kind: "image" },
-    { key: ASSET_KEYS.stormSpireEnemyForms, path: "./assets/overload/regions/storm-spire/enemy-forms-atlas.png", performancePath: "./assets/overload/regions/storm-spire/performance/enemy-forms-atlas.png", kind: "atlas", columns: 4, rows: 1 },
+    { key: ASSET_KEYS.stormSpireEnemyForms, path: "./assets/overload/quality-v3/storm-spire-enemies.png", performancePath: "./assets/overload/quality-v3/performance/storm-spire-enemies.png", kind: "motion", columns: 6, rows: 4 },
   ]),
   "gene-vault": freezeAssets([
     { key: ASSET_KEYS.geneVaultArena, path: "./assets/overload/regions/gene-vault/arena-square-v1.webp", performancePath: "./assets/overload/regions/gene-vault/performance/arena-square-v1.webp", kind: "image" },
-    { key: ASSET_KEYS.geneVaultEnemyForms, path: "./assets/overload/regions/gene-vault/enemy-forms-atlas.png", performancePath: "./assets/overload/regions/gene-vault/performance/enemy-forms-atlas.png", kind: "atlas", columns: 4, rows: 1 },
+    { key: ASSET_KEYS.geneVaultEnemyForms, path: "./assets/overload/quality-v3/gene-vault-enemies.png", performancePath: "./assets/overload/quality-v3/performance/gene-vault-enemies.png", kind: "motion", columns: 6, rows: 4 },
   ]),
 });
 
@@ -278,43 +283,46 @@ export const REGION_BOSS_ASSETS: Readonly<Record<RegionId, readonly AssetDefinit
   "wrong-engine-core": freezeAssets([
     { key: ASSET_KEYS.bossRoom, path: "./assets/overload/environment/boss-chamber.webp", performancePath: "./assets/overload/environment/performance/boss-chamber.webp", kind: "image" },
     { key: ASSET_KEYS.bossForms, path: "./assets/overload/boss/wrong-engine-forms-atlas.png", performancePath: "./assets/overload/boss/performance/wrong-engine-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
-    { key: ASSET_KEYS.bossMotion, path: "./assets/overload/boss/motion-v2/wrong-engine-motion-atlas.png", performancePath: "./assets/overload/boss/motion-v2/performance/wrong-engine-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
-    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
-    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossMotion, path: "./assets/overload/quality-v3/wrong-engine-core-boss.png", performancePath: "./assets/overload/quality-v3/performance/wrong-engine-core-boss.png", kind: "motion", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/quality-v3/boss-patterns.png", performancePath: "./assets/overload/quality-v3/performance/boss-patterns.png", kind: "atlas", columns: 6, rows: 6 },
+    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/quality-v3/regional-patterns.png", performancePath: "./assets/overload/quality-v3/performance/regional-patterns.png", kind: "atlas", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
   ]),
   "glass-dune": freezeAssets([
     { key: ASSET_KEYS.glassDuneBossRoom, path: "./assets/overload/regions/glass-dune/boss-room.webp", performancePath: "./assets/overload/regions/glass-dune/performance/boss-room.webp", kind: "image" },
     { key: ASSET_KEYS.glassDuneBossForms, path: "./assets/overload/regions/glass-dune/boss-forms-atlas.png", performancePath: "./assets/overload/regions/glass-dune/performance/boss-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
-    { key: ASSET_KEYS.glassDuneBossMotion, path: "./assets/overload/regions/glass-dune/motion-v2/mirror-tyrant-motion-atlas.png", performancePath: "./assets/overload/regions/glass-dune/motion-v2/performance/mirror-tyrant-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
-    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
-    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.glassDuneBossMotion, path: "./assets/overload/quality-v3/glass-dune-boss.png", performancePath: "./assets/overload/quality-v3/performance/glass-dune-boss.png", kind: "motion", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/quality-v3/boss-patterns.png", performancePath: "./assets/overload/quality-v3/performance/boss-patterns.png", kind: "atlas", columns: 6, rows: 6 },
+    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/quality-v3/regional-patterns.png", performancePath: "./assets/overload/quality-v3/performance/regional-patterns.png", kind: "atlas", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
   ]),
   "abyssal-archive": freezeAssets([
     { key: ASSET_KEYS.abyssalArchiveBossRoom, path: "./assets/overload/regions/abyssal-archive/boss-room.webp", performancePath: "./assets/overload/regions/abyssal-archive/performance/boss-room.webp", kind: "image" },
     { key: ASSET_KEYS.abyssalArchiveBossForms, path: "./assets/overload/regions/abyssal-archive/boss-forms-atlas.png", performancePath: "./assets/overload/regions/abyssal-archive/performance/boss-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
-    { key: ASSET_KEYS.abyssalArchiveBossMotion, path: "./assets/overload/regions/abyssal-archive/motion-v2/drowned-oracle-motion-atlas.png", performancePath: "./assets/overload/regions/abyssal-archive/motion-v2/performance/drowned-oracle-motion-atlas.png", kind: "motion", columns: 6, rows: 4 },
-    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
-    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.abyssalArchiveBossMotion, path: "./assets/overload/quality-v3/abyssal-archive-boss.png", performancePath: "./assets/overload/quality-v3/performance/abyssal-archive-boss.png", kind: "motion", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/quality-v3/boss-patterns.png", performancePath: "./assets/overload/quality-v3/performance/boss-patterns.png", kind: "atlas", columns: 6, rows: 6 },
+    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/quality-v3/regional-patterns.png", performancePath: "./assets/overload/quality-v3/performance/regional-patterns.png", kind: "atlas", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
   ]),
   "neon-foundry": freezeAssets([
     { key: ASSET_KEYS.neonFoundryBossForms, path: "./assets/overload/regions/neon-foundry/boss-forms-atlas.png", performancePath: "./assets/overload/regions/neon-foundry/performance/boss-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
-    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
-    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.neonFoundryBossMotion, path: "./assets/overload/quality-v3/neon-foundry-boss.png", performancePath: "./assets/overload/quality-v3/performance/neon-foundry-boss.png", kind: "motion", columns: 8, rows: 4 },
+    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/quality-v3/boss-patterns.png", performancePath: "./assets/overload/quality-v3/performance/boss-patterns.png", kind: "atlas", columns: 6, rows: 6 },
+    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/quality-v3/regional-patterns.png", performancePath: "./assets/overload/quality-v3/performance/regional-patterns.png", kind: "atlas", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
   ]),
   "storm-spire": freezeAssets([
     { key: ASSET_KEYS.stormSpireBossForms, path: "./assets/overload/regions/storm-spire/boss-forms-atlas.png", performancePath: "./assets/overload/regions/storm-spire/performance/boss-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
-    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
-    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.stormSpireBossMotion, path: "./assets/overload/quality-v3/storm-spire-boss.png", performancePath: "./assets/overload/quality-v3/performance/storm-spire-boss.png", kind: "motion", columns: 8, rows: 4 },
+    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/quality-v3/boss-patterns.png", performancePath: "./assets/overload/quality-v3/performance/boss-patterns.png", kind: "atlas", columns: 6, rows: 6 },
+    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/quality-v3/regional-patterns.png", performancePath: "./assets/overload/quality-v3/performance/regional-patterns.png", kind: "atlas", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
   ]),
   "gene-vault": freezeAssets([
     { key: ASSET_KEYS.geneVaultBossForms, path: "./assets/overload/regions/gene-vault/boss-forms-atlas.png", performancePath: "./assets/overload/regions/gene-vault/performance/boss-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
-    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/vfx/pixel/boss-pattern-common-pixel-atlas.png", kind: "atlas", columns: 6, rows: 6 },
-    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/vfx/pixel/boss-pattern-regional-pixel-atlas.png", kind: "atlas", columns: 6, rows: 4 },
+    { key: ASSET_KEYS.geneVaultBossMotion, path: "./assets/overload/quality-v3/gene-vault-boss.png", performancePath: "./assets/overload/quality-v3/performance/gene-vault-boss.png", kind: "motion", columns: 8, rows: 4 },
+    { key: ASSET_KEYS.bossPatternCommonPixel, path: "./assets/overload/quality-v3/boss-patterns.png", performancePath: "./assets/overload/quality-v3/performance/boss-patterns.png", kind: "atlas", columns: 6, rows: 6 },
+    { key: ASSET_KEYS.bossPatternRegionalPixel, path: "./assets/overload/quality-v3/regional-patterns.png", performancePath: "./assets/overload/quality-v3/performance/regional-patterns.png", kind: "atlas", columns: 6, rows: 4 },
     { key: ASSET_KEYS.bossTimedBombPixel, path: "./assets/overload/vfx/pixel/timed-bomb-pixel-atlas.png", kind: "atlas", columns: 6, rows: 2 },
   ]),
 });

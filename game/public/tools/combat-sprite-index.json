@@ -1,0 +1,170 @@
+[
+  {
+    "id": "mika-skills",
+    "columns": 6,
+    "rows": 4,
+    "version": "b8f8097bcce37274"
+  },
+  {
+    "id": "vesper-skills",
+    "columns": 6,
+    "rows": 4,
+    "version": "e286df22b35e546a"
+  },
+  {
+    "id": "nox-skills",
+    "columns": 6,
+    "rows": 4,
+    "version": "79cfce90609e2bb3"
+  },
+  {
+    "id": "aegis-skills",
+    "columns": 6,
+    "rows": 4,
+    "version": "550eaeba0f5b45ec"
+  },
+  {
+    "id": "sword-manual-skills",
+    "columns": 6,
+    "rows": 4,
+    "version": "6c50461313876b92"
+  },
+  {
+    "id": "automatic-skills",
+    "columns": 6,
+    "rows": 4,
+    "version": "a158c69c77eac4f6"
+  },
+  {
+    "id": "sword-auto-skills",
+    "columns": 6,
+    "rows": 4,
+    "version": "e912194f255cdfe1"
+  },
+  {
+    "id": "boss-patterns",
+    "columns": 6,
+    "rows": 6,
+    "version": "d1f6c381bd63584d"
+  },
+  {
+    "id": "neon-foundry-enemies",
+    "columns": 6,
+    "rows": 4,
+    "version": "e6a9aee7869f91ec"
+  },
+  {
+    "id": "storm-spire-enemies",
+    "columns": 6,
+    "rows": 4,
+    "version": "344d8d154041f818"
+  },
+  {
+    "id": "gene-vault-enemies",
+    "columns": 6,
+    "rows": 4,
+    "version": "611c4ad73db3e9a6"
+  },
+  {
+    "id": "neon-foundry-boss",
+    "columns": 8,
+    "rows": 4,
+    "version": "d4510875d6077fdd"
+  },
+  {
+    "id": "storm-spire-boss",
+    "columns": 8,
+    "rows": 4,
+    "version": "faa859f4071b0301"
+  },
+  {
+    "id": "gene-vault-boss",
+    "columns": 8,
+    "rows": 4,
+    "version": "09a986feda015456"
+  },
+  {
+    "id": "defense-towers",
+    "columns": 6,
+    "rows": 4,
+    "version": "03140a3ce078d9ba"
+  },
+  {
+    "id": "wrong-engine-core-boss",
+    "columns": 6,
+    "rows": 4,
+    "version": "eb0a2ec33b37da35"
+  },
+  {
+    "id": "glass-dune-boss",
+    "columns": 6,
+    "rows": 4,
+    "version": "17195baca43e3ad9"
+  },
+  {
+    "id": "abyssal-archive-boss",
+    "columns": 6,
+    "rows": 4,
+    "version": "b5eaabcd82557fb4"
+  },
+  {
+    "id": "rifleman",
+    "columns": 6,
+    "rows": 4,
+    "version": "43e1dc8dc204b0d5"
+  },
+  {
+    "id": "sniper",
+    "columns": 6,
+    "rows": 4,
+    "version": "a6a885fba66aa193"
+  },
+  {
+    "id": "siege-walker",
+    "columns": 6,
+    "rows": 4,
+    "version": "ecced4bf393a81c7"
+  },
+  {
+    "id": "defense-directions",
+    "columns": 8,
+    "rows": 4,
+    "version": "dd1a8840f3ae62f9"
+  },
+  {
+    "id": "aegis-operative",
+    "columns": 8,
+    "rows": 8,
+    "version": "354fd16943e629e7"
+  },
+  {
+    "id": "aegis-sword-operative",
+    "columns": 8,
+    "rows": 8,
+    "version": "e982b4e9cddf2afa"
+  },
+  {
+    "id": "vesper-operative",
+    "columns": 8,
+    "rows": 8,
+    "version": "821bae9219911551"
+  },
+  {
+    "id": "nox-operative",
+    "columns": 8,
+    "rows": 8,
+    "version": "c8726f662988b667"
+  },
+  {
+    "id": "mika-operative",
+    "columns": 8,
+    "rows": 8,
+    "version": "86354ea241dac015"
+  },
+  {
+    "id": "regional-patterns",
+    "columns": 6,
+    "rows": 4,
+    "version": "5d56024c38cc9190"
+  }
+]
