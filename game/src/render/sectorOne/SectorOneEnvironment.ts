@@ -69,7 +69,7 @@ export class SectorOneEnvironment {
       if (this.theme.style === 'transit') this.build();
       else buildRegionalEnvironment({ route: this.route, boss: this.boss,
         material: this.material.bind(this), texture: this.texture.bind(this), batch: this.batch.bind(this),
-        sign: this.addFloorSign.bind(this), trackMaterial: material => this.materials.add(material),
+        trackMaterial: material => this.materials.add(material),
         register: this.registerStructure.bind(this), rotor: (object, speed) => this.rotors.push({ object, speed }),
       }, this.theme);
     } catch (error) { this.dispose(); throw error; }
@@ -238,7 +238,6 @@ export class SectorOneEnvironment {
         }
       }
       b.finish();
-      this.addFloorSign(parent, parent === this.route ? '01  //  TRANSIT ARRAY' : 'WRONG ENGINE  //  CORE', w / 2, parent === this.route ? 2150 : 940, parent === this.route ? 520 : 650);
     }
     for (const site of SECTOR_ONE_STRUCTURES) {
       const group = new THREE.Group(); this.route.add(group);
@@ -351,17 +350,6 @@ export class SectorOneEnvironment {
         }
       }
     }
-  }
-
-  private addFloorSign(parent: THREE.Group, text: string, x: number, y: number, width: number) {
-    const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 160;
-    const c = canvas.getContext('2d')!; c.fillStyle = '#9dbac0'; c.font = 'bold 46px monospace'; c.textAlign = 'center';
-    c.fillText(text, 512, 75); c.fillStyle = '#63838e'; c.fillRect(110, 106, 804, 3);
-    const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; this.textures.add(texture);
-    const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: .65, depthWrite: false });
-    this.materials.add(material);
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, width * .156 / FLOOR_SIN), material);
-    mesh.rotation.x = -Math.PI / 2; mesh.position.set(x, 7, y / FLOOR_SIN); parent.add(mesh);
   }
 
   render(camera: Camera2D, frame: Frame) {

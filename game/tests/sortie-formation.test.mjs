@@ -1,10 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolveSortieRoster } from '../src/game/content/sortieFormation.js';
+import { defaultSortieParty, resolveSortieRoster } from '../src/game/content/sortieFormation.js';
 import { createSwarmState, createSwarmInput, stepSwarm, drainSwarmEvents, getSwarmHud } from '../src/swarm/engine.js';
 
 const unlocked = { mikaUnlocked: true, vesperUnlocked: true, noxUnlocked: true };
 const ids = ['aegis', 'mika', 'vesper', 'nox'];
+
+test('preparation defaults to the chosen lead and one available reserve', () => {
+  assert.deepEqual(defaultSortieParty('nox', ids), ['nox', 'aegis']);
+  assert.deepEqual(defaultSortieParty('aegis', ['aegis', 'aegis', 'mika']), ['aegis', 'mika']);
+  assert.deepEqual(defaultSortieParty('nox', ['aegis']), ['aegis']);
+  assert.deepEqual(defaultSortieParty('aegis', []), []);
+});
 
 test('explicit sortie parties reject locked, duplicate and extra characters', () => {
   assert.deepEqual(resolveSortieRoster({ ...unlocked, characterId: 'nox', partyCharacterIds: ['nox', 'mika', 'vesper', 'aegis'] }), ['nox', 'mika']);

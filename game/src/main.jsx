@@ -14,6 +14,7 @@ import "./styles/settings.css";
 import "./styles/defense-overhaul.css";
 import "./styles/tag-cutscene.css";
 import "./styles/npc-portraits.css";
+import "./styles/combat-ui-refinement.css";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

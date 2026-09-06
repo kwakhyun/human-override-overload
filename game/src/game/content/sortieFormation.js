@@ -1,5 +1,11 @@
 export const MAX_SORTIE_CHARACTERS = 2;
 
+export function defaultSortieParty(characterId, availableIds = []) {
+  const ids = [...new Set(availableIds)];
+  const lead = ids.includes(characterId) ? characterId : ids[0];
+  return lead ? [lead, ...ids.filter(id => id !== lead)].slice(0, MAX_SORTIE_CHARACTERS) : [];
+}
+
 // The same allow-list drives simulation and texture loading. Unlocks alone
 // never add a third operative to an explicitly selected sortie.
 export function resolveSortieRoster({ characterId = 'aegis', partyCharacterIds = /** @type {readonly string[] | undefined} */ (undefined),

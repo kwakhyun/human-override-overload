@@ -1,4 +1,5 @@
 import { SORTIE_BRIEFINGS } from '../../game/content/sortieBriefings.js';
+import { defaultSortieParty } from '../../game/content/sortieFormation.js';
 import { NpcPortraitImage } from '../portrait/NpcPortraitImage.jsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -1574,7 +1575,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
     () => (regions || []).find((region) => region.id === selectedRegionId) || null,
     [selectedRegionId, regions],
   );
-  const [partyIds, setPartyIds] = useState([selectedCharacterId]);
+  const [partyIds, setPartyIds] = useState(() => defaultSortieParty(selectedCharacterId, availableCharacters.map(character => character.id)));
   const selectedParty = partyIds.filter(id => availableCharacters.some(character => character.id === id)).slice(0, 2);
   const selectedCharacter = availableCharacters.find(character => character.id === selectedParty[0]) || null;
   const togglePartyMember = (id) => {
@@ -1646,8 +1647,10 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
       )}
       <div className="region-map-shade" aria-hidden="true" />
       <header className="region-select-heading" inert={Boolean(selectedRegion)} aria-hidden={Boolean(selectedRegion)}>
-        <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={selectedCluster ? () => setSelectedClusterId(null) : onBack}><ArrowLeft weight="bold" /> {selectedCluster ? "권역 지도" : "기지"} <kbd>ESC</kbd></button>
-        <small>나이트자 · 광역 항로 관제</small>
+        <div className="region-heading-navigation">
+          <button type="button" className="campaign-back" data-ui-sound="uiClose" onClick={selectedCluster ? () => setSelectedClusterId(null) : onBack}><ArrowLeft weight="bold" /> {selectedCluster ? "권역 지도" : "기지"} <kbd>ESC</kbd></button>
+          <small>나이트자 · 광역 항로 관제</small>
+        </div>
         <h1>{selectedCluster ? <>{selectedCluster.koreanName}<span> · 구역 선택</span></> : "작전 권역 선택"}</h1>
         <p>{selectedCluster ? "이 권역에서 출격할 구역을 선택하세요." : "먼저 출격할 작전 권역을 선택하세요."}</p>
       </header>

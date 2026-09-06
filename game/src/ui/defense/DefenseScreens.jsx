@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ArrowCounterClockwise,
   ArrowLeft,
@@ -40,12 +40,26 @@ const DEFENSE_GUIDE_STEPS = Object.freeze([
 function DefenseSpotlightGuide({ stepIndex, onNext, onBack, onSkip }) {
   const modalRef = useRef(null);
   const step = DEFENSE_GUIDE_STEPS[stepIndex];
+  const [targetBounds, setTargetBounds] = useState(null);
+  useLayoutEffect(() => {
+    const root = modalRef.current?.closest('.defense-runtime-screen');
+    const selectors = { core: '.defense-core-status', field: '.defense-phaser-host', palette: '[data-defense-tower-palette]', wave: '.defense-command-actions' };
+    const target = root?.querySelector(selectors[step?.target]);
+    if (!target) return;
+    const measure = () => {
+      const r = target.getBoundingClientRect();
+      setTargetBounds({ left: r.left + 2, top: r.top + 2, width: Math.max(0, r.width - 4), height: Math.max(0, r.height - 4), right: 'auto', bottom: 'auto' });
+    };
+    measure(); const observer = new ResizeObserver(measure); observer.observe(target);
+    window.addEventListener('resize', measure);
+    return () => { observer.disconnect(); window.removeEventListener('resize', measure); };
+  }, [step?.target]);
   useDialogFocusTrap(modalRef, Boolean(step));
   if (!step) return null;
   const final = stepIndex === DEFENSE_GUIDE_STEPS.length - 1;
   return (
     <section className={`defense-guide-overlay is-${step.target}`} data-defense-guide-step={stepIndex + 1} aria-label={`디펜스 첫 도전 가이드 ${stepIndex + 1}단계`}>
-      <div className={`defense-guide-spotlight is-${step.target}`} aria-hidden="true" />
+      <div className={`defense-guide-spotlight is-${step.target}`} style={targetBounds || { display: "none" }} aria-hidden="true" />
       <article className="defense-guide-card" role="dialog" aria-modal="true" aria-labelledby="defense-guide-title" ref={modalRef} tabIndex={-1}>
         <div className="defense-guide-copy">
           <small>{step.kicker} · 레아 전술 교신</small>
@@ -71,10 +85,15 @@ export function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutor
   const hostRef = useRef(null);
   const controllerRef = useRef(null);
   const [hud, setHud] = useState(null);
+  const [dockTab, setDockTab] = useState("build");
   const [loadProgress, setLoadProgress] = useState(0);
   const [tutorialStep, setTutorialStep] = useState(showTutorial ? 0 : -1);
   const stage = getDefenseStage(stageId);
   const tutorialActive = showTutorial && tutorialStep >= 0;
+  const activeDockTab = tutorialActive ? 'build' : dockTab;
+  useEffect(() => {
+    if (hud?.selectedNodeId) setDockTab(hud?.selectedTower ? 'manage' : 'build');
+  }, [hud?.selectedNodeId, hud?.selectedTower?.id]);
 
   useEffect(() => setTutorialStep(showTutorial ? 0 : -1), [showTutorial, stageId]);
 
@@ -146,12 +165,12 @@ export function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutor
       }
       if (event.key === "Escape") {
         event.preventDefault();
-        onBase?.();
+        controllerRef.current?.setSpeed(hud?.simulationSpeed === 0 ? 1 : 0);
       }
     };
     window.addEventListener("keydown", escape, true);
     return () => window.removeEventListener("keydown", escape, true);
-  }, [advanceTutorial, finishTutorial, onBase, tutorialActive]);
+  }, [advanceTutorial, finishTutorial, hud?.simulationSpeed, tutorialActive]);
 
   const selectedTowerDefinition = hud?.selectedTower ? DEFENSE_TOWER_DEFINITIONS[hud.selectedTower.type] : null;
   const selectedTowerUpgradeCost = selectedTowerDefinition && hud?.selectedTower?.rank < 3
@@ -165,31 +184,37 @@ export function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutor
   const nextWaveEntries = Object.entries(hud?.nextWave || {}).filter(([, count]) => count > 0);
   return (
     <main
-      className="defense-runtime-screen"
+      className="defense-runtime-screen defense-ui-v4"
       style={assets?.defenseBattlefield ? {
         "--defense-battlefield": `url("${assets.defenseBattlefield?.src || assets.defenseBattlefield}")`,
         "--defense-battlefield-portrait": `url("${assets.defenseBattlefieldPortrait?.src || assets.defenseBattlefieldPortrait || assets.defenseBattlefield?.src || assets.defenseBattlefield}")`,
       } : undefined}
     >
-      <div className="defense-phaser-host" ref={hostRef} />
+      <div className="defense-phaser-host" ref={hostRef} inert={tutorialActive} />
       {loadProgress < 1 && <div className="defense-load-chip">방어 체계 동기화 {Math.round(loadProgress * 100)}%</div>}
-      <header className="defense-combat-hud" data-defense-phase={hud?.phase || "intermission"}>
+      <header inert={tutorialActive} className="defense-combat-hud" data-defense-phase={hud?.phase || "intermission"}>
         <div className={`defense-core-status${guideTarget === "core" ? " is-guide-target" : ""}`}><span><small>방벽 내구도</small><b>{hud?.baseHp ?? stage?.baseHp} / {hud?.maxBaseHp ?? stage?.baseHp}</b></span><i><em style={{ width: `${Math.max(0, (hud?.baseHp ?? stage?.baseHp ?? 1) / (hud?.maxBaseHp ?? stage?.baseHp ?? 1) * 100)}%` }} /></i></div>
         <div className="defense-wave-command" aria-live="polite">
           <span><small>WAVE {String(hud?.wave || 1).padStart(2, "0")} / {String(hud?.totalWaves || stage?.waveCounts.length).padStart(2, "0")}</small><b>{hud?.phase === "wave" ? `교전 중 · 잔존 ${hud?.liveEnemies || 0}` : "다음 공세 분석 완료"}</b></span>
           <i><em style={{ width: `${Math.round((hud?.waveProgress || 0) * 100)}%` }} /></i>
         </div>
         <div className="defense-wave-status"><span><small>격파</small><b>{hud?.kills || 0}</b></span><span><small>전술 자원</small><b><Coins weight="fill" /> {hud?.credits || 0}</b></span><span><small>정예</small><b>{hud?.eliteEnemies || 0}</b></span></div>
-        <div className="defense-speed-controls" aria-label="전투 속도"><button type="button" className={hud?.simulationSpeed === 0 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(0)} aria-label="일시정지"><Pause weight="fill" /></button><button type="button" className={hud?.simulationSpeed === 1 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(1)}><Play weight="fill" />1×</button><button type="button" className={hud?.simulationSpeed === 2 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(2)}><FastForward weight="fill" />2×</button></div>
-        <button type="button" className="defense-exit" data-ui-sound="uiClose" onClick={onBase}><HouseLine weight="bold" /> 기지로 <kbd>ESC</kbd></button>
+        <div className="defense-speed-controls" aria-label="전투 속도"><button type="button" className={hud?.simulationSpeed === 0 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(0)} aria-label="일시정지" title="일시정지 · ESC"><Pause weight="fill" /></button><button type="button" className={hud?.simulationSpeed === 1 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(1)}><Play weight="fill" />1×</button><button type="button" className={hud?.simulationSpeed === 2 ? "is-active" : ""} onClick={() => controllerRef.current?.setSpeed(2)}><FastForward weight="fill" />2×</button></div>
+        <button type="button" className="defense-exit" data-ui-sound="uiClose" onClick={onBase}><HouseLine weight="bold" /> 기지로</button>
       </header>
 
       <div className={`defense-guide-world-target${guideTarget === "field" ? " is-guide-target" : ""}`} aria-hidden="true" />
       <aside
         className={`defense-command-dock${hud?.selectedNodeId ? " has-selected-pad" : " needs-pad"}${hud?.selectedTower ? " has-selected-tower" : " is-deployment"}${hud?.phase === "wave" ? " is-combat" : " is-preparation"}`}
         data-defense-phase={hud?.phase || "intermission"}
+        data-dock-tab={activeDockTab}
+        inert={tutorialActive}
         aria-label={hud?.phase === "wave" ? "방어전 전술 명령" : "방어전 출격 준비"}
       >
+        <nav className="defense-dock-tabs" aria-label="방어전 명령 패널">
+          {[['build', '포탑 건설'], ['manage', '포대 관리'], ['abilities', '전술 명령']].map(([id, label]) =>
+            <button type="button" key={id} aria-pressed={activeDockTab === id} onClick={() => setDockTab(id)}>{label}</button>)}
+        </nav>
         <header>
           <div><small>{hud?.selectedTower ? "FIRE CONTROL" : "DEPLOYMENT PAD"}</small><strong>{hud?.selectedTower ? selectedTowerDefinition?.name : selectedNodeLabel}</strong></div>
           <div className="defense-pad-stepper" aria-label="건설 패드 순환 선택">
@@ -203,14 +228,14 @@ export function DefenseArenaScreen({ stageId, doctrineId, assets, sfx, showTutor
           {Object.values(DEFENSE_TOWER_DEFINITIONS).map((tower, index) => {
             const Icon = DEFENSE_TOWER_ICONS[tower.id] || Crosshair;
             const disabled = !hud?.selectedNodeId || Boolean(hud?.selectedTower) || (hud?.credits || 0) < tower.cost;
-            const compactName = tower.name.split(" ").at(-1);
-            return <button type="button" data-defense-tower={tower.id} aria-label={`${tower.name}, ${tower.role}, 자원 ${tower.cost}`} title={hud?.selectedTower ? "빈 패드로 이동하면 바로 설치할 수 있습니다." : tower.description} disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="duotone" /><span><b><span className="defense-tower-name-full">{tower.name}</span><span className="defense-tower-name-compact">{compactName}</span></b><small>{tower.role}</small></span><em>{tower.cost}</em></button>;
+            const compactName = { pulseSentry: "펄스 포탑", arcRelay: "연쇄 전격", skyfireBattery: "광역 포격", aegisBastion: "감속 방벽" }[tower.id];
+            return <button type="button" data-defense-tower={tower.id} aria-label={`${tower.name}, ${tower.role}, 자원 ${tower.cost}`} title={hud?.selectedTower ? "빈 패드로 이동하면 바로 설치할 수 있습니다." : tower.description} disabled={disabled} onClick={() => controllerRef.current?.buildTower(tower.id)} key={tower.id}><kbd>{index + 1}</kbd><Icon weight="duotone" /><span className="defense-tower-copy"><b>{compactName}</b><small>{tower.role}</small></span><em>{tower.cost}</em></button>;
           })}
         </div>
         <section className="defense-tower-console">
           {hud?.selectedTower ? (
             <>
-              <div className="defense-tower-metrics"><span><small>DMG</small><b>{hud.selectedTower.damage}</b></span><span><small>RNG</small><b>{hud.selectedTower.range}</b></span><span><small>RATE</small><b>{hud.selectedTower.cooldown}s</b></span></div>
+              <div className="defense-tower-metrics"><span><small>공격력</small><b>{hud.selectedTower.damage}</b></span><span><small>사거리</small><b>{hud.selectedTower.range}</b></span><span><small>공격 간격</small><b>{hud.selectedTower.cooldown}s</b></span></div>
               <div className="defense-tower-quick-actions">
                 <button type="button" onClick={() => controllerRef.current?.cycleTargetPriority()}><ArrowsClockwise weight="bold" /><span><small>표적 규칙 <kbd>T</kbd></small><b>{priorityLabels[hud.selectedTower.targetPriority]}</b></span></button>
                 <button type="button" className="defense-upgrade-button" disabled={hud.selectedTower.rank >= 3 || (hud?.credits || 0) < (selectedTowerUpgradeCost || 0)} onClick={() => controllerRef.current?.upgradeTower()}><Sparkle weight="duotone" /><span><small>{hud.selectedTower.rank >= 3 ? "강화 완료" : `비용 ${selectedTowerUpgradeCost}`} <kbd>U</kbd></small><b>{hud.selectedTower.rank >= 3 ? "최대 단계" : "즉시 강화"}</b></span></button>

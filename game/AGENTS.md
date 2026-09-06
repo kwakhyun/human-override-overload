@@ -1,5 +1,15 @@
 # Prototype Instructions
 
+## Sortie defaults, drone heading and defense UI v4 - 2026-09-06
+
+- Default preparation to the selected lead plus one other unlocked operative; retain explicit solo changes and never expand the two-person tag roster. Remove central 3D floor lettering in every route and boss room.
+- Inner-network suicide-drone plates point east at rest; use their aim angle directly. Only north-authored outer flight plates receive the quarter-turn correction. Preserve feet-down ground actors and bosses.
+- Keep region navigation at top-left with back-button spacing. Keep operative speech below faces, inside the portrait stage and above conflicting lobby actions.
+- The current defense-ui-v4 CSS supersedes older one-row/always-visible palette rules below. Use separate HUD, battlefield and command rows; wide desktop has five zones and narrow/low landscape uses build/manage/abilities tabs. Preserve next-empty-pad selection after construction. Guide copy is one column, highlights measure actual target bounds, and ESC pauses/resumes instead of leaving the run. Keep full Korean tower names in accessible labels and readable costs, metrics and specialization details. Scroll the management panel when required without hiding the battle behind it.
+- Focused checkpoint: TypeScript, 63 related tests, actual browser defense operations at desktop/portrait/landscape sizes, default two-person launch, all four speech bubbles, and inner-region drone rendering. This is local work, not a fresh deployment or whole-campaign certification.
+
+
+
 ## All regional 3D terrain and destructible props - 2026-09-06
 
 - This supersedes the first-region-only renderer rule below. All six regional routes and boss rooms use the imperative Three.js background. `buildRegionalEnvironment.ts` authors distinct glass/desert, submerged archive, foundry, storm deck and gene-vault geometry. Keep the existing 2D actors and VFX, Phaser clock/camera authority, WebGL fallback and teardown contract. Keep all boss interiors clear and raised exterior geometry outside walkable bounds.

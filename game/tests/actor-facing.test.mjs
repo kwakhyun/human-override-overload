@@ -2,6 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { resolveActorFacing } from "../src/phaser/view/animation/actorFacing.ts";
 
+test('inner-network suicide drones charge red nose first in every compass heading', () => {
+  for (let i = 0; i < 8; i++) {
+    const angle = i * Math.PI / 4;
+    for (const combatRole of ['hunter', 'suicideDrone']) {
+      assert.deepEqual(resolveActorFacing('enemy', { visualSet: 'inner-network', combatRole, angle }), {rotation: angle, flipX: false});
+    }
+  }
+});
+
 test("grounded enemies and all bosses retain feet-down artwork at every aim angle", () => {
   for (let angle = -Math.PI; angle <= Math.PI; angle += Math.PI / 8) {
     for (const combatRole of ["rifleman", "sniper", "siegeWalker"]) {

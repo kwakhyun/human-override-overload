@@ -15,7 +15,6 @@ type Builder = {
   material: (color: number, map?: THREE.Texture, emissive?: number) => THREE.MeshStandardMaterial;
   texture: (kind: 'floor' | 'metal' | 'shadow') => THREE.Texture;
   batch: (parent: THREE.Group) => Batch;
-  sign: (parent: THREE.Group, text: string, x: number, y: number, width: number) => void;
   trackMaterial: (material: THREE.Material) => void;
   register: (site: TerrainSite, group: THREE.Group, materials: THREE.Material[]) => void;
   rotor: (object: THREE.Object3D, speed: number) => void;
@@ -158,7 +157,6 @@ export function buildRegionalEnvironment(c: Builder, theme: TerrainDefinition) {
       b.box(i % 3 ? steel : accent, cx + Math.cos(a) * (r - 25), cy + Math.sin(a) * (r - 25), 12, 12, 1, 6.2);
     }
     b.finish();
-    c.sign(parent, route ? theme.label : theme.bossLabel, route ? 2048 : 960, route ? 2150 : 900, route ? 560 : 630);
   }
 
   for (const site of theme.structures) {
