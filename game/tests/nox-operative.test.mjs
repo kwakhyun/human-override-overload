@@ -35,7 +35,7 @@ test("NOX launch gating and combat identity are authoritative in the simulation"
   assert.equal(unlocked.player.characterId, "nox");
   assert.equal(unlocked.player.name, "NOX");
   assert.equal(unlocked.player.mainWeaponId, "pulse-rifle");
-  assert.deepEqual(unlocked.player.tagRoster, ["nox", "aegis", "mika", "vesper"]);
+  assert.deepEqual(unlocked.player.tagRoster, ["nox", "aegis"]);
   assert.equal(unlocked.player.reserveCharacterId, "aegis");
   assert.equal(unlocked.player.maxHp, 338);
   assert.equal(unlocked.player.speed, 245 * 1.06);

@@ -1,0 +1,95 @@
+/* Shared NPC camera: crop the waist at the supporting panel, never in mid-air. */
+.npc-portrait-camera { position: absolute; inset: 0; display: block; overflow: hidden; pointer-events: none; }
+.npc-portrait-crop {
+  position: absolute; display: block; bottom: 0; left: 50%;
+  width: var(--npc-frameWidth); height: var(--npc-frameHeight);
+  transform: translateX(-50%); overflow: hidden;
+}
+.npc-portrait-camera .npc-portrait-crop > img {
+  position: absolute; display: block; max-width: none; margin: 0;
+  width: var(--npc-width); height: var(--npc-height);
+  left: var(--npc-left); top: var(--npc-top); right: auto; bottom: auto;
+  object-fit: fill; transform: none; animation: none;
+  filter: drop-shadow(10px 8px 18px #0007);
+}
+
+/* The text row owns its height, so translated/long dialogue cannot leave a gap. */
+.mika-recruit-screen .mika-recruit-stage {
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto;
+  padding: clamp(88px, 12vh, 130px) max(22px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-left));
+}
+.mika-recruit-screen .mika-recruit-character {
+  position: relative; grid-row: 1; grid-column: 1; justify-self: center; align-self: stretch;
+  inset: auto; width: min(68vw, 740px); height: 100%; min-height: 0;
+  transform: none; animation: none; overflow: hidden;
+}
+.mika-recruit-screen .mika-recruit-dialogue-box {
+  position: relative; grid-row: 2; grid-column: 1; inset: auto; margin: 0;
+}
+.mika-recruit-screen .mika-recruit-progress {
+  position: relative; grid-row: 2; grid-column: 1; inset: auto;
+  justify-self: end; align-self: start; transform: translateY(-15px); margin-right: 14px;
+}
+
+@media (min-width: 901px) {
+  .base-facility-panel.has-npc-host > .facility-resource {
+    position: relative; top: auto; left: auto; width: auto; margin: 0;
+  }
+  .ability-guide-rhea { width: 29vw; }
+  .ability-guide-console { left: 30vw; width: auto; min-width: 0; }
+  .base-facility-panel.has-npc-host .facility-npc-stage {
+    top: 170px; left: 24px; width: clamp(310px, 34vw, 550px);
+  }
+  .base-facility-panel.has-npc-host .facility-upgrade-grid,
+  .base-facility-panel.has-npc-host .facility-exchange-panel { margin-left: clamp(350px, 38vw, 600px); }
+  .base-facility-panel.has-npc-host .facility-upgrade-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .facility-npc-portrait .npc-portrait-camera { bottom: 42px; }
+  .flight-ops-console { grid-template-columns: minmax(300px, 0.9fr) minmax(300px, 1.1fr) minmax(280px, 0.95fr); }
+  .flight-ops-lark-portrait .npc-portrait-camera { top: 20px; bottom: 72px; }
+}
+
+/* Keep mobile hosts prominent without shrinking the purchasing controls. */
+@media (max-width: 900px) {
+  .base-facility-panel.has-npc-host .facility-npc-stage {
+    display: block; height: 360px; min-height: 360px;
+    background: transparent; border: 0;
+  }
+  .base-facility-panel.has-npc-host .facility-npc-portrait {
+    position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+  }
+  .base-facility-panel.has-npc-host .facility-npc-dialogue {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+    background: linear-gradient(100deg, #020a0efa, #020a0ee8); pointer-events: none;
+  }
+  .flight-ops-lark-portrait .npc-portrait-camera { bottom: 35px; }
+}
+@media (max-width: 720px) {
+  .campaign-shell .base-dialogue {
+    min-height: 0; max-height: 51dvh; padding: 18px 16px max(16px, env(safe-area-inset-bottom));
+  }
+  .campaign-shell .base-dialogue .base-npc-portrait.is-standalone {
+    bottom: 100%; left: 50%; width: min(84vw, 330px); height: min(37dvh, 300px);
+    transform: translateX(-50%);
+  }
+  .campaign-shell .base-dialogue-copy { max-height: calc(51dvh - 36px); }
+  .mika-recruit-screen .mika-recruit-stage { padding: 82px 10px max(10px, env(safe-area-inset-bottom)); }
+  .mika-recruit-screen .mika-recruit-character { width: 100%; }
+  .mika-recruit-screen .mika-recruit-dialogue-box { min-height: 0; }
+}
+@media (max-height: 540px) and (min-width: 721px) {
+  .mika-recruit-screen .mika-recruit-stage { padding: 56px 12px 8px; }
+  .mika-recruit-screen .mika-recruit-dialogue-box { grid-template-columns: 120px minmax(0, 1fr) 154px; gap: 12px; }
+  .base-facility-panel.has-npc-host .facility-npc-stage { top: 130px; }
+}
+
+.combat-tutorial-npc { position: absolute; bottom: 0; left: -8px; width: 142px; height: 94%; }
+.narrative-portrait:is(.is-operator, .is-support, .is-sera) { width: clamp(150px, 21vw, 285px); }
+@media (max-width: 720px) {
+  .narrative-portrait:is(.is-operator, .is-support, .is-sera) { width: 114px; }
+  .ability-guide-rhea > .npc-illustration-button { right: auto; width: 82px; }
+
+}
+
+@media (max-width: 900px), (max-height: 600px) {
+  .combat-tutorial-npc { left: -5px; width: 82px; height: 100%; }
+}

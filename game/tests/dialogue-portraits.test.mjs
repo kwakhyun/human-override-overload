@@ -103,6 +103,6 @@ test("the active narrative panel resolves the actual speaker without misleading 
   assert.match(styles, /\.narrative-portrait\.is-operator img\s*\{[\s\S]*?height: 112%;/);
   assert.match(styles, /\.narrative-portrait\.is-hostile \.narrative-portrait-frame\s*\{[\s\S]*?height: 92%;/);
   assert.match(screens, /className=\{`base-npc-portrait is-standalone is-\$\{npc\.id\}`\}/);
-  assert.match(screens, /<img src=\{portrait\} alt="" draggable="false" decoding="async" fetchPriority="high"/);
+  assert.match(screens, /<NpcPortraitImage source=\{portrait\} npcId=\{npc.id\}/);
   assert.doesNotMatch(screens, /npc\.portraitIndex|assets\?\.npcPortraits/);
 });

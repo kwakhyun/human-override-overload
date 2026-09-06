@@ -351,6 +351,7 @@ export function resolveNarrativePortrait(speaker, assets, activeRegion, bossStag
       source,
       mode: "standalone",
       variant: npc.id === "lark" ? "sera" : "support",
+      npcId: npc.id,
       alt: `${localizeSpeakerName(normalizedSpeaker)} 대화 일러스트`,
     } : null;
   }

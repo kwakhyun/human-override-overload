@@ -56,11 +56,11 @@ test("region selection previews and confirms a sortie instead of launching on ca
   assert.match(screens, /className="character-weapon-management"/);
   assert.match(screens, /className="sortie-character-loadout"/);
   assert.match(styles, /\.region-sortie-briefing \.region-sortie-intel \{ margin-top: 15px; grid-template-columns: 1fr; \}/);
-  assert.match(screens, /availableCharacters\.length > 1/);
-  assert.match(screens, /새 동료를 영입하면 전투 중 교대할 수 있습니다/);
+  assert.match(screens, /selectedParty\.length >= 2/);
+  assert.match(screens, /선택한 두 전투원만 태그로 교대/);
   assert.match(app, /setCampaignCharacter\(campaign, activeSlotId, characterId\)/);
   assert.match(screens, /disabled=\{!formationConfirmed\}/);
-  assert.match(screens, /onClick=\{\(\) => formationConfirmed && onSelect\(selectedRegion\.id\)\}/);
+  assert.match(screens, /onClick=\{\(\) => formationConfirmed && onSelect\(selectedRegion\.id, selectedParty\)\}/);
   assert.match(screens, /const formationConfirmed = Boolean\(selectedCharacter && equippedWeaponUnlocked\)/);
   assert.doesNotMatch(screens, /confirmedWeaponId/);
   assert.match(screens, /현재 편성으로 즉시 출격할 수 있습니다/);
@@ -127,7 +127,7 @@ test("active campaign UI uses authored HAVEN portraits, including standalone RHE
   assert.doesNotMatch(app, /commandButtonStates|--command-button-atlas/);
   assert.match(app, /assets\?\.characterSyncChamber/);
   assert.match(screens, /function resolveNpcPortraitSource[\s\S]*assets\?\.hanaPortrait[\s\S]*assets\?\.ilyaPortrait/);
-  assert.match(screens, /<img src=\{portrait\} alt="" draggable="false" decoding="async" fetchPriority="high"/);
+  assert.match(screens, /<NpcPortraitImage source=\{portrait\} npcId=\{npc.id\}/);
   assert.match(screens, /NPC_ICON = Object\.freeze\(\{ hana: Broadcast, ilya: Wrench, lark: User, rhea: Crosshair \}\)/);
   assert.match(screens, /portraitMode === "standalone"/);
   assert.match(screens, /npc\.interactionLabel \|\| "상호작용"/);

@@ -1,3 +1,5 @@
+import { getRegionalTerrain } from '../game/content/regionalTerrain.js';
+import { resolveSortieRoster } from '../game/content/sortieFormation.js';
 import Phaser from "phaser";
 import { resolveRegionId, type PlayableCharacterId } from "../game/assets/manifest";
 import { detectInitialQuality, QUALITY_PRESETS } from "../swarm/performance.js";
@@ -30,6 +32,7 @@ export type OverloadLaunchOptions = Readonly<{
   characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper" | "nox", number>>;
   mainWeaponId?: "pulse-rifle" | "beam-sword";
   characterId?: "aegis" | "mika" | "vesper" | "nox";
+  partyCharacterIds?: readonly PlayableCharacterId[];
   mikaUnlocked?: boolean;
   vesperUnlocked?: boolean;
   noxUnlocked?: boolean;
@@ -63,11 +66,7 @@ export function createOverloadGame(
   const assetProfile = initialQuality === "performance" || mobileRuntime.touchOptimized
     ? "performance"
     : "full";
-  const availableCharacterIds = new Set<PlayableCharacterId>(["aegis"]);
-  if (launch.mikaUnlocked) availableCharacterIds.add("mika");
-  if (launch.vesperUnlocked) availableCharacterIds.add("vesper");
-  if (launch.noxUnlocked) availableCharacterIds.add("nox");
-  if (launch.characterId) availableCharacterIds.add(launch.characterId);
+  const availableCharacterIds = resolveSortieRoster(launch) as PlayableCharacterId[];
   const bootScene = new BootScene(regionId, assetProfile, launch.mainWeaponId, [...availableCharacterIds], callbacks.onLoadProgress);
   const portraitPresentation = mobileRuntime.portrait && mobileRuntime.touchOptimized;
   const presentationWidth = portraitPresentation
@@ -76,7 +75,7 @@ export function createOverloadGame(
   const presentationHeight = portraitPresentation
     ? Math.max(1, Math.round(window.visualViewport?.height || window.innerHeight || parent.clientHeight))
     : 720;
-  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.characterSkillRanks, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, launch.vesperUnlocked, launch.noxUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation);
+  const battleScene = new OverloadScene(bridge, regionId, launch.combatBonuses, launch.characterSkillRanks, launch.mainWeaponId, launch.characterId, launch.mikaUnlocked, launch.vesperUnlocked, launch.noxUnlocked, assetProfile, mobileRuntime.autoAim, portraitPresentation, availableCharacterIds);
   battleScene.configurePresentationSettings(initialQuality, launch.screenShakeEnabled !== false);
   const game = new Phaser.Game({
     type: Phaser.AUTO,
@@ -84,7 +83,7 @@ export function createOverloadGame(
     width: presentationWidth,
     height: presentationHeight,
     backgroundColor: "#020608",
-    transparent: false,
+    transparent: Boolean(getRegionalTerrain(regionId)),
     antialias: initialQuality !== "performance",
     antialiasGL: initialQuality !== "performance",
     roundPixels: false,

@@ -10,7 +10,7 @@ export const PORTRAIT_RIGS = Object.freeze({
 export const TOUCH_AREAS = Object.freeze(['head', 'chest', 'armLeft', 'armRight', 'legs']);
 // Head XY, head roll, torso lean, shoulder response L/R, hip shift, expression.
 const CLIPS = {
-  head: [4, 5, -.035, -2, 0, 0, 0, .5],
+  head: [0, 0, 0, 0, 0, 0, 0, .5],
   chest: [-7, -3, .025, -7, 5, -4, 1, 1],
   armLeft: [-9, 2, -.027, -3, -15, 0, 1, .3],
   armRight: [9, 2, .027, 3, 0, 15, -1, .3],
@@ -61,10 +61,10 @@ export function createPortraitMotion(characterId) {
         const age = (clock - started) * rig.tempo;
         const amount = reactionEnvelope(age) * rig.energy * (variant ? 1 : .9);
         for (let i = 0; i < pose.length; i++) {
+          // Painted heads remain attached: no isolated translation or roll,
+          // including idle sway, pointer following and other touch reactions.
+          if (i < 3) { pose[i] = 0; velocity[i] = 0; continue; }
           let target = (clip?.[i] || 0) * amount;
-          if (i === 0) target += gazeX * 2 + Math.sin(clock * .67 + rig.phase) * 1.3;
-          if (i === 1) target += gazeY * 1.2;
-          if (i === 2) target += Math.sin(clock * .48 + rig.phase) * .003;
           velocity[i] += ((target - pose[i]) * 100 - velocity[i] * 19) * step;
           pose[i] += velocity[i] * step;
         }

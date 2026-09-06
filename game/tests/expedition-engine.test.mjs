@@ -419,10 +419,12 @@ test("the arena minimap exposes only bounded active materializing transit gates"
   assert.equal(minimap.gates.some((gate) => [190, 191, 192].includes(gate.id)), false);
 });
 
-test("expedition navigation clamps only at the square arena perimeter", () => {
+test("expedition navigation reaches the perimeter through an unobstructed lane", () => {
   const state = createSwarmState({ random: seededRandom(12), duration: 360, expedition: true });
   const input = createSwarmInput();
   input.down = true;
+  // The central relay now blocks x=2048; this lane tests the outer boundary.
+  state.player.x = 1800;
   state.enemies.length = 0;
   state.spawnedEnemies = state.enemyBudget;
   state.killedEnemies = state.enemyBudget - 1;

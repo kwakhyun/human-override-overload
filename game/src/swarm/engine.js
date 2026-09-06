@@ -1,3 +1,5 @@
+import { resolveSortieRoster } from '../game/content/sortieFormation.js';
+import { hasRegionalTerrain, terrainContact, constrainTerrainActor, steerTerrainEnemy, createTerrainState, activeTerrainSites, damageTerrainStructure } from '../game/content/regionalTerrain.js';
 import {
   BOSS_PATTERNS,
   REGION_BOSS_PATTERNS,
@@ -860,7 +862,7 @@ function characterFireRateMultiplier(characterId) {
   return 1;
 }
 
-function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true, noxUnlocked = true) {
+function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true, noxUnlocked = true, partyCharacterIds) {
   const bonuses = sanitizeCombatBonuses(combatBonuses);
   const requestedCharacterId = sanitizeCharacterId(characterId);
   const safeCharacterId = requestedCharacterId === "mika" && !mikaUnlocked
@@ -868,8 +870,7 @@ function createPlayer(combatBonuses, mainWeaponId = "pulse-rifle", characterId =
     : requestedCharacterId === "vesper" && !vesperUnlocked
       ? "aegis"
       : requestedCharacterId === "nox" && !noxUnlocked ? "aegis" : requestedCharacterId;
-  const unlockedRoster = ["aegis", ...(mikaUnlocked ? ["mika"] : []), ...(vesperUnlocked ? ["vesper"] : []), ...(noxUnlocked ? ["nox"] : [])];
-  const tagRoster = [safeCharacterId, ...unlockedRoster.filter((id) => id !== safeCharacterId)];
+  const tagRoster = resolveSortieRoster({ characterId: safeCharacterId, partyCharacterIds, mikaUnlocked, vesperUnlocked, noxUnlocked });
   const fieldLeadCharacterId = safeCharacterId;
   const weaponId = safeCharacterId === "vesper" || safeCharacterId === "nox" ? "pulse-rifle" : sanitizeMainWeaponId(mainWeaponId);
   const maxHp = (safeCharacterId === "vesper" ? 320 : safeCharacterId === "nox" ? 338 : 360) + bonuses.maxHpFlat;
@@ -1002,10 +1003,10 @@ function createBoss(regionConfig = REGION_COMBAT_CONFIGS["wrong-engine-core"]) {
   };
 }
 
-export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, characterSkillRanks = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true, noxUnlocked = true } = {}) {
+export function createSwarmState({ random = Math.random, duration = 180, expedition = false, regionId = "wrong-engine-core", combatBonuses = {}, characterSkillRanks = {}, mainWeaponId = "pulse-rifle", characterId = "aegis", mikaUnlocked = true, vesperUnlocked = true, noxUnlocked = true, partyCharacterIds = /** @type {readonly string[] | undefined} */ (undefined) } = {}) {
   const safeRandom = typeof random === "function" ? random : Math.random;
   const regionConfig = REGION_COMBAT_CONFIGS[regionId] ?? REGION_COMBAT_CONFIGS["wrong-engine-core"];
-  const player = createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked, vesperUnlocked, noxUnlocked);
+  const player = createPlayer(combatBonuses, mainWeaponId, characterId, mikaUnlocked, vesperUnlocked, noxUnlocked, partyCharacterIds);
   const manualAbilityBanks = createManualAbilityBanks(player.aegisWeaponId);
   const state = {
     mode: "swarm",
@@ -1017,6 +1018,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
     phaseTime: 0,
     random: safeRandom,
     regionId: regionConfig.id,
+    terrain: createTerrainState(regionConfig.id, expedition),
     difficultyScalar: Math.max(1, finite(regionConfig.difficultyScalar, 1)),
     enemyProfile: REGION_ENEMY_PROFILES[regionConfig.id] ?? REGION_ENEMY_PROFILES["wrong-engine-core"],
     enemyVisualSet: regionConfig.enemyVisualSet ?? "inner-network",
@@ -1292,7 +1294,7 @@ function clampPlayerToFloor(player, expedition = null) {
 
 function tagCharacter(state) {
   const player = state.player;
-  const roster = Array.isArray(player.tagRoster) ? player.tagRoster.filter((id) => ["aegis", "mika", "vesper", "nox"].includes(id)) : [player.characterId];
+  const roster = Array.isArray(player.tagRoster) ? [...new Set(player.tagRoster.filter((id) => ["aegis", "mika", "vesper", "nox"].includes(id)))].slice(0, 2) : [player.characterId];
   if (roster.length < 2 || !player.reserveCharacterId || player.dead || player.stunTimer > 0 || player.tagCooldown > 0) return false;
   ensureManualAbilityBanks(state);
   const currentIndex = Math.max(0, roster.indexOf(player.characterId));
@@ -1605,10 +1607,27 @@ function pushSwordEffect(state, type, radius, arc, life, extra = {}) {
   });
 }
 
+function hitTerrain(state, site, amount) {
+  if (damageTerrainStructure(state, site, amount)) {
+    burst(state, site.x, site.y - 20, '#b4c8bc', 12, 110, .4, 4);
+    emit(state, 'terrainDestroyed', { id: site.id, x: site.x, y: site.y, regionId: state.regionId });
+  }
+}
+
+function damageTerrainArea(state, x, y, radius, damage, angle = 0, halfArc = Math.PI) {
+  if (!hasRegionalTerrain(state)) return;
+  // Snapshot: a destroyed site is removed from the live collision list at once.
+  for (const site of [...activeTerrainSites(state)]) {
+    if (Math.hypot(site.x - x, site.y - y) <= radius + site.radius
+      && Math.abs(signedAngleDelta(Math.atan2(site.y - y, site.x - x), angle)) <= halfArc) hitTerrain(state, site, damage);
+  }
+}
+
 function performSwordArc(state, type, radius, arc, baseDamage, extra = {}) {
   const player = state.player;
   const halfArc = arc >= TAU - 0.01 ? Math.PI : arc * 0.5;
   const damage = baseDamage * player.damageMultiplier * player.weaponDamageMultiplier;
+  damageTerrainArea(state, player.x, player.y, radius, damage, player.angle, halfArc);
   let hits = 0;
   state.stats.meleeAttacks += 1;
   state.stats.shots += 1;
@@ -2538,6 +2557,15 @@ function updateProjectiles(state, dt) {
     projectile.py = projectile.y;
     projectile.x += projectile.vx * dt;
     projectile.y += projectile.vy * dt;
+    const terrainHit = hasRegionalTerrain(state) && terrainContact(projectile.px, projectile.py, projectile.x, projectile.y, projectile.radius || 0, activeTerrainSites(state));
+    if (terrainHit) {
+      hitTerrain(state, terrainHit.obstacle, projectile.damage);
+      projectile.x = projectile.px + (projectile.x - projectile.px) * terrainHit.t;
+      projectile.y = projectile.py + (projectile.y - projectile.py) * terrainHit.t;
+      projectile.dead = true;
+      burst(state, projectile.x, projectile.y, '#80c9d3', 3, 40, .12, 2);
+      continue;
+    }
     if (projectile.life <= 0 || projectile.x < -80 || projectile.x > world.width + 80 || projectile.y < -80 || projectile.y > world.height + 80) {
       if (projectile.kind === "rocket" && projectile.life <= 0) explodeRocket(state, projectile);
       projectile.dead = true;
@@ -2665,6 +2693,14 @@ function updateEnemyProjectiles(state, dt) {
     projectile.py = projectile.y;
     projectile.x += projectile.vx * dt;
     projectile.y += projectile.vy * dt;
+    const terrainHit = hasRegionalTerrain(state) && terrainContact(projectile.px, projectile.py, projectile.x, projectile.y, projectile.radius || 0, activeTerrainSites(state));
+    if (terrainHit) {
+      hitTerrain(state, terrainHit.obstacle, projectile.damage);
+      projectile.x = projectile.px + (projectile.x - projectile.px) * terrainHit.t;
+      projectile.y = projectile.py + (projectile.y - projectile.py) * terrainHit.t;
+      projectile.dead = true;
+      continue;
+    }
     if (projectile.life <= 0 || projectile.x < -100 || projectile.x > world.width + 100 || projectile.y < -100 || projectile.y > world.height + 100) {
       projectile.dead = true;
       continue;
@@ -2933,11 +2969,15 @@ function updateEnemies(state, dt) {
     if (!deepPursuit && role === "rifleman" && distance < 520) movement = distance < 285 ? -0.5 : 0;
     if (!deepPursuit && role === "siegeWalker" && distance < 620) movement = distance < 330 ? -0.28 : 0;
     if (!deepPursuit && role === "sniper") movement = wasAiming ? 0 : distance < 520 ? -0.62 : distance < 820 ? 0 : 1;
+    // Ranged units reposition when a solid prop blocks the firing lane, rather
+    // than camping forever at their preferred distance and shooting the tank.
+    if (!wasAiming && hasRegionalTerrain(state) && terrainContact(enemy.x, enemy.y, player.x, player.y, 0, activeTerrainSites(state))) movement = 1;
     const movementSpeed = deepPursuit
       ? Math.max(enemy.speed, finite(player.speed, 245) * EXPEDITION_PURSUIT_SPEED_MULTIPLIER)
       : enemy.speed;
     enemy.vx = towardX * movementSpeed * slowScale * movement;
     enemy.vy = towardY * movementSpeed * slowScale * movement;
+    steerTerrainEnemy(state, enemy);
     enemy.x = clamp(enemy.x + enemy.vx * dt, arena.left, arena.right);
     enemy.y = clamp(enemy.y + enemy.vy * dt, arena.top, arena.bottom);
     enemy.angle = wasAiming
@@ -3421,6 +3461,7 @@ function commitManualAbility(state, ability, payload = {}) {
 }
 
 function applySwordAbilityArea(state, x, y, radius, damage, source, executeOrdinary = false) {
+  damageTerrainArea(state, x, y, radius, damage);
   let hits = 0;
   if (state.phase === "boss") {
     const boss = state.boss;
@@ -6046,9 +6087,11 @@ export function stepSwarm(state, input, dt) {
     return state;
   }
 
+  const terrainPlayerX = state.player.x, terrainPlayerY = state.player.y;
   updatePlayer(state, input, worldDelta);
   updateExpedition(state, input, worldDelta);
   updateManualAbilities(state, input, worldDelta);
+  constrainTerrainActor(state, state.player, terrainPlayerX, terrainPlayerY);
   updateOverdrive(state, worldDelta);
   updateAutoWeapons(state, worldDelta);
   updateAllies(state, worldDelta);
@@ -6056,6 +6099,7 @@ export function stepSwarm(state, input, dt) {
   if (state.phase === "swarm") {
     updateEnemies(state, worldDelta);
     resolveExpeditionEnemySeparation(state);
+    if (hasRegionalTerrain(state)) for (const enemy of state.enemies) constrainTerrainActor(state, enemy);
     updateOrbitWeapon(state, worldDelta);
     updateSupportSkills(state, worldDelta);
     updateProjectiles(state, worldDelta);
@@ -6063,6 +6107,11 @@ export function stepSwarm(state, input, dt) {
     updatePickups(state, worldDelta);
     updateHealingKits(state, worldDelta);
     updateSwarmSpawning(state, worldDelta);
+    if (hasRegionalTerrain(state)) {
+      for (const enemy of state.enemies) constrainTerrainActor(state, enemy);
+      for (const pickup of state.pickups) constrainTerrainActor(state, pickup);
+      for (const kit of state.healthKits) constrainTerrainActor(state, kit);
+    }
   } else if (state.phase === "boss") {
     updateBoss(state, worldDelta, input, delta);
     updateOrbitWeapon(state, worldDelta);
@@ -6147,6 +6196,7 @@ function buildExpeditionMinimap(state) {
   return {
     mode: "arena",
     mapId: state.regionId,
+    structures: hasRegionalTerrain(state) ? activeTerrainSites(state).map(({ id, x, y, radius, maxHp }) => ({ id, x, y, radius, breakable: maxHp > 0 })) : [],
     worldWidth: EXPEDITION_WORLD_WIDTH,
     worldHeight: EXPEDITION_WORLD_HEIGHT,
     playableInset: EXPEDITION_ARENA.left,
@@ -6261,7 +6311,7 @@ export function getSwarmHud(state) {
       reserveCharacterId: player.reserveCharacterId,
       tagCooldown: player.tagCooldown,
       tagCooldownMax: player.tagCooldownMax,
-      tagReady: player.tagCooldown <= 0.05,
+      tagReady: Boolean(player.reserveCharacterId) && !player.dead && player.stunTimer <= 0 && player.tagCooldown <= 0,
       mainWeaponId: player.mainWeaponId,
       hp: player.hp,
       maxHp: player.maxHp,

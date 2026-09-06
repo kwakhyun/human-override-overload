@@ -51,6 +51,20 @@ test('reduced motion returns all deformation channels to the exact source pose',
   assert.equal(motion.output.blink,0);assert.equal(motion.output.breath,0);assert.equal(motion.output.hair,0);
 });
 
+test('head translation and rotation stay neutral during clicks, idle and pointer tracking',()=>{
+  for (const id of Object.keys(PORTRAIT_RIGS)) {
+    const motion = createPortraitMotion(id);
+    for (const area of TOUCH_AREAS) {
+      motion.look(1, -1); motion.react(area);
+      for (let i = 0; i < 200; i++) {
+        motion.update(1 / 60);
+        assert.deepEqual([...motion.output.pose.slice(0, 3)], [0, 0, 0]);
+      }
+    }
+    assert.ok(motion.output.breath > 0, 'breathing remains active');
+  }
+});
+
 test('operative framing equalizes head scale and crown height without stretching the source',()=>{
   for(const [w,h] of [[650,820],[380,720],[200,100],[800,280]]){
     const heads=[];

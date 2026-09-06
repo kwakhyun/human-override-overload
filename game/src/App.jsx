@@ -1,3 +1,6 @@
+import { resolveSortieRoster } from './game/content/sortieFormation.js';
+import { getRegionalTerrain } from './game/content/regionalTerrain.js';
+import { NpcPortraitImage } from './ui/portrait/NpcPortraitImage.jsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowCounterClockwise,
@@ -600,13 +603,13 @@ function ExpeditionCombatDock({ hud, compact = false, onDash, onTag, onActivateA
         {player.reserveCharacterId && (
           <button
             type="button"
-            className={`combat-tag-switch${player.tagReady ? " is-ready" : " is-cooling"}${player.characterId === "mika" ? " is-mika" : player.characterId === "vesper" ? " is-vesper" : " is-aegis"}`}
+            className={`combat-tag-switch${player.tagReady ? " is-ready" : " is-cooling"}${player.characterId === "mika" ? " is-mika" : player.characterId === "vesper" ? " is-vesper" : player.characterId === "nox" ? " is-nox" : " is-aegis"}`}
             onClick={() => onTag?.()}
             disabled={!player.tagReady}
             aria-label={`T 캐릭터 교대. 대기 ${Math.ceil(player.tagCooldown || 0)}초`}
             aria-keyshortcuts="T"
           >
-            <span><kbd>T</kbd><strong>{player.reserveCharacterId === "mika" ? "미카" : player.reserveCharacterId === "vesper" ? "베스퍼" : "이지스"}</strong></span>
+            <span><kbd>T</kbd><strong>{player.reserveCharacterId === "mika" ? "미카" : player.reserveCharacterId === "vesper" ? "베스퍼" : player.reserveCharacterId === "nox" ? "녹스" : "이지스"}</strong></span>
             <small>{player.tagReady ? "교대 가능" : `${(player.tagCooldown || 0).toFixed(1)}초`}</small>
           </button>
         )}
@@ -644,7 +647,7 @@ function CombatAbilityTutorialOverlay({ ability, stepIndex, totalSteps, portrait
     <div className="combat-tutorial-layer" role="dialog" aria-modal="true" aria-labelledby="combat-tutorial-title">
       <div className="combat-tutorial-scrim" aria-hidden="true" />
       <section className={`combat-tutorial-card tutorial-${ability.id}`} ref={modalRef} tabIndex={-1}>
-        {portraitSource && <img src={portraitSource} alt="전술 관제관 레아" />}
+        {portraitSource && <div className="combat-tutorial-npc"><NpcPortraitImage source={portraitSource} npcId="rhea" alt="전술 관제관 레아" /></div>}
         <div className="combat-tutorial-copy">
           <small>레아 · 실전 인터페이스 {stepIndex + 1} / {totalSteps}</small>
           <header><kbd>{ability.key}</kbd><div><h2 id="combat-tutorial-title">{ability.koreanName}</h2><span>{ability.name}</span></div></header>
@@ -943,6 +946,8 @@ function NarrativePortrait({ portrait }) {
             "--portrait-frame-position": `${portrait.frameIndex * 50}%`,
           }}
         />
+      ) : portrait.npcId || portrait.variant === "operator" ? (
+        <NpcPortraitImage source={portrait.source} npcId={portrait.npcId || "rhea"} alt={portrait.alt} />
       ) : (
         <img src={portrait.source} alt={portrait.alt} draggable="false" decoding="async" fetchPriority="high" />
       )}
@@ -1018,12 +1023,20 @@ function RouteMinimap({ hud, region }) {
     : [];
   const hostiles = Math.max(0, Number(minimap.liveEnemyCount ?? hud?.enemiesRemaining) || 0);
   const arenaAsset = bossRoom ? null : getRegionArenaAsset(hud?.regionId || region?.id, "performance");
+  const terrain = !bossRoom && getRegionalTerrain(hud?.regionId || region?.id);
+  const terrainSites = minimap.structures ?? terrain?.structures ?? [];
+  const terrainColor = terrain ? `#${terrain.accent.toString(16).padStart(6, '0')}` : '#83bbc5';
 
   return (
     <aside className={bossRoom ? "route-minimap is-boss" : "route-minimap is-arena"} aria-label={`전술 미니맵. 작전 진행 ${Math.round(progress * 100)}%, 현재 출현 적 ${hostiles}기`}>
       <header><MapTrifold weight="fill" /><span>전술 지도</span><b>출현 {hostiles}</b></header>
       <div className={bossRoom ? "route-minimap-field is-boss" : "route-minimap-field is-arena"} aria-hidden="true">
-        {arenaAsset?.path && <img className="route-minimap-backdrop" src={arenaAsset.path} alt="" draggable="false" />}
+        {terrain ? <svg className="route-minimap-terrain" viewBox="0 0 4096 4096">
+          <rect x="144" y="144" width="3808" height="3808" fill="#10252e" stroke="#577984" strokeWidth="28" />
+          <path d="M2048 144V3952M144 2048H3952" fill="none" stroke={terrainColor} opacity=".28" strokeWidth="18" />
+          <circle cx="2048" cy="2048" r="248" fill="#1d3640" stroke="#8a713c" strokeWidth="26" />
+          {terrainSites.map(site => <circle key={site.id} cx={site.x} cy={site.y} r={site.radius} fill={site.breakable || site.maxHp > 0 ? "#b58945" : terrainColor} stroke="#e0e5cf" strokeWidth="14" />)}
+        </svg> : arenaAsset?.path && <img className="route-minimap-backdrop" src={arenaAsset.path} alt="" draggable="false" />}
         {!bossRoom && <i className="route-minimap-scan" />}
         {traces.map((trace) => (
           <span
@@ -1062,7 +1075,7 @@ function RouteMinimap({ hud, region }) {
   );
 }
 
-function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterSkillRanks, mainWeaponId, characterId, mikaUnlocked = false, vesperUnlocked = false, noxUnlocked = false, soundEnabled, audioSettings, settingsSaved, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
+function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterSkillRanks, mainWeaponId, characterId, partyCharacterIds, mikaUnlocked = false, vesperUnlocked = false, noxUnlocked = false, soundEnabled, audioSettings, settingsSaved, sfx, onToggleSound, onAudioSettingsChange, onFinish, onBase, showCombatTutorial = false, skipOpeningNarrative = false, onCombatTutorialComplete, preparing = false, onRuntimeProgress, onRuntimeReady }) {
   const hostRef = useRef(null);
   const frameRef = useRef(null);
   const controllerRef = useRef(null);
@@ -1264,6 +1277,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
         characterSkillRanks: runtimeCharacterSkillRanksRef.current.value,
         mainWeaponId,
         characterId,
+        partyCharacterIds,
         mikaUnlocked,
         vesperUnlocked,
         noxUnlocked,
@@ -1286,7 +1300,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
       controllerRef.current = null;
       controller?.destroy();
     };
-  }, [assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, mikaUnlocked, noxUnlocked, regionId, runRevision, sfx, vesperUnlocked]);
+  }, [assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, partyCharacterIds, mikaUnlocked, noxUnlocked, regionId, runRevision, sfx, vesperUnlocked]);
 
   const selectReward = useCallback((id) => {
     controllerRef.current?.chooseReward(id);
@@ -1742,6 +1756,7 @@ export function App() {
   const [campaign, setCampaign] = useState(() => loadCampaign());
   const [activeSlotId, setActiveSlotId] = useState(null);
   const [activeRegionId, setActiveRegionId] = useState(DEFAULT_REGION_ID);
+  const [sortieCharacterIds, setSortieCharacterIds] = useState(null);
   const [activeDefenseStageId, setActiveDefenseStageId] = useState("haven-perimeter");
   const [activeDefenseDoctrineId, setActiveDefenseDoctrineId] = useState("rapidDeployment");
   const [defenseResult, setDefenseResult] = useState(null);
@@ -2148,9 +2163,12 @@ export function App() {
     setCombatLoadProgress(Math.max(0, Math.min(1, Number(progress) || 0)));
   }, []);
 
-  const launchCombat = useCallback((regionId) => {
+  const launchCombat = useCallback((regionId, requestedParty) => {
     const slot = activeSlotId ? getCampaignSlot(campaign, activeSlotId) : null;
     if (!slot || !canLaunchRegion(slot, regionId)) return;
+    const party = Array.isArray(requestedParty) ? requestedParty : sortieCharacterIds || [activeCharacterId];
+    setSortieCharacterIds(resolveSortieRoster({ characterId: party[0] || activeCharacterId,
+      partyCharacterIds: party, mikaUnlocked, vesperUnlocked, noxUnlocked }));
     setActiveNpc(null);
     setActiveFacilityId(null);
     setActiveRegionId(regionId);
@@ -2161,9 +2179,10 @@ export function App() {
       return;
     }
     beginSortieCinematic(regionId);
-  }, [activeSlotId, beginSortieCinematic, campaign, debugGuideBypass, prepareSurface]);
+  }, [activeSlotId, activeCharacterId, sortieCharacterIds, mikaUnlocked, vesperUnlocked, noxUnlocked, beginSortieCinematic, campaign, debugGuideBypass, prepareSurface]);
 
   const selectSaveSlot = useCallback((index) => {
+    setSortieCharacterIds(null);
     const slotId = `slot-${index + 1}`;
     const existing = getCampaignSlot(campaign, slotId);
     const nextCampaign = existing ? campaign : createCampaignSlot(campaign, slotId);
@@ -2584,7 +2603,8 @@ export function App() {
           combatBonuses={combatBonuses}
           characterSkillRanks={characterSkillRanks}
           mainWeaponId={activeMainWeaponId}
-          characterId={activeCharacterId}
+          characterId={sortieCharacterIds?.[0] || activeCharacterId}
+          partyCharacterIds={sortieCharacterIds}
           mikaUnlocked={mikaUnlocked}
           vesperUnlocked={vesperUnlocked}
           noxUnlocked={noxUnlocked}

@@ -13,6 +13,7 @@ import "./styles/save-profiles.css";
 import "./styles/settings.css";
 import "./styles/defense-overhaul.css";
 import "./styles/tag-cutscene.css";
+import "./styles/npc-portraits.css";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>

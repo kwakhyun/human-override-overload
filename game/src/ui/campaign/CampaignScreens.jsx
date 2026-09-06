@@ -1,3 +1,5 @@
+import { SORTIE_BRIEFINGS } from '../../game/content/sortieBriefings.js';
+import { NpcPortraitImage } from '../portrait/NpcPortraitImage.jsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AirplaneTilt,
@@ -480,7 +482,7 @@ function NpcPortrait({ npc, assets }) {
       role="img"
       aria-label={`${npc.name} 대화 일러스트`}
     >
-      {portrait && <img src={portrait} alt="" draggable="false" decoding="async" fetchPriority="high" />}
+      {portrait && <NpcPortraitImage source={portrait} npcId={npc.id} />}
     </div>
   );
 }
@@ -562,13 +564,7 @@ export function BaseFacilityPanel({ facility, onPurchase, onExchange, onClose, o
             aria-label={`${facilityNpcDisplay.name} 일러스트와 대화`}
           >
             {facilityNpc.portraitSource && (
-              <img
-                src={assetSource(facilityNpc.portraitSource)}
-                alt=""
-                draggable="false"
-                decoding="async"
-                fetchPriority="high"
-              />
+              <NpcPortraitImage source={assetSource(facilityNpc.portraitSource)} npcId={facilityNpc.id} />
             )}
           </button>
           <div className="facility-npc-dialogue" role="status">
@@ -968,7 +964,7 @@ export function MikaRecruitScreen({ assets, onComplete }) {
       </header>
       <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="mika-recruit-title" ref={dialogRef} tabIndex={-1}>
         <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
-          {portraitSource && (line.portrait === "rhea" ? <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} /> : <OperativePortraitImage source={assetSource(portraitSource)} characterId={line.portrait} alt={`${line.speaker} 대화 일러스트`} />)}
+          {portraitSource && (line.portrait === "rhea" ? <NpcPortraitImage source={assetSource(portraitSource)} npcId="rhea" alt={`${line.speaker} 대화 일러스트`} /> : <OperativePortraitImage source={assetSource(portraitSource)} characterId={line.portrait} alt={`${line.speaker} 대화 일러스트`} />)}
         </figure>
         <div className="mika-recruit-progress" aria-label={`${lineIndex + 1}/${MIKA_RECRUIT_DIALOGUE.length} 대화`}>
           {MIKA_RECRUIT_DIALOGUE.map((_, index) => <i className={index <= lineIndex ? "is-active" : ""} key={index} />)}
@@ -1015,7 +1011,7 @@ export function VesperRecruitScreen({ assets, onComplete }) {
       </header>
       <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="vesper-recruit-title" ref={dialogRef} tabIndex={-1}>
         <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
-          {portraitSource && (line.portrait === "rhea" ? <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} /> : <OperativePortraitImage source={assetSource(portraitSource)} characterId={line.portrait} alt={`${line.speaker} 대화 일러스트`} />)}
+          {portraitSource && (line.portrait === "rhea" ? <NpcPortraitImage source={assetSource(portraitSource)} npcId="rhea" alt={`${line.speaker} 대화 일러스트`} /> : <OperativePortraitImage source={assetSource(portraitSource)} characterId={line.portrait} alt={`${line.speaker} 대화 일러스트`} />)}
         </figure>
         <div className="mika-recruit-progress" aria-label={`${lineIndex + 1}/${VESPER_RECRUIT_DIALOGUE.length} 대화`}>
           {VESPER_RECRUIT_DIALOGUE.map((_, index) => <i className={index <= lineIndex ? "is-active" : ""} key={index} />)}
@@ -1062,7 +1058,7 @@ export function NoxRecruitScreen({ assets, onComplete }) {
       </header>
       <section className="mika-recruit-stage" role="dialog" aria-modal="true" aria-labelledby="nox-recruit-title" ref={dialogRef} tabIndex={-1}>
         <figure className={`mika-recruit-character is-${line.portrait}`} key={`${lineIndex}-${line.portrait}`}>
-          {portraitSource && (line.portrait === "rhea" ? <img src={assetSource(portraitSource)} alt={`${line.speaker} 대화 일러스트`} /> : <OperativePortraitImage source={assetSource(portraitSource)} characterId={line.portrait} alt={`${line.speaker} 대화 일러스트`} />)}
+          {portraitSource && (line.portrait === "rhea" ? <NpcPortraitImage source={assetSource(portraitSource)} npcId="rhea" alt={`${line.speaker} 대화 일러스트`} /> : <OperativePortraitImage source={assetSource(portraitSource)} characterId={line.portrait} alt={`${line.speaker} 대화 일러스트`} />)}
         </figure>
         <div className="mika-recruit-progress" aria-label={`${lineIndex + 1}/${NOX_RECRUIT_DIALOGUE.length} 대화`}>
           {NOX_RECRUIT_DIALOGUE.map((_, index) => <i className={index <= lineIndex ? "is-active" : ""} key={index} />)}
@@ -1270,7 +1266,7 @@ export function LarkFlightOperationsScreen({ campaign, pilot, plans = [], active
             onClick={() => setPilotReactionIndex((index) => nextDialogueIndex(index, pilotDialogue))}
             aria-label="나이트자 수석 조종사 세라와 대화"
           >
-            {pilotPortrait && <img src={pilotPortrait} alt="청백색 비행복과 항로 태블릿을 든 나이트자 수석 조종사 세라" />}
+            {pilotPortrait && <NpcPortraitImage source={pilotPortrait} npcId="sera" alt="나이트자 수석 조종사 세라" />}
             <span><ChatText weight="fill" /> 세라에게 말 걸기</span>
           </button>
           <div>
@@ -1470,7 +1466,7 @@ export function AbilityGuideScreen({ assets, npc, guideType = "rifle", onComplet
       <div className="ability-guide-shade" aria-hidden="true" />
       <aside className="ability-guide-rhea" aria-label="전술 관제관 레아">
         <button type="button" className="npc-illustration-button" onClick={() => setRheaReactionIndex((index) => nextDialogueIndex(index, rheaDialogue))} aria-label="전술 관제관 레아와 대화">
-          {portrait && <img src={portrait} alt="은빛 보랏빛 단발과 전술 헤드셋을 착용한 관제관 레아" />}
+          {portrait && <NpcPortraitImage source={portrait} npcId="rhea" alt="전술 관제관 레아" />}
         </button>
         <div><small>전술 관제 · 레아</small><strong role="status">“{rheaGuideLine}”</strong></div>
       </aside>
@@ -1578,11 +1574,25 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
     () => (regions || []).find((region) => region.id === selectedRegionId) || null,
     [selectedRegionId, regions],
   );
-  const selectedCharacter = availableCharacters.find((character) => character.id === selectedCharacterId) || availableCharacters[0] || null;
+  const [partyIds, setPartyIds] = useState([selectedCharacterId]);
+  const selectedParty = partyIds.filter(id => availableCharacters.some(character => character.id === id)).slice(0, 2);
+  const selectedCharacter = availableCharacters.find(character => character.id === selectedParty[0]) || null;
+  const togglePartyMember = (id) => {
+    const next = selectedParty.includes(id)
+      ? selectedParty.length > 1 ? selectedParty.filter(member => member !== id) : selectedParty
+      : selectedParty.length < 2 ? [...selectedParty, id] : selectedParty;
+    setPartyIds(next);
+    if (next[0] && next[0] !== selectedParty[0]) onCharacterChange?.(next[0]);
+  };
+  const makeLead = (id) => {
+    setPartyIds([id, ...selectedParty.filter(member => member !== id)]);
+    onCharacterChange?.(id);
+  };
   const equippedWeapon = weapons.find((weapon) => weapon.id === equippedWeaponId) || null;
   const equippedWeaponUnlocked = Boolean(equippedWeapon && (!equippedWeapon.unlockRegionId || completed.has(equippedWeapon.unlockRegionId)));
   const formationConfirmed = Boolean(selectedCharacter && equippedWeaponUnlocked);
   const repeatOperation = Boolean(selectedRegion && completed.has(selectedRegion.id));
+  const briefing = selectedRegion ? SORTIE_BRIEFINGS[selectedRegion.id] : null;
   useDialogFocusTrap(sortieDialogRef, Boolean(selectedRegion));
 
   useEffect(() => {
@@ -1737,14 +1747,18 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
             <section className="region-sortie-briefing">
               <h2 className="region-mixed-name" id="region-sortie-title"><span>{selectedRegion.koreanName || selectedRegion.name}</span><em>{selectedRegion.name}</em></h2>
               <p>{localizeWorldText(selectedRegion.description)}</p>
+              <p className="sortie-clear-route">일반 적 {selectedRegion.enemyBudget}기 돌파 → {selectedRegion.midBoss ? `${selectedRegion.midBoss.koreanName} 격파 → ` : ''}최종 보스 격파</p>
               <details className="region-sortie-repeat-intel">
-                <summary>{repeatOperation ? "작전 상세 다시 보기" : "작전 상세 보기"}</summary>
+                <summary>적과 보스 공략 보기</summary>
+                <div className="sortie-boss-preview">
+                  <span className="sortie-boss-image" role="img" aria-label={`${BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName} 전투 모습`}
+                    style={{backgroundImage: `url(./assets/overload/quality-v3/performance/${selectedRegion.id}-boss.png)`, backgroundSize: `${selectedRegion.midBoss ? 800 : 600}% 400%`}} />
+                  <div><small>최종 보스</small><strong>{(BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName).split(" · ")[0]}</strong><p>보스전은 별도 전장에서 진행됩니다. 아래 위험을 확인하고 출격하세요.</p></div>
+                </div>
                 <dl className="region-sortie-intel">
-                <div><dt>주요 적 조합</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.composition)}</dd></div>
-                <div><dt>보스 패턴</dt><dd>{localizeThreatText(selectedRegion.threatProfile?.bossSignatures)}</dd></div>
-                {selectedRegion.midBoss && <div><dt>중간 방어체</dt><dd>{selectedRegion.midBoss.koreanName} · {selectedRegion.midBoss.name}</dd></div>}
-                <div><dt>최종 목표</dt><dd>{BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName} 파괴</dd></div>
-                <div><dt>예상 교전</dt><dd>적성 기체 약 {selectedRegion.enemyBudget}기 추정</dd></div>
+                  <div><dt>주로 만나는 적</dt><dd>{briefing?.enemies}</dd></div>
+                  <div><dt>보스의 위험한 공격</dt><dd>{briefing?.danger}</dd></div>
+                  <div><dt>이렇게 대응하세요</dt><dd>{briefing?.tip}</dd></div>
                 </dl>
               </details>
               <div className="region-sortie-rewards">
@@ -1770,12 +1784,18 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
             </section>
             <section className="sortie-character-loadout" aria-labelledby="sortie-character-title">
               <header>
-                <div><small>전술 편제</small><h3 id="sortie-character-title">선봉 요원 선택</h3></div>
-                <span>{availableCharacters.length > 1 ? `해금된 전투원 ${availableCharacters.length}명을 전투 중 교대할 수 있습니다.` : "새 동료를 영입하면 전투 중 교대할 수 있습니다."}</span>
+                <div><small>출격 편성 · {selectedParty.length} / 2명</small><h3 id="sortie-character-title">함께 출격할 전투원</h3></div>
+                <span>최대 2명까지 선택합니다. 선택한 두 전투원만 태그로 교대하며, 1명 출격 시에는 태그를 사용할 수 없습니다.</span>
               </header>
+              <div className="sortie-party-order" aria-label="출격 순서">
+                {selectedParty.map((id, index) => <button key={id} type="button" aria-pressed={index === 0} onClick={() => makeLead(id)}>
+                  {index === 0 ? '선봉' : '교대'} · {availableCharacters.find(character => character.id === id)?.koreanName}
+                  {index > 0 && <small>선봉으로 변경</small>}
+                </button>)}
+              </div>
               <div className="sortie-character-options">
                 {availableCharacters.map((character) => {
-                  const selected = character.id === selectedCharacterId;
+                  const selected = selectedParty.includes(character.id);
                   const portrait = assetSource(assets?.[character.portraitAssetKey === "player" ? "playerPortrait" : character.portraitAssetKey]);
                   return (
                     <button
@@ -1783,13 +1803,14 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
                       className={`sortie-character-card is-${character.accent}${selected ? " is-selected" : ""}`}
                       aria-pressed={selected}
                       data-ui-sound={selected ? "click" : "uiConfirm"}
-                      onClick={() => character.unlocked !== false && onCharacterChange?.(character.id)}
+                      disabled={!selected && selectedParty.length >= 2}
+                      onClick={() => togglePartyMember(character.id)}
                       key={character.id}
                     >
                       {portrait && <img src={portrait} alt={`${character.koreanName} 출격 초상화`} />}
                       <span><small>{character.role}</small><strong>{character.koreanName}</strong><em>{character.name}</em></span>
                       <p>{character.description}</p>
-                      {selected && <mark><CheckCircle weight="fill" /> 선봉 지정</mark>}
+                      {selected && <mark><CheckCircle weight="fill" /> {selectedParty[0] === character.id ? "선봉" : "교대"} · {selectedParty.length > 1 ? "눌러서 제외" : "선택됨"}</mark>}
                     </button>
                   );
                 })}
@@ -1798,7 +1819,7 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
           </div>
           <footer className="region-sortie-command-footer">
             <span className={formationConfirmed ? "is-confirmed" : "is-pending"}>{formationConfirmed ? <CheckCircle weight="fill" /> : <Crosshair weight="bold" />} {formationConfirmed ? "현재 편성으로 즉시 출격할 수 있습니다." : "사용 가능한 전투원과 장비를 선택하세요."}</span>
-            <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound={formationConfirmed ? "uiConfirm" : "denied"} disabled={!formationConfirmed} onClick={() => formationConfirmed && onSelect(selectedRegion.id)}>
+            <button type="button" className="region-sortie-launch command-ui-button" data-ui-sound={formationConfirmed ? "uiConfirm" : "denied"} disabled={!formationConfirmed} onClick={() => formationConfirmed && onSelect(selectedRegion.id, selectedParty)}>
               <AirplaneTilt weight="fill" /><span><small>{selectedCharacter?.koreanName || "이지스"} 선봉</small><strong>{formationConfirmed ? (repeatOperation ? "즉시 재출격" : "이 편성으로 출격") : "편성 확인 필요"}</strong></span><ArrowRight weight="bold" />
             </button>
           </footer>

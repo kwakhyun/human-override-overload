@@ -254,6 +254,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   private readonly characterSkillRanks?: Readonly<Record<"aegis" | "mika" | "vesper" | "nox", number>>;
   private readonly mainWeaponId?: "pulse-rifle" | "beam-sword";
   private readonly characterId?: "aegis" | "mika" | "vesper" | "nox";
+  private readonly partyCharacterIds?: readonly string[];
   private readonly mikaUnlocked: boolean;
   private readonly vesperUnlocked: boolean;
   private readonly noxUnlocked: boolean;
@@ -307,6 +308,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     assetProfile: AssetProfile = "full",
     mobileAutoAim = false,
     portraitPresentation = false,
+    partyCharacterIds?: readonly string[],
   ) {
     super({ key: "OverloadBattle" });
     this.bridge = bridge;
@@ -315,6 +317,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.characterSkillRanks = characterSkillRanks;
     this.mainWeaponId = mainWeaponId;
     this.characterId = characterId;
+    this.partyCharacterIds = partyCharacterIds;
     this.mikaUnlocked = mikaUnlocked;
     this.vesperUnlocked = vesperUnlocked;
     this.noxUnlocked = noxUnlocked;
@@ -332,7 +335,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   create() {
-    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, characterSkillRanks: this.characterSkillRanks, mainWeaponId: this.mainWeaponId, characterId: this.characterId, mikaUnlocked: this.mikaUnlocked, vesperUnlocked: this.vesperUnlocked, noxUnlocked: this.noxUnlocked });
+    this.state = createSwarmState({ duration: 600, expedition: true, regionId: this.regionId, combatBonuses: this.combatBonuses, characterSkillRanks: this.characterSkillRanks, mainWeaponId: this.mainWeaponId, characterId: this.characterId, mikaUnlocked: this.mikaUnlocked, vesperUnlocked: this.vesperUnlocked, noxUnlocked: this.noxUnlocked, partyCharacterIds: this.partyCharacterIds });
     applyDebugScene(this.state, this.bridge.debugScene);
     this.gameInput = createSwarmInput();
     this.governor = createPerformanceGovernor({
@@ -349,7 +352,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
     this.view.syncCamera(this.state);
     this.configureInput();
     this.configureRuntimeLifecycle();
-    this.bridge.attach(this);
+    void this.view.ready.then(() => { if (this.sys.isActive()) this.bridge.attach(this); });
     this.refreshHud();
     this.view.render(this.state, this.governor.preset);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.bridge.detach(this));
@@ -358,7 +361,7 @@ export class OverloadScene extends Phaser.Scene implements BattleSceneControls {
   }
 
   update(time: number, deltaMs: number) {
-    if (!this.state || !this.view) return;
+    if (!this.state || !this.view || this.view.terrainLoading) return;
     if (this.isRuntimeInterrupted()) {
       this.accumulator = 0;
       clearPressedInput(this.gameInput);

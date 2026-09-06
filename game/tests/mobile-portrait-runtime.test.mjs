@@ -18,7 +18,7 @@ test("portrait touch runtime uses the native viewport, a tactical camera, and de
   assert.match(createGame, /initialQuality === "performance" \|\| mobileRuntime\.touchOptimized/);
   assert.match(createGame, /Phaser\.Scale\.RESIZE : Phaser\.Scale\.FIT/);
   assert.match(createGame, /const portraitPresentation = mobileRuntime\.portrait && mobileRuntime\.touchOptimized/);
-  assert.match(createGame, /new OverloadScene\([\s\S]*mobileRuntime\.autoAim, portraitPresentation\)/);
+  assert.match(createGame, /new OverloadScene\([\s\S]*mobileRuntime\.autoAim, portraitPresentation, availableCharacterIds\)/);
   assert.match(scene, /private readonly mobileAutoAim: boolean/);
   assert.match(scene, /private readonly portraitPresentation: boolean/);
   assert.match(scene, /new BattleView\(this, this\.state\.regionId, this\.portraitPresentation\)/);

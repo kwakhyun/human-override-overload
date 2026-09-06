@@ -36,7 +36,7 @@ test("completing the combat tutorial keeps the active Phaser run alive", async (
   assert.match(app, /onFinishRef\.current\(result\)/);
   assert.match(
     app,
-    /\}, \[assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, mikaUnlocked, noxUnlocked, regionId, runRevision, sfx, vesperUnlocked\]\);/,
+    /\}, \[assets, characterId, characterSkillRanksSignature, combatBonusesSignature, mainWeaponId, partyCharacterIds, mikaUnlocked, noxUnlocked, regionId, runRevision, sfx, vesperUnlocked\]\);/,
   );
   assert.doesNotMatch(app, /\[characterId, combatBonuses, mainWeaponId/);
 });
@@ -50,7 +50,7 @@ test("locked MIKA is absent and a valid saved loadout is immediately launchable"
   assert.match(screens, /const formationConfirmed = Boolean\(selectedCharacter && equippedWeaponUnlocked\)/);
   assert.match(screens, /현재 편성으로 즉시 출격할 수 있습니다/);
   assert.match(screens, /disabled=\{!formationConfirmed\}/);
-  assert.match(screens, /formationConfirmed && onSelect\(selectedRegion\.id\)/);
+  assert.match(screens, /formationConfirmed && onSelect\(selectedRegion\.id, selectedParty\)/);
   assert.match(styles, /\.region-sortie-dialog \.region-sortie-command-footer \{[\s\S]*position: sticky;/);
   assert.match(screens, /region-sortie-repeat-intel/);
 });

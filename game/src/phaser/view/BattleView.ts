@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { getRegionalTerrain } from '../../game/content/regionalTerrain.js';
+import type { SectorOneEnvironment } from '../../render/sectorOne/SectorOneEnvironment';
 import { ASSET_KEYS } from "../../game/assets/manifest";
 import { EXPEDITION_WORLD_HEIGHT, EXPEDITION_WORLD_WIDTH, WORLD_HEIGHT, WORLD_WIDTH } from "../../swarm/engine.js";
 import {
@@ -421,6 +423,8 @@ function projectileArt(projectile: any) {
 }
 
 export class BattleView {
+  ready: Promise<void> = Promise.resolve();
+  terrainLoading = false;
   private readonly scene: Phaser.Scene;
   private readonly mainCamera: Phaser.Cameras.Scene2D.Camera;
   private readonly portraitPresentation: boolean;
@@ -498,6 +502,12 @@ export class BattleView {
   private bossRevealFromZoom = 1.08;
   private userZoomFactor = 1;
   private screenShakeEnabled = true;
+  private terrain3D?: SectorOneEnvironment;
+  private terrainDisposed = false;
+  private terrainFrame: any;
+  private terrainFallback?: Phaser.GameObjects.Graphics;
+  private terrainHealth?: Phaser.GameObjects.Graphics;
+  private terrainRevision = -1;
 
   constructor(scene: Phaser.Scene, regionId = "wrong-engine-core", portraitPresentation = false) {
     this.scene = scene;
@@ -535,6 +545,8 @@ export class BattleView {
     this.portraitPresentation = portraitPresentation;
     this.mainCamera.setBackgroundColor("#020608");
 
+    if (getRegionalTerrain(regionId)) this.prepareTerrain(regionId);
+
     const routeMaps = regionAssets.route.map((key, index) => scene.add.image(
       EXPEDITION_WORLD_WIDTH * 0.5,
       EXPEDITION_WORLD_HEIGHT * 0.5,
@@ -552,8 +564,13 @@ export class BattleView {
     this.bossMap = bossMap;
     this.maps = [...routeMaps, bossMap];
     this.worldBack = scene.add.container(0, 0);
+    if (getRegionalTerrain(regionId)) {
+      this.terrainFallback = scene.add.graphics();
+      this.worldBack.add(this.terrainFallback);
+    }
     this.actors = scene.add.container(0, 0);
     this.worldFront = scene.add.container(0, 0);
+    this.terrainHealth = scene.add.graphics(); this.worldFront.add(this.terrainHealth);
     this.hudLayer = scene.add.container(0, 0);
     this.bossPatternLayer = scene.add.container(0, 0);
 
@@ -618,6 +635,33 @@ export class BattleView {
 
   setScreenShakeEnabled(enabled: boolean) {
     this.screenShakeEnabled = enabled;
+  }
+
+  private prepareTerrain(regionId: string) {
+    // Extern is invoked after Phaser finalizes its camera matrix (including
+    // shake), so the 3D ground and sprites cannot drift by one update frame.
+    const external = this.scene.add.extern().setDepth(-1000);
+    external.render = (_renderer: any, context: any) => {
+      if (context.camera !== this.mainCamera || !this.terrainFrame) return;
+      try { this.terrain3D?.render(this.mainCamera, this.terrainFrame); }
+      catch (error) {
+        console.warn('Regional terrain renderer failed; restoring 2D:', error);
+        this.terrain3D?.dispose(); this.terrain3D = undefined;
+      }
+    };
+    const dispose = () => {
+      if (this.terrainDisposed) return;
+      this.terrainDisposed = true; this.terrain3D?.dispose(); this.terrain3D = undefined;
+    };
+    this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, dispose);
+    this.scene.events.once(Phaser.Scenes.Events.DESTROY, dispose);
+    this.terrainLoading = true;
+    this.ready = import('../../render/sectorOne/SectorOneEnvironment').then(({ SectorOneEnvironment }) => {
+      if (!this.terrainDisposed) this.terrain3D = new SectorOneEnvironment(this.scene.game.canvas, regionId);
+    }).catch(error => {
+      // Existing 2D map plus identical solid footprints remain playable.
+      console.warn('Regional terrain uses the 2D fallback:', error);
+    }).finally(() => { this.terrainLoading = false; });
   }
 
   private prepareAtlas(key: string, columns: number, rows: number) {
@@ -785,9 +829,34 @@ export class BattleView {
     this.shakeCamera(duration, intensity);
   }
 
+  private syncTerrainStatus(state: any) {
+    const sites = state.terrain?.sites ?? [];
+    if (this.terrainFallback && this.terrainRevision !== state.terrain?.revision) {
+      this.terrainRevision = state.terrain?.revision ?? 0;
+      const g = this.terrainFallback; g.clear();
+      for (const site of sites) {
+        if (site.destroyedAt !== null) continue;
+        g.fillStyle(0x182b34, 1).fillCircle(site.x, site.y, site.radius);
+        g.lineStyle(4, site.maxHp ? 0xd3bc88 : 0x83bbc5, .9).strokeCircle(site.x, site.y, site.radius);
+        g.lineStyle(5, 0x668995, .9).strokeCircle(site.x, site.y - 15, site.radius * .68);
+      }
+    }
+    const g = this.terrainHealth; if (!g) return; g.clear();
+    if (state.expedition?.bossRoom || state.phase !== 'swarm') return;
+    for (const site of sites) {
+      if (!site.maxHp || site.destroyedAt !== null || state.time - site.hitAt > 3) continue;
+      const y = site.y + site.radius + 12;
+      g.fillStyle(0x091216, .9).fillRect(site.x - 35, y, 70, 7);
+      g.fillStyle(0xd3bc88, .95).fillRect(site.x - 33, y + 2, 66 * site.hp / site.maxHp, 3);
+    }
+  }
+
   render(state: any, quality: QualityPreset) {
     const time = finite(state?.time);
     this.currentQualityId = quality.id ?? "balanced";
+    this.terrainFrame = { boss: Boolean(state.expedition?.bossRoom || state.phase === 'boss'),
+      time, quality: this.currentQualityId, player: state.player, enemies: state.enemies ?? [], terrain: state.terrain };
+    this.syncTerrainStatus(state);
     this.syncCamera(state);
     this.syncTraceProps(state);
 
@@ -855,6 +924,7 @@ export class BattleView {
     const zoom = Math.max(0.001, finite(this.mainCamera.zoom, 1));
     const worldView = this.mainCamera.worldView;
     return {
+      terrain: this.terrain3D?.snapshot() ?? null,
       zoom,
       viewportWidth: this.mainCamera.width,
       viewportHeight: this.mainCamera.height,
@@ -872,6 +942,9 @@ export class BattleView {
     const expedition = state?.expedition;
     const bossMapIndex = this.routeMapCount;
     const bossStageActive = Boolean(expedition?.bossRoom || state?.phase === "boss");
+    const terrainActive = this.terrain3D?.available === true;
+    this.mainCamera.setBackgroundColor(terrainActive ? 'rgba(0,0,0,0)' : '#020608');
+    this.terrainFallback?.setVisible(!terrainActive && !bossStageActive);
     this.mainCamera.setBounds(
       0,
       0,
@@ -882,7 +955,7 @@ export class BattleView {
       const alpha = bossStageActive ? Number(index === bossMapIndex) : Number(index === 0);
       const map = this.maps[index];
       map
-        .setVisible(alpha > 0.001)
+        .setVisible(!terrainActive && alpha > 0.001)
         .setAlpha(alpha);
     }
     const engineZoom = finite(camera.zoom, 1.08);

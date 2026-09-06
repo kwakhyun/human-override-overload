@@ -17,6 +17,7 @@ function routeRuntimeAssetsThroughEdge() {
 function manualChunks(id) {
   const normalized = id.replaceAll("\\", "/");
   if (normalized.includes("/node_modules/phaser/")) return "phaser-vendor";
+  if (normalized.includes("/node_modules/three/")) return "three-vendor";
   if (normalized.includes("/node_modules/react/")
     || normalized.includes("/node_modules/react-dom/")
     || normalized.includes("/node_modules/scheduler/")) return "react-vendor";

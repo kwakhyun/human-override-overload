@@ -1,5 +1,32 @@
 # Prototype Instructions
 
+## All regional 3D terrain and destructible props - 2026-09-06
+
+- This supersedes the first-region-only renderer rule below. All six regional routes and boss rooms use the imperative Three.js background. `buildRegionalEnvironment.ts` authors distinct glass/desert, submerged archive, foundry, storm deck and gene-vault geometry. Keep the existing 2D actors and VFX, Phaser clock/camera authority, WebGL fallback and teardown contract. Keep all boss interiors clear and raised exterior geometry outside walkable bounds.
+- `regionalTerrain.js` owns the per-region ten-site registry, active collision list, durability and destruction timestamps. `sectorOneStructures.js` retains the original yard footprints; `sectorOneTerrain.js` is a compatibility export. Player/enemy bullets and sword attacks can break the designated small props. Destruction immediately opens movement and fire and removes the minimap/fallback symbol; it never grants kills, XP or progress. Other area/aerial ability rules are unchanged. Reset durability on every new run.
+- Debris is bounded (eight instanced cosmetic shards per destroyed site), settles using simulation time and has no physical damage/collision. Do not add a separate physics world, RAF or per-frame texture upload. Structure health appears only briefly after a hit. Keep ground slabs at distinct elevations to prevent coplanar flicker. Update Korean sortie advice when collision or destruction rules change.
+- Focused checks: regional-terrain, sector-one-terrain, sortie-formation, swarm-engine, phaser-runtime and campaign-ui tests (168 checks at this checkpoint), TypeScript and affected browser scenes. The five new regions were checked through route/boss rendering, projectile destruction, projection, context restore and cleanup; gene-vault also through the actual App HUD and mobile resize. This is not a full campaign clear or physical-device FPS certification. Local changes are not a new deployment.
+
+## Sector 01 real-time 3D terrain - 2026-09-06
+
+- WRONG ENGINE route and boss room use `src/render/sectorOne/SectorOneEnvironment.ts`, a lazily loaded Three.js background synchronized by the Phaser Extern callback after the camera matrix is finalized. Keep the ground projection pixel-aligned with simulation coordinates via `projection.js`. Existing sprites, VFX, HUD and deterministic engine remain authoritative. Do not add a second RAF loop or React state updates per frame.
+- `sectorOneTerrain.js` owns the ten solid route footprints shared by 3D geometry, engine collision, fallback symbols and minimap. Keep the boss arena clear of new obstacles. Solid props block actors and ordinary projectiles with swept contacts; enemies steer around them, and embedded drops/spawns are rescued. Area and aerial skills retain existing rules. New interior props must not silently appear without matching collision.
+- Raised perimeter objects stay outside playable bounds; service grates and rails inside are flush. Occluding structures fade for actor visibility. Handle WebGL 2 initialization failure and context loss with the old map plus exact 2D footprints. Dispose GPU resources and the extra canvas on scene teardown. Wait for terrain initialization before reporting runtime ready. Other regions keep their existing renderer and assets.
+- Models and material textures are authored procedurally in code, not generated GLB assets. Static geometry is merged by material; avoid unbounded shadows, bloom, per-frame texture uploads or extra canvases. Measured headless browser draw calls are not device FPS guarantees. Focused checks: `tests/sector-one-terrain.test.mjs`, `tests/sortie-formation.test.mjs`, `tests/swarm-engine.test.mjs`, `tests/phaser-runtime.test.mjs`, TypeScript and affected browser routes.
+
+
+## Selected sortie pair and neutral portrait head - 2026-09-06
+
+- Regional sorties select one or two unlocked operatives, with an explicit lead and optional reserve. Resolve the same sanitized `partyCharacterIds` in the UI launch, Phaser preload and deterministic engine. Keep the pair through the guide, cinematic and retry; never re-add all unlocked actors to the tag cycle. Solo sorties cannot tag or report tag-ready. This supersedes the historical all-unlocked tag cycle below.
+- Operation details show Korean enemy composition, actual boss-pattern danger and counterplay, a correctly isolated first-frame boss preview, clear progression and rewards. Maintain `sortieBriefings.js` when engine boss patterns change.
+- Keep all three independent portrait head pose channels at zero across idle, gaze and touch reactions. Preserve head-click speech, blinking, breathing and other body responses. This overrides historical head-sway requirements, not the unfinished Cubism production scope.
+
+
+## NPC portrait camera - 2026-09-06
+
+- All NPC dialogue and detail portraits use `NpcPortraitImage` with the shared anatomical framing in `npcPortraitFraming.js`. Keep approved 768px WebP sources unchanged. This supersedes the historical square-canvas contain-only NPC rule: match crown/chin scale and center, crop the lower body against the supporting dialogue panel, and never leave an exposed floating cutoff. Recruitment uses a content-sized grid text row; mobile base dialogue anchors the portrait above the panel. Facility and flight hosts remain prominent and clickable. Combat narrative passes the explicit NPC ID so HANA/ILYA do not fall back to the RHEA camera. Keep operative framing independent.
+
+
 ## Source frame isolation correction - 2026-09-06
 
 - Source padding and runtime texture dimensions do not prove frame isolation. Use reviewed per-frame rectangles in `scripts/sprite-source-layouts.json`, source hash checks, and pre-resize foreground-edge validation. Never shrink a wrongly cropped frame to hide neighbor fragments. The two `*-isolated.png` repairs preserve the rejected spacing versions as history. Actual source poses total 905, mapped into 916 runtime slots; held recovery frames are not independent artwork. The review page reads generated grid/hash metadata and must expose every row, including boss destruction, with manual frame selection. Run `scripts/test-sprite-source-layouts.py` with the preserved sources and inspect both whole sheets and the affected runtime phases.

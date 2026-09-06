@@ -2435,3 +2435,30 @@ The active source-to-output mapping, original generated filenames, actual source
 ## 전투 프레임 분리 수정 - 2026-09-06
 
 생체금고 보스와 검 수동 스킬의 맞닿은 원본을 ImageGen으로 수정했다. 수정 원본은 각각 `exec-79a87c9b-8b44-4de8-a73f-85c0c6ab397e.png`, `exec-43c913d2-07e8-4358-89f5-b016e162b03f.png`이며 `reference/source-assets/overload/sprite-quality-v3/*-isolated.png`로 별도 보존한다. 기존 생성 원본·프롬프트는 유지한다. 나머지 시트는 실제 프레임 경계로 재분리했다. [정확한 수정 요청과 검증 기록](docs/art/sprite-frame-isolation-fix-2026-09-06.md)을 참조한다.
+
+### NPC 표시 보정 - 2026-09-06
+기존 하나·일리야·세라·레아 WebP 원본을 그대로 사용하며 새 이미지 생성은 없다. 정수리와 턱 기준의 공통 React/CSS 카메라 및 반응형 대화창 배치를 적용했다.
+
+## Current runtime note - 2026-09-06 sortie UI
+
+The two-member formation and Korean operation briefings are code/content updates. Boss previews reuse the approved quality-v3 atlases with their correct 6x4 or 8x4 grids. No artwork or audio was generated for this change. Independent head displacement/roll in the intermediate operative portrait effect is disabled; click dialogue and breathing remain. This is not a new Cubism model.
+
+## Sector 01 procedural 3D environment - 2026-09-06
+
+The transport yard, cooling tanks, turbines, relay towers, rail tracks, grates and engine-core arena are original procedural mesh/material work in `src/render/sectorOne/`. Canvas textures are deterministic code-authored steel, grime, signs and contact shadows. No external 3D model, generated image, or new audio was used. Existing approved operative/enemy/boss/VFX artwork remains active. Three.js 0.185.1 (MIT) is a new runtime dependency; `@types/three` 0.185.4 is development-only. Preserve their upstream license notices during distribution.
+
+## 전 구역 3D 전장과 구조물 파괴 - 2026-09-06
+
+1구역에 이어 2-6구역의 일반 전장과 보스방에도 실시간 3D 환경을 적용했다. 전투원·적·보스·스킬은 기존 2D 표현을 사용한다. 지형은 Three.js 메시와 절차적 재질로 제작했다.
+
+- 2구역 유리 사구: 모래 바닥, 수정 군집, 반사경 기둥과 외곽 사구.
+- 3구역 심연 기록고: 매립 데이터 통로, 서버 설비, 기록 기둥과 침수된 외곽 설비.
+- 4구역 네온 주조구: 격자로 덮인 용융 통로, 소형 용광로, 대형 프레스와 배기 설비.
+- 5구역 폭풍 첨탑: 고가 갑판, 축전기, 코일 기둥과 회전하는 외곽 풍력 설비.
+- 6구역 생체 금고: 육각 격실 바닥, 배양조, 생체 기둥과 외곽 격리 설비.
+
+각 일반 전장은 서로 다른 배치의 구조물 10개를 갖는다. 냉각 탱크·수정 군집·낮은 서버·소형 용광로·축전기·배양조는 양측 일반 탄환과 검 공격으로 파괴할 수 있다. 피격 시 내구도 표시가 나타나고, 파괴되면 붕괴와 파편 연출 뒤 낮은 잔해가 남는다. 잔해는 이동과 사격을 막지 않는다. 대형 기둥과 프레스는 파괴되지 않으며, 보스방 내부는 회피 공간을 위해 비워 둔다. 다른 광역·공중 능력은 기존 공격 규칙을 따른다.
+
+구조물 상태는 결정론적 전투 엔진이 관리하며, 파괴 즉시 충돌 목록·2D 대체 표시·미니맵에서 제거한다. 구조물 파괴는 적 처치 수, 경험치, 권역 진행도를 올리지 않는다. 새 출격에서는 설비 내구도가 복구된다. 작전 공략에도 파괴 가능한 설비와 우회할 구조물을 한국어로 설명한다. WebGL 2 장애 시 기존 배경과 같은 위치의 2D 충돌 표시로 전환한다.
+
+검증: 관련 집중 테스트 168개와 TypeScript 검사 통과. 2-6구역 각각의 일반 전장·보스방, 실제 탄환에 의한 파괴, 지면 좌표 정렬, 그래픽 컨텍스트 손실·복구와 종료 후 캔버스 정리를 브라우저에서 확인했다. 6구역은 실제 앱의 출격·HUD·미니맵과 390x844 / 844x390 모바일 표시를 추가 확인했다. 지면 정렬 오차는 검수점에서 0.001px 미만이었다. 전체 캠페인 완주, 실물 모바일 성능 측정, 전체 프로덕션 빌드 및 신규 배포는 이 변경의 검증 범위에 포함하지 않았다. 로컬 서버에서 테스트할 수 있다.

@@ -3833,7 +3833,7 @@ details:focus-visible {
   transform: scale(1.015);
 }
 
-.flight-ops-lark-portrait > span {
+.flight-ops-lark-portrait > span:not(.npc-portrait-camera) {
   position: absolute;
   right: 12px;
   bottom: 12px;
@@ -3975,7 +3975,7 @@ details:focus-visible {
     object-position: center 18%;
   }
 
-  .flight-ops-lark-portrait > span,
+  .flight-ops-lark-portrait > span:not(.npc-portrait-camera),
   .npc-portrait-interaction-hint {
     display: none;
   }
@@ -7655,4 +7655,34 @@ details:focus-visible {
   .expedition-game.is-mobile-boss-pattern .boss-crisis-screen {
     pointer-events: none;
   }
+}
+
+/* Two-operative sortie selection and actionable region briefing. */
+.route-minimap-terrain { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .72; }
+.sortie-party-order { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.sortie-party-order button { display: flex; align-items: center; gap: 10px; padding: 10px 14px; min-height: 46px; border: 1px solid #76f2f766; color: #e9fcff; background: #07191f; }
+.sortie-party-order button[aria-pressed="true"] { border-color: #76f2f7; background: #10333b; }
+.sortie-party-order small { color: #a2d2da; font-size: 11px; }
+.sortie-character-card:disabled { opacity: .45; cursor: not-allowed; }
+.sortie-clear-route { padding: 12px 14px; border-left: 3px solid #76f2f7; background: #76f2f70a; color: #d8faff; font-size: 15px; line-height: 1.6; }
+.sortie-boss-preview { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; gap: 16px; margin: 14px 0; }
+.sortie-boss-image { display: block; width: 120px; height: 120px; background-repeat: no-repeat; background-position: left top; background-color: #051018; border-radius: 8px; }
+.sortie-boss-preview strong { display: block; color: #e7fcff; font-size: 20px; }
+.sortie-boss-preview small { color: #73dce9; }
+.sortie-boss-preview p { margin: 6px 0 0; font-size: 14px; line-height: 1.6; }
+.region-sortie-briefing .region-sortie-intel dd { white-space: normal; line-height: 1.65; word-break: keep-all; }
+@media (max-width: 720px) {
+  .sortie-boss-preview { grid-template-columns: 88px minmax(0, 1fr); gap: 10px; }
+  .sortie-boss-image { width: 88px; height: 88px; }
+}
+
+.sortie-character-loadout > header { display: block; }
+.sortie-character-loadout > header > span { display: block; margin-top: 8px; line-height: 1.6; }
+.sortie-character-loadout > header h3 { word-break: keep-all; }
+.region-sortie-briefing .region-sortie-intel dd { text-align: left; }
+@media (max-width: 720px) {
+  .campaign-shell.region-select-screen.has-selection .sortie-character-loadout > header > span { display: block; font-size: 15px; line-height: 1.6; word-break: keep-all; }
+  .campaign-shell.campaign-shell.region-select-screen.has-selection .sortie-character-card.is-selected { padding-top: 50px; }
+  .sortie-party-order button { min-height: 56px; }
+  .sortie-boss-preview p { word-break: keep-all; }
 }
