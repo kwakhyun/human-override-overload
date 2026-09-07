@@ -73,8 +73,8 @@ test("Phaser defense runtime stays behind its own deterministic bridge and guide
 
 test("defense art ships dedicated atlases plus three full and performance stage maps", async () => {
   const [atlas, atlasLow, enemy, enemyLow, fx, fxLow] = await Promise.all([
-    stat(new URL("public/assets/overload/defense/defense-systems-motion-atlas.png", root)),
-    stat(new URL("public/assets/overload/defense/performance/defense-systems-motion-atlas.png", root)),
+    stat(new URL("public/assets/overload/quality-v3/defense-towers.png", root)),
+    stat(new URL("public/assets/overload/quality-v3/performance/defense-towers.png", root)),
     readFile(new URL("public/assets/overload/defense/defense-enemy-motion-atlas-v2.png", root)),
     readFile(new URL("public/assets/overload/defense/performance/defense-enemy-motion-atlas-v2.png", root)),
     readFile(new URL("public/assets/overload/defense/defense-combat-vfx-atlas-v2.png", root)),

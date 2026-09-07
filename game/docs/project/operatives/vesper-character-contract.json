@@ -41,10 +41,10 @@
       "columnPhases": ["locomotion-1", "locomotion-2", "locomotion-3", "locomotion-4", "attack-anticipation", "attack-release", "attack-follow-through", "attack-recovery"],
       "comparisonAssets": ["survivor-directional-aim-atlas.png", "mika-directional-aim-atlas.png"],
       "forbiddenElements": ["unapproved halo", "head ring", "baked background", "checkerboard matte", "floor-shadow plate"],
-      "path": "public/assets/overload/hero/vesper-directional-aim-atlas.png"
+      "path": "public/assets/overload/quality-v3/vesper-operative.png"
     },
-    "performanceAtlas": "public/assets/overload/hero/performance/vesper-directional-aim-atlas.png",
-    "abilityAtlas": "public/assets/overload/vfx/manual/vesper-ability-hd-atlas.png",
+    "performanceAtlas": "public/assets/overload/quality-v3/performance/vesper-operative.png",
+    "abilityAtlas": "public/assets/overload/quality-v3/vesper-skills.png",
     "icons": {
       "basic": "vector-needle",
       "Q": "vector-step",

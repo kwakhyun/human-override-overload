@@ -16,18 +16,14 @@ from PIL import Image
 
 
 SPECS = {
-    "hero-directional-aim": ("public/assets/overload/hero/survivor-directional-aim-atlas.png", 8, 8, 128),
-    "hero-sword-directional-aim": ("public/assets/overload/hero/survivor-sword-directional-aim-atlas.png", 8, 8, 128),
     "enemy-suicide-drone": ("public/assets/overload/enemies/motion-v2/suicide-drone-motion-atlas.png", 6, 4, 160),
-    "enemy-rifleman": ("public/assets/overload/enemies/motion-v2/rifleman-motion-atlas.png", 6, 4, 160),
-    "enemy-sniper": ("public/assets/overload/enemies/motion-v2/sniper-motion-atlas.png", 6, 4, 160),
     "ally-hunter-drone": ("public/assets/overload/allies/motion-v2/hunter-drone-motion-atlas.png", 5, 4, 128),
     "ally-pulse-sentry": ("public/assets/overload/allies/motion-v2/pulse-sentry-motion-atlas.png", 5, 4, 128),
     "ally-suppressor-drone": ("public/assets/overload/allies/motion-v2/suppressor-drone-motion-atlas.png", 5, 4, 128),
-    "boss-wrong-engine": ("public/assets/overload/boss/motion-v2/wrong-engine-motion-atlas.png", 6, 4, 320),
-    "boss-mirror-tyrant": ("public/assets/overload/regions/glass-dune/motion-v2/mirror-tyrant-motion-atlas.png", 6, 4, 320),
-    "boss-drowned-oracle": ("public/assets/overload/regions/abyssal-archive/motion-v2/drowned-oracle-motion-atlas.png", 6, 4, 320),
 }
+for recipe in json.loads((Path(__file__).parent / "sprite-quality-recipes.json").read_text(encoding="utf-8")):
+    SPECS[recipe["id"]] = (f"public/assets/overload/quality-v3/{recipe['id']}.png", recipe["columns"], recipe["rows"], recipe["cell"])
+
 
 
 def pixels(image: Image.Image):

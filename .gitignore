@@ -24,3 +24,12 @@ google-credentials*.json
 
 __pycache__/
 *.py[cod]
+
+# Retained authoring inputs for current atlas/portrait regeneration.
+!game/reference/
+game/reference/*
+!game/reference/source-assets/
+game/reference/source-assets/*
+!game/reference/source-assets/overload/
+game/reference/source-assets/overload/*
+!game/reference/source-assets/overload/runtime-inputs/

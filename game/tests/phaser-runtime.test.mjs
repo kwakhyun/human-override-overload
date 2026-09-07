@@ -10,7 +10,7 @@ test("the title screen is a full-bleed user key art composition with only essent
   const engine = await read("src/swarm/engine.js");
   const manifest = await read("src/game/assets/manifest.ts");
   const styles = await read("src/styles.css");
-  const intro = app.slice(app.indexOf("function IntroScreen"), app.indexOf("function resolveCombatDockSlot"));
+  const intro = app.slice(app.indexOf("function IntroScreen"), app.indexOf("function CombatAbilityTutorialOverlay"));
   assert.match(manifest, /intro: "\.\/assets\/overload\/intro\/start-screen-key-art\.webp"/);
   assert.match(intro, /className="intro-key-art"/);
   assert.match(intro, /className="intro-minimal-content"/);

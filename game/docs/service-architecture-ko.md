@@ -78,7 +78,7 @@ npm run test:sites
 - `dist/server/index.js` Worker
 - `dist/.openai/hosting.json`의 `DB` D1, `FILES` R2 논리 바인딩
 - `dist/.openai/drizzle/*.sql` D1 마이그레이션
-- 제작 재현을 위해 `public/`에 남긴 비활성 시안 46개를 제외한 `dist/client/` 런타임 에셋
+- `public/`에서 미사용 파일을 제거하고 제작 원본을 `reference/`로 분리한 `dist/client/` 런타임 에셋
 
 클라이언트는 선택 구역·무기·실제 해금 전투원의 Phaser 아틀라스만 부트 번들에 포함합니다.
 전투 대화에 필요한 포트레이트만 준비 완료 조건으로 사용하고, 레벨업 보상 이미지는 전투 준비 뒤

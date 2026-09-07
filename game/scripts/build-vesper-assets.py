@@ -124,8 +124,8 @@ def main() -> None:
     atlas_chroma_path = ROOT / "reference/source-assets/overload/hero/vesper-directional-aim-v7-chroma.png"
     atlas_master_path = ROOT / "reference/source-assets/overload/hero/vesper-directional-aim-v7-alpha.png"
     runtime_portrait_path = ROOT / "public/assets/overload/hero/vesper-portrait-v7.webp"
-    runtime_atlas_path = ROOT / "public/assets/overload/hero/vesper-directional-aim-atlas.png"
-    performance_atlas_path = ROOT / "public/assets/overload/hero/performance/vesper-directional-aim-atlas.png"
+    runtime_atlas_path = ROOT / "reference/source-assets/overload/runtime-inputs/vesper-directional-aim-atlas.png"
+    performance_atlas_path = ROOT / "reference/source-assets/overload/runtime-inputs/performance/vesper-directional-aim-atlas.png"
     preview_dir = ROOT / "tmp/character-factory/vesper"
 
     for path in (

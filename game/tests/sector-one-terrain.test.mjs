@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { SECTOR_ONE_STRUCTURES, terrainContact, constrainTerrainActor, steerTerrainEnemy, hasSectorOneTerrain } from '../src/game/content/sectorOneTerrain.js';
-import { FLOOR_SIN, FLOOR_COS, toTerrainPosition, projectedGroundPosition } from '../src/render/sectorOne/projection.js';
+import { SECTOR_ONE_STRUCTURES } from '../src/game/content/sectorOneStructures.js';
+import { terrainContact, constrainTerrainActor, steerTerrainEnemy, hasRegionalTerrain } from '../src/game/content/regionalTerrain.js';
+import { FLOOR_SIN, FLOOR_COS, toTerrainPosition, projectedGroundPosition } from '../src/render/environment/projection.js';
 import { createSwarmState, createSwarmInput, stepSwarm } from '../src/swarm/engine.js';
 
 const state = () => createSwarmState({ expedition: true, regionId: 'wrong-engine-core', random: () => .5 });
@@ -16,14 +17,14 @@ test('3D floor projects exactly onto simulation coordinates at every ground poin
   }
 });
 
-test('legacy Sector 01 predicate stays scoped and the original center spawn stays clear', () => {
-  const s = state(); assert.equal(hasSectorOneTerrain(s), true);
+test('regional terrain predicate stays scoped and the original center spawn stays clear', () => {
+  const s = state(); assert.equal(hasRegionalTerrain(s), true);
   assert.equal(terrainContact(2048, 2048, 2048, 2048, 170), null);
   for (const site of SECTOR_ONE_STRUCTURES) {
     assert.ok(site.x - site.radius > 144 && site.x + site.radius < 3952);
     assert.ok(site.y - site.radius > 144 && site.y + site.radius < 3952);
   }
-  for (const patch of [{ regionId: 'glass-dune' }, { phase: 'boss' }, { expedition: null }]) assert.equal(hasSectorOneTerrain({ ...s, ...patch }), false);
+  for (const patch of [{ regionId: 'unknown' }, { phase: 'boss' }, { expedition: null }]) assert.equal(hasRegionalTerrain({ ...s, ...patch }), false);
 });
 
 test('fast swept movement cannot cross a tank, glancing travel slides, embedded drops are rescued', () => {

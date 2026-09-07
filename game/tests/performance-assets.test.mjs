@@ -9,34 +9,7 @@ function pngDimensions(bytes) {
   return [bytes.readUInt32BE(16), bytes.readUInt32BE(20)];
 }
 
-const PERFORMANCE_PNG_SPECS = Object.freeze([
-  ["hero/performance/survivor-directional-aim-atlas.png", 768, 768],
-  ["hero/performance/survivor-sword-directional-aim-atlas.png", 768, 768],
-  ["hero/performance/mika-directional-aim-atlas.png", 768, 768],
-  ["hero/performance/nox-directional-aim-atlas.png", 768, 768],
-  ["enemies/motion-v2/performance/suicide-drone-motion-atlas.png", 720, 480],
-  ["enemies/motion-v2/performance/rifleman-motion-atlas.png", 720, 480],
-  ["enemies/motion-v2/performance/sniper-motion-atlas.png", 720, 480],
-  ["allies/motion-v2/performance/hunter-drone-motion-atlas.png", 480, 384],
-  ["allies/motion-v2/performance/pulse-sentry-motion-atlas.png", 480, 384],
-  ["allies/motion-v2/performance/suppressor-drone-motion-atlas.png", 480, 384],
-  ["vfx/performance/combat-fx-atlas.png", 512, 384],
-  ["vfx/gates/performance/sovereign-gate-motion-atlas.png", 864, 144],
-  ["items/performance/healing-kit-motion-atlas.png", 384, 96],
-  ["campaign/performance/squad-traces-atlas.png", 576, 192],
-  ["boss/performance/wrong-engine-forms-atlas.png", 768, 256],
-  ["boss/motion-v2/performance/wrong-engine-motion-atlas.png", 1440, 960],
-  ["regions/glass-dune/performance/boss-forms-atlas.png", 768, 256],
-  ["regions/glass-dune/motion-v2/performance/mirror-tyrant-motion-atlas.png", 1440, 960],
-  ["regions/abyssal-archive/performance/boss-forms-atlas.png", 768, 256],
-  ["regions/abyssal-archive/motion-v2/performance/drowned-oracle-motion-atlas.png", 1440, 960],
-  ["regions/neon-foundry/performance/enemy-forms-atlas.png", 768, 192],
-  ["regions/neon-foundry/performance/boss-forms-atlas.png", 1152, 384],
-  ["regions/storm-spire/performance/enemy-forms-atlas.png", 768, 192],
-  ["regions/storm-spire/performance/boss-forms-atlas.png", 1152, 384],
-  ["regions/gene-vault/performance/enemy-forms-atlas.png", 768, 192],
-  ["regions/gene-vault/performance/boss-forms-atlas.png", 1152, 384],
-]);
+
 
 test("PERFORMANCE selects lighter paths without changing stable Phaser texture keys", async () => {
   const full = manifest.getGameAssetsForRegion("wrong-engine-core", "full", "pulse-rifle", ["aegis", "mika"]);
@@ -103,27 +76,28 @@ test("combat bundles load only unlocked operatives and the selected AEGIS weapon
   assert.equal(sword.has(manifest.ASSET_KEYS.swordSkillPixel), true);
 });
 
-test("generated low-memory atlases keep their authored grids and expected dimensions", async () => {
-  for (const [relativePath, width, height] of PERFORMANCE_PNG_SPECS) {
-    const bytes = await readFile(new URL(`../public/assets/overload/${relativePath}`, import.meta.url));
-    assert.deepEqual(pngDimensions(bytes), [width, height], relativePath);
-    assert.equal(bytes[25], 6, `${relativePath} must retain RGBA transparency`);
-  }
-
-  for (const relativePath of [
-    "defense/performance/haven-defense-grid.webp",
-    "defense/performance/haven-defense-grid-portrait.webp",
-    "environment/performance/sector-01-shattered-approach.webp",
-    "environment/performance/sector-02-flooded-memorial.webp",
-    "environment/performance/sector-03-engine-causeway.webp",
-    "environment/performance/boss-chamber.webp",
-    "regions/glass-dune/performance/route.webp",
-    "regions/glass-dune/performance/boss-room.webp",
-    "regions/abyssal-archive/performance/route.webp",
-    "regions/abyssal-archive/performance/boss-room.webp",
-  ]) {
-    const bytes = await readFile(new URL(`../public/assets/overload/${relativePath}`, import.meta.url));
-    assert.equal(bytes.subarray(0, 4).toString("ascii"), "RIFF", relativePath);
-    assert.equal(bytes.subarray(8, 12).toString("ascii"), "WEBP", relativePath);
+test("every active low-memory variant retains its format and authored grid", async () => {
+  const assets = new Map();
+  const collect = (value) => {
+    if (!value || typeof value !== 'object') return;
+    if (value.performancePath) assets.set(value.path, value);
+    else Object.values(value).forEach(collect);
+  };
+  collect(manifest);
+  for (const stage of ['haven-perimeter', 'relay-blackout', 'sovereign-night-siege']) collect(manifest.getDefenseGameAssets(stage));
+  assert.ok(assets.size >= 50, 'exercise the full current asset registry');
+  for (const asset of assets.values()) {
+    const [full, low] = await Promise.all([asset.path, asset.performancePath].map(relative => readFile(new URL('../public/' + relative.slice(2), import.meta.url))));
+    if (asset.path.endsWith('.png')) {
+      const [w,h] = pngDimensions(full), [lw,lh] = pngDimensions(low);
+      assert.equal(low[25], 6, asset.path + ' RGBA');
+      assert.ok(lw <= w && lh <= h, asset.path + ' bounded low-memory dimensions');
+      assert.equal(lw / w, lh / h, asset.path + ' uniform scale');
+      assert.equal(lw % (asset.columns || 1), 0, asset.path + ' columns');
+      assert.equal(lh % (asset.rows || 1), 0, asset.path + ' rows');
+    } else {
+      assert.equal(low.subarray(0,4).toString('ascii'), 'RIFF', asset.performancePath);
+      assert.equal(low.subarray(8,12).toString('ascii'), 'WEBP', asset.performancePath);
+    }
   }
 });

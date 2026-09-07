@@ -28,4 +28,7 @@ test("historical survivor and adversarial prototypes stay removed from active so
 
   const testEntries = await readdir(new URL("./", import.meta.url));
   assert.equal(testEntries.some((name) => /^(?:survivor|adversarial|neural-echo).*\.test\.mjs$/.test(name)), false);
+  for (const retired of ["src/game/engine.js", "src/game/equipment.js", "src/game/renderer.js", "src/swarm/renderer.js", "src/game/content/sectorOneTerrain.js", "tests/engine.test.mjs"]) {
+    await assert.rejects(access(new URL(`../${retired}`, import.meta.url)), { code: "ENOENT" });
+  }
 });

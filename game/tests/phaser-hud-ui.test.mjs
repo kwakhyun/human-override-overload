@@ -6,7 +6,7 @@ const root = new URL("../", import.meta.url);
 
 test("Phaser combat dock gives HP visual priority and exposes only the five manual input slots", async () => {
   const [app, styles, tacticalStyles] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+    Promise.all([readFile(new URL("src/App.jsx", root), "utf8"), readFile(new URL("src/ui/combat/ExpeditionCombatDock.jsx", root), "utf8")]).then(parts => parts.join("\n")),
     readFile(new URL("src/styles.css", root), "utf8"),
     readFile(new URL("src/styles/tactical-os.css", root), "utf8"),
   ]);
@@ -21,7 +21,7 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
     assert.ok(app.includes(slot[0]), `${slot[1]} slot should keep its visible keyboard binding`);
   }
   const slotStart = app.indexOf("const COMBAT_DOCK_SLOTS");
-  const slotEnd = app.indexOf("const REWARD_NAMES_KO", slotStart);
+  const slotEnd = app.indexOf("function resolveCombatDockSlot", slotStart);
   const slotContract = app.slice(slotStart, slotEnd);
   assert.match(slotContract, /label: "방벽 전개"/);
   assert.match(slotContract, /label: "항공 지원"/);
@@ -88,7 +88,7 @@ test("Phaser combat dock gives HP visual priority and exposes only the five manu
 
 test("level-up focus starts on the dialog, not option one, until real keyboard navigation", async () => {
   const [app, styles] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+    Promise.all([readFile(new URL("src/App.jsx", root), "utf8"), readFile(new URL("src/ui/combat/ExpeditionCombatDock.jsx", root), "utf8")]).then(parts => parts.join("\n")),
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
 
@@ -102,7 +102,7 @@ test("level-up focus starts on the dialog, not option one, until real keyboard n
 
 test("Phaser DOM HUD shows authored combat and transit cues without restoring a boss gate", async () => {
   const [app, styles] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+    Promise.all([readFile(new URL("src/App.jsx", root), "utf8"), readFile(new URL("src/ui/combat/ExpeditionCombatDock.jsx", root), "utf8")]).then(parts => parts.join("\n")),
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
 
@@ -136,7 +136,7 @@ test("Phaser DOM HUD shows authored combat and transit cues without restoring a 
 
 test("active HUD and HAVEN interactions expose Korean-first copy with NPC menu portraits", async () => {
   const [app, screens, styles, combatPresentation] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+    Promise.all([readFile(new URL("src/App.jsx", root), "utf8"), readFile(new URL("src/ui/combat/ExpeditionCombatDock.jsx", root), "utf8")]).then(parts => parts.join("\n")),
     readFile(new URL("src/ui/campaign/CampaignScreens.jsx", root), "utf8"),
     readFile(new URL("src/styles.css", root), "utf8"),
     readFile(new URL("src/ui/combat/combatPresentation.js", root), "utf8"),
@@ -159,7 +159,7 @@ test("active HUD and HAVEN interactions expose Korean-first copy with NPC menu p
 
 test("Escape pause is guarded from modal states and supports resume, local restart, and unlocked base exit", async () => {
   const [app, styles] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+    Promise.all([readFile(new URL("src/App.jsx", root), "utf8"), readFile(new URL("src/ui/combat/ExpeditionCombatDock.jsx", root), "utf8")]).then(parts => parts.join("\n")),
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
   assert.match(app, /const pausedRef = useRef\(false\)/);
@@ -184,7 +184,7 @@ test("Escape pause is guarded from modal states and supports resume, local resta
 
 test("combat onboarding follows only unlocked HUD skills and character tags render a transient side cut-in", async () => {
   const [app, main, cutsceneStyles] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+    Promise.all([readFile(new URL("src/App.jsx", root), "utf8"), readFile(new URL("src/ui/combat/ExpeditionCombatDock.jsx", root), "utf8")]).then(parts => parts.join("\n")),
     readFile(new URL("src/main.jsx", root), "utf8"),
     readFile(new URL("src/styles/tag-cutscene.css", root), "utf8"),
   ]);
@@ -205,7 +205,7 @@ test("combat onboarding follows only unlocked HUD skills and character tags rend
 
 test("airstrike banner dedupe and independent manual ability SFX stay separate", async () => {
   const [app, combatPresentation] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+    Promise.all([readFile(new URL("src/App.jsx", root), "utf8"), readFile(new URL("src/ui/combat/ExpeditionCombatDock.jsx", root), "utf8")]).then(parts => parts.join("\n")),
     readFile(new URL("src/ui/combat/combatPresentation.js", root), "utf8"),
   ]);
   assert.match(app, /const airstrikeBannerShownRef = useRef\(false\)/);
@@ -236,7 +236,7 @@ test("airstrike banner dedupe and independent manual ability SFX stay separate",
 
 test("result actions keep retry and base return as two readable responsive buttons", async () => {
   const [app, styles] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+    Promise.all([readFile(new URL("src/App.jsx", root), "utf8"), readFile(new URL("src/ui/combat/ExpeditionCombatDock.jsx", root), "utf8")]).then(parts => parts.join("\n")),
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
   const result = app.slice(app.indexOf("function ResultScreen"), app.indexOf("function App"));
@@ -250,7 +250,7 @@ test("result actions keep retry and base return as two readable responsive butto
 
 test("phone landscape keeps rewards, defeat actions, dialogue advance, and movement controls inside the viewport", async () => {
   const [app, styles] = await Promise.all([
-    readFile(new URL("src/App.jsx", root), "utf8"),
+    Promise.all([readFile(new URL("src/App.jsx", root), "utf8"), readFile(new URL("src/ui/combat/ExpeditionCombatDock.jsx", root), "utf8")]).then(parts => parts.join("\n")),
     readFile(new URL("src/styles.css", root), "utf8"),
   ]);
   const landscapeStart = styles.lastIndexOf("@media (max-height: 600px) and (orientation: landscape)");

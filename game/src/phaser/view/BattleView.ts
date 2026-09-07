@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { getRegionalTerrain } from '../../game/content/regionalTerrain.js';
-import type { SectorOneEnvironment } from '../../render/sectorOne/SectorOneEnvironment';
+import type { RegionalEnvironment } from '../../render/environment/RegionalEnvironment';
 import { ASSET_KEYS } from "../../game/assets/manifest";
 import { EXPEDITION_WORLD_HEIGHT, EXPEDITION_WORLD_WIDTH, WORLD_HEIGHT, WORLD_WIDTH } from "../../swarm/engine.js";
 import {
@@ -502,7 +502,7 @@ export class BattleView {
   private bossRevealFromZoom = 1.08;
   private userZoomFactor = 1;
   private screenShakeEnabled = true;
-  private terrain3D?: SectorOneEnvironment;
+  private terrain3D?: RegionalEnvironment;
   private terrainDisposed = false;
   private terrainFrame: any;
   private terrainFallback?: Phaser.GameObjects.Graphics;
@@ -656,8 +656,8 @@ export class BattleView {
     this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, dispose);
     this.scene.events.once(Phaser.Scenes.Events.DESTROY, dispose);
     this.terrainLoading = true;
-    this.ready = import('../../render/sectorOne/SectorOneEnvironment').then(({ SectorOneEnvironment }) => {
-      if (!this.terrainDisposed) this.terrain3D = new SectorOneEnvironment(this.scene.game.canvas, regionId);
+    this.ready = import('../../render/environment/RegionalEnvironment').then(({ RegionalEnvironment }) => {
+      if (!this.terrainDisposed) this.terrain3D = new RegionalEnvironment(this.scene.game.canvas, regionId);
     }).catch(error => {
       // Existing 2D map plus identical solid footprints remain playable.
       console.warn('Regional terrain uses the 2D fallback:', error);

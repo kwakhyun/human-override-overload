@@ -212,7 +212,7 @@ def main():
         print(job['id'], reports[-1]['size'], reports[-1]['frames'])
     qa = ROOT / 'qa/sprite-quality-v3'; qa.mkdir(parents=True, exist_ok=True)
     (qa/'packing-report.json').write_text(json.dumps(reports, indent=2), encoding='utf-8')
-    review = ROOT/'public/tools/combat-sprite-index.json'
+    review = ROOT/'tools/combat-sprite-index.json'
     review.parent.mkdir(parents=True,exist_ok=True)
     review.write_text(json.dumps([dict(id=j['id'],columns=j['columns'],rows=j['rows'],
         version=hashlib.sha256((OUT/(j['id']+'.png')).read_bytes()).hexdigest()[:16])

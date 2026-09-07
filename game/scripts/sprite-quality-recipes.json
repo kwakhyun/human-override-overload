@@ -325,7 +325,7 @@
   },
   {
     "id": "aegis-operative",
-    "sourcePath": "public/assets/overload/hero/survivor-directional-aim-atlas.png",
+    "sourcePath": "reference/source-assets/overload/runtime-inputs/survivor-directional-aim-atlas.png",
     "columns": 8,
     "rows": 8,
     "cell": 128,
@@ -335,7 +335,7 @@
   },
   {
     "id": "aegis-sword-operative",
-    "sourcePath": "public/assets/overload/hero/survivor-sword-directional-aim-atlas.png",
+    "sourcePath": "reference/source-assets/overload/runtime-inputs/survivor-sword-directional-aim-atlas.png",
     "columns": 8,
     "rows": 8,
     "cell": 128,

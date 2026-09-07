@@ -29,7 +29,7 @@ test("P1 portrait combat keeps the wide lens while enlarging actors and exposing
 
 test("P1 modals trap focus, make background surfaces inert, and expose mobile carousel position", async () => {
   const [app, screens, focusTrap, responsiveStyles] = await Promise.all([
-    read("src/App.jsx"),
+    Promise.all([read("src/App.jsx"), read("src/ui/combat/ExpeditionCombatDock.jsx")]).then(parts => parts.join("\n")),
     read("src/ui/campaign/CampaignScreens.jsx"),
     read("src/ui/useDialogFocusTrap.js"),
     read("src/styles/p1-p2.css"),
@@ -91,7 +91,7 @@ test("P2 character details use staged disclosure and sortie videos only preload 
 
 test("P1 and P2 polish exposes opening protection, focus HUD controls, trustworthy results, and upgrade filtering", async () => {
   const [app, engine, screens, responsiveStyles] = await Promise.all([
-    read("src/App.jsx"),
+    Promise.all([read("src/App.jsx"), read("src/ui/combat/ExpeditionCombatDock.jsx")]).then(parts => parts.join("\n")),
     read("src/swarm/engine.js"),
     read("src/ui/campaign/CampaignScreens.jsx"),
     read("src/styles/p1-p2.css"),
@@ -125,7 +125,7 @@ test("P1 and P2 polish exposes opening protection, focus HUD controls, trustwort
 
 test("desktop command UI preserves readable hierarchy, clear keyboard affordances, and short-window density", async () => {
   const [app, responsiveStyles] = await Promise.all([
-    read("src/App.jsx"),
+    Promise.all([read("src/App.jsx"), read("src/ui/combat/ExpeditionCombatDock.jsx")]).then(parts => parts.join("\n")),
     read("src/styles/p1-p2.css"),
   ]);
 

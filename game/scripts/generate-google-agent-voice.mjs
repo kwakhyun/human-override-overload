@@ -11,16 +11,6 @@ export const GOOGLE_TTS_VOICE = "ko-KR-Chirp3-HD-Kore";
 export const GOOGLE_TTS_SPEAKING_RATE = 1.3;
 
 export const AGENT_VOICE_LINES = Object.freeze({
-  empPulse: Object.freeze({
-    key: "Q",
-    file: "emp-pulse-start.mp3",
-    text: "EMP 전개.",
-  }),
-  aegisWard: Object.freeze({
-    key: "E",
-    file: "aegis-ward-start.mp3",
-    text: "방벽 전개.",
-  }),
   stratosRun: Object.freeze({
     key: "F",
     file: "stratos-run-v2.mp3",

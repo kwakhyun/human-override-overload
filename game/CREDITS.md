@@ -1,5 +1,7 @@
 # Assets, Tools, and Licenses
 
+> 2026-09-07 정리: 아래 프롬프트와 경로는 제작 당시의 이력입니다. 현행 파일 경로는 `src/game/assets/manifest.ts`, 제작 입력은 `reference/source-assets/overload/runtime-inputs/`를 기준으로 합니다. 폐기된 바이너리와 생성기는 Git 이력에서 확인하며, 이력 경로가 현재 작업 폴더에 모두 존재한다는 뜻은 아닙니다.
+
 2026-09-06 재생 동작 보정: 기존 BGM 파일과 제작 프롬프트는 변경하지 않았다. 로비와 준비 메뉴에서 동일 곡을 유지하고, 영상 일시 정지 및 곡별 재생 위치 복원을 앱 공통 재생기로 처리한다. 새 음원 제작·도입은 없다.
 
 ## Project-original game assets

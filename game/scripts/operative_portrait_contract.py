@@ -19,7 +19,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 HERO_DIR = ROOT / "public/assets/overload/hero"
-CONTRACT_PATH = HERO_DIR / "operative-portrait-contract.json"
+CONTRACT_PATH = ROOT / "reference/source-assets/overload/runtime-inputs/operative-portrait-contract.json"
 CANVAS = (864, 1536)
 PORTRAITS = {
     "aegis": "survivor-portrait-v2.webp",

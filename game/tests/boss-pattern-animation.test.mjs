@@ -25,12 +25,12 @@ test("warning and active phases address the first and second halves of each row"
   assert.equal(animation.resolveBossPatternAtlasFrame("unknown", {}), null);
 });
 
-test("both shipped sheets keep exact 64px cells and RGBA transparency", async () => {
+test("both shipped sheets keep authored HD cells and RGBA transparency", async () => {
   for (const [name, width, height] of [
-    ["boss-pattern-common-pixel-atlas.png", 384, 384],
-    ["boss-pattern-regional-pixel-atlas.png", 384, 256],
+    ["boss-patterns.png", 1152, 1152],
+    ["regional-patterns.png", 1152, 768],
   ]) {
-    const png = await readFile(new URL(`public/assets/overload/vfx/pixel/${name}`, root));
+    const png = await readFile(new URL(`public/assets/overload/quality-v3/${name}`, root));
     assert.equal(png.toString("ascii", 1, 4), "PNG");
     assert.equal(png.readUInt32BE(16), width);
     assert.equal(png.readUInt32BE(20), height);

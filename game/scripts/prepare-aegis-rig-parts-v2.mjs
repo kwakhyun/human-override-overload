@@ -9,7 +9,7 @@ const W=864,H=1536,N=W*H;
 const root=path.resolve('reference/source-assets/overload/live2d-production/aegis');
 const out=path.join(root,'parts-v2');await mkdir(out,{recursive:true});
 const src=await sharp('public/assets/overload/hero/survivor-portrait-v2.webp').ensureAlpha().raw().toBuffer();
-const old=JSON.parse(await readFile(path.join(root,'parts-v1/parts.json'),'utf8'));
+const old=JSON.parse(await readFile(path.resolve('reference/source-assets/overload/runtime-inputs/aegis-part-segmentation.json'),'utf8'));
 const removed=/^(Eye_|Brow_|Mouth$|Seam_Residual$)/;
 let regions=old.layers.filter(l=>!removed.test(l.name)).map(l=>({name:l.name,group:l.group,points:l.points}));
 function set(name,points){regions.find(r=>r.name===name).points=points;}

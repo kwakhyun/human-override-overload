@@ -115,9 +115,9 @@
   "assets": {
     "sourceMaster": "reference/source-assets/nox-portrait-master.png",
     "portraitRuntime": "public/assets/overload/hero/nox-portrait-v1.webp",
-    "directionalAtlas": "public/assets/overload/hero/nox-directional-aim-atlas.png",
-    "performanceAtlas": "public/assets/overload/hero/performance/nox-directional-aim-atlas.png",
-    "abilityAtlas": "public/assets/overload/vfx/manual/nox-ability-hd-atlas.png",
+    "directionalAtlas": "public/assets/overload/quality-v3/nox-operative.png",
+    "performanceAtlas": "public/assets/overload/quality-v3/performance/nox-operative.png",
+    "abilityAtlas": "public/assets/overload/quality-v3/nox-skills.png",
     "portraitBaseline": {
       "width": 864,
       "height": 1536,

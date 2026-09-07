@@ -9,7 +9,7 @@ function pngDimensions(bytes) {
   return [bytes.readUInt32BE(16), bytes.readUInt32BE(20)];
 }
 
-test("beam sword loadout selects only its authored directional and pixel atlases", async () => {
+test("beam sword loadout selects only its authored directional and unified skill atlases", async () => {
   const rifle = manifest.getGameAssetsForRegion("wrong-engine-core", "full", "pulse-rifle");
   const sword = manifest.getGameAssetsForRegion("wrong-engine-core", "full", "beam-sword");
   const rifleKeys = new Set(rifle.map((asset) => asset.key));
@@ -23,10 +23,22 @@ test("beam sword loadout selects only its authored directional and pixel atlases
   assert.equal(swordKeys.has(manifest.ASSET_KEYS.swordSkillPixel), true);
 
   const specs = [
-    ["../public/assets/overload/hero/survivor-sword-directional-aim-atlas.png", 1024, 1024],
-    ["../public/assets/overload/hero/performance/survivor-sword-directional-aim-atlas.png", 768, 768],
-    ["../public/assets/overload/vfx/pixel/sword-skill-pixel-atlas.png", 384, 256],
-  ];
+    [
+        "../public/assets/overload/quality-v3/aegis-sword-operative.png",
+        1024,
+        1024
+    ],
+    [
+        "../public/assets/overload/quality-v3/performance/aegis-sword-operative.png",
+        768,
+        768
+    ],
+    [
+        "../public/assets/overload/quality-v3/sword-auto-skills.png",
+        1536,
+        1024
+    ]
+];
   for (const [path, width, height] of specs) {
     const bytes = await readFile(new URL(path, import.meta.url));
     assert.deepEqual(pngDimensions(bytes), [width, height], path);

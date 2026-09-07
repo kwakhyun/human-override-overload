@@ -26,7 +26,7 @@ test('every active quality atlas has RGBA square-cell full and mobile grids', as
 });
 
 test('review metadata matches runtime grids and current image bytes', async () => {
-  const index=JSON.parse(await readFile(new URL('../public/tools/combat-sprite-index.json',import.meta.url),'utf8'));
+  const index=JSON.parse(await readFile(new URL('../tools/combat-sprite-index.json',import.meta.url),'utf8'));
   const assets=REGION_IDS.flatMap(r=>[...getGameAssetsForRegion(r),...getGameAssetsForRegion(r,'full','beam-sword'),...getBossGameAssetsForRegion(r)]).concat(getDefenseGameAssets());
   assert.equal(index.length,28);
   for(const item of index){

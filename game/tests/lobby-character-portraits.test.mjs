@@ -42,7 +42,7 @@ test("lobby animates the approved key art without restoring the rejected Cubism 
 });
 
 test("operative key art obeys the shared floor-anchor and visible-scale contract", async () => {
-  const contractUrl = new URL("public/assets/overload/hero/operative-portrait-contract.json", root);
+  const contractUrl = new URL("reference/source-assets/overload/runtime-inputs/operative-portrait-contract.json", root);
   const contract = JSON.parse(await readFile(contractUrl, "utf8"));
   const rules = contract.rules;
   const heightRatios = [];

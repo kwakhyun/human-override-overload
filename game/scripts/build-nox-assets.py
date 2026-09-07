@@ -230,9 +230,9 @@ def main() -> None:
 
     source_master = ROOT / "reference/source-assets/nox-portrait-master.png"
     runtime_portrait = ROOT / "public/assets/overload/hero/nox-portrait-v1.webp"
-    atlas_path = ROOT / "public/assets/overload/hero/nox-directional-aim-atlas.png"
-    performance_path = ROOT / "public/assets/overload/hero/performance/nox-directional-aim-atlas.png"
-    vfx_path = ROOT / "public/assets/overload/vfx/manual/nox-ability-hd-atlas.png"
+    atlas_path = ROOT / "reference/source-assets/overload/runtime-inputs/nox-directional-aim-atlas.png"
+    performance_path = ROOT / "reference/source-assets/overload/runtime-inputs/performance/nox-directional-aim-atlas.png"
+    vfx_path = ROOT / "reference/source-assets/overload/runtime-inputs/nox-ability-hd-atlas.png"
     preview_dir = ROOT / "tmp/character-factory/nox"
     output_paths = [source_master, runtime_portrait]
     if atlas is not None:

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const policy = await import(new URL("../scripts/production-asset-policy.mjs", import.meta.url));
 
-test("the production asset policy is explicit, unique, and retains authoring inputs in public", async () => {
+test("the production asset policy is explicit, unique, and keeps authoring inputs outside public", async () => {
   const paths = policy.AUTHORING_ONLY_ASSET_PATHS;
   assert.equal(new Set(paths).size, paths.length);
   assert.ok(paths.length >= 40);
@@ -15,8 +15,11 @@ test("the production asset policy is explicit, unique, and retains authoring inp
 
   const publicRoot = fileURLToPath(new URL("../public/", import.meta.url));
   const report = policy.inspectAuthoringOnlyAssets(publicRoot);
-  assert.equal(report.missing, 0, "authoring inputs stay available for reproducible generation and provenance review");
-  assert.ok(report.bytes > 20 * 1024 * 1024, "the production policy must remove a material amount of unused payload");
+  assert.equal(report.present, 0, "retired art must not return to the public tree");
+  const { inspectRuntimeAssets } = await import("../scripts/lib/runtime-assets.mjs");
+  const inventory = await inspectRuntimeAssets();
+  assert.deepEqual(inventory.missing, [], "all region, operative, defense, DOM and audio paths exist");
+  assert.deepEqual(inventory.unowned, [], "public assets must have a runtime owner");
 });
 
 test("the production pruner deletes only explicitly listed client copies", async () => {

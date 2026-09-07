@@ -173,12 +173,12 @@ def save_operative_runtime(
 
 def main() -> None:
     save_operative_runtime(
-        HERO_DIR / "survivor-portrait.png",
+        ROOT / "reference/source-assets/overload/runtime-inputs/survivor-portrait.png",
         HERO_DIR / "survivor-portrait-v2.webp",
         visible_height=1464,
     )
     save_operative_runtime(
-        HERO_DIR / "mika-portrait.png",
+        ROOT / "reference/source-assets/overload/runtime-inputs/mika-portrait.png",
         HERO_DIR / "mika-portrait-v2.webp",
         # MIKA is canonically shorter than AEGIS; the restrained 5% difference
         # preserves that identity without the former arbitrary oversized read.

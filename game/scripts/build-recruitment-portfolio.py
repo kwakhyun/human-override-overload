@@ -1,14 +1,13 @@
 """Recruitment edit of the supplied AI portfolio; evidence baseline 75b6e0c.
 
-Reuses the previous PDF's typography helpers, not its authored pages.
+Uses shared layout helpers and durable evidence under docs/project/media/recruitment.
 Screenshots are actual QA/user captures, cropped only for readable detail.
 No hiring outcomes, user metrics or new benchmarks are asserted.
 """
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-helpers=(ROOT/'scripts/update-ai-portfolio.py').read_text(encoding='utf-8').split('# 1 / Cover')[0]
-helpers=helpers.replace('human-override-overload-ai-report-updated.pdf','human-override-overload-recruitment-portfolio.pdf').replace('2026.09.06 개정','2026.09.07 개정').replace('Updated nine-page portfolio based on release 75b6e0c','Recruitment portfolio; verified release 75b6e0c').replace('2026.09.06\')','2026.09.07\')')
-exec(compile(helpers,str(__file__),'exec'))
+from lib.portfolio_pdf import (OUT, TMP, W, H, INK, MUTED, CYAN, PALE, LINE, PAPER, DARK, PINK, colors, Image, ImageReader, PdfReader, begin_document, fill, text, para, box, card, band, shot, base, end, steps)
+c=begin_document()
 
 URL='https://human-override-overload.khyun97.chatgpt.site'
 def crop(src,name,rect):
@@ -23,11 +22,11 @@ def footerlink(y):
  text(40,y,'게임 플레이 → human-override-overload.khyun97.chatgpt.site',9,CYAN,True)
  c.linkURL(URL,(40,H-y-20,555,H-y+3),relative=0)
 
-before=Path('C:/Users/82105/AppData/Local/Temp')
-guide_before=crop(before/'codex-clipboard-417c8131-b994-4179-ab68-d04668044175.png','guide-before',(1420,100,1890,690))
-guide_after=crop(ROOT/'qa/ui-defense-guide-1440-1.png','guide-after',(980,88,1420,370))
-drone_before=crop(before/'codex-clipboard-e0a5d83d-d88c-4db6-a554-97fcce8fe085.png','drone-before',(455,100,760,490))
-drone_after=crop(ROOT/'qa/ui-drone-abyssal-archive.png','drone-after',(1040,190,1310,580))
+before=ROOT/'docs/project/media/recruitment'
+guide_before=crop(before/'defense-before.png','guide-before',(1420,100,1890,690))
+guide_after=crop(ROOT/'docs/project/media/recruitment/ui-defense-guide-1440-1.png','guide-after',(980,88,1420,370))
+drone_before=crop(before/'drone-before.png','drone-before',(455,100,760,490))
+drone_after=crop(ROOT/'docs/project/media/recruitment/ui-drone-abyssal-archive.png','drone-after',(1040,190,1310,580))
 
 
 def arrow(x1,y1,x2,y2,color=CYAN):
@@ -67,7 +66,7 @@ text(40,803,'채용 제출용 포트폴리오 · 2026.09.07',8,'#BCD8E0');text(5
 
 # 2: A one-page reading map and clear ownership boundary.
 base(2,'PROJECT & ROLE','무엇을 만들고, 무엇을 결정했는가','6개 구역과 4명 전투원으로 구성한 탑다운 액션 게임입니다.')
-shot(ROOT/'qa/ui-portrait-aegis-1440.png',40,137,515,245,'실제 로비 화면 · 연구·장비·출격과 캐릭터 상호작용을 한 공간에 배치했습니다.')
+shot(ROOT/'docs/project/media/recruitment/ui-portrait-aegis-1440.png',40,137,515,245,'실제 로비 화면 · 연구·장비·출격과 캐릭터 상호작용을 한 공간에 배치했습니다.')
 steps(423,[('기지 준비','연구·장비·지원'),('출격 편성','최대 두 전투원'),('전투·성장','웨이브와 보스'),('귀환','보상과 다음 구역')],79)
 row(527,'내가 결정한 것','플레이 방향, 전투·성장 규칙, 출격 제한과 UI 우선순위를 정했습니다. 직접 플레이한 결과를 바탕으로 수정 범위와 품질 승인, 공개 여부를 판단했습니다.',81)
 row(625,'AI와 수행한 것','Codex에 코드 탐색·구현·반복 수정을 맡기고, 생성 도구로 이미지·음향 후보를 제작했습니다. 결과는 실제 게임에 적용한 뒤 화면과 동작을 검수했습니다.',81)
@@ -87,7 +86,7 @@ text(40,763,'설계 기준: 전장을 가리지 않으면서, 현재 선택과 �
 
 # 4: Enlarge the selected pair instead of shrinking a complete mobile screen.
 base(4,'CASE 02 · GAME RULES','출격 때 고른 두 명만 교대하도록','편성 화면의 선택이 실제 전투까지 그대로 이어지도록 규칙을 정리했습니다.')
-party=crop(ROOT/'qa/ui-sortie-1920.png','sortie-selected-pair',(800,100,1540,572))
+party=crop(ROOT/'docs/project/media/recruitment/ui-sortie-1920.png','sortie-selected-pair',(800,100,1540,572))
 shot(party,40,138,515,328)
 text(40,475,'실제 출격 준비 화면에서 편성 영역 발췌 · 선봉 이지스 / 교대 미카',8.5,MUTED)
 box(40,503,515,39,PALE)
@@ -112,7 +111,7 @@ text(40,774,'에셋의 해상도보다 먼저 확인한 것: 원본 시점, 프�
 
 # 6: Detail crop with editorial markers connects the image to the system design.
 base(6,'SYSTEM EXTENSION','3D 지형을 더하면서 전투는 유지하기','기존 2D 캐릭터와 전투 감각을 살리고 구역별 공간 표현부터 확장했습니다.')
-terrain=crop(ROOT/'qa/storm-spire-3d-structure.png','terrain-detail',(480,135,1150,610))
+terrain=crop(ROOT/'docs/project/media/recruitment/storm-spire-3d-structure.png','terrain-detail',(480,135,1150,610))
 shot(terrain,40,137,515,365)
 marker(451,273,1);marker(178,382,2);arrow(191,382,216,382,'#73DFEE')
 box(56,153,166,35,DARK,DARK);text(67,163,'폭풍 첨탑 · 실제 검수 화면',9,'#FFFFFF',True)
