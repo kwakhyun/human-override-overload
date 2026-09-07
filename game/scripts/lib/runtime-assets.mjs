@@ -28,7 +28,7 @@ export async function collectRuntimeAssetPaths(root = PROJECT_ROOT) {
   for (const stage of ['haven-perimeter', 'relay-blackout', 'sovereign-night-siege']) collect(manifest.getDefenseGameAssets(stage));
   for (const file of [path.join(root, 'index.html'), ...walkFiles(path.join(root, 'src')).filter((file) => /\.(?:css|jsx?|tsx?)$/.test(file))]) {
     const source = readFileSync(file, 'utf8');
-    for (const match of source.matchAll(/(?:\.\/|\/)?(assets\/[\w./-]+\.(?:png|webp|jpe?g|mp3|mp4|json))/g)) paths.add(match[1]);
+    for (const match of source.matchAll(/(?:\.\/|\/)?(assets\/[\w./-]+\.(?:png|webp|jpe?g|mp3|mp4|wav|ogg|json))/g)) paths.add(match[1]);
   }
   return [...paths].sort();
 }

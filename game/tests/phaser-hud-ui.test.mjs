@@ -221,7 +221,7 @@ test("airstrike banner dedupe and independent manual ability SFX stay separate",
   const soundsEnd = combatPresentation.indexOf("const WEAPON_EVENT_SOUNDS", soundsStart);
   const sounds = combatPresentation.slice(soundsStart, soundsEnd);
   assert.match(sounds, /empPulseActivated: "emp"/);
-  assert.match(sounds, /aegisWardActivated: "collect"/);
+  assert.match(sounds, /aegisWardActivated: "shield"/);
   assert.match(sounds, /stratosRunSweep: "rail"/);
   assert.match(sounds, /stratosRunImpact: "explosion"/);
   assert.match(sounds, /helixTempestStarted: "bossBreak"/);

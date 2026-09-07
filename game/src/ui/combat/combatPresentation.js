@@ -100,7 +100,7 @@ export function localizeObjective(name, hud) {
 const EVENT_SOUNDS = Object.freeze({
   swarmStart: "enemyAlert",
   shot: "shoot",
-  swordAttack: "rail",
+  swordAttack: "sword",
   enemyKilled: "kill",
   levelUp: "analysis",
   rewardChosen: "upgrade",
@@ -147,7 +147,7 @@ const EVENT_SOUNDS = Object.freeze({
   enemySelfDestruct: "explosion",
   healthKitPicked: "collect",
   empPulseActivated: "emp",
-  aegisWardActivated: "collect",
+  aegisWardActivated: "shield",
   stratosRunWarning: "bossTelegraph",
   stratosRunSweep: "rail",
   stratosRunImpact: "explosion",
@@ -162,9 +162,12 @@ const EVENT_SOUNDS = Object.freeze({
 
 const WEAPON_EVENT_SOUNDS = Object.freeze({
   pulse: "shoot",
+  mikaHaloBlade: "mikaShot",
+  mikaHaloCarnival: "mikaShot",
+  noxWarrantThread: "noxShot",
   pulseOverdrive: "emp",
-  vesperVectorNeedle: "rail",
-  vesperLockLance: "rail",
+  vesperVectorNeedle: "vesperShot",
+  vesperLockLance: "vesperShot",
   vesperVectorCorona: "emp",
   scatter: "shoot",
   rail: "rail",
@@ -386,6 +389,7 @@ export function resolveEventSound(event) {
     if (kind === "rail" || kind === "airstrike" || kind === "omegaLaser") return "rail";
     if (kind === "rocket") return "bossBreak";
     if (event?.type === "explosion") return "explosion";
+    if (["pulse", "scatter", "mikaHaloBlade", "mikaHaloCarnival", "noxWarrantThread", "vesperVectorNeedle", "vesperLockLance"].includes(kind)) return "enemyHit";
     return WEAPON_EVENT_SOUNDS[kind] || "enemyHit";
   }
   return direct;

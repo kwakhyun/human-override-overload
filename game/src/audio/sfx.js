@@ -1,3 +1,6 @@
+import { SFX_SAMPLES } from './sfxSamples.js';
+import { createSfxSampleBank } from './sfxSampleBank.js';
+
 function safeAudioContext() {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   return AudioContext ? new AudioContext() : null;
@@ -118,6 +121,10 @@ const PRIORITY_EVENTS = new Set([
 
 export function createSfxEngine() {
   let context = null;
+  let sampleBank = null;
+  const sampleSequence = new Map();
+  let samplePlays = 0;
+  let fallbackPlays = 0;
   let enabled = true;
   let volume = 0.78;
   let master = null;
@@ -138,7 +145,7 @@ export function createSfxEngine() {
         compressor.attack.value = 0.002;
         compressor.release.value = 0.16;
         master = context.createGain();
-        master.gain.value = volume;
+        master.gain.value = enabled ? volume : 0;
         master.connect(compressor).connect(context.destination);
 
         whiteNoise = context.createBuffer(1, Math.ceil(context.sampleRate * WHITE_NOISE_SECONDS), context.sampleRate);
@@ -161,9 +168,11 @@ export function createSfxEngine() {
         wet.gain.value = 0.18;
         convolver.connect(wet).connect(master);
         reverb = convolver;
+        sampleBank = createSfxSampleBank(context);
+        void sampleBank.preload();
       }
     }
-    if (context?.state === "suspended") context.resume();
+    if (context?.state === "suspended") context.resume()?.catch?.(() => {});
     return context;
   }
 
@@ -181,11 +190,12 @@ export function createSfxEngine() {
   function reserveVoice() {
     if (activeVoices >= currentVoiceLimit) return null;
     activeVoices += 1;
+    const reservedContext = context;
     let released = false;
     return () => {
       if (released) return;
       released = true;
-      activeVoices = Math.max(0, activeVoices - 1);
+      if (context === reservedContext) activeVoices = Math.max(0, activeVoices - 1);
     };
   }
 
@@ -294,19 +304,54 @@ export function createSfxEngine() {
     tone({ frequency: 2500, endFrequency: 740, duration: 0.045, type: "sawtooth", volume: volume * 0.32, filterFrequency: 4200 });
   }
 
+  function playSample(name, config) {
+    if (!config || !sampleBank) return false;
+    const index = sampleSequence.get(name) || 0;
+    const path = config.paths[index % config.paths.length];
+    const buffer = sampleBank.get(path);
+    if (!buffer) return false;
+    const release = reserveVoice();
+    if (!release) return true;
+    let source, gain;
+    try {
+      source = context.createBufferSource();
+      gain = context.createGain();
+      source.buffer = buffer;
+      gain.gain.value = config.gain;
+      source.connect(gain).connect(master);
+      trackVoice(source, [source, gain], release);
+      source.start(context.currentTime);
+      sampleSequence.set(name, index + 1);
+      samplePlays += 1;
+      return true;
+    } catch {
+      source?.disconnect();
+      gain?.disconnect();
+      release();
+      return false;
+    }
+  }
+
   function play(name) {
     if (!enabled) return;
     const now = typeof performance === "undefined" ? Date.now() : performance.now();
-    const cooldown = EVENT_COOLDOWNS_MS[name] || 0;
+    if (!ensureContext()) return;
+    const sample = SFX_SAMPLES[name];
+    const fallbackName = sample?.fallback || name;
+    const cooldown = sample?.cooldownMs ?? EVENT_COOLDOWNS_MS[name] ?? 0;
     const previous = lastPlayedAt.get(name) ?? -Infinity;
     if (now - previous < cooldown) return;
     const voiceLimit = PRIORITY_EVENTS.has(name) ? MAX_ACTIVE_VOICE_LIMIT : NORMAL_ACTIVE_VOICE_LIMIT;
-    const voiceCost = EVENT_VOICE_COSTS[name] || 1;
+    const selectedPath = sample?.paths[(sampleSequence.get(name) || 0) % sample.paths.length];
+    const hasSample = Boolean(selectedPath && sampleBank?.get(selectedPath));
+    const voiceCost = hasSample ? 1 : (EVENT_VOICE_COSTS[fallbackName] || 1);
     if (activeVoices + voiceCost > voiceLimit) return;
     lastPlayedAt.set(name, now);
     currentVoiceLimit = voiceLimit;
     try {
-      switch (name) {
+      if (playSample(name, sample)) return;
+      fallbackPlays += 1;
+      switch (fallbackName) {
       case "start":
         tone({ frequency: 150, endFrequency: 320, duration: 0.3, volume: 0.045, wet: 0.3 });
         tone({ frequency: 360, endFrequency: 880, duration: 0.2, delay: 0.14, volume: 0.03, wet: 0.25 });
@@ -532,16 +577,22 @@ export function createSfxEngine() {
   return {
     start() {
       ensureContext();
+      return sampleBank?.preload() || Promise.resolve();
     },
     setEnabled(value) {
-      enabled = value;
+      enabled = Boolean(value);
+      if (master) master.gain.setTargetAtTime(enabled ? volume : 0, context?.currentTime || 0, 0.018);
     },
     setVolume(value) {
       volume = Math.max(0, Math.min(1, Number(value) || 0));
-      if (master) master.gain.setTargetAtTime(volume, context?.currentTime || 0, 0.018);
+      if (master) master.gain.setTargetAtTime(enabled ? volume : 0, context?.currentTime || 0, 0.018);
     },
     play,
+    getDiagnostics: () => ({ ...(sampleBank?.stats() || { ready: 0, total: 0, failures: 0 }), samplePlays, fallbackPlays, activeVoices, enabled, volume }),
     dispose() {
+      sampleBank?.dispose();
+      sampleBank = null;
+      sampleSequence.clear();
       lastPlayedAt.clear();
       activeVoices = 0;
       whiteNoise = null;
