@@ -1,12 +1,5 @@
 # Project Instructions
 
-## Sample effects — 2026-09-08
-
-- Current SFX direction is dry, low mechanical menus and recorded firearm/blast attacks. Of 38 PCM16 WAVs, 25 use realism-v2 recordings and 13 retain Kenney v1. Unchanged inputs live in runtime-inputs/audio/{realism,kenney}; preserve provenance, license links and hashes under docs/audio. Rebuild replacements with scripts/build-realistic-sfx.py. Do not restore bright menu chimes/arcade laser shots or alter music/voice assets.
-- The app-lifetime SFX engine loads four samples concurrently, caches decoded buffers and falls back immediately to synthesis on missing/unready audio. Never replay stale events after decode. Preserve mute/volume, cooldowns, normal/priority voice limits and disposal cancellation. Launch and projectile-hit cues are separate; only the authoritative shot event owns operative firing audio.
-- Local audition is tools/sfx-review.html; focused checks are tests/sfx-samples.test.mjs and scripts/verify-sfx-samples.mjs.
-
-
 ## Repository ownership — 2026-09-07
 
 - Current instructions here override historical checkpoints below. App orchestration stays in `src/App.jsx`; combat HUD presentation lives in `src/ui/combat/ExpeditionCombatDock.jsx`. All six regions use `src/render/environment/RegionalEnvironment.ts` and the shared projection. Keep simulation, camera clock, collision and rendering ownership unchanged.

@@ -2477,13 +2477,3 @@ The transport yard, cooling tanks, turbines, relay towers, rail tracks, grates a
 방어전은 상단 상태, 전장, 하단 명령을 분리한다. 넓은 화면은 다섯 명령 구역을 쓰며, 1300px 이하 또는 낮은 가로 화면에서는 포탑 건설/포대 관리/전술 명령 탭을 사용한다. 안내창은 1열 본문과 실제 대상 크기를 측정한 강조 테두리를 사용한다. 포탑 이름과 비용, 공격력/사거리/공격 간격, 강화/철거/전문화 정보를 읽을 수 있게 정리했다. ESC는 일시정지/재개이며 기지 복귀는 명시적인 버튼을 사용한다. 설치 후 다음 빈 패드 자동 선택은 유지한다.
 
 검증: TypeScript와 관련 63개 테스트 통과. 실제 브라우저에서 1440x900, 390x844, 844x390 방어전 가이드 4단계, 설치/강화/전문화/판매/공세 시작/ESC 일시정지를 확인했다. 1920x900 및 390x844 구역 선택과 기본 두 명 출격, 네 캐릭터의 데스크톱/모바일 말풍선, 1-3구역 실제 전투의 3D 표시를 확인했다. 전체 캠페인 클리어와 실기기 성능 인증은 포함하지 않는다. 이번 변경은 로컬 수정이며 별도 배포하지 않았다.
-
-
-## Downloaded sound effects · 2026-09-08
-
-Kenney (https://kenney.nl), CC0-1.0: Sci-fi Sounds, Impact Sounds, Interface Sounds, RPG Audio. 38 selected source files, adapted as mono PCM16 WAV with trimmed/faded tails and controlled levels. Original files and license texts are retained. Per-file attribution, URLs, processing and SHA-256 records: [Sound sources](docs/audio/sfx-sources.json); [integration notes](docs/audio/README.md).
-
-
-## Recorded SFX replacement · 2026-09-08
-
-25 of the initial 38 runtime effects now use CC0 recordings: The Free Firearm Sound Library by Ben Jaszczak, Brian Nelson, Kevin Heras and Matthew Nanney; Equipment Clicks III by LFA; and 25 CC0 bang / firework SFX by rubberduck. Explosions are edits of fireworks recordings, not military bomb field recordings. Thirteen Kenney effects remain. [Source pages, unchanged inputs and processing](docs/audio/realistic-sfx-sources.md); [per-file provenance](docs/audio/sfx-sources.json).

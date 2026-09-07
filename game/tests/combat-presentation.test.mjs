@@ -33,6 +33,6 @@ test("combat presentation resolves character portraits and event sounds from dec
       mode: "standalone",
     },
   );
-  assert.equal(resolveEventSound({ type: "shot", kind: "vesperVectorNeedle" }), "vesperShot");
+  assert.equal(resolveEventSound({ type: "shot", kind: "vesperVectorNeedle" }), "rail");
   assert.equal(resolveEventSound({ type: "bossPatternFire", pattern: "depthCollapse" }), "emp");
 });

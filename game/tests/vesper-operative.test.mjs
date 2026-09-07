@@ -126,7 +126,7 @@ test("VESPER vector projectiles have dedicated Phaser trails and sound identity"
   assert.match(battleView, /type\.includes\("vesperlocklance"\)/);
   assert.match(battleView, /const vesperNeedle = projectileKind\.includes\("vesper"\)/);
   assert.match(battleView, /graphics\.lineStyle\(1\.25, 0x8ff4ff, 0\.7\)/);
-  assert.match(combatPresentation, /vesperVectorNeedle: "vesperShot"/);
+  assert.match(combatPresentation, /vesperVectorNeedle: "rail"/);
   assert.match(combatPresentation, /vesperVectorCorona: "emp"/);
 });
 
