@@ -2482,3 +2482,8 @@ The transport yard, cooling tanks, turbines, relay towers, rail tracks, grates a
 ## Downloaded sound effects · 2026-09-08
 
 Kenney (https://kenney.nl), CC0-1.0: Sci-fi Sounds, Impact Sounds, Interface Sounds, RPG Audio. 38 selected source files, adapted as mono PCM16 WAV with trimmed/faded tails and controlled levels. Original files and license texts are retained. Per-file attribution, URLs, processing and SHA-256 records: [Sound sources](docs/audio/sfx-sources.json); [integration notes](docs/audio/README.md).
+
+
+## Recorded SFX replacement · 2026-09-08
+
+25 of the initial 38 runtime effects now use CC0 recordings: The Free Firearm Sound Library by Ben Jaszczak, Brian Nelson, Kevin Heras and Matthew Nanney; Equipment Clicks III by LFA; and 25 CC0 bang / firework SFX by rubberduck. Explosions are edits of fireworks recordings, not military bomb field recordings. Thirteen Kenney effects remain. [Source pages, unchanged inputs and processing](docs/audio/realistic-sfx-sources.md); [per-file provenance](docs/audio/sfx-sources.json).

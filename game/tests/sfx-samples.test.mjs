@@ -108,6 +108,18 @@ test('decode failure keeps synthesis playable without retry storms',async()=>{
     assert.ok(getContext().started.length>0);
   });
 });
+test('offline menu interactions use short non-tonal clicks instead of bright oscillator sweeps',async()=>{
+  await withEngine(async(engine,getContext,tick)=>{
+    await engine.start();
+    for(const cue of ['click','uiHover','uiConfirm','uiClose','start','upgrade','defenseSelect']){
+      tick();const first=getContext().started.length;engine.play(cue);
+      const voices=getContext().started.slice(first);
+      assert.equal(voices.length,1);
+      assert.ok(voices.every(n=>n.buffer),'menu fallback must use noise, never pitched oscillators');
+      voices.forEach(n=>n.onended?.());
+    }
+  },async()=>({ok:false}));
+});
 test('mute affects active voices, volume persists, cooldowns and normal/priority caps remain bounded',async()=>{
   await withEngine(async(engine,getContext,tick)=>{
     await engine.start();engine.play('shoot');engine.play('shoot');

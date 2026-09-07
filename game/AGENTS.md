@@ -2,7 +2,7 @@
 
 ## Sample effects — 2026-09-08
 
-- Kenney CC0 source effects and their unchanged inputs live in runtime-inputs/audio/kenney, with provenance and licenses under docs/audio. Ship only the 38 selected PCM16 WAVs registered in src/audio/sfxSamples.js. Preserve source hashes and do not alter music or voice assets.
+- Current SFX direction is dry, low mechanical menus and recorded firearm/blast attacks. Of 38 PCM16 WAVs, 25 use realism-v2 recordings and 13 retain Kenney v1. Unchanged inputs live in runtime-inputs/audio/{realism,kenney}; preserve provenance, license links and hashes under docs/audio. Rebuild replacements with scripts/build-realistic-sfx.py. Do not restore bright menu chimes/arcade laser shots or alter music/voice assets.
 - The app-lifetime SFX engine loads four samples concurrently, caches decoded buffers and falls back immediately to synthesis on missing/unready audio. Never replay stale events after decode. Preserve mute/volume, cooldowns, normal/priority voice limits and disposal cancellation. Launch and projectile-hit cues are separate; only the authoritative shot event owns operative firing audio.
 - Local audition is tools/sfx-review.html; focused checks are tests/sfx-samples.test.mjs and scripts/verify-sfx-samples.mjs.
 

@@ -300,8 +300,8 @@ export function createSfxEngine() {
   function weaponCrack({ body = 150, snap = 2400, volume = 0.05, tail = 0.18 } = {}) {
     noise({ duration: 0.035, volume: volume * 1.15, filterType: "highpass", filterFrequency: snap, q: 0.3 });
     noise({ duration: tail, volume: volume * 0.48, delay: 0.012, filterFrequency: 1100, q: 0.75, wet: 0.42 });
-    tone({ frequency: body * 1.8, endFrequency: body, duration: 0.075, type: "square", volume, filterFrequency: 1800, wet: 0.12 });
-    tone({ frequency: 2500, endFrequency: 740, duration: 0.045, type: "sawtooth", volume: volume * 0.32, filterFrequency: 4200 });
+    tone({ frequency: body, endFrequency: body * 0.55, duration: 0.09, type: "sine", volume, filterFrequency: 600 });
+    noise({ duration: 0.06, volume: volume * 0.45, filterFrequency: 680, q: 0.35 });
   }
 
   function playSample(name, config) {
@@ -352,6 +352,11 @@ export function createSfxEngine() {
       if (playSample(name, sample)) return;
       fallbackPlays += 1;
       switch (fallbackName) {
+      case "mechanical":
+        // The very first menu action may precede decoding: keep it dry and dark too.
+        noise({ duration: name === "uiHover" ? 0.035 : 0.08, volume: name === "uiHover" ? 0.012 : 0.04,
+          filterType: "lowpass", filterFrequency: 1100, q: 0.4, attack: 0.002 });
+        break;
       case "start":
         tone({ frequency: 150, endFrequency: 320, duration: 0.3, volume: 0.045, wet: 0.3 });
         tone({ frequency: 360, endFrequency: 880, duration: 0.2, delay: 0.14, volume: 0.03, wet: 0.25 });
@@ -375,10 +380,7 @@ export function createSfxEngine() {
         tone({ frequency: 310, endFrequency: 82, duration: 0.12, type: "square", volume: 0.024, filterFrequency: 1550 });
         break;
       case "rail":
-        noise({ duration: 0.055, volume: 0.07, filterType: "highpass", filterFrequency: 1900 });
-        noise({ duration: 0.34, volume: 0.035, delay: 0.018, filterFrequency: 760, q: 0.55, wet: 0.7 });
-        tone({ frequency: 2100, endFrequency: 76, duration: 0.32, type: "sawtooth", volume: 0.055, filterFrequency: 4600, wet: 0.35 });
-        tone({ frequency: 92, endFrequency: 48, duration: 0.28, type: "sine", volume: 0.065, delay: 0.025 });
+        weaponCrack({ body: 115, snap: 1900, volume: 0.065, tail: 0.34 });
         break;
       case "enemyShot":
         weaponCrack({ body: 105, snap: 1800, volume: 0.038, tail: 0.21 });
