@@ -1,0 +1,30 @@
+{
+  "tool": "Built-in image_gen",
+  "prompt": "EDIT TARGET: the supplied cropped anime character head. Production Live2D blink endpoint. Make ONLY ONE tiny local change: close both eyes naturally in a relaxed blink, with beautifully drawn gently curved upper eyelids and delicate dark lashes at the original eye positions. Keep the exact same head angle, face width, framing, nose, mouth, eyebrows, every hair strand, outfit, colors, shading, and transparent background. No new design, no recentering, no portrait change. Strong clean anime line art identical to source, never realistic. Return the identical composition and aspect ratio with both eyes fully closed, no visible iris or sclera. Do not add text, panels or checkerboard.",
+  "images": [
+    {
+      "id": "aegis",
+      "source": "reference/source-assets/overload/live2d-production/anime-v2/aegis-closed-source.png",
+      "generatedFile": "C:\\Users\\82105\\.codex\\generated_images\\01a07971-205a-7952-9abf-c9fcf096a695\\exec-22799997-4f6a-4e60-a16e-44bfac1af320.png",
+      "sha256": "83beb0b6b2dedb45fe852d42df8a154d44a2720a9186c98fe882a4c86ec4ca3e"
+    },
+    {
+      "id": "mika",
+      "source": "reference/source-assets/overload/live2d-production/anime-v2/mika-closed-source.png",
+      "generatedFile": "C:\\Users\\82105\\.codex\\generated_images\\01a07971-205a-7952-9abf-c9fcf096a695\\exec-41972ef7-1434-45f4-af98-4d668065a613.png",
+      "sha256": "c4095e3de82394f839149dc3cb722bfdd961ed97beaa0da3f43c1c0143b36cae"
+    },
+    {
+      "id": "vesper",
+      "source": "reference/source-assets/overload/live2d-production/anime-v2/vesper-closed-source.png",
+      "generatedFile": "C:\\Users\\82105\\.codex\\generated_images\\01a07971-205a-7952-9abf-c9fcf096a695\\exec-2dd8a1a0-05f2-4097-a735-d97e6875f4da.png",
+      "sha256": "98b2b5af2acfccc1f77779bc5325e5d288ffbb5be2541453e638331324a84d1c"
+    },
+    {
+      "id": "nox",
+      "source": "reference/source-assets/overload/live2d-production/anime-v2/nox-closed-source.png",
+      "generatedFile": "C:\\Users\\82105\\.codex\\generated_images\\01a07971-205a-7952-9abf-c9fcf096a695\\exec-4ca6cb61-c095-416a-9dcc-683dda755fe3.png",
+      "sha256": "b93130d72f3b3a543fce491390d7b22af8a00fcead34c39dd48b6489cb62ec96"
+    }
+  ]
+}

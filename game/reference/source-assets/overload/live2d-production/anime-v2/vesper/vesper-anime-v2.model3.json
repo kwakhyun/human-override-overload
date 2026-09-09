@@ -1,0 +1,10 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "vesper-anime-v2.moc3",
+		"Textures": [
+			"vesper-anime-v2.2048/texture_00.png"
+		],
+		"DisplayInfo": "vesper-anime-v2.cdi3.json"
+	}
+}

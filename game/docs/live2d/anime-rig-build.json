@@ -1,0 +1,621 @@
+{
+  "date": "2026-09-09",
+  "editor": "Cubism 5.4 alpha2",
+  "exportTarget": "SDK 5.0",
+  "headRotation": "fixed-neutral",
+  "models": [
+    {
+      "id": "aegis",
+      "mocSha256": "7eebd0f4d88a590b96961d47b1228104e09d61edfd042f8a6fc47be233608d20",
+      "cmoSha256": "f9b45493858426bffba43726aa684137dd411e5a319796499349b8ed359bbd44",
+      "controls": [
+        {
+          "id": "Rig_Hair_Fringe_Center",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.65,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Fringe_L",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.6,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Fringe_R",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.65,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Side_L",
+          "parameter": "ParamHairSide",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.5,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Side_R",
+          "parameter": "ParamHairSide",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.5,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Arm_L",
+          "parameter": "ParamArmL",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.25,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Arm_R",
+          "parameter": "ParamArmR",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.25,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Coat_L",
+          "parameter": "ParamCoatL",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.22,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Coat_R",
+          "parameter": "ParamCoatR",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.22,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Back_L",
+          "parameter": "ParamHairBack",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.7,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Back_R",
+          "parameter": "ParamHairBack",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.6,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Torso",
+          "parameter": "ParamBreath",
+          "keys": [
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Eye_L",
+          "parameter": "ParamEyeLOpen",
+          "keys": [
+            0,
+            1
+          ],
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Eye_R",
+          "parameter": "ParamEyeROpen",
+          "keys": [
+            0,
+            1
+          ],
+          "status": "Authored and verified in exported MOC3"
+        }
+      ]
+    },
+    {
+      "id": "mika",
+      "mocSha256": "d0a8635e93f9102c353c650fea3f40651e336aeaa5bce19c8a7da16efdc133f8",
+      "cmoSha256": "47939b398a10569f7f1f5084b29449a6303c4717edf40a2472764714e5ea7ada",
+      "controls": [
+        {
+          "id": "Rig_Hair_Fringe_Center",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.65,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Fringe_L",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.6,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Fringe_R",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.65,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Side_L",
+          "parameter": "ParamHairSide",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.5,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Side_R",
+          "parameter": "ParamHairSide",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.5,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Arm_L",
+          "parameter": "ParamArmL",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.25,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Arm_R",
+          "parameter": "ParamArmR",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.25,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Coat_L",
+          "parameter": "ParamCoatL",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.22,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Coat_R",
+          "parameter": "ParamCoatR",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.22,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Back_L",
+          "parameter": "ParamHairBack",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.7,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Back_R",
+          "parameter": "ParamHairBack",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.6,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Torso",
+          "parameter": "ParamBreath",
+          "keys": [
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Eye_L",
+          "parameter": "ParamEyeLOpen",
+          "keys": [
+            0,
+            1
+          ],
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Eye_R",
+          "parameter": "ParamEyeROpen",
+          "keys": [
+            0,
+            1
+          ],
+          "status": "Authored and verified in exported MOC3"
+        }
+      ]
+    },
+    {
+      "id": "vesper",
+      "mocSha256": "ad3eb9deef89858bf31c21d57b6077146cc36d6ce545d7ff2c2bbd32ab7c2467",
+      "cmoSha256": "a321a227d568aff03c50d18827e2b84b97df25a638c9645bb3240a15650640d2",
+      "controls": [
+        {
+          "id": "Rig_Hair_Fringe_Center",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.65,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Fringe_L",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.6,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Fringe_R",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.65,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Side_R",
+          "parameter": "ParamHairSide",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.5,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Arm_L",
+          "parameter": "ParamArmL",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.25,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Arm_R",
+          "parameter": "ParamArmR",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.25,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Coat_L",
+          "parameter": "ParamCoatL",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.22,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Coat_R",
+          "parameter": "ParamCoatR",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.22,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Back_L",
+          "parameter": "ParamHairBack",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.7,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Back_R",
+          "parameter": "ParamHairBack",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.6,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Torso",
+          "parameter": "ParamBreath",
+          "keys": [
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Eye_L",
+          "parameter": "ParamEyeLOpen",
+          "keys": [
+            0,
+            1
+          ],
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Eye_R",
+          "parameter": "ParamEyeROpen",
+          "keys": [
+            0,
+            1
+          ],
+          "status": "Authored and verified in exported MOC3"
+        }
+      ]
+    },
+    {
+      "id": "nox",
+      "mocSha256": "e5289c7764737f224c2a099f78f90acf3c5fc2a7b7a2f071a0ac45cd92115eed",
+      "cmoSha256": "b98ab785296bbfd0df454ac3cf87b44c7c55d7c5c51a05b136c5bf8af99f26a3",
+      "controls": [
+        {
+          "id": "Rig_Hair_Fringe_Center",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.65,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Fringe_L",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.6,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Fringe_R",
+          "parameter": "ParamHairFront",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.65,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Side_L",
+          "parameter": "ParamHairSide",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.5,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Side_R",
+          "parameter": "ParamHairSide",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.5,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Arm_L",
+          "parameter": "ParamArmL",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.25,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Arm_R",
+          "parameter": "ParamArmR",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.25,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Coat_L",
+          "parameter": "ParamCoatL",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.22,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Coat_R",
+          "parameter": "ParamCoatR",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.22,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Back_L",
+          "parameter": "ParamHairBack",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": -0.7,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Hair_Back_R",
+          "parameter": "ParamHairBack",
+          "keys": [
+            -1,
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0.6,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Torso",
+          "parameter": "ParamBreath",
+          "keys": [
+            0,
+            1
+          ],
+          "amplitudeDegrees": 0,
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Eye_L",
+          "parameter": "ParamEyeLOpen",
+          "keys": [
+            0,
+            1
+          ],
+          "status": "Authored and verified in exported MOC3"
+        },
+        {
+          "id": "Rig_Eye_R",
+          "parameter": "ParamEyeROpen",
+          "keys": [
+            0,
+            1
+          ],
+          "status": "Authored and verified in exported MOC3"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,452 @@
+{
+  "character": "mika",
+  "canvas": [
+    960,
+    1280
+  ],
+  "source": "reference/source-assets/overload/runtime-inputs/anime-2026-09-09/transparent/mika.png",
+  "sourceSha256": "f9a316af54b296312b6f73f5f3a882632f59fcaea75baa0ad990c1831d7f6b34",
+  "neutralPixelDifferences": 0,
+  "status": "Separated material; rig and deformation QA pending",
+  "layers": [
+    {
+      "name": "ClosedEye_R",
+      "pivot": [
+        590,
+        385
+      ],
+      "bounds": [
+        545,
+        358,
+        644,
+        420
+      ],
+      "defaultOpacity": 0,
+      "pivotBounds": [
+        588,
+        383,
+        592,
+        387
+      ]
+    },
+    {
+      "name": "ClosedEye_L",
+      "pivot": [
+        480,
+        344
+      ],
+      "bounds": [
+        427,
+        307,
+        524,
+        378
+      ],
+      "defaultOpacity": 0,
+      "pivotBounds": [
+        478,
+        342,
+        482,
+        346
+      ]
+    },
+    {
+      "name": "Hair_Fringe_Center",
+      "pivot": [
+        573,
+        214
+      ],
+      "bounds": [
+        518,
+        194,
+        595,
+        377
+      ],
+      "overlapPixels": 0,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        571,
+        212,
+        575,
+        216
+      ]
+    },
+    {
+      "name": "Hair_Fringe_L",
+      "pivot": [
+        489,
+        204
+      ],
+      "bounds": [
+        409,
+        176,
+        564,
+        416
+      ],
+      "overlapPixels": 0,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        487,
+        202,
+        491,
+        206
+      ]
+    },
+    {
+      "name": "Hair_Fringe_R",
+      "pivot": [
+        615,
+        227
+      ],
+      "bounds": [
+        595,
+        193,
+        685,
+        494
+      ],
+      "overlapPixels": 0,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        613,
+        225,
+        617,
+        229
+      ]
+    },
+    {
+      "name": "Hair_Side_L",
+      "pivot": [
+        417,
+        350
+      ],
+      "bounds": [
+        399,
+        328,
+        440,
+        603
+      ],
+      "overlapPixels": 719,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        415,
+        348,
+        419,
+        352
+      ]
+    },
+    {
+      "name": "Hair_Side_R",
+      "pivot": [
+        633,
+        389
+      ],
+      "bounds": [
+        590,
+        364,
+        641,
+        582
+      ],
+      "overlapPixels": 1191,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        631,
+        387,
+        635,
+        391
+      ]
+    },
+    {
+      "name": "Eye_L",
+      "pivot": [
+        480,
+        344
+      ],
+      "bounds": [
+        435,
+        313,
+        522,
+        376
+      ],
+      "overlapPixels": 57,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        478,
+        342,
+        482,
+        346
+      ]
+    },
+    {
+      "name": "Eye_R",
+      "pivot": [
+        590,
+        385
+      ],
+      "bounds": [
+        547,
+        360,
+        629,
+        418
+      ],
+      "overlapPixels": 52,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        588,
+        383,
+        592,
+        387
+      ]
+    },
+    {
+      "name": "Mouth",
+      "pivot": [
+        509,
+        439
+      ],
+      "bounds": [
+        476,
+        414,
+        543,
+        465
+      ],
+      "overlapPixels": 0,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        507,
+        437,
+        511,
+        441
+      ]
+    },
+    {
+      "name": "Hand_L",
+      "pivot": [
+        258,
+        645
+      ],
+      "bounds": [
+        196,
+        531,
+        355,
+        723
+      ],
+      "overlapPixels": 0,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        256,
+        643,
+        260,
+        647
+      ]
+    },
+    {
+      "name": "Hand_R",
+      "pivot": [
+        713,
+        1066
+      ],
+      "bounds": [
+        596,
+        962,
+        777,
+        1125
+      ],
+      "overlapPixels": 0,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        711,
+        1064,
+        715,
+        1068
+      ]
+    },
+    {
+      "name": "Arm_L",
+      "pivot": [
+        194,
+        781
+      ],
+      "bounds": [
+        41,
+        690,
+        286,
+        1114
+      ],
+      "overlapPixels": 770,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        192,
+        779,
+        196,
+        783
+      ]
+    },
+    {
+      "name": "Arm_R",
+      "pivot": [
+        783,
+        690
+      ],
+      "bounds": [
+        717,
+        622,
+        936,
+        1155
+      ],
+      "overlapPixels": 1015,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        781,
+        688,
+        785,
+        692
+      ]
+    },
+    {
+      "name": "Coat_L",
+      "pivot": [
+        295,
+        554
+      ],
+      "bounds": [
+        147,
+        488,
+        398,
+        1280
+      ],
+      "overlapPixels": 8858,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        293,
+        552,
+        297,
+        556
+      ]
+    },
+    {
+      "name": "Coat_R",
+      "pivot": [
+        678,
+        575
+      ],
+      "bounds": [
+        543,
+        507,
+        828,
+        1280
+      ],
+      "overlapPixels": 6568,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        676,
+        573,
+        680,
+        577
+      ]
+    },
+    {
+      "name": "Face_Neck",
+      "pivot": [
+        492,
+        511
+      ],
+      "bounds": [
+        365,
+        187,
+        641,
+        559
+      ],
+      "overlapPixels": 16381,
+      "concealedFacePixels": 15090,
+      "pivotBounds": [
+        490,
+        509,
+        494,
+        513
+      ]
+    },
+    {
+      "name": "Hair_Back_L",
+      "pivot": [
+        369,
+        205
+      ],
+      "bounds": [
+        24,
+        74,
+        426,
+        914
+      ],
+      "overlapPixels": 6254,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        367,
+        203,
+        371,
+        207
+      ]
+    },
+    {
+      "name": "Hair_Back_R",
+      "pivot": [
+        686,
+        255
+      ],
+      "bounds": [
+        646,
+        160,
+        936,
+        853
+      ],
+      "overlapPixels": 5619,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        684,
+        253,
+        688,
+        257
+      ]
+    },
+    {
+      "name": "Hair_Crown",
+      "pivot": [
+        480,
+        150
+      ],
+      "bounds": [
+        401,
+        93,
+        713,
+        267
+      ],
+      "overlapPixels": 5680,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        478,
+        148,
+        482,
+        152
+      ]
+    },
+    {
+      "name": "Torso",
+      "pivot": [
+        480,
+        1240
+      ],
+      "bounds": [
+        33,
+        181,
+        936,
+        1280
+      ],
+      "overlapPixels": 38346,
+      "concealedFacePixels": 0,
+      "pivotBounds": [
+        478,
+        1238,
+        482,
+        1242
+      ]
+    }
+  ]
+}

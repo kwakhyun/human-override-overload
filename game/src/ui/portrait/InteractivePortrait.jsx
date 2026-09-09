@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { createPortraitMotion, PORTRAIT_RIGS, portraitFit } from './portraitMotion.js';
-import { applyPortraitFit } from './portraitFraming.js';
+import { createCubismMotion } from './cubismMotion.js';
+import { CUBISM_PORTRAITS } from '../../game/assets/manifest.ts';
+import { applyPortraitFit, portraitFit } from './portraitFraming.js';
 import './portrait.css';
 
 const ZONES = [
@@ -8,30 +9,39 @@ const ZONES = [
 ];
 
 // Mount with a character key: artwork, timers, gaze and GPU resources have one owner.
-export function InteractivePortrait({ source, characterId, name, onReact }) {
+export function InteractivePortrait({ source, characterId, name, onReact, presentation = 'profile' }) {
   const rootRef = useRef(null), imageRef = useRef(null), canvasRef = useRef(null);
   const engineRef = useRef(null), callbackRef = useRef(onReact);
   const [ready, setReady] = useState(false);
   useEffect(() => { callbackRef.current = onReact; }, [onReact]);
   useEffect(() => {
     const root = rootRef.current, img = imageRef.current, canvas = canvasRef.current;
-    if (!PORTRAIT_RIGS[characterId]) return;
-    const motion = createPortraitMotion(characterId);
+    const assets = CUBISM_PORTRAITS[characterId];
+    if (!assets) return;
+    setReady(false);
+    const motion = createCubismMotion(characterId);
+    const abort = new AbortController();
     engineRef.current = motion;
-    let renderer, disposed = false, failed = false, raf = 0, previous = 0, visible = true;
+    let renderer, loading = false, disposed = false, failed = false, raf = 0, previous = 0, visible = true;
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const reduced = () => preference.matches || document.documentElement.classList.contains('game-reduced-motion');
     const canAnimate = () => !disposed && !failed && renderer && visible && !document.hidden && !root.closest('[inert]');
+    const fail = () => {
+      failed = true; cancelAnimationFrame(raf); raf = 0; previous = 0;
+      abort.abort();
+      renderer?.destroy(); renderer = undefined;
+      if (!disposed) setReady(false);
+    };
     const resize = () => {
       const { width, height } = root.getBoundingClientRect();
-      const fit = renderer?.resize(width,height,window.devicePixelRatio) || portraitFit(width,height,characterId);
+      const fit = renderer?.resize(width,height,window.devicePixelRatio) || portraitFit(width,height,characterId,presentation);
       applyPortraitFit(root,fit);
-      if (renderer) renderer.draw(motion.update(0,reduced()));
+      if (renderer) { try { renderer.draw(motion.update(0,reduced())); } catch { fail(); } }
     };
     const frame = (time) => {
       raf = 0;
       if (!canAnimate()) { previous = 0; return; }
-      renderer.draw(motion.update(previous ? (time-previous)/1000 : 0,reduced()));
+      try { renderer.draw(motion.update(previous ? (time-previous)/1000 : 0,reduced())); } catch { fail(); return; }
       previous = time;
       if (!reduced()) raf = requestAnimationFrame(frame);
     };
@@ -40,20 +50,22 @@ export function InteractivePortrait({ source, characterId, name, onReact }) {
       if (!raf) raf = requestAnimationFrame(frame);
     };
     const begin = async () => {
-      if (renderer || disposed || failed || !img.naturalWidth) return;
+      if (renderer || loading || disposed || failed || !img.naturalWidth) return;
+      loading = true;
       try {
-        const { createPortraitRenderer } = await import('./portraitRenderer.js');
+        const { createCubismRenderer } = await import('./cubismRenderer.js');
         if (disposed || renderer) return;
-        renderer = createPortraitRenderer(canvas,img,characterId);
+        const created = await createCubismRenderer(canvas,assets,characterId,presentation,abort.signal);
+        if (disposed || failed) { created.destroy(); return; }
+        renderer = created;
         resize();
+        if (failed) return;
         setReady(true);
         wake();
-      } catch { failed = true; if (!disposed) setReady(false); }
+      } catch { fail(); }
     };
     const contextLost = (event) => {
-      event.preventDefault(); failed = true;
-      cancelAnimationFrame(raf); raf = 0;
-      if (!disposed) setReady(false);
+      event.preventDefault(); fail();
     };
     const observer = new ResizeObserver(resize);
     observer.observe(root);
@@ -69,20 +81,20 @@ export function InteractivePortrait({ source, characterId, name, onReact }) {
     if (img.complete) begin();
     resize();
     return () => {
-      disposed = true; engineRef.current = null;
+      disposed = true; abort.abort(); engineRef.current = null;
       cancelAnimationFrame(raf); observer.disconnect(); intersection.disconnect(); attributes.disconnect();
       document.removeEventListener('visibilitychange',wake);
       preference.removeEventListener('change',wake); img.removeEventListener('load',begin);
       canvas.removeEventListener('webglcontextlost',contextLost);
       renderer?.destroy();
     };
-  }, [source, characterId]);
+  }, [source, characterId, presentation]);
   const react = (zone) => {
     engineRef.current?.react(zone);
     callbackRef.current?.(zone.startsWith('arm') ? 'arms' : zone,zone);
   };
   return (
-    <div ref={rootRef} className={`interactive-portrait${ready ? ' is-rendered' : ''}`} data-portrait-renderer={ready ? 'artwork-mesh' : 'static-fallback'}
+    <div ref={rootRef} className={`interactive-portrait${ready ? ' is-rendered' : ''}`} data-portrait-renderer={ready ? 'cubism' : 'static-fallback'}
       onPointerMove={(event) => {
         if (event.pointerType !== 'mouse') return;
         const box = event.currentTarget.getBoundingClientRect();

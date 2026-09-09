@@ -13,7 +13,7 @@ function shader(gl, type, source) {
 }
 const vec = (values) => `vec${values.length}(${values.map(n => Number(n).toFixed(5)).join(',')})`;
 
-export function createPortraitRenderer(canvas, source, characterId) {
+export function createPortraitRenderer(canvas, source, characterId, presentation = 'profile') {
   const rig = PORTRAIT_RIGS[characterId];
   const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: true, depth: false, stencil: false, preserveDrawingBuffer: false });
   if (!gl || !rig) throw new Error('Portrait WebGL unavailable');
@@ -120,10 +120,10 @@ export function createPortraitRenderer(canvas, source, characterId) {
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,textureSource);
   gl.generateMipmap(gl.TEXTURE_2D);
   const uniforms = Object.fromEntries(['u_fit','u_poseA','u_poseB','u_idle'].map(key=>[key,gl.getUniformLocation(program,key)]));
-  let width = 1, height = 1, fit = portraitFit(1,1,characterId);
+  let width = 1, height = 1, fit = portraitFit(1,1,characterId,presentation);
   return {
     resize(w,h,dpr = 1) {
-      width = Math.max(1,w); height = Math.max(1,h); fit = portraitFit(width,height,characterId);
+      width = Math.max(1,w); height = Math.max(1,h); fit = portraitFit(width,height,characterId,presentation);
       canvas.width = Math.round(width*Math.min(2,dpr)); canvas.height = Math.round(height*Math.min(2,dpr));
       gl.viewport(0,0,canvas.width,canvas.height);
       return fit;

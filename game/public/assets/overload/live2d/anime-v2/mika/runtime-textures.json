@@ -1,0 +1,351 @@
+{
+  "version": 1,
+  "canvas": [
+    960,
+    1280
+  ],
+  "size": 2048,
+  "padding": 24,
+  "textures": [
+    "runtime-texture-0.png",
+    "runtime-texture-1.png"
+  ],
+  "meshes": {
+    "Torso": {
+      "page": 0,
+      "source": [
+        33,
+        181,
+        936,
+        1280
+      ],
+      "atlas": [
+        24,
+        24,
+        903,
+        1099
+      ],
+      "sha256": "60eacf33240e84006dd3e91f385d63d3f060a2f8232fe5bd4bb2db959e11e9df"
+    },
+    "Hair_Back_L": {
+      "page": 0,
+      "source": [
+        24,
+        74,
+        426,
+        914
+      ],
+      "atlas": [
+        975,
+        24,
+        402,
+        840
+      ],
+      "sha256": "37afff5925193509272ba9f46763b9ffe25dbec0744a935b3b7241daa0b1aa95"
+    },
+    "Coat_L": {
+      "page": 0,
+      "source": [
+        147,
+        488,
+        398,
+        1280
+      ],
+      "atlas": [
+        1425,
+        24,
+        251,
+        792
+      ],
+      "sha256": "b735040776141212f2564ddb7f6d00f68c47d76dfee222a5582e536a7e7c2df2"
+    },
+    "Coat_R": {
+      "page": 0,
+      "source": [
+        543,
+        507,
+        828,
+        1280
+      ],
+      "atlas": [
+        1724,
+        24,
+        285,
+        773
+      ],
+      "sha256": "fa4f1e562ccce6a0c6ee0d1863afc68e891f15f6000cbcf9e54883385dff1d2b"
+    },
+    "Hair_Back_R": {
+      "page": 0,
+      "source": [
+        646,
+        160,
+        936,
+        853
+      ],
+      "atlas": [
+        24,
+        1171,
+        290,
+        693
+      ],
+      "sha256": "dca4a7d2b298cbbfc538dcd4f19cad3964ccfdd7bf20bc88aa1f7b182d15d787"
+    },
+    "Arm_R": {
+      "page": 0,
+      "source": [
+        717,
+        622,
+        936,
+        1155
+      ],
+      "atlas": [
+        362,
+        1171,
+        219,
+        533
+      ],
+      "sha256": "afb466a5efbab55406a8cf9044fdaf95525166e9351b04a85c5692d69e8eff04"
+    },
+    "Arm_L": {
+      "page": 0,
+      "source": [
+        41,
+        690,
+        286,
+        1114
+      ],
+      "atlas": [
+        629,
+        1171,
+        245,
+        424
+      ],
+      "sha256": "4144d48a906b8b2261d2f938b2e932b28614cad7bdc5b2d4cac21b8ee750ca21"
+    },
+    "Face_Neck": {
+      "page": 0,
+      "source": [
+        365,
+        187,
+        641,
+        559
+      ],
+      "atlas": [
+        922,
+        1171,
+        276,
+        372
+      ],
+      "sha256": "2a080752ab1f40c12dfe253f2bd9d05b091b591d9a7cfb03b17a873beea509ca"
+    },
+    "Hair_Fringe_R": {
+      "page": 0,
+      "source": [
+        595,
+        193,
+        685,
+        494
+      ],
+      "atlas": [
+        1246,
+        1171,
+        90,
+        301
+      ],
+      "sha256": "27df284643f3c33d71f49f9051a0d2818cef15612f8e84cc4178c7a6d6dc3329"
+    },
+    "Hair_Side_L": {
+      "page": 0,
+      "source": [
+        399,
+        328,
+        440,
+        603
+      ],
+      "atlas": [
+        1384,
+        1171,
+        41,
+        275
+      ],
+      "sha256": "960c139400bb46b8eb020ae1d50fe870d126b271f9ea16b54a9ac10628e3adec"
+    },
+    "Hair_Fringe_L": {
+      "page": 0,
+      "source": [
+        409,
+        176,
+        564,
+        416
+      ],
+      "atlas": [
+        1473,
+        1171,
+        155,
+        240
+      ],
+      "sha256": "e9c887f5b5dce463e02139528153f6a14b3deae0ef20bd2c63d74323350ba4a2"
+    },
+    "Hair_Side_R": {
+      "page": 0,
+      "source": [
+        590,
+        364,
+        641,
+        582
+      ],
+      "atlas": [
+        1676,
+        1171,
+        51,
+        218
+      ],
+      "sha256": "f98fe385f8c89918ce0c39d71e9042480fd97edc58bf45b206fda570349a147b"
+    },
+    "Hand_L": {
+      "page": 0,
+      "source": [
+        196,
+        531,
+        355,
+        723
+      ],
+      "atlas": [
+        1775,
+        1171,
+        159,
+        192
+      ],
+      "sha256": "c106987eedcd5202b78eaa7367ef58f7c9f00b07cd3fefd9cb8604a8ac11a891"
+    },
+    "Hair_Fringe_Center": {
+      "page": 1,
+      "source": [
+        518,
+        194,
+        595,
+        377
+      ],
+      "atlas": [
+        24,
+        24,
+        77,
+        183
+      ],
+      "sha256": "2b07d4cf544e1b50094f7dbd11cd1a5e9b34aa6b0bad266228d26ac1a70578d5"
+    },
+    "Hair_Crown": {
+      "page": 1,
+      "source": [
+        401,
+        93,
+        713,
+        267
+      ],
+      "atlas": [
+        149,
+        24,
+        312,
+        174
+      ],
+      "sha256": "37860bb8c45034452caeda91049d6692d6737dbac7d0f9c130220d10ebe3725e"
+    },
+    "Hand_R": {
+      "page": 1,
+      "source": [
+        596,
+        962,
+        777,
+        1125
+      ],
+      "atlas": [
+        509,
+        24,
+        181,
+        163
+      ],
+      "sha256": "d2ded945816f04b0df15ff7feaac7e9b40d18a00cf17fc014aaf3d722b1869ba"
+    },
+    "ClosedEye_L": {
+      "page": 1,
+      "source": [
+        427,
+        307,
+        524,
+        378
+      ],
+      "atlas": [
+        738,
+        24,
+        97,
+        71
+      ],
+      "sha256": "d975b8ec17077bc5745810e08163f726ec667db701a9a017e309d98622389d69"
+    },
+    "Eye_L": {
+      "page": 1,
+      "source": [
+        435,
+        313,
+        522,
+        376
+      ],
+      "atlas": [
+        883,
+        24,
+        87,
+        63
+      ],
+      "sha256": "c6deb6807ff3065d56491dd7270e64d23e7271395658612907f90326e18cdae1"
+    },
+    "ClosedEye_R": {
+      "page": 1,
+      "source": [
+        545,
+        358,
+        644,
+        420
+      ],
+      "atlas": [
+        1018,
+        24,
+        99,
+        62
+      ],
+      "sha256": "7775ab5b605ce3ddcb8889244056929066d07e568f8581bea58f202f10850f63"
+    },
+    "Eye_R": {
+      "page": 1,
+      "source": [
+        547,
+        360,
+        629,
+        418
+      ],
+      "atlas": [
+        1165,
+        24,
+        82,
+        58
+      ],
+      "sha256": "e0b811461ea3cde72408356372387bcf8466784ed304e4efa055af9688e23813"
+    },
+    "Mouth": {
+      "page": 1,
+      "source": [
+        476,
+        414,
+        543,
+        465
+      ],
+      "atlas": [
+        1295,
+        24,
+        67,
+        51
+      ],
+      "sha256": "eef389ba617cbda881f3ef577c4292d9c38f406e1f26b0a9cb1ca39d976d9de3"
+    }
+  }
+}

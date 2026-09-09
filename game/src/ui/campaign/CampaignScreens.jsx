@@ -919,7 +919,7 @@ function MotionPortraitStage({ source, characterId, name, onOpen }) {
       aria-label={`${name} 상호작용 포트레이트`}
     >
       <div className="motion-portrait-body">
-        <InteractivePortrait key={characterId} source={assetSource(source)} characterId={characterId} name={name} onReact={react} />
+        <InteractivePortrait key={characterId} source={assetSource(source)} characterId={characterId} name={name} onReact={react} presentation="lobby" />
       </div>
       <div className="portrait-touch-hint" aria-hidden="true">
         <Sparkle weight="fill" />

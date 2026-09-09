@@ -1,0 +1,36 @@
+{
+  "reports": [
+    {
+      "id": "aegis",
+      "texturePages": 1,
+      "activeDraws": true,
+      "reducedMotion": true,
+      "viewports": 3
+    },
+    {
+      "id": "mika",
+      "texturePages": 2,
+      "activeDraws": true,
+      "reducedMotion": true,
+      "viewports": 3
+    },
+    {
+      "id": "vesper",
+      "texturePages": 1,
+      "activeDraws": true,
+      "reducedMotion": true,
+      "viewports": 3
+    },
+    {
+      "id": "nox",
+      "texturePages": 2,
+      "activeDraws": true,
+      "reducedMotion": true,
+      "viewports": 3
+    }
+  ],
+  "errors": [],
+  "contextLossFallback": true,
+  "assetFailureFallback": true,
+  "gpuCleanup": true
+}

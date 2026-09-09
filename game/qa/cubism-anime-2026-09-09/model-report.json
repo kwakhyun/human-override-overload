@@ -1,0 +1,175 @@
+[
+  {
+    "id": "aegis",
+    "drawables": 20,
+    "vertices": 677,
+    "changes": {
+      "ParamBreath": [
+        "Torso"
+      ],
+      "ParamHairFront": [
+        "Hair_Fringe_Center",
+        "Hair_Fringe_L",
+        "Hair_Fringe_R"
+      ],
+      "ParamHairSide": [
+        "Hair_Side_L",
+        "Hair_Side_R"
+      ],
+      "ParamHairBack": [
+        "Hair_Back_L",
+        "Hair_Back_R"
+      ],
+      "ParamArmL": [
+        "Arm_L"
+      ],
+      "ParamArmR": [
+        "Arm_R"
+      ],
+      "ParamCoatL": [
+        "Coat_L"
+      ],
+      "ParamCoatR": [
+        "Coat_R"
+      ],
+      "ParamEyeLOpen": [
+        "Eye_L"
+      ],
+      "ParamEyeROpen": [
+        "Eye_R"
+      ]
+    },
+    "restored": true
+  },
+  {
+    "id": "mika",
+    "drawables": 21,
+    "vertices": 726,
+    "changes": {
+      "ParamBreath": [
+        "Torso"
+      ],
+      "ParamHairFront": [
+        "Hair_Fringe_Center",
+        "Hair_Fringe_L",
+        "Hair_Fringe_R"
+      ],
+      "ParamHairSide": [
+        "Hair_Side_L",
+        "Hair_Side_R"
+      ],
+      "ParamHairBack": [
+        "Hair_Back_L",
+        "Hair_Back_R"
+      ],
+      "ParamArmL": [
+        "Hand_L",
+        "Arm_L"
+      ],
+      "ParamArmR": [
+        "Hand_R",
+        "Arm_R"
+      ],
+      "ParamCoatL": [
+        "Coat_L"
+      ],
+      "ParamCoatR": [
+        "Coat_R"
+      ],
+      "ParamEyeLOpen": [
+        "Eye_L"
+      ],
+      "ParamEyeROpen": [
+        "Eye_R"
+      ]
+    },
+    "restored": true
+  },
+  {
+    "id": "vesper",
+    "drawables": 20,
+    "vertices": 756,
+    "changes": {
+      "ParamBreath": [
+        "Torso"
+      ],
+      "ParamHairFront": [
+        "Hair_Fringe_Center",
+        "Hair_Fringe_L",
+        "Hair_Fringe_R"
+      ],
+      "ParamHairSide": [
+        "Hair_Side_R"
+      ],
+      "ParamHairBack": [
+        "Hair_Back_L",
+        "Hair_Back_R"
+      ],
+      "ParamArmL": [
+        "Forearm_L",
+        "Arm_L"
+      ],
+      "ParamArmR": [
+        "Forearm_R",
+        "Arm_R"
+      ],
+      "ParamCoatL": [
+        "Coat_L"
+      ],
+      "ParamCoatR": [
+        "Coat_R"
+      ],
+      "ParamEyeLOpen": [
+        "Eye_L"
+      ],
+      "ParamEyeROpen": [
+        "Eye_R"
+      ]
+    },
+    "restored": true
+  },
+  {
+    "id": "nox",
+    "drawables": 21,
+    "vertices": 726,
+    "changes": {
+      "ParamBreath": [
+        "Torso"
+      ],
+      "ParamHairFront": [
+        "Hair_Fringe_Center",
+        "Hair_Fringe_L",
+        "Hair_Fringe_R"
+      ],
+      "ParamHairSide": [
+        "Hair_Side_L",
+        "Hair_Side_R"
+      ],
+      "ParamHairBack": [
+        "Hair_Back_L",
+        "Hair_Back_R"
+      ],
+      "ParamArmL": [
+        "Hand_L",
+        "Arm_L"
+      ],
+      "ParamArmR": [
+        "Hand_R",
+        "Arm_R"
+      ],
+      "ParamCoatL": [
+        "Coat_L"
+      ],
+      "ParamCoatR": [
+        "Coat_R"
+      ],
+      "ParamEyeLOpen": [
+        "Eye_L"
+      ],
+      "ParamEyeROpen": [
+        "Eye_R"
+      ]
+    },
+    "restored": true
+  }
+]

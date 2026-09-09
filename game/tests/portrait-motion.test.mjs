@@ -80,3 +80,22 @@ test('operative framing equalizes head scale and crown height without stretching
   assert.equal(reactionEnvelope(0),0);assert.equal(reactionEnvelope(3),0);
   assert.ok(Math.abs(reactionEnvelope(2.9-1e-4))<1e-8);
 });
+
+test('lobby and profile reduce the artwork while preserving aligned faces and concealed lower cuts',()=>{
+  for (const [w,h] of [[650,820],[460,762],[390,420],[200,100],[800,280]]) {
+    for (const [presentation,ratio] of [['lobby',.8],['profile',.82]]) {
+      const crowns=[];
+      for (const [id,head] of Object.entries(PORTRAIT_LANDMARKS)) {
+        const original=portraitFit(w,h,id),fit=portraitFit(w,h,id,presentation);
+        assert.ok(Math.abs(fit.width/original.width-ratio)<1e-10);
+        assert.ok(Math.abs(fit.width/fit.height-.75)<1e-10);
+        assert.ok(Math.abs(fit.left*2+fit.width-w)<1e-8);
+        assert.ok(fit.top+fit.height>=h-1e-8);
+        const crown=fit.top+head.crown*fit.height/1280;
+        assert.ok(crown>=0 && crown<h);
+        crowns.push(crown);
+      }
+      crowns.forEach(crown=>assert.ok(Math.abs(crown-crowns[0])<1e-8));
+    }
+  }
+});

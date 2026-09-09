@@ -460,3 +460,41 @@ export function frameCrop(
     height,
   };
 }
+
+// Lazy-loaded lobby/profile models; never part of combat preload.
+export const CUBISM_PORTRAITS = {
+  "aegis": {
+    "core": "./assets/overload/live2d/anime-v2/live2dcubismcore.min.js",
+    "moc": "./assets/overload/live2d/anime-v2/aegis/aegis-anime-v2.moc3",
+    "layout": "./assets/overload/live2d/anime-v2/aegis/runtime-textures.json",
+    "textures": [
+      "./assets/overload/live2d/anime-v2/aegis/runtime-texture-0.png"
+    ]
+  },
+  "mika": {
+    "core": "./assets/overload/live2d/anime-v2/live2dcubismcore.min.js",
+    "moc": "./assets/overload/live2d/anime-v2/mika/mika-anime-v2.moc3",
+    "layout": "./assets/overload/live2d/anime-v2/mika/runtime-textures.json",
+    "textures": [
+      "./assets/overload/live2d/anime-v2/mika/runtime-texture-0.png",
+      "./assets/overload/live2d/anime-v2/mika/runtime-texture-1.png"
+    ]
+  },
+  "vesper": {
+    "core": "./assets/overload/live2d/anime-v2/live2dcubismcore.min.js",
+    "moc": "./assets/overload/live2d/anime-v2/vesper/vesper-anime-v2.moc3",
+    "layout": "./assets/overload/live2d/anime-v2/vesper/runtime-textures.json",
+    "textures": [
+      "./assets/overload/live2d/anime-v2/vesper/runtime-texture-0.png"
+    ]
+  },
+  "nox": {
+    "core": "./assets/overload/live2d/anime-v2/live2dcubismcore.min.js",
+    "moc": "./assets/overload/live2d/anime-v2/nox/nox-anime-v2.moc3",
+    "layout": "./assets/overload/live2d/anime-v2/nox/runtime-textures.json",
+    "textures": [
+      "./assets/overload/live2d/anime-v2/nox/runtime-texture-0.png",
+      "./assets/overload/live2d/anime-v2/nox/runtime-texture-1.png"
+    ]
+  }
+} as const;

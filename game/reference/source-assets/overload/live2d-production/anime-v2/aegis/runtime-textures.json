@@ -1,0 +1,334 @@
+{
+  "version": 1,
+  "canvas": [
+    960,
+    1280
+  ],
+  "size": 2048,
+  "padding": 24,
+  "textures": [
+    "runtime-texture-0.png"
+  ],
+  "meshes": {
+    "Hair_Back_R": {
+      "page": 0,
+      "source": [
+        601,
+        233,
+        931,
+        1280
+      ],
+      "atlas": [
+        24,
+        24,
+        330,
+        1047
+      ],
+      "sha256": "62709f9f8df01c742cf7a398746aa93874049cba42d5a0bf7ee8df6e8fee49c7"
+    },
+    "Hair_Back_L": {
+      "page": 0,
+      "source": [
+        38,
+        72,
+        465,
+        1112
+      ],
+      "atlas": [
+        402,
+        24,
+        427,
+        1040
+      ],
+      "sha256": "4b0d587977d70172d2b100db5812ed6333a2f5b7fb2ac148a0022e4770326488"
+    },
+    "Torso": {
+      "page": 0,
+      "source": [
+        314,
+        310,
+        800,
+        1280
+      ],
+      "atlas": [
+        877,
+        24,
+        486,
+        970
+      ],
+      "sha256": "042679774a5043fdbd5308eaca8f4756d987c176598fbd18f44dc3e81a0191f5"
+    },
+    "Coat_L": {
+      "page": 0,
+      "source": [
+        47,
+        555,
+        407,
+        1280
+      ],
+      "atlas": [
+        1411,
+        24,
+        360,
+        725
+      ],
+      "sha256": "4223e32aeee07dec7f8c975d8610aac8e4789a14881de053e38a9917d5dd0d3e"
+    },
+    "Coat_R": {
+      "page": 0,
+      "source": [
+        631,
+        665,
+        835,
+        1280
+      ],
+      "atlas": [
+        1819,
+        24,
+        204,
+        615
+      ],
+      "sha256": "e4f855617b9cd68f2c56e427cc5706cf641554a41512c2b326eea0c2837fc5a1"
+    },
+    "Arm_R": {
+      "page": 0,
+      "source": [
+        638,
+        553,
+        845,
+        1101
+      ],
+      "atlas": [
+        24,
+        1119,
+        207,
+        548
+      ],
+      "sha256": "42f1a1c1916535454af76d66d66b325cf9f2846eeee8e7a2f40f44a65c0aa2ed"
+    },
+    "Arm_L": {
+      "page": 0,
+      "source": [
+        132,
+        552,
+        422,
+        1086
+      ],
+      "atlas": [
+        279,
+        1119,
+        290,
+        534
+      ],
+      "sha256": "c8b4957ae896837e9e03d3e43e3561e7d2150bac68fb0bdfdf9eda780eb7c205"
+    },
+    "Hair_Side_L": {
+      "page": 0,
+      "source": [
+        390,
+        305,
+        461,
+        756
+      ],
+      "atlas": [
+        617,
+        1119,
+        71,
+        451
+      ],
+      "sha256": "df984590578abdf7518e3e5e7decf1b18cf33760aff12d23450dd6a372d36001"
+    },
+    "Hair_Side_R": {
+      "page": 0,
+      "source": [
+        581,
+        334,
+        696,
+        732
+      ],
+      "atlas": [
+        736,
+        1119,
+        115,
+        398
+      ],
+      "sha256": "f0aa30c6a2c972057711ee377420621538b6aabcc8ad9a77827584d1c63dcef2"
+    },
+    "Face_Neck": {
+      "page": 0,
+      "source": [
+        344,
+        152,
+        620,
+        537
+      ],
+      "atlas": [
+        899,
+        1119,
+        276,
+        385
+      ],
+      "sha256": "8fdafe71b6da3985b99d85aadfd67ca36e110322a79f3cea71ad19db62bb32f5"
+    },
+    "Hair_Fringe_R": {
+      "page": 0,
+      "source": [
+        556,
+        144,
+        641,
+        398
+      ],
+      "atlas": [
+        1223,
+        1119,
+        85,
+        254
+      ],
+      "sha256": "4cba7a1b02c0db94125bb8eefff16990627a57df69c1b3b7774a09f5a5cd5562"
+    },
+    "Hair_Fringe_Center": {
+      "page": 0,
+      "source": [
+        463,
+        152,
+        557,
+        386
+      ],
+      "atlas": [
+        1356,
+        1119,
+        94,
+        234
+      ],
+      "sha256": "a8806371c2abff7cad121b25c6dd7925c9631b850391dcdf8c1f056c07975730"
+    },
+    "Hair_Fringe_L": {
+      "page": 0,
+      "source": [
+        391,
+        137,
+        526,
+        352
+      ],
+      "atlas": [
+        1498,
+        1119,
+        135,
+        215
+      ],
+      "sha256": "8b6ac58c0abb2d68e8a438f071f92069c96438cc4f5fa522259eec3671bd2e0c"
+    },
+    "Hair_Crown": {
+      "page": 0,
+      "source": [
+        405,
+        69,
+        634,
+        247
+      ],
+      "atlas": [
+        1681,
+        1119,
+        229,
+        178
+      ],
+      "sha256": "4cc229aaeacd4d0797db80d3c455af772340bbdbbf14442b84f9760bf487c98e"
+    },
+    "Hands": {
+      "page": 0,
+      "source": [
+        322,
+        998,
+        688,
+        1149
+      ],
+      "atlas": [
+        24,
+        1715,
+        366,
+        151
+      ],
+      "sha256": "65fe3b4f54a5bab38641261704077eac611c9baccf6b1367bc68fc10c4a33095"
+    },
+    "ClosedEye_L": {
+      "page": 0,
+      "source": [
+        399,
+        293,
+        494,
+        357
+      ],
+      "atlas": [
+        438,
+        1715,
+        95,
+        64
+      ],
+      "sha256": "24abb68486d2cc02f3209d89a857bb62267bf48a5d0db0ca776b9a88fc3b6eb1"
+    },
+    "ClosedEye_R": {
+      "page": 0,
+      "source": [
+        510,
+        319,
+        594,
+        378
+      ],
+      "atlas": [
+        581,
+        1715,
+        84,
+        59
+      ],
+      "sha256": "00629238dfb00092a0947a4cb21b8348cfe87fde1a2ff4c1808b0c593f6fcdad"
+    },
+    "Eye_L": {
+      "page": 0,
+      "source": [
+        401,
+        298,
+        494,
+        355
+      ],
+      "atlas": [
+        713,
+        1715,
+        93,
+        57
+      ],
+      "sha256": "6211236c783d60502b8884345212ad0dec16fff171d3ee1c80234c87b7eb29b8"
+    },
+    "Eye_R": {
+      "page": 0,
+      "source": [
+        512,
+        321,
+        592,
+        376
+      ],
+      "atlas": [
+        854,
+        1715,
+        80,
+        55
+      ],
+      "sha256": "764237b5ddf0f0b329e6803385cd5dd0de510c23486f5687e14ef7f6e020225a"
+    },
+    "Mouth": {
+      "page": 0,
+      "source": [
+        457,
+        404,
+        516,
+        429
+      ],
+      "atlas": [
+        982,
+        1715,
+        59,
+        25
+      ],
+      "sha256": "4565e26c13c562d58557e1a4dfa73b41df4e4f1c61ee620feaec1c531bcb925c"
+    }
+  }
+}

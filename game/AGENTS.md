@@ -1,5 +1,12 @@
 # Project Instructions
 
+## Anime Cubism runtime — 2026-09-09
+
+- Lobby/profile now use the four authored anime-v2 MOC3s through `cubismRenderer.js` and `cubismMotion.js`, owned by `CUBISM_PORTRAITS`. Do not restore the one-image warp as the active rig. Preserve editable PSD/CMO3/materials under `reference/source-assets/overload/live2d-production/anime-v2/` and all earlier required source inputs.
+- Shared portrait framing uses lobby 0.8/profile 0.82 zoom, aligned crowns, preserved aspect ratio and concealed lower cut. Static fallback and touch zones use the same frame. Head X/Y/Z remain exactly zero. Actual authored channels are eyelids, hair, arms, coat and torso; iris/brow/lip expression parameters are not implemented.
+- Compile non-overlapping runtime textures with `pack-anime-live2d-textures.mjs`; alpha Editor polygon packing can overlap disconnected islands. Remap UVs once from neutral Core geometry and use premultiplied-alpha texture filtering. Never derive UVs from animated vertices, upload textures per frame or ship raw overlapping Editor atlases.
+- Keep lazy loading, abort/unmount cleanup, context-loss static fallback, reduced-motion neutral pose, hidden/inert suspension and source asset ownership. See `docs/live2d/anime-session-2026-09-09.md` for evidence/limits and `scripts/verify-anime-cubism.mjs` for isolated browser QA.
+
 ## Anime portraits and story CG — 2026-09-09
 
 - The user's current direction supersedes historical byte-identical/unchanged-portrait rules: retain clear anime faces, use new backgroundless upper-body designs for dialogue/lobby/profile, and keep approved scene paintings in story sequences. Do not restore rejected semi-realistic UI variants or baked checkerboards. `docs/art/anime-2026-09-09.json` owns prompts and source hashes; `scripts/prepare-anime-art.py` owns explicitly user-authorized alpha cleanup. Current masters are 960×1280. Shared anatomical framing and mesh landmarks must match those masters; neutral head pose and reduced-motion behavior remain required.

@@ -1,0 +1,134 @@
+{
+  "L0": {
+    "BezierDivH": 1,
+    "BezierDivV": 1,
+    "Id": "Rig_Eye_L",
+    "LabelColorType": "undefined",
+    "LabelCustomColor": "#FFFFFF",
+    "MultiplyColor": "#FFFFFF",
+    "Name": "Eye L closure",
+    "Opacity": 100,
+    "ParentDeformerId": "%Root",
+    "ParentId": "%Root",
+    "Rectangle": {
+      "BottomLeft": {
+        "X": 389,
+        "Y": 311.7058410644531
+      },
+      "BottomRight": {
+        "X": 505,
+        "Y": 311.7058410644531
+      },
+      "TopLeft": {
+        "X": 389,
+        "Y": 286.9371643066406
+      },
+      "TopRight": {
+        "X": 505,
+        "Y": 286.9371643066406
+      }
+    },
+    "ScreenColor": "#000000",
+    "WarpDivH": 4,
+    "WarpDivV": 4
+  },
+  "L1": {
+    "BezierDivH": 1,
+    "BezierDivV": 1,
+    "Id": "Rig_Eye_L",
+    "LabelColorType": "undefined",
+    "LabelCustomColor": "#FFFFFF",
+    "MultiplyColor": "#FFFFFF",
+    "Name": "Eye L closure",
+    "Opacity": 100,
+    "ParentDeformerId": "%Root",
+    "ParentId": "%Root",
+    "Rectangle": {
+      "BottomLeft": {
+        "X": 389,
+        "Y": 338
+      },
+      "BottomRight": {
+        "X": 505,
+        "Y": 338
+      },
+      "TopLeft": {
+        "X": 389,
+        "Y": 256
+      },
+      "TopRight": {
+        "X": 505,
+        "Y": 256
+      }
+    },
+    "ScreenColor": "#000000",
+    "WarpDivH": 4,
+    "WarpDivV": 4
+  },
+  "R0": {
+    "BezierDivH": 1,
+    "BezierDivV": 1,
+    "Id": "Rig_Eye_R",
+    "LabelColorType": "undefined",
+    "LabelCustomColor": "#FFFFFF",
+    "MultiplyColor": "#FFFFFF",
+    "Name": "Eye R closure",
+    "Opacity": 100,
+    "ParentDeformerId": "%Root",
+    "ParentId": "%Root",
+    "Rectangle": {
+      "BottomLeft": {
+        "X": 492,
+        "Y": 346.7046813964844
+      },
+      "BottomRight": {
+        "X": 596,
+        "Y": 346.7046813964844
+      },
+      "TopLeft": {
+        "X": 492,
+        "Y": 322.1510009765625
+      },
+      "TopRight": {
+        "X": 596,
+        "Y": 322.1510009765625
+      }
+    },
+    "ScreenColor": "#000000",
+    "WarpDivH": 4,
+    "WarpDivV": 4
+  },
+  "R1": {
+    "BezierDivH": 1,
+    "BezierDivV": 1,
+    "Id": "Rig_Eye_R",
+    "LabelColorType": "undefined",
+    "LabelCustomColor": "#FFFFFF",
+    "MultiplyColor": "#FFFFFF",
+    "Name": "Eye R closure",
+    "Opacity": 100,
+    "ParentDeformerId": "%Root",
+    "ParentId": "%Root",
+    "Rectangle": {
+      "BottomLeft": {
+        "X": 492,
+        "Y": 373
+      },
+      "BottomRight": {
+        "X": 596,
+        "Y": 373
+      },
+      "TopLeft": {
+        "X": 492,
+        "Y": 293
+      },
+      "TopRight": {
+        "X": 596,
+        "Y": 293
+      }
+    },
+    "ScreenColor": "#000000",
+    "WarpDivH": 4,
+    "WarpDivV": 4
+  }
+}
