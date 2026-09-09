@@ -1,8 +1,29 @@
 # HUMAN OVERRIDE: OVERLOAD
 
-![HUMAN OVERRIDE: OVERLOAD key art](game/public/assets/overload/intro/start-screen-key-art.webp)
+![HUMAN OVERRIDE: OVERLOAD 인게임 타이틀 화면](game/docs/project/media/screenshots/01-title.png)
 
 통치 AI **SOVEREIGN**이 장악한 세계에서, 이동 기지 **HAVEN-09**의 전투원 **AEGIS**, **MIKA**, **VESPER**, **NOX**가 기계 군단을 돌파하는 Phaser 기반 탑다운 액션 서바이버입니다. 6개 캠페인 구역, 캐릭터·무기별 전투 체계, 보스 패링·시한폭탄 기믹, 스킬 해금 성장과 별도 타워 디펜스 모드를 한 프로젝트에 담았습니다.
+
+## 인게임 스크린샷
+
+2026-09-09 기준 실제 실행 화면입니다. 전투원과 구역을 해금한 로컬 소개용 저장 상태로 촬영했습니다. 이미지를 클릭하면 원본 크기로 볼 수 있습니다.
+
+| 헤이븐-09 메인 로비 | 전투원 정보 · 미카 |
+| --- | --- |
+| ![이지스 일러스트와 시설·출격 메뉴가 있는 헤이븐-09 로비](game/docs/project/media/screenshots/02-haven-lobby.png) | ![미카의 일러스트, 능력치, 전용 스킬과 전투원 목록](game/docs/project/media/screenshots/03-operative-profile.png) |
+| 전투원과 교류하고 연구·장비 강화·출격을 준비합니다. | 전투원별 특성과 배경 이야기를 확인하고 스킬을 해금합니다. |
+
+| 작전 권역 선택 | 출격 편성 |
+| --- | --- |
+| ![소버린 내부망과 외곽 생산권역을 선택하는 작전 지도](game/docs/project/media/screenshots/04-operation-map.png) | ![오답 엔진 중앙로 작전 안내와 이지스·미카 두 명 편성](game/docs/project/media/screenshots/05-sortie-preparation.png) |
+| 내부망과 외곽 권역을 탐색하며 여섯 구역을 해방합니다. | 적·보스 공략과 보상을 확인하고 선봉·교대 전투원을 정합니다. |
+
+| 구역 실시간 전투 | 헤이븐 기지 방어전 |
+| --- | --- |
+| ![미카가 기계 군단과 교전하는 전장과 하단 스킬·태그 HUD](game/docs/project/media/screenshots/06-region-combat.png) | ![방어 패드에 포탑을 배치하고 기계 군단의 공세를 막는 기지 방어전](game/docs/project/media/screenshots/07-base-defense.png) |
+| 이동·대시·전용 스킬·태그로 웨이브를 돌파합니다. | 포탑 배치와 전술 명령으로 중앙 코어를 지킵니다. |
+
+## 문서와 플레이
 
 - [상세 런타임 문서](game/README.md)
 - [제작·검증 도구 안내](game/scripts/README.md)
