@@ -19,7 +19,7 @@ try{
    const x=snapshot(...v);return {name,changes:x.map((p,i)=>({id:d.ids[i],maxDelta:Math.max(...p.map((a,j)=>Math.abs(a-n[i][j])))})).filter(a=>a.maxDelta>1e-6),invalidVertices:x.flat().filter(a=>!Number.isFinite(a)).length};
   });
   const restored=snapshot(0,0,0),rgba=pixels();
-  const image=new Image();image.src='/assets/overload/hero/survivor-portrait-v2.webp';await image.decode();
+  const image=new Image();image.src='/reference/source-assets/overload/runtime-inputs/pre-anime-2026-09-09/hero/survivor-portrait-v2.webp';await image.decode();
   const c=document.createElement('canvas');c.width=864;c.height=1536;const ctx=c.getContext('2d');ctx.drawImage(image,0,0);const source=ctx.getImageData(0,0,864,1536).data;
   let opaqueInterior=0,alphaHoles=0;const holeSamples=[];
   for(let y=3;y<1533;y++)for(let x=3;x<861;x++){

@@ -49,7 +49,7 @@ def marker(x,y,n):
 
 # 1: The candidate's contribution, not the tool list, leads the cover.
 fill(DARK);c.rect(0,0,W,H,stroke=0,fill=1)
-shot(ROOT/'public/assets/overload/intro/start-screen-key-art.webp',0,0,W,290)
+shot(ROOT/'public/assets/overload/intro/start-screen-anime-v1.webp',0,0,W,290)
 text(40,317,'HUMAN OVERRIDE: OVERLOAD',12,'#6ADAE9',True)
 para(40,351,515,'플레이에서 발견한 문제를\n설계와 구현으로 해결했습니다',25,'#FFFFFF',True)
 para(40,443,510,'AI와 함께 만든 웹 액션 게임을 직접 플레이하고 수정하며,\n기획부터 공개 배포까지 연결한 개인 프로젝트입니다.',12,'#BCD8E0')

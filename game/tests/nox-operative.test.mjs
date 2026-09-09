@@ -114,12 +114,12 @@ test("NOX ships dedicated portrait, sprite, skill VFX, recruitment, and HUD inte
     readFile(new URL("../src/ui/campaign/CampaignScreens.jsx", import.meta.url), "utf8"),
     readFile(new URL("../src/game/content/characterDialogue.js", import.meta.url), "utf8"),
   ]);
-  assert.match(manifest, /noxPortrait: "\.\/assets\/overload\/hero\/nox-portrait-v1\.webp"/);
+  assert.match(manifest, /noxPortrait: "\.\/assets\/overload\/portraits\/anime-v1\/nox\.webp"/);
   assert.match(manifest, /path: "\.\/assets\/overload\/quality-v3\/nox-operative\.png"/);
   assert.match(manifest, /path: "\.\/assets\/overload\/quality-v3\/nox-skills\.png"/);
   assert.match(battleView, /characterId === "nox"/);
   assert.match(battleView, /projectileKind\.includes\("noxwarrant"\)/);
-  assert.match(app, /NoxRecruitScreen/);
+  assert.match(app, /StorySceneScreen/);
   assert.match(app, /noxUnlocked/);
   assert.match(screens, /NOX_RECRUIT_DIALOGUE/);
   assert.match(dialogue, /characterId === "nox"/);

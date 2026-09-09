@@ -1,10 +1,10 @@
-// Source coordinates are the approved 864 x 1536 portrait canvas. This is a
+// Source coordinates are the anime-v1 960 x 1280 upper-body canvas. This is a
 // local artwork mesh, not a Cubism model or a replacement for authored moc3 rigs.
 export const PORTRAIT_RIGS = Object.freeze({
-  aegis: { neck: [438, 367], head: [451, 223, 192, 220], chest: [487, 644], arms: [[238, 889], [723, 1040]], hair: [[232, 613], [582, 467]], eyes: [[449, 252, 24, 10, .18], [522, 275, 20, 9, .23]], energy: .8, tempo: 1, phase: .2 },
-  mika: { neck: [445, 490], head: [449, 319, 165, 197], chest: [487, 748], arms: [[193, 1054], [705, 693]], hair: [[191, 515], [665, 506]], eyes: [[419, 366, 24, 13, .22], [510, 398, 23, 12, .21]], energy: 1.12, tempo: 1.13, phase: 1.7 },
-  vesper: { neck: [426, 353], head: [429, 222, 150, 162], chest: [481, 576], arms: [[227, 606], [639, 758]], hair: [[355, 267], [519, 269]], eyes: [[418, 245, 22, 10, .22], [482, 269, 18, 9, .28]], energy: .72, tempo: .94, phase: 3.1 },
-  nox: { neck: [446, 421], head: [438, 278, 156, 178], chest: [399, 638], arms: [[161, 793], [638, 925]], hair: [[302, 606], [631, 643]], eyes: [[380, 344, 21, 8, -.2], [455, 324, 23, 9, -.29]], energy: .66, tempo: .86, phase: 4.5 },
+  aegis: { neck: [483, 486], head: [480, 298, 185, 225], chest: [520, 700], arms: [[233, 965], [746, 940]], hair: [[236, 540], [728, 627]], eyes: [[445, 328, 30, 13, .17], [546, 351, 28, 12, .22]], energy: .8, tempo: 1, phase: .2 },
+  mika: { neck: [492, 511], head: [490, 314, 182, 220], chest: [520, 740], arms: [[254, 750], [754, 1000]], hair: [[215, 516], [778, 575]], eyes: [[480, 344, 31, 15, .28], [590, 385, 29, 14, .22]], energy: 1.12, tempo: 1.13, phase: 1.7 },
+  vesper: { neck: [482, 477], head: [487, 280, 185, 220], chest: [500, 741], arms: [[230, 900], [738, 961]], hair: [[345, 410], [633, 412]], eyes: [[442, 299, 29, 13, .3], [542, 330, 27, 12, .23]], energy: .72, tempo: .94, phase: 3.1 },
+  nox: { neck: [477, 464], head: [479, 278, 182, 220], chest: [505, 705], arms: [[258, 930], [718, 931]], hair: [[223, 630], [770, 657]], eyes: [[400, 336, 27, 11, -.2], [508, 308, 29, 11, -.29]], energy: .66, tempo: .86, phase: 4.5 },
 });
 
 export const TOUCH_AREAS = Object.freeze(['head', 'chest', 'armLeft', 'armRight', 'legs']);

@@ -1,16 +1,16 @@
-// Approved 768px square sources. Crown/chin exclude stray hair and accessories.
+// 960 x 1280 anime upper-body masters; crown/chin exclude accessories.
 export const NPC_PORTRAIT_LANDMARKS = Object.freeze({
-  hana: { crown: 20, chin: 324, center: 390 },
-  ilya: { crown: 48, chin: 278, center: 332 },
-  lark: { crown: 32, chin: 272, center: 350 },
-  sera: { crown: 32, chin: 272, center: 350 },
-  rhea: { crown: 22, chin: 288, center: 400 },
+  hana: { crown: 85, chin: 480, center: 480 },
+  ilya: { crown: 85, chin: 420, center: 408 },
+  lark: { crown: 105, chin: 484, center: 490 },
+  sera: { crown: 105, chin: 484, center: 490 },
+  rhea: { crown: 85, chin: 446, center: 487 },
 });
 export function npcPortraitFit(width, height, npcId) {
   const head = NPC_PORTRAIT_LANDMARKS[npcId] || NPC_PORTRAIT_LANDMARKS.rhea;
   const unit = Math.max(0, Math.min(width / 600, height / 740));
   const scale = unit * 300 / (head.chin - head.crown);
   return { frameWidth: 600 * unit, frameHeight: 740 * unit,
-    width: 768 * scale, height: 768 * scale,
+    width: 960 * scale, height: 1280 * scale,
     left: 300 * unit - head.center * scale, top: 20 * unit - head.crown * scale };
 }

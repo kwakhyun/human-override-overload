@@ -194,7 +194,7 @@ def parse_cover(lines: list[str], sheet: dict[str, ParagraphStyle], kind: str) -
     meta_lines = [line.strip() for line in lines[:divider] if line.strip() and not line.startswith("#") and not line.startswith(">")]
     quote = " ".join(line[1:].strip() for line in lines[:divider] if line.startswith(">"))
 
-    cover_image = ROOT / "public" / "assets" / "overload" / "intro" / "start-screen-key-art.webp"
+    cover_image = ROOT / "public" / "assets" / "overload" / "intro" / "start-screen-anime-v1.webp"
     flow: list = [Spacer(1, 3 * mm)]
     if cover_image.exists():
         flow.extend([scaled_image(cover_image, 174 * mm, 98 * mm), Spacer(1, 7 * mm)])

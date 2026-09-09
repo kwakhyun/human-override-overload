@@ -22,6 +22,7 @@ npm run build
 
 ## 현재 플레이 규칙
 
+- 새로운 슬롯은 이지스의 구조 작전 프롤로그로 시작합니다. 최초 구역 클리어 뒤 추론핵 분석·전투원 합류·외곽 항로 발견을 CG와 대사로 보여 줍니다. 헤이븐 **작전 기록**에서 해금된 6편을 다시 볼 수 있으며 보상은 중복 지급하지 않습니다.
 - AEGIS는 기본 전투원입니다. MIKA는 01구역, VESPER는 03구역, NOX는 04구역 최초 클리어로 합류합니다.
 - 출격은 최대 두 명입니다. 가능한 경우 현재 전투원과 다른 해금 전투원 한 명을 기본 선택하고, 단독 출격으로 바꿀 수 있습니다. 태그는 선택한 두 명만 번갈아 사용합니다.
 - 각 전투원은 Q부터 시작하며 동기화 성장으로 E·F·R을 해금합니다. 스킬 상태와 재사용 대기시간은 엔진이 관리하고 교대 후에도 보존합니다.
@@ -36,6 +37,7 @@ npm run build
 | --- | --- |
 | `src/App.jsx` | 화면 이동, 진행 흐름, 앱 수명의 음악·설정·컨트롤러 연결 |
 | `src/ui/campaign/CampaignScreens.jsx` | 기지, 전투원, 권역 선택, 출격 화면 |
+| `src/game/content/storyEpisodes.js`, `src/ui/campaign/StoryScreens.jsx` | CG 에피소드, 진행 조건, 작전 기록 다시 보기 |
 | `src/ui/combat/ExpeditionCombatDock.jsx` | 전투 체력·스킬·태그 HUD |
 | `src/ui/combat/cooldownPresentation.js` | 사용 가능·재충전·잠김 등 상태 표현 |
 | `src/ui/defense/DefenseScreens.jsx` | 방어전 UI와 전술 안내 |

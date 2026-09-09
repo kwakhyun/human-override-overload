@@ -41,13 +41,16 @@ export const LEGACY_CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v1";
 export const CAMPAIGN_SAVE_EVENT = "human-override:campaign-saved";
 export const CAMPAIGN_SAVE_SLOT_COUNT = 3;
 export const CAMPAIGN_SLOT_PROGRESSION_FIELD = "progression";
-export const CAMPAIGN_POST_VICTORY_STEPS = Object.freeze(["recruit", "vesper-recruit", "nox-recruit", "sword-guide", "return"]);
+export const CAMPAIGN_POST_VICTORY_STEPS = Object.freeze(["prologue", "core-fragment", "recruit", "vesper-recruit", "nox-recruit", "outer-signal", "sword-guide", "return"]);
 
 const KNOWN_REGION_IDS = new Set(getCampaignRegions().map((region) => region.id));
 const KNOWN_CHAPTER_IDS = new Set(CAMPAIGN_CHAPTERS.map((chapter) => chapter.id));
 const KNOWN_DEFENSE_STAGE_IDS = new Set(DEFENSE_STAGES.map((stage) => stage.id));
 const KNOWN_POST_VICTORY_STEPS = new Set(CAMPAIGN_POST_VICTORY_STEPS);
 const POST_VICTORY_SEEN_FLAG = Object.freeze({
+  prologue: "story-prologue-seen",
+  "core-fragment": "story-core-fragment-seen",
+  "outer-signal": "story-outer-signal-seen",
   recruit: "mika-recruit-seen",
   "vesper-recruit": "vesper-recruit-seen",
   "nox-recruit": "nox-recruit-seen",
@@ -88,6 +91,9 @@ function sanitizePendingPostVictorySteps(values, completedRegionIds = [], storyF
   const requested = new Set(values.filter((value) => KNOWN_POST_VICTORY_STEPS.has(value)));
   return CAMPAIGN_POST_VICTORY_STEPS.filter((step) => {
     if (!requested.has(step)) return false;
+    if (step === "prologue") return completedRegionIds.length === 0 && !storyFlags.includes("story-prologue-seen");
+    if (step === "core-fragment") return completedRegionIds.includes("wrong-engine-core") && !storyFlags.includes("story-core-fragment-seen");
+    if (step === "outer-signal") return ["wrong-engine-core", "glass-dune", "abyssal-archive"].every(id => completedRegionIds.includes(id)) && !storyFlags.includes("story-outer-signal-seen");
     if (step === "recruit") return isCharacterUnlocked("mika", completedRegionIds) && !storyFlags.includes("mika-recruit-seen");
     if (step === "vesper-recruit") return isCharacterUnlocked("vesper", completedRegionIds) && !storyFlags.includes("vesper-recruit-seen");
     if (step === "nox-recruit") return isCharacterUnlocked("nox", completedRegionIds) && !storyFlags.includes("nox-recruit-seen");
@@ -333,6 +339,7 @@ export function createCampaignSlot(campaign, slotId, options = {}) {
     updatedAt: now,
     completedRegionIds: [],
     storyFlags: [],
+    pendingPostVictorySteps: ["prologue"],
     regionRecords: {},
     progression: createEmptyBaseProgression(),
     flightOperations: sanitizeFlightOperations(null, []),
@@ -570,10 +577,14 @@ export function completeRegion(campaign, slotId, regionId, result = {}, options 
     && isMainWeaponUnlocked("beam-sword", completedRegionIds)
     && !slot.storyFlags.includes("beam-sword-guide-complete");
   const pendingPostVictorySteps = [
+    ...slot.pendingPostVictorySteps,
+    ...(firstClear && regionId === "wrong-engine-core" ? ["core-fragment"] : []),
     ...(mikaJustUnlocked ? ["recruit"] : []),
     ...(vesperJustUnlocked ? ["vesper-recruit"] : []),
     ...(noxJustUnlocked ? ["nox-recruit"] : []),
     ...(swordJustUnlocked ? ["sword-guide"] : []),
+    ...(firstClear && !["wrong-engine-core", "glass-dune", "abyssal-archive"].every(id => slot.completedRegionIds.includes(id))
+      && ["wrong-engine-core", "glass-dune", "abyssal-archive"].every(id => completedRegionIds.includes(id)) ? ["outer-signal"] : []),
     "return",
   ];
   const regionRecords = {

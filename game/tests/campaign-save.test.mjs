@@ -175,13 +175,14 @@ test("first-victory follow-up scenes survive reload and consume without duplicat
   }, { now: "2026-08-10T06:20:00.000Z" });
   const awardedProgression = getCampaignSlot(victory, "slot-1").progression;
 
-  assert.deepEqual(getCampaignPostVictorySteps(victory, "slot-1"), ["recruit", "return"]);
+  assert.deepEqual(getCampaignPostVictorySteps(victory, "slot-1"), ["core-fragment", "recruit", "return"]);
   assert.equal(saveCampaign(victory, storage), true);
   const reloaded = loadCampaign(storage);
-  assert.deepEqual(getCampaignPostVictorySteps(reloaded, "slot-1"), ["recruit", "return"]);
+  assert.deepEqual(getCampaignPostVictorySteps(reloaded, "slot-1"), ["core-fragment", "recruit", "return"]);
   assert.deepEqual(getCampaignSlot(reloaded, "slot-1").progression, awardedProgression);
 
-  const recruited = consumeCampaignPostVictoryStep(reloaded, "slot-1", "recruit", { now: "2026-08-10T06:21:00.000Z" });
+  const analyzed = consumeCampaignPostVictoryStep(reloaded, "slot-1", "core-fragment", { now: "2026-08-10T06:20:30.000Z" });
+  const recruited = consumeCampaignPostVictoryStep(analyzed, "slot-1", "recruit", { now: "2026-08-10T06:21:00.000Z" });
   assert.deepEqual(getCampaignPostVictorySteps(recruited, "slot-1"), ["return"]);
   assert.ok(getCampaignSlot(recruited, "slot-1").storyFlags.includes("mika-recruit-seen"));
   assert.deepEqual(getCampaignSlot(recruited, "slot-1").progression, awardedProgression);
@@ -203,6 +204,7 @@ test("the beam-sword guide can only be completed after the Glass Dune clear", ()
   assert.deepEqual(completeSwordAbilityGuide(initial, "slot-1", { now: NOW }), initial);
 
   let campaign = completeRegion(initial, "slot-1", "wrong-engine-core", { status: "victory" }, { now: NOW });
+  for (const step of ["core-fragment", "recruit", "return"]) campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", step, { now: NOW });
   campaign = completeRegion(campaign, "slot-1", "glass-dune", { status: "victory" }, { now: NOW });
   assert.deepEqual(getCampaignPostVictorySteps(campaign, "slot-1"), ["sword-guide", "return"]);
   const completed = completeSwordAbilityGuide(campaign, "slot-1", { now: "2026-08-10T07:30:00.000Z" });
@@ -217,6 +219,7 @@ test("the beam-sword guide can only be completed after the Glass Dune clear", ()
 test("the first Abyssal Archive clear queues the one-time Vesper recruitment scene", () => {
   let campaign = createCampaignSlot(createEmptyCampaign(), "slot-1", { now: NOW });
   campaign = completeRegion(campaign, "slot-1", "wrong-engine-core", { status: "victory" }, { now: NOW });
+  campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "core-fragment", { now: NOW });
   campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "recruit", { now: NOW });
   campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "return", { now: NOW });
   campaign = completeRegion(campaign, "slot-1", "glass-dune", { status: "victory" }, { now: NOW });
@@ -224,11 +227,13 @@ test("the first Abyssal Archive clear queues the one-time Vesper recruitment sce
   campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "return", { now: NOW });
   campaign = completeRegion(campaign, "slot-1", "abyssal-archive", { status: "victory" }, { now: NOW });
 
-  assert.deepEqual(getCampaignPostVictorySteps(campaign, "slot-1"), ["vesper-recruit", "return"]);
+  assert.deepEqual(getCampaignPostVictorySteps(campaign, "slot-1"), ["vesper-recruit", "outer-signal", "return"]);
   assert.ok(getCampaignSlot(campaign, "slot-1").storyFlags.includes("vesper-unlocked"));
 
   campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "vesper-recruit", { now: NOW });
   assert.ok(getCampaignSlot(campaign, "slot-1").storyFlags.includes("vesper-recruit-seen"));
+  assert.deepEqual(getCampaignPostVictorySteps(campaign, "slot-1"), ["outer-signal", "return"]);
+  campaign = consumeCampaignPostVictoryStep(campaign, "slot-1", "outer-signal", { now: NOW });
   assert.deepEqual(getCampaignPostVictorySteps(campaign, "slot-1"), ["return"]);
 });
 

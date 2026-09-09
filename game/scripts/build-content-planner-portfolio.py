@@ -62,7 +62,7 @@ WHITE = colors.white
 
 
 ASSETS = {
-    "cover": ROOT / "public" / "assets" / "overload" / "intro" / "start-screen-key-art.webp",
+    "cover": ROOT / "public" / "assets" / "overload" / "intro" / "start-screen-anime-v1.webp",
     "haven": ROOT / "docs/project/media/content-planner" / "responsive-desktop-home-1440x810.png",
     "regions": ROOT / "docs/project/media/content-planner" / "desktop-final-regions.png",
     "sortie": ROOT / "docs/project/media/content-planner" / "korean-copy-desktop-sortie.png",

@@ -36,7 +36,7 @@ export const BASE_NPCS = deepFreeze({
     role: "BASE COMMANDER",
     station: "COMMAND DECK",
     portraitKey: "hanaPortrait",
-    portraitPath: "./assets/overload/ui/npcs/hana-research-director-v2.webp",
+    portraitPath: "./assets/overload/portraits/anime-v1/hana.webp",
     portraitMode: "standalone",
     portraitDialogue: [
       "분석 중이야. 지휘관, 화면을 가리면 오차가 0.7% 늘어나.",
@@ -56,7 +56,7 @@ export const BASE_NPCS = deepFreeze({
     role: "SYSTEMS ENGINEER",
     station: "REPAIR BAY",
     portraitKey: "ilyaPortrait",
-    portraitPath: "./assets/overload/ui/npcs/ilya-mechanic-v4.webp",
+    portraitPath: "./assets/overload/portraits/anime-v1/ilya.webp",
     portraitMode: "standalone",
     portraitDialogue: [
       "장비는 거짓말을 안 해. 소리가 달라졌다면 어디선가 마모가 시작된 거지.",
@@ -76,7 +76,7 @@ export const BASE_NPCS = deepFreeze({
     role: "NIGHTJAR CHIEF PILOT",
     station: "FLIGHT CONTROL",
     portraitKey: "nightjarPilot",
-    portraitPath: "./assets/overload/ui/npcs/sera-nightjar-pilot-v4.webp",
+    portraitPath: "./assets/overload/portraits/anime-v1/sera.webp",
     portraitMode: "standalone",
     portraitDialogue: [
       "관제 링크 정상. 임무 좌표만 확인하면 가장 안전한 진입각을 잡을게.",
@@ -106,7 +106,7 @@ export const BASE_NPCS = deepFreeze({
     role: "TACTICAL CONTROL OFFICER",
     station: "CONTROL ROOM",
     portraitKey: "rheaControlOfficer",
-    portraitPath: "./assets/overload/ui/npcs/rhea-control-officer-v3.webp",
+    portraitPath: "./assets/overload/portraits/anime-v1/rhea.webp",
     portraitMode: "standalone",
     portraitDialogue: [
       "시선은 전장에 둬. 필요한 정보는 내가 가장 짧은 경로로 전달할게.",

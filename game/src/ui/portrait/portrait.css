@@ -43,6 +43,16 @@
 .character-art-stage .interactive-portrait { z-index: 1; }
 .character-art-stage figcaption,
 .character-lock-banner { pointer-events: none; }
+.portrait-touch-map .portrait-touch-zone.is-head { left: 34%; top: 10%; width: 31%; height: 28%; }
+.portrait-touch-map .portrait-touch-zone.is-chest { left: 36%; top: 42%; width: 29%; height: 23%; }
+.portrait-touch-map .portrait-touch-zone.is-armLeft { left: 14%; top: 46%; width: 22%; height: 31%; }
+.portrait-touch-map .portrait-touch-zone.is-armRight { left: 66%; top: 45%; width: 23%; height: 32%; }
+.portrait-touch-map .portrait-touch-zone.is-legs { left: 34%; top: 78%; width: 30%; height: 18%; }
+.base-record-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.narrative-portrait .operative-portrait-image > .portrait-source {
+  left: var(--portrait-left); top: var(--portrait-top); width: var(--portrait-width); height: var(--portrait-height);
+  transform: none; max-width: none; object-fit: fill;
+}
 .motion-portrait-speech { pointer-events: none; }
 @media (max-width: 720px) and (orientation: portrait) {
   /* Reserve the compact-view button above the common head line. */

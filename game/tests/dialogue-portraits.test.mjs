@@ -15,9 +15,9 @@ function pngDimensions(bytes) {
 
 test("combat dialogue uses independent optimized portraits while bosses retain authored atlases", async () => {
   const portraitPaths = [
-    "./assets/overload/hero/survivor-portrait-v2.webp",
-    "./assets/overload/hero/mika-portrait-v2.webp",
-    "./assets/overload/hero/vesper-portrait-v7.webp",
+    "./assets/overload/portraits/anime-v1/aegis.webp",
+    "./assets/overload/portraits/anime-v1/mika.webp",
+    "./assets/overload/portraits/anime-v1/vesper.webp",
     ...["hana", "ilya", "lark", "rhea"].map((npcId) => BASE_NPCS[npcId].portraitPath),
   ];
   assert.equal(new Set(portraitPaths).size, portraitPaths.length);
@@ -37,7 +37,7 @@ test("combat dialogue uses independent optimized portraits while bosses retain a
   assert.equal(BASE_NPCS.lark.name, "SERA");
   assert.equal(BASE_NPCS.lark.portraitMode, "standalone");
   assert.equal(BASE_NPCS.lark.portraitKey, "nightjarPilot");
-  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/ui/npcs/sera-nightjar-pilot-v4.webp");
+  assert.equal(BASE_NPCS.lark.portraitPath, "./assets/overload/portraits/anime-v1/sera.webp");
 
   for (const [regionId, path] of [
     ["wrong-engine-core", "public/assets/overload/boss/wrong-engine-forms-atlas.png"],

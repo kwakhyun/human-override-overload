@@ -4,7 +4,7 @@ import { applyPortraitFit } from './portraitFraming.js';
 import './portrait.css';
 
 const ZONES = [
-  ['head', '머리'], ['chest', '상체'], ['armLeft', '왼팔'], ['armRight', '오른팔'], ['legs', '다리'],
+  ['head', '머리'], ['chest', '상체'], ['armLeft', '왼팔'], ['armRight', '오른팔'], ['legs', '장비'],
 ];
 
 // Mount with a character key: artwork, timers, gaze and GPU resources have one owner.
@@ -88,7 +88,7 @@ export function InteractivePortrait({ source, characterId, name, onReact }) {
         const box = event.currentTarget.getBoundingClientRect();
         engineRef.current?.look((event.clientX-box.left)/box.width*2-1,(event.clientY-box.top)/box.height*2-1);
       }} onPointerLeave={() => engineRef.current?.look(0,0)}>
-      <img ref={imageRef} className="portrait-source" src={source} alt={`${name} 전신 일러스트`} draggable="false" decoding="async" />
+      <img ref={imageRef} className="portrait-source" src={source} alt={`${name} 상반신 일러스트`} draggable="false" decoding="async" />
       <canvas ref={canvasRef} className="portrait-mesh" aria-hidden="true" />
       <div className={`portrait-touch-map is-${characterId}`} aria-label={`${name} 터치 상호작용`}>
         {ZONES.map(([zone,label]) => <button key={zone} type="button" className={`portrait-touch-zone is-${zone}`} data-ui-sound="click" onClick={() => react(zone)} aria-label={`${name} ${label} 반응 보기`} />)}

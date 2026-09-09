@@ -64,7 +64,7 @@ test("combat aim is primed away from the previous menu click before unsuspending
 
 test("every victory shows evidence and rewards before queued unlock and return scenes", async () => {
   const [app, , styles, campaignSave] = await sources();
-  const finish = app.slice(app.indexOf("const finish = useCallback"), app.indexOf("const finishMikaRecruitment"));
+  const finish = app.slice(app.indexOf("const finish = useCallback"), app.indexOf("const finishSwordAbilityGuide"));
   assert.match(finish, /campaignRewards: completedSlot\?\.lastRegionRewards/);
   assert.match(campaignSave, /pendingPostVictorySteps = \[[\s\S]*"return"/);
   assert.match(campaignSave, /pendingPostVictorySteps: sanitizePendingPostVictorySteps/);
@@ -72,7 +72,7 @@ test("every victory shows evidence and rewards before queued unlock and return s
   assert.match(app, /const continuePostVictory = useCallback/);
   assert.match(app, /getCampaignPostVictorySteps\(campaign, activeSlotId\)\[0\]/);
   assert.match(app, /consumeCampaignPostVictoryStep\(sourceCampaign, activeSlotId, step\)/);
-  assert.match(app, /nextStep === "recruit"/);
+  assert.match(app, /STORY_EPISODES\[nextStep\]/);
   assert.match(app, /nextStep === "sword-guide"/);
   assert.match(app, /className="result-evidence"/);
   assert.match(app, /stats\.projectileAccuracy/);

@@ -1,6 +1,9 @@
 import { resolveSortieRoster } from './game/content/sortieFormation.js';
 import { getRegionalTerrain } from './game/content/regionalTerrain.js';
 import { NpcPortraitImage } from './ui/portrait/NpcPortraitImage.jsx';
+import { OperativePortraitImage } from './ui/portrait/InteractivePortrait.jsx';
+import { StorySceneScreen, StoryArchiveScreen } from './ui/campaign/StoryScreens.jsx';
+import { STORY_ART, STORY_EPISODES, isStoryAvailable } from './game/content/storyEpisodes.js';
 import { ExpeditionCombatDock } from './ui/combat/ExpeditionCombatDock.jsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -97,9 +100,6 @@ import {
   HomeBaseScreen,
   LarkFlightOperationsScreen,
   MANUAL_ABILITY_GUIDE,
-  MikaRecruitScreen,
-  NoxRecruitScreen,
-  VesperRecruitScreen,
   RegionSelectScreen,
   ReturnCinematicScreen,
   SaveSlotScreen,
@@ -370,7 +370,7 @@ function IntroScreen({ assets, assetError, onStart, musicPlaying, onToggleMusic,
         <img
           className="intro-key-art"
           src={assets.intro.src}
-          alt="폐허 도시에서 거대 기계 군단과 맞서는 생존자"
+          alt="끊어진 고가선 너머 소버린의 하얀 성채를 바라보는 이지스"
           fetchPriority="high"
           decoding="async"
           draggable="false"
@@ -759,6 +759,8 @@ function NarrativePortrait({ portrait }) {
         />
       ) : portrait.npcId || portrait.variant === "operator" ? (
         <NpcPortraitImage source={portrait.source} npcId={portrait.npcId || "rhea"} alt={portrait.alt} />
+      ) : ['hero', 'mika', 'vesper', 'nox'].includes(portrait.variant) ? (
+        <OperativePortraitImage source={portrait.source} characterId={portrait.variant === 'hero' ? 'aegis' : portrait.variant} alt={portrait.alt} />
       ) : (
         <img src={portrait.source} alt={portrait.alt} draggable="false" decoding="async" fetchPriority="high" />
       )}
@@ -1559,6 +1561,8 @@ function ResultScreen({ result, assets, region, onRestart, onBase, onContinue })
 export function App() {
   const { assets, error: assetError, progress: assetProgress } = useGameAssets();
   const [screen, setScreen] = useState("intro");
+  const [storyEpisodeId, setStoryEpisodeId] = useState("prologue");
+  const [storyReplay, setStoryReplay] = useState(false);
   const [audioSettings, setAudioSettings] = useState(loadGameSettings);
   const [settingsSaved, setSettingsSaved] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(() => audioSettings.masterSoundEnabled !== false);
@@ -1909,28 +1913,10 @@ export function App() {
   }, []);
 
   const openPostVictoryStep = useCallback((nextStep) => {
-    if (nextStep === "recruit") {
-      prepareSurface(
-        "신규 전투원 미카 불러오는 중",
-        [DOM_ASSET_REFS.mikaPortrait?.src, DOM_ASSET_REFS.characterSyncChamber?.src],
-        () => setScreen("recruit"),
-      );
-      return;
-    }
-    if (nextStep === "vesper-recruit") {
-      prepareSurface(
-        "신규 전투원 베스퍼 동기화 중",
-        [DOM_ASSET_REFS.vesperPortrait?.src, DOM_ASSET_REFS.characterSyncChamber?.src],
-        () => setScreen("vesper-recruit"),
-      );
-      return;
-    }
-    if (nextStep === "nox-recruit") {
-      prepareSurface(
-        "신규 전투원 녹스 동기화 중",
-        [DOM_ASSET_REFS.noxPortrait?.src, DOM_ASSET_REFS.characterSyncChamber?.src],
-        () => setScreen("nox-recruit"),
-      );
+    if (STORY_EPISODES[nextStep]) {
+      setStoryEpisodeId(nextStep);
+      setStoryReplay(false);
+      prepareSurface("작전 기록 불러오는 중", [STORY_ART[STORY_EPISODES[nextStep].lines[0].art]], () => setScreen("story"));
       return;
     }
     if (nextStep === "sword-guide") {
@@ -2064,18 +2050,6 @@ export function App() {
     setResult({ ...nextResult, regionId });
     setScreen("result");
   }, [activeRegionId, activeSlotId, campaign]);
-
-  const finishMikaRecruitment = useCallback(() => {
-    consumePostVictoryScene("recruit");
-  }, [consumePostVictoryScene]);
-
-  const finishVesperRecruitment = useCallback(() => {
-    consumePostVictoryScene("vesper-recruit");
-  }, [consumePostVictoryScene]);
-
-  const finishNoxRecruitment = useCallback(() => {
-    consumePostVictoryScene("nox-recruit");
-  }, [consumePostVictoryScene]);
 
   const finishSwordAbilityGuide = useCallback(() => {
     if (swordGuideReturnScreen === "post-victory") {
@@ -2330,6 +2304,18 @@ export function App() {
     content = <InitialAssetLoadingScreen progress={transitionProgress} label={transitionLabel} />;
   } else if (screen === "save") {
     content = <SaveSlotScreen slots={campaign.slots} onSelect={selectSaveSlot} onBack={() => setScreen("intro")} />;
+  } else if (screen === "story") {
+    content = <StorySceneScreen key={`${storyReplay}:${storyEpisodeId}`} episodeId={storyEpisodeId} replay={storyReplay} onComplete={() => {
+      if (storyReplay) setScreen("story-archive");
+      else consumePostVictoryScene(storyEpisodeId);
+    }} />;
+  } else if (screen === "story-archive" && activeSlot) {
+    content = <StoryArchiveScreen completedRegionIds={activeSlot.completedRegionIds} onBack={() => setScreen("base")} onReplay={id => {
+      if (!isStoryAvailable(id, activeSlot.completedRegionIds)) return;
+      setStoryEpisodeId(id);
+      setStoryReplay(true);
+      prepareSurface("작전 기록 불러오는 중", [STORY_ART[STORY_EPISODES[id].lines[0].art]], () => setScreen("story"));
+    }} />;
   } else if (screen === "guide") {
     content = (
       <AbilityGuideScreen
@@ -2375,6 +2361,7 @@ export function App() {
         onBoard={openRegionSelect}
         onDefense={openDefenseSelect}
         onOpenSettings={() => setSettingsOpen(true)}
+        onArchive={() => { closeNpc(); closeFacility(); setScreen("story-archive"); }}
         onTitle={() => { closeNpc(); closeFacility(); setScreen("save"); }}
       />
     );
@@ -2398,12 +2385,6 @@ export function App() {
     content = <DefenseArenaScreen stageId={activeDefenseStageId} doctrineId={activeDefenseDoctrineId} assets={campaignAssets} sfx={sfx} showTutorial={activeDefenseStageId === "haven-perimeter" && !activeSlot?.defenseGuideSeen} onTutorialComplete={finishDefenseGuide} onFinish={finishDefense} onBase={() => setScreen("base")} />;
   } else if (screen === "defense-result") {
     content = <DefenseResultScreen result={defenseResult} stage={getDefenseStage(activeDefenseStageId)} rewards={defenseResult?.rewards} onRetry={() => { setDefenseResult(null); setScreen("defense"); }} onBase={() => setScreen("base")} />;
-  } else if (screen === "recruit") {
-    content = <MikaRecruitScreen assets={campaignAssets} onComplete={finishMikaRecruitment} />;
-  } else if (screen === "vesper-recruit") {
-    content = <VesperRecruitScreen assets={campaignAssets} onComplete={finishVesperRecruitment} />;
-  } else if (screen === "nox-recruit") {
-    content = <NoxRecruitScreen assets={campaignAssets} onComplete={finishNoxRecruitment} />;
   } else if (screen === "sortie" || screen === "game") {
     content = (
       <div className={`combat-runtime-shell${screen === "sortie" ? " is-preparing" : " is-live"}`}>

@@ -69,8 +69,8 @@ test('operative framing equalizes head scale and crown height without stretching
   for(const [w,h] of [[650,820],[380,720],[200,100],[800,280]]){
     const heads=[];
     for(const [id,head] of Object.entries(PORTRAIT_LANDMARKS)) {
-      const fit=portraitFit(w,h,id),scale=fit.height/1536;
-      assert.ok(Math.abs(fit.width/fit.height-864/1536)<1e-10);
+      const fit=portraitFit(w,h,id),scale=fit.height/1280;
+      assert.ok(Math.abs(fit.width/fit.height-960/1280)<1e-10);
       assert.ok(Math.abs(fit.left*2+fit.width-w)<1e-10);
       assert.ok(fit.top+fit.height>=h,'Source cut edge must remain below the display frame');
       heads.push([fit.top+head.crown*scale,(head.chin-head.crown)*scale]);

@@ -39,7 +39,7 @@ export function createPortraitRenderer(canvas, source, characterId) {
     }
     void main() {
       vec2 original = a_position;
-      v_uv = original / vec2(864.0,1536.0);
+      v_uv = original / vec2(960.0,1280.0);
       vec2 p = original;
       ${rig.eyes.map(e => `p = eyelid(p, ${vec(e.slice(0,2))}, ${vec(e.slice(2,4))}, ${e[4].toFixed(5)});`).join('\n')}
       vec2 neck = ${vec(rig.neck)};
@@ -62,8 +62,8 @@ export function createPortraitRenderer(canvas, source, characterId) {
       float hairR = weight(original,${vec(rig.hair[1])},vec2(62.0,210.0));
       p.x += u_idle.y*(hairL*.8-hairR*.6);
       // All movement tends to zero before the cropped floor; no image scaling.
-      p = mix(p,original,smoothstep(1360.0,1536.0,original.y));
-      vec2 clip = (p / vec2(864.0,1536.0)*2.0-1.0)*vec2(1.0,-1.0);
+      p = mix(p,original,smoothstep(1140.0,1280.0,original.y));
+      vec2 clip = (p / vec2(960.0,1280.0)*2.0-1.0)*vec2(1.0,-1.0);
       gl_Position = vec4(clip*u_fit.xy+u_fit.zw,0.0,1.0);
     }
   `);
@@ -81,9 +81,9 @@ export function createPortraitRenderer(canvas, source, characterId) {
 
   // Denser rows/columns around eyelids retain the painted lashes as eyes close.
   const xs = new Set(), ys = new Set();
-  for (let x = 0; x <= 864; x += 9) xs.add(x);
-  for (let y = 0; y < 1536; y += 9) ys.add(y);
-  ys.add(1536);
+  for (let x = 0; x < 960; x += 9) xs.add(x);
+  for (let y = 0; y < 1280; y += 9) ys.add(y);
+  xs.add(960); ys.add(1280);
   for (const [x,y,w,h] of rig.eyes) {
     for (let dx = -w * 1.5; dx <= w * 1.5; dx += 2) xs.add(x+dx);
     for (let dy = -h * 3; dy <= h * 3; dy += 2) ys.add(y+dy);

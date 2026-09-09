@@ -1,5 +1,12 @@
 # Project Instructions
 
+## Anime portraits and story CG — 2026-09-09
+
+- The user's current direction supersedes historical byte-identical/unchanged-portrait rules: retain clear anime faces, use new backgroundless upper-body designs for dialogue/lobby/profile, and keep approved scene paintings in story sequences. Do not restore rejected semi-realistic UI variants or baked checkerboards. `docs/art/anime-2026-09-09.json` owns prompts and source hashes; `scripts/prepare-anime-art.py` owns explicitly user-authorized alpha cleanup. Current masters are 960×1280. Shared anatomical framing and mesh landmarks must match those masters; neutral head pose and reduced-motion behavior remain required.
+- Retain former artwork and Cubism inputs under `reference/source-assets/overload/runtime-inputs/`, including `pre-anime-2026-09-09/`. Do not feed the new illustrations into old segmentation recipes. Only runtime-owned images belong in public.
+- `storyEpisodes.js` and `StoryScreens.jsx` own the six current CG episodes and archive. Follow the existing save queue/seen flags, preserve unfinished steps, and never grant rewards or progression on replay. Returning to an unfinished scene restarts that episode; existing slots are not forced into the new prologue. Outer sorties still unlock automatically after the first three regions; the optional pilot briefing is not a new gate. Story CGs stay out of Phaser preload.
+- Local checkpoint: 415 tests, source alpha/hash checks, actual desktop/portrait/landscape story and roster flows. See `docs/art/anime-and-story-2026-09-09.md` for evidence and limits.
+
 ## Repository ownership — 2026-09-07
 
 - Current instructions here override historical checkpoints below. App orchestration stays in `src/App.jsx`; combat HUD presentation lives in `src/ui/combat/ExpeditionCombatDock.jsx`. All six regions use `src/render/environment/RegionalEnvironment.ts` and the shared projection. Keep simulation, camera clock, collision and rendering ownership unchanged.

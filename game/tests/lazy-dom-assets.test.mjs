@@ -29,6 +29,6 @@ test("DOM art uses scoped decode warmups without mirroring Phaser texture groups
   assert.match(preloader, /const image = new Image\(\)/);
   assert.match(preloader, /Promise\.race\(\[/);
   assert.match(preloader, /IMAGE_DECODE_TIMEOUT_MS/);
-  assert.match(index, /rel="preload" as="image"[^>]+start-screen-key-art\.webp[^>]+fetchpriority="high"/);
+  assert.match(index, /rel="preload" as="image"[^>]+start-screen-anime-v1\.webp[^>]+fetchpriority="high"/);
   assert.match(source, /<audio[^>]+preload="metadata"/);
 });

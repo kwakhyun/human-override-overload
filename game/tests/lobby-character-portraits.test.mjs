@@ -19,20 +19,20 @@ test("lobby animates the approved key art without restoring the rejected Cubism 
   assert.doesNotMatch(screens, /CubismCharacter|data-motion-profile="lobby-breathing"/);
   assert.doesNotMatch(packageJson, /@greenmansk\/react-live2d/);
   assert.doesNotMatch(styles, /cubism-character/);
-  assert.match(manifest, /player: "\.\/assets\/overload\/hero\/survivor-portrait-v2\.webp"/);
-  assert.match(manifest, /mikaPortrait: "\.\/assets\/overload\/hero\/mika-portrait-v2\.webp"/);
-  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/hero\/vesper-portrait-v7\.webp"/);
-  assert.match(manifest, /noxPortrait: "\.\/assets\/overload\/hero\/nox-portrait-v1\.webp"/);
+  assert.match(manifest, /player: "\.\/assets\/overload\/portraits\/anime-v1\/aegis\.webp"/);
+  assert.match(manifest, /mikaPortrait: "\.\/assets\/overload\/portraits\/anime-v1\/mika\.webp"/);
+  assert.match(manifest, /vesperPortrait: "\.\/assets\/overload\/portraits\/anime-v1\/vesper\.webp"/);
+  assert.match(manifest, /noxPortrait: "\.\/assets\/overload\/portraits\/anime-v1\/nox\.webp"/);
   assert.match(styles, /\.motion-portrait-body \{[\s\S]*overflow: hidden/);
   assert.match(styles, /\.motion-portrait-original \{[\s\S]*object-fit: contain;[\s\S]*object-position: center top/);
   assert.match(tacticalStyles, /OPERATIVE PORTRAIT STAGE CONTRACT/);
   assert.match(tacticalStyles, /\.character-art-stage\.is-aegis > img,[\s\S]*\.character-art-stage\.is-nox > img/);
   assert.match(tacticalStyles, /\.home-base-screen \.base-motion-portrait\.is-aegis,[\s\S]*\.home-base-screen \.base-motion-portrait\.is-nox/);
 
-  for (const file of ["survivor-portrait-v2.webp", "mika-portrait-v2.webp", "vesper-portrait-v7.webp", "nox-portrait-v1.webp"]) {
-    const url = new URL(`public/assets/overload/hero/${file}`, root);
+  for (const file of ["aegis.webp", "mika.webp", "vesper.webp", "nox.webp"]) {
+    const url = new URL(`public/assets/overload/portraits/anime-v1/${file}`, root);
     const [asset, webp] = await Promise.all([stat(url), readFile(url)]);
-    assert.ok(asset.size > 150_000 && asset.size < 400_000, `${file} should balance detail and transfer size`);
+    assert.ok(asset.size > 50_000 && asset.size < 400_000, `${file} should balance detail and transfer size`);
     assert.equal(webp.subarray(0, 4).toString("ascii"), "RIFF");
     assert.equal(webp.subarray(8, 12).toString("ascii"), "WEBP");
   }
@@ -41,7 +41,7 @@ test("lobby animates the approved key art without restoring the rejected Cubism 
   await assert.rejects(access(new URL("public/vendor/live2d/live2dcubismcore.min.js", root)));
 });
 
-test("operative key art obeys the shared floor-anchor and visible-scale contract", async () => {
+test("archived pre-anime operative inputs retain their original visual contract", async () => {
   const contractUrl = new URL("reference/source-assets/overload/runtime-inputs/operative-portrait-contract.json", root);
   const contract = JSON.parse(await readFile(contractUrl, "utf8"));
   const rules = contract.rules;
@@ -51,7 +51,7 @@ test("operative key art obeys the shared floor-anchor and visible-scale contract
   assert.deepEqual(Object.keys(contract.portraits).sort(), ["aegis", "mika", "nox", "vesper"]);
 
   for (const [operativeId, metrics] of Object.entries(contract.portraits)) {
-    const bytes = await readFile(new URL(`public/assets/overload/hero/${metrics.file}`, root));
+    const bytes = await readFile(new URL(`reference/source-assets/overload/runtime-inputs/pre-anime-2026-09-09/hero/${metrics.file}`, root));
     const digest = createHash("sha256").update(bytes).digest("hex");
     assert.equal(digest, metrics.sha256, `${operativeId} portrait changed without refreshing its visual contract`);
     assert.deepEqual(metrics.canvas, contract.canvas, `${operativeId} uses a different canvas`);

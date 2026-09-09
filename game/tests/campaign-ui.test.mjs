@@ -198,10 +198,10 @@ test("MIKA unlocks on the first Wrong Engine victory and keeps independent dialo
     readFile(new URL("src/ui/combat/combatPresentation.js", root), "utf8"),
   ]);
   assert.match(characters, /unlockRegionId: "wrong-engine-core"/);
-  assert.match(app, /consumePostVictoryScene\("recruit"\)/);
+  assert.match(app, /consumePostVictoryScene\(storyEpisodeId\)/);
   assert.match(app, /getCampaignPostVictorySteps\(nextCampaign, slotId\)\[0\]/);
-  assert.match(app, /setScreen\("recruit"\)/);
-  assert.match(app, /<MikaRecruitScreen/);
+  assert.match(app, /setScreen\("story"\)/);
+  assert.match(app, /<StorySceneScreen/);
   assert.match(screens, /export \{ MIKA_RECRUIT_DIALOGUE \}/);
   assert.match(dialogueContent, /링블레이드 전투원 미카, 지금부터 팀에 합류합니다/);
   assert.match(dialogueContent, /CHARACTER_DIALOGUE_OVERRIDES/);

@@ -11,7 +11,7 @@ test("the title screen is a full-bleed user key art composition with only essent
   const manifest = await read("src/game/assets/manifest.ts");
   const styles = await read("src/styles.css");
   const intro = app.slice(app.indexOf("function IntroScreen"), app.indexOf("function CombatAbilityTutorialOverlay"));
-  assert.match(manifest, /intro: "\.\/assets\/overload\/intro\/start-screen-key-art\.webp"/);
+  assert.match(manifest, /intro: "\.\/assets\/overload\/intro\/start-screen-anime-v1\.webp"/);
   assert.match(intro, /className="intro-key-art"/);
   assert.match(intro, /className="intro-minimal-content"/);
   assert.match(intro, /<span>HUMAN<\/span><em>OVERRIDE<\/em><b>OVERLOAD<\/b>/);
@@ -27,7 +27,7 @@ test("the title screen is a full-bleed user key art composition with only essent
 
 test("the DOM campaign manifest ships SERA's dedicated full-body pilot art", async () => {
   const manifest = await read("src/game/assets/manifest.ts");
-  assert.match(manifest, /nightjarPilot: "\.\/assets\/overload\/ui\/npcs\/sera-nightjar-pilot-v4\.webp"/);
+  assert.match(manifest, /nightjarPilot: "\.\/assets\/overload\/portraits\/anime-v1\/sera\.webp"/);
 });
 
 test("the active App mounts the Phaser runtime while React owns the DOM HUD", async () => {
@@ -234,7 +234,7 @@ test("authored trace props and campaign region art are registered without restor
   assert.equal(traceAtlas.readUInt32BE(20), 384);
   assert.match(manifest, /squad-traces-atlas\.png", kind: "atlas", columns: 3, rows: 1/);
   assert.match(manifest, /havenBase: "\.\/assets\/overload\/campaign\/haven-09-base\.webp"/);
-  assert.match(manifest, /hanaPortrait: "\.\/assets\/overload\/ui\/npcs\/hana-research-director-v2\.webp"/);
+  assert.match(manifest, /hanaPortrait: "\.\/assets\/overload\/portraits\/anime-v1\/hana\.webp"/);
   assert.doesNotMatch(manifest, /havenNpcPortraits|haven-npc-portraits-atlas/);
   assert.match(manifest, /airshipRegionMap: "\.\/assets\/overload\/campaign\/strategic-world-map\.webp"/);
   assert.match(manifest, /innerNetworkRegionMap: "\.\/assets\/overload\/campaign\/airship-region-map-v2\.webp"/);

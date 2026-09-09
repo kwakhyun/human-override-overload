@@ -1076,7 +1076,7 @@ export function NoxRecruitScreen({ assets, onComplete }) {
   );
 }
 
-export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, availableUpgrades = {}, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onExchangeResources, onCharacterChange, onWeaponChange, onOpenSwordGuide, onCloseFacility, onBoard, onDefense, onOpenSettings, onTitle }) {
+export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, activeFacility, larkAlert = false, availableUpgrades = {}, onNpc, onAdvanceNpc, onCloseNpc, onOpenFacility, onNpcInteraction, onPurchaseUpgrade, onExchangeResources, onCharacterChange, onWeaponChange, onOpenSwordGuide, onCloseFacility, onBoard, onDefense, onOpenSettings, onArchive, onTitle }) {
   const facilityRailRef = useRef(null);
   const [facilityRailIndex, setFacilityRailIndex] = useState(0);
   const background = assetSource(assets?.homeBase);
@@ -1191,7 +1191,7 @@ export function HomeBaseScreen({ campaign, npcs, assets, activeNpc, lineIndex, a
             <b>동기화 코어 +{campaign.lastRegionRewards.augmentationCores || 0}</b>
           </div>
         )}
-        <button type="button" onClick={onTitle}>작전 프로필 선택</button>
+        <div className="base-record-actions"><button type="button" onClick={onArchive}>작전 기록</button><button type="button" onClick={onTitle}>작전 프로필 선택</button></div>
       </aside>
 
       </div>
