@@ -1,6 +1,6 @@
 # HUMAN OVERRIDE: OVERLOAD
 
-4명 전투원과 6개 구역의 실시간 3D 배경·2D 전투를 결합한 웹 액션 서바이버입니다. 이 문서는 현재 실행·제작·검증 경로를 안내합니다. 상세 기획과 과거 측정 조건은 별도 문서에서 관리합니다.
+4명 전투원과 6개 구역의 실시간 3D 배경·2D 전투를 결합한 웹 액션 서바이버입니다. 이 문서는 현재 실행·제작·검증 경로를 안내합니다. 게임 소개와 전체 스크린샷은 [루트 README](../README.md)에서 확인할 수 있습니다.
 
 ## 인게임 미리보기
 
@@ -24,11 +24,12 @@ npm run build
 - `npm run analyze:assets`: 모든 구역·전투원·방어전·화질 단계·화면·음원의 누락과 미사용 공개 파일을 검사합니다.
 - `npm run analyze:content`: 현재 콘텐츠와 경제 수치를 산출합니다.
 - `npm run test:sites`: 저장 API와 배포 Worker를 검사합니다.
-- 빌드는 에셋 검사 → TypeScript → Vite → Sites 패키징 순서입니다. 산출물은 `dist/client`, `dist/server`, `dist/.openai`입니다.
+- `npm run typecheck`: TypeScript 타입을 검사합니다.
+- 빌드는 에셋 검사 → TypeScript → Vite → Sites 배포 디렉터리 준비 순서입니다. 산출물은 `dist/client`, `dist/server`, `dist/.openai`입니다.
 - `scripts/production-asset-policy.mjs`가 에셋 소유권과 구형 공개 경로를 검사합니다.
 - `public/`은 실제 게임에 필요한 파일만 포함합니다. 제작 도구와 원본, 검수 화면, PDF는 배포하지 않습니다.
 
-## 현재 플레이 규칙
+## 플레이 규칙
 
 - 새로운 슬롯은 이지스의 구조 작전 프롤로그로 시작합니다. 최초 구역 클리어 뒤 추론핵 분석·전투원 합류·외곽 항로 발견을 CG와 대사로 보여 줍니다. 헤이븐 **작전 기록**에서 해금된 6편을 다시 볼 수 있으며 보상은 중복 지급하지 않습니다.
 - AEGIS는 기본 전투원입니다. MIKA는 01구역, VESPER는 03구역, NOX는 04구역 최초 클리어로 합류합니다.
@@ -38,6 +39,7 @@ npm run build
 - 6개 구역과 보스방은 3D 배경을 공유하며 테마별 구조물이 다릅니다. 지정된 소형 구조물은 파괴 후 이동·사격 경로를 열고, 처치 수나 경험치는 주지 않습니다.
 - 적은 전장 주변 8곳의 전송 게이트에서 진입합니다. 비행 지원은 SERA의 선행 정찰 지원·긴급 보급 지원·요격기 엄호 지원 중 하나를 선택합니다.
 - 방어전은 세 작전과 네 종류 포탑을 사용하는 별도 결정론 엔진입니다. 캠페인 저장·재화·설정과 연결됩니다.
+- 로비·전투원 정보는 네 전투원의 Cubism 모델을 사용합니다. 캐릭터별 11개 터치 부위에 두 줄씩 총 88개의 대사가 있으며, 부위별로 순환합니다.
 
 ## 코드 구조
 
@@ -66,23 +68,31 @@ React·Phaser·Three.js는 같은 시뮬레이션 상태를 표현합니다. 피
 
 ## 에셋과 제작 자료
 
-현재 에셋은 `public/assets/`에 209개, 약 118.88MiB입니다. 최신 스프라이트는 `overload/quality-v3/`, 현재 일러스트와 음원은 manifest가 지정한 경로를 따릅니다. 구형 파일명에 숫자를 붙여 공개 폴더에 계속 쌓지 않습니다.
+게임에서 사용하는 에셋만 `public/assets/`에 둡니다. 전투 스프라이트는 `overload/quality-v3/`, 전투원·NPC의 정적 일러스트는 `overload/portraits/anime-v1/`, Cubism 런타임은 `overload/live2d/anime-v2/`, 스토리 CG는 `overload/story/awakening/`을 사용합니다. 실제 등록·로딩 경로는 `src/game/assets/manifest.ts`와 `src/game/content/storyEpisodes.js`를 따릅니다. 파일 수·용량·누락·미사용 여부는 `npm run analyze:assets`로 확인합니다.
 
-- `reference/source-assets/overload/runtime-inputs/`: AEGIS 원본 아틀라스, AEGIS·MIKA 원본 일러스트, 공통 비율 계약, Cubism 부위 분리 좌표입니다.
+- `reference/source-assets/overload/runtime-inputs/`: 원본 아틀라스, 이전 일러스트와 재현에 필요한 제작 계약을 보존합니다.
 - `reference/source-assets/overload/sprite-quality-v3/`: 현행 그래픽을 다시 만드는 검수된 원본과 프레임 분리 자료입니다.
-- `reference/source-assets/overload/live2d-production/`: 진행 중인 Cubism 원본입니다. AEGIS `parts-v2`는 완성된 상용 리깅이 아닙니다. 실제 제작 상태는 [리깅 기록](docs/live2d/aegis-parts-v2-session-2026-09-06.md)을 따릅니다.
+- `reference/source-assets/overload/live2d-production/anime-v2/`: 네 전투원의 편집 가능한 PSD·CMO3와 리깅 소재입니다. 런타임은 여기서 내보낸 MOC3와 전용 텍스처를 사용합니다. 머리 회전은 고정하며, 눈꺼풀·머리카락·팔·코트·몸통 모션을 사용합니다. 눈동자·눈썹·입술의 독립 표정 파라미터는 구현되지 않았습니다.
 - `tools/`: 로컬 전투 스프라이트·일러스트·현재 Cubism 검수 화면입니다. 개발 서버의 `/tools/combat-sprite-review.html` 등에서 엽니다.
 - `docs/project/media/`: 문서에 실제로 쓰는 영구 이미지입니다. 임시 QA 캡처 경로와 사용자 다운로드 폴더에 의존하지 않습니다.
 - `output/pdf/`: 현재 제출·열람용 PDF입니다. 생성 중간본은 `tmp/pdfs/`에 둡니다.
 - `qa/`, `tmp/`, `dist/`: 재생성 가능한 검증·작업·빌드 결과입니다. 현재 필요한 제작 원본과 혼용하지 않습니다.
 
-제작 명령은 [도구 안내](scripts/README.md), 정리 범위와 남은 로컬 파일은 [정리 기록](docs/maintenance/project-cleanup-2026-09-07.md)에 있습니다. 과거 시안·프롬프트·측정 결과는 [CREDITS](CREDITS.md), 관련 문서와 Git 이력으로 확인합니다.
+제작 명령은 [도구 안내](scripts/README.md), 에셋 출처와 사용 조건은 [CREDITS](CREDITS.md)에서 확인합니다. 문서 이미지와 제작 원본은 게임 배포에 포함하지 않습니다.
 
 ## 검증
 
-2026-09-07 정리 작업에서 현행 자동 테스트 410개, TypeScript, production 빌드, 프레임 분리 검사 2개를 통과했습니다. 구형 프로토타입 엔진과 그 전용 테스트 11개는 함께 제거했습니다. 실제 브라우저에서 출격·스킬 사용·재충전·일시정지·태그·PC/세로/가로 배치를 확인했습니다. 현행 에셋 209개의 파일 해시는 정리 전과 같습니다.
+`npm test`로 콘텐츠·진행 저장·전투·UI 계약을 검사하고, `npm run build`로 에셋 정책·타입·배포 산출물을 확인합니다. README 설명과 코드 경로만 검사하려면 `node --test tests/readme-consistency.test.mjs`를 실행합니다.
 
-주요 브라우저 검수는 로컬 서버를 켠 뒤 `node scripts/verify-skill-readiness.mjs`와 `node scripts/verify-combat-sprites.mjs`로 실행합니다. 현재 도구는 Windows Edge와 번들 Playwright를 사용합니다. 다른 환경은 도구의 실행 경로를 맞춰야 합니다. 이 검수는 실제 모바일 기기의 성능 인증이나 전체 캠페인 클리어 기록을 뜻하지 않습니다.
+브라우저 검수는 `npm run dev -- --port 4174`로 로컬 서버를 켠 뒤 실행합니다.
+
+| 명령 | 확인 범위 |
+| --- | --- |
+| `node scripts/verify-skill-readiness.mjs` | 스킬 사용·재충전·일시정지·태그와 화면 크기별 HUD |
+| `node scripts/verify-combat-sprites.mjs` | 전투 스프라이트와 렌더링 |
+| `node scripts/verify-anime-cubism.mjs` | 네 전투원의 11개 터치 부위·대사, 화면 크기별 배치, 모션 감소·그래픽 자원 정리·대체 표시 |
+
+브라우저 도구는 별도 테스트 프로필과 소개용 저장 상태를 사용합니다. Windows Edge와 Playwright가 필요하며 도구별 기본 경로가 다르므로 실행 환경에 맞춰 설정합니다. Cubism 검수기는 `PLAYWRIGHT_MODULE`, `EDGE_EXECUTABLE`, `QA_BASE_URL`, `QA_OUTPUT` 환경 변수를 지원합니다. 이 검수는 실물 모바일 기기의 성능 측정이나 전체 캠페인 완주 검증을 대신하지 않습니다.
 
 ## 문서
 
@@ -96,4 +106,4 @@ React·Phaser·Three.js는 같은 시뮬레이션 상태를 표현합니다. 피
 - [음성 생성](GOOGLE_TTS_SETUP.md), [Suno BGM 프롬프트](SUNO_BGM_PROMPTS.md)
 - [모바일 출시 로드맵](docs/mobile-app-release-roadmap.md)
 
-공개 사이트: https://human-override-overload.khyun97.chatgpt.site
+[공개 플레이 사이트](https://human-override-overload.khyun97.chatgpt.site)
