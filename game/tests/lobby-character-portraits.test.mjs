@@ -82,10 +82,11 @@ test("invisible body zones retain character-specific dialogue without fake overl
     readFile(new URL("src/ui/portrait/InteractivePortrait.jsx", root), "utf8"),
   ]);
 
-  for (const zone of ["head", "chest", "armLeft", "armRight", "legs"]) {
-    assert.match(portrait, new RegExp(`\\['${zone}'`));
-  }
-  assert.match(screens, /PORTRAIT_REACTIONS[\s\S]*vesper: Object\.freeze/);
+  assert.match(portrait, /PORTRAIT_TOUCH_ZONES\[characterId\]/);
+  assert.match(portrait, /createPortraitDialogue\(characterId\)/);
+  assert.match(portrait, /data-portrait-zone=\{zone.key\}/);
+  assert.match(portrait, /role="status" aria-live="polite"/);
+  assert.doesNotMatch(screens, /터치 상호작용/);
   assert.match(styles, /\.portrait-zone \{[\s\S]*background: transparent/);
   assert.match(styles, /\.portrait-zone:focus-visible \{ outline: 0; background: transparent; \}/);
   assert.match(styles, /\.motion-portrait-speech/);

@@ -2,17 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import { createCubismMotion } from './cubismMotion.js';
 import { CUBISM_PORTRAITS } from '../../game/assets/manifest.ts';
 import { applyPortraitFit, portraitFit } from './portraitFraming.js';
+import { PORTRAIT_TOUCH_ZONES, createPortraitDialogue } from './portraitInteractions.js';
 import './portrait.css';
-
-const ZONES = [
-  ['head', '머리'], ['chest', '상체'], ['armLeft', '왼팔'], ['armRight', '오른팔'], ['legs', '장비'],
-];
 
 // Mount with a character key: artwork, timers, gaze and GPU resources have one owner.
 export function InteractivePortrait({ source, characterId, name, onReact, presentation = 'profile' }) {
   const rootRef = useRef(null), imageRef = useRef(null), canvasRef = useRef(null);
   const engineRef = useRef(null), callbackRef = useRef(onReact);
   const [ready, setReady] = useState(false);
+  const [speech, setSpeech] = useState(null);
+  const speechTimer = useRef(null), dialogueRef = useRef(null), speechToken = useRef(0);
+  useEffect(() => {
+    dialogueRef.current = createPortraitDialogue(characterId);
+    setSpeech(null);
+    return () => clearTimeout(speechTimer.current);
+  }, [characterId]);
   useEffect(() => { callbackRef.current = onReact; }, [onReact]);
   useEffect(() => {
     const root = rootRef.current, img = imageRef.current, canvas = canvasRef.current;
@@ -36,6 +40,7 @@ export function InteractivePortrait({ source, characterId, name, onReact, presen
       const { width, height } = root.getBoundingClientRect();
       const fit = renderer?.resize(width,height,window.devicePixelRatio) || portraitFit(width,height,characterId,presentation);
       applyPortraitFit(root,fit);
+      root.style.setProperty('--portrait-speech-top', `${fit.top + 575 * fit.height / 1280}px`);
       if (renderer) { try { renderer.draw(motion.update(0,reduced())); } catch { fail(); } }
     };
     const frame = (time) => {
@@ -90,8 +95,14 @@ export function InteractivePortrait({ source, characterId, name, onReact, presen
     };
   }, [source, characterId, presentation]);
   const react = (zone) => {
-    engineRef.current?.react(zone);
-    callbackRef.current?.(zone.startsWith('arm') ? 'arms' : zone,zone);
+    engineRef.current?.react(zone.motion);
+    const text = dialogueRef.current?.(zone.key);
+    if (text) {
+      clearTimeout(speechTimer.current);
+      setSpeech({ text, token: ++speechToken.current, area: zone.key });
+      speechTimer.current = setTimeout(() => setSpeech(null), 5200);
+    }
+    callbackRef.current?.(zone.key);
   };
   return (
     <div ref={rootRef} className={`interactive-portrait${ready ? ' is-rendered' : ''}`} data-portrait-renderer={ready ? 'cubism' : 'static-fallback'}
@@ -102,9 +113,12 @@ export function InteractivePortrait({ source, characterId, name, onReact, presen
       }} onPointerLeave={() => engineRef.current?.look(0,0)}>
       <img ref={imageRef} className="portrait-source" src={source} alt={`${name} 상반신 일러스트`} draggable="false" decoding="async" />
       <canvas ref={canvasRef} className="portrait-mesh" aria-hidden="true" />
-      <div className={`portrait-touch-map is-${characterId}`} aria-label={`${name} 터치 상호작용`}>
-        {ZONES.map(([zone,label]) => <button key={zone} type="button" className={`portrait-touch-zone is-${zone}`} data-ui-sound="click" onClick={() => react(zone)} aria-label={`${name} ${label} 반응 보기`} />)}
+      <div className={`portrait-touch-map is-${characterId}`} aria-label={`${name} 부위별 반응`}>
+        {(PORTRAIT_TOUCH_ZONES[characterId] || []).map(zone => <button key={zone.key} type="button" className={`portrait-touch-zone is-${zone.key}`} data-portrait-zone={zone.key}
+          style={{left:`${zone.bounds[0]/9.6}%`,top:`${zone.bounds[1]/12.8}%`,width:`${zone.bounds[2]/9.6}%`,height:`${zone.bounds[3]/12.8}%`}}
+          data-ui-sound="click" onClick={() => react(zone)} aria-label={`${name} ${zone.label} 반응 보기`} />)}
       </div>
+      {speech && <aside className="portrait-reaction-speech" key={speech.token} data-reaction-area={speech.area} role="status" aria-live="polite" aria-atomic="true"><strong>{name}</strong><p>{speech.text}</p></aside>}
     </div>
   );
 }

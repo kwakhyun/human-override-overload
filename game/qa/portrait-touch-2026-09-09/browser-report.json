@@ -1,0 +1,44 @@
+{
+  "reports": [
+    {
+      "id": "aegis",
+      "touchAreas": 11,
+      "mobileFaceTouch": true,
+      "texturePages": 1,
+      "activeDraws": true,
+      "reducedMotion": true,
+      "viewports": 3
+    },
+    {
+      "id": "mika",
+      "touchAreas": 11,
+      "mobileFaceTouch": true,
+      "texturePages": 2,
+      "activeDraws": true,
+      "reducedMotion": true,
+      "viewports": 3
+    },
+    {
+      "id": "vesper",
+      "touchAreas": 11,
+      "mobileFaceTouch": true,
+      "texturePages": 1,
+      "activeDraws": true,
+      "reducedMotion": true,
+      "viewports": 3
+    },
+    {
+      "id": "nox",
+      "touchAreas": 11,
+      "mobileFaceTouch": true,
+      "texturePages": 2,
+      "activeDraws": true,
+      "reducedMotion": true,
+      "viewports": 3
+    }
+  ],
+  "errors": [],
+  "contextLossFallback": true,
+  "assetFailureFallback": true,
+  "gpuCleanup": true
+}

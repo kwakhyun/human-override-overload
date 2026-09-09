@@ -1,5 +1,11 @@
 # Project Instructions
 
+## Portrait touch dialogue — 2026-09-09
+
+- Do not display the “터치 상호작용” badge. `portraitInteractions.js` owns eleven non-overlapping, character-specific source-space areas: hair, face, collar, two shoulders, chest, two arms, two hands and waist gear. Screen-left/right correspond to the artwork; use the shared portrait transform for both art and buttons.
+- All four operatives have two authored lines per area (88 total), cycling independently per area. Keep AEGIS reserved but considerate, MIKA playful, VESPER composed and dry, NOX politely concise. Do not restore the discarded threats or mixed refusal/flirtation copy.
+- `InteractivePortrait.jsx` owns speech and expiry on both lobby/profile. Preserve keyboard buttons, polite live announcement, timer cleanup and reset on character changes. Detailed touch areas map to existing Cubism controls; they do not imply new facial rig channels. QA: 421 tests plus real eleven-area clicks and responsive view checks in `scripts/verify-anime-cubism.mjs` (`QA_OUTPUT` can isolate the report).
+
 ## Anime Cubism runtime — 2026-09-09
 
 - Lobby/profile now use the four authored anime-v2 MOC3s through `cubismRenderer.js` and `cubismMotion.js`, owned by `CUBISM_PORTRAITS`. Do not restore the one-image warp as the active rig. Preserve editable PSD/CMO3/materials under `reference/source-assets/overload/live2d-production/anime-v2/` and all earlier required source inputs.

@@ -27,33 +27,31 @@
   border: 0; border-radius: 42%; background: transparent; box-shadow: none;
   pointer-events: auto; cursor: pointer; touch-action: manipulation;
 }
-.portrait-touch-zone.is-head { left: 36%; top: 5%; width: 33%; height: 20%; }
-.portrait-touch-zone.is-chest { left: 36%; top: 29%; width: 36%; height: 27%; }
-.portrait-touch-zone.is-armLeft { left: 17%; top: 29%; width: 19%; height: 28%; }
-.portrait-touch-zone.is-armRight { left: 73%; top: 29%; width: 19%; height: 30%; }
-.portrait-touch-zone.is-legs { left: 29%; top: 66%; width: 41%; height: 33%; }
-.portrait-touch-map.is-mika .is-head { top: 12%; }
-.portrait-touch-map.is-mika .is-armRight { top: 30%; left: 72%; height: 29%; }
-.portrait-touch-map.is-vesper .is-armLeft { top: 23%; height: 29%; }
-.portrait-touch-map.is-vesper .is-armRight { top: 39%; left: 67%; height: 23%; }
-.portrait-touch-map.is-nox .is-head { top: 10%; }
-.portrait-touch-map.is-nox .is-armLeft { top: 40%; left: 7%; height: 22%; }
-.portrait-touch-map.is-nox .is-armRight { top: 46%; left: 65%; height: 35%; }
 .campaign-shell .portrait-touch-zone:focus-visible { outline: 2px solid rgba(150,237,249,.8); outline-offset: -3px; background: rgba(98,218,236,.04); }
 .character-art-stage .interactive-portrait { z-index: 1; }
 .character-art-stage figcaption,
 .character-lock-banner { pointer-events: none; }
-.portrait-touch-map .portrait-touch-zone.is-head { left: 34%; top: 10%; width: 31%; height: 28%; }
-.portrait-touch-map .portrait-touch-zone.is-chest { left: 36%; top: 42%; width: 29%; height: 23%; }
-.portrait-touch-map .portrait-touch-zone.is-armLeft { left: 14%; top: 46%; width: 22%; height: 31%; }
-.portrait-touch-map .portrait-touch-zone.is-armRight { left: 66%; top: 45%; width: 23%; height: 32%; }
-.portrait-touch-map .portrait-touch-zone.is-legs { left: 34%; top: 78%; width: 30%; height: 18%; }
 .base-record-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .narrative-portrait .operative-portrait-image > .portrait-source {
   left: var(--portrait-left); top: var(--portrait-top); width: var(--portrait-width); height: var(--portrait-height);
   transform: none; max-width: none; object-fit: fill;
 }
 .motion-portrait-speech { pointer-events: none; }
+.portrait-reaction-speech {
+  position: absolute; z-index: 3; left: 6%; right: 6%;
+  top: clamp(80px,var(--portrait-speech-top),calc(100% - 120px));
+  padding: 12px 16px; border: 1px solid rgba(126,216,231,.5);
+  border-left: 3px solid var(--accent,#8fe6df); border-radius: 4px;
+  background: rgba(3,16,22,.96); color: #eef9fa;
+  box-shadow: 0 8px 22px #0006; pointer-events: none;
+}
+.portrait-reaction-speech strong { display: block; margin-bottom: 5px; color: #9cebe6; font-size: 12px; }
+.campaign-shell .portrait-reaction-speech p { margin: 0; font-size: 14px; line-height: 1.6; word-break: keep-all; overflow-wrap: anywhere; }
+.character-art-stage .interactive-portrait:has(.portrait-reaction-speech) { z-index: 3; }
+@media (max-width:720px) {
+  .portrait-reaction-speech { left: 3%; right: 3%; padding: 9px 12px; }
+  .campaign-shell .portrait-reaction-speech p { font-size: 13px; }
+}
 @media (max-width: 720px) and (orientation: portrait) {
   /* Reserve the compact-view button above the common head line. */
   .character-art-stage .interactive-portrait { top: 56px; }

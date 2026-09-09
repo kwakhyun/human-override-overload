@@ -162,8 +162,8 @@ test("HAVEN lobby uses original character art, icon currencies, edge navigation,
   assert.doesNotMatch(screens, /CubismCharacter|data-motion-profile="lobby-breathing"/);
   assert.doesNotMatch(screens, /motion-portrait-expression/);
   assert.doesNotMatch(screens, /onPointerMove|--portrait-look-x|--portrait-tilt/);
-  assert.match(screens, /name=\{name\} onReact=\{react\}/);
-  assert.match(screens, /PORTRAIT_REACTIONS[\s\S]*머리 만지지 마[\s\S]*싫진 않지만/);
+  assert.match(screens, /name=\{name\} presentation="lobby"/);
+  assert.doesNotMatch(screens, /터치 상호작용|const PORTRAIT_REACTIONS/);
   assert.match(styles, /\.motion-portrait-speech/);
   assert.doesNotMatch(styles, /\.motion-portrait-expression|radial-gradient\(circle at 18% 72%/);
   assert.match(styles, /\.portrait-zone:focus-visible \{ outline: 0; background: transparent; \}/);

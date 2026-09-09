@@ -141,33 +141,6 @@ const CHARACTER_ACTIVE_LOADOUTS = Object.freeze({
   ]),
 });
 
-const PORTRAIT_REACTIONS = Object.freeze({
-  aegis: Object.freeze({
-    head: Object.freeze(["머리 만지지 마. 작전 브리핑이나 계속해.", "집중이 흐트러져. 손을 거둬."]),
-    chest: Object.freeze(["손 치워. 다음엔 경고 없이 제압한다.", "접촉 허가 안 했어. 선을 지켜."]),
-    arms: Object.freeze(["장비 점검이면 일리야에게 가.", "팔은 멀쩡해. 네 걱정은 필요 없어."]),
-    legs: Object.freeze(["기동부는 정상. 발목 잡지 마.", "출격 전이야. 장난은 여기까지."]),
-  }),
-  mika: Object.freeze({
-    head: Object.freeze(["으앗… 머리 흐트러지잖아. 그래도 조금은 괜찮아.", "또 쓰다듬는 거야? 싫진 않지만… 딱 한 번만이야."]),
-    chest: Object.freeze(["자, 잠깐! 거긴 안 돼… 정말 하지 마. …미워하진 않지만.", "너무 가깝잖아! 심장 소리 들리면 책임져."]),
-    arms: Object.freeze(["손잡고 싶으면 그냥 말해. 이번만이야.", "팔은 전투 준비 완료! 네가 잡아 주면… 조금 더 든든할지도."]),
-    legs: Object.freeze(["간지럽잖아! 출격 전에 장난치지 마… 조금만 더.", "도망 못 가게 잡는 거야? 나도 같이 갈 테니까 놔 줘."]),
-  }),
-  vesper: Object.freeze({
-    head: Object.freeze(["전술 계산 중이야. 머리카락은 나중에 정리해 줘.", "집중은 흐트러지지 않았어. 다음 표적을 말해." ]),
-    chest: Object.freeze(["방탄 플레이트 상태 양호. 너무 걱정하지 마.", "제로 벡터 동기화 완료. 출격 가능해." ]),
-    arms: Object.freeze(["레일 피스톨 영점은 완벽해.", "손목 보정기 반응 정상. 한 발이면 충분해." ]),
-    legs: Object.freeze(["기동 보조기 점검 완료. 먼저 길을 열게.", "내 장점은 속도야. 따라올 수 있겠어?" ]),
-  }),
-  nox: Object.freeze({
-    head: Object.freeze(["심사 집중을 방해하지 마십시오.", "시선 추적 정상. 다음 표적을 지정합니다."]),
-    chest: Object.freeze(["전술 단말은 보호 중입니다.", "권한 확인이 먼저입니다."]),
-    arms: Object.freeze(["모노와이어 장력 정상.", "판결선 전개 준비를 유지합니다."]),
-    legs: Object.freeze(["이동 경로는 이미 계산했습니다.", "후퇴 사유는 기각합니다."]),
-  }),
-});
-
 export { MIKA_RECRUIT_DIALOGUE };
 
 const ABILITY_CATEGORY_KO = Object.freeze({
@@ -895,37 +868,15 @@ function CharacterInformationPanel({ facility, onPurchase, onClose, onCharacterC
 }
 
 function MotionPortraitStage({ source, characterId, name, onOpen }) {
-  const [reaction, setReaction] = useState(null);
-  const reactionIndex = useRef(0);
-  const reactionTimer = useRef(null);
-  useEffect(() => {
-    setReaction(null);
-    reactionIndex.current = 0;
-    return () => clearTimeout(reactionTimer.current);
-  }, [characterId]);
-  const react = useCallback((area) => {
-    const lines = PORTRAIT_REACTIONS[characterId]?.[area] || [];
-    const text = lines[reactionIndex.current % Math.max(1, lines.length)] || "작전 준비를 계속하세요.";
-    reactionIndex.current += 1;
-    clearTimeout(reactionTimer.current);
-    setReaction({ area, text, token: reactionIndex.current });
-    reactionTimer.current = setTimeout(() => setReaction(null), 4200);
-  }, [characterId]);
-
   return (
     <section
-      className={`base-motion-portrait is-${characterId}${reaction ? ` is-reacting reaction-${reaction.area}` : ""}`}
+      className={`base-motion-portrait is-${characterId}`}
       data-portrait-surface="interactive-operative"
       aria-label={`${name} 상호작용 포트레이트`}
     >
       <div className="motion-portrait-body">
-        <InteractivePortrait key={characterId} source={assetSource(source)} characterId={characterId} name={name} onReact={react} presentation="lobby" />
+        <InteractivePortrait key={characterId} source={assetSource(source)} characterId={characterId} name={name} presentation="lobby" />
       </div>
-      <div className="portrait-touch-hint" aria-hidden="true">
-        <Sparkle weight="fill" />
-        <span>터치 상호작용</span>
-      </div>
-      {reaction && <aside className="motion-portrait-speech" key={reaction.token} role="status" aria-live="polite"><strong>{name}</strong><p>{reaction.text}</p></aside>}
       <button type="button" className="motion-portrait-caption" onClick={onOpen} aria-label={`${name} 전투원 정보 열기`}>
         <small>ACTIVE OPERATIVE</small><strong>{name}</strong><em>전투원 정보</em>
       </button>

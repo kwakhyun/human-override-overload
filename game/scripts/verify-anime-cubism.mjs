@@ -7,7 +7,7 @@ const require=createRequire(import.meta.url);
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const browser=await chromium.launch({headless:true,...(process.env.EDGE_EXECUTABLE?{executablePath:process.env.EDGE_EXECUTABLE}:{})});
 const root=process.env.QA_BASE_URL||'http://127.0.0.1:4174';
-const output='qa/cubism-anime-2026-09-09';await mkdir(output,{recursive:true});
+const output=process.env.QA_OUTPUT||'qa/cubism-anime-2026-09-09';await mkdir(output,{recursive:true});
 const names=[['aegis','이지스'],['mika','미카'],['vesper','베스퍼'],['nox','녹스']];
 let campaign=createEmptyCampaign();
 for(const id of ['wrong-engine-core','glass-dune','abyssal-archive','neon-foundry','storm-spire','gene-vault']){
@@ -37,6 +37,9 @@ try{
   await page.goto(root);await page.locator('.intro-start:not([disabled])').click();
   await page.locator('.save-slot-card').first().click();await page.locator('.home-base-screen').waitFor();await page.keyboard.press('Escape');
   await page.locator('[data-portrait-renderer=cubism]').waitFor();
+  assert.equal(await page.getByText('터치 상호작용',{exact:true}).count(),0);
+  await page.locator('.home-base-screen [data-portrait-zone=face]').click();
+  assert.equal(await page.locator('.home-base-screen .portrait-reaction-speech').getAttribute('data-reaction-area'),'face');
   await page.screenshot({path:output+'/lobby-desktop.png'});
   await page.locator('.motion-portrait-caption').click();
   for(const [id,name] of names){
@@ -46,17 +49,22 @@ try{
     assert.ok(after.at(-1).draws>before.at(-1).draws,'Active model renders');
     assert.equal(after.at(-1).uploads,before.at(-1).uploads,'No per-frame texture uploads');
     for(const s of after.filter(s=>!s.connected))assert.equal(s.buffers+s.textures,0,'Retired profile resources released');
-    for(const zone of ['head','chest','armLeft','armRight','legs'])await page.locator('.character-art-stage .is-'+zone+'.portrait-touch-zone').click({force:true});
+    for(const zone of ['hair','face','collar','shoulderLeft','shoulderRight','chest','armLeft','armRight','handLeft','handRight','gear']) {
+      await page.locator('.character-art-stage [data-portrait-zone='+zone+']').click();
+      assert.equal(await page.locator('.character-art-stage .portrait-reaction-speech').getAttribute('data-reaction-area'),zone);
+    }
     await page.emulateMedia({reducedMotion:'reduce'});await wait(100);const stopped=await stats();await wait(200);assert.equal((await stats()).at(-1).draws,stopped.at(-1).draws);
     await page.screenshot({path:output+'/profile-'+id+'-desktop.png'});
     for(const [width,height,label] of [[390,844,'portrait'],[844,390,'landscape']]){
       await page.setViewportSize({width,height});await wait(100);
       const rect=await page.locator('.character-art-stage canvas').boundingBox();assert.ok(rect.width>0&&rect.height>0);
+      await page.locator('.character-art-stage [data-portrait-zone=face]').click();
+      assert.equal(await page.locator('.character-art-stage .portrait-reaction-speech').getAttribute('data-reaction-area'),'face');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No horizontal overflow');
       await page.screenshot({path:output+'/profile-'+id+'-'+label+'.png'});
     }
     await page.setViewportSize({width:1440,height:900});await page.emulateMedia({reducedMotion:'no-preference'});
-    reports.push({id,texturePages:after.at(-1).textures,activeDraws:true,reducedMotion:true,viewports:3});
+    reports.push({id,touchAreas:11,mobileFaceTouch:true,texturePages:after.at(-1).textures,activeDraws:true,reducedMotion:true,viewports:3});
   }
   await page.locator('.character-art-stage canvas').evaluate(c=>c.getContext('webgl').getExtension('WEBGL_lose_context').loseContext());
   await page.locator('.character-art-stage [data-portrait-renderer=static-fallback]').waitFor();
