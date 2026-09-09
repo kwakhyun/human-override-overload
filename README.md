@@ -26,6 +26,7 @@
 ## 문서와 플레이
 
 - [상세 런타임 문서](game/README.md)
+- [공개 저장소 이미지 보관 정책](game/docs/public-repository-assets.md)
 - [제작·검증 도구 안내](game/scripts/README.md)
 - [서비스 아키텍처·운영 가이드](game/docs/service-architecture-ko.md)
 - [전투 콘텐츠 기획 기준선](game/docs/project/content-design-baseline-ko.md)
@@ -33,11 +34,7 @@
 - [AI 활용 기술 문서](game/docs/project/ai-usage-report-ko.md)
 - [에셋·도구·라이선스 기록](game/CREDITS.md)
 - [모바일 앱 출시 로드맵](game/docs/mobile-app-release-roadmap.md)
-- [게임 소개 PDF](game/output/pdf/HUMAN_OVERRIDE_OVERLOAD_Game_Guide_KO.pdf)
-- [AI 활용 기술 PDF](game/output/pdf/HUMAN_OVERRIDE_OVERLOAD_AI_Technical_Report_KO.pdf)
-- [전투 콘텐츠 기획 PDF](game/output/pdf/HUMAN_OVERRIDE_OVERLOAD_Content_Design_Baseline_KO.pdf)
 - [AI·게임 개발 포트폴리오 원문](game/docs/project/portfolio-ko.md)
-- [AI·게임 개발 포트폴리오 PDF](game/output/pdf/HUMAN_OVERRIDE_OVERLOAD_AI_Game_Development_Portfolio_KO.pdf)
 - [공개 플레이 사이트](https://human-override-overload.khyun97.chatgpt.site)
 
 ## 게임 흐름
@@ -86,7 +83,10 @@
 
 실제 Vite 앱은 `game/`입니다. 검증 환경은 Node.js 24.14.0입니다.
 
+**공개 저장소에는 게임 이미지와 제작 원본이 포함되지 않습니다.** 새로 복제한 환경은 실행·빌드 전에 권한 있는 비공개 사본의 이미지를 기존 로컬 경로에 복원해야 합니다. 설치·검사 방법은 [이미지 보관 정책](game/docs/public-repository-assets.md)을 따릅니다.
+
 ```bash
+git config --local core.hooksPath .githooks
 cd game
 npm ci
 npm run dev
@@ -111,8 +111,8 @@ game/
 ├─ src/defense/engine.js     # 60Hz 타워 디펜스 판정
 ├─ src/render/environment/   # 전 구역 3D 배경·투영
 ├─ src/phaser/               # 입력, 카메라, 씬, 2D 렌더링
-├─ public/assets/            # 게임에서 사용하는 런타임 에셋
-├─ reference/source-assets/  # 제작 원본·리깅·재현용 입력 (배포 제외)
+├─ public/assets/            # 런타임 경로 (이미지는 비공개 로컬 입력)
+├─ reference/source-assets/  # 비공개 제작 입력 (Git·배포 제외)
 ├─ worker/index.js           # 동일 출처 저장 API와 R2 read-through 경계
 ├─ db/ · drizzle/            # D1 스키마와 마이그레이션
 ├─ scripts/                  # 빌드, 에셋 정책, 재현 도구
@@ -120,7 +120,7 @@ game/
 └─ docs/                     # 문서와 README 스크린샷
 ```
 
-전투 규칙은 `src/swarm`/`src/defense`, 렌더링은 `src/phaser`, 화면 UI는 `src/ui`로 분리합니다. 활성 에셋 키는 `src/game/assets/manifest.ts`가 단일 진실 공급원이며, 제작 재현용 파일은 저장소에 남겨도 production 패키지에는 포함하지 않습니다.
+전투 규칙은 `src/swarm`/`src/defense`, 렌더링은 `src/phaser`, 화면 UI는 `src/ui`로 분리합니다. 활성 에셋 키는 `src/game/assets/manifest.ts`가 단일 진실 공급원이며, 제작 재현용 파일은 비공개 로컬 경로에 보존하며 Git과 production 패키지에서 제외합니다.
 
 ## 기술 구성
 
@@ -147,4 +147,4 @@ game/
 
 ## 저장소 안내
 
-실행 소스·활성 런타임 에셋과 재현에 필요한 제작 입력을 버전 관리합니다. 게임에서 사용하는 파일은 `game/public/assets/`, 제작 원본은 `game/reference/source-assets/`, README 스크린샷은 `game/docs/project/media/screenshots/`에 둡니다. 빌드는 공개 에셋의 누락과 미사용 파일을 먼저 검사합니다. 로컬 QA 캡처, 생성 중간본, 브라우저 프로파일, 세션 인계 파일과 인증 정보도 배포 대상이 아닙니다. 프로젝트 전용 AI 생성 에셋의 개별 재배포·재판매는 허용되지 않으며, 오픈소스 의존성은 각 원 라이선스를 따릅니다.
+공개 GitHub 저장소에는 실행 소스·문서·승인된 화면 스크린샷을 게시합니다. 게임 이미지와 Cubism 런타임은 `game/public/assets/`, 제작 입력은 `game/reference/source-assets/`의 비공개 로컬 파일로 관리합니다. 문서·이미지가 포함된 `game/output/` 산출물도 공개하지 않습니다. README 스크린샷은 `game/docs/project/media/screenshots/`에 둡니다. `npm run check:public-assets`와 Git 훅이 이미지의 커밋·푸시를 검사합니다. 빌드는 복원된 로컬 에셋의 누락과 미사용 파일을 검사합니다. 로컬 QA 캡처, 생성 중간본, 브라우저 프로파일, 세션 인계 파일과 인증 정보도 배포 대상이 아닙니다. 프로젝트 전용 AI 생성 에셋의 개별 재배포·재판매는 허용되지 않으며, 오픈소스 의존성은 각 원 라이선스를 따릅니다.

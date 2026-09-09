@@ -1,5 +1,11 @@
 # Project Instructions
 
+## Public repository artwork boundary
+
+- User instruction: game artwork must not be uploaded to the public GitHub repository. This supersedes older instructions to commit runtime art, authoring inputs, source contracts under reference, QA images or generated PDFs. Keep every local file intact; only untrack it. All `reference/`, `output/`, runtime Cubism files and standalone artwork are private inputs. Do not use `git add -f` to restore them.
+- Only the reviewed documentation screenshots in `scripts/public-asset-policy.json` are public image exceptions. Keep `.gitignore` and this list aligned. Run `npm run check:public-assets` before committing; `.githooks` also checks outgoing additions, including files later removed. Preserve unrelated user work and existing Git hooks when installing on another checkout.
+- Public clones need authorized private art restored at the original local paths before running/building. Production asset ownership checks remain required and must not be weakened to accommodate missing art. Build from local restored assets and publish the deployment archive, never commit it. See `docs/public-repository-assets.md`; removing current tracking does not purge historical Git objects.
+
 ## Portrait touch dialogue — 2026-09-09
 
 - Do not display the “터치 상호작용” badge. `portraitInteractions.js` owns eleven non-overlapping, character-specific source-space areas: hair, face, collar, two shoulders, chest, two arms, two hands and waist gear. Screen-left/right correspond to the artwork; use the shared portrait transform for both art and buttons.

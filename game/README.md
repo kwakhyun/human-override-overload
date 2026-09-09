@@ -12,7 +12,9 @@
 
 ## 실행과 검사
 
-검증 환경은 Node.js 24.14.0입니다. 저장소의 `game/`에서 실행합니다.
+검증 환경은 Node.js 24.14.0입니다. **공개 저장소만 복제하면 게임 이미지와 제작 원본은 없습니다.** 권한 있는 비공개 사본을 원래 로컬 경로에 복원한 뒤 실행·빌드합니다. 기존 개발 PC의 이미지는 Git 추적만 제외되며 유지됩니다. [이미지 보관·Git 훅 설치 안내](docs/public-repository-assets.md)를 먼저 확인하세요.
+
+다음 명령은 저장소의 `game/`에서 실행합니다.
 
 ```bash
 npm ci
@@ -21,6 +23,7 @@ npm test
 npm run build
 ```
 
+- `npm run check:public-assets`: Git 인덱스에 게임 이미지·제작 원본·PDF 출력물이 포함되었는지 검사합니다.
 - `npm run analyze:assets`: 모든 구역·전투원·방어전·화질 단계·화면·음원의 누락과 미사용 공개 파일을 검사합니다.
 - `npm run analyze:content`: 현재 콘텐츠와 경제 수치를 산출합니다.
 - `npm run test:sites`: 저장 API와 배포 Worker를 검사합니다.
@@ -68,14 +71,14 @@ React·Phaser·Three.js는 같은 시뮬레이션 상태를 표현합니다. 피
 
 ## 에셋과 제작 자료
 
-게임에서 사용하는 에셋만 `public/assets/`에 둡니다. 전투 스프라이트는 `overload/quality-v3/`, 전투원·NPC의 정적 일러스트는 `overload/portraits/anime-v1/`, Cubism 런타임은 `overload/live2d/anime-v2/`, 스토리 CG는 `overload/story/awakening/`을 사용합니다. 실제 등록·로딩 경로는 `src/game/assets/manifest.ts`와 `src/game/content/storyEpisodes.js`를 따릅니다. 파일 수·용량·누락·미사용 여부는 `npm run analyze:assets`로 확인합니다.
+게임에서 사용하는 에셋만 `public/assets/`에 둡니다. 이 경로의 이미지와 Cubism 파일은 공개 Git에서 제외되므로 아래 경로는 에셋을 복원한 로컬 환경 기준입니다. 전투 스프라이트는 `overload/quality-v3/`, 전투원·NPC의 정적 일러스트는 `overload/portraits/anime-v1/`, Cubism 런타임은 `overload/live2d/anime-v2/`, 스토리 CG는 `overload/story/awakening/`을 사용합니다. 실제 등록·로딩 경로는 `src/game/assets/manifest.ts`와 `src/game/content/storyEpisodes.js`를 따릅니다. 파일 수·용량·누락·미사용 여부는 `npm run analyze:assets`로 확인합니다.
 
 - `reference/source-assets/overload/runtime-inputs/`: 원본 아틀라스, 이전 일러스트와 재현에 필요한 제작 계약을 보존합니다.
 - `reference/source-assets/overload/sprite-quality-v3/`: 현행 그래픽을 다시 만드는 검수된 원본과 프레임 분리 자료입니다.
 - `reference/source-assets/overload/live2d-production/anime-v2/`: 네 전투원의 편집 가능한 PSD·CMO3와 리깅 소재입니다. 런타임은 여기서 내보낸 MOC3와 전용 텍스처를 사용합니다. 머리 회전은 고정하며, 눈꺼풀·머리카락·팔·코트·몸통 모션을 사용합니다. 눈동자·눈썹·입술의 독립 표정 파라미터는 구현되지 않았습니다.
 - `tools/`: 로컬 전투 스프라이트·일러스트·현재 Cubism 검수 화면입니다. 개발 서버의 `/tools/combat-sprite-review.html` 등에서 엽니다.
 - `docs/project/media/`: 문서에 실제로 쓰는 영구 이미지입니다. 임시 QA 캡처 경로와 사용자 다운로드 폴더에 의존하지 않습니다.
-- `output/pdf/`: 현재 제출·열람용 PDF입니다. 생성 중간본은 `tmp/pdfs/`에 둡니다.
+- `output/pdf/`: 로컬 생성·열람용 PDF이며 공개 Git 추적에서 제외합니다. `python scripts/build-project-pdfs.py`로 본문 문서 PDF를 생성하며, 생성 중간본은 `tmp/pdfs/`에 둡니다.
 - `qa/`, `tmp/`, `dist/`: 재생성 가능한 검증·작업·빌드 결과입니다. 현재 필요한 제작 원본과 혼용하지 않습니다.
 
 제작 명령은 [도구 안내](scripts/README.md), 에셋 출처와 사용 조건은 [CREDITS](CREDITS.md)에서 확인합니다. 문서 이미지와 제작 원본은 게임 배포에 포함하지 않습니다.
@@ -96,12 +99,12 @@ React·Phaser·Three.js는 같은 시뮬레이션 상태를 표현합니다. 피
 
 ## 문서
 
+- [공개 저장소 이미지 보관 정책](docs/public-repository-assets.md)
 - [플레이 가이드](docs/project/game-guide-ko.md)
 - [전투 콘텐츠 기획](docs/project/content-design-baseline-ko.md)
 - [서비스 구조·저장·운영](docs/service-architecture-ko.md)
 - [AI 활용과 검증 범위](docs/project/ai-usage-report-ko.md)
 - [개발 포트폴리오](docs/project/portfolio-ko.md)
-- [채용 제출용 PDF](output/pdf/human-override-overload-recruitment-portfolio.pdf)
 - [에셋·라이선스·제작 이력](CREDITS.md)
 - [음성 생성](GOOGLE_TTS_SETUP.md), [Suno BGM 프롬프트](SUNO_BGM_PROMPTS.md)
 - [모바일 출시 로드맵](docs/mobile-app-release-roadmap.md)

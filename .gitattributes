@@ -7,3 +7,4 @@
 *.mp4 binary
 *.woff binary
 *.woff2 binary
+.githooks/* text eol=lf

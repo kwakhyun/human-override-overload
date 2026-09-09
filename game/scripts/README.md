@@ -1,9 +1,12 @@
 # 제작·검증 도구
 
+게임 이미지·Cubism 모델·`reference/` 제작 입력과 `output/` PDF는 비공개 로컬 자료입니다. 공개 저장소를 복제한 경우 해당 작업 전에 권한 있는 사본을 원래 경로에 복원합니다. [이미지 보관·Git 검사 정책](../docs/public-repository-assets.md)을 따릅니다.
+
 명령은 `game/`에서 실행합니다. Python 이미지 도구에는 Pillow·NumPy, PDF 도구에는 ReportLab·pypdf가 필요합니다. 포트폴리오 글꼴은 Windows 맑은 고딕을 사용합니다. 브라우저 검증 도구는 번들 Playwright와 Edge 경로를 사용합니다.
 
 | 작업 | 도구와 입력 |
 | --- | --- |
+| 공개 Git 이미지 제외 검사 | `npm run check:public-assets` + 저장소의 `.githooks/`: 인덱스와 푸시할 새 커밋을 검사 |
 | 공개 에셋 검사 | `npm run analyze:assets` → `lib/runtime-assets.mjs`: manifest의 동적 등록·화질과 HTML/CSS 참조까지 확인 |
 | 배포 패키징 | `prepare-sites-build.mjs`: Worker·DB·hosting 계약 보존, 구형 공개 경로 방어 목록 적용 |
 | 현행 전투 아틀라스 | `build-sprite-quality-assets.py` + `sprite-quality-recipes.json` + `sprite-source-layouts.json` |
