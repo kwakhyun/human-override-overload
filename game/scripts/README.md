@@ -6,6 +6,7 @@
 
 | 작업 | 도구와 입력 |
 | --- | --- |
+| 이지스 대표 아이콘 | `prepare-aegis-icon.py`: 비공개 승인 원본에서 512px 대표 이미지·32px 파비콘·180px 홈 화면 아이콘 인코딩 |
 | 공개 Git 이미지 제외 검사 | `npm run check:public-assets` + 저장소의 `.githooks/`: 인덱스와 푸시할 새 커밋을 검사 |
 | 공개 에셋 검사 | `npm run analyze:assets` → `lib/runtime-assets.mjs`: manifest의 동적 등록·화질과 HTML/CSS 참조까지 확인 |
 | 배포 패키징 | `prepare-sites-build.mjs`: Worker·DB·hosting 계약 보존, 구형 공개 경로 방어 목록 적용 |

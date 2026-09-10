@@ -1,0 +1,32 @@
+{
+  "reference": "public/assets/overload/portraits/anime-v1/aegis.webp",
+  "generator": "Built-in image_gen",
+  "prompt": "Create one polished square browser/app icon for HUMAN OVERRIDE: OVERLOAD, based closely on the attached CURRENT AEGIS illustration. Preserve her exact anime character identity: silver-white layered fringe and long high ponytail, black ribbon, pale blue-gray eyes, delicate clearly 2D anime face with clean linework and controlled cel shading, calm steady slightly reserved expression, black high collar and silver angular clasp, a hint of white tactical coat and cyan detail. Tight head-and-shoulders portrait; the face is dominant and recognizable at favicon sizes, looking nearly forward with only a slight natural tilt. Keep full crown and chin within a central safe area with 8% margin; shoulders meet the bottom edge. Deep near-black navy background, a simple subtle cyan halo behind the head for silhouette separation. Restrained luminous edge accents. Flat square full-bleed artwork, opaque background. NO semi-realism, no skin pores, no glossy photoreal skin, no flower hair ornament, no elaborate concentric HUD rings, no words, no letters, no watermark, no border, no rounded-corner mockup, no UI frame. Retain the current illustration's anime facial style and costume, do not use the earlier semi-realistic icon.",
+  "postprocess": "Resize and encode only; 512px WebP, 32px and 180px PNG. No repainting.",
+  "visibility": "User-approved public runtime icons (512 WebP, 32 PNG, 180 PNG), included in Git and game deployment. Generation source master stays private.",
+  "source": "reference/source-assets/overload/icons/aegis-anime-v2/source.png",
+  "sourceSha256": "538b1f7884e71657fc3805b3f22c33ac9b3fef5c3b483f595a47cba731cf1a5a",
+  "outputs": [
+    {
+      "path": "public/assets/overload/hero/aegis-anime-v2-icon.webp",
+      "width": 512,
+      "height": 512,
+      "bytes": 73070,
+      "sha256": "c0fafe45ecfe784d65f765dbc964bb5c3a2002dee14c37fd431ff861195fe267"
+    },
+    {
+      "path": "public/assets/overload/hero/aegis-anime-v2-favicon-32.png",
+      "width": 32,
+      "height": 32,
+      "bytes": 2677,
+      "sha256": "72348f0af1b0e59e5ee9295eb7eefacfbae6976a50f101b1602ba75572995087"
+    },
+    {
+      "path": "public/assets/overload/hero/aegis-anime-v2-apple-touch-180.png",
+      "width": 180,
+      "height": 180,
+      "bytes": 63567,
+      "sha256": "4ebaafd6bbd8ef5e60c1cc5bac862705cff205d1cb17da1acb1e14becfbcdf9a"
+    }
+  ]
+}

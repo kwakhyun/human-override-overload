@@ -6,9 +6,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { privateAssetPaths, checkIndex, checkPush } from '../scripts/check-public-assets.mjs';
 
-test('only reviewed screenshots are exempt from artwork exclusion', () => {
+test('only reviewed screenshots and user-approved representative icons are public', () => {
   const forbidden = ['game/public/assets/hero.PNG', 'game/reference/config.json', 'game/output/report.pdf', 'game/public/assets/overload/live2d/model.json', 'copy/hero.psd', 'game/docs/project/media/new-art.webp', 'game/qa/atlas.png'];
-  assert.deepEqual(privateAssetPaths([...forbidden, 'game/docs/project/media/screenshots/01-title.png', 'game/src/App.jsx', 'game/public/assets/audio/theme.mp3']), forbidden);
+  assert.deepEqual(privateAssetPaths([...forbidden, 'game/docs/project/media/screenshots/01-title.png', 'game/public/assets/overload/hero/aegis-anime-v2-icon.webp', 'game/public/assets/overload/hero/aegis-anime-v2-favicon-32.png', 'game/public/assets/overload/hero/aegis-anime-v2-apple-touch-180.png', 'game/src/App.jsx', 'game/public/assets/audio/theme.mp3']), forbidden);
 });
 
 test('Git index and outgoing history both reject private artwork without deleting local files', () => {

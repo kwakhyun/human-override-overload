@@ -5,11 +5,11 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const policy = JSON.parse(readFileSync(new URL('./public-asset-policy.json', import.meta.url), 'utf8'));
-const screenshots = new Set(policy.allowedScreenshots);
+const publicImages = new Set([...policy.allowedScreenshots, ...(policy.allowedIcons || [])]);
 const artwork = /\.(png|jpe?g|webp|gif|avif|bmp|tiff?|svg|ico|ps[db]|cmo3|moc3|blend|xcf|kra|ktx2?|dds)$/i;
 
 export function privateAssetPaths(paths) {
-  return paths.filter(file => !screenshots.has(file) && (
+  return paths.filter(file => !publicImages.has(file) && (
     /^(game\/reference\/|game\/output\/|game\/public\/assets\/overload\/live2d\/)/i.test(file)
     || artwork.test(file)
   ));

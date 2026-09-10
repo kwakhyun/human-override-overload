@@ -435,7 +435,7 @@ OpenAI ImageGen으로 만든 캐릭터·NPC·적·보스·전장·UI·VFX는 이
 - Vite 브라우저 코드에서 Google API를 호출하지 않습니다.
 - `.env`, `.google`, `google-credentials*.json`은 Git ignore 대상입니다.
 - 브라우저 저장은 로컬 캠페인 슬롯뿐이며 별도 사용자 계정을 수집하지 않습니다.
-- AI 생성 원본과 게임 이미지·Cubism 파일은 비공개 로컬 자료로 보존합니다. 공개 GitHub에는 실행 소스·파생 스크립트·문서와 승인된 게임 화면 스크린샷만 게시하며, 이미지 자원과 PDF 출력물은 Git 추적에서 제외합니다. 에셋 복원·빌드는 [이미지 보관 정책](../public-repository-assets.md)을 따릅니다.
+- AI 생성 원본과 게임 이미지·Cubism 파일은 비공개 로컬 자료로 보존합니다. 공개 GitHub에는 실행 소스·파생 스크립트·문서와 승인된 게임 화면 스크린샷·대표 아이콘만 게시하며, 나머지 이미지 자원과 PDF 출력물은 Git 추적에서 제외합니다. 에셋 복원·빌드는 [이미지 보관 정책](../public-repository-assets.md)을 따릅니다.
 - production build는 매니페스트에 등록된 활성 자산만 사용합니다.
 - 같은 시드의 적 조합과 전투 fingerprint는 테스트로 재현됩니다.
 

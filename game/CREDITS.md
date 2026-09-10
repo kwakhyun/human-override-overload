@@ -1,6 +1,10 @@
 # Assets, Tools, and Licenses
 
-> **현재 공개 범위:** 게임 이미지·아틀라스·Cubism 모델과 `reference/` 제작 입력, `output/` PDF는 공개 GitHub의 최신 트리에서 제외합니다. 아래 제작 경로·해시는 비공개 로컬 자료를 식별하기 위한 기록이며, Git에서 파일을 다운로드할 수 있다는 뜻이 아닙니다. 승인된 문서 스크린샷만 공개합니다. [이미지 보관 정책](docs/public-repository-assets.md)을 따르며, 과거 커밋의 파일 제거는 별도 이력 정리 대상입니다.
+## 이지스 대표 아이콘
+
+최신 `portraits/anime-v1/aegis.webp`를 참조해 내장 OpenAI 이미지 도구로 애니메이션풍 얼굴 중심 아이콘을 제작했습니다. 원본은 비공개 `reference/source-assets/overload/icons/aegis-anime-v2/`에 보관합니다. `scripts/prepare-aegis-icon.py`는 생성 결과를 다시 그리지 않고 512px WebP, 32px PNG 파비콘, 180px PNG 홈 화면 아이콘으로 축소·인코딩합니다. 사용 위치는 `index.html`이며, 프롬프트·해시·출력 경로는 [아이콘 제작 명세](docs/art/aegis-icon-anime-v2.json)를 따릅니다. 사용자가 승인한 아이콘 출력 3종은 공개 Git과 배포에 포함하며, 생성 원본은 비공개로 보관합니다.
+
+> **현재 공개 범위:** 게임 이미지·아틀라스·Cubism 모델과 `reference/` 제작 입력, `output/` PDF는 공개 GitHub의 최신 트리에서 제외합니다. 아래 제작 경로·해시는 비공개 로컬 자료를 식별하기 위한 기록이며, Git에서 파일을 다운로드할 수 있다는 뜻이 아닙니다. 승인된 문서 스크린샷과 대표 아이콘 3종만 공개합니다. [이미지 보관 정책](docs/public-repository-assets.md)을 따르며, 과거 커밋의 파일 제거는 별도 이력 정리 대상입니다.
 
 ## 2026-09-09 애니메이션풍 UI 일러스트 및 스토리 CG
 

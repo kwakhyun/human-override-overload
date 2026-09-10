@@ -83,7 +83,7 @@
 
 실제 Vite 앱은 `game/`입니다. 검증 환경은 Node.js 24.14.0입니다.
 
-**공개 저장소에는 게임 이미지와 제작 원본이 포함되지 않습니다.** 새로 복제한 환경은 실행·빌드 전에 권한 있는 비공개 사본의 이미지를 기존 로컬 경로에 복원해야 합니다. 설치·검사 방법은 [이미지 보관 정책](game/docs/public-repository-assets.md)을 따릅니다.
+**대표 아이콘과 문서 스크린샷을 제외한 게임 이미지·제작 원본은 공개 저장소에 포함되지 않습니다.** 새로 복제한 환경은 실행·빌드 전에 권한 있는 비공개 사본의 이미지를 기존 로컬 경로에 복원해야 합니다. 설치·검사 방법은 [이미지 보관 정책](game/docs/public-repository-assets.md)을 따릅니다.
 
 ```bash
 git config --local core.hooksPath .githooks
@@ -147,4 +147,4 @@ game/
 
 ## 저장소 안내
 
-공개 GitHub 저장소에는 실행 소스·문서·승인된 화면 스크린샷을 게시합니다. 게임 이미지와 Cubism 런타임은 `game/public/assets/`, 제작 입력은 `game/reference/source-assets/`의 비공개 로컬 파일로 관리합니다. 문서·이미지가 포함된 `game/output/` 산출물도 공개하지 않습니다. README 스크린샷은 `game/docs/project/media/screenshots/`에 둡니다. `npm run check:public-assets`와 Git 훅이 이미지의 커밋·푸시를 검사합니다. 빌드는 복원된 로컬 에셋의 누락과 미사용 파일을 검사합니다. 로컬 QA 캡처, 생성 중간본, 브라우저 프로파일, 세션 인계 파일과 인증 정보도 배포 대상이 아닙니다. 프로젝트 전용 AI 생성 에셋의 개별 재배포·재판매는 허용되지 않으며, 오픈소스 의존성은 각 원 라이선스를 따릅니다.
+공개 GitHub 저장소에는 실행 소스·문서·승인된 화면 스크린샷과 대표 아이콘 3종을 게시합니다. 대표 아이콘 외의 게임 이미지와 Cubism 런타임은 `game/public/assets/`, 제작 입력은 `game/reference/source-assets/`의 비공개 로컬 파일로 관리합니다. 문서·이미지가 포함된 `game/output/` 산출물도 공개하지 않습니다. README 스크린샷은 `game/docs/project/media/screenshots/`에 둡니다. `npm run check:public-assets`와 Git 훅이 이미지의 커밋·푸시를 검사합니다. 빌드는 복원된 로컬 에셋의 누락과 미사용 파일을 검사합니다. 로컬 QA 캡처, 생성 중간본, 브라우저 프로파일, 세션 인계 파일과 인증 정보도 배포 대상이 아닙니다. 프로젝트 전용 AI 생성 에셋의 개별 재배포·재판매는 허용되지 않으며, 오픈소스 의존성은 각 원 라이선스를 따릅니다.

@@ -12,7 +12,7 @@
 
 ## 실행과 검사
 
-검증 환경은 Node.js 24.14.0입니다. **공개 저장소만 복제하면 게임 이미지와 제작 원본은 없습니다.** 권한 있는 비공개 사본을 원래 로컬 경로에 복원한 뒤 실행·빌드합니다. 기존 개발 PC의 이미지는 Git 추적만 제외되며 유지됩니다. [이미지 보관·Git 훅 설치 안내](docs/public-repository-assets.md)를 먼저 확인하세요.
+검증 환경은 Node.js 24.14.0입니다. **공개 저장소는 대표 아이콘·문서 스크린샷만 포함하며, 나머지 게임 이미지와 제작 원본은 별도로 필요합니다.** 권한 있는 비공개 사본을 원래 로컬 경로에 복원한 뒤 실행·빌드합니다. 기존 개발 PC의 이미지는 Git 추적만 제외되며 유지됩니다. [이미지 보관·Git 훅 설치 안내](docs/public-repository-assets.md)를 먼저 확인하세요.
 
 다음 명령은 저장소의 `game/`에서 실행합니다.
 
@@ -71,7 +71,7 @@ React·Phaser·Three.js는 같은 시뮬레이션 상태를 표현합니다. 피
 
 ## 에셋과 제작 자료
 
-게임에서 사용하는 에셋만 `public/assets/`에 둡니다. 이 경로의 이미지와 Cubism 파일은 공개 Git에서 제외되므로 아래 경로는 에셋을 복원한 로컬 환경 기준입니다. 전투 스프라이트는 `overload/quality-v3/`, 전투원·NPC의 정적 일러스트는 `overload/portraits/anime-v1/`, Cubism 런타임은 `overload/live2d/anime-v2/`, 스토리 CG는 `overload/story/awakening/`을 사용합니다. 실제 등록·로딩 경로는 `src/game/assets/manifest.ts`와 `src/game/content/storyEpisodes.js`를 따릅니다. 파일 수·용량·누락·미사용 여부는 `npm run analyze:assets`로 확인합니다.
+게임에서 사용하는 에셋만 `public/assets/`에 둡니다. 이 경로의 대표 아이콘 3종 외 이미지와 Cubism 파일은 공개 Git에서 제외되므로 아래 경로는 에셋을 복원한 로컬 환경 기준입니다. 전투 스프라이트는 `overload/quality-v3/`, 전투원·NPC의 정적 일러스트는 `overload/portraits/anime-v1/`, Cubism 런타임은 `overload/live2d/anime-v2/`, 스토리 CG는 `overload/story/awakening/`을 사용합니다. 실제 등록·로딩 경로는 `src/game/assets/manifest.ts`와 `src/game/content/storyEpisodes.js`를 따릅니다. 파일 수·용량·누락·미사용 여부는 `npm run analyze:assets`로 확인합니다.
 
 - `reference/source-assets/overload/runtime-inputs/`: 원본 아틀라스, 이전 일러스트와 재현에 필요한 제작 계약을 보존합니다.
 - `reference/source-assets/overload/sprite-quality-v3/`: 현행 그래픽을 다시 만드는 검수된 원본과 프레임 분리 자료입니다.

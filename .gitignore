@@ -52,6 +52,10 @@ __pycache__/
 *.dds
 
 # Explicitly reviewed presentation screenshots (never standalone art/atlases).
+# User-approved public representative icons; source masters remain private.
+!/game/public/assets/overload/hero/aegis-anime-v2-icon.webp
+!/game/public/assets/overload/hero/aegis-anime-v2-favicon-32.png
+!/game/public/assets/overload/hero/aegis-anime-v2-apple-touch-180.png
 !/game/docs/project/media/combat-guide.png
 !/game/docs/project/media/content-planner/character-information-desktop.png
 !/game/docs/project/media/content-planner/character-information-mika.png
