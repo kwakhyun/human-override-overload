@@ -4,6 +4,20 @@ const sites = (prefix, rows) => Object.freeze(rows.map(([kind, x, y, radius, hei
   Object.freeze({ id: `${prefix}-${index}`, kind, x, y, radius, height, maxHp })));
 
 export const REGIONAL_TERRAIN = Object.freeze({
+  ...Object.fromEntries([
+    ['eclipse-relay', 'eclipse', 0x424752, 0xddb879, 0x68dce8],
+    ['ark-transit', 'ark', 0x384d61, 0x66cfdf, 0xe9a56f],
+    ['sovereign-throne', 'throne', 0x493c58, 0xb997eb, 0xeb667d],
+  ].map(([id, style, floor, accent, secondary]) => [id, {
+    style, label: '', bossLabel: '', floor, accent, secondary, steel: 0x637384, dark: 0x162333, trim: 0xa1afba, sky: 0x060c19,
+    structures: sites(id, [
+      ['relay',650,750,90,220], ['capacitor',1720,800,80,140,380],
+      ['relay',2900,750,90,225], ['capacitor',3500,1220,80,140,380],
+      ['relay',700,1900,90,245], ['capacitor',3500,2880,80,140,380],
+      ['relay',650,3360,90,240], ['capacitor',1740,3450,80,140,380],
+      ['relay',2990,3380,90,245], ['capacitor',950,2810,80,140,380],
+    ]),
+  }])),
   'wrong-engine-core': { style: 'transit', label: '01 // TRANSIT ARRAY', bossLabel: 'WRONG ENGINE // CORE',
     floor: 0x6b7d88, steel: 0x566871, dark: 0x192b34, trim: 0x839598, accent: 0x4bd1dc, secondary: 0xdb8643,
     sky: 0x061014, structures: SECTOR_ONE_STRUCTURES },

@@ -100,6 +100,9 @@ const NPC_DISPLAY = Object.freeze({
 });
 
 const BOSS_DISPLAY = Object.freeze({
+  'HELIO JUDGE': '헬리오스 심판관 · HELIO JUDGE',
+  'CHRONO LEVIATHAN': '크로노 레비아탄 · CHRONO LEVIATHAN',
+  'NULL SOVEREIGN': '널 소버린 · NULL SOVEREIGN',
   "THE WRONG ENGINE": "오답 엔진 · THE WRONG ENGINE",
   "MIRROR TYRANT": "거울 폭군 · MIRROR TYRANT",
   "DROWNED ORACLE": "침몰한 예언자 · DROWNED ORACLE",
@@ -1701,12 +1704,12 @@ export function RegionSelectScreen({ regions, clusters = [], campaign, assets, w
             <section className="region-sortie-briefing">
               <h2 className="region-mixed-name" id="region-sortie-title"><span>{selectedRegion.koreanName || selectedRegion.name}</span><em>{selectedRegion.name}</em></h2>
               <p>{localizeWorldText(selectedRegion.description)}</p>
-              <p className="sortie-clear-route">일반 적 {selectedRegion.enemyBudget}기 돌파 → {selectedRegion.midBoss ? `${selectedRegion.midBoss.koreanName} 격파 → ` : ''}최종 보스 격파</p>
+              <p className="sortie-clear-route">{selectedRegion.missionKind ? selectedRegion.objective : <>일반 적 {selectedRegion.enemyBudget}기 돌파 → {selectedRegion.midBoss ? `${selectedRegion.midBoss.koreanName} 격파 → ` : ''}최종 보스 격파</>}</p>
               <details className="region-sortie-repeat-intel">
                 <summary>적과 보스 공략 보기</summary>
                 <div className="sortie-boss-preview">
                   <span className="sortie-boss-image" role="img" aria-label={`${BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName} 전투 모습`}
-                    style={{backgroundImage: `url(./assets/overload/quality-v3/performance/${selectedRegion.id}-boss.png)`, backgroundSize: `${selectedRegion.midBoss ? 800 : 600}% 400%`}} />
+                    style={{backgroundImage: `url(${selectedRegion.missionKind ? selectedRegion.assets.dom.bossPortrait.path : `./assets/overload/quality-v3/performance/${selectedRegion.id}-boss.png`})`, backgroundSize: selectedRegion.missionKind ? '300% 100%' : `${selectedRegion.midBoss ? 800 : 600}% 400%`}} />
                   <div><small>최종 보스</small><strong>{(BOSS_DISPLAY[selectedRegion.bossName] || selectedRegion.bossName).split(" · ")[0]}</strong><p>보스전은 별도 전장에서 진행됩니다. 아래 위험을 확인하고 출격하세요.</p></div>
                 </div>
                 <dl className="region-sortie-intel">

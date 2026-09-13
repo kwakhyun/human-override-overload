@@ -58,7 +58,43 @@ export function buildRegionalEnvironment(c: Builder, theme: TerrainDefinition) {
       b.box(secondary, w / 2, y, w - inset * 2 + 64, 4, 2, 30);
     }
 
-    if (style === 'glass') {
+    if (style === 'eclipse' || style === 'ark' || style === 'throne') {
+      // Orbital decks: pressure ribs outside bounds, distinct walkable inlays.
+      for (const x of [-150, w + 150]) for (let y = 100; y < d; y += 520) {
+        b.box(steel, x, y, 130, 160, 310, -80);
+        b.box(trim, x, y, 160, 180, 16, 230);
+        if (style === 'eclipse') {
+          for (const dx of [-110, 110]) {
+            b.box(dark, x+dx, y, 96, 330, 6, 200);
+            for(let k=-3;k<=3;k++) b.box(secondary,x+dx,y+k*40,83,2,2,207);
+          }
+          b.add(new THREE.TorusGeometry(95,8,6,32),accent,x,y,310,new THREE.Euler(Math.PI/2,0,0));
+        } else if (style === 'ark') {
+          b.box(dark,x,y,190,320,28,180); b.box(accent,x,y+160,160,4,8,188);
+        } else {
+          b.add(new THREE.ConeGeometry(72,260,4),trim,x,y,390,new THREE.Euler(0,Math.PI/4,0));
+          b.cylinder(accent,x,y,20,220,240,8);
+        }
+      }
+      if (style === 'ark') {
+        for(const y of [d*.39,d*.61]) {
+          b.box(dark,w/2,y,w-inset*2,86,1,.2);
+          for(const dy of [-29,29]) b.box(accent,w/2,y+dy,w-inset*2,5,1,1.5);
+          for(let x=inset+20;x<w-inset;x+=46) b.box(trim,x,y,9,67,1,2.7);
+        }
+      } else {
+        for(const radius of [route?540:240,route?1050:380]) {
+          b.add(new THREE.TorusGeometry(radius,3,4,64),accent,w/2,d/2,2,new THREE.Euler(-Math.PI/2,0,0));
+        }
+        for(let i=0;i<(style==='throne'?6:3);i++) {
+          const a=i*Math.PI*2/(style==='throne'?6:3);
+          const x=w/2+Math.cos(a)*(route?1200:440),y=d/2+Math.sin(a)*(route?1200:330);
+          b.cylinder(dark,x,y,route?110:65,1,.4,6);
+          b.cylinder(secondary,x,y,route?90:45,1,1.6,6);
+          b.cylinder(dark,x,y,route?84:40,1,2.8,6);
+        }
+      }
+    } else if (style === 'glass') {
       // Broken glass strata and buried prism conduits, all level with the sand.
       for (let y = inset + 220; y < d - inset; y += 480) for (let x = inset + 190; x < w - inset; x += 530) {
         const phase = (Math.floor(x) + Math.floor(y)) % 7;
@@ -169,7 +205,15 @@ export function buildRegionalEnvironment(c: Builder, theme: TerrainDefinition) {
     shadowAt(b, x, y, r);
     b.cylinder(dk, x, y, r, 12, 0, 24);
     b.cylinder(tr, x, y, r * .9, 6, 12, 24);
-    if (kind === 'crystal') {
+    if (kind === 'relay') {
+      b.cylinder(s,x,y,r*.46,h*.7,18,8,r*.3);
+      for(const dx of [-r*.68,r*.68]) {
+        b.box(dk,x+dx,y,r*.52,r*1.35,12,h*.52);
+        for(let k=-2;k<=2;k++) b.box(se,x+dx,y+k*r*.23,r*.46,3,2,h*.52+13);
+      }
+      b.add(new THREE.TorusGeometry(r*.58,7,6,20),ac,x,y,h,new THREE.Euler(Math.PI/2,.3,0));
+      b.cylinder(tr,x,y,8,55,h,8);
+    } else if (kind === 'crystal') {
       for (let i = 0; i < 5; i++) {
         const a = i * Math.PI * 2 / 5, scale = i === 0 ? 1 : .62;
         b.add(new THREE.CylinderGeometry(0, r * .29, h * scale, 5), i % 2 ? cr : ac,

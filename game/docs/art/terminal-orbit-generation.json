@@ -1,0 +1,52 @@
+{
+  "recipes": [
+    {
+      "id": "eclipse-relay",
+      "kind": "scene",
+      "source": "reference/source-assets/overload/terminal-orbit/eclipse-relay/scene.png",
+      "prompt": "Use case: stylized-concept. Production environment illustration for HUMAN OVERRIDE, a polished dark sci-fi anime tactical action game. Create a wide cinematic landscape, 1536x1024 or wider. ECLIPSE RELAY: a deserted orbital communications harbor high over the blue crescent of Earth, a huge eclipsed sun surrounded by a thin pale-gold corona in the black sky. Three elegant gigantic satellite relay towers connected by broad gunmetal landing decks, cyan signal conduits, gold solar panels. A small command platform in the foreground, dramatic depth toward the eclipsed sun. Sophisticated mechanical architecture, restrained atmospheric glow, crisp detailed cel-painted anime background art, premium Japanese sci-fi game aesthetic. No people, no text, no logos, no UI. Readable silhouettes, complex original architecture. The intended use is campaign selection artwork and narrative CG, not a navigable painted game map. Deliver one finished scene.",
+      "tool": "built-in image_gen",
+      "generatedAt": "2026-09-13"
+    },
+    {
+      "id": "eclipse-relay",
+      "kind": "boss",
+      "source": "reference/source-assets/overload/terminal-orbit/eclipse-relay/boss.png",
+      "prompt": "Use case: stylized-concept. One finished production animation sprite sheet for a new boss in HUMAN OVERRIDE, a dark anime sci-fi action game. HELIO JUDGE, an original levitating orbital sentinel: circular black eclipse core encased in white titanium armor, segmented pale gold solar halo, four articulated mechanical fins, cyan sensors, heavy purposeful construction. True three-quarter overhead game perspective, front consistently toward image bottom, NO sideways rotation. Exactly 8 isolated poses arranged in a strict 4-column 2-row equal-cell grid, wide 2048x1024 canvas. Same machine, same palette, same scale and consistent centered registration every cell. Readable silhouette with large generous empty margins per cell, absolutely no part entering another cell. Row1: closed idle; slightly expanded hover; fins raised charging; open radiant core charging. Row2: fins wide firing; recoil after firing; damaged core with cracks; collapsed broken debris with dark cooling core. Crisp detailed hand-painted cel-rendered game art, restrained soft emission, no pixelation, no scenery, no text, no labels, no grid lines, no ground shadows. Genuine transparent alpha background; do not paint checkerboards. If transparency cannot be produced use perfectly flat pure magenta #ff00ff outside all isolated silhouettes to allow deterministic extraction. Produce the whole strip together.",
+      "tool": "built-in image_gen",
+      "generatedAt": "2026-09-13"
+    },
+    {
+      "id": "ark-transit",
+      "kind": "scene",
+      "source": "reference/source-assets/overload/terminal-orbit/ark-transit/scene.png",
+      "prompt": "Use case: stylized-concept. One finished wide cinematic campaign scene for HUMAN OVERRIDE, dark premium sci-fi anime game background art. ARK TRANSIT: a vast orbital evacuation rail terminal with two branching illuminated magnetic tracks. A substantial white titanium rescue ark train with glowing cyan windows and amber navigation lamps travels toward a distant docking portal; immense curved station ribs overhead, Earth and stars beyond the open hangar. Foreground track splits: shorter exposed upper rail with amber warning lamps and distant debris, longer lower service rail with turquoise repair cradles. Mood is tense but hopeful, people are safe within this believable heavy industrial ark. Original sophisticated architecture, exquisite detailed cel-painted anime environment, dark navy metals, cool cyan light, warm amber highlights, cinematic atmospheric perspective, composed as narrative key art. 1536x1024 landscape. No text, logos, UI, or close-up people. Produce one scene.",
+      "tool": "built-in image_gen",
+      "generatedAt": "2026-09-13"
+    },
+    {
+      "id": "ark-transit",
+      "kind": "boss",
+      "source": "reference/source-assets/overload/terminal-orbit/ark-transit/boss.png",
+      "prompt": "Use case: stylized-concept. One production game sprite sheet for CHRONO LEVIATHAN, original boss of a dark sci-fi anime action game. An imposing hovering armored mechanical manta-whale, broad compact silhouette, navy titanium plates, two swept side fins bearing heavy rail cannons, luminous cyan gravity spine, bronze vents, short segmented tail. Distinct from a dragon. 3/4 overhead view with head toward image bottom in ALL cells, consistent same identity, palette, scale and centered anchor. Exactly eight independent isolated poses in equal 4-column by 2-row cells of a wide 2048x1024 sheet. Each sprite no more than 75% of cell width AND height, generous transparent gutters, no touching image border, no neighboring overlap. Top row: neutral hovering; fins gently swept back; fins raised with charging cannons; blue energy vents opening. Bottom row: both rail cannons firing short controlled cyan muzzle flash; recoiling with vents dimming; armor damaged and cracked core; collapsed ruined machine with dim debris. Detailed crisp cel-painted premium sci-fi sprite illustration, no pixels, no scenery, no text, no numbers, no grid lines, no shadows. Genuine transparent alpha background, never painted checkerboard. A single consistent whole-sheet generation, with all eight full-body poses completely inside their cells.",
+      "tool": "built-in image_gen",
+      "generatedAt": "2026-09-13"
+    },
+    {
+      "id": "sovereign-throne",
+      "kind": "scene",
+      "source": "reference/source-assets/overload/terminal-orbit/sovereign-throne/scene.png",
+      "prompt": "Use case: stylized-concept. One original wide narrative illustration for the finale of HUMAN OVERRIDE, a premium dark sci-fi anime tactical action game. SOVEREIGN THRONE: an immense orbital judicial cathedral made entirely of black ceramic and ivory precision machinery, three violet authentication spires encircling a central luminous red-white core suspended over a circular throne dais. A long empty approach walkway in foreground, concentric broken orbital rings framing the core, star-filled abyss beyond tall windows, faint blue Earth on distant horizon. A terrifying but beautiful machine authority, high-tech architecture with no religious crosses. Crisp intricate hand-painted anime background art, luminous violet data ribbons, restrained crimson highlights, cinematic asymmetry, deep shadows and clean readable focal composition. 1536x1024 landscape. No characters, no lettering, no UI, no logos. Intended for chapter selection and finale dialogue CG. Deliver one finished premium scene.",
+      "tool": "built-in image_gen",
+      "generatedAt": "2026-09-13"
+    },
+    {
+      "id": "sovereign-throne",
+      "kind": "boss",
+      "source": "reference/source-assets/overload/terminal-orbit/sovereign-throne/boss.png",
+      "prompt": "Use case: stylized-concept. Create one finished 8-pose game sprite sheet for NULL SOVEREIGN, original final boss of HUMAN OVERRIDE, dark premium sci-fi anime action game. A regal inhuman hovering judge made of black ceramic and ivory titanium, central crimson vertical eye in a faceless diamond helmet, angular layered armor tapering downward like a mechanical robe, six levitating blade-like judicial tablets behind its shoulders forming a broken crown, violet data conduits, NO organic human face. Ominous, elegant, geometrically precise. Entire full body shown in consistent 3/4 overhead game perspective, crown up and lower body down in every cell, never rotate sideways. Exactly 4 columns by 2 rows of equal cells on 2048x1024 wide canvas. Generous true transparent padding: each pose occupies at most 72% width and height, fully separated. Same boss identity and scale throughout. Top row: regal neutral idle, subtle levitating hover, six tablets opening in preparation, arms raised and crimson core charging. Bottom row: tablets spread into a radiant violet verdict array with short controlled energy rays, arms lowered in recoil, cracked dark armor with exposed white core, completely collapsed crown and broken machine debris. High quality crisp cel-painted sprite art, detailed mechanical surfaces and controlled bloom. No text, labels, gridlines, backdrop, ground shadows, or checkerboard. True transparent alpha outside figures. Produce all eight poses as one coherent production sheet.",
+      "tool": "built-in image_gen",
+      "generatedAt": "2026-09-13"
+    }
+  ]
+}

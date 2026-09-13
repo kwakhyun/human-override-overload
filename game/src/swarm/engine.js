@@ -1,4 +1,7 @@
 import { resolveSortieRoster } from '../game/content/sortieFormation.js';
+import { TERMINAL_COMBAT_CONFIGS } from '../game/content/terminalCampaign.js';
+import { createTerminalObjective, stepTerminalObjective, getTerminalHud } from './terminalObjectives.js';
+import { beginTerminalBossPattern, stepTerminalBossPattern, recordTerminalBossHistory } from './terminalBossPatterns.js';
 import { hasRegionalTerrain, terrainContact, constrainTerrainActor, steerTerrainEnemy, createTerrainState, activeTerrainSites, damageTerrainStructure } from '../game/content/regionalTerrain.js';
 import {
   BOSS_PATTERNS,
@@ -112,6 +115,7 @@ const SUICIDE_BLAST_RADIUS = 126;
 const SUICIDE_ELITE_BLAST_RADIUS = 156;
 
 export const REGION_COMBAT_CONFIGS = Object.freeze({
+  ...TERMINAL_COMBAT_CONFIGS,
   "wrong-engine-core": Object.freeze({
     id: "wrong-engine-core",
     chapterId: "chapter-01",
@@ -207,6 +211,10 @@ const ALLY_DAMAGE_SOURCES = Object.freeze(new Set([
 ]));
 
 export const REGION_ENEMY_PROFILES = Object.freeze({
+  ...Object.fromEntries(['eclipse-relay', 'ark-transit', 'sovereign-throne'].map((id, index) => [id, Object.freeze({
+    opening: Object.freeze({ weights: Object.freeze({ hunter: 1, suppressor: 7, brute: 2 }), offset: index }),
+    reinforcement: Object.freeze({ weights: Object.freeze({ hunter: 2, suppressor: 6, brute: 2 }), offset: index + 3 }),
+  })])),
   "wrong-engine-core": Object.freeze({
     opening: Object.freeze({ weights: Object.freeze({ hunter: 6, suppressor: 3, brute: 1 }), offset: 0 }),
     reinforcement: Object.freeze({ weights: Object.freeze({ hunter: 5, suppressor: 3, brute: 2 }), offset: 2 }),
@@ -635,11 +643,12 @@ function edgeSpawn(state, index) {
 }
 
 function chooseEnemyType(state, index) {
+  const objectiveDriven = Boolean(state.expedition?.mission);
   const openingCount = state.expedition ? EXPEDITION_INITIAL_SWARM : LEGACY_INITIAL_SWARM;
   const datasetProgress = clamp(index / Math.max(1, state.enemyBudget - 1), 0, 1);
   const openingProfile = state.enemyProfile?.opening ?? REGION_ENEMY_PROFILES["wrong-engine-core"].opening;
   const reinforcementProfile = state.enemyProfile?.reinforcement ?? REGION_ENEMY_PROFILES["wrong-engine-core"].reinforcement;
-  if (state.expedition && (index < openingCount || datasetProgress < 0.12)) return "hunter";
+  if (!objectiveDriven && state.expedition && (index < openingCount || datasetProgress < 0.12)) return "hunter";
   // Giant siege walkers are a late-wave threat, never part of the opening
   // crowd. The index gate keeps their cadence deterministic across replays.
   if (state.expedition && datasetProgress >= 0.72 && (index + finite(reinforcementProfile.offset)) % 31 === 0) {
@@ -648,14 +657,14 @@ function chooseEnemyType(state, index) {
 
   let weights;
   let offset;
-  if (state.expedition && datasetProgress < 0.42) {
+  if (!objectiveDriven && state.expedition && datasetProgress < 0.42) {
     weights = {
       hunter: Math.max(4, finite(openingProfile.weights.hunter)),
       suppressor: Math.max(1, finite(openingProfile.weights.suppressor)),
       brute: 0,
     };
     offset = openingProfile.offset;
-  } else if (state.expedition && datasetProgress < 0.72) {
+  } else if (!objectiveDriven && state.expedition && datasetProgress < 0.72) {
     weights = {
       hunter: Math.max(2, Math.round((finite(openingProfile.weights.hunter) + finite(reinforcementProfile.weights.hunter)) * 0.5)),
       suppressor: Math.max(2, Math.round((finite(openingProfile.weights.suppressor) + finite(reinforcementProfile.weights.suppressor)) * 0.5)),
@@ -1052,6 +1061,7 @@ export function createSwarmState({ random = Math.random, duration = 180, expedit
       progress: 0,
       checkpointIndex: 0,
       objective: regionConfig.objective,
+      mission: createTerminalObjective(regionConfig.id),
       reachedGate: false,
       clearTransition: null,
       entryPrompted: false,
@@ -1415,6 +1425,12 @@ function updatePlayer(state, input, dt) {
 function updateExpedition(state) {
   const expedition = state.expedition;
   if (!expedition || state.phase !== "swarm") return;
+  if (expedition.mission) {
+    expedition.progress = expedition.mission.progress;
+    expedition.distance = expedition.progress * expedition.routeLength;
+    if (!expedition.clearTransition) expedition.objective = expedition.mission.message || state.regionObjective;
+    return;
+  }
   // The arena has no forward route gate. Preserve the normalized expedition
   // progress contract for story/HUD consumers by deriving it from confirmed
   // kills rather than the player's x coordinate.
@@ -2203,6 +2219,7 @@ function hasLivingEnemy(enemies) {
 }
 
 function allRouteHostilesKilled(state) {
+  if (state?.expedition?.mission) return state.expedition.mission.complete && !state.expedition.mission.failed;
   return state?.spawnedEnemies >= state?.enemyBudget
     && state?.killedEnemies >= state?.enemyBudget
     && (!state?.expedition?.midBoss || state.expedition.midBoss.defeated)
@@ -4676,22 +4693,22 @@ export function enterBossRoom(state) {
 function beginRouteClearTransition(state) {
   const expedition = state.expedition;
   if (!expedition || expedition.clearTransition) return;
-  expedition.objective = "적 전멸 · 보스 구역 전환 준비";
+  expedition.objective = expedition.mission ? '작전 목표 달성 · 보스 구역 연결' : "적 전멸 · 보스 구역 전환 준비";
   expedition.clearTransition = {
     phase: "warning",
     timer: ROUTE_CLEAR_WARNING_DURATION,
     duration: ROUTE_CLEAR_WARNING_DURATION,
     progress: 0,
   };
-  emit(state, "swarmCleared", { kills: state.killedEnemies });
+  emit(state, "swarmCleared", { kills: state.killedEnemies, objectiveDriven: Boolean(expedition.mission) });
   emit(state, "routeClearWarning", {
     duration: ROUTE_CLEAR_WARNING_DURATION,
-    title: "적 전멸 확인",
+    title: expedition.mission ? '작전 목표 달성' : "적 전멸 확인",
     message: "SOVEREIGN 방어망이 무너지고 있습니다.",
     kills: state.killedEnemies,
     regionId: state.regionId,
   });
-  addText(state, "구역의 적을 모두 처치했습니다", state.player.x, state.player.y - 86, "#72f2ff", 1.45);
+  addText(state, expedition.mission ? '작전 목표를 달성했습니다' : "구역의 적을 모두 처치했습니다", state.player.x, state.player.y - 86, "#72f2ff", 1.45);
 }
 
 function updateRouteClearTransition(state, dt) {
@@ -4740,6 +4757,25 @@ function updateRouteClearTransition(state, dt) {
 }
 
 function updateSwarmSpawning(state, dt) {
+  const mission = state.expedition?.mission;
+  if (mission) {
+    if (mission.failed) return;
+    if (mission.complete) {
+      state.enemies.length = 0;
+      state.enemyProjectiles.length = 0;
+      beginRouteClearTransition(state);
+      updateRouteClearTransition(state, dt);
+      return;
+    }
+    mission.nextSpawn -= dt;
+    if (mission.nextSpawn <= 0) {
+      mission.nextSpawn = 2.4;
+      const cap = Math.min(getEnemyPressureCap(state), 24 + Math.floor(mission.elapsed / 20));
+      for (let i = 0; i < 4 && state.enemies.length < cap && state.spawnedEnemies < state.enemyBudget; i++) spawnEnemy(state);
+    }
+    state.stats.peakEnemies = Math.max(state.stats.peakEnemies, state.enemies.length);
+    return;
+  }
   const wave = SURGE_WAVES[state.surgeIndex];
   const routeAnchor = null;
   const triggerReached = state.expedition
@@ -4871,6 +4907,10 @@ function openingWrongEngineChargeAssist(state) {
 
 function beginBossPattern(state) {
   const boss = state.boss;
+  if (TERMINAL_COMBAT_CONFIGS[state.regionId]) {
+    beginTerminalBossPattern(state, (type, payload) => emit(state, type, payload));
+    return;
+  }
   const arena = activeArena(state);
   const patterns = boss.patterns ?? BOSS_PATTERNS;
   const type = patterns[boss.patternIndex % patterns.length];
@@ -5427,6 +5467,10 @@ function exposeBossCore(state, pattern) {
 
 function updateBossPattern(state, dt) {
   const boss = state.boss;
+  if (boss.activePattern?.terminal) {
+    stepTerminalBossPattern(state, dt, (amount, source) => damagePlayer(state, amount, source), (type, payload) => emit(state, type, payload));
+    return;
+  }
   let pattern = boss.activePattern;
   if (!pattern) {
     boss.patternCooldown -= dt;
@@ -5904,6 +5948,7 @@ function updateBossBombSequence(state, input, dt) {
 
 function updateBoss(state, dt, input, mechanicDt = dt) {
   const boss = state.boss;
+  if (TERMINAL_COMBAT_CONFIGS[state.regionId]) recordTerminalBossHistory(state, dt);
   boss.hitFlash = Math.max(0, boss.hitFlash - dt);
   boss.hitStun = Math.max(0, boss.hitStun - dt);
   boss.recoil = Math.max(0, boss.recoil - dt * 5.5);
@@ -5930,7 +5975,7 @@ function updateBoss(state, dt, input, mechanicDt = dt) {
   boss.damageMultiplier = (boss.groggy > 0
     ? boss.groggyMultiplier
     : boss.weakness > 0 ? 2 : 1) * (boss.bombArmorTimer > 0 ? boss.bombArmorDamageMultiplier : 1);
-  const bombMechanicActive = updateBossBombSequence(state, input, mechanicDt);
+  const bombMechanicActive = !TERMINAL_COMBAT_CONFIGS[state.regionId] && updateBossBombSequence(state, input, mechanicDt);
   if (bombMechanicActive) {
     boss.vx = 0;
     boss.vy = 0;
@@ -5943,7 +5988,7 @@ function updateBoss(state, dt, input, mechanicDt = dt) {
   const charging = (boss.activePattern?.type === "charge" || boss.activePattern?.type === "multiCharge")
     && boss.activePattern?.phase === "active";
   const warning = boss.activePattern?.phase === "warning";
-  if (!charging && !warning && boss.weakness <= 0 && boss.transformTimer <= 0) {
+  if (!charging && !warning && !boss.activePattern?.terminal && boss.weakness <= 0 && boss.transformTimer <= 0) {
     const arena = activeArena(state);
     const desiredX = (state.expedition ? WORLD_WIDTH : GAME_WIDTH) * 0.76
       + Math.sin(state.phaseTime * 0.43) * (state.expedition ? 190 : 125);
@@ -6089,6 +6134,21 @@ export function stepSwarm(state, input, dt) {
 
   const terrainPlayerX = state.player.x, terrainPlayerY = state.player.y;
   updatePlayer(state, input, worldDelta);
+  if (state.expedition?.mission && state.phase === 'swarm') {
+    const mission = state.expedition.mission;
+    stepTerminalObjective(state, worldDelta, (amount, source) => damagePlayer(state, amount, source));
+    for (const text of mission.milestones.splice(0)) {
+      gainXp(state, state.player.nextXp * 2.2);
+      emit(state, 'objectiveCheckpoint', { text });
+      addText(state, text, state.player.x, state.player.y - 85, '#8ef3de', 1.2);
+      state.player.hp = Math.min(state.player.maxHp, state.player.hp + state.player.maxHp * .08);
+    }
+    if (mission.failed) {
+      state.status = 'defeat'; state.phase = 'defeat';
+      emit(state, 'loss', { reason: 'ark-destroyed', kills: state.stats.kills });
+      return state;
+    }
+  }
   updateExpedition(state, input, worldDelta);
   updateManualAbilities(state, input, worldDelta);
   constrainTerrainActor(state, state.player, terrainPlayerX, terrainPlayerY);
@@ -6260,6 +6320,7 @@ export function getSwarmHud(state) {
       progress: state.expedition.progress,
       checkpoint: state.expedition.checkpointIndex,
       objective: state.expedition.objective,
+      mission: getTerminalHud(state),
       reachedGate: state.expedition.reachedGate,
       clearTransition: state.expedition.clearTransition
         ? { ...state.expedition.clearTransition }
@@ -6344,6 +6405,7 @@ export function getSwarmHud(state) {
       maxHp: state.boss.maxHp,
       stage: state.boss.stage,
       pattern: state.boss.activePattern?.type ?? null,
+      terminalAdvice: state.boss.activePattern?.terminal ? state.boss.activePattern.advice : null,
       weakness: state.boss.weakness,
       groggy: state.boss.groggy,
       groggyDuration: state.boss.groggyDuration,

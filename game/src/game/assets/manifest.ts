@@ -98,7 +98,8 @@ export const ASSET_KEYS = Object.freeze({
 } as const);
 
 export const DEFAULT_REGION_ID = "wrong-engine-core" as const;
-export const REGION_IDS = Object.freeze([DEFAULT_REGION_ID, "glass-dune", "abyssal-archive", "neon-foundry", "storm-spire", "gene-vault"] as const);
+export const TERMINAL_REGION_IDS = Object.freeze(['eclipse-relay', 'ark-transit', 'sovereign-throne'] as const);
+export const REGION_IDS = Object.freeze([DEFAULT_REGION_ID, "glass-dune", "abyssal-archive", "neon-foundry", "storm-spire", "gene-vault", ...TERMINAL_REGION_IDS] as const);
 export type RegionId = (typeof REGION_IDS)[number];
 export type AssetProfile = "full" | "performance";
 export type MainWeaponId = "pulse-rifle" | "beam-sword";
@@ -255,6 +256,9 @@ function freezeAssets(assets: readonly AssetDefinition[]): readonly AssetDefinit
 }
 
 export const REGION_ROUTE_ASSETS: Readonly<Record<RegionId, readonly AssetDefinition[]>> = Object.freeze({
+  ...Object.fromEntries(TERMINAL_REGION_IDS.map(id => [id, freezeAssets([
+    { key: `${id}-floor`, path: `./assets/overload/terminal-orbit/${id}/floor.webp`, kind: 'image' },
+  ])])) as Record<(typeof TERMINAL_REGION_IDS)[number], readonly AssetDefinition[]>,
   "wrong-engine-core": freezeAssets([
     { key: ASSET_KEYS.wrongEngineArena, path: "./assets/overload/regions/wrong-engine-core/arena-square-v1.webp", performancePath: "./assets/overload/regions/wrong-engine-core/performance/arena-square-v1.webp", kind: "image" },
     { key: ASSET_KEYS.squadTraces, path: "./assets/overload/campaign/squad-traces-atlas.png", performancePath: "./assets/overload/campaign/performance/squad-traces-atlas.png", kind: "atlas", columns: 3, rows: 1 },
@@ -280,6 +284,11 @@ export const REGION_ROUTE_ASSETS: Readonly<Record<RegionId, readonly AssetDefini
 });
 
 export const REGION_BOSS_ASSETS: Readonly<Record<RegionId, readonly AssetDefinition[]>> = Object.freeze({
+  ...Object.fromEntries(TERMINAL_REGION_IDS.map(id => [id, freezeAssets([
+    { key: `${id}-forms`, path: `./assets/overload/terminal-orbit/${id}/boss-forms.png`, kind: 'atlas', columns: 3, rows: 1 },
+    { key: `${id}-motion`, path: `./assets/overload/terminal-orbit/${id}/boss-motion.png`,
+      performancePath: `./assets/overload/terminal-orbit/${id}/boss-motion-small.png`, kind: 'motion', columns: 4, rows: 2 },
+  ])])) as Record<(typeof TERMINAL_REGION_IDS)[number], readonly AssetDefinition[]>,
   "wrong-engine-core": freezeAssets([
     { key: ASSET_KEYS.bossRoom, path: "./assets/overload/environment/boss-chamber.webp", performancePath: "./assets/overload/environment/performance/boss-chamber.webp", kind: "image" },
     { key: ASSET_KEYS.bossForms, path: "./assets/overload/boss/wrong-engine-forms-atlas.png", performancePath: "./assets/overload/boss/performance/wrong-engine-forms-atlas.png", kind: "atlas", columns: 3, rows: 1 },
@@ -436,6 +445,9 @@ export const REGION_BGM_PATHS = Object.freeze({
   "neon-foundry": "./assets/audio/neon-foundry.mp3",
   "storm-spire": "./assets/audio/storm-spire.mp3",
   "gene-vault": "./assets/audio/gene-vault.mp3",
+  'eclipse-relay': './assets/audio/storm-spire.mp3',
+  'ark-transit': './assets/audio/refraction-war-glass-dune.mp3',
+  'sovereign-throne': './assets/audio/memory-below-pressure-abyssal-archive.mp3',
 });
 
 export const AGENT_VOICE_PATHS = Object.freeze({

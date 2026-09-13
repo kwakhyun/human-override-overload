@@ -1,5 +1,9 @@
 # Assets, Tools, and Licenses
 
+## 종단 궤도 캠페인 에셋
+
+내장 OpenAI 이미지 생성 도구로 07–09구역의 장면 CG 3장과 보스 8포즈 원본 3장을 새로 제작했습니다. 특정 모델 버전은 도구가 보증하지 않아 표기하지 않습니다. [원문 프롬프트](docs/art/terminal-orbit-generation.json), [원본·출력 해시 및 셀 범위](docs/art/terminal-orbit-assets.json)를 기록했습니다. `scripts/prepare-terminal-art.py`는 승인된 Python 후처리 범위에서 투명 셀 분리, 위치·크기 정규화, 4×2 동작/3×1 변신 시트, 경량 PNG·WebP를 만듭니다. 원본은 `reference/source-assets/overload/terminal-orbit/`, 런타임은 `public/assets/overload/terminal-orbit/`에 보관하며 둘 다 공개 Git에서 제외합니다. 3D 구조물과 바닥·호위 방주·경고 도형은 프로젝트 코드로 제작했습니다. 세 지역은 기존 폭풍 첨탑·유리 사구·심해 기록고 BGM을 재사용하며 새 음원은 도입하지 않았습니다.
+
 ## 이지스 대표 아이콘
 
 최신 `portraits/anime-v1/aegis.webp`를 참조해 내장 OpenAI 이미지 도구로 애니메이션풍 얼굴 중심 아이콘을 제작했습니다. 원본은 비공개 `reference/source-assets/overload/icons/aegis-anime-v2/`에 보관합니다. `scripts/prepare-aegis-icon.py`는 생성 결과를 다시 그리지 않고 512px WebP, 32px PNG 파비콘, 180px PNG 홈 화면 아이콘으로 축소·인코딩합니다. 사용 위치는 `index.html`이며, 프롬프트·해시·출력 경로는 [아이콘 제작 명세](docs/art/aegis-icon-anime-v2.json)를 따릅니다. 사용자가 승인한 아이콘 출력 3종은 공개 Git과 배포에 포함하며, 생성 원본은 비공개로 보관합니다.

@@ -1,3 +1,4 @@
+import { TERMINAL_STORY_EPISODES } from '../content/terminalNarrative.js';
 import {
   CAMPAIGN_CHAPTERS,
   DEFAULT_REGION_ID,
@@ -41,13 +42,14 @@ export const LEGACY_CAMPAIGN_SAVE_KEY = "train-me-wrong.overload.campaign.v1";
 export const CAMPAIGN_SAVE_EVENT = "human-override:campaign-saved";
 export const CAMPAIGN_SAVE_SLOT_COUNT = 3;
 export const CAMPAIGN_SLOT_PROGRESSION_FIELD = "progression";
-export const CAMPAIGN_POST_VICTORY_STEPS = Object.freeze(["prologue", "core-fragment", "recruit", "vesper-recruit", "nox-recruit", "outer-signal", "sword-guide", "return"]);
+export const CAMPAIGN_POST_VICTORY_STEPS = Object.freeze(["prologue", "core-fragment", "recruit", "vesper-recruit", "nox-recruit", "outer-signal", "sword-guide", ...Object.keys(TERMINAL_STORY_EPISODES), "return"]);
 
 const KNOWN_REGION_IDS = new Set(getCampaignRegions().map((region) => region.id));
 const KNOWN_CHAPTER_IDS = new Set(CAMPAIGN_CHAPTERS.map((chapter) => chapter.id));
 const KNOWN_DEFENSE_STAGE_IDS = new Set(DEFENSE_STAGES.map((stage) => stage.id));
 const KNOWN_POST_VICTORY_STEPS = new Set(CAMPAIGN_POST_VICTORY_STEPS);
 const POST_VICTORY_SEEN_FLAG = Object.freeze({
+  ...Object.fromEntries(Object.entries(TERMINAL_STORY_EPISODES).map(([id, e]) => [id, e.seen])),
   prologue: "story-prologue-seen",
   "core-fragment": "story-core-fragment-seen",
   "outer-signal": "story-outer-signal-seen",
@@ -91,6 +93,8 @@ function sanitizePendingPostVictorySteps(values, completedRegionIds = [], storyF
   const requested = new Set(values.filter((value) => KNOWN_POST_VICTORY_STEPS.has(value)));
   return CAMPAIGN_POST_VICTORY_STEPS.filter((step) => {
     if (!requested.has(step)) return false;
+    const terminal = TERMINAL_STORY_EPISODES[step];
+    if (terminal) return terminal.requires.every(id => completedRegionIds.includes(id)) && !storyFlags.includes(terminal.seen);
     if (step === "prologue") return completedRegionIds.length === 0 && !storyFlags.includes("story-prologue-seen");
     if (step === "core-fragment") return completedRegionIds.includes("wrong-engine-core") && !storyFlags.includes("story-core-fragment-seen");
     if (step === "outer-signal") return ["wrong-engine-core", "glass-dune", "abyssal-archive"].every(id => completedRegionIds.includes(id)) && !storyFlags.includes("story-outer-signal-seen");
@@ -578,6 +582,9 @@ export function completeRegion(campaign, slotId, regionId, result = {}, options 
     && !slot.storyFlags.includes("beam-sword-guide-complete");
   const pendingPostVictorySteps = [
     ...slot.pendingPostVictorySteps,
+    ...Object.entries(TERMINAL_STORY_EPISODES).filter(([, e]) =>
+      !slot.storyFlags.includes(e.seen) && e.requires.every(id => completedRegionIds.includes(id))
+      && !e.requires.every(id => slot.completedRegionIds.includes(id))).map(([id]) => id),
     ...(firstClear && regionId === "wrong-engine-core" ? ["core-fragment"] : []),
     ...(mikaJustUnlocked ? ["recruit"] : []),
     ...(vesperJustUnlocked ? ["vesper-recruit"] : []),

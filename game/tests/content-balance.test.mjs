@@ -9,11 +9,11 @@ import {
 
 test("content balance baseline derives supply and sinks from active content data", () => {
   const summary = summarizeStaticContentBalance();
-  assert.deepEqual(summary.generatedFrom, { regions: 6, defenseStages: 3, upgradeLines: 12 });
-  assert.deepEqual(summary.totalFirstClear, { researchData: 137, equipmentParts: 137, augmentationCores: 34 });
-  assert.deepEqual(summary.totalRepeatClear, { researchData: 52, equipmentParts: 57, augmentationCores: 19 });
+  assert.deepEqual(summary.generatedFrom, { regions: 9, defenseStages: 3, upgradeLines: 12 });
+  assert.deepEqual(summary.totalFirstClear, { researchData: 237, equipmentParts: 224, augmentationCores: 67 });
+  assert.deepEqual(summary.totalRepeatClear, { researchData: 82, equipmentParts: 81, augmentationCores: 34 });
   assert.deepEqual(summary.upgradeCosts, { researchData: 49, equipmentParts: 97, augmentationCores: 24 });
-  assert.deepEqual(summary.firstClearSurplus, { researchData: 88, equipmentParts: 40, augmentationCores: 10 });
+  assert.deepEqual(summary.firstClearSurplus, { researchData: 188, equipmentParts: 127, augmentationCores: 43 });
   assert.deepEqual(summary.resourceExchanges.map((exchange) => exchange.id), ["research-to-parts", "field-core-fabrication"]);
 });
 

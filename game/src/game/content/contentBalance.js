@@ -28,6 +28,9 @@ export const CONTENT_BALANCE_TARGETS = Object.freeze({
     "neon-foundry": Object.freeze({ medianMin: 300, medianMax: 450, p90Max: 570 }),
     "storm-spire": Object.freeze({ medianMin: 315, medianMax: 480, p90Max: 600 }),
     "gene-vault": Object.freeze({ medianMin: 330, medianMax: 510, p90Max: 630 }),
+    'eclipse-relay': Object.freeze({ medianMin: 180, medianMax: 360, p90Max: 510 }),
+    'ark-transit': Object.freeze({ medianMin: 210, medianMax: 390, p90Max: 540 }),
+    'sovereign-throne': Object.freeze({ medianMin: 210, medianMax: 420, p90Max: 570 }),
   }),
 });
 

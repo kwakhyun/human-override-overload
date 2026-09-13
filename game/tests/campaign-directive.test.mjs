@@ -22,9 +22,9 @@ test("inner-network completion directs to the outer region without requiring dia
   slot.storyFlags = [OUTER_SECTOR_BRIEFING_FLAG];
   assert.equal(getCampaignDirective(slot).regionId, regionIds[3]);
 });
-test("complete and malformed profiles never show a nonexistent seventh operation", () => {
+test("complete and malformed profiles never show a nonexistent tenth operation", () => {
   const directive = getCampaignDirective({ completedRegionIds: [...regionIds, regionIds[0], "unknown"] });
-  assert.equal(directive.cleared, 6);
+  assert.equal(directive.cleared, 9);
   assert.equal(directive.title, "모든 권역 해방 완료");
   assert.equal(getCampaignDirective(null).regionId, null);
 });

@@ -1,0 +1,545 @@
+[
+  {
+    "id": "eclipse-relay",
+    "independentPoses": 8,
+    "motionGrid": [
+      4,
+      2
+    ],
+    "runtimeCell": 320,
+    "sourceSha256": {
+      "boss.png": "c1d5c1934647d55ddaf6281fe7b7e338d8487e621ad6a5ea211a7b88f154ddd5",
+      "scene.png": "678d44a26c989a790c5b90de36d80faa3a5e6b1269a8ce44d8b2b3ac75dad816"
+    },
+    "sourceCells": [
+      {
+        "cell": [
+          0,
+          0
+        ],
+        "sourceRect": [
+          0,
+          0,
+          444,
+          444
+        ],
+        "foreground": [
+          47,
+          9,
+          444,
+          444
+        ]
+      },
+      {
+        "cell": [
+          1,
+          0
+        ],
+        "sourceRect": [
+          444,
+          0,
+          887,
+          444
+        ],
+        "foreground": [
+          0,
+          11,
+          443,
+          444
+        ]
+      },
+      {
+        "cell": [
+          2,
+          0
+        ],
+        "sourceRect": [
+          887,
+          0,
+          1330,
+          444
+        ],
+        "foreground": [
+          1,
+          12,
+          443,
+          444
+        ]
+      },
+      {
+        "cell": [
+          3,
+          0
+        ],
+        "sourceRect": [
+          1330,
+          0,
+          1774,
+          444
+        ],
+        "foreground": [
+          0,
+          1,
+          444,
+          444
+        ]
+      },
+      {
+        "cell": [
+          0,
+          1
+        ],
+        "sourceRect": [
+          0,
+          444,
+          444,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          444,
+          443
+        ]
+      },
+      {
+        "cell": [
+          1,
+          1
+        ],
+        "sourceRect": [
+          444,
+          444,
+          887,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          443,
+          443
+        ]
+      },
+      {
+        "cell": [
+          2,
+          1
+        ],
+        "sourceRect": [
+          887,
+          444,
+          1330,
+          887
+        ],
+        "foreground": [
+          1,
+          0,
+          443,
+          419
+        ]
+      },
+      {
+        "cell": [
+          3,
+          1
+        ],
+        "sourceRect": [
+          1330,
+          444,
+          1774,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          426,
+          421
+        ]
+      }
+    ],
+    "outputs": {
+      "boss-forms.png": {
+        "bytes": 332268,
+        "sha256": "dc88228ffa5ac3f2ce8d40d085bc5df4bc902cd156b9f9154c5bbaa151f1830a"
+      },
+      "boss-motion-small.png": {
+        "bytes": 366291,
+        "sha256": "5ffcfdb740836453a7e700f0609388bdf5010a3d3ddc0443b5ec73b26a7384b3"
+      },
+      "boss-motion.png": {
+        "bytes": 905138,
+        "sha256": "a0596840a29cc576b4528847e970504b23ba04de8e19ffb7528531b9118dbdae"
+      },
+      "floor.webp": {
+        "bytes": 46726,
+        "sha256": "8a4ece2d1403f1af44ddf66dcfbac32955d1cfbc10de0a04fbdb8f10bcd6f5e3"
+      },
+      "scene.webp": {
+        "bytes": 275158,
+        "sha256": "3ae0a56ace99ffb967a96ce1d09dd3601922fce08cef420cd6ca2332d5aa7bcd"
+      }
+    }
+  },
+  {
+    "id": "ark-transit",
+    "independentPoses": 8,
+    "motionGrid": [
+      4,
+      2
+    ],
+    "runtimeCell": 320,
+    "sourceSha256": {
+      "boss.png": "ff5b713b4170d2e81cc246dea9e18c1ae9b6bf2a7c89695b2f66ef6a7389bfe5",
+      "scene.png": "e90d73e8549811d7b2aa2251822c2683ed7b192cb447fb1e00602eda9ec13d34"
+    },
+    "sourceCells": [
+      {
+        "cell": [
+          0,
+          0
+        ],
+        "sourceRect": [
+          0,
+          0,
+          444,
+          444
+        ],
+        "foreground": [
+          0,
+          0,
+          444,
+          444
+        ]
+      },
+      {
+        "cell": [
+          1,
+          0
+        ],
+        "sourceRect": [
+          444,
+          0,
+          887,
+          444
+        ],
+        "foreground": [
+          0,
+          19,
+          443,
+          444
+        ]
+      },
+      {
+        "cell": [
+          2,
+          0
+        ],
+        "sourceRect": [
+          887,
+          0,
+          1330,
+          444
+        ],
+        "foreground": [
+          0,
+          15,
+          443,
+          444
+        ]
+      },
+      {
+        "cell": [
+          3,
+          0
+        ],
+        "sourceRect": [
+          1330,
+          0,
+          1774,
+          444
+        ],
+        "foreground": [
+          0,
+          15,
+          429,
+          444
+        ]
+      },
+      {
+        "cell": [
+          0,
+          1
+        ],
+        "sourceRect": [
+          0,
+          444,
+          444,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          444,
+          443
+        ]
+      },
+      {
+        "cell": [
+          1,
+          1
+        ],
+        "sourceRect": [
+          444,
+          444,
+          887,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          443,
+          443
+        ]
+      },
+      {
+        "cell": [
+          2,
+          1
+        ],
+        "sourceRect": [
+          887,
+          444,
+          1330,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          443,
+          443
+        ]
+      },
+      {
+        "cell": [
+          3,
+          1
+        ],
+        "sourceRect": [
+          1330,
+          444,
+          1774,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          441,
+          423
+        ]
+      }
+    ],
+    "outputs": {
+      "boss-forms.png": {
+        "bytes": 250592,
+        "sha256": "40de79a974391192cbfec60cb64c54d4477d93f111687daa087537199af7811b"
+      },
+      "boss-motion-small.png": {
+        "bytes": 260576,
+        "sha256": "0e91179c853e507b1b79d3751e4d853bbd27eaa05b3e123d3a0734b122fbc7de"
+      },
+      "boss-motion.png": {
+        "bytes": 659691,
+        "sha256": "4d50d74df4be9f393046b7f6f3e1914f806f0a28fddd692bc4e0f1be3cde4320"
+      },
+      "floor.webp": {
+        "bytes": 19822,
+        "sha256": "cd030313e705716c46ffb998834a65510c23c3e5df0b9eaeff081fbe4e856afc"
+      },
+      "scene.webp": {
+        "bytes": 350338,
+        "sha256": "3bedc05bc0a0a79dd11112310f4d6aab4c4f0ed2431d0fd1cee6be9f06f157dd"
+      }
+    }
+  },
+  {
+    "id": "sovereign-throne",
+    "independentPoses": 8,
+    "motionGrid": [
+      4,
+      2
+    ],
+    "runtimeCell": 320,
+    "sourceSha256": {
+      "boss.png": "f6b96c26f1f2b004dd37856de2dcd828ba82d637c05f137988d7b06c3b076a91",
+      "scene.png": "eddcb41936bcfdea795d1f77d8c32ac1eee927c46c8ee9cb39629ad847219cd4"
+    },
+    "sourceCells": [
+      {
+        "cell": [
+          0,
+          0
+        ],
+        "sourceRect": [
+          0,
+          0,
+          444,
+          444
+        ],
+        "foreground": [
+          27,
+          0,
+          444,
+          444
+        ]
+      },
+      {
+        "cell": [
+          1,
+          0
+        ],
+        "sourceRect": [
+          444,
+          0,
+          887,
+          444
+        ],
+        "foreground": [
+          0,
+          1,
+          443,
+          444
+        ]
+      },
+      {
+        "cell": [
+          2,
+          0
+        ],
+        "sourceRect": [
+          887,
+          0,
+          1330,
+          444
+        ],
+        "foreground": [
+          5,
+          0,
+          443,
+          444
+        ]
+      },
+      {
+        "cell": [
+          3,
+          0
+        ],
+        "sourceRect": [
+          1330,
+          0,
+          1774,
+          444
+        ],
+        "foreground": [
+          0,
+          0,
+          430,
+          441
+        ]
+      },
+      {
+        "cell": [
+          0,
+          1
+        ],
+        "sourceRect": [
+          0,
+          444,
+          444,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          444,
+          443
+        ]
+      },
+      {
+        "cell": [
+          1,
+          1
+        ],
+        "sourceRect": [
+          444,
+          444,
+          887,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          443,
+          443
+        ]
+      },
+      {
+        "cell": [
+          2,
+          1
+        ],
+        "sourceRect": [
+          887,
+          444,
+          1330,
+          887
+        ],
+        "foreground": [
+          17,
+          3,
+          443,
+          443
+        ]
+      },
+      {
+        "cell": [
+          3,
+          1
+        ],
+        "sourceRect": [
+          1330,
+          444,
+          1774,
+          887
+        ],
+        "foreground": [
+          0,
+          0,
+          428,
+          417
+        ]
+      }
+    ],
+    "outputs": {
+      "boss-forms.png": {
+        "bytes": 311191,
+        "sha256": "cf48d26e777036c166ac1cf347d043304f072248e565c26bf34be6747e5f2f64"
+      },
+      "boss-motion-small.png": {
+        "bytes": 360299,
+        "sha256": "4d327663a8ff5e73ce7761e1fb67eb01cf145a4eb53a4cd4b2523cd63857bcb2"
+      },
+      "boss-motion.png": {
+        "bytes": 888764,
+        "sha256": "46f80873cbd4f27df1c3aeeedbb742a2beeb140b86679e9b8e6dfb9e10396c27"
+      },
+      "floor.webp": {
+        "bytes": 42040,
+        "sha256": "f0c1750422738c05c9fa24cc40e31d1766c45300bf4cafdf70e3e60060488bc8"
+      },
+      "scene.webp": {
+        "bytes": 341984,
+        "sha256": "aa82d7b69ee04cce3c428351076b7d117fbf25cba31b5658b662a657ec4c994b"
+      }
+    }
+  }
+]

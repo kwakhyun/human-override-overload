@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { TerminalBattleView } from './TerminalBattleView';
 import { getRegionalTerrain } from '../../game/content/regionalTerrain.js';
 import type { RegionalEnvironment } from '../../render/environment/RegionalEnvironment';
 import { ASSET_KEYS } from "../../game/assets/manifest";
@@ -105,10 +106,15 @@ type RegionVisualAssets = Readonly<{
   bossForms: string;
   bossMotion?: string;
   expandedBossMotion?: boolean;
+  terminalMotion?: boolean;
   enemyForms?: string;
 }>;
 
 const REGION_VISUAL_ASSETS: Readonly<Record<string, RegionVisualAssets>> = Object.freeze({
+  ...Object.fromEntries(['eclipse-relay', 'ark-transit', 'sovereign-throne'].map(id => [id, {
+    route: [`${id}-floor`], routeSourceWidth: 1024, routeSourceHeight: 1024,
+    bossRoom: `${id}-floor`, bossForms: `${id}-forms`, bossMotion: `${id}-motion`, terminalMotion: true,
+  }])),
   "wrong-engine-core": Object.freeze({
     route: Object.freeze([ASSET_KEYS.wrongEngineArena]),
     routeSourceWidth: 1254,
@@ -224,7 +230,13 @@ function resolvePortraitBossCameraFocus(
   }
 
   const parryActive = finite(boss?.parry?.life) > 0;
-  const mechanicActive = parryActive || bombsActive;
+  const terminalPattern = boss.activePattern?.terminal ? boss.activePattern : null;
+  if (terminalPattern) for (const zone of terminalPattern.zones) {
+    const age = terminalPattern.elapsed - zone.start;
+    if (age < 0 || age > zone.warning + zone.duration || zone.shape.kind !== 'outside') continue;
+    expand(zone.shape.x, zone.shape.y, zone.shape.radius + 30);
+  }
+  const mechanicActive = parryActive || bombsActive || Boolean(terminalPattern);
   const safeWidth = Math.max(1, finite(viewportWidth, WIDTH) * 0.82);
   const safeHeight = Math.max(1, finite(viewportHeight, HEIGHT) * (mechanicActive ? 0.6 : 0.68));
   const focusWidth = Math.max(360, maxX - minX);
@@ -440,6 +452,7 @@ export class BattleView {
   private readonly hudLayer: Phaser.GameObjects.Container;
   private readonly shadowGraphics: Phaser.GameObjects.Graphics;
   private readonly telegraphGraphics: Phaser.GameObjects.Graphics;
+  private readonly terminalView: TerminalBattleView;
   private readonly effectGraphics: Phaser.GameObjects.Graphics;
   private readonly manualAbilityGraphics: Phaser.GameObjects.Graphics;
   private readonly omegaLaserGraphics: Phaser.GameObjects.Graphics;
@@ -594,6 +607,7 @@ export class BattleView {
     this.enemyHealthGraphics = scene.add.graphics();
     this.hudGraphics = scene.add.graphics();
     this.worldBack.add([this.shadowGraphics, this.telegraphGraphics, this.bossPatternLayer, this.effectGraphics, this.manualAbilityGraphics]);
+    this.terminalView = new TerminalBattleView(scene, this.worldBack);
     this.worldFront.add([this.projectileGraphics, this.impactGraphics, this.enemyHealthGraphics, this.omegaLaserGraphics, this.foregroundGraphics]);
     this.hudLayer.add(this.hudGraphics);
 
@@ -696,7 +710,7 @@ export class BattleView {
     const { bossRoom, bossForms, bossMotion } = this.regionAssets;
     if (!this.scene.textures.exists(bossRoom) || !this.scene.textures.exists(bossForms)) return false;
     ensureAtlasFrames(this.scene, bossForms, 3, 1);
-    const hasMotion = bossMotion ? this.prepareAtlas(bossMotion, this.regionAssets.expandedBossMotion ? 8 : 6, 4) : false;
+    const hasMotion = bossMotion ? this.prepareAtlas(bossMotion, this.regionAssets.terminalMotion ? 4 : this.regionAssets.expandedBossMotion ? 8 : 6, this.regionAssets.terminalMotion ? 2 : 4) : false;
     const hasCommonPatterns = this.prepareAtlas(ASSET_KEYS.bossPatternCommonPixel, 6, 6);
     const hasRegionalPatterns = this.prepareAtlas(ASSET_KEYS.bossPatternRegionalPixel, 6, 4);
     const hasTimedBombs = this.preparePixelAtlas(ASSET_KEYS.bossTimedBombPixel, 6, 2);
@@ -1114,8 +1128,9 @@ export class BattleView {
     );
     const animation = sampleActorAnimation("boss", entity, clipElapsed);
     const usesDedicatedMotion = this.boss.texture.key === this.regionAssets.bossMotion;
+    const terminalFrame = animation.clipId === 'death' ? 7 : animation.clipId === 'hit' ? 6 : animation.clipId === 'attack' ? 4 + animation.clipFrameIndex % 2 : animation.clipId === 'windup' || animation.clipId === 'transform' ? 2 + animation.clipFrameIndex % 2 : animation.clipFrameIndex % 2;
     const bossFrame = usesDedicatedMotion
-      ? this.regionAssets.expandedBossMotion ? resolveExpandedBossFrame(animation, entity) : resolveDedicatedAtlasFrame("boss", animation, entity)
+      ? this.regionAssets.terminalMotion ? { column: terminalFrame % 4, row: Math.floor(terminalFrame / 4) } : this.regionAssets.expandedBossMotion ? resolveExpandedBossFrame(animation, entity) : resolveDedicatedAtlasFrame("boss", animation, entity)
       : animation.fallbackAtlasFrame;
     setAtlasFrame(this.boss, bossFrame.column, bossFrame.row);
     setAtlasFrame(this.bossPhaseArt, bossFrame.column, bossFrame.row);
@@ -1795,6 +1810,7 @@ export class BattleView {
   }
 
   private drawTelegraphs(state: any, time: number, quality: QualityPreset) {
+    this.terminalView.update(state);
     const graphics = this.telegraphGraphics;
     graphics.clear();
     const reducedDecoration = quality.id === "performance";

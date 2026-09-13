@@ -19,7 +19,7 @@ test("README character, campaign, and flight-operation summaries match active co
   const regions = getCampaignRegions();
   const plans = getFlightPlans();
   assert.equal(characters.length, 4);
-  assert.equal(regions.length, 6);
+  assert.equal(regions.length, 9);
   for (const character of characters) {
     assert.match(rootReadme, new RegExp(`\\*\\*${character.name}:\\*\\*`));
     assert.match(gameReadme, new RegExp(character.name));

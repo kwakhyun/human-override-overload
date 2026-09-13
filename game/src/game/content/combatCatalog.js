@@ -1,3 +1,4 @@
+import { TERMINAL_PATTERNS } from './terminalCampaign.js';
 export const BOSS_PATTERNS = Object.freeze([
   "radial",
   "sweep",
@@ -8,6 +9,7 @@ export const BOSS_PATTERNS = Object.freeze([
 ]);
 
 export const REGION_BOSS_PATTERNS = Object.freeze({
+  ...TERMINAL_PATTERNS,
   "wrong-engine-core": BOSS_PATTERNS,
   "glass-dune": Object.freeze(["prismLattice", "solarFlare", "refractionSweep", "mirrorShards"]),
   "abyssal-archive": Object.freeze(["memorySpiral", "depthCollapse", "archiveEcho", "undertow"]),

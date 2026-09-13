@@ -1,6 +1,8 @@
 // Player-facing advice follows REGION_BOSS_PATTERNS, not the legacy English
 // flavour labels (which do not always describe the attacks used in combat).
+import { TERMINAL_CAMPAIGN } from './terminalCampaign.js';
 export const SORTIE_BRIEFINGS = Object.freeze({
+  ...Object.fromEntries(Object.values(TERMINAL_CAMPAIGN).map(r => [r.id, { enemies: r.enemies, danger: r.danger, tip: r.tip }])),
   'wrong-engine-core': {
     enemies: '자폭 드론이 많이 접근합니다. 소총병과 저격수의 원거리 사격도 함께 들어옵니다.',
     danger: '보스가 사방으로 탄을 쏘고 넓은 범위를 쓸어 공격합니다. 연속 돌진도 주의하세요.',

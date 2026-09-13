@@ -5,6 +5,7 @@ import { OperativePortraitImage } from './ui/portrait/InteractivePortrait.jsx';
 import { StorySceneScreen, StoryArchiveScreen } from './ui/campaign/StoryScreens.jsx';
 import { STORY_ART, STORY_EPISODES, isStoryAvailable } from './game/content/storyEpisodes.js';
 import { ExpeditionCombatDock } from './ui/combat/ExpeditionCombatDock.jsx';
+import { TerminalMissionReadout } from './ui/combat/TerminalMissionReadout.jsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowCounterClockwise,
@@ -798,15 +799,17 @@ const CLEAR_TRANSITION_COPY = Object.freeze({
   swap: Object.freeze(["보스 구역으로 이동", "전장을 전환하고 있습니다. 잠시 후 최종 교전이 시작됩니다."]),
 });
 
-function RouteClearTransition({ transition }) {
+function RouteClearTransition({ transition, mission }) {
   if (!transition?.phase) return null;
   const phase = CLEAR_TRANSITION_COPY[transition.phase] ? transition.phase : "warning";
-  const copy = CLEAR_TRANSITION_COPY[phase];
+  const copy = mission && phase === "warning"
+    ? ["작전 목표 달성", "추론핵으로 이어지는 항로를 확보했습니다."]
+    : CLEAR_TRANSITION_COPY[phase];
   const progress = Math.max(0, Math.min(1, Number(transition.progress) || 0));
   return (
     <section className={`route-clear-transition is-${phase}`} role="status" aria-live="assertive">
       <div className="route-clear-rings" aria-hidden="true"><i /><i /><i /></div>
-      <small>{phase === "panic" ? "적 통신 감청" : phase === "swap" ? "전장 전환" : "구역 전멸"}</small>
+      <small>{phase === "panic" ? "적 통신 감청" : phase === "swap" ? "전장 전환" : mission ? "작전 완료" : "구역 전멸"}</small>
       <strong>{copy[0]}</strong>
       <span>{copy[1]}</span>
       <i className="route-clear-progress" aria-hidden="true"><i style={{ width: `${progress * 100}%` }} /></i>
@@ -867,6 +870,9 @@ function RouteMinimap({ hud, region }) {
             style={{ left: `${clampMapRatio(enemy?.x) * 100}%`, top: `${clampMapRatio(enemy?.y) * 100}%` }}
             key={enemy?.id ?? `${index}-${enemy?.x}-${enemy?.y}`}
           />
+        ))}
+        {!bossRoom && expedition.mission?.targets.map(target => (
+          <i key={target.id} className="route-minimap-objective" style={{ left: `${target.x / 4096 * 100}%`, top: `${target.y / 4096 * 100}%` }} />
         ))}
         {gates.map((gate, index) => (
           <i
@@ -1000,6 +1006,9 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
         : event.type === "ultimateWarning"
           ? ULTIMATE_WARNING_BANNERS[event.skill] || EVENT_BANNERS.ultimateWarning
           : EVENT_BANNERS[event.type];
+      if (event.type === "swarmCleared" && event.objectiveDriven) {
+        copy = ["작전 목표 달성", "확보한 항로를 통해 추론핵으로 진입합니다."];
+      }
       if (event.type === "ultimateWarning" && event.skill === "airstrike") {
         if (airstrikeBannerShownRef.current) return;
         airstrikeBannerShownRef.current = true;
@@ -1346,8 +1355,8 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
             />
             {tagCutscene && <TagCutsceneOverlay key={tagCutscene.key} cutscene={tagCutscene} />}
             <div className="expedition-hud" aria-label="필수 전투 정보">
-              <div className={hud?.boss ? "route-objective is-boss" : "route-objective"}>
-                <span>{hud?.boss ? `${hud.boss.stage || 1}단계` : `${hud?.expedition?.bossRoom ? 4 : Math.min(3, (hud?.expedition?.checkpoint || 0) + 1)} / 4 구간`}</span>
+              <div className={`route-objective${hud?.boss ? ' is-boss' : ''}${hud?.expedition?.mission ? ' has-mission' : ''}`}>
+                <span>{hud?.boss ? `${hud.boss.stage || 1}단계` : hud?.expedition?.mission ? `작전 목표 ${Math.floor(routeRatio * 100)}%` : `${hud?.expedition?.bossRoom ? 4 : Math.min(3, (hud?.expedition?.checkpoint || 0) + 1)} / 4 구간`}</span>
                 <strong>{hud?.boss ? localizeBossName(hud.boss.name) : localizeObjective(hud?.expedition?.objective, hud)}</strong>
                 <div><i style={{ width: `${routeRatio * 100}%` }} /></div>
                 {openingProtection?.active && (
@@ -1358,7 +1367,8 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
                       : `피해 완화 ${Math.ceil(openingProtection.remaining)}초`}
                   </em>
                 )}
-                <b>{hud?.boss ? `체력 ${Math.ceil(hud.boss.hp || 0)}` : `남은 적 ${hud?.enemiesRemaining ?? 0}기`}</b>
+                <b>{hud?.boss ? `체력 ${Math.ceil(hud.boss.hp || 0)}` : hud?.expedition?.mission ? '목표 방향을 따라 이동' : `남은 적 ${hud?.enemiesRemaining ?? 0}기`}</b>
+                <TerminalMissionReadout mission={hud?.expedition?.mission} boss={hud?.boss} />
               </div>
               <div className="expedition-hud-actions" aria-label="전투 편의 기능">
                 <button
@@ -1463,7 +1473,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
             {(parryActive || bombSlowMotion || bombRetaliation) && <div className="boss-crisis-screen" aria-hidden="true"><i /><i /></div>}
             {playerStunned && <div className="stun-screen-effect" aria-hidden="true"><i /><i /><i /><i /></div>}
             {!dialogue && <RouteMinimap hud={hud} region={region} />}
-            {!dialogue && <RouteClearTransition transition={hud?.expedition?.clearTransition} />}
+            {!dialogue && <RouteClearTransition transition={hud?.expedition?.clearTransition} mission={hud?.expedition?.mission} />}
             <div className="expedition-xp"><i style={{ width: `${xpRatio * 100}%` }} /></div>
             <div className="transient-controls">
               <span>이동: WASD</span>

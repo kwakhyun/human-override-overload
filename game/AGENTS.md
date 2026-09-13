@@ -2,6 +2,16 @@
 
 - Browser identity uses the current anime AEGIS icon via `index.html`: `aegis-anime-v2-icon.webp` (512), `aegis-anime-v2-favicon-32.png` and `aegis-anime-v2-apple-touch-180.png`. Keep the legacy semi-realistic icon in private reference only. `scripts/prepare-aegis-icon.py` reproduces encodings from the approved private source; `docs/art/aegis-icon-anime-v2.json` records provenance. The user approved these three encoded icons for public Git; the source master stays private.
 
+
+## Terminal orbit campaign contract (sectors 07–09)
+
+- `terminalCampaign.js`, `terminalObjectives.js` and `terminalBossPatterns.js` own the new rules. The six older arenas retain their kill-gated waves; those rules below do not apply to terminal missions. Clearing 04–06 unlocks 07, then 08 and 09 unlock sequentially. Existing saves migrate without a reset. Chapter 04 requires all three terminal victories.
+- 07 captures three relays in any order (10 seconds uncontested per node), then a 14-second central broadcast. 08 escorts a 720-HP ark inside 310 units, with a fast hazardous upper fork or longer repairing lower fork; hostile proximity stops and damages it, destruction fails the sortie. 09 retrieves three keys one at a time (6 seconds per vault), deposits them centrally, then channels for 16 seconds; carrying attracts more bombardments. Menus and dialogue freeze simulation time.
+- Begin with eight mixed guards; reinforce four through the existing gates every 2.4 seconds within a bounded pressure cap. The 1,200 spawn budget is a safety bound, never a completion goal. Objective milestones grant in-run healing/XP; persistent rewards and the next unlock require actual boss victory. Clear leftover guards without inventing kills, then use the existing independent boss-room transition.
+- HELIO JUDGE / CHRONO LEVIATHAN / NULL SOVEREIGN have 2.4 / 2.8 / 3.4 million HP and three exclusive patterns each. Shared warning shapes drive both collision and Phaser graphics. Stage changes at 70%/38%, phase-overlapped hazards, and finite recovery windows remain authoritative. Do not add the legacy timed bomb puzzle to these bosses or rotate a boss sprite's feet upward.
+- New boss sheets have eight authored poses in a 4×2 atlas and three forms in a 3×1 atlas. `prepare-terminal-art.py` reproduces full/performance encodings and 2D fallback floors; provenance lives in `docs/art/terminal-orbit-*.json`. Three new 3D themes and three story CGs are registered through the asset manifest. Reuse existing BGM; no new audio synthesis is required.
+- New artwork, source masters, QA captures and PDFs remain private. Browser verification uses a test-response-only scene accessor and real simulation inputs; never ship that accessor or report a maximum-upgrade bot as external human balance evidence. Four new stories reuse the existing once-only post-victory queue and archive.
+
 ## Public repository artwork boundary
 
 - User instruction: game artwork must not be uploaded to the public GitHub repository. This supersedes older instructions to commit runtime art, authoring inputs, source contracts under reference, QA images or generated PDFs. Keep every local file intact; only untrack it. All `reference/`, `output/`, runtime Cubism files and standalone artwork are private inputs. Do not use `git add -f` to restore them.

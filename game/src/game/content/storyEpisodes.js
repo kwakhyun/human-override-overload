@@ -1,5 +1,7 @@
 // Scene CGs belong to the DOM story viewer; never preload them into combat.
+import { TERMINAL_STORY_ART, TERMINAL_STORY_EPISODES } from './terminalNarrative.js';
 export const STORY_ART = Object.freeze({
+  ...TERMINAL_STORY_ART,
   aegis: '/assets/overload/story/awakening/aegis.webp',
   mika: '/assets/overload/story/awakening/mika.webp',
   vesper: '/assets/overload/story/awakening/vesper.webp',
@@ -69,6 +71,7 @@ export const STORY_EPISODES = Object.freeze({
       line('nox', '녹스', '호출부호 녹스. 표식 심사와 전장 처형을 담당하겠습니다. 다음 판결의 근거는 명령이 아니라, 우리가 직접 확인한 사실이어야 합니다.'),
     ],
   },
+  ...TERMINAL_STORY_EPISODES,
 });
 export function isStoryAvailable(id, completedRegionIds = []) {
   const episode = STORY_EPISODES[id];

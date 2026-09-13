@@ -1,6 +1,11 @@
 import { BASE_NPCS, getRegion } from "../../game/content/campaign.js";
+import { TERMINAL_COMBAT_BEATS } from '../../game/content/terminalNarrative.js';
+import { TERMINAL_PATTERN_LABELS } from '../../swarm/terminalBossPatterns.js';
 
 export const BOSS_NAME_KO = Object.freeze({
+  'HELIO JUDGE': '헬리오스 심판관',
+  'CHRONO LEVIATHAN': '크로노 레비아탄',
+  'NULL SOVEREIGN': '널 소버린',
   "THE WRONG ENGINE": "오답 엔진 · THE WRONG ENGINE",
   "WRONG ENGINE CORE": "오답 엔진 핵심부 · WRONG ENGINE CORE",
   "MIRROR TYRANT": "거울 폭군 · MIRROR TYRANT",
@@ -69,6 +74,7 @@ export function localizeObjective(name, hud) {
     ?? 0,
   ) || 0);
   const clearPhase = expedition?.clearTransition?.phase;
+  if (expedition?.mission && !expedition.bossRoom) return clearPhase ? '작전 목표 달성 · 보스 구역 연결' : expedition.mission.message || raw;
   if (clearPhase === "warning") return "적 전멸 · 보스 구역 방어망 붕괴";
   if (clearPhase === "panic") return "소버린 비상 신호 · 보스 추론핵 추격";
   if (clearPhase === "swap") return "보스 구역으로 자동 전환 중";
@@ -217,6 +223,7 @@ export const ULTIMATE_WARNING_BANNERS = Object.freeze({
 });
 
 export const SIGNATURE_PATTERN_BANNERS = Object.freeze({
+  ...TERMINAL_PATTERN_LABELS,
   prismLattice: ["⚠ 프리즘 격자", "교차 광선이 고정됩니다. 두 경고선 밖으로 이탈하세요."],
   solarFlare: ["⚠ 태양 폭발", "표식 순서대로 집광 폭발이 연쇄 점화됩니다."],
   refractionSweep: ["⚠ 굴절 스윕", "평행 광선 세 줄이 전장을 절단합니다. 틈 사이로 이동하세요."],
@@ -228,6 +235,7 @@ export const SIGNATURE_PATTERN_BANNERS = Object.freeze({
 });
 
 export const SCENARIO_SCRIPT = Object.freeze({
+  ...TERMINAL_COMBAT_BEATS,
   deployment: Object.freeze([
     Object.freeze({ speaker: "OPERATOR", text: "이지스, 응답해. 초지능 AI 소버린이 마지막 자유 구역까지 장악했어. 오답 엔진으로 진입해." }),
     Object.freeze({ speaker: "AEGIS", text: "도시에 남은 생존자 신호는?" }),
@@ -323,6 +331,9 @@ const NARRATIVE_NPC_IDS = Object.freeze({
 });
 
 export const NARRATIVE_BOSS_REGION_IDS = Object.freeze({
+  'HELIO JUDGE': 'eclipse-relay',
+  'CHRONO LEVIATHAN': 'ark-transit',
+  'NULL SOVEREIGN': 'sovereign-throne',
   "THE WRONG ENGINE": "wrong-engine-core",
   "MIRROR TYRANT": "glass-dune",
   "DROWNED ORACLE": "abyssal-archive",

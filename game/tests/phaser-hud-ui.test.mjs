@@ -107,7 +107,7 @@ test("Phaser DOM HUD shows authored combat and transit cues without restoring a 
   ]);
 
   assert.doesNotMatch(app, /GateLockedNotice|gateNotice/);
-  assert.match(app, /function RouteClearTransition\(\{ transition \}\)/);
+  assert.match(app, /function RouteClearTransition\(\{ transition, mission \}\)/);
   assert.match(app, /hud\?\.expedition\?\.clearTransition/);
   assert.match(app, /CLEAR_TRANSITION_COPY[\s\S]*warning[\s\S]*panic[\s\S]*swap/);
   assert.match(app, /event\.type === "bossAutoTransition" && !autoBossEntryHandledRef\.current/);

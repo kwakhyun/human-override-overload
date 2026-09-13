@@ -1,3 +1,4 @@
+import { TERMINAL_CAMPAIGN } from './terminalCampaign.js';
 import {
   REGION_BOSS_PATTERNS,
   REGION_MID_BOSS_PROFILES,
@@ -123,6 +124,7 @@ export const BASE_NPCS = deepFreeze({
 });
 
 export const CAMPAIGN_REGIONS = deepFreeze({
+  ...TERMINAL_CAMPAIGN,
   "wrong-engine-core": {
     id: "wrong-engine-core",
     clusterId: "inner-network",
@@ -426,6 +428,9 @@ export const CAMPAIGN_CHAPTERS = deepFreeze([
     regionIds: ["neon-foundry", "storm-spire", "gene-vault"],
     completionRegionIds: ["neon-foundry", "storm-spire", "gene-vault"],
   },
+  { id: 'chapter-04', order: 4, name: 'THE RIGHT TO RETURN',
+    regionIds: ['eclipse-relay', 'ark-transit', 'sovereign-throne'],
+    completionRegionIds: ['eclipse-relay', 'ark-transit', 'sovereign-throne'] },
 ]);
 
 export const REGION_CLUSTERS = deepFreeze([
@@ -458,11 +463,10 @@ export const REGION_CLUSTERS = deepFreeze([
     rangeLabel: "SECTORS 07—09",
     name: "TERMINAL ORBIT",
     koreanName: "종단 궤도권",
-    summary: "미확인 항로 · 다음 작전 준비 중",
-    regionIds: [],
+    summary: "일식 중계항 · 방주 운송로 · 주권의 왕좌",
+    regionIds: ['eclipse-relay', 'ark-transit', 'sovereign-throne'],
     prerequisiteRegionIds: ["neon-foundry", "storm-spire", "gene-vault"],
-    comingSoon: true,
-    previewPath: "./assets/overload/campaign/strategic-world-map.webp",
+    previewPath: "./assets/overload/terminal-orbit/eclipse-relay/scene.webp",
     mapPosition: { x: 82, y: 18 },
   },
 ]);

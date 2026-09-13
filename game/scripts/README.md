@@ -6,6 +6,8 @@
 
 | 작업 | 도구와 입력 |
 | --- | --- |
+| 종단 궤도 원본·런타임 인코딩 | `prepare-terminal-art.py`: 비공개 장면·8포즈 보스 원본을 4×2 동작/3×1 변신 시트와 경량 이미지로 정규화 |
+| 종단 궤도 엔진·앱 완주 검사 | `simulate-terminal-campaign.mjs`, `verify-terminal-campaign.mjs`: 실제 입력 기반 가속 검사, 기존 6구역 완료 테스트 저장 사용; `TERMINAL_QA_URL`로 개발 서버 지정 |
 | 이지스 대표 아이콘 | `prepare-aegis-icon.py`: 비공개 승인 원본에서 512px 대표 이미지·32px 파비콘·180px 홈 화면 아이콘 인코딩 |
 | 공개 Git 이미지 제외 검사 | `npm run check:public-assets` + 저장소의 `.githooks/`: 인덱스와 푸시할 새 커밋을 검사 |
 | 공개 에셋 검사 | `npm run analyze:assets` → `lib/runtime-assets.mjs`: manifest의 동적 등록·화질과 HTML/CSS 참조까지 확인 |
