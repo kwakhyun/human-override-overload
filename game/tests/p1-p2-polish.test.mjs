@@ -109,7 +109,7 @@ test("P1 and P2 polish exposes opening protection, focus HUD controls, trustwort
   assert.match(app, /event\.type === "playerHit"[\s\S]*triggerTouchFeedback/);
   assert.match(app, /SETTINGS_STORAGE_KEY/);
   assert.match(app, /if \(settingsOpen\) return <GameSettingsOverlay/);
-  assert.match(app, /compact=\{hudFocusMode\}/);
+  assert.match(app, /compact=\{hudFocusMode \|\| Boolean\(hud\?\.expedition\?\.mission\)\}/);
   assert.match(app, /직접 공격 명중률/);
   assert.match(app, /자폭·환경/);
   assert.match(screens, /className="character-skill-ladder"/);

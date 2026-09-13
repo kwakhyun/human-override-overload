@@ -1407,7 +1407,7 @@ function PhaserArenaScreen({ assets, regionId, region, combatBonuses, characterS
             {!dialogue && !rewardOpen ? (
               <ExpeditionCombatDock
                 hud={hud}
-                compact={hudFocusMode}
+                compact={hudFocusMode || Boolean(hud?.expedition?.mission)}
                 onDash={activateDash}
                 onTag={activateTag}
                 onActivateAbility={activateAbility}

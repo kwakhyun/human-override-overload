@@ -61,6 +61,8 @@ try{
       await launch(page,index);await shot(page,`${name}-${index+7}-objective`);
       assert.equal(await page.locator('.terminal-mission-readout').count(),1);
       if(screensOnly){
+        const dock=await page.locator('.skill-readiness').evaluate(el=>({bounds:el.getBoundingClientRect().toJSON(),cards:[...el.querySelectorAll('.combat-ability-chip,.combat-tag-switch')].map(c=>c.getBoundingClientRect().toJSON())}));
+        for(const card of dock.cards)assert.ok(card.bottom<=page.viewportSize().height+1&&card.right<=page.viewportSize().width+1,JSON.stringify(dock));
         if(mobile){
           const before=await page.evaluate(()=>({x:window.__terminalScene.state.player.x,y:window.__terminalScene.state.player.y}));
           const cdp=await context.newCDPSession(page);
